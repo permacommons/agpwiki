@@ -1,0 +1,50 @@
+{
+  "name": "agpwiki",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/index.js",
+    "mcp": "tsx src/mcp/stdio.ts",
+    "mcp-playwright": "tsx src/mcp/stdio-playwright.ts",
+    "create-user": "node --import tsx src/scripts/create-user.ts",
+    "create-token": "node --import tsx src/scripts/create-token.ts",
+    "create-invite": "node --import tsx src/scripts/create-invite.ts",
+    "grant-role": "node --import tsx src/scripts/grant-role.ts",
+    "test": "NODE_ENV=test node --import tsx --test test/**/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "biome check src locales util types"
+  },
+  "dependencies": {
+    "@citeproc-rs/wasm": "^0.2.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "config": "^4.1.1",
+    "debug": "^4.4.3",
+    "diff": "^7.0.0",
+    "entities": "^7.0.0",
+    "express": "^5.2.1",
+    "hbs": "^4.2.0",
+    "is-uuid": "^1.0.2",
+    "markdown-it": "^14.1.0",
+    "pg": "^8.17.0",
+    "striptags": "^3.2.0",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.3.11",
+    "@types/config": "^3.3.5",
+    "@types/debug": "^4.1.12",
+    "@types/diff": "^7.0.2",
+    "@types/express": "^5.0.6",
+    "@types/is-uuid": "^1.0.2",
+    "@types/node": "^25.0.8",
+    "@types/pg": "^8.15.6",
+    "playwright": "^1.57.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

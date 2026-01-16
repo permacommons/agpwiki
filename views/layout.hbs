@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="/static/styles/site.css" />
+  </head>
+  <body>
+    {{> header}}
+    {{{topHtml}}}
+    <div class="page-layout{{#unless hasSidebar}} single{{/unless}}">
+      <main class="article">
+        {{{labelHtml}}}
+        <h1>{{title}}</h1>
+        {{{bodyHtml}}}
+      </main>
+      {{#if hasSidebar}}
+      <aside class="sidebar">
+        {{{sidebarHtml}}}
+      </aside>
+      {{/if}}
+    </div>
+    {{> footer}}
+    <script src="/static/scripts/search.js" defer></script>
+    <script src="/static/scripts/meta-tooltips.js" defer></script>
+  </body>
+</html>

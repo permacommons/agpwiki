@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "allowJs": true,
+    "checkJs": false,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "rootDir": ".",
+    "outDir": "dist",
+    "types": ["node"],
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.ts",
+    "dal/**/*.ts",
+    "locales/**/*.ts",
+    "util/**/*.ts",
+    "types/**/*.d.ts"
+  ]
+}

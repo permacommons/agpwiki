@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "dal/**/*.ts",
+    "locales/**/*.ts",
+    "util/**/*.ts",
+    "types/**/*.d.ts"
+  ]
+}

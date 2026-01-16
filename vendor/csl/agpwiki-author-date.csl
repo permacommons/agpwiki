@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<style xmlns="http://purl.org/net/xbiblio/csl" version="1.0" class="note">
+  <info>
+    <title>Agpedia Author-Date</title>
+    <id>https://agp.wiki/styles/agpwiki-author-date</id>
+    <updated>2026-01-15T00:00:00Z</updated>
+  </info>
+
+  <macro name="author">
+    <names variable="author">
+      <name and="text" delimiter=", " />
+    </names>
+  </macro>
+
+  <macro name="issued">
+    <date variable="issued">
+      <date-part name="year" />
+    </date>
+  </macro>
+
+  <macro name="title">
+    <text variable="title" />
+  </macro>
+
+  <macro name="container">
+    <text variable="container-title" font-style="italic" />
+  </macro>
+
+  <macro name="publisher">
+    <group delimiter=", ">
+      <text variable="publisher" />
+      <text variable="publisher-place" />
+    </group>
+  </macro>
+
+  <macro name="online">
+    <group delimiter=" ">
+      <text variable="DOI" prefix="https://doi.org/" />
+      <text variable="URL" />
+    </group>
+  </macro>
+
+  <citation>
+    <layout delimiter="; ">
+      <group delimiter=" ">
+        <choose>
+          <if variable="author">
+            <text macro="author" />
+          </if>
+          <else>
+            <text macro="title" />
+          </else>
+        </choose>
+        <choose>
+          <if variable="issued">
+            <text macro="issued" />
+          </if>
+        </choose>
+      </group>
+      <text macro="title" prefix=". " />
+      <text macro="container" prefix=". " />
+      <text macro="publisher" prefix=". " />
+      <text macro="online" prefix=". " />
+    </layout>
+  </citation>
+
+  <bibliography>
+    <layout suffix=".">
+      <text macro="title" suffix=". " />
+      <text macro="container" suffix=". " />
+      <text macro="publisher" suffix=". " />
+      <text macro="online" />
+    </layout>
+  </bibliography>
+</style>

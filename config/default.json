@@ -1,0 +1,15 @@
+{
+  "server": {
+    "port": 3000
+  },
+  "postgres": {
+    "host": "localhost",
+    "port": 5432,
+    "database": "agpwiki",
+    "user": "agpwiki_user",
+    "password": "agpwiki_password",
+    "max": 20,
+    "idleTimeoutMillis": 30000,
+    "connectionTimeoutMillis": 2000
+  }
+}

@@ -1,0 +1,1 @@
+- [ ] Split MCP access so local agents can use Playwright locally while targeting a remote production instance, without exposing local dev environment MCP tools.
