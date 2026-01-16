@@ -387,7 +387,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.createPage',
+    'wiki_createPage',
     {
       title: 'Create Wiki Page',
       description: 'Create a new wiki page with initial content.',
@@ -409,7 +409,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'citation.create',
+    'citation_create',
     {
       title: 'Create Citation',
       description: 'Create a new citation entry with CSL JSON data.',
@@ -429,7 +429,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'citation.query',
+    'citation_query',
     {
       title: 'Query Citations',
       description: 'Search citations by key prefix, title, author, year, DOI, or URL.',
@@ -456,7 +456,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'blog.createPost',
+    'blog_createPost',
     {
       title: 'Create Blog Post',
       description: 'Create a new blog post with initial content.',
@@ -479,7 +479,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'blog.updatePost',
+    'blog_updatePost',
     {
       title: 'Update Blog Post',
       description: 'Create a new revision for an existing blog post.',
@@ -503,7 +503,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'blog.listRevisions',
+    'blog_listRevisions',
     {
       title: 'List Blog Post Revisions',
       description: 'List revisions for a blog post by slug.',
@@ -519,7 +519,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'blog.diffRevisions',
+    'blog_diffRevisions',
     {
       title: 'Diff Blog Post Revisions',
       description: 'Generate a unified diff between two blog post revisions.',
@@ -538,7 +538,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'citation.listRevisions',
+    'citation_listRevisions',
     {
       title: 'List Citation Revisions',
       description: 'List revisions for a citation by key.',
@@ -554,7 +554,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'citation.diffRevisions',
+    'citation_diffRevisions',
     {
       title: 'Diff Citation Revisions',
       description: 'Generate a unified diff between two citation revisions.',
@@ -572,7 +572,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'citation.update',
+    'citation_update',
     {
       title: 'Update Citation',
       description: 'Create a new revision for an existing citation.',
@@ -593,7 +593,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.listRevisions',
+    'wiki_listRevisions',
     {
       title: 'List Wiki Page Revisions',
       description: 'List revisions for a wiki page by slug.',
@@ -609,7 +609,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.diffRevisions',
+    'wiki_diffRevisions',
     {
       title: 'Diff Wiki Page Revisions',
       description: 'Generate a unified diff between two revisions.',
@@ -628,7 +628,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.applyPatch',
+    'wiki_applyPatch',
     {
       title: 'Apply Wiki Patch',
       description:
@@ -656,7 +656,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.updatePage',
+    'wiki_updatePage',
     {
       title: 'Update Wiki Page',
       description: 'Create a new revision for an existing wiki page.',
@@ -679,7 +679,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.addAlias',
+    'wiki_addAlias',
     {
       title: 'Add Wiki Page Alias',
       description: 'Create a new alias slug for an existing wiki page.',
@@ -698,7 +698,7 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
-    'wiki.removeAlias',
+    'wiki_removeAlias',
     {
       title: 'Remove Wiki Page Alias',
       description: 'Remove an alias slug from a wiki page.',
