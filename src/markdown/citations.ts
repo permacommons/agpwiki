@@ -27,13 +27,12 @@ interface CitationOptions {
 
 const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
   const regexes = {
-    citation: /^([^^-]|[^^].+?)?(-)?@([\w][\w:.#$%&\-+?<>~\/]*)(.+)?$/,
-    inText: /^@([\w][\w:.#$%&\-+?<>~\/]*)(\s*)(\[)?/,
+    citation: /^([^^-]|[^^].+?)?(-)?@([\w][\w:.#$%&+?<>~/-]*)(.+)?$/,
+    inText: /^@([\w][\w:.#$%&+?<>~/-]*)(\s*)(\[)?/,
     allowedBefore: /^[^a-zA-Z.0-9]$/,
   };
 
   md.inline.ruler.after('emphasis', 'citation', (state, silent) => {
-    let max = state.posMax;
     const char = state.src.charCodeAt(state.pos);
     if (
       char === 0x40 /* @ */ &&
@@ -41,15 +40,22 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
     ) {
       const match = state.src.slice(state.pos).match(regexes.inText);
       if (match) {
-        const citeproc: CiteProc<unknown> | undefined = options?.citeproc
-          ? state.env.citeproc || (state.env.citeproc = options?.citeproc(state.env))
-          : undefined;
+        let citeproc: CiteProc<unknown> | undefined;
+        if (options?.citeproc) {
+          citeproc = state.env.citeproc;
+          if (!citeproc) {
+            citeproc = options.citeproc(state.env);
+            state.env.citeproc = citeproc;
+          }
+        }
+        const nextNoteNum = (state.env.noteNum ?? 0) + 1;
+        state.env.noteNum = nextNoteNum;
         const citation: Citation = {
           citationId: match[1],
           citationPrefix: [],
           citationSuffix: [],
           citationMode: 'AuthorInText',
-          citationNoteNum: (state.env.noteNum = (state.env.noteNum || 0) + 1),
+          citationNoteNum: nextNoteNum,
           citationHash: 0,
         };
         let token: Token | undefined;
@@ -65,10 +71,10 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
           if (suffixEnd > 0 && charAfter !== 0x28 && charAfter !== 0x5b /* ( or [ */) {
             const suffix = state.src.slice(suffixStart, suffixEnd);
             citation.citationSuffix = state.md.parseInline(suffix, state.env);
-            state.pending += match[0] + suffix + ']';
+            state.pending += `${match[0]}${suffix}]`;
             state.pos += match[0].length + suffixEnd - suffixStart + 1;
           } else {
-            state.pending += '@' + match[1];
+            state.pending += `@${match[1]}`;
             state.pos += match[0].length - match[2].length - match[3].length;
           }
         } else {
@@ -90,15 +96,22 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
         if (parts.indexOf(null) >= 0) {
           return false;
         }
-        const citeproc: CiteProc<unknown> | undefined = options?.citeproc
-          ? state.env.citeproc || (state.env.citeproc = options?.citeproc(state.env))
-          : undefined;
+        let citeproc: CiteProc<unknown> | undefined;
+        if (options?.citeproc) {
+          citeproc = state.env.citeproc;
+          if (!citeproc) {
+            citeproc = options.citeproc(state.env);
+            state.env.citeproc = citeproc;
+          }
+        }
+        const nextNoteNum = (state.env.noteNum ?? 0) + 1;
+        state.env.noteNum = nextNoteNum;
         const cites: Citation[] = (parts as RegExpMatchArray[]).map(x => ({
           citationId: x[3],
           citationPrefix: x[1] ? state.md.parseInline(x[1], state.env) : [],
           citationSuffix: x[4] ? state.md.parseInline(x[4], state.env) : [],
           citationMode: x[2] ? 'SuppressAuthor' : 'NormalCitation',
-          citationNoteNum: (state.env.noteNum = (state.env.noteNum || 0) + 1),
+          citationNoteNum: nextNoteNum,
           citationHash: 0,
         }));
         if (!silent) {
@@ -159,9 +172,14 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
       });
 
       md.renderer.rules.bibliography = (_tks, _idx, _opts, env) => {
-        const citeproc: CiteProc<unknown> | undefined = options?.citeproc
-          ? env.citeproc || (env.citeproc = options?.citeproc(env))
-          : undefined;
+        let citeproc: CiteProc<unknown> | undefined;
+        if (options?.citeproc) {
+          citeproc = env.citeproc;
+          if (!citeproc) {
+            citeproc = options.citeproc(env);
+            env.citeproc = citeproc;
+          }
+        }
         return citeproc?.renderBibliography() || '<NO CITEPROC CONFIGURED>';
       };
     }

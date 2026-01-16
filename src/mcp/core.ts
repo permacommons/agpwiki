@@ -1,9 +1,9 @@
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult, ListResourcesResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 import { initializePostgreSQL } from '../db.js';
-import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { resolveAuthUserId } from './auth.js';
 import {
   createBlogPost,

@@ -3,8 +3,8 @@ import config from 'config';
 
 import createDataAccessLayer from '../dal/index.js';
 import { initializeManifestModels } from '../dal/lib/create-model.js';
-import { setBootstrapResolver } from '../dal/lib/model-handle.js';
 import type { DataAccessLayer } from '../dal/lib/data-access-layer.js';
+import { setBootstrapResolver } from '../dal/lib/model-handle.js';
 import debug from '../util/debug.js';
 
 type JsonObject = Record<string, unknown>;

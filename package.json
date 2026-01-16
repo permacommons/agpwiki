@@ -18,7 +18,8 @@
     "grant-role": "node --import tsx src/scripts/grant-role.ts",
     "test": "NODE_ENV=test node --import tsx --test test/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "biome check src locales util types"
+    "lint": "biome check src locales util types",
+    "lint:fix": "biome check src locales util types --fix"
   },
   "dependencies": {
     "@citeproc-rs/wasm": "^0.2.0",

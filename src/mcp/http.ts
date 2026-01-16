@@ -1,8 +1,10 @@
-import config from 'config';
-import type { NextFunction, Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
+import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import config from 'config';
+import type { NextFunction, Request, Response } from 'express';
 
 import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
@@ -74,19 +76,79 @@ const app = createMcpExpressApp({
   allowedHosts: mcpConfig.allowedHosts,
 });
 
-app.all('/mcp', authMiddleware, async (req, res) => {
-  const { server } = createMcpServer();
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
+type SessionEntry = {
+  transport: StreamableHTTPServerTransport;
+  server: ReturnType<typeof createMcpServer>['server'];
+  userId: string;
+  lastUsedAt: number;
+};
+
+const sessions = new Map<string, SessionEntry>();
+
+const getAuthInfo = (req: Request) => (req as Request & { auth?: AuthInfo }).auth;
+
+const sendJsonError = (res: Response, status: number, message: string) => {
+  res.status(status).json({
+    jsonrpc: '2.0',
+    error: { code: -32000, message },
+    id: null,
   });
+};
+
+app.all('/mcp', authMiddleware, async (req, res) => {
+  const authInfo = getAuthInfo(req);
+  const userId = authInfo?.extra?.userId;
+  if (typeof userId !== 'string' || !userId) {
+    sendJsonError(res, 401, 'Unauthorized.');
+    return;
+  }
+
+  const sessionIdHeader = req.headers['mcp-session-id'];
+  const sessionId = Array.isArray(sessionIdHeader) ? sessionIdHeader[0] : sessionIdHeader;
+  const entry = sessionId ? sessions.get(sessionId) : undefined;
+  let transport: StreamableHTTPServerTransport | null = null;
+  let server: ReturnType<typeof createMcpServer>['server'] | null = null;
+
+  if (entry) {
+    if (entry.userId !== userId) {
+      sendJsonError(res, 403, 'Forbidden: session does not match token user.');
+      return;
+    }
+    entry.lastUsedAt = Date.now();
+    transport = entry.transport;
+    server = entry.server;
+  } else if (req.method === 'POST' && isInitializeRequest(req.body)) {
+    const mcp = createMcpServer();
+    server = mcp.server;
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => randomUUID(),
+      onsessioninitialized: initializedId => {
+        sessions.set(initializedId, {
+          transport: transport as StreamableHTTPServerTransport,
+          server: server as ReturnType<typeof createMcpServer>['server'],
+          userId,
+          lastUsedAt: Date.now(),
+        });
+      },
+      onsessionclosed: closedId => {
+        sessions.delete(closedId);
+      },
+    });
+
+    transport.onclose = () => {
+      if (transport?.sessionId) {
+        sessions.delete(transport.sessionId);
+      }
+    };
+
+    await server.connect(transport);
+  } else {
+    sendJsonError(res, 400, 'Bad Request: No valid session ID provided.');
+    return;
+  }
 
   try {
-    await server.connect(transport);
     await transport.handleRequest(req, res, req.body);
-    res.on('close', () => {
-      transport.close();
-      server.close();
-    });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`MCP HTTP request failed: ${message}`);
