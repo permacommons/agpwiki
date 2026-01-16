@@ -16,6 +16,7 @@ import {
 } from './blog-handlers.js';
 import {
   applyWikiPagePatch,
+  addWikiPageAlias,
   createCitation,
   createWikiPage,
   diffCitationRevisions,
@@ -28,6 +29,7 @@ import {
   readCitationRevision,
   readWikiPageResource,
   readWikiPageRevision,
+  removeWikiPageAlias,
   updateCitation,
   updateWikiPage,
 } from './handlers.js';
@@ -672,6 +674,42 @@ export const createMcpServer = () => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'wiki.addAlias',
+    {
+      title: 'Add Wiki Page Alias',
+      description: 'Create a new alias slug for an existing wiki page.',
+      inputSchema: {
+        slug: z.string(),
+        pageSlug: z.string(),
+        lang: z.string().optional(),
+      },
+    },
+    async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await addWikiPageAlias(dal, args, userId);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'wiki.removeAlias',
+    {
+      title: 'Remove Wiki Page Alias',
+      description: 'Remove an alias slug from a wiki page.',
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await removeWikiPageAlias(dal, args.slug, userId);
       return formatToolResult(payload);
     }
   );

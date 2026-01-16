@@ -1,9 +1,13 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
+import languages from '../../locales/languages.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
+import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
+import type { PageAliasInstance } from '../models/manifests/page-alias.js';
+import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
 
@@ -88,6 +92,27 @@ export interface WikiPagePatchInput {
   baseRevId?: string;
   tags?: string[];
   revSummary: Record<string, string>;
+}
+
+export interface WikiPageAliasInput {
+  slug: string;
+  pageSlug: string;
+  lang?: string;
+}
+
+export interface WikiPageAliasResult {
+  id: string;
+  pageId: string;
+  slug: string;
+  lang: string | null | undefined;
+  createdAt: Date | null | undefined;
+  updatedAt: Date | null | undefined;
+  createdBy: string | null | undefined;
+}
+
+export interface WikiPageAliasDeleteResult {
+  slug: string;
+  removed: boolean;
 }
 
 export interface WikiPageDiffResult {
@@ -256,12 +281,39 @@ const toCitationRevisionResult = (citation: CitationInstance): CitationRevisionR
   oldRevOf: citation._oldRevOf ?? null,
 });
 
+const toWikiPageAliasResult = (alias: PageAliasInstance): WikiPageAliasResult => ({
+  id: alias.id,
+  pageId: alias.pageId,
+  slug: alias.slug,
+  lang: alias.lang ?? null,
+  createdAt: alias.createdAt ?? null,
+  updatedAt: alias.updatedAt ?? null,
+  createdBy: alias.createdBy ?? null,
+});
+
 const findCurrentPageBySlug = async (slug: string) =>
   WikiPage.filterWhere({
     slug,
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>).first();
+
+const findCurrentPageById = async (id: string) =>
+  WikiPage.filterWhere({
+    id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+
+const findCurrentPageBySlugOrAlias = async (slug: string) => {
+  const direct = await findCurrentPageBySlug(slug);
+  if (direct) return direct;
+
+  const alias = await PageAlias.filterWhere({ slug }).first();
+  if (!alias) return null;
+
+  return findCurrentPageById(alias.pageId);
+};
 
 const findCurrentCitationByKey = async (key: string) =>
   Citation.filterWhere({
@@ -362,6 +414,14 @@ const ensureOptionalString = (value: string | null | undefined, label: string) =
   }
 };
 
+const ensureOptionalLanguage = (value: string | null | undefined, label: string) => {
+  ensureOptionalString(value, label);
+  if (!value) return;
+  if (!languages.isValid(value)) {
+    throw new Error(`${label} must be a supported locale code.`);
+  }
+};
+
 const validateTitle = (value: Record<string, string> | null | undefined) => {
   if (value === undefined) return;
   mlString.validate(value, { maxLength: 200, allowHTML: false });
@@ -455,7 +515,7 @@ export async function readWikiPageResource(
     throw new Error(`Invalid MCP resource: ${uri}`);
   }
 
-  const page = await findCurrentPageBySlug(slug);
+  const page = await findCurrentPageBySlugOrAlias(slug);
 
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
@@ -483,7 +543,7 @@ export async function createWikiPage(
 ): Promise<WikiPageResult> {
   ensureNonEmptyString(slug, 'slug');
   ensureNonEmptyString(userId, 'userId');
-  ensureOptionalString(originalLanguage, 'originalLanguage');
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   validateRevSummary(revSummary);
@@ -491,6 +551,10 @@ export async function createWikiPage(
   const existing = await findCurrentPageBySlug(slug);
   if (existing) {
     throw new Error(`Wiki page already exists: ${slug}`);
+  }
+  const existingAlias = await PageAlias.filterWhere({ slug }).first();
+  if (existingAlias) {
+    throw new Error(`Wiki page alias already exists: ${slug}`);
   }
 
   const createdAt = new Date();
@@ -528,12 +592,12 @@ export async function updateWikiPage(
   ensureNonEmptyString(slug, 'slug');
   ensureNonEmptyString(userId, 'userId');
   ensureOptionalString(newSlug, 'newSlug');
-  ensureOptionalString(originalLanguage, 'originalLanguage');
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   requireRevSummary(revSummary);
 
-  const page = await findCurrentPageBySlug(slug);
+  const page = await findCurrentPageBySlugOrAlias(slug);
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
   }
@@ -542,6 +606,10 @@ export async function updateWikiPage(
     const slugMatch = await findCurrentPageBySlug(newSlug);
     if (slugMatch) {
       throw new Error(`Wiki page already exists: ${newSlug}`);
+    }
+    const aliasMatch = await PageAlias.filterWhere({ slug: newSlug }).first();
+    if (aliasMatch) {
+      throw new Error(`Wiki page alias already exists: ${newSlug}`);
     }
   }
 
@@ -570,11 +638,11 @@ export async function applyWikiPagePatch(
   if (format !== 'unified' && format !== 'codex') {
     throw new Error(`Invalid patch format: ${format}`);
   }
-  ensureOptionalString(lang, 'lang');
+  ensureOptionalLanguage(lang, 'lang');
   ensureOptionalString(baseRevId, 'baseRevId');
   requireRevSummary(revSummary);
 
-  const page = await findCurrentPageBySlug(slug);
+  const page = await findCurrentPageBySlugOrAlias(slug);
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
   }
@@ -603,11 +671,75 @@ export async function applyWikiPagePatch(
   return toWikiPageResult(page);
 }
 
+export async function addWikiPageAlias(
+  _dalInstance: DataAccessLayer,
+  { slug, pageSlug, lang }: WikiPageAliasInput,
+  userId: string
+): Promise<WikiPageAliasResult> {
+  ensureNonEmptyString(slug, 'slug');
+  ensureNonEmptyString(pageSlug, 'pageSlug');
+  ensureNonEmptyString(userId, 'userId');
+  ensureOptionalLanguage(lang, 'lang');
+
+  if (isBlockedSlug(slug)) {
+    throw new Error(`Alias slug is reserved: ${slug}`);
+  }
+
+  const page = await findCurrentPageBySlugOrAlias(pageSlug);
+  if (!page) {
+    throw new Error(`Wiki page not found: ${pageSlug}`);
+  }
+
+  if (page.slug === slug) {
+    throw new Error(`Alias slug matches the current page slug: ${slug}`);
+  }
+
+  const existingPage = await findCurrentPageBySlug(slug);
+  if (existingPage) {
+    throw new Error(`Wiki page already exists: ${slug}`);
+  }
+
+  const existingAlias = await PageAlias.filterWhere({ slug }).first();
+  if (existingAlias) {
+    throw new Error(`Wiki page alias already exists: ${slug}`);
+  }
+
+  const createdAt = new Date();
+  const alias = await PageAlias.create({
+    pageId: page.id,
+    slug,
+    lang: lang ?? null,
+    createdAt,
+    updatedAt: createdAt,
+    createdBy: userId,
+  });
+
+  return toWikiPageAliasResult(alias);
+}
+
+export async function removeWikiPageAlias(
+  _dalInstance: DataAccessLayer,
+  slug: string,
+  userId: string
+): Promise<WikiPageAliasDeleteResult> {
+  ensureNonEmptyString(slug, 'slug');
+  ensureNonEmptyString(userId, 'userId');
+
+  const alias = await PageAlias.filterWhere({ slug }).first();
+  if (!alias) {
+    throw new Error(`Wiki page alias not found: ${slug}`);
+  }
+
+  await alias.delete();
+
+  return { slug, removed: true };
+}
+
 export async function listWikiPageRevisions(
   dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageRevisionListResult> {
-  const page = await findCurrentPageBySlug(slug);
+  const page = await findCurrentPageBySlugOrAlias(slug);
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
   }
@@ -631,7 +763,7 @@ export async function readWikiPageRevision(
   slug: string,
   revId: string
 ): Promise<WikiPageRevisionReadResult> {
-  const page = await findCurrentPageBySlug(slug);
+  const page = await findCurrentPageBySlugOrAlias(slug);
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
   }
@@ -651,7 +783,8 @@ export async function diffWikiPageRevisions(
   dalInstance: DataAccessLayer,
   { slug, fromRevId, toRevId, lang = 'en' }: WikiPageDiffInput
 ): Promise<WikiPageDiffResult> {
-  const page = await findCurrentPageBySlug(slug);
+  ensureOptionalLanguage(lang, 'lang');
+  const page = await findCurrentPageBySlugOrAlias(slug);
   if (!page) {
     throw new Error(`Wiki page not found: ${slug}`);
   }

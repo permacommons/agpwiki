@@ -4,6 +4,7 @@ import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthUserId } from '../src/mcp/auth.js';
+import { createBlogPost } from '../src/mcp/blog-handlers.js';
 import {
   applyWikiPagePatch,
   createCitation,
@@ -223,6 +224,75 @@ test('renderMarkdown includes bibliography entries for citations', async () => {
     try {
       await cleanupTestArtifacts(dal, {
         citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects invalid language codes', async () => {
+  const dal = await getDal();
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug: `test-lang-${Date.now()}`,
+            title: { en: 'Invalid lang' },
+            body: { en: 'Body' },
+            originalLanguage: 'xx',
+          },
+          userId
+        ),
+      /supported locale/i
+    );
+
+    await assert.rejects(
+      () =>
+        applyWikiPagePatch(
+          dal,
+          {
+            slug: 'nonexistent-slug',
+            patch: ['--- before', '+++ after', '@@ -1 +1 @@', '-a', '+b'].join('\n'),
+            format: 'unified',
+            lang: 'xx',
+            revSummary: { en: 'Invalid lang patch.' },
+          },
+          userId
+        ),
+      /supported locale/i
+    );
+
+    await assert.rejects(
+      () =>
+        createBlogPost(
+          dal,
+          {
+            slug: `test-blog-lang-${Date.now()}`,
+            title: { en: 'Invalid blog lang' },
+            body: { en: 'Body' },
+            originalLanguage: 'xx',
+          },
+          userId
+        ),
+      /supported locale/i
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
         userId: userIdForCleanup ?? undefined,
       });
     } catch (cleanupError) {

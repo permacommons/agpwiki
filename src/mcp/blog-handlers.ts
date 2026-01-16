@@ -1,5 +1,6 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
+import languages from '../../locales/languages.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
@@ -15,6 +16,14 @@ const ensureNonEmptyString = (value: string | undefined | null, label: string) =
 const ensureOptionalString = (value: string | undefined | null, label: string) => {
   if (value !== undefined && value !== null && typeof value !== 'string') {
     throw new Error(`${label} must be a string.`);
+  }
+};
+
+const ensureOptionalLanguage = (value: string | undefined | null, label: string) => {
+  ensureOptionalString(value, label);
+  if (!value) return;
+  if (!languages.isValid(value)) {
+    throw new Error(`${label} must be a supported locale code.`);
   }
 };
 
@@ -278,7 +287,7 @@ export async function createBlogPost(
 ): Promise<BlogPostResult> {
   ensureNonEmptySlug(slug);
   ensureNonEmptyString(userId, 'userId');
-  ensureOptionalString(originalLanguage, 'originalLanguage');
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   validateSummary(summary);
@@ -316,7 +325,7 @@ export async function updateBlogPost(
   ensureNonEmptySlug(slug);
   ensureNonEmptyString(userId, 'userId');
   ensureOptionalString(newSlug, 'newSlug');
-  ensureOptionalString(originalLanguage, 'originalLanguage');
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   validateSummary(summary);
@@ -395,6 +404,7 @@ export async function diffBlogPostRevisions(
   dalInstance: DataAccessLayer,
   { slug, fromRevId, toRevId, lang = 'en' }: BlogPostDiffInput
 ): Promise<BlogPostDiffResult> {
+  ensureOptionalLanguage(lang, 'lang');
   const post = await findCurrentPostBySlug(slug);
   if (!post) {
     throw new Error(`Blog post not found: ${slug}`);

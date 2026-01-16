@@ -6,6 +6,7 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
+import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
 import {
   escapeHtml,
@@ -27,6 +28,30 @@ const extractCitationKeys = (value: string) => {
     keys.add(match[1]);
   }
   return keys;
+};
+
+const findCurrentPageBySlug = async (slug: string) =>
+  WikiPage.filterWhere({
+    slug,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+
+const findCurrentPageById = async (id: string) =>
+  WikiPage.filterWhere({
+    id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+
+const resolvePageBySlug = async (slug: string) => {
+  const direct = await findCurrentPageBySlug(slug);
+  if (direct) return direct;
+
+  const alias = await PageAlias.filterWhere({ slug }).first();
+  if (!alias) return null;
+
+  return findCurrentPageById(alias.pageId);
 };
 
 export const registerPageRoutes = (app: Express) => {
@@ -52,11 +77,7 @@ export const registerPageRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
 
-      const page = await WikiPage.filterWhere({
-        slug,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>).first();
+      const page = await resolvePageBySlug(slug);
 
       if (!page) {
         res.status(404).type('text').send('Not found');
@@ -102,10 +123,11 @@ export const registerPageRoutes = (app: Express) => {
       const resolvedTitle = mlString.resolve('en', selectedRevision.title ?? null);
       const resolvedBody = mlString.resolve('en', selectedRevision.body ?? null);
 
-      const title = resolvedTitle?.str ?? page.slug;
-      const metaLabel = slug.startsWith('meta/')
+      const canonicalSlug = page.slug;
+      const title = resolvedTitle?.str ?? canonicalSlug;
+      const metaLabel = canonicalSlug.startsWith('meta/')
         ? '<div class="page-label">META — PAGE ABOUT AGPEDIA</div>'
-        : slug.startsWith('tool/')
+        : canonicalSlug.startsWith('tool/')
           ? '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>'
           : '<div class="page-label">FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE</div>';
       const bodySource = resolvedBody?.str ?? '';
@@ -159,7 +181,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const historyItems = revisions
         .map((rev, index) => {
-          const revTitle = mlString.resolve('en', rev.title ?? null)?.str ?? slug;
+          const revTitle = mlString.resolve('en', rev.title ?? null)?.str ?? canonicalSlug;
           const revSummary = mlString.resolve('en', rev._revSummary ?? null)?.str ?? '';
           const summaryHtml = revSummary
             ? `<div class="rev-summary">${escapeHtml(revSummary)}</div>`
@@ -198,7 +220,7 @@ export const registerPageRoutes = (app: Express) => {
   </div>
   ${summaryHtml}
   <div class="rev-actions">
-    <a href="/${slug}?rev=${rev._revID}">View</a>
+    <a href="/${canonicalSlug}?rev=${rev._revID}">View</a>
   </div>
 </li>`;
         })
@@ -206,7 +228,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const historyHtml = `<details class="page-history">
   <summary>Version history</summary>
-  <form class="history-form" method="get" action="/${slug}">
+  <form class="history-form" method="get" action="/${canonicalSlug}">
     <div class="history-actions">
       <button type="submit">Compare selected revisions</button>
     </div>
