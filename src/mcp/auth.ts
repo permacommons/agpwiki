@@ -1,3 +1,4 @@
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { hashToken } from '../auth/tokens.js';
 import ApiToken from '../models/api-token.js';
 
@@ -16,18 +17,28 @@ export const requireAuthToken = () => {
   return token.trim();
 };
 
-export const resolveAuthUserId = async () => {
-  const token = requireAuthToken();
+type AuthResolveOptions = {
+  token?: string;
+  authInfo?: AuthInfo;
+};
+
+export const verifyAuthToken = async (token: string) => {
   const tokenHash = hashToken(token);
   const record = await ApiToken.findActiveByHash(tokenHash);
   if (!record) {
     throw new AuthError('Invalid or expired MCP token.');
   }
-  if (record.lastUsedAt === null || record.lastUsedAt === undefined) {
-    record.lastUsedAt = new Date();
-  } else {
-    record.lastUsedAt = new Date();
-  }
+  record.lastUsedAt = new Date();
   await record.save();
+  return record;
+};
+
+export const resolveAuthUserId = async (options: AuthResolveOptions = {}) => {
+  const authUser = options.authInfo?.extra?.userId;
+  if (typeof authUser === 'string' && authUser) {
+    return authUser;
+  }
+  const token = options.token ?? requireAuthToken();
+  const record = await verifyAuthToken(token);
   return record.userId;
 };

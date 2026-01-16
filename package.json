@@ -10,6 +10,7 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/src/index.js",
     "mcp": "tsx src/mcp/stdio.ts",
+    "mcp-http": "tsx src/mcp/http.ts",
     "mcp-playwright": "tsx src/mcp/stdio-playwright.ts",
     "create-user": "node --import tsx src/scripts/create-user.ts",
     "create-token": "node --import tsx src/scripts/create-token.ts",

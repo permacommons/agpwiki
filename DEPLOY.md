@@ -8,6 +8,7 @@ The build outputs to `dist/` with a `src/` prefix. The entrypoint is:
 
 - `dist/src/index.js` (web app)
 - `dist/src/mcp/stdio.js` (MCP server, stdio transport)
+- `dist/src/mcp/http.js` (MCP server, Streamable HTTP transport)
 - `dist/src/mcp/stdio-playwright.js` (local-only MCP with Playwright)
 
 ## Configuration
@@ -119,21 +120,15 @@ Notes:
 
 ## MCP server (production)
 
-The MCP server uses stdio transport and must be run as a separate process. It requires a token via `AGPWIKI_MCP_TOKEN`.
+Use the Streamable HTTP transport so ordinary users can connect over HTTPS with their API tokens.
 
-Create a token for a user:
-
-```bash
-npm run create-token
-```
-
-### systemd (MCP stdio)
+### systemd (MCP HTTP)
 
 Example unit at `/etc/systemd/system/agpwiki-mcp.service`:
 
 ```
 [Unit]
-Description=AGP Wiki MCP server (stdio)
+Description=AGP Wiki MCP server (HTTP)
 After=network.target postgresql.service
 
 [Service]
@@ -141,8 +136,7 @@ Type=simple
 WorkingDirectory=/opt/agpwiki
 Environment=NODE_ENV=production
 Environment=NODE_CONFIG_DIR=/opt/agpwiki/config
-Environment=AGPWIKI_MCP_TOKEN=REPLACE_ME
-ExecStart=/usr/bin/node /opt/agpwiki/dist/src/mcp/stdio.js
+ExecStart=/usr/bin/node /opt/agpwiki/dist/src/mcp/http.js
 Restart=always
 RestartSec=5
 User=agpwiki
@@ -159,20 +153,35 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now agpwiki-mcp.service
 ```
 
+### nginx proxy for MCP
+
+Forward `/mcp` to the MCP HTTP service:
+
+```nginx
+location /mcp {
+  proxy_pass http://127.0.0.1:3333;
+  proxy_http_version 1.1;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
 ### Connecting to MCP from a workstation
 
-Codex (or another MCP client) can spawn the remote stdio server over SSH. Example `~/.codex/config.toml` entry:
+Use the Streamable HTTP client with a bearer token:
 
 ```toml
 [mcp_servers.agpwiki-prod]
 command = "bash"
-args = ["-lc", "ssh agpwiki@your-host 'AGPWIKI_MCP_TOKEN=REPLACE_ME node /opt/agpwiki/dist/src/mcp/stdio.js'"]
+args = ["-lc", "AGPWIKI_MCP_URL=https://your-host/mcp AGPWIKI_MCP_TOKEN=REPLACE_ME node /path/to/your/mcp-client.js"]
 ```
 
 Notes:
 
-- The stdio MCP server is not an HTTP service. Use SSH or a dedicated MCP bridge if you need network transport.
-- Do not expose `AGPWIKI_MCP_TOKEN` publicly. Rotate it via the web UI or CLI.
+- MCP HTTP requires `Authorization: Bearer <token>`.
+- Rotate tokens via the web UI or CLI.
 
 ## Playwright MCP (local only)
 

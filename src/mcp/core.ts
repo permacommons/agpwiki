@@ -3,6 +3,7 @@ import type { CallToolResult, ListResourcesResult, ReadResourceResult } from '@m
 import { z } from 'zod';
 
 import { initializePostgreSQL } from '../db.js';
+import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { resolveAuthUserId } from './auth.js';
 import {
   createBlogPost,
@@ -61,7 +62,8 @@ export const createMcpServer = () => {
     };
   };
 
-  const requireAuthUserId = async () => resolveAuthUserId();
+  const requireAuthUserId = async (extra?: { authInfo?: AuthInfo }) =>
+    resolveAuthUserId({ authInfo: extra?.authInfo });
 
   const getAgentTags = () => {
     const info = server.server.getClientVersion();
@@ -396,9 +398,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await createWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
@@ -416,9 +418,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await createCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
@@ -466,9 +468,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await createBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
@@ -490,9 +492,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await updateBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
@@ -580,9 +582,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await updateCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
@@ -639,9 +641,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await applyWikiPagePatch(
         dal,
         { ...args, tags: mergeTags(args.tags) },
@@ -666,9 +668,9 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async args => {
+    async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId();
+      const userId = await requireAuthUserId(extra);
       const payload = await updateWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
       return formatToolResult(payload);
     }
