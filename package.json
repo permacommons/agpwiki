@@ -13,6 +13,7 @@
     "mcp-http": "tsx src/mcp/http.ts",
     "mcp-playwright": "tsx src/mcp/stdio-playwright.ts",
     "create-user": "node --import tsx src/scripts/create-user.ts",
+    "reset-password": "node --import tsx src/scripts/reset-password.ts",
     "create-token": "node --import tsx src/scripts/create-token.ts",
     "create-invite": "node --import tsx src/scripts/create-invite.ts",
     "grant-role": "node --import tsx src/scripts/grant-role.ts",
