@@ -1,12 +1,12 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
-import languages from '../../locales/languages.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
+import languages from '../../locales/languages.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
-import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
+import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
@@ -536,6 +536,18 @@ export async function readWikiPageResource(
   };
 }
 
+export async function readWikiPage(
+  _dalInstance: DataAccessLayer,
+  slug: string
+): Promise<WikiPageResult> {
+  ensureNonEmptyString(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(slug);
+  if (!page) {
+    throw new Error(`Wiki page not found: ${slug}`);
+  }
+  return toWikiPageResult(page);
+}
+
 export async function createWikiPage(
   _dalInstance: DataAccessLayer,
   { slug, title, body, originalLanguage, tags = [], revSummary }: WikiPageWriteInput,
@@ -861,6 +873,18 @@ export async function readCitationResource(
       },
     ],
   };
+}
+
+export async function readCitation(
+  _dalInstance: DataAccessLayer,
+  key: string
+): Promise<CitationResult> {
+  ensureNonEmptyString(key, 'key');
+  const citation = await findCurrentCitationByKey(key);
+  if (!citation) {
+    throw new Error(`Citation not found: ${key}`);
+  }
+  return toCitationResult(citation);
 }
 
 export async function createCitation(

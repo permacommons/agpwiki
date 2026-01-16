@@ -1,7 +1,7 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
-import languages from '../../locales/languages.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
+import languages from '../../locales/languages.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 
@@ -248,6 +248,18 @@ export async function listBlogPostResources(
     mimeType: 'application/json',
   }));
   return { resources };
+}
+
+export async function readBlogPost(
+  _dalInstance: DataAccessLayer,
+  slug: string
+): Promise<BlogPostResult> {
+  ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(slug);
+  if (!post) {
+    throw new Error(`Blog post not found: ${slug}`);
+  }
+  return toBlogPostResult(post);
 }
 
 export async function readBlogPostResource(

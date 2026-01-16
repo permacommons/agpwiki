@@ -1,6 +1,6 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult, ListResourcesResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 
 import { initializePostgreSQL } from '../db.js';
@@ -10,13 +10,14 @@ import {
   diffBlogPostRevisions,
   listBlogPostResources,
   listBlogPostRevisions,
+  readBlogPost,
   readBlogPostResource,
   readBlogPostRevision,
   updateBlogPost,
 } from './blog-handlers.js';
 import {
-  applyWikiPagePatch,
   addWikiPageAlias,
+  applyWikiPagePatch,
   createCitation,
   createWikiPage,
   diffCitationRevisions,
@@ -25,8 +26,10 @@ import {
   listWikiPageResources,
   listWikiPageRevisions,
   queryCitations,
+  readCitation,
   readCitationResource,
   readCitationRevision,
+  readWikiPage,
   readWikiPageResource,
   readWikiPageRevision,
   removeWikiPageAlias,
@@ -135,17 +138,7 @@ export const createMcpServer = () => {
   );
 
   const wikiPageTemplate = new ResourceTemplate('agpwiki://page{?slug}', {
-    list: async () => {
-      try {
-        const dal = await initializePostgreSQL();
-        const listing = await listWikiPageResources(dal);
-        const result: ListResourcesResult = { resources: listing.resources };
-        return result;
-      } catch (error) {
-        console.error('Failed to list wiki page resources:', error);
-        return { resources: [] };
-      }
-    },
+    list: undefined,
   });
 
   server.registerResource(
@@ -164,17 +157,7 @@ export const createMcpServer = () => {
   );
 
   const blogPostTemplate = new ResourceTemplate('agpwiki://blog{?slug}', {
-    list: async () => {
-      try {
-        const dal = await initializePostgreSQL();
-        const listing = await listBlogPostResources(dal);
-        const result: ListResourcesResult = { resources: listing.resources };
-        return result;
-      } catch (error) {
-        console.error('Failed to list blog post resources:', error);
-        return { resources: [] };
-      }
-    },
+    list: undefined,
   });
 
   server.registerResource(
@@ -538,6 +521,39 @@ export const createMcpServer = () => {
   );
 
   server.registerTool(
+    'blog_readPost',
+    {
+      title: 'Read Blog Post',
+      description: 'Read a single blog post by slug.',
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readBlogPost(dal, args.slug);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'blog_readRevision',
+    {
+      title: 'Read Blog Post Revision',
+      description: 'Read a specific blog post revision by revision ID.',
+      inputSchema: {
+        slug: z.string(),
+        revId: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readBlogPostRevision(dal, args.slug, args.revId);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
     'citation_listRevisions',
     {
       title: 'List Citation Revisions',
@@ -567,6 +583,39 @@ export const createMcpServer = () => {
     async args => {
       const dal = await initializePostgreSQL();
       const payload = await diffCitationRevisions(dal, args);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'citation_read',
+    {
+      title: 'Read Citation',
+      description: 'Read a citation by key.',
+      inputSchema: {
+        key: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readCitation(dal, args.key);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'citation_readRevision',
+    {
+      title: 'Read Citation Revision',
+      description: 'Read a specific citation revision by revision ID.',
+      inputSchema: {
+        key: z.string(),
+        revId: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readCitationRevision(dal, args.key, args.revId);
       return formatToolResult(payload);
     }
   );
@@ -623,6 +672,39 @@ export const createMcpServer = () => {
     async args => {
       const dal = await initializePostgreSQL();
       const payload = await diffWikiPageRevisions(dal, args);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'wiki_readPage',
+    {
+      title: 'Read Wiki Page',
+      description: 'Read a single wiki page by slug.',
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readWikiPage(dal, args.slug);
+      return formatToolResult(payload);
+    }
+  );
+
+  server.registerTool(
+    'wiki_readRevision',
+    {
+      title: 'Read Wiki Page Revision',
+      description: 'Read a specific wiki page revision by revision ID.',
+      inputSchema: {
+        slug: z.string(),
+        revId: z.string(),
+      },
+    },
+    async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readWikiPageRevision(dal, args.slug, args.revId);
       return formatToolResult(payload);
     }
   );
