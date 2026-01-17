@@ -16,6 +16,8 @@
   <macro name="issued">
     <date variable="issued">
       <date-part name="year" />
+      <date-part name="month" prefix="-" form="numeric-leading-zeros" />
+      <date-part name="day" prefix="-" form="numeric-leading-zeros" />
     </date>
   </macro>
 
@@ -39,6 +41,10 @@
       <text variable="DOI" prefix="https://doi.org/" />
       <text variable="URL" />
     </group>
+  </macro>
+
+  <macro name="isbn">
+    <text variable="ISBN" prefix="ISBN " />
   </macro>
 
   <citation>
@@ -68,9 +74,11 @@
   <bibliography et-al-min="5" et-al-use-first="4">
     <layout suffix=".">
       <text macro="author" suffix=". " />
+      <text macro="issued" suffix=". " />
       <text macro="title" suffix=". " />
       <text macro="container" suffix=". " />
       <text macro="publisher" suffix=". " />
+      <text macro="isbn" suffix=". " />
       <text macro="online" />
     </layout>
   </bibliography>
