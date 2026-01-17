@@ -1,4 +1,3 @@
-import { createTwoFilesPatch } from 'diff';
 import type { Express } from 'express';
 
 import dal from '../../dal/index.js';
@@ -8,14 +7,9 @@ import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
-import {
-  escapeHtml,
-  formatDateUTC,
-  normalizeForDiff,
-  renderLayout,
-  renderMarkdown,
-  renderUnifiedDiff,
-} from '../render.js';
+import { formatDateUTC, renderLayout, renderMarkdown } from '../render.js';
+import { renderRevisionDiff } from './lib/diff.js';
+import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
 
@@ -104,16 +98,7 @@ export const registerPageRoutes = (app: Express) => {
       const userIds = revisions
         .map(rev => rev._revUser)
         .filter((id): id is string => Boolean(id));
-      const userMap = new Map<string, string>();
-      if (userIds.length) {
-        const userResult = await dalInstance.query(
-          'SELECT id, display_name FROM users WHERE id = ANY($1)',
-          [userIds]
-        );
-        for (const row of userResult.rows as Array<{ id: string; display_name: string }>) {
-          userMap.set(row.id, row.display_name);
-        }
-      }
+      const userMap = await fetchUserMap(dalInstance, userIds);
 
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : page;
       if (revIdParam && !selectedRevision) {
@@ -168,79 +153,31 @@ export const registerPageRoutes = (app: Express) => {
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          const diff = createTwoFilesPatch(
-            `rev:${fromLabel}`,
-            `rev:${toLabel}`,
-            normalizeForDiff(fromText),
-            normalizeForDiff(toText),
-            '',
-            '',
-            { context: 2 }
-          );
-          const diffRendered = renderUnifiedDiff(diff);
-          diffHtml = `<details class="page-diff" open>
-  <summary>Revision diff</summary>
-  <pre class="diff">${diffRendered}</pre>
-</details>`;
+          diffHtml = renderRevisionDiff({
+            fromLabel,
+            toLabel,
+            fromText,
+            toText,
+          });
         }
       }
 
-      const historyItems = revisions
-        .map((rev, index) => {
-          const revTitle = mlString.resolve('en', rev.title ?? null)?.str ?? canonicalSlug;
-          const revSummary = mlString.resolve('en', rev._revSummary ?? null)?.str ?? '';
-          const summaryHtml = revSummary
-            ? `<div class="rev-summary">${escapeHtml(revSummary)}</div>`
-            : '';
-          const dateLabel = formatDateUTC(rev._revDate);
-          const fromChecked = diffFrom ? diffFrom === rev._revID : index === 1;
-          const toChecked = diffTo ? diffTo === rev._revID : index === 0;
-          const revUser = rev._revUser ?? null;
-          const displayName = revUser ? userMap.get(revUser) ?? revUser : null;
-          const agentTag = (rev._revTags ?? []).find(tag => tag.startsWith('agent:')) ?? null;
-          const agentVersion =
-            (rev._revTags ?? []).find(tag => tag.startsWith('agent_version:')) ?? null;
-          const metaLabelParts = [
-            displayName ? `operator: ${displayName}` : null,
-            agentTag,
-            agentVersion,
-          ].filter(Boolean);
-          const metaLabel = metaLabelParts.join(' · ');
-          const metaAttrs = metaLabel
-            ? ` data-meta="true" data-user="${escapeHtml(displayName ?? '')}" data-agent="${escapeHtml(
-                agentTag ?? ''
-              )}" data-agent-version="${escapeHtml(
-                agentVersion ?? ''
-              )}" title="${escapeHtml(metaLabel)}"`
-            : '';
-          return `<li>
-  <div class="rev-meta"${metaAttrs}>
-    <span class="rev-radio"><input type="radio" name="diffFrom" value="${rev._revID}" ${
-      fromChecked ? 'checked' : ''
-    } /></span>
-    <span class="rev-radio"><input type="radio" name="diffTo" value="${rev._revID}" ${
-      toChecked ? 'checked' : ''
-    } /></span>
-    <strong>${escapeHtml(revTitle)}</strong>
-    <span>${escapeHtml(dateLabel)}</span>
-  </div>
-  ${summaryHtml}
-  <div class="rev-actions">
-    <a href="/${canonicalSlug}?rev=${rev._revID}">View</a>
-  </div>
-</li>`;
-        })
-        .join('\n');
-
-      const historyHtml = `<details class="page-history">
-  <summary>Version history</summary>
-  <form class="history-form" method="get" action="/${canonicalSlug}">
-    <div class="history-actions">
-      <button type="submit">Compare selected revisions</button>
-    </div>
-    <ol class="history-list">${historyItems}</ol>
-  </form>
-</details>`;
+      const historyRevisions = revisions.map(rev => ({
+        revId: rev._revID,
+        dateLabel: formatDateUTC(rev._revDate),
+        title: mlString.resolve('en', rev.title ?? null)?.str ?? canonicalSlug,
+        summary: mlString.resolve('en', rev._revSummary ?? null)?.str ?? '',
+        revUser: rev._revUser ?? null,
+        revTags: rev._revTags ?? null,
+      }));
+      const historyHtml = renderRevisionHistory({
+        revisions: historyRevisions,
+        diffFrom,
+        diffTo,
+        action: `/${canonicalSlug}`,
+        viewHref: revId => `/${canonicalSlug}?rev=${revId}`,
+        userMap,
+      });
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const signedIn = Boolean(await resolveSessionUser(req));

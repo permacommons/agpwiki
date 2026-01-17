@@ -10,7 +10,9 @@ test('isBlockedSlug blocks empty or reserved prefixes', () => {
   assert.equal(isBlockedSlug('mcp/tools'), true);
   assert.equal(isBlockedSlug('search'), true);
   assert.equal(isBlockedSlug('blog'), true);
+  assert.equal(isBlockedSlug('cite'), true);
   assert.equal(isBlockedSlug('tool/recent-changes'), true);
+  assert.equal(isBlockedSlug('tool/pages'), true);
 });
 
 test('isBlockedSlug blocks reserved suffixes', () => {

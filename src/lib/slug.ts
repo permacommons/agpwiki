@@ -3,9 +3,9 @@ const RESERVED_SLUGS = new Set([
   'api',
   'mcp',
   'search',
-  'recent-changes',
   'tool',
   'blog',
+  'cite',
 ]);
 
 const RESERVED_SUFFIXES = ['comments'];

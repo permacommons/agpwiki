@@ -3,19 +3,86 @@ import type { Express } from 'express';
 import dal from '../../dal/index.js';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { formatCitationLabel } from '../lib/citation.js';
+import Citation from '../models/citation.js';
 import WikiPage from '../models/wiki-page.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import { fetchUserMap } from './lib/history.js';
 
 const { mlString } = dal;
 
-export const registerToolRoutes = (app: Express) => {
-  app.get('/recent-changes', (_req, res) => {
-    res.redirect(302, '/tool/recent-changes');
-  });
+type RecentListAction = {
+  label: string;
+  href: string;
+};
 
+type RecentListItem = {
+  primaryLabel: string;
+  primaryHref?: string;
+  dateLabel: string;
+  summary?: string;
+  revUser: string | null;
+  revTags: string[];
+  actions?: RecentListAction[];
+};
+
+const parseRecentLimit = (limitQuery: unknown) => {
+  const limitParam = typeof limitQuery === 'string' ? Number(limitQuery) : 50;
+  return Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
+};
+
+const resolveRevSummary = (value: Record<string, string> | null) =>
+  mlString.resolve('en', value ?? null)?.str ?? '';
+
+const renderRecentList = (items: RecentListItem[], userMap: Map<string, string>) =>
+  items
+    .map(item => {
+      const displayName = item.revUser ? userMap.get(item.revUser) ?? item.revUser : '';
+      const agentTag = item.revTags.find(tag => tag.startsWith('agent:')) ?? '';
+      const agentVersion = item.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
+      const metaLabelParts = [
+        displayName ? `operator: ${displayName}` : null,
+        agentTag || null,
+        agentVersion || null,
+      ].filter(Boolean);
+      const metaLabel = metaLabelParts.join(' · ');
+      const metaAttrs = metaLabel
+        ? ` data-meta="true" data-user="${escapeHtml(displayName)}" data-agent="${escapeHtml(
+            agentTag
+          )}" data-agent-version="${escapeHtml(agentVersion)}" title="${escapeHtml(metaLabel)}"`
+        : '';
+      const visibleTags = item.revTags.filter(
+        tag => !tag.startsWith('agent:') && !tag.startsWith('agent_version:')
+      );
+      const tags = visibleTags.length ? `· ${escapeHtml(visibleTags.join(', '))}` : '';
+      const summary = item.summary
+        ? `<div class="change-summary">${escapeHtml(item.summary)}</div>`
+        : '';
+      const primaryLabel = escapeHtml(item.primaryLabel);
+      const primaryHtml = item.primaryHref
+        ? `<a href="${escapeHtml(item.primaryHref)}">${primaryLabel}</a>`
+        : `<span>${primaryLabel}</span>`;
+      const actionsHtml =
+        item.actions?.length
+          ? `<div class="change-actions">${item.actions
+              .map(action => `<a href="${escapeHtml(action.href)}">${escapeHtml(action.label)}</a>`)
+              .join(' ')}</div>`
+          : '';
+      return `<li>
+  <div class="change-meta"${metaAttrs}>
+    ${primaryHtml}
+    <span>${escapeHtml(item.dateLabel)}</span>
+    ${tags ? `<span>${tags}</span>` : ''}
+  </div>
+  ${summary}
+  ${actionsHtml}
+</li>`;
+    })
+    .join('');
+
+export const registerToolRoutes = (app: Express) => {
   app.get('/tool/recent-changes', async (req, res) => {
-    const limitParam = typeof req.query.limit === 'string' ? Number(req.query.limit) : 50;
-    const limit = Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
+    const limit = parseRecentLimit(req.query.limit);
 
     const dalInstance = await initializePostgreSQL();
     const result = await dalInstance.query(
@@ -50,7 +117,7 @@ export const registerToolRoutes = (app: Express) => {
         revId: row._rev_id,
         revDate: row._rev_date,
         revUser: row._rev_user,
-        revSummary: mlString.resolve('en', row._rev_summary ?? null)?.str ?? '',
+        revSummary: resolveRevSummary(row._rev_summary ?? null),
         revTags: row._rev_tags ?? [],
         prevRevId: row.prev_rev_id,
       })
@@ -58,70 +125,126 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = new Map<string, string>();
-    if (userIds.length) {
-      const userResult = await dalInstance.query(
-        'SELECT id, display_name FROM users WHERE id = ANY($1)',
-        [userIds]
-      );
-      for (const row of userResult.rows as Array<{ id: string; display_name: string }>) {
-        userMap.set(row.id, row.display_name);
+    const userMap = await fetchUserMap(dalInstance, userIds);
+    const items: RecentListItem[] = changes.map(change => {
+      const actions: RecentListAction[] = [
+        { label: 'View', href: `/${change.slug}?rev=${change.revId}` },
+      ];
+      if (change.prevRevId) {
+        actions.push({
+          label: 'Diff',
+          href: `/${change.slug}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
+        });
       }
-    }
-
-    const itemsHtml = changes
-      .map(change => {
-        const dateLabel = formatDateUTC(change.revDate);
-        const displayName = change.revUser ? userMap.get(change.revUser) ?? change.revUser : '';
-        const agentTag = change.revTags.find(tag => tag.startsWith('agent:')) ?? '';
-        const agentVersion =
-          change.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
-        const metaLabelParts = [
-          displayName ? `operator: ${displayName}` : null,
-          agentTag || null,
-          agentVersion || null,
-        ].filter(Boolean);
-        const metaLabel = metaLabelParts.join(' · ');
-        const metaAttrs = metaLabel
-          ? ` data-meta="true" data-user="${escapeHtml(displayName)}" data-agent="${escapeHtml(
-              agentTag
-            )}" data-agent-version="${escapeHtml(
-              agentVersion
-            )}" title="${escapeHtml(metaLabel)}"`
-          : '';
-        const visibleTags = change.revTags.filter(
-          tag => !tag.startsWith('agent:') && !tag.startsWith('agent_version:')
-        );
-        const tags = visibleTags.length ? `· ${escapeHtml(visibleTags.join(', '))}` : '';
-        const summary = change.revSummary
-          ? `<div class="change-summary">${escapeHtml(change.revSummary)}</div>`
-          : '';
-        const diffLink = change.prevRevId
-          ? `<a href="/${escapeHtml(change.slug)}?diffFrom=${change.prevRevId}&diffTo=${change.revId}">Diff</a>`
-          : '';
-        return `<li>
-  <div class="change-meta"${metaAttrs}>
-    <a href="/${escapeHtml(change.slug)}">${escapeHtml(change.slug)}</a>
-    <span>${escapeHtml(dateLabel)}</span>
-    ${tags ? `<span>${tags}</span>` : ''}
-  </div>
-  ${summary}
-  <div class="change-actions">
-    <a href="/${escapeHtml(change.slug)}?rev=${change.revId}">View</a>
-    ${diffLink}
-  </div>
-</li>`;
-      })
-      .join('');
+      return {
+        primaryLabel: change.slug,
+        primaryHref: `/${change.slug}`,
+        dateLabel: formatDateUTC(change.revDate),
+        summary: change.revSummary,
+        revUser: change.revUser,
+        revTags: change.revTags,
+        actions,
+      };
+    });
+    const itemsHtml = renderRecentList(items, userMap);
 
     const bodyHtml = `<div class="tool-page">
   <p>Latest edits across the wiki.</p>
+  <p>See also: <a href="/tool/recent-citations">Recent citations</a></p>
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>';
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
       title: 'Recent Changes',
+      labelHtml,
+      bodyHtml,
+      signedIn,
+    });
+    res.type('html').send(html);
+  });
+
+  app.get('/tool/recent-citations', async (req, res) => {
+    const limit = parseRecentLimit(req.query.limit);
+
+    const dalInstance = await initializePostgreSQL();
+    const result = await dalInstance.query(
+      `SELECT key,
+              data,
+              _rev_id,
+              _rev_date,
+              _rev_user,
+              _rev_summary,
+              _rev_tags,
+              LEAD(_rev_id) OVER (
+                PARTITION BY COALESCE(_old_rev_of, id)
+                ORDER BY _rev_date DESC, _rev_id DESC
+              ) AS prev_rev_id
+       FROM ${Citation.tableName}
+       WHERE _rev_deleted = false
+       ORDER BY _rev_date DESC, _rev_id DESC
+       LIMIT $1`,
+      [limit]
+    );
+
+    const changes = result.rows.map(
+      (row: {
+        key: string;
+        data: Record<string, unknown> | null;
+        _rev_id: string;
+        _rev_date: string;
+        _rev_user: string | null;
+        _rev_summary: Record<string, string> | null;
+        _rev_tags: string[] | null;
+        prev_rev_id: string | null;
+      }) => ({
+        key: row.key,
+        data: row.data ?? null,
+        revId: row._rev_id,
+        revDate: row._rev_date,
+        revUser: row._rev_user,
+        revSummary: resolveRevSummary(row._rev_summary ?? null),
+        revTags: row._rev_tags ?? [],
+        prevRevId: row.prev_rev_id,
+      })
+    );
+
+    const userIds = changes
+      .map(change => change.revUser)
+      .filter((id): id is string => Boolean(id));
+    const userMap = await fetchUserMap(dalInstance, userIds);
+    const items: RecentListItem[] = changes.map(change => {
+      const encodedKey = encodeURIComponent(change.key);
+      const actions: RecentListAction[] = [
+        { label: 'View', href: `/cite/${encodedKey}?rev=${change.revId}` },
+      ];
+      if (change.prevRevId) {
+        actions.push({
+          label: 'Diff',
+          href: `/cite/${encodedKey}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
+        });
+      }
+      return {
+        primaryLabel: formatCitationLabel(change.key, change.data),
+        primaryHref: `/cite/${encodedKey}`,
+        dateLabel: formatDateUTC(change.revDate),
+        summary: change.revSummary,
+        revUser: change.revUser,
+        revTags: change.revTags,
+        actions,
+      };
+    });
+    const itemsHtml = renderRecentList(items, userMap);
+
+    const bodyHtml = `<div class="tool-page">
+  <p>Latest edits to citation entries.</p>
+  <p>See also: <a href="/tool/recent-changes">Recent changes</a></p>
+  <ul class="change-list">${itemsHtml}</ul>
+</div>`;
+    const labelHtml = '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>';
+    const signedIn = Boolean(await resolveSessionUser(req));
+    const html = renderLayout({
+      title: 'Recent Citations',
       labelHtml,
       bodyHtml,
       signedIn,
@@ -202,8 +325,7 @@ export const registerToolRoutes = (app: Express) => {
   });
 
   app.get('/api/recent-changes', async (req, res) => {
-    const limitParam = typeof req.query.limit === 'string' ? Number(req.query.limit) : 50;
-    const limit = Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
+    const limit = parseRecentLimit(req.query.limit);
 
     const dalInstance = await initializePostgreSQL();
     const result = await dalInstance.query(

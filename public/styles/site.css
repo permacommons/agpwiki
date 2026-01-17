@@ -201,6 +201,48 @@ pre.diff ins { background: #ddf8dd; text-decoration: none; }
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
+.citation-card {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+.citation-meta {
+  margin-top: 0.5rem;
+  color: #555;
+  font-size: 0.9rem;
+}
+.citation-fields {
+  margin: 1rem 0 0;
+}
+.citation-field {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+}
+.citation-field dt {
+  font-weight: 600;
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.citation-field dd {
+  margin: 0;
+}
+.citation-raw {
+  margin-top: 1.5rem;
+}
+.citation-raw pre {
+  background: #f6f4ee;
+  border: 1px solid var(--rule);
+  padding: 1rem;
+  overflow: auto;
+}
+@media (max-width: 640px) {
+  .citation-field {
+    grid-template-columns: 1fr;
+  }
+}
 .rev-meta { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .rev-radio { width: 1.4rem; display: inline-flex; justify-content: center; }
 .rev-summary { margin-top: 0.25rem; color: #333; }
