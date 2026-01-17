@@ -73,8 +73,15 @@
 
   <bibliography et-al-min="5" et-al-use-first="4">
     <layout suffix=".">
-      <text macro="author" />
-      <text macro="issued" prefix=" (" suffix="). " />
+      <choose>
+        <if variable="issued">
+          <text macro="author" />
+          <text macro="issued" prefix=" (" suffix="). " />
+        </if>
+        <else>
+          <text macro="author" suffix=". " />
+        </else>
+      </choose>
       <text macro="title" suffix=". " />
       <text macro="container" suffix=". " />
       <text macro="publisher" suffix=". " />

@@ -234,6 +234,51 @@ test('renderMarkdown includes bibliography entries for citations', async () => {
   }
 });
 
+test('renderMarkdown punctuation handles author-only citations without year', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-noyear-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const citation = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Sandbox citation with no year',
+          author: [{ family: 'Tester', given: 'Alex' }],
+          URL: 'https://example.com/sandbox-citation',
+        },
+      },
+      userId
+    );
+
+    const html = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
+    assert.match(html, /Tester, Alex\. Sandbox citation with no year\./);
+    assert.doesNotMatch(html, /AlexSandbox/);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('MCP rejects invalid language codes', async () => {
   const dal = await getDal();
   let userIdForCleanup: string | null = null;
