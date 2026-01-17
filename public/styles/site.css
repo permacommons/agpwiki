@@ -146,6 +146,35 @@ code, pre { background: #f5f0e7; }
 pre { padding: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; }
 pre.diff del { background: #ffe0e0; text-decoration: none; }
 pre.diff ins { background: #ddf8dd; text-decoration: none; }
+.article table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+}
+.article th,
+.article td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+.article thead th {
+  background: var(--panel);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.article tbody tr:nth-child(even) {
+  background: #f5f0e7;
+}
+.article tbody tr:last-child td {
+  border-bottom: none;
+}
 #refs { margin-top: 2rem; font-size: 0.95rem; }
 .citation-ref { font-size: 0.8em; }
 .citation-group { white-space: nowrap; }
@@ -394,4 +423,5 @@ footer.site-footer {
   .sidebar { order: -1; }
   .search-form { flex: 1 1 100%; }
   header.site-header { flex-direction: column; align-items: flex-start; }
+  .article table { display: block; overflow-x: auto; }
 }

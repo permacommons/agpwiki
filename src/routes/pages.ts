@@ -68,6 +68,7 @@ export const registerPageRoutes = (app: Express) => {
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
+    const formatParam = typeof req.query.format === 'string' ? req.query.format : undefined;
 
     if (isBlockedSlug(slug)) {
       res.status(404).type('text').send('Not found');
@@ -131,6 +132,11 @@ export const registerPageRoutes = (app: Express) => {
           ? '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>'
           : '<div class="page-label">FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE</div>';
       const bodySource = resolvedBody?.str ?? '';
+
+      if (formatParam === 'raw') {
+        res.type('text/plain').send(bodySource);
+        return;
+      }
       const citationKeys = extractCitationKeys(bodySource);
       const citationEntries: Array<Record<string, unknown>> = [];
 
