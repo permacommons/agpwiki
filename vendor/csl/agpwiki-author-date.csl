@@ -7,8 +7,9 @@
   </info>
 
   <macro name="author">
-    <names variable="author">
-      <name and="text" delimiter=", " />
+    <names variable="author" et-al-min="4" et-al-use-first="1">
+      <name and="text" delimiter=", " name-as-sort-order="all" sort-separator=", " />
+      <et-al term="et-al" />
     </names>
   </macro>
 
@@ -66,6 +67,7 @@
 
   <bibliography>
     <layout suffix=".">
+      <text macro="author" suffix=". " />
       <text macro="title" suffix=". " />
       <text macro="container" suffix=". " />
       <text macro="publisher" suffix=". " />
