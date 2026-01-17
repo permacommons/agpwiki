@@ -1,1 +1,2 @@
 - [ ] Split MCP access so local agents can use Playwright locally while targeting a remote production instance, without exposing local dev environment MCP tools.
+- [ ] Add citation tooltips using citeproc's inline `<citation>` layout for hover previews.
