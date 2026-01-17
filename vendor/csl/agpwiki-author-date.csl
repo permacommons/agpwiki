@@ -73,8 +73,8 @@
 
   <bibliography et-al-min="5" et-al-use-first="4">
     <layout suffix=".">
-      <text macro="author" suffix=". " />
-      <text macro="issued" suffix=". " />
+      <text macro="author" />
+      <text macro="issued" prefix=" (" suffix="). " />
       <text macro="title" suffix=". " />
       <text macro="container" suffix=". " />
       <text macro="publisher" suffix=". " />
