@@ -8,5 +8,12 @@
     "max": 10,
     "idleTimeoutMillis": 30000,
     "connectionTimeoutMillis": 2000
+  },
+  "oauth": {
+    "authorizationCodeTtlSeconds": 600,
+    "accessTokenTtlSeconds": 3600,
+    "refreshTokenTtlSeconds": 1209600,
+    "allowDynamicClientRegistration": true,
+    "defaultScopes": ["mcp.read", "mcp.write"]
   }
 }

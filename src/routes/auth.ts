@@ -27,6 +27,13 @@ const renderAuthLayout = (title: string, bodyHtml: string, signedIn = false) =>
 const renderError = (message: string) =>
   `<div class="form-error">${escapeHtml(message)}</div>`;
 
+const getSafeRedirect = (value: string | null) => {
+  if (!value) return null;
+  if (!value.startsWith('/tool/')) return null;
+  if (value.includes('://') || value.includes('\\')) return null;
+  return value;
+};
+
 const requireAuthUser = async (req: Request, res: Response) => {
   const session = await resolveSessionUser(req);
   if (!session) {
@@ -46,8 +53,16 @@ export const registerAuthRoutes = (app: Express) => {
       return;
     }
 
+    const redirectTo = getSafeRedirect(
+      typeof req.query.redirect === 'string' ? req.query.redirect : null
+    );
+    const redirectField = redirectTo
+      ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
+      : '';
+
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
+    ${redirectField}
     <label class="form-field">
       <span>Email</span>
       <input type="email" name="email" autocomplete="email" required />
@@ -69,14 +84,19 @@ export const registerAuthRoutes = (app: Express) => {
   app.post('/tool/auth/login', async (req, res) => {
     const email = String(req.body.email ?? '').trim().toLowerCase();
     const password = String(req.body.password ?? '');
+    const redirectTo = getSafeRedirect(String(req.body.redirect ?? '').trim()) ?? null;
 
     const user = email ? await User.filterWhere({ email }).first() : null;
     const valid = user ? await verifyPassword(password, user.passwordHash) : false;
 
     if (!user || !valid) {
+      const redirectField = redirectTo
+        ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
+        : '';
       const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
     ${renderError('Invalid email or password.')}
+    ${redirectField}
     <label class="form-field">
       <span>Email</span>
       <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
@@ -98,7 +118,7 @@ export const registerAuthRoutes = (app: Express) => {
 
     const session = await createSession(user.id);
     setSessionCookie(res, session.token, session.expiresAt);
-    res.redirect(302, '/tool/account/tokens');
+    res.redirect(302, redirectTo ?? '/tool/account/tokens');
   });
 
   app.post('/tool/auth/logout', async (req, res) => {

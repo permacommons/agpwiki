@@ -7,6 +7,7 @@ import { initializePostgreSQL } from './db.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
+import { registerOAuthRoutes } from './routes/oauth.js';
 import { registerPageRoutes } from './routes/pages.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerToolRoutes } from './routes/tools.js';
@@ -19,6 +20,7 @@ app.use('/static', express.static(path.resolve(process.cwd(), 'public')));
 
 registerSearchRoutes(app);
 registerAuthRoutes(app);
+registerOAuthRoutes(app);
 registerToolRoutes(app);
 registerBlogRoutes(app);
 registerCitationRoutes(app);

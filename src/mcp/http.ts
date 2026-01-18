@@ -8,7 +8,7 @@ import type { NextFunction, Request, Response } from 'express';
 
 import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
-import { verifyAuthToken } from './auth.js';
+import { resolveAuthInfoFromToken } from './auth.js';
 import { createMcpServer } from './core.js';
 
 type McpConfig = {
@@ -43,20 +43,7 @@ const authMiddleware = async (req: Request, res: Response, next: NextFunction) =
     }
 
     await initializePostgreSQL();
-    const record = await verifyAuthToken(token);
-
-    const authInfo: AuthInfo = {
-      token,
-      clientId: record.userId,
-      scopes: [],
-      extra: {
-        userId: record.userId,
-        tokenId: record.id,
-        tokenPrefix: record.tokenPrefix,
-        tokenLast4: record.tokenLast4 ?? null,
-        label: record.label ?? null,
-      },
-    };
+    const authInfo: AuthInfo = await resolveAuthInfoFromToken(token);
 
     (req as Request & { auth?: AuthInfo }).auth = authInfo;
     next();

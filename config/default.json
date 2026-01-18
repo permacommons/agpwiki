@@ -15,5 +15,12 @@
   "mcp": {
     "host": "127.0.0.1",
     "port": 3333
+  },
+  "oauth": {
+    "authorizationCodeTtlSeconds": 600,
+    "accessTokenTtlSeconds": 3600,
+    "refreshTokenTtlSeconds": 1209600,
+    "allowDynamicClientRegistration": true,
+    "defaultScopes": ["mcp.read", "mcp.write"]
   }
 }

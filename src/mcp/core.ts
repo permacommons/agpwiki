@@ -416,6 +416,7 @@ export const createMcpServer = () => {
     {
       title: 'Query Citations',
       description: 'Search citations by key prefix, title, author, year, DOI, or URL.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         keyPrefix: z.string().optional(),
         title: z.string().optional(),
@@ -490,6 +491,7 @@ export const createMcpServer = () => {
     {
       title: 'List Blog Post Revisions',
       description: 'List revisions for a blog post by slug.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
       },
@@ -506,6 +508,7 @@ export const createMcpServer = () => {
     {
       title: 'Diff Blog Post Revisions',
       description: 'Generate a unified diff between two blog post revisions.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
         fromRevId: z.string(),
@@ -525,6 +528,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Blog Post',
       description: 'Read a single blog post by slug.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
       },
@@ -541,6 +545,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Blog Post Revision',
       description: 'Read a specific blog post revision by revision ID.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
         revId: z.string(),
@@ -558,6 +563,7 @@ export const createMcpServer = () => {
     {
       title: 'List Citation Revisions',
       description: 'List revisions for a citation by key.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
       },
@@ -574,6 +580,7 @@ export const createMcpServer = () => {
     {
       title: 'Diff Citation Revisions',
       description: 'Generate a unified diff between two citation revisions.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
         fromRevId: z.string(),
@@ -592,6 +599,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Citation',
       description: 'Read a citation by key.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
       },
@@ -608,6 +616,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Citation Revision',
       description: 'Read a specific citation revision by revision ID.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
         revId: z.string(),
@@ -646,6 +655,7 @@ export const createMcpServer = () => {
     {
       title: 'List Wiki Page Revisions',
       description: 'List revisions for a wiki page by slug.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
       },
@@ -662,6 +672,7 @@ export const createMcpServer = () => {
     {
       title: 'Diff Wiki Page Revisions',
       description: 'Generate a unified diff between two revisions.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
         fromRevId: z.string(),
@@ -681,6 +692,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Wiki Page',
       description: 'Read a single wiki page by slug.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
       },
@@ -697,6 +709,7 @@ export const createMcpServer = () => {
     {
       title: 'Read Wiki Page Revision',
       description: 'Read a specific wiki page revision by revision ID.',
+      annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
         revId: z.string(),
