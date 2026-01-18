@@ -2,7 +2,7 @@ import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
 import languages from '../../locales/languages.js';
-import { isBlockedSlug } from '../lib/slug.js';
+import { isBlockedSlug, normalizeSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
@@ -407,6 +407,25 @@ const ensureNonEmptyString = (value: string, label: string) => {
   }
 };
 
+const normalizeSlugInput = (value: string, label: string) => {
+  ensureNonEmptyString(value, label);
+  const normalized = normalizeSlug(value);
+  if (!normalized) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+  return normalized;
+};
+
+const normalizeOptionalSlug = (value: string | undefined | null, label: string) => {
+  ensureOptionalString(value, label);
+  if (!value) return undefined;
+  const normalized = normalizeSlug(value);
+  if (!normalized) {
+    throw new Error(`${label} must be a non-empty string.`);
+  }
+  return normalized;
+};
+
 const ensureOptionalString = (value: string | null | undefined, label: string) => {
   if (value === null || value === undefined) return;
   if (typeof value !== 'string') {
@@ -515,10 +534,11 @@ export async function readWikiPageResource(
     throw new Error(`Invalid MCP resource: ${uri}`);
   }
 
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
 
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
   const payload = {
@@ -540,10 +560,10 @@ export async function readWikiPage(
   _dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageResult> {
-  ensureNonEmptyString(slug, 'slug');
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
   return toWikiPageResult(page);
 }
@@ -553,20 +573,20 @@ export async function createWikiPage(
   { slug, title, body, originalLanguage, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
-  ensureNonEmptyString(slug, 'slug');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
   ensureNonEmptyString(userId, 'userId');
   ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   validateRevSummary(revSummary);
 
-  const existing = await findCurrentPageBySlug(slug);
+  const existing = await findCurrentPageBySlug(normalizedSlug);
   if (existing) {
-    throw new Error(`Wiki page already exists: ${slug}`);
+    throw new Error(`Wiki page already exists: ${normalizedSlug}`);
   }
-  const existingAlias = await PageAlias.filterWhere({ slug }).first();
+  const existingAlias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (existingAlias) {
-    throw new Error(`Wiki page alias already exists: ${slug}`);
+    throw new Error(`Wiki page alias already exists: ${normalizedSlug}`);
   }
 
   const createdAt = new Date();
@@ -575,7 +595,7 @@ export async function createWikiPage(
     { tags: ['create', ...tags], date: createdAt }
   );
 
-  page.slug = slug;
+  page.slug = normalizedSlug;
   if (title !== undefined) page.title = title;
   if (body !== undefined) page.body = body;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
@@ -601,33 +621,33 @@ export async function updateWikiPage(
   }: WikiPageUpdateInput,
   userId: string
 ): Promise<WikiPageResult> {
-  ensureNonEmptyString(slug, 'slug');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug');
   ensureNonEmptyString(userId, 'userId');
-  ensureOptionalString(newSlug, 'newSlug');
   ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
   requireRevSummary(revSummary);
 
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
-  if (newSlug && newSlug !== slug) {
-    const slugMatch = await findCurrentPageBySlug(newSlug);
+  if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
+    const slugMatch = await findCurrentPageBySlug(normalizedNewSlug);
     if (slugMatch) {
-      throw new Error(`Wiki page already exists: ${newSlug}`);
+      throw new Error(`Wiki page already exists: ${normalizedNewSlug}`);
     }
-    const aliasMatch = await PageAlias.filterWhere({ slug: newSlug }).first();
+    const aliasMatch = await PageAlias.filterWhere({ slug: normalizedNewSlug }).first();
     if (aliasMatch) {
-      throw new Error(`Wiki page alias already exists: ${newSlug}`);
+      throw new Error(`Wiki page alias already exists: ${normalizedNewSlug}`);
     }
   }
 
   await page.newRevision({ id: userId }, { tags: ['update', ...tags] });
 
-  if (newSlug !== undefined) page.slug = newSlug;
+  if (normalizedNewSlug !== undefined) page.slug = normalizedNewSlug;
   if (title !== undefined) page.title = title;
   if (body !== undefined) page.body = body;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
@@ -644,7 +664,7 @@ export async function applyWikiPagePatch(
   { slug, patch, format, lang = 'en', baseRevId, tags = [], revSummary }: WikiPagePatchInput,
   userId: string
 ): Promise<WikiPageResult> {
-  ensureNonEmptyString(slug, 'slug');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
   ensureNonEmptyString(patch, 'patch');
   ensureNonEmptyString(format, 'format');
   if (format !== 'unified' && format !== 'codex') {
@@ -654,9 +674,9 @@ export async function applyWikiPagePatch(
   ensureOptionalString(baseRevId, 'baseRevId');
   requireRevSummary(revSummary);
 
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
   if (baseRevId && baseRevId !== page._revID) {
@@ -667,7 +687,7 @@ export async function applyWikiPagePatch(
 
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
-  const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: slug });
+  const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: normalizedSlug });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
 
@@ -688,38 +708,38 @@ export async function addWikiPageAlias(
   { slug, pageSlug, lang }: WikiPageAliasInput,
   userId: string
 ): Promise<WikiPageAliasResult> {
-  ensureNonEmptyString(slug, 'slug');
-  ensureNonEmptyString(pageSlug, 'pageSlug');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const normalizedPageSlug = normalizeSlugInput(pageSlug, 'pageSlug');
   ensureNonEmptyString(userId, 'userId');
   ensureOptionalLanguage(lang, 'lang');
 
-  if (isBlockedSlug(slug)) {
-    throw new Error(`Alias slug is reserved: ${slug}`);
+  if (isBlockedSlug(normalizedSlug)) {
+    throw new Error(`Alias slug is reserved: ${normalizedSlug}`);
   }
 
-  const page = await findCurrentPageBySlugOrAlias(pageSlug);
+  const page = await findCurrentPageBySlugOrAlias(normalizedPageSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${pageSlug}`);
+    throw new Error(`Wiki page not found: ${normalizedPageSlug}`);
   }
 
-  if (page.slug === slug) {
-    throw new Error(`Alias slug matches the current page slug: ${slug}`);
+  if (page.slug === normalizedSlug) {
+    throw new Error(`Alias slug matches the current page slug: ${normalizedSlug}`);
   }
 
-  const existingPage = await findCurrentPageBySlug(slug);
+  const existingPage = await findCurrentPageBySlug(normalizedSlug);
   if (existingPage) {
-    throw new Error(`Wiki page already exists: ${slug}`);
+    throw new Error(`Wiki page already exists: ${normalizedSlug}`);
   }
 
-  const existingAlias = await PageAlias.filterWhere({ slug }).first();
+  const existingAlias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (existingAlias) {
-    throw new Error(`Wiki page alias already exists: ${slug}`);
+    throw new Error(`Wiki page alias already exists: ${normalizedSlug}`);
   }
 
   const createdAt = new Date();
   const alias = await PageAlias.create({
     pageId: page.id,
-    slug,
+    slug: normalizedSlug,
     lang: lang ?? null,
     createdAt,
     updatedAt: createdAt,
@@ -734,26 +754,27 @@ export async function removeWikiPageAlias(
   slug: string,
   userId: string
 ): Promise<WikiPageAliasDeleteResult> {
-  ensureNonEmptyString(slug, 'slug');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
   ensureNonEmptyString(userId, 'userId');
 
-  const alias = await PageAlias.filterWhere({ slug }).first();
+  const alias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (!alias) {
-    throw new Error(`Wiki page alias not found: ${slug}`);
+    throw new Error(`Wiki page alias not found: ${normalizedSlug}`);
   }
 
   await alias.delete();
 
-  return { slug, removed: true };
+  return { slug: normalizedSlug, removed: true };
 }
 
 export async function listWikiPageRevisions(
   dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageRevisionListResult> {
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
   const tableName = WikiPage.tableName;
@@ -775,9 +796,10 @@ export async function readWikiPageRevision(
   slug: string,
   revId: string
 ): Promise<WikiPageRevisionReadResult> {
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
   const revision = await fetchPageRevisionByRevId(dalInstance, page.id, revId);
@@ -796,9 +818,10 @@ export async function diffWikiPageRevisions(
   { slug, fromRevId, toRevId, lang = 'en' }: WikiPageDiffInput
 ): Promise<WikiPageDiffResult> {
   ensureOptionalLanguage(lang, 'lang');
-  const page = await findCurrentPageBySlugOrAlias(slug);
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${slug}`);
+    throw new Error(`Wiki page not found: ${normalizedSlug}`);
   }
 
   const fromRev = await fetchPageRevisionByRevId(dalInstance, page.id, fromRevId);

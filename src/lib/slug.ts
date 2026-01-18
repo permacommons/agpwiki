@@ -11,6 +11,9 @@ const RESERVED_SLUGS = new Set([
 
 const RESERVED_SUFFIXES = ['comments'];
 
+export const normalizeSlug = (slug: string) =>
+  slug.trim().replace(/^\/+/, '').replace(/\/+$/, '');
+
 export const isBlockedSlug = (slug: string) => {
   if (!slug) return true;
   const [prefix] = slug.split('/');

@@ -2,6 +2,7 @@ import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import dal from '../../dal/index.js';
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
 import languages from '../../locales/languages.js';
+import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 
@@ -11,6 +12,25 @@ const ensureNonEmptyString = (value: string | undefined | null, label: string) =
   if (!value || !value.trim()) {
     throw new Error(`${label} is required.`);
   }
+};
+
+const normalizeSlugInput = (value: string, label: string) => {
+  ensureNonEmptyString(value, label);
+  const normalized = normalizeSlug(value);
+  if (!normalized) {
+    throw new Error(`${label} is required.`);
+  }
+  return normalized;
+};
+
+const normalizeOptionalSlug = (value: string | undefined | null, label: string) => {
+  ensureOptionalString(value, label);
+  if (!value) return undefined;
+  const normalized = normalizeSlug(value);
+  if (!normalized) {
+    throw new Error(`${label} is required.`);
+  }
+  return normalized;
 };
 
 const ensureOptionalString = (value: string | undefined | null, label: string) => {
@@ -32,7 +52,7 @@ const ensureObject = (value: unknown, label: string) => {
   throw new Error(`${label} must be an object.`);
 };
 
-const ensureNonEmptySlug = (slug: string) => ensureNonEmptyString(slug, 'slug');
+const ensureNonEmptySlug = (slug: string) => normalizeSlugInput(slug, 'slug');
 
 const validateTitle = (value: Record<string, string> | null | undefined) => {
   if (value === undefined || value === null) return;
@@ -254,10 +274,10 @@ export async function readBlogPost(
   _dalInstance: DataAccessLayer,
   slug: string
 ): Promise<BlogPostResult> {
-  ensureNonEmptySlug(slug);
-  const post = await findCurrentPostBySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
   return toBlogPostResult(post);
 }
@@ -274,9 +294,10 @@ export async function readBlogPostResource(
   if (!slug) {
     throw new Error(`Invalid MCP resource: ${uri}`);
   }
-  const post = await findCurrentPostBySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
   const payload = {
     ...toBlogPostResult(post),
@@ -297,7 +318,7 @@ export async function createBlogPost(
   { slug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostWriteInput,
   userId: string
 ): Promise<BlogPostResult> {
-  ensureNonEmptySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
   ensureNonEmptyString(userId, 'userId');
   ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
@@ -306,9 +327,9 @@ export async function createBlogPost(
   validateRevSummary(revSummary);
   await requireBlogAuthor(dalInstance, userId);
 
-  const existing = await findCurrentPostBySlug(slug);
+  const existing = await findCurrentPostBySlug(normalizedSlug);
   if (existing) {
-    throw new Error(`Blog post already exists: ${slug}`);
+    throw new Error(`Blog post already exists: ${normalizedSlug}`);
   }
 
   const createdAt = new Date();
@@ -316,7 +337,7 @@ export async function createBlogPost(
     { id: userId },
     { tags: ['create', ...tags], date: createdAt }
   );
-  post.slug = slug;
+  post.slug = normalizedSlug;
   if (title !== undefined) post.title = title;
   if (body !== undefined) post.body = body;
   if (summary !== undefined) post.summary = summary;
@@ -334,9 +355,9 @@ export async function updateBlogPost(
   { slug, newSlug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostUpdateInput,
   userId: string
 ): Promise<BlogPostResult> {
-  ensureNonEmptySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug');
   ensureNonEmptyString(userId, 'userId');
-  ensureOptionalString(newSlug, 'newSlug');
   ensureOptionalLanguage(originalLanguage, 'originalLanguage');
   validateTitle(title);
   validateBody(body);
@@ -344,19 +365,19 @@ export async function updateBlogPost(
   requireRevSummary(revSummary);
   await requireBlogAuthor(dalInstance, userId);
 
-  const post = await findCurrentPostBySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
-  if (newSlug && newSlug !== slug) {
-    const slugMatch = await findCurrentPostBySlug(newSlug);
+  if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
+    const slugMatch = await findCurrentPostBySlug(normalizedNewSlug);
     if (slugMatch) {
-      throw new Error(`Blog post already exists: ${newSlug}`);
+      throw new Error(`Blog post already exists: ${normalizedNewSlug}`);
     }
   }
 
   await post.newRevision({ id: userId }, { tags: ['update', ...tags] });
-  if (newSlug !== undefined) post.slug = newSlug;
+  if (normalizedNewSlug !== undefined) post.slug = normalizedNewSlug;
   if (title !== undefined) post.title = title;
   if (body !== undefined) post.body = body;
   if (summary !== undefined) post.summary = summary;
@@ -372,9 +393,10 @@ export async function listBlogPostRevisions(
   dalInstance: DataAccessLayer,
   slug: string
 ): Promise<BlogPostRevisionListResult> {
-  const post = await findCurrentPostBySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
   const tableName = BlogPost.tableName;
   const result = await dalInstance.query(
@@ -393,9 +415,10 @@ export async function readBlogPostRevision(
   slug: string,
   revId: string
 ): Promise<BlogPostRevisionReadResult> {
-  const post = await findCurrentPostBySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
   const result = await dalInstance.query(
     `SELECT * FROM ${BlogPost.tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
@@ -417,9 +440,10 @@ export async function diffBlogPostRevisions(
   { slug, fromRevId, toRevId, lang = 'en' }: BlogPostDiffInput
 ): Promise<BlogPostDiffResult> {
   ensureOptionalLanguage(lang, 'lang');
-  const post = await findCurrentPostBySlug(slug);
+  const normalizedSlug = ensureNonEmptySlug(slug);
+  const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${slug}`);
+    throw new Error(`Blog post not found: ${normalizedSlug}`);
   }
   const fetchRevisionByRevId = async (revId: string) => {
     const result = await dalInstance.query(

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { isBlockedSlug } from '../src/lib/slug.js';
+import { isBlockedSlug, normalizeSlug } from '../src/lib/slug.js';
 
 test('isBlockedSlug blocks empty or reserved prefixes', () => {
   assert.equal(isBlockedSlug(''), true);
@@ -27,4 +27,10 @@ test('isBlockedSlug allows normal page slugs', () => {
   assert.equal(isBlockedSlug('barack-obama'), false);
   assert.equal(isBlockedSlug('meta/welcome'), false);
   assert.equal(isBlockedSlug('foo/bar'), false);
+});
+
+test('normalizeSlug trims leading and trailing slashes', () => {
+  assert.equal(normalizeSlug('/foo/bar'), 'foo/bar');
+  assert.equal(normalizeSlug('foo/bar/'), 'foo/bar');
+  assert.equal(normalizeSlug('///foo/bar///'), 'foo/bar');
 });
