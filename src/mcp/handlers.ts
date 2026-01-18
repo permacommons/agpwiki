@@ -9,6 +9,14 @@ import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
+import {
+  ConflictError,
+  InvalidRequestError,
+  NotFoundError,
+  PreconditionFailedError,
+  ValidationCollector,
+  ValidationError,
+} from './errors.js';
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
 
 const { mlString } = dal;
@@ -401,73 +409,183 @@ const buildFieldDiff = (
   };
 };
 
-const ensureNonEmptyString = (value: string, label: string) => {
+const ensureNonEmptyString = (
+  value: string | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
   if (!value || typeof value !== 'string' || value.trim().length === 0) {
-    throw new Error(`${label} must be a non-empty string.`);
+    if (errors) {
+      errors.add(label, 'must be a non-empty string.', 'required');
+      return false;
+    }
+    throw new ValidationError(`${label} must be a non-empty string.`, [
+      { field: label, message: 'must be a non-empty string.', code: 'required' },
+    ]);
   }
+  return true;
 };
 
-const normalizeSlugInput = (value: string, label: string) => {
-  ensureNonEmptyString(value, label);
+const normalizeSlugInput = (value: string, label: string, errors?: ValidationCollector) => {
+  if (!ensureNonEmptyString(value, label, errors)) return '';
   const normalized = normalizeSlug(value);
   if (!normalized) {
-    throw new Error(`${label} must be a non-empty string.`);
+    if (errors) {
+      errors.add(label, 'must be a non-empty string.', 'required');
+      return '';
+    }
+    throw new ValidationError(`${label} must be a non-empty string.`, [
+      { field: label, message: 'must be a non-empty string.', code: 'required' },
+    ]);
   }
   return normalized;
 };
 
-const normalizeOptionalSlug = (value: string | undefined | null, label: string) => {
-  ensureOptionalString(value, label);
+const normalizeOptionalSlug = (
+  value: string | undefined | null,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  ensureOptionalString(value, label, errors);
   if (!value) return undefined;
   const normalized = normalizeSlug(value);
   if (!normalized) {
-    throw new Error(`${label} must be a non-empty string.`);
+    if (errors) {
+      errors.add(label, 'must be a non-empty string.', 'required');
+      return undefined;
+    }
+    throw new ValidationError(`${label} must be a non-empty string.`, [
+      { field: label, message: 'must be a non-empty string.', code: 'required' },
+    ]);
   }
   return normalized;
 };
 
-const ensureOptionalString = (value: string | null | undefined, label: string) => {
+const ensureOptionalString = (
+  value: string | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
   if (value === null || value === undefined) return;
   if (typeof value !== 'string') {
-    throw new Error(`${label} must be a string.`);
+    if (errors) {
+      errors.add(label, 'must be a string.', 'type');
+      return;
+    }
+    throw new ValidationError(`${label} must be a string.`, [
+      { field: label, message: 'must be a string.', code: 'type' },
+    ]);
   }
 };
 
-const ensureOptionalLanguage = (value: string | null | undefined, label: string) => {
-  ensureOptionalString(value, label);
+const ensureOptionalLanguage = (
+  value: string | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  ensureOptionalString(value, label, errors);
   if (!value) return;
   if (!languages.isValid(value)) {
-    throw new Error(`${label} must be a supported locale code.`);
+    if (errors) {
+      errors.add(label, 'must be a supported locale code.', 'invalid');
+      return;
+    }
+    throw new ValidationError(`${label} must be a supported locale code.`, [
+      { field: label, message: 'must be a supported locale code.', code: 'invalid' },
+    ]);
   }
 };
 
-const validateTitle = (value: Record<string, string> | null | undefined) => {
+const validateTitle = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined) return;
-  mlString.validate(value, { maxLength: 200, allowHTML: false });
+  try {
+    mlString.validate(value, { maxLength: 200, allowHTML: false });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid title value.';
+    if (errors) {
+      errors.add('title', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'title', message, code: 'invalid' }]);
+  }
 };
 
-const validateBody = (value: Record<string, string> | null | undefined) => {
+const validateBody = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined) return;
-  mlString.validate(value, { maxLength: 20000, allowHTML: true });
+  try {
+    mlString.validate(value, { maxLength: 20000, allowHTML: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid body value.';
+    if (errors) {
+      errors.add('body', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'body', message, code: 'invalid' }]);
+  }
 };
 
-const validateRevSummary = (value: Record<string, string> | null | undefined) => {
+const validateRevSummary = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined) return;
-  mlString.validate(value, { maxLength: 300, allowHTML: false });
+  try {
+    mlString.validate(value, { maxLength: 300, allowHTML: false });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
+    if (errors) {
+      errors.add('revSummary', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [
+      { field: 'revSummary', message, code: 'invalid' },
+    ]);
+  }
 };
 
-const requireRevSummary = (value: Record<string, string> | null | undefined) => {
+const requireRevSummary = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === null || value === undefined) {
-    throw new Error('revSummary is required for updates.');
+    if (errors) {
+      errors.addMissing('revSummary');
+      return;
+    }
+    throw new ValidationError('revSummary is required for updates.', [
+      { field: 'revSummary', message: 'is required.', code: 'required' },
+    ]);
   }
-  validateRevSummary(value);
+  validateRevSummary(value, errors);
   const entries = Object.entries(value);
   if (entries.length === 0) {
-    throw new Error('revSummary must include at least one language entry.');
+    if (errors) {
+      errors.add('revSummary', 'must include at least one language entry.', 'invalid');
+      return;
+    }
+    throw new ValidationError('revSummary must include at least one language entry.', [
+      { field: 'revSummary', message: 'must include at least one language entry.', code: 'invalid' },
+    ]);
   }
   for (const [lang, text] of entries) {
     if (!lang || !text || text.trim().length === 0) {
-      throw new Error('revSummary entries must be non-empty strings.');
+      if (errors) {
+        errors.add(`revSummary.${lang || 'unknown'}`, 'must be a non-empty string.', 'invalid');
+        continue;
+      }
+      throw new ValidationError('revSummary entries must be non-empty strings.', [
+        {
+          field: `revSummary.${lang || 'unknown'}`,
+          message: 'must be a non-empty string.',
+          code: 'invalid',
+        },
+      ]);
     }
   }
 };
@@ -475,21 +593,45 @@ const requireRevSummary = (value: Record<string, string> | null | undefined) => 
 const ensureObject = (
   value: Record<string, unknown> | null | undefined,
   label: string,
-  { allowNull = false }: { allowNull?: boolean } = {}
+  { allowNull = false }: { allowNull?: boolean } = {},
+  errors?: ValidationCollector
 ) => {
   if (value === undefined) return;
   if (value === null) {
     if (allowNull) return;
-    throw new Error(`${label} must be an object.`);
+    if (errors) {
+      errors.add(label, 'must be an object.', 'type');
+      return;
+    }
+    throw new ValidationError(`${label} must be an object.`, [
+      { field: label, message: 'must be an object.', code: 'type' },
+    ]);
   }
   if (typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`${label} must be an object.`);
+    if (errors) {
+      errors.add(label, 'must be an object.', 'type');
+      return;
+    }
+    throw new ValidationError(`${label} must be an object.`, [
+      { field: label, message: 'must be an object.', code: 'type' },
+    ]);
   }
 };
 
-const ensureKeyLength = (value: string, label: string, maxLength: number) => {
+const ensureKeyLength = (
+  value: string,
+  label: string,
+  maxLength: number,
+  errors?: ValidationCollector
+) => {
   if (value.length > maxLength) {
-    throw new Error(`${label} must be at most ${maxLength} characters.`);
+    if (errors) {
+      errors.add(label, `must be at most ${maxLength} characters.`, 'max_length');
+      return;
+    }
+    throw new ValidationError(`${label} must be at most ${maxLength} characters.`, [
+      { field: label, message: `must be at most ${maxLength} characters.`, code: 'max_length' },
+    ]);
   }
 };
 
@@ -526,19 +668,21 @@ export async function readWikiPageResource(
 ): Promise<McpReadResourceResult> {
   const parsed = new URL(uri);
   if (parsed.hostname !== 'page') {
-    throw new Error(`Unknown MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
   }
 
   const slug = parsed.searchParams.get('slug') ?? '';
   if (!slug) {
-    throw new Error(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
   }
 
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
 
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const payload = {
@@ -563,7 +707,9 @@ export async function readWikiPage(
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   return toWikiPageResult(page);
 }
@@ -573,20 +719,26 @@ export async function createWikiPage(
   { slug, title, body, originalLanguage, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  ensureNonEmptyString(userId, 'userId');
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
-  validateTitle(title);
-  validateBody(body);
-  validateRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid wiki page input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  validateTitle(title, errors);
+  validateBody(body, errors);
+  validateRevSummary(revSummary, errors);
+  errors.throwIfAny();
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
   if (existing) {
-    throw new Error(`Wiki page already exists: ${normalizedSlug}`);
+    throw new ConflictError(`Wiki page already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   const existingAlias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (existingAlias) {
-    throw new Error(`Wiki page alias already exists: ${normalizedSlug}`);
+    throw new ConflictError(`Wiki page alias already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const createdAt = new Date();
@@ -621,27 +773,35 @@ export async function updateWikiPage(
   }: WikiPageUpdateInput,
   userId: string
 ): Promise<WikiPageResult> {
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug');
-  ensureNonEmptyString(userId, 'userId');
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
-  validateTitle(title);
-  validateBody(body);
-  requireRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid wiki page update input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  validateTitle(title, errors);
+  validateBody(body, errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
     const slugMatch = await findCurrentPageBySlug(normalizedNewSlug);
     if (slugMatch) {
-      throw new Error(`Wiki page already exists: ${normalizedNewSlug}`);
+      throw new ConflictError(`Wiki page already exists: ${normalizedNewSlug}`, {
+        slug: normalizedNewSlug,
+      });
     }
     const aliasMatch = await PageAlias.filterWhere({ slug: normalizedNewSlug }).first();
     if (aliasMatch) {
-      throw new Error(`Wiki page alias already exists: ${normalizedNewSlug}`);
+      throw new ConflictError(`Wiki page alias already exists: ${normalizedNewSlug}`, {
+        slug: normalizedNewSlug,
+      });
     }
   }
 
@@ -664,24 +824,29 @@ export async function applyWikiPagePatch(
   { slug, patch, format, lang = 'en', baseRevId, tags = [], revSummary }: WikiPagePatchInput,
   userId: string
 ): Promise<WikiPageResult> {
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  ensureNonEmptyString(patch, 'patch');
-  ensureNonEmptyString(format, 'format');
-  if (format !== 'unified' && format !== 'codex') {
-    throw new Error(`Invalid patch format: ${format}`);
+  const errors = new ValidationCollector('Invalid wiki patch input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(patch, 'patch', errors);
+  ensureNonEmptyString(format, 'format', errors);
+  if (format && format !== 'unified' && format !== 'codex') {
+    errors.add('format', 'must be "unified" or "codex".', 'invalid');
   }
-  ensureOptionalLanguage(lang, 'lang');
-  ensureOptionalString(baseRevId, 'baseRevId');
-  requireRevSummary(revSummary);
+  ensureOptionalLanguage(lang, 'lang', errors);
+  ensureOptionalString(baseRevId, 'baseRevId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   if (baseRevId && baseRevId !== page._revID) {
-    throw new Error(
-      `Revision mismatch: current is ${page._revID ?? 'unknown'}, base was ${baseRevId}.`
+    throw new PreconditionFailedError(
+      `Revision mismatch: current is ${page._revID ?? 'unknown'}, base was ${baseRevId}.`,
+      { currentRevId: page._revID ?? null, baseRevId }
     );
   }
 
@@ -708,32 +873,45 @@ export async function addWikiPageAlias(
   { slug, pageSlug, lang }: WikiPageAliasInput,
   userId: string
 ): Promise<WikiPageAliasResult> {
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  const normalizedPageSlug = normalizeSlugInput(pageSlug, 'pageSlug');
-  ensureNonEmptyString(userId, 'userId');
-  ensureOptionalLanguage(lang, 'lang');
+  const errors = new ValidationCollector('Invalid wiki alias input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedPageSlug = normalizeSlugInput(pageSlug, 'pageSlug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureOptionalLanguage(lang, 'lang', errors);
+  errors.throwIfAny();
 
   if (isBlockedSlug(normalizedSlug)) {
-    throw new Error(`Alias slug is reserved: ${normalizedSlug}`);
+    throw new InvalidRequestError(`Alias slug is reserved: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const page = await findCurrentPageBySlugOrAlias(normalizedPageSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedPageSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedPageSlug}`, {
+      slug: normalizedPageSlug,
+    });
   }
 
   if (page.slug === normalizedSlug) {
-    throw new Error(`Alias slug matches the current page slug: ${normalizedSlug}`);
+    throw new ConflictError(`Alias slug matches the current page slug: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+      pageSlug: page.slug,
+    });
   }
 
   const existingPage = await findCurrentPageBySlug(normalizedSlug);
   if (existingPage) {
-    throw new Error(`Wiki page already exists: ${normalizedSlug}`);
+    throw new ConflictError(`Wiki page already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const existingAlias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (existingAlias) {
-    throw new Error(`Wiki page alias already exists: ${normalizedSlug}`);
+    throw new ConflictError(`Wiki page alias already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const createdAt = new Date();
@@ -754,12 +932,16 @@ export async function removeWikiPageAlias(
   slug: string,
   userId: string
 ): Promise<WikiPageAliasDeleteResult> {
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  ensureNonEmptyString(userId, 'userId');
+  const errors = new ValidationCollector('Invalid wiki alias removal input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  errors.throwIfAny();
 
   const alias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (!alias) {
-    throw new Error(`Wiki page alias not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page alias not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   await alias.delete();
@@ -774,7 +956,9 @@ export async function listWikiPageRevisions(
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const tableName = WikiPage.tableName;
@@ -799,12 +983,16 @@ export async function readWikiPageRevision(
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const revision = await fetchPageRevisionByRevId(dalInstance, page.id, revId);
   if (!revision) {
-    throw new Error(`Revision not found: ${revId}`);
+    throw new NotFoundError(`Revision not found: ${revId}`, {
+      revId,
+    });
   }
 
   return {
@@ -821,18 +1009,24 @@ export async function diffWikiPageRevisions(
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
-    throw new Error(`Wiki page not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const fromRev = await fetchPageRevisionByRevId(dalInstance, page.id, fromRevId);
   if (!fromRev) {
-    throw new Error(`Revision not found: ${fromRevId}`);
+    throw new NotFoundError(`Revision not found: ${fromRevId}`, {
+      revId: fromRevId,
+    });
   }
 
   const toRevisionId = toRevId ?? page._revID;
   const toRev = await fetchPageRevisionByRevId(dalInstance, page.id, toRevisionId);
   if (!toRev) {
-    throw new Error(`Revision not found: ${toRevisionId}`);
+    throw new NotFoundError(`Revision not found: ${toRevisionId}`, {
+      revId: toRevisionId,
+    });
   }
 
   const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
@@ -870,17 +1064,19 @@ export async function readCitationResource(
 ): Promise<McpReadResourceResult> {
   const parsed = new URL(uri);
   if (parsed.hostname !== 'citation') {
-    throw new Error(`Unknown MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
   }
 
   const key = parsed.pathname.replace(/^\//, '');
   if (!key) {
-    throw new Error(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
   }
 
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
 
   const payload = {
@@ -905,7 +1101,9 @@ export async function readCitation(
   ensureNonEmptyString(key, 'key');
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
   return toCitationResult(citation);
 }
@@ -915,15 +1113,21 @@ export async function createCitation(
   { key, data, tags = [], revSummary }: CitationWriteInput,
   userId: string
 ): Promise<CitationResult> {
-  ensureNonEmptyString(key, 'key');
-  ensureKeyLength(key, 'key', 200);
-  ensureNonEmptyString(userId, 'userId');
-  ensureObject(data, 'data');
-  validateRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid citation input.');
+  ensureNonEmptyString(key, 'key', errors);
+  if (key) {
+    ensureKeyLength(key, 'key', 200, errors);
+  }
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureObject(data, 'data', {}, errors);
+  validateRevSummary(revSummary, errors);
+  errors.throwIfAny();
 
   const existing = await findCurrentCitationByKey(key);
   if (existing) {
-    throw new Error(`Citation already exists: ${key}`);
+    throw new ConflictError(`Citation already exists: ${key}`, {
+      key,
+    });
   }
 
   const createdAt = new Date();
@@ -948,23 +1152,31 @@ export async function updateCitation(
   { key, newKey, data, tags = [], revSummary }: CitationUpdateInput,
   userId: string
 ): Promise<CitationResult> {
-  ensureNonEmptyString(key, 'key');
-  ensureKeyLength(key, 'key', 200);
-  ensureOptionalString(newKey, 'newKey');
-  if (newKey) ensureKeyLength(newKey, 'newKey', 200);
-  ensureNonEmptyString(userId, 'userId');
-  ensureObject(data, 'data');
-  requireRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid citation update input.');
+  ensureNonEmptyString(key, 'key', errors);
+  if (key) {
+    ensureKeyLength(key, 'key', 200, errors);
+  }
+  ensureOptionalString(newKey, 'newKey', errors);
+  if (newKey) ensureKeyLength(newKey, 'newKey', 200, errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureObject(data, 'data', {}, errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
 
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
 
   if (newKey && newKey !== key) {
     const keyMatch = await findCurrentCitationByKey(newKey);
     if (keyMatch) {
-      throw new Error(`Citation already exists: ${newKey}`);
+      throw new ConflictError(`Citation already exists: ${newKey}`, {
+        key: newKey,
+      });
     }
   }
 
@@ -986,7 +1198,9 @@ export async function listCitationRevisions(
 ): Promise<CitationRevisionListResult> {
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
 
   const tableName = Citation.tableName;
@@ -1012,12 +1226,16 @@ export async function readCitationRevision(
 ): Promise<CitationRevisionReadResult> {
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
 
   const revision = await fetchCitationRevisionByRevId(dalInstance, citation.id, revId);
   if (!revision) {
-    throw new Error(`Revision not found: ${revId}`);
+    throw new NotFoundError(`Revision not found: ${revId}`, {
+      revId,
+    });
   }
 
   return {
@@ -1032,18 +1250,24 @@ export async function diffCitationRevisions(
 ): Promise<CitationDiffResult> {
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {
-    throw new Error(`Citation not found: ${key}`);
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
   }
 
   const fromRev = await fetchCitationRevisionByRevId(dalInstance, citation.id, fromRevId);
   if (!fromRev) {
-    throw new Error(`Revision not found: ${fromRevId}`);
+    throw new NotFoundError(`Revision not found: ${fromRevId}`, {
+      revId: fromRevId,
+    });
   }
 
   const toRevisionId = toRevId ?? citation._revID;
   const toRev = await fetchCitationRevisionByRevId(dalInstance, citation.id, toRevisionId);
   if (!toRev) {
-    throw new Error(`Revision not found: ${toRevisionId}`);
+    throw new NotFoundError(`Revision not found: ${toRevisionId}`, {
+      revId: toRevisionId,
+    });
   }
 
   const fromKey = fromRev.key ?? '';

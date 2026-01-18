@@ -15,6 +15,7 @@ import {
   readBlogPostRevision,
   updateBlogPost,
 } from './blog-handlers.js';
+import { toToolErrorPayload } from './errors.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -66,6 +67,31 @@ export const createMcpServer = () => {
       structuredContent,
     };
   };
+
+  const formatToolErrorResult = (error: unknown): CallToolResult => {
+    const payload = toToolErrorPayload(error);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(payload, null, 2),
+        },
+      ],
+      structuredContent: payload,
+      isError: true,
+    };
+  };
+
+  const withToolErrorHandling =
+    <Args,>(handler: (args: Args, extra?: { authInfo?: AuthInfo }) => Promise<unknown>) =>
+    async (args: Args, extra?: { authInfo?: AuthInfo }) => {
+      try {
+        const payload = await handler(args, extra);
+        return formatToolResult(payload);
+      } catch (error) {
+        return formatToolErrorResult(error);
+      }
+    };
 
   const requireAuthUserId = async (extra?: { authInfo?: AuthInfo }) =>
     resolveAuthUserId({ authInfo: extra?.authInfo });
@@ -383,12 +409,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -403,12 +429,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -432,11 +458,11 @@ export const createMcpServer = () => {
         offset: z.number().int().optional(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await queryCitations(dal, args);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -454,12 +480,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()).nullable().optional(),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -478,12 +504,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -496,11 +522,11 @@ export const createMcpServer = () => {
         slug: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await listBlogPostRevisions(dal, args.slug);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -516,11 +542,11 @@ export const createMcpServer = () => {
         lang: z.string().optional(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await diffBlogPostRevisions(dal, args);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -533,11 +559,11 @@ export const createMcpServer = () => {
         slug: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readBlogPost(dal, args.slug);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -551,11 +577,11 @@ export const createMcpServer = () => {
         revId: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readBlogPostRevision(dal, args.slug, args.revId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -568,11 +594,11 @@ export const createMcpServer = () => {
         key: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await listCitationRevisions(dal, args.key);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -587,11 +613,11 @@ export const createMcpServer = () => {
         toRevId: z.string().optional(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await diffCitationRevisions(dal, args);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -604,11 +630,11 @@ export const createMcpServer = () => {
         key: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readCitation(dal, args.key);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -622,11 +648,11 @@ export const createMcpServer = () => {
         revId: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readCitationRevision(dal, args.key, args.revId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -642,12 +668,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -660,11 +686,11 @@ export const createMcpServer = () => {
         slug: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await listWikiPageRevisions(dal, args.slug);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -680,11 +706,11 @@ export const createMcpServer = () => {
         lang: z.string().optional(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await diffWikiPageRevisions(dal, args);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -697,11 +723,11 @@ export const createMcpServer = () => {
         slug: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPage(dal, args.slug);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -715,11 +741,11 @@ export const createMcpServer = () => {
         revId: z.string(),
       },
     },
-    async args => {
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPageRevision(dal, args.slug, args.revId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -738,7 +764,7 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await applyWikiPagePatch(
@@ -746,8 +772,8 @@ export const createMcpServer = () => {
         { ...args, tags: mergeTags(args.tags) },
         userId
       );
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -765,12 +791,12 @@ export const createMcpServer = () => {
         revSummary: z.record(z.string(), z.string()),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -784,12 +810,12 @@ export const createMcpServer = () => {
         lang: z.string().optional(),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await addWikiPageAlias(dal, args, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
   server.registerTool(
@@ -801,13 +827,13 @@ export const createMcpServer = () => {
         slug: z.string(),
       },
     },
-    async (args, extra) => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await removeWikiPageAlias(dal, args.slug, userId);
-      return formatToolResult(payload);
-    }
+      return payload;
+    })
   );
 
-  return { server, formatToolResult };
+  return { server, formatToolResult, formatToolErrorResult };
 };

@@ -5,92 +5,200 @@ import languages from '../../locales/languages.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  InvalidRequestError,
+  NotFoundError,
+  ValidationCollector,
+  ValidationError,
+} from './errors.js';
 
 const { mlString } = dal;
 
-const ensureNonEmptyString = (value: string | undefined | null, label: string) => {
+const ensureNonEmptyString = (
+  value: string | undefined | null,
+  label: string,
+  errors?: ValidationCollector
+) => {
   if (!value || !value.trim()) {
-    throw new Error(`${label} is required.`);
+    if (errors) {
+      errors.add(label, 'is required.', 'required');
+      return false;
+    }
+    throw new ValidationError(`${label} is required.`, [
+      { field: label, message: 'is required.', code: 'required' },
+    ]);
   }
+  return true;
 };
 
-const normalizeSlugInput = (value: string, label: string) => {
-  ensureNonEmptyString(value, label);
+const normalizeSlugInput = (value: string, label: string, errors?: ValidationCollector) => {
+  if (!ensureNonEmptyString(value, label, errors)) return '';
   const normalized = normalizeSlug(value);
   if (!normalized) {
-    throw new Error(`${label} is required.`);
+    if (errors) {
+      errors.add(label, 'is required.', 'required');
+      return '';
+    }
+    throw new ValidationError(`${label} is required.`, [
+      { field: label, message: 'is required.', code: 'required' },
+    ]);
   }
   return normalized;
 };
 
-const normalizeOptionalSlug = (value: string | undefined | null, label: string) => {
-  ensureOptionalString(value, label);
+const normalizeOptionalSlug = (
+  value: string | undefined | null,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  ensureOptionalString(value, label, errors);
   if (!value) return undefined;
   const normalized = normalizeSlug(value);
   if (!normalized) {
-    throw new Error(`${label} is required.`);
+    if (errors) {
+      errors.add(label, 'is required.', 'required');
+      return undefined;
+    }
+    throw new ValidationError(`${label} is required.`, [
+      { field: label, message: 'is required.', code: 'required' },
+    ]);
   }
   return normalized;
 };
 
-const ensureOptionalString = (value: string | undefined | null, label: string) => {
+const ensureOptionalString = (
+  value: string | undefined | null,
+  label: string,
+  errors?: ValidationCollector
+) => {
   if (value !== undefined && value !== null && typeof value !== 'string') {
-    throw new Error(`${label} must be a string.`);
+    if (errors) {
+      errors.add(label, 'must be a string.', 'type');
+      return;
+    }
+    throw new ValidationError(`${label} must be a string.`, [
+      { field: label, message: 'must be a string.', code: 'type' },
+    ]);
   }
 };
 
-const ensureOptionalLanguage = (value: string | undefined | null, label: string) => {
-  ensureOptionalString(value, label);
+const ensureOptionalLanguage = (
+  value: string | undefined | null,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  ensureOptionalString(value, label, errors);
   if (!value) return;
   if (!languages.isValid(value)) {
-    throw new Error(`${label} must be a supported locale code.`);
+    if (errors) {
+      errors.add(label, 'must be a supported locale code.', 'invalid');
+      return;
+    }
+    throw new ValidationError(`${label} must be a supported locale code.`, [
+      { field: label, message: 'must be a supported locale code.', code: 'invalid' },
+    ]);
   }
 };
 
-const ensureObject = (value: unknown, label: string) => {
+const ensureObject = (value: unknown, label: string, errors?: ValidationCollector) => {
   if (value && typeof value === 'object') return;
-  throw new Error(`${label} must be an object.`);
+  if (errors) {
+    errors.add(label, 'must be an object.', 'type');
+    return;
+  }
+  throw new ValidationError(`${label} must be an object.`, [
+    { field: label, message: 'must be an object.', code: 'type' },
+  ]);
 };
 
 const ensureNonEmptySlug = (slug: string) => normalizeSlugInput(slug, 'slug');
 
-const validateTitle = (value: Record<string, string> | null | undefined) => {
+const validateTitle = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined || value === null) return;
-  ensureObject(value, 'title');
+  ensureObject(value, 'title', errors);
 };
 
-const validateBody = (value: Record<string, string> | null | undefined) => {
+const validateBody = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined || value === null) return;
-  ensureObject(value, 'body');
+  ensureObject(value, 'body', errors);
 };
 
-const validateSummary = (value: Record<string, string> | null | undefined) => {
+const validateSummary = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined || value === null) return;
-  ensureObject(value, 'summary');
+  ensureObject(value, 'summary', errors);
 };
 
-const validateRevSummary = (value: Record<string, string> | null | undefined) => {
+const validateRevSummary = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === undefined || value === null) return;
-  ensureObject(value, 'revSummary');
+  ensureObject(value, 'revSummary', errors);
   for (const [lang, summary] of Object.entries(value)) {
     if (summary.length > 300) {
-      throw new Error(`revSummary for ${lang} must be 300 characters or less.`);
+      if (errors) {
+        errors.add(`revSummary.${lang}`, 'must be 300 characters or less.', 'max_length');
+        continue;
+      }
+      throw new ValidationError(`revSummary for ${lang} must be 300 characters or less.`, [
+        {
+          field: `revSummary.${lang}`,
+          message: 'must be 300 characters or less.',
+          code: 'max_length',
+        },
+      ]);
     }
   }
 };
 
-const requireRevSummary = (value: Record<string, string> | null | undefined) => {
+const requireRevSummary = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
   if (value === null || value === undefined) {
-    throw new Error('revSummary is required for updates.');
+    if (errors) {
+      errors.addMissing('revSummary');
+      return;
+    }
+    throw new ValidationError('revSummary is required for updates.', [
+      { field: 'revSummary', message: 'is required.', code: 'required' },
+    ]);
   }
-  validateRevSummary(value);
+  validateRevSummary(value, errors);
   const entries = Object.entries(value);
   if (entries.length === 0) {
-    throw new Error('revSummary must include at least one language entry.');
+    if (errors) {
+      errors.add('revSummary', 'must include at least one language entry.', 'invalid');
+      return;
+    }
+    throw new ValidationError('revSummary must include at least one language entry.', [
+      { field: 'revSummary', message: 'must include at least one language entry.', code: 'invalid' },
+    ]);
   }
   for (const [lang, summary] of entries) {
     if (!lang || !summary || summary.trim().length === 0) {
-      throw new Error('revSummary entries must be non-empty strings.');
+      if (errors) {
+        errors.add(`revSummary.${lang || 'unknown'}`, 'must be a non-empty string.', 'invalid');
+        continue;
+      }
+      throw new ValidationError('revSummary entries must be non-empty strings.', [
+        {
+          field: `revSummary.${lang || 'unknown'}`,
+          message: 'must be a non-empty string.',
+          code: 'invalid',
+        },
+      ]);
     }
   }
 };
@@ -249,7 +357,7 @@ const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) =
     [userId, 'blog_author']
   );
   if (result.rowCount === 0) {
-    throw new Error('User does not have blog_author role.');
+    throw new ForbiddenError('User does not have blog_author role.');
   }
 };
 
@@ -277,7 +385,9 @@ export async function readBlogPost(
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   return toBlogPostResult(post);
 }
@@ -288,16 +398,18 @@ export async function readBlogPostResource(
 ): Promise<{ contents: Array<{ uri: string; mimeType: string; text: string }> }> {
   const parsed = new URL(uri);
   if (parsed.hostname !== 'blog') {
-    throw new Error(`Unknown MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
   }
   const slug = parsed.searchParams.get('slug') ?? '';
   if (!slug) {
-    throw new Error(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
   }
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   const payload = {
     ...toBlogPostResult(post),
@@ -318,18 +430,22 @@ export async function createBlogPost(
   { slug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostWriteInput,
   userId: string
 ): Promise<BlogPostResult> {
-  const normalizedSlug = ensureNonEmptySlug(slug);
-  ensureNonEmptyString(userId, 'userId');
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
-  validateTitle(title);
-  validateBody(body);
-  validateSummary(summary);
-  validateRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid blog post input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  validateTitle(title, errors);
+  validateBody(body, errors);
+  validateSummary(summary, errors);
+  validateRevSummary(revSummary, errors);
+  errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
   const existing = await findCurrentPostBySlug(normalizedSlug);
   if (existing) {
-    throw new Error(`Blog post already exists: ${normalizedSlug}`);
+    throw new ConflictError(`Blog post already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
 
   const createdAt = new Date();
@@ -355,24 +471,30 @@ export async function updateBlogPost(
   { slug, newSlug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostUpdateInput,
   userId: string
 ): Promise<BlogPostResult> {
-  const normalizedSlug = ensureNonEmptySlug(slug);
-  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug');
-  ensureNonEmptyString(userId, 'userId');
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage');
-  validateTitle(title);
-  validateBody(body);
-  validateSummary(summary);
-  requireRevSummary(revSummary);
+  const errors = new ValidationCollector('Invalid blog post update input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  validateTitle(title, errors);
+  validateBody(body, errors);
+  validateSummary(summary, errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
     const slugMatch = await findCurrentPostBySlug(normalizedNewSlug);
     if (slugMatch) {
-      throw new Error(`Blog post already exists: ${normalizedNewSlug}`);
+      throw new ConflictError(`Blog post already exists: ${normalizedNewSlug}`, {
+        slug: normalizedNewSlug,
+      });
     }
   }
 
@@ -396,7 +518,9 @@ export async function listBlogPostRevisions(
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   const tableName = BlogPost.tableName;
   const result = await dalInstance.query(
@@ -418,7 +542,9 @@ export async function readBlogPostRevision(
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   const result = await dalInstance.query(
     `SELECT * FROM ${BlogPost.tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
@@ -426,7 +552,9 @@ export async function readBlogPostRevision(
   );
   const [row] = result.rows;
   if (!row) {
-    throw new Error(`Revision not found: ${revId}`);
+    throw new NotFoundError(`Revision not found: ${revId}`, {
+      revId,
+    });
   }
   const revision = BlogPost.createFromRow(row);
   return {
@@ -443,7 +571,9 @@ export async function diffBlogPostRevisions(
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
-    throw new Error(`Blog post not found: ${normalizedSlug}`);
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
   }
   const fetchRevisionByRevId = async (revId: string) => {
     const result = await dalInstance.query(
@@ -455,12 +585,16 @@ export async function diffBlogPostRevisions(
   };
   const fromRev = await fetchRevisionByRevId(fromRevId);
   if (!fromRev) {
-    throw new Error(`Revision not found: ${fromRevId}`);
+    throw new NotFoundError(`Revision not found: ${fromRevId}`, {
+      revId: fromRevId,
+    });
   }
   const toRevisionId = toRevId ?? post._revID;
   const toRev = await fetchRevisionByRevId(toRevisionId);
   if (!toRev) {
-    throw new Error(`Revision not found: ${toRevisionId}`);
+    throw new NotFoundError(`Revision not found: ${toRevisionId}`, {
+      revId: toRevisionId,
+    });
   }
   const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
   const toTitle = mlString.resolve(lang, toRev.title ?? null)?.str ?? '';

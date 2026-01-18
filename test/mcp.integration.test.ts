@@ -5,6 +5,7 @@ import test from 'node:test';
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthUserId } from '../src/mcp/auth.js';
 import { createBlogPost } from '../src/mcp/blog-handlers.js';
+import { ValidationError } from '../src/mcp/errors.js';
 import {
   applyWikiPagePatch,
   createCitation,
@@ -302,7 +303,11 @@ test('MCP rejects invalid language codes', async () => {
           },
           userId
         ),
-      /supported locale/i
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'originalLanguage'));
+        return true;
+      }
     );
 
     await assert.rejects(
@@ -318,7 +323,11 @@ test('MCP rejects invalid language codes', async () => {
           },
           userId
         ),
-      /supported locale/i
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'lang'));
+        return true;
+      }
     );
 
     await assert.rejects(
@@ -333,7 +342,55 @@ test('MCP rejects invalid language codes', async () => {
           },
           userId
         ),
-      /supported locale/i
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'originalLanguage'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP aggregates validation errors for wiki patch inputs', async () => {
+  const dal = await getDal();
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await assert.rejects(
+      () =>
+        applyWikiPagePatch(
+          dal,
+          {
+            slug: '',
+            patch: '',
+            format: 'bad' as unknown as 'unified',
+            lang: 'xx',
+            revSummary: null as unknown as Record<string, string>,
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors);
+        assert.ok(error.fieldErrors.length >= 4);
+        return true;
+      }
     );
   } finally {
     try {

@@ -5,7 +5,7 @@ import { registerWebFetchTool } from './web-tool.js';
 
 const transport = new StdioServerTransport();
 
-const { server, formatToolResult } = createMcpServer();
-registerWebFetchTool(server, formatToolResult);
+const { server, formatToolResult, formatToolErrorResult } = createMcpServer();
+registerWebFetchTool(server, formatToolResult, formatToolErrorResult);
 
 await server.connect(transport);
