@@ -1,4 +1,5 @@
 const RESERVED_SLUGS = new Set([
+  '.well-known',
   'health',
   'api',
   'mcp',

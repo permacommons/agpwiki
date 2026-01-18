@@ -9,6 +9,9 @@ export type OAuthConfig = {
   refreshTokenTtlSeconds: number;
   allowDynamicClientRegistration: boolean;
   defaultScopes: string[];
+  issuerUrl?: string;
+  resourceServerUrl?: string;
+  resourceName?: string;
 };
 
 const defaultConfig: OAuthConfig = {

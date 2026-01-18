@@ -6,6 +6,8 @@ import { isBlockedSlug } from '../src/lib/slug.js';
 test('isBlockedSlug blocks empty or reserved prefixes', () => {
   assert.equal(isBlockedSlug(''), true);
   assert.equal(isBlockedSlug('health'), true);
+  assert.equal(isBlockedSlug('.well-known'), true);
+  assert.equal(isBlockedSlug('.well-known/oauth-authorization-server'), true);
   assert.equal(isBlockedSlug('api/status'), true);
   assert.equal(isBlockedSlug('mcp/tools'), true);
   assert.equal(isBlockedSlug('search'), true);

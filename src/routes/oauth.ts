@@ -98,7 +98,74 @@ const isValidAuthMethod = (method: string) =>
 
 const getRequestBodyValue = (req: Request, key: string) => pickString(req.body?.[key]);
 
+const getIssuerUrl = (req: Request) => {
+  const oauthConfig = getOAuthConfig();
+  if (oauthConfig.issuerUrl) return new URL(oauthConfig.issuerUrl);
+  const host = req.get('host');
+  const protocol = req.protocol;
+  if (!host) {
+    throw new Error('Missing Host header.');
+  }
+  return new URL(`${protocol}://${host}`);
+};
+
+const getResourceServerUrl = (_req: Request, issuer: URL) => {
+  const oauthConfig = getOAuthConfig();
+  if (oauthConfig.resourceServerUrl) return new URL(oauthConfig.resourceServerUrl);
+  return new URL('/mcp', issuer.origin);
+};
+
+const buildOAuthMetadata = (req: Request) => {
+  const oauthConfig = getOAuthConfig();
+  const issuer = getIssuerUrl(req);
+  const baseUrl = new URL(issuer.origin);
+
+  return {
+    issuer: baseUrl.origin,
+    authorization_endpoint: new URL('/tool/oauth/authorize', baseUrl).href,
+    token_endpoint: new URL('/tool/oauth/token', baseUrl).href,
+    registration_endpoint: oauthConfig.allowDynamicClientRegistration
+      ? new URL('/tool/oauth/register', baseUrl).href
+      : undefined,
+    response_types_supported: ['code'],
+    code_challenge_methods_supported: ['S256', 'plain'],
+    token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
+    scopes_supported: oauthConfig.defaultScopes,
+  };
+};
+
+const buildProtectedResourceMetadata = (req: Request) => {
+  const oauthConfig = getOAuthConfig();
+  const issuer = getIssuerUrl(req);
+  const resourceServerUrl = getResourceServerUrl(req, issuer);
+  return {
+    resource: resourceServerUrl.href,
+    authorization_servers: [new URL(issuer.origin).href],
+    scopes_supported: oauthConfig.defaultScopes,
+    resource_name: oauthConfig.resourceName ?? 'AGP Wiki MCP',
+  };
+};
+
 export const registerOAuthRoutes = (app: Express) => {
+  app.get('/.well-known/oauth-authorization-server', (req, res) => {
+    try {
+      res.json(buildOAuthMetadata(req));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ error: 'invalid_request', error_description: message });
+    }
+  });
+
+  app.get('/.well-known/oauth-protected-resource/mcp', (req, res) => {
+    try {
+      res.json(buildProtectedResourceMetadata(req));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(400).json({ error: 'invalid_request', error_description: message });
+    }
+  });
+
   app.get('/tool/oauth/authorize', async (req, res) => {
     const responseType = pickString(req.query.response_type);
     const clientId = pickString(req.query.client_id);
