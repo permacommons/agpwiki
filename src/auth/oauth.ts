@@ -16,7 +16,7 @@ export type OAuthConfig = {
 
 const defaultConfig: OAuthConfig = {
   authorizationCodeTtlSeconds: 600,
-  accessTokenTtlSeconds: 3600,
+  accessTokenTtlSeconds: 28800,
   refreshTokenTtlSeconds: 1209600,
   allowDynamicClientRegistration: true,
   defaultScopes: ['mcp.read', 'mcp.write'],
