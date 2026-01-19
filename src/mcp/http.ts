@@ -10,6 +10,7 @@ import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
 import { resolveAuthInfoFromToken } from './auth.js';
 import { createMcpServer } from './core.js';
+import { getUserRoles } from './roles.js';
 
 type McpConfig = {
   host?: string;
@@ -105,7 +106,9 @@ app.all('/mcp', authMiddleware, async (req, res) => {
     transport = entry.transport;
     server = entry.server;
   } else if (req.method === 'POST' && isInitializeRequest(req.body)) {
-    const mcp = createMcpServer();
+    const dal = await initializePostgreSQL();
+    const userRoles = await getUserRoles(dal, userId);
+    const mcp = createMcpServer({ userRoles });
     server = mcp.server;
     transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: () => randomUUID(),

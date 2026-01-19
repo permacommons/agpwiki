@@ -5,14 +5,20 @@ import test from 'node:test';
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthUserId } from '../src/mcp/auth.js';
 import { createBlogPost } from '../src/mcp/blog-handlers.js';
-import { ValidationError } from '../src/mcp/errors.js';
+import { createMcpServer } from '../src/mcp/core.js';
+import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
 import {
   applyWikiPagePatch,
   createCitation,
   createWikiPage,
+  deleteCitation,
+  deleteWikiPage,
   listWikiPageRevisions,
+  readCitation,
+  readWikiPage,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
+import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
 import ApiToken from '../src/models/api-token.js';
 import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
@@ -403,4 +409,139 @@ test('MCP aggregates validation errors for wiki patch inputs', async () => {
     }
     delete process.env.AGPWIKI_MCP_TOKEN;
   }
+});
+
+test('MCP deleteWikiPage soft-deletes a page', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-delete-page-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Page to Delete' },
+        body: { en: 'Content to delete.' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const readBefore = await readWikiPage(dal, slug);
+    assert.equal(readBefore.slug, slug);
+
+    const deleteResult = await deleteWikiPage(
+      dal,
+      { slug, revSummary: { en: 'Admin deletion.' } },
+      userId
+    );
+
+    assert.equal(deleteResult.deleted, true);
+    assert.equal(deleteResult.slug, slug);
+
+    await assert.rejects(
+      () => readWikiPage(dal, slug),
+      error => {
+        assert.ok(error instanceof NotFoundError);
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP deleteCitation soft-deletes a citation', async () => {
+  const dal = await getDal();
+  const citationKey = `test-delete-cite-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation to Delete',
+          URL: 'https://example.com/delete-test',
+        },
+      },
+      userId
+    );
+
+    const readBefore = await readCitation(dal, citationKey);
+    assert.equal(readBefore.key, citationKey);
+
+    const deleteResult = await deleteCitation(
+      dal,
+      { key: citationKey, revSummary: { en: 'Admin deletion.' } },
+      userId
+    );
+
+    assert.equal(deleteResult.deleted, true);
+    assert.equal(deleteResult.key, citationKey);
+
+    await assert.rejects(
+      () => readCitation(dal, citationKey),
+      error => {
+        assert.ok(error instanceof NotFoundError);
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP admin tools are disabled without wiki_admin role', () => {
+  const mcpWithoutRole = createMcpServer({ userRoles: [] });
+  assert.ok(mcpWithoutRole.adminTools.wikiDeletePageTool);
+  assert.ok(mcpWithoutRole.adminTools.citationDeleteTool);
+
+  assert.equal(mcpWithoutRole.adminTools.wikiDeletePageTool.enabled, false);
+  assert.equal(mcpWithoutRole.adminTools.citationDeleteTool.enabled, false);
+});
+
+test('MCP admin tools are enabled with wiki_admin role', () => {
+  const mcpWithRole = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
+  assert.ok(mcpWithRole.adminTools.wikiDeletePageTool);
+  assert.ok(mcpWithRole.adminTools.citationDeleteTool);
+
+  assert.equal(mcpWithRole.adminTools.wikiDeletePageTool.enabled, true);
+  assert.equal(mcpWithRole.adminTools.citationDeleteTool.enabled, true);
 });

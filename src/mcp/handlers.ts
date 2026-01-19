@@ -123,6 +123,28 @@ export interface WikiPageAliasDeleteResult {
   removed: boolean;
 }
 
+export interface WikiPageDeleteInput {
+  slug: string;
+  revSummary: Record<string, string>;
+}
+
+export interface WikiPageDeleteResult {
+  id: string;
+  slug: string;
+  deleted: boolean;
+}
+
+export interface CitationDeleteInput {
+  key: string;
+  revSummary: Record<string, string>;
+}
+
+export interface CitationDeleteResult {
+  id: string;
+  key: string;
+  deleted: boolean;
+}
+
 export interface WikiPageDiffResult {
   pageId: string;
   fromRevId: string;
@@ -1371,5 +1393,59 @@ export async function queryCitations(
     offset: normalizedOffset,
     hasMore,
     nextOffset: hasMore ? normalizedOffset + normalizedLimit : null,
+  };
+}
+
+export async function deleteWikiPage(
+  _dalInstance: DataAccessLayer,
+  { slug, revSummary }: WikiPageDeleteInput,
+  userId: string
+): Promise<WikiPageDeleteResult> {
+  const errors = new ValidationCollector('Invalid wiki page delete input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) {
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+
+  return {
+    id: page.id,
+    slug: page.slug,
+    deleted: true,
+  };
+}
+
+export async function deleteCitation(
+  _dalInstance: DataAccessLayer,
+  { key, revSummary }: CitationDeleteInput,
+  userId: string
+): Promise<CitationDeleteResult> {
+  const errors = new ValidationCollector('Invalid citation delete input.');
+  ensureNonEmptyString(key, 'key', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const citation = await findCurrentCitationByKey(key);
+  if (!citation) {
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
+  }
+
+  await citation.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+
+  return {
+    id: citation.id,
+    key: citation.key,
+    deleted: true,
   };
 }

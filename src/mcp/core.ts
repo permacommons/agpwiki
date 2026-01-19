@@ -21,6 +21,8 @@ import {
   applyWikiPagePatch,
   createCitation,
   createWikiPage,
+  deleteCitation,
+  deleteWikiPage,
   diffCitationRevisions,
   diffWikiPageRevisions,
   listCitationRevisions,
@@ -38,10 +40,16 @@ import {
   updateWikiPage,
 } from './handlers.js';
 import { registerPrompts } from './prompts.js';
+import { hasRole, WIKI_ADMIN_ROLE } from './roles.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 
-export const createMcpServer = () => {
+export interface CreateMcpServerOptions {
+  userRoles?: string[];
+}
+
+export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
+  const { userRoles = [] } = options;
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -836,7 +844,50 @@ export const createMcpServer = () => {
     })
   );
 
+  const wikiDeletePageTool = server.registerTool(
+    'wiki_deletePage',
+    {
+      title: 'Delete Wiki Page',
+      description: 'Soft-delete a wiki page and all its revisions. Requires wiki_admin role.',
+      inputSchema: {
+        slug: z.string(),
+        revSummary: z.record(z.string(), z.string()),
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await deleteWikiPage(dal, { ...args }, userId);
+      return payload;
+    })
+  );
+
+  const citationDeleteTool = server.registerTool(
+    'citation_delete',
+    {
+      title: 'Delete Citation',
+      description: 'Soft-delete a citation and all its revisions. Requires wiki_admin role.',
+      inputSchema: {
+        key: z.string(),
+        revSummary: z.record(z.string(), z.string()),
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await deleteCitation(dal, { ...args }, userId);
+      return payload;
+    })
+  );
+
+  const adminTools = { wikiDeletePageTool, citationDeleteTool };
+
+  if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
+    wikiDeletePageTool.disable();
+    citationDeleteTool.disable();
+  }
+
   registerPrompts(server);
 
-  return { server, formatToolResult, formatToolErrorResult };
+  return { server, formatToolResult, formatToolErrorResult, adminTools };
 };
