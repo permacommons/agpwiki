@@ -4,10 +4,18 @@ import test from 'node:test';
 import { renderRevisionHistory } from '../src/routes/lib/history.js';
 
 test('renderRevisionHistory marks default diff selections', () => {
+  const t = (key: string) => {
+    if (key === 'history.view') return 'View';
+    if (key === 'history.title') return 'Version history';
+    if (key === 'history.compare') return 'Compare selected revisions';
+    return key;
+  };
+
   const html = renderRevisionHistory({
     action: '/tool/test',
     viewHref: revId => `/tool/test?rev=${revId}`,
     userMap: new Map(),
+    t: t as any,
     revisions: [
       {
         revId: 'rev-2',

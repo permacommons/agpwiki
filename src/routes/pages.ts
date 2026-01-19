@@ -112,10 +112,10 @@ export const registerPageRoutes = (app: Express) => {
       const canonicalSlug = page.slug;
       const title = resolvedTitle?.str ?? canonicalSlug;
       const metaLabel = canonicalSlug.startsWith('meta/')
-        ? '<div class="page-label">META — PAGE ABOUT AGPEDIA</div>'
+        ? `<div class="page-label">${req.t('label.meta')}</div>`
         : canonicalSlug.startsWith('tool/')
-          ? '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>'
-          : '<div class="page-label">FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE</div>';
+          ? `<div class="page-label">${req.t('label.tool')}</div>`
+          : `<div class="page-label">${req.t('label.article')}</div>`;
       const bodySource = resolvedBody?.str ?? '';
 
       if (formatParam === 'raw') {
@@ -177,6 +177,7 @@ export const registerPageRoutes = (app: Express) => {
         action: `/${canonicalSlug}`,
         viewHref: revId => `/${canonicalSlug}?rev=${revId}`,
         userMap,
+        t: req.t,
       });
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
@@ -188,6 +189,8 @@ export const registerPageRoutes = (app: Express) => {
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
+        locale: res.locals.locale,
+        languageOptions: res.locals.languageOptions,
       });
       res.type('html').send(html);
     } catch (error) {

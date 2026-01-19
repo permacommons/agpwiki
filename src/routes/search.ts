@@ -34,20 +34,22 @@ export const registerSearchRoutes = (app: Express) => {
       .join('');
 
     const bodyHtml = `<div class="tool-page">
-  <p>Search page titles and slugs.</p>
+  <p>${req.t('search.description')}</p>
   <form method="get" action="/search">
     <input class="search-input" type="search" name="q" value="${escapeHtml(
       query
-    )}" placeholder="Search titles..." />
+    )}" placeholder="${req.t('search.placeholder')}" />
   </form>
   <ul class="change-list">${resultsHtml}</ul>
 </div>`;
 
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
-      title: 'Search',
+      title: req.t('search.title'),
       bodyHtml,
       signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
     });
     res.type('html').send(html);
   });

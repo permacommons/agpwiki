@@ -40,7 +40,9 @@ export const registerBlogRoutes = (app: Express) => {
           const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
           const updatedHtml =
             updatedLabel && updatedLabel !== createdLabel
-              ? `<span class="post-updated">Updated ${escapeHtml(updatedLabel)}</span>`
+              ? `<span class="post-updated">${req.t('blog.updated', {
+                  date: escapeHtml(updatedLabel),
+                })}</span>`
               : '';
           const summaryHtml = summary
             ? `<div class="post-summary">${escapeHtml(summary)}</div>`
@@ -48,7 +50,9 @@ export const registerBlogRoutes = (app: Express) => {
           return `<li>
   <h2><a href="/blog/${escapeHtml(post.slug)}">${escapeHtml(title)}</a></h2>
   <div class="post-meta">
-    <span class="post-created">Created ${escapeHtml(createdLabel)}</span>
+    <span class="post-created">${req.t('blog.created', {
+      date: escapeHtml(createdLabel),
+    })}</span>
     ${updatedHtml}
   </div>
   ${summaryHtml}
@@ -57,16 +61,18 @@ export const registerBlogRoutes = (app: Express) => {
         .join('');
 
       const bodyHtml = `<div class="blog-list">
-  <p>Blog posts from Agpedia editors.</p>
+  <p>${req.t('blog.description')}</p>
   <ol class="post-list">${items}</ol>
 </div>`;
 
-      const labelHtml = '<div class="page-label">BLOG POST — FROM THE AGPEDIA TEAM</div>';
+      const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       const html = renderLayout({
-        title: 'Blog',
+        title: req.t('page.blog'),
         labelHtml,
         bodyHtml,
         signedIn,
+        locale: res.locals.locale,
+        languageOptions: res.locals.languageOptions,
       });
       res.type('html').send(html);
     } catch (error) {
@@ -130,7 +136,9 @@ export const registerBlogRoutes = (app: Express) => {
       const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
       const updatedHtml =
         updatedLabel && updatedLabel !== createdLabel
-          ? `<span class="post-updated">Updated ${escapeHtml(updatedLabel)}</span>`
+          ? `<span class="post-updated">${req.t('blog.updated', {
+              date: escapeHtml(updatedLabel),
+            })}</span>`
           : '';
       const bodySource = resolvedBody?.str ?? '';
       const citationKeys = extractCitationKeys(bodySource);
@@ -188,6 +196,7 @@ export const registerBlogRoutes = (app: Express) => {
         action: `/blog/${slug}`,
         viewHref: revId => `/blog/${slug}?rev=${revId}`,
         userMap,
+        t: req.t,
       });
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
@@ -195,10 +204,12 @@ export const registerBlogRoutes = (app: Express) => {
         ? `<div class="post-summary">${escapeHtml(summary)}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">
-  <span class="post-created">Created ${escapeHtml(createdLabel)}</span>
+  <span class="post-created">${req.t('blog.created', {
+    date: escapeHtml(createdLabel),
+  })}</span>
   ${updatedHtml}
 </div>`;
-      const labelHtml = '<div class="page-label">BLOG POST — FROM THE AGPEDIA TEAM</div>';
+      const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
       const html = renderLayout({
         title,
@@ -207,6 +218,8 @@ export const registerBlogRoutes = (app: Express) => {
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
+        locale: res.locals.locale,
+        languageOptions: res.locals.languageOptions,
       });
       res.type('html').send(html);
     } catch (error) {

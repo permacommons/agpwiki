@@ -1,18 +1,26 @@
 <header class="site-header">
   <div class="nav-left">
-    <a class="home-link" href="/meta/welcome">Agpedia</a>
-    <a class="nav-link" href="/blog">Blog</a>
-    <a class="nav-link" href="/tool/recent-changes">Recent changes</a>
+    <a class="home-link" href="/meta/welcome">{{__ "nav.home"}}</a>
+    <a class="nav-link" href="/blog">{{__ "nav.blog"}}</a>
+    <a class="nav-link" href="/tool/recent-changes">{{__ "nav.recentChanges"}}</a>
     {{#if signedIn}}
     <form class="nav-form" method="post" action="/tool/auth/logout">
-      <button class="nav-link nav-button" type="submit">Sign out</button>
+      <button class="nav-link nav-button" type="submit">{{__ "nav.signOut"}}</button>
     </form>
     {{else}}
-    <a class="nav-link" href="/meta/contributing">Contribute</a>
+    <a class="nav-link" href="/meta/contributing">{{__ "nav.contribute"}}</a>
     {{/if}}
   </div>
   <form class="search-form" action="/search" method="get">
-    <input class="search-input" type="search" name="q" placeholder="Search titles..." autocomplete="off" />
+    <input class="search-input" type="search" name="q" placeholder="{{__ "search.placeholder"}}" autocomplete="off" />
     <ul class="search-suggestions" role="listbox"></ul>
+  </form>
+  <form class="lang-form" method="post" action="/set-locale">
+    <select class="lang-selector" name="locale" onchange="this.form.submit()">
+      {{#each languageOptions}}
+      <option value="{{this.code}}" {{#if (eq this.code ../locale)}}selected{{/if}}>{{this.label}}</option>
+      {{/each}}
+    </select>
+    <noscript><button type="submit">{{__ "language.selector"}}</button></noscript>
   </form>
 </header>

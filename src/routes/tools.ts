@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import type { TFunction } from 'i18next';
 
 import dal from '../../dal/index.js';
 import { resolveSessionUser } from '../auth/session.js';
@@ -34,14 +35,18 @@ const parseRecentLimit = (limitQuery: unknown) => {
 const resolveRevSummary = (value: Record<string, string> | null) =>
   mlString.resolve('en', value ?? null)?.str ?? '';
 
-const renderRecentList = (items: RecentListItem[], userMap: Map<string, string>) =>
+const renderRecentList = (
+  items: RecentListItem[],
+  userMap: Map<string, string>,
+  t: TFunction
+) =>
   items
     .map(item => {
       const displayName = item.revUser ? userMap.get(item.revUser) ?? item.revUser : '';
       const agentTag = item.revTags.find(tag => tag.startsWith('agent:')) ?? '';
       const agentVersion = item.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
       const metaLabelParts = [
-        displayName ? `operator: ${displayName}` : null,
+        displayName ? t('history.operator', { name: displayName }) : null,
         agentTag || null,
         agentVersion || null,
       ].filter(Boolean);
@@ -128,11 +133,11 @@ export const registerToolRoutes = (app: Express) => {
     const userMap = await fetchUserMap(dalInstance, userIds);
     const items: RecentListItem[] = changes.map(change => {
       const actions: RecentListAction[] = [
-        { label: 'View', href: `/${change.slug}?rev=${change.revId}` },
+        { label: req.t('tool.view'), href: `/${change.slug}?rev=${change.revId}` },
       ];
       if (change.prevRevId) {
         actions.push({
-          label: 'Diff',
+          label: req.t('tool.diff'),
           href: `/${change.slug}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
         });
       }
@@ -146,20 +151,25 @@ export const registerToolRoutes = (app: Express) => {
         actions,
       };
     });
-    const itemsHtml = renderRecentList(items, userMap);
+    const itemsHtml = renderRecentList(items, userMap, req.t);
 
     const bodyHtml = `<div class="tool-page">
-  <p>Latest edits across the wiki.</p>
-  <p>See also: <a href="/tool/recent-citations">Recent citations</a></p>
+  <p>${req.t('tool.recentChangesDescription')}</p>
+  <p>${req.t('tool.seeAlso', {
+    url: '/tool/recent-citations',
+    label: req.t('page.recentCitations'),
+  })}</p>
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
-    const labelHtml = '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>';
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
-      title: 'Recent Changes',
+      title: req.t('page.recentChanges'),
       labelHtml,
       bodyHtml,
       signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
     });
     res.type('html').send(html);
   });
@@ -216,11 +226,11 @@ export const registerToolRoutes = (app: Express) => {
     const items: RecentListItem[] = changes.map(change => {
       const encodedKey = encodeURIComponent(change.key);
       const actions: RecentListAction[] = [
-        { label: 'View', href: `/cite/${encodedKey}?rev=${change.revId}` },
+        { label: req.t('tool.view'), href: `/cite/${encodedKey}?rev=${change.revId}` },
       ];
       if (change.prevRevId) {
         actions.push({
-          label: 'Diff',
+          label: req.t('tool.diff'),
           href: `/cite/${encodedKey}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
         });
       }
@@ -234,20 +244,25 @@ export const registerToolRoutes = (app: Express) => {
         actions,
       };
     });
-    const itemsHtml = renderRecentList(items, userMap);
+    const itemsHtml = renderRecentList(items, userMap, req.t);
 
     const bodyHtml = `<div class="tool-page">
-  <p>Latest edits to citation entries.</p>
-  <p>See also: <a href="/tool/recent-changes">Recent changes</a></p>
+  <p>${req.t('tool.recentCitationsDescription')}</p>
+  <p>${req.t('tool.seeAlso', {
+    url: '/tool/recent-changes',
+    label: req.t('page.recentChanges'),
+  })}</p>
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
-    const labelHtml = '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>';
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
-      title: 'Recent Citations',
+      title: req.t('page.recentCitations'),
       labelHtml,
       bodyHtml,
       signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
     });
     res.type('html').send(html);
   });
@@ -302,24 +317,26 @@ export const registerToolRoutes = (app: Express) => {
       .join('');
 
     const pagination = `<div class="history-actions">
-  ${prevLink ? `<a href="${prevLink}">Previous</a>` : ''}
-  <span>Page ${page} of ${totalPages}</span>
-  ${nextLink ? `<a href="${nextLink}">Next</a>` : ''}
+  ${prevLink ? `<a href="${prevLink}">${req.t('tool.previous')}</a>` : ''}
+  <span>${req.t('tool.pagination', { page, totalPages })}</span>
+  ${nextLink ? `<a href="${nextLink}">${req.t('tool.next')}</a>` : ''}
 </div>`;
 
     const bodyHtml = `<div class="tool-page">
-  <p>Encyclopedia pages (${total} total).</p>
+  <p>${req.t('tool.pagesDescription', { total })}</p>
   ${pagination}
   <ul class="change-list">${listItems}</ul>
   ${pagination}
 </div>`;
-    const labelHtml = '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>';
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
-      title: 'Pages',
+      title: req.t('page.pages'),
       labelHtml,
       bodyHtml,
       signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
     });
     res.type('html').send(html);
   });

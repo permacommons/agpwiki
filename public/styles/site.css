@@ -116,6 +116,31 @@ header.site-header {
 .search-suggestions li a:hover {
   background: var(--panel);
 }
+.lang-form {
+  margin: 0;
+}
+.lang-selector {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  color: var(--ink);
+  cursor: pointer;
+}
+.lang-selector:hover {
+  border-color: var(--accent);
+}
+.lang-form noscript button {
+  margin-left: 0.5rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  cursor: pointer;
+}
 .page-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 18rem;

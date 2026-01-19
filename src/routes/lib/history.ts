@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import type { initializePostgreSQL } from '../../db.js';
 import { escapeHtml } from '../../render.js';
 
@@ -19,6 +20,7 @@ type HistoryOptions = {
   action: string;
   viewHref: (revId: string) => string;
   userMap: Map<string, string>;
+  t: TFunction;
 };
 
 export const fetchUserMap = async (dalInstance: DalInstance, userIds: string[]) => {
@@ -42,6 +44,7 @@ export const renderRevisionHistory = ({
   action,
   viewHref,
   userMap,
+  t,
 }: HistoryOptions) => {
   const historyItems = revisions
     .map((rev, index) => {
@@ -55,7 +58,7 @@ export const renderRevisionHistory = ({
       const agentVersion =
         (rev.revTags ?? []).find(tag => tag.startsWith('agent_version:')) ?? null;
       const metaLabelParts = [
-        displayName ? `operator: ${displayName}` : null,
+        displayName ? t('history.operator', { name: displayName }) : null,
         agentTag,
         agentVersion,
       ].filter(Boolean);
@@ -80,17 +83,17 @@ export const renderRevisionHistory = ({
   </div>
   ${summaryHtml}
   <div class="rev-actions">
-    <a href="${escapeHtml(viewHref(rev.revId))}">View</a>
+    <a href="${escapeHtml(viewHref(rev.revId))}">${t('history.view')}</a>
   </div>
 </li>`;
     })
     .join('\n');
 
   return `<details class="page-history">
-  <summary>Version history</summary>
+  <summary>${t('history.title')}</summary>
   <form class="history-form" method="get" action="${escapeHtml(action)}">
     <div class="history-actions">
-      <button type="submit">Compare selected revisions</button>
+      <button type="submit">${t('history.compare')}</button>
     </div>
     <ol class="history-list">${historyItems}</ol>
   </form>

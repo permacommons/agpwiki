@@ -234,6 +234,13 @@ Handlebars.registerPartial(
   fs.readFileSync(path.resolve(process.cwd(), 'views/partials/footer.hbs'), 'utf8')
 );
 
+Handlebars.registerHelper('eq', (a: unknown, b: unknown) => a === b);
+
+export interface LanguageOption {
+  code: string;
+  label: string;
+}
+
 export const renderLayout = (options: {
   title: string;
   bodyHtml: string;
@@ -241,8 +248,19 @@ export const renderLayout = (options: {
   sidebarHtml?: string;
   topHtml?: string;
   signedIn?: boolean;
+  locale?: string;
+  languageOptions?: LanguageOption[];
 }) => {
-  const { title, bodyHtml, labelHtml = '', sidebarHtml = '', topHtml = '', signedIn } = options;
+  const {
+    title,
+    bodyHtml,
+    labelHtml = '',
+    sidebarHtml = '',
+    topHtml = '',
+    signedIn,
+    locale = 'en',
+    languageOptions = [],
+  } = options;
   return layoutTemplate({
     title,
     bodyHtml,
@@ -251,5 +269,7 @@ export const renderLayout = (options: {
     topHtml,
     hasSidebar: Boolean(sidebarHtml),
     signedIn: Boolean(signedIn),
+    locale,
+    languageOptions,
   });
 };

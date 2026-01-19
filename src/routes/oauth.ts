@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from 'express';
+import type { TFunction } from 'i18next';
 
 import {
   formatScope,
@@ -22,21 +23,32 @@ import OAuthClient from '../models/oauth-client.js';
 import OAuthRefreshToken from '../models/oauth-refresh-token.js';
 import { escapeHtml, renderLayout } from '../render.js';
 
-const renderOAuthLayout = (title: string, bodyHtml: string, signedIn = false) =>
+const renderOAuthLayout = (
+  t: TFunction,
+  res: Response,
+  title: string,
+  bodyHtml: string,
+  signedIn = false
+) =>
   renderLayout({
     title,
-    labelHtml: '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>',
+    labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    locale: res.locals.locale,
+    languageOptions: res.locals.languageOptions,
   });
 
-const renderOAuthError = (res: Response, message: string, signedIn = false) => {
+const renderOAuthError = (t: TFunction, res: Response, message: string, signedIn = false) => {
   const bodyHtml = `<div class="tool-page">
   <div class="form-card">
     <p class="form-error">${escapeHtml(message)}</p>
   </div>
 </div>`;
-  res.status(400).type('html').send(renderOAuthLayout('OAuth error', bodyHtml, signedIn));
+  res
+    .status(400)
+    .type('html')
+    .send(renderOAuthLayout(t, res, t('oauth.error'), bodyHtml, signedIn));
 };
 
 const pickString = (value: unknown) => {
@@ -66,6 +78,7 @@ const sendTokenError = (res: Response, status: number, error: string, descriptio
 };
 
 const redirectWithParams = (
+  t: TFunction,
   res: Response,
   redirectUri: string,
   params: Record<string, string | undefined>
@@ -80,7 +93,7 @@ const redirectWithParams = (
     res.redirect(302, url.toString());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    renderOAuthError(res, `Invalid redirect URI: ${message}`);
+    renderOAuthError(t, res, `Invalid redirect URI: ${message}`);
   }
 };
 
@@ -176,29 +189,29 @@ export const registerOAuthRoutes = (app: Express) => {
     const codeChallengeMethod = pickString(req.query.code_challenge_method) ?? 'S256';
 
     if (responseType !== 'code') {
-      renderOAuthError(res, 'Invalid response type.');
+      renderOAuthError(req.t, res, 'Invalid response type.');
       return;
     }
 
     if (!clientId || !redirectUri || !codeChallenge) {
-      renderOAuthError(res, 'Missing required OAuth parameters.');
+      renderOAuthError(req.t, res, 'Missing required OAuth parameters.');
       return;
     }
 
     await initializePostgreSQL();
     const client = await requireOAuthClient(clientId);
     if (!client) {
-      renderOAuthError(res, 'Unknown OAuth client.');
+      renderOAuthError(req.t, res, 'Unknown OAuth client.');
       return;
     }
 
     if (!isValidRedirectUri(client, redirectUri)) {
-      renderOAuthError(res, 'Redirect URI is not registered for this client.');
+      renderOAuthError(req.t, res, 'Redirect URI is not registered for this client.');
       return;
     }
 
     if (!['S256', 'plain'].includes(codeChallengeMethod)) {
-      redirectWithParams(res, redirectUri, {
+      redirectWithParams(req.t, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
         state,
@@ -218,12 +231,14 @@ export const registerOAuthRoutes = (app: Express) => {
       ? `<ul class="form-help">${requestedScopes
           .map(scope => `<li>${escapeHtml(scope)}</li>`)
           .join('')}</ul>`
-      : '<p class="form-help">No scopes requested.</p>';
+      : `<p class="form-help">${req.t('oauth.authorize.noScopes')}</p>`;
 
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    <h2>Authorize access</h2>
-    <p class="form-help">${escapeHtml(client.clientName ?? client.clientId)} is requesting access.</p>
+    <h2>${req.t('oauth.authorize.title')}</h2>
+    <p class="form-help">${req.t('oauth.authorize.request', {
+      clientName: escapeHtml(client.clientName ?? client.clientId),
+    })}</p>
     ${scopeList}
     <input type="hidden" name="response_type" value="${escapeHtml(responseType)}" />
     <input type="hidden" name="client_id" value="${escapeHtml(clientId)}" />
@@ -233,13 +248,27 @@ export const registerOAuthRoutes = (app: Express) => {
     <input type="hidden" name="code_challenge" value="${escapeHtml(codeChallenge)}" />
     <input type="hidden" name="code_challenge_method" value="${escapeHtml(codeChallengeMethod)}" />
     <div class="form-actions">
-      <button type="submit" name="decision" value="approve">Approve</button>
-      <button type="submit" name="decision" value="deny">Deny</button>
+      <button type="submit" name="decision" value="approve">${req.t(
+        'oauth.authorize.approve'
+      )}</button>
+      <button type="submit" name="decision" value="deny">${req.t(
+        'oauth.authorize.deny'
+      )}</button>
     </div>
   </form>
 </div>`;
 
-    res.type('html').send(renderOAuthLayout('Authorize', bodyHtml, true));
+    res
+      .type('html')
+      .send(
+        renderOAuthLayout(
+          req.t,
+          res,
+          req.t('oauth.authorize.pageTitle'),
+          bodyHtml,
+          true
+        )
+      );
   });
 
   app.post('/tool/oauth/authorize', async (req, res) => {
@@ -253,19 +282,24 @@ export const registerOAuthRoutes = (app: Express) => {
     const decision = getRequestBodyValue(req, 'decision');
 
     if (responseType !== 'code' || !clientId || !redirectUri || !codeChallenge) {
-      renderOAuthError(res, 'Missing required OAuth parameters.', true);
+      renderOAuthError(req.t, res, 'Missing required OAuth parameters.', true);
       return;
     }
 
     await initializePostgreSQL();
     const client = await requireOAuthClient(clientId);
     if (!client) {
-      renderOAuthError(res, 'Unknown OAuth client.', true);
+      renderOAuthError(req.t, res, 'Unknown OAuth client.', true);
       return;
     }
 
     if (!isValidRedirectUri(client, redirectUri)) {
-      renderOAuthError(res, 'Redirect URI is not registered for this client.', true);
+      renderOAuthError(
+        req.t,
+        res,
+        'Redirect URI is not registered for this client.',
+        true
+      );
       return;
     }
 
@@ -277,7 +311,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
 
     if (decision !== 'approve') {
-      redirectWithParams(res, redirectUri, {
+      redirectWithParams(req.t, res, redirectUri, {
         error: 'access_denied',
         state,
       });
@@ -285,7 +319,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
 
     if (!['S256', 'plain'].includes(codeChallengeMethod)) {
-      redirectWithParams(res, redirectUri, {
+      redirectWithParams(req.t, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
         state,
@@ -313,7 +347,7 @@ export const registerOAuthRoutes = (app: Express) => {
       createdAt: new Date(),
     });
 
-    redirectWithParams(res, redirectUri, { code, state });
+    redirectWithParams(req.t, res, redirectUri, { code, state });
   });
 
   app.post('/tool/oauth/token', async (req, res) => {
@@ -571,24 +605,35 @@ export const registerOAuthRoutes = (app: Express) => {
     if (error) {
       details = `<p class="form-error">${escapeHtml(errorDescription ?? error)}</p>`;
     } else if (code) {
-      details = `<p class="form-help">Authorization code:</p>
+      details = `<p class="form-help">${req.t('oauth.callback.codeLabel')}</p>
   <div class="token-display">${escapeHtml(code)}</div>`;
     } else {
-      details = `<p class="form-help">No authorization code returned.</p>`;
+      details = `<p class="form-help">${req.t('oauth.callback.noCode')}</p>`;
     }
 
     const stateHtml = state
-      ? `<p class="form-help">State: <code>${escapeHtml(state)}</code></p>`
+      ? `<p class="form-help">${req.t('oauth.callback.stateLabel', {
+          state: escapeHtml(state),
+        })}</p>`
       : '';
 
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    <h2>OAuth callback</h2>
+    <h2>${req.t('oauth.callback.title')}</h2>
     ${details}
     ${stateHtml}
   </div>
 </div>`;
 
-    res.type('html').send(renderOAuthLayout('OAuth callback', bodyHtml));
+    res
+      .type('html')
+      .send(
+        renderOAuthLayout(
+          req.t,
+          res,
+          req.t('oauth.callback.title'),
+          bodyHtml
+        )
+      );
   });
 };

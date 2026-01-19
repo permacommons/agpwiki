@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from 'express';
+import type { TFunction } from 'i18next';
 
 import { hashPassword, verifyPassword } from '../auth/password.js';
 import {
@@ -16,12 +17,20 @@ import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 
-const renderAuthLayout = (title: string, bodyHtml: string, signedIn = false) =>
+const renderAuthLayout = (
+  t: TFunction,
+  res: Response,
+  title: string,
+  bodyHtml: string,
+  signedIn = false
+) =>
   renderLayout({
     title,
-    labelHtml: '<div class="page-label">TOOL — BUILT-IN SOFTWARE FEATURE</div>',
+    labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    locale: res.locals.locale,
+    languageOptions: res.locals.languageOptions,
   });
 
 const renderError = (message: string) =>
@@ -64,21 +73,25 @@ export const registerAuthRoutes = (app: Express) => {
   <form method="post" class="form-card">
     ${redirectField}
     <label class="form-field">
-      <span>Email</span>
+      <span>${req.t('auth.form.email')}</span>
       <input type="email" name="email" autocomplete="email" required />
     </label>
     <label class="form-field">
-      <span>Password</span>
+      <span>${req.t('auth.form.password')}</span>
       <input type="password" name="password" autocomplete="current-password" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Log in</button>
+      <button type="submit">${req.t('auth.login.action')}</button>
     </div>
-    <p class="form-help">Need an invite? Use <code>/tool/auth/signup</code>.</p>
+    <p class="form-help">${req.t('auth.login.needInvite')}</p>
   </form>
 </div>`;
 
-    res.type('html').send(renderAuthLayout('Log in', bodyHtml, false));
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
+      );
   });
 
   app.post('/tool/auth/login', async (req, res) => {
@@ -95,24 +108,28 @@ export const registerAuthRoutes = (app: Express) => {
         : '';
       const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    ${renderError('Invalid email or password.')}
+    ${renderError(req.t('auth.login.errorInvalid'))}
     ${redirectField}
     <label class="form-field">
-      <span>Email</span>
+      <span>${req.t('auth.form.email')}</span>
       <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
         email
       )}" />
     </label>
     <label class="form-field">
-      <span>Password</span>
+      <span>${req.t('auth.form.password')}</span>
       <input type="password" name="password" autocomplete="current-password" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Log in</button>
+      <button type="submit">${req.t('auth.login.action')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Log in', bodyHtml, false));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
+        );
       return;
     }
 
@@ -139,17 +156,27 @@ export const registerAuthRoutes = (app: Express) => {
       if (!invite) {
         const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    ${renderError('Invite code is invalid or expired.')}
+    ${renderError(req.t('auth.signup.errorInvalidCode'))}
     <label class="form-field">
-      <span>Invite code</span>
+      <span>${req.t('auth.form.inviteCode')}</span>
       <input type="text" name="code" autocomplete="one-time-code" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Continue</button>
+      <button type="submit">${req.t('auth.signup.continue')}</button>
     </div>
   </form>
 </div>`;
-        res.type('html').send(renderAuthLayout('Sign up', bodyHtml, false));
+        res
+          .type('html')
+          .send(
+            renderAuthLayout(
+              req.t,
+              res,
+              req.t('auth.signup.title'),
+              bodyHtml,
+              false
+            )
+          );
         return;
       }
 
@@ -158,41 +185,61 @@ export const registerAuthRoutes = (app: Express) => {
   <form method="post" class="form-card">
     <input type="hidden" name="code" value="${escapeHtml(codeParam)}" />
     <label class="form-field">
-      <span>Display name</span>
+      <span>${req.t('auth.form.displayName')}</span>
       <input type="text" name="displayName" required />
     </label>
     <label class="form-field">
-      <span>Email</span>
+      <span>${req.t('auth.form.email')}</span>
       <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
         invite.email ?? ''
       )}" ${lockEmail ? 'readonly' : ''} />
     </label>
     <label class="form-field">
-      <span>Password</span>
+      <span>${req.t('auth.form.password')}</span>
       <input type="password" name="password" autocomplete="new-password" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Create account</button>
+      <button type="submit">${req.t('auth.signup.action')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Create account', bodyHtml, false));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.signup.createAccount'),
+            bodyHtml,
+            false
+          )
+        );
       return;
     }
 
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
     <label class="form-field">
-      <span>Invite code</span>
+      <span>${req.t('auth.form.inviteCode')}</span>
       <input type="text" name="code" autocomplete="one-time-code" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Continue</button>
+      <button type="submit">${req.t('auth.signup.continue')}</button>
     </div>
   </form>
 </div>`;
 
-    res.type('html').send(renderAuthLayout('Sign up', bodyHtml, false));
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.signup.title'),
+          bodyHtml,
+          false
+        )
+      );
   });
 
   app.post('/tool/auth/signup', async (req, res) => {
@@ -204,17 +251,27 @@ export const registerAuthRoutes = (app: Express) => {
     if (!code) {
       const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    ${renderError('Invite code is required.')}
+    ${renderError(req.t('auth.signup.errorRequired'))}
     <label class="form-field">
-      <span>Invite code</span>
+      <span>${req.t('auth.form.inviteCode')}</span>
       <input type="text" name="code" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Continue</button>
+      <button type="submit">${req.t('auth.signup.continue')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Sign up', bodyHtml, false));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.signup.title'),
+            bodyHtml,
+            false
+          )
+        );
       return;
     }
 
@@ -224,17 +281,27 @@ export const registerAuthRoutes = (app: Express) => {
     if (!invite) {
       const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    ${renderError('Invite code is invalid or expired.')}
+    ${renderError(req.t('auth.signup.errorInvalidCode'))}
     <label class="form-field">
-      <span>Invite code</span>
+      <span>${req.t('auth.form.inviteCode')}</span>
       <input type="text" name="code" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Continue</button>
+      <button type="submit">${req.t('auth.signup.continue')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Sign up', bodyHtml, false));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.signup.title'),
+            bodyHtml,
+            false
+          )
+        );
       return;
     }
 
@@ -244,45 +311,61 @@ export const registerAuthRoutes = (app: Express) => {
   <form method="post" class="form-card">
     <input type="hidden" name="code" value="${escapeHtml(code)}" />
     <label class="form-field">
-      <span>Display name</span>
+      <span>${req.t('auth.form.displayName')}</span>
       <input type="text" name="displayName" required />
     </label>
     <label class="form-field">
-      <span>Email</span>
+      <span>${req.t('auth.form.email')}</span>
       <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
         invite.email ?? ''
       )}" ${lockEmail ? 'readonly' : ''} />
     </label>
     <label class="form-field">
-      <span>Password</span>
+      <span>${req.t('auth.form.password')}</span>
       <input type="password" name="password" autocomplete="new-password" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Create account</button>
+      <button type="submit">${req.t('auth.signup.action')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Create account', bodyHtml, false));
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      res
-        .type('html')
-        .send(renderAuthLayout('Create account', renderError('Email is invalid.'), false));
-      return;
-    }
-
-    if (invite.email && invite.email.toLowerCase() !== email.toLowerCase()) {
       res
         .type('html')
         .send(
           renderAuthLayout(
-            'Create account',
-            renderError('Invite code is locked to a different email.'),
+            req.t,
+            res,
+            req.t('auth.signup.createAccount'),
+            bodyHtml,
             false
           )
         );
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      res.type('html').send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.signup.createAccount'),
+          renderError(req.t('auth.signup.errorInvalidEmail')),
+          false
+        )
+      );
+      return;
+    }
+
+    if (invite.email && invite.email.toLowerCase() !== email.toLowerCase()) {
+      res.type('html').send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.signup.createAccount'),
+          renderError(req.t('auth.signup.errorEmailMismatch')),
+          false
+        )
+      );
       return;
     }
 
@@ -316,23 +399,33 @@ export const registerAuthRoutes = (app: Express) => {
     ${renderError(message)}
     <input type="hidden" name="code" value="${escapeHtml(code)}" />
     <label class="form-field">
-      <span>Display name</span>
+      <span>${req.t('auth.form.displayName')}</span>
       <input type="text" name="displayName" required value="${escapeHtml(displayName)}" />
     </label>
     <label class="form-field">
-      <span>Email</span>
+      <span>${req.t('auth.form.email')}</span>
       <input type="email" name="email" required value="${escapeHtml(email)}" />
     </label>
     <label class="form-field">
-      <span>Password</span>
+      <span>${req.t('auth.form.password')}</span>
       <input type="password" name="password" autocomplete="new-password" required />
     </label>
     <div class="form-actions">
-      <button type="submit">Create account</button>
+      <button type="submit">${req.t('auth.signup.action')}</button>
     </div>
   </form>
 </div>`;
-      res.type('html').send(renderAuthLayout('Create account', bodyHtml, false));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.signup.createAccount'),
+            bodyHtml,
+            false
+          )
+        );
     }
   });
 
@@ -346,8 +439,12 @@ export const registerAuthRoutes = (app: Express) => {
 
     const rows = tokens
       .map(token => {
-        const label = token.label ? escapeHtml(token.label) : 'Untitled';
-        const status = token.revokedAt ? 'Revoked' : 'Active';
+        const label = token.label
+          ? escapeHtml(token.label)
+          : req.t('auth.tokens.untitled');
+        const status = token.revokedAt
+          ? req.t('auth.tokens.revoked')
+          : req.t('auth.tokens.active');
         const lastUsed = token.lastUsedAt ? formatDateUTC(token.lastUsedAt) : '';
         const last4 = token.tokenLast4 ? `…${token.tokenLast4}` : token.tokenPrefix;
         return `<tr>
@@ -358,11 +455,11 @@ export const registerAuthRoutes = (app: Express) => {
   <td>
     <form method="post" action="/tool/account/tokens/revoke">
       <input type="hidden" name="tokenId" value="${escapeHtml(token.id)}" />
-      <button type="submit">Revoke</button>
+      <button type="submit">${req.t('auth.tokens.revoke')}</button>
     </form>
     <form method="post" action="/tool/account/tokens/reset">
       <input type="hidden" name="tokenId" value="${escapeHtml(token.id)}" />
-      <button type="submit">Regenerate</button>
+      <button type="submit">${req.t('auth.tokens.regenerate')}</button>
     </form>
   </td>
 </tr>`;
@@ -370,43 +467,55 @@ export const registerAuthRoutes = (app: Express) => {
       .join('');
 
     const toggleLink = showRevoked
-      ? '<a href="/tool/account/tokens">Hide revoked</a>'
-      : '<a href="/tool/account/tokens?show=revoked">Show revoked</a>';
+      ? `<a href="/tool/account/tokens">${req.t('auth.tokens.hideRevoked')}</a>`
+      : `<a href="/tool/account/tokens?show=revoked">${req.t(
+          'auth.tokens.showRevoked'
+        )}</a>`;
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    <p class="form-help">Create and manage API tokens for MCP access. Tokens are shown only once.</p>
+    <p class="form-help">${req.t('auth.tokens.description')}</p>
     <form method="post" action="/tool/account/tokens/create" class="form-inline">
       <label>
-        <span>Label</span>
+        <span>${req.t('auth.tokens.label')}</span>
         <input type="text" name="label" />
       </label>
-      <button type="submit">Create token</button>
+      <button type="submit">${req.t('auth.tokens.create')}</button>
     </form>
     <div class="form-help">${toggleLink}</div>
   </div>
   <div class="form-card">
-    <h2>Active tokens</h2>
+    <h2>${req.t('auth.tokens.activeTokens')}</h2>
     <table class="token-table">
       <thead>
         <tr>
-          <th>Label</th>
-          <th>Token</th>
-          <th>Status</th>
-          <th>Last used</th>
-          <th>Actions</th>
+          <th>${req.t('auth.tokens.headers.label')}</th>
+          <th>${req.t('auth.tokens.headers.token')}</th>
+          <th>${req.t('auth.tokens.headers.status')}</th>
+          <th>${req.t('auth.tokens.headers.lastUsed')}</th>
+          <th>${req.t('auth.tokens.headers.actions')}</th>
         </tr>
       </thead>
       <tbody>
-        ${rows || '<tr><td colspan="5">No tokens yet.</td></tr>'}
+        ${rows || `<tr><td colspan="5">${req.t('auth.tokens.empty')}</td></tr>`}
       </tbody>
     </table>
   </div>
   <form method="post" action="/tool/auth/logout" class="form-card">
-    <button type="submit">Log out</button>
+    <button type="submit">${req.t('auth.tokens.logout')}</button>
   </form>
 </div>`;
 
-    res.type('html').send(renderAuthLayout('API tokens', bodyHtml, true));
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.tokens.title'),
+          bodyHtml,
+          true
+        )
+      );
   });
 
   app.post('/tool/account/tokens/create', async (req, res) => {
@@ -420,13 +529,23 @@ export const registerAuthRoutes = (app: Express) => {
       if (existing) {
         const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    ${renderError('An active token already uses that label.')}
+    ${renderError(req.t('auth.tokens.errorLabelActive'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">Back to tokens</a>
+      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
-        res.type('html').send(renderAuthLayout('New token', bodyHtml, true));
+        res
+          .type('html')
+          .send(
+            renderAuthLayout(
+              req.t,
+              res,
+              req.t('auth.tokens.newToken'),
+              bodyHtml,
+              true
+            )
+          );
         return;
       }
     }
@@ -446,15 +565,25 @@ export const registerAuthRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    <p class="form-help">Copy this token now. You will not be able to see it again.</p>
+    <p class="form-help">${req.t('auth.tokens.copyHelp')}</p>
     <div class="token-display">${escapeHtml(token)}</div>
     <div class="form-actions">
-      <a href="/tool/account/tokens">Back to tokens</a>
+      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
 
-    res.type('html').send(renderAuthLayout('New token', bodyHtml, true));
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.tokens.newToken'),
+          bodyHtml,
+          true
+        )
+      );
   });
 
   app.post('/tool/account/tokens/revoke', async (req, res) => {
@@ -488,13 +617,23 @@ export const registerAuthRoutes = (app: Express) => {
     if (!existing) {
       const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    ${renderError('Token not found for reset.')}
+    ${renderError(req.t('auth.tokens.errorNotFound'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">Back to tokens</a>
+      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
-      res.type('html').send(renderAuthLayout('Regenerate token', bodyHtml, true));
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.tokens.regenerateTitle'),
+            bodyHtml,
+            true
+          )
+        );
       return;
     }
 
@@ -508,13 +647,23 @@ export const registerAuthRoutes = (app: Express) => {
       if (conflict && conflict.id !== existing.id) {
         const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    ${renderError('Another active token already uses this label.')}
+    ${renderError(req.t('auth.tokens.errorLabelConflict'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">Back to tokens</a>
+      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
-        res.type('html').send(renderAuthLayout('Regenerate token', bodyHtml, true));
+        res
+          .type('html')
+          .send(
+            renderAuthLayout(
+              req.t,
+              res,
+              req.t('auth.tokens.regenerateTitle'),
+              bodyHtml,
+              true
+            )
+          );
         return;
       }
     }
@@ -539,14 +688,24 @@ export const registerAuthRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    <p class="form-help">Copy this token now. You will not be able to see it again.</p>
+    <p class="form-help">${req.t('auth.tokens.copyHelp')}</p>
     <div class="token-display">${escapeHtml(token)}</div>
     <div class="form-actions">
-      <a href="/tool/account/tokens">Back to tokens</a>
+      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
 
-    res.type('html').send(renderAuthLayout('Regenerate token', bodyHtml, true));
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.tokens.regenerateTitle'),
+          bodyHtml,
+          true
+        )
+      );
   });
 };

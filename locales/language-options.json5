@@ -1,0 +1,3430 @@
+/**
+ * THIS FILE IS GENERATED AUTOMATICALLY.
+ * DO NOT EDIT MANUALLY.
+ *
+ * To regenerate, run: npm run generate-locales
+ */
+{
+  en: [
+    {
+      code: 'en',
+      label: 'en - English',
+    },
+    {
+      code: 'ar',
+      label: 'ar - Arabic (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - Bangla (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - German (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - Spanish (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - Finnish (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - French (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - Hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - Hungarian (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - Indonesian (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - Italian (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - Japanese (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - Korean (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - Lithuanian (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - Macedonian (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - Dutch (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - Polish (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - Brazilian Portuguese (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - European Portuguese (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - Russian (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - Slovak (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - Slovenian (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - Swedish (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - Turkish (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - Ukrainian (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - Simplified Chinese (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - Traditional Chinese (繁體中文)',
+    },
+  ],
+  ar: [
+    {
+      code: 'en',
+      label: 'en - الإنجليزية (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - العربية',
+    },
+    {
+      code: 'bn',
+      label: 'bn - البنغالية (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - الألمانية (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - الإسبرانتو (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - الإسبانية (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - الفنلندية (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - الفرنسية (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - الهندية (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - الهنغارية (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - الإندونيسية (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - الإيطالية (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - اليابانية (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - الكورية (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - الليتوانية (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - المقدونية (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - الهولندية (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - البولندية (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - البرتغالية البرازيلية (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - البرتغالية الأوروبية (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - الروسية (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - السلوفاكية (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - السلوفانية (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - السويدية (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - التركية (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - الأوكرانية (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - الأوردية (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - الصينية المبسطة (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - الصينية التقليدية (繁體中文)',
+    },
+  ],
+  bn: [
+    {
+      code: 'en',
+      label: 'en - ইংরেজি (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - আরবি (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - বাংলা',
+    },
+    {
+      code: 'de',
+      label: 'de - জার্মান (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - এস্পেরান্তো (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - স্প্যানিশ (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - ফিনিশ (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - ফরাসি (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - হিন্দি (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - হাঙ্গেরীয় (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - ইন্দোনেশীয় (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - ইতালীয় (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - জাপানি (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - কোরিয়ান (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - লিথুয়ানীয় (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - ম্যাসেডোনিয়া (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - ওলন্দাজ (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - পোলিশ (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - পর্তুগিজ (ব্রাজিল) (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - পর্তুগিজ (ইউরোপ) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - রুশ (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - স্লোভাক (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - স্লোভেনীয় (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - সুইডিশ (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - তুর্কি (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ইউক্রেনীয় (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - উর্দু (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - চীনা ম্যান্ডারিন (সরলীকৃত) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - ম্যান্ডারিন চীনা (ঐতিহ্যবাহী) (繁體中文)',
+    },
+  ],
+  de: [
+    {
+      code: 'en',
+      label: 'en - Englisch (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - Arabisch (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - Bengalisch (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - Deutsch',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - Spanisch (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - Finnisch (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - Französisch (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - Hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - Ungarisch (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - Indonesisch (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - Italienisch (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - Japanisch (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - Koreanisch (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - Litauisch (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - Mazedonisch (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - Niederländisch (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - Polnisch (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - Portugiesisch (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - Russisch (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - Slowakisch (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - Slowenisch (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - Schwedisch (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - Türkisch (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - Ukrainisch (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - Chinesisch (vereinfacht) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - Chinesisch (traditionell) (繁體中文)',
+    },
+  ],
+  eo: [
+    {
+      code: 'en',
+      label: 'en - angla (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - araba (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengala (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - germana (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - hispana (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finna (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - franca (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindia (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - hungara (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonezia (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - itala (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japana (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - korea (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litova (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - makedona (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - nederlanda (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - pola (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portugala brazila (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - portugala eŭropa (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - rusa (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovaka (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovena (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - sveda (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turka (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukraina (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urduo (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - ĉina simpligita (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - ĉina tradicia (繁體中文)',
+    },
+  ],
+  es: [
+    {
+      code: 'en',
+      label: 'en - inglés (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - árabe (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalí (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - alemán (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - español',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finés (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francés (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - húngaro (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonesio (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italiano',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonés (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - coreano (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lituano (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedonio (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - neerlandés (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polaco (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portugués de Brasil (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - portugués de Portugal (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - ruso (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - eslovaco (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - esloveno (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - sueco (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turco (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ucraniano (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - chino simplificado (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - chino tradicional (繁體中文)',
+    },
+  ],
+  fi: [
+    {
+      code: 'en',
+      label: 'en - englanti (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabia (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengali (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - saksa (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - espanja (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - suomi',
+    },
+    {
+      code: 'fr',
+      label: 'fr - ranska (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - unkari (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonesia (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italia (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japani (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - korea (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - liettua (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - makedonia (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - hollanti (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - puola (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - brasilianportugali (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - euroopanportugali (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - venäjä (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovakki (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - sloveeni (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - ruotsi (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turkki (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukraina (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - mandariinikiina (yksinkertaistettu) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - mandariinikiina (perinteinen) (繁體中文)',
+    },
+  ],
+  fr: [
+    {
+      code: 'en',
+      label: 'en - anglais (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabe (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengali (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - allemand (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - espéranto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - espagnol (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finnois (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - français',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - hongrois (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonésien (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italien (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonais (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - coréen (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lituanien (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macédonien (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - néerlandais (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polonais (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portugais brésilien (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - portugais européen (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - russe (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovaque (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovène (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - suédois (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turc (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrainien (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - ourdou (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - chinois simplifié (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - chinois traditionnel (繁體中文)',
+    },
+  ],
+  hi: [
+    {
+      code: 'en',
+      label: 'en - अंग्रेज़ी (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - अरबी (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - बंगाली (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - जर्मन (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - एस्पेरेंतो (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - स्पेनिश (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - फ़िनिश (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - फ़्रेंच (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - हिन्दी',
+    },
+    {
+      code: 'hu',
+      label: 'hu - हंगेरियाई (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - इंडोनेशियाई (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - इतालवी (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - जापानी (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - कोरियाई (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - लिथुआनियाई (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - मकदूनियाई (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - डच (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - पोलिश (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - ब्राज़ीली पुर्तगाली (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - यूरोपीय पुर्तगाली (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - रूसी (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - स्लोवाक (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - स्लोवेनियाई (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - स्वीडिश (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - तुर्की (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - यूक्रेनियाई (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - उर्दू (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - सरलीकृत चीनी (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - पारंपरिक चीनी (繁體中文)',
+    },
+  ],
+  hu: [
+    {
+      code: 'en',
+      label: 'en - angol (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arab (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bangla (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - német (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - eszperantó (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - spanyol (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finn (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francia (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - magyar',
+    },
+    {
+      code: 'id',
+      label: 'id - indonéz (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - olasz (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japán (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - koreai (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litván (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedón (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - holland (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - lengyel (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - brazíliai portugál (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - európai portugál (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - orosz (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - szlovák (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - szlovén (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - svéd (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - török (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrán (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - egyszerűsített kínai (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - hagyományos kínai (繁體中文)',
+    },
+  ],
+  id: [
+    {
+      code: 'en',
+      label: 'en - Inggris (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - Arab (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - Bengali (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - Jerman (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - Spanyol (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - Suomi (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - Prancis (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - Hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - Hungaria (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - Indonesia',
+    },
+    {
+      code: 'it',
+      label: 'it - Italia (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - Jepang (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - Korea (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - Lituania (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - Makedonia (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - Belanda (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - Polski (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - Portugis (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - Portugis (Eropa) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - Rusia (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - Slovak (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - Slovenia (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - Swedia (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - Turki (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - Ukraina (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - Tionghoa Mandarin (Sederhana) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - Tionghoa Mandarin (Tradisional) (繁體中文)',
+    },
+  ],
+  it: [
+    {
+      code: 'en',
+      label: 'en - inglese (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabo (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalese (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - tedesco (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - spagnolo (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finlandese (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francese (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - ungherese (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonesiano (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italiano',
+    },
+    {
+      code: 'ja',
+      label: 'ja - giapponese (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - coreano (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lituano (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedone (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - olandese (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polacco (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portoghese brasiliano (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - portoghese europeo (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - russo (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovacco (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - sloveno (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - svedese (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turco (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ucraino (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - cinese semplificato (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - cinese tradizionale (繁體中文)',
+    },
+  ],
+  ja: [
+    {
+      code: 'en',
+      label: 'en - 英語 (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - アラビア語 (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - ベンガル語 (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - ドイツ語 (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - エスペラント語 (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - スペイン語 (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - フィンランド語 (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - フランス語 (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - ヒンディー語 (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - ハンガリー語 (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - インドネシア語 (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - イタリア語 (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - 日本語',
+    },
+    {
+      code: 'ko',
+      label: 'ko - 韓国語 (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - リトアニア語 (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - マケドニア語 (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - オランダ語 (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - ポーランド語 (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - ポルトガル語 (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - ポルトガル語 (イベリア半島) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - ロシア語 (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - スロバキア語 (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - スロベニア語 (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - スウェーデン語 (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - トルコ語 (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ウクライナ語 (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - ウルドゥー語 (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - 簡体中国語 (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - 繁体中国語 (繁體中文)',
+    },
+  ],
+  ko: [
+    {
+      code: 'en',
+      label: 'en - 영어 (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - 아랍어 (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - 벵골어 (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - 독일어 (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - 에스페란토어 (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - 스페인어 (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - 핀란드어 (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - 프랑스어 (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - 힌디어 (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - 헝가리어 (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - 인도네시아어 (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - 이탈리아어 (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - 일본어 (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - 한국어',
+    },
+    {
+      code: 'lt',
+      label: 'lt - 리투아니아어 (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - 마케도니아어 (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - 네덜란드어 (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - 폴란드어 (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - 포르투갈어 (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - 포르투갈어(유럽) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - 러시아어 (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - 슬로바키아어 (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - 슬로베니아어 (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - 스웨덴어 (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - 튀르키예어 (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - 우크라이나어 (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - 우르두어 (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - 중국어(만다린, 간체) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - 중국어(만다린, 번체) (繁體中文)',
+    },
+  ],
+  lt: [
+    {
+      code: 'en',
+      label: 'en - anglų (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabų (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalų (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - vokiečių (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - ispanų (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - suomių (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - prancūzų (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - vengrų (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indoneziečių (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italų (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonų (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - korėjiečių (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lietuvių',
+    },
+    {
+      code: 'mk',
+      label: 'mk - makedonų (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - olandų (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - lenkų (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portugalų (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - rusų (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovakų (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovėnų (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - švedų (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turkų (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrainiečių (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdų (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - supaprastintoji kinų (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - tradicinė kinų (繁體中文)',
+    },
+  ],
+  mk: [
+    {
+      code: 'en',
+      label: 'en - англиски (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - арапски (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - бенгалски (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - германски (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - есперанто (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - шпански (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - фински (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - француски (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - хинди (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - унгарски (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - индонезиски (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - италијански (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - јапонски (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - корејски (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - литвански (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - македонски',
+    },
+    {
+      code: 'nl',
+      label: 'nl - холандски (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - полски (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - бразилски португалски (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - португалски (Европа) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - руски (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - словачки (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - словенечки (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - шведски (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - турски (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - украински (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - урду (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - поедноставен кинески (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - традиционален кинески (繁體中文)',
+    },
+  ],
+  nl: [
+    {
+      code: 'en',
+      label: 'en - Engels (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - Arabisch (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - Bengaals (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - Duits (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - Spaans (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - Fins (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - Frans (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - Hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - Hongaars (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - Indonesisch (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - Italiaans (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - Japans (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - Koreaans (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - Litouws (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - Macedonisch (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - Nederlands',
+    },
+    {
+      code: 'pl',
+      label: 'pl - Pools (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - Portugees (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - Russisch (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - Slowaaks (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - Sloveens (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - Zweeds (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - Turks (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - Oekraïens (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - Mandarijn (vereenvoudigd) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - Mandarijn (traditioneel) (繁體中文)',
+    },
+  ],
+  pl: [
+    {
+      code: 'en',
+      label: 'en - angielski (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabski (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalski (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - niemiecki (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - hiszpański (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - fiński (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francuski (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - węgierski (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonezyjski (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - włoski (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japoński (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - koreański (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litewski (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedoński (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - niderlandzki (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polski',
+    },
+    {
+      code: 'pt',
+      label: 'pt - brazylijski portugalski (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - europejski portugalski (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - rosyjski (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - słowacki (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - słoweński (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - szwedzki (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turecki (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukraiński (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - chiński uproszczony (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - chiński tradycyjny (繁體中文)',
+    },
+  ],
+  pt: [
+    {
+      code: 'en',
+      label: 'en - inglês (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - árabe (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengali (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - alemão (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - espanhol (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finlandês (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francês (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - húngaro (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonésio (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italiano',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonês (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - coreano (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lituano (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedônio (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - holandês (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polonês (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - português',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - russo (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - eslovaco (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - esloveno (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - sueco (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turco (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ucraniano (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - chinês simplificado (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - chinês tradicional (繁體中文)',
+    },
+  ],
+  'pt-PT': [
+    {
+      code: 'en',
+      label: 'en - inglês (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - árabe (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalês (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - alemão (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - espanhol (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finlandês (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francês (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - húngaro (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonésio (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italiano',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonês (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - coreano (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - lituano (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedónio (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - neerlandês (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polaco (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - português do Brasil (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - português europeu',
+    },
+    {
+      code: 'ru',
+      label: 'ru - russo (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - eslovaco (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - esloveno (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - sueco (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turco (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ucraniano (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - chinês mandarim simplificado (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - chinês mandarim tradicional (繁體中文)',
+    },
+  ],
+  ru: [
+    {
+      code: 'en',
+      label: 'en - английский (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - арабский (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - бенгальский (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - немецкий (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - эсперанто (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - испанский (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - финский (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - французский (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - хинди (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - венгерский (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - индонезийский (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - итальянский (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - японский (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - корейский (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - литовский (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - македонский (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - нидерландский (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - польский (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - бразильский португальский (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - европейский португальский (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - русский',
+    },
+    {
+      code: 'sk',
+      label: 'sk - словацкий (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - словенский (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - шведский (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - турецкий (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - украинский (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - урду (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - китайский, упрощенное письмо (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - китайский, традиционное письмо (繁體中文)',
+    },
+  ],
+  sk: [
+    {
+      code: 'en',
+      label: 'en - angličtina (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabčina (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengálčina (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - nemčina (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - španielčina (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - fínčina (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francúzština (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindčina (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - maďarčina (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonézština (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - taliančina (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japončina (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - kórejčina (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litovčina (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - macedónčina (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - holandčina (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - poľština (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - portugalčina (brazílska) (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - portugalčina (európska) (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - ruština (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovenčina',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovinčina (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - švédčina (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turečtina (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrajinčina (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdčina (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - čínština (zjednodušená) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - čínština (tradičná) (繁體中文)',
+    },
+  ],
+  sl: [
+    {
+      code: 'en',
+      label: 'en - angleščina (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabščina (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengalščina (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - nemščina (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - španščina (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finščina (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - francoščina (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindijščina (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - madžarščina (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonezijščina (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italijanščina (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japonščina (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - korejščina (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litovščina (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - makedonščina (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - nizozemščina (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - poljščina (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - brazilska portugalščina (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - evropska portugalščina (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - ruščina (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovaščina (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovenščina',
+    },
+    {
+      code: 'sv',
+      label: 'sv - švedščina (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turščina (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrajinščina (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdujščina (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - poenostavljena kitajščina (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - tradicionalna kitajščina (繁體中文)',
+    },
+  ],
+  sv: [
+    {
+      code: 'en',
+      label: 'en - engelska (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - arabiska (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - bengali (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - tyska (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - esperanto (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - spanska (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - finska (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - franska (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - hindi (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - ungerska (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - indonesiska (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - italienska (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - japanska (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - koreanska (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - litauiska (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - makedonska (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - nederländska (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - polska (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - brasiliansk portugisiska (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - europeisk portugisiska (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - ryska (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - slovakiska (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - slovenska (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - svenska',
+    },
+    {
+      code: 'tr',
+      label: 'tr - turkiska (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - ukrainska (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - urdu (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - förenklad kinesiska (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - traditionell kinesiska (繁體中文)',
+    },
+  ],
+  tr: [
+    {
+      code: 'en',
+      label: 'en - İngilizce (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - Arapça (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - Bengalce (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - Almanca (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - Esperanto',
+    },
+    {
+      code: 'es',
+      label: 'es - İspanyolca (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - Fince (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - Fransızca (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - Hintçe (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - Macarca (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - Endonezce (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - İtalyanca (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - Japonca (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - Korece (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - Litvanca (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - Makedonca (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - Felemenkçe (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - Lehçe (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - Brezilya Portekizcesi (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - Avrupa Portekizcesi (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - Rusça (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - Slovakça (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - Slovence (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - İsveççe (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - Türkçe',
+    },
+    {
+      code: 'uk',
+      label: 'uk - Ukraynaca (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - Urduca (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - Basitleştirilmiş Çince (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - Geleneksel Çince (繁體中文)',
+    },
+  ],
+  uk: [
+    {
+      code: 'en',
+      label: 'en - англійська (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - арабська (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - бенгальська (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - німецька (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - есперанто (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - іспанська (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - фінська (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - французька (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - гінді (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - угорська (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - індонезійська (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - італійська (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - японська (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - корейська (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - литовська (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - македонська (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - нідерландська (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - польська (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - португальська (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - російська (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - словацька (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - словенська (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - шведська (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - турецька (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - українська',
+    },
+    {
+      code: 'ur',
+      label: 'ur - урду (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - китайська (спрощене письмо) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - китайська (традиційне письмо) (繁體中文)',
+    },
+  ],
+  ur: [
+    {
+      code: 'en',
+      label: 'en - انگریزی (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - عربی (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - بنگلہ (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - جرمن (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - ایسپرانٹو (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - ہسپانوی (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - فینیش (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - فرانسیسی (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - ہندی (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - ہنگیرین (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - انڈونیثیائی (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - اطالوی (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - جاپانی (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - کوریائی (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - لیتھوینین (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - مقدونیائی (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - ڈچ (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - پولش (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - برازیلی پرتگالی (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - یورپی پرتگالی (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - روسی (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - سلوواک (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - سلووینیائی (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - سویڈش (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - ترکی (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - یوکرینیائی (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - اردو',
+    },
+    {
+      code: 'zh',
+      label: 'zh - چینی (آسان کردہ) (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - روایتی چینی (繁體中文)',
+    },
+  ],
+  zh: [
+    {
+      code: 'en',
+      label: 'en - 英语 (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - 阿拉伯语 (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - 孟加拉语 (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - 德语 (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - 世界语 (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - 西班牙语 (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - 芬兰语 (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - 法语 (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - 印地语 (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - 匈牙利语 (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - 印度尼西亚语 (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - 意大利语 (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - 日语 (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - 韩语 (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - 立陶宛语 (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - 马其顿语 (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - 荷兰语 (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - 波兰语 (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - 巴西葡萄牙语 (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - 欧洲葡萄牙语 (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - 俄语 (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - 斯洛伐克语 (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - 斯洛文尼亚语 (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - 瑞典语 (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - 土耳其语 (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - 乌克兰语 (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - 乌尔都语 (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - 简体中文',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - 繁体中文 (繁體中文)',
+    },
+  ],
+  'zh-Hant': [
+    {
+      code: 'en',
+      label: 'en - 英文 (English)',
+    },
+    {
+      code: 'ar',
+      label: 'ar - 阿拉伯文 (العربية)',
+    },
+    {
+      code: 'bn',
+      label: 'bn - 孟加拉文 (বাংলা)',
+    },
+    {
+      code: 'de',
+      label: 'de - 德文 (Deutsch)',
+    },
+    {
+      code: 'eo',
+      label: 'eo - 世界文 (Esperanto)',
+    },
+    {
+      code: 'es',
+      label: 'es - 西班牙文 (español)',
+    },
+    {
+      code: 'fi',
+      label: 'fi - 芬蘭文 (suomi)',
+    },
+    {
+      code: 'fr',
+      label: 'fr - 法文 (français)',
+    },
+    {
+      code: 'hi',
+      label: 'hi - 印地文 (हिन्दी)',
+    },
+    {
+      code: 'hu',
+      label: 'hu - 匈牙利文 (magyar)',
+    },
+    {
+      code: 'id',
+      label: 'id - 印尼文 (Indonesia)',
+    },
+    {
+      code: 'it',
+      label: 'it - 義大利文 (italiano)',
+    },
+    {
+      code: 'ja',
+      label: 'ja - 日文 (日本語)',
+    },
+    {
+      code: 'ko',
+      label: 'ko - 韓文 (한국어)',
+    },
+    {
+      code: 'lt',
+      label: 'lt - 立陶宛文 (lietuvių)',
+    },
+    {
+      code: 'mk',
+      label: 'mk - 馬其頓文 (македонски)',
+    },
+    {
+      code: 'nl',
+      label: 'nl - 荷蘭文 (Nederlands)',
+    },
+    {
+      code: 'pl',
+      label: 'pl - 波蘭文 (polski)',
+    },
+    {
+      code: 'pt',
+      label: 'pt - 葡萄牙文 (português)',
+    },
+    {
+      code: 'pt-PT',
+      label: 'pt-PT - pt-PT (português europeu)',
+    },
+    {
+      code: 'ru',
+      label: 'ru - 俄文 (русский)',
+    },
+    {
+      code: 'sk',
+      label: 'sk - 斯洛伐克文 (slovenčina)',
+    },
+    {
+      code: 'sl',
+      label: 'sl - 斯洛維尼亞文 (slovenščina)',
+    },
+    {
+      code: 'sv',
+      label: 'sv - 瑞典文 (svenska)',
+    },
+    {
+      code: 'tr',
+      label: 'tr - 土耳其文 (Türkçe)',
+    },
+    {
+      code: 'uk',
+      label: 'uk - 烏克蘭文 (українська)',
+    },
+    {
+      code: 'ur',
+      label: 'ur - 烏都文 (اردو)',
+    },
+    {
+      code: 'zh',
+      label: 'zh - 簡體中文 (简体中文)',
+    },
+    {
+      code: 'zh-Hant',
+      label: 'zh-Hant - 繁體中文',
+    },
+  ],
+}

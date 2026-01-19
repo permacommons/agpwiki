@@ -196,9 +196,10 @@ export const registerCitationRoutes = (app: Express) => {
         action: `/cite/${encodeURIComponent(key)}`,
         viewHref: revId => `/cite/${encodeURIComponent(key)}?rev=${revId}`,
         userMap,
+        t: req.t,
       });
 
-      const labelHtml = '<div class="page-label">CITATION — REFERENCE ENTRY</div>';
+      const labelHtml = `<div class="page-label">${req.t('label.citation')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const html = renderLayout({
@@ -208,6 +209,8 @@ export const registerCitationRoutes = (app: Express) => {
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
+        locale: res.locals.locale,
+        languageOptions: res.locals.languageOptions,
       });
       res.type('html').send(html);
     } catch (error) {
