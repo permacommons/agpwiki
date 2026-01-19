@@ -37,6 +37,7 @@ import {
   updateCitation,
   updateWikiPage,
 } from './handlers.js';
+import { registerPrompts } from './prompts.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 
@@ -834,6 +835,8 @@ export const createMcpServer = () => {
       return payload;
     })
   );
+
+  registerPrompts(server);
 
   return { server, formatToolResult, formatToolErrorResult };
 };
