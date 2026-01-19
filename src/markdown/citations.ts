@@ -90,7 +90,7 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
     } else if (char === 0x5b /* [ */) {
       const end = state.md.helpers.parseLinkLabel(state, state.pos);
       const charAfter = state.src.codePointAt(end + 1);
-      if (end > 0 && charAfter !== 0x28 && charAfter !== 0x5b) {
+      if (end > 0 && charAfter !== 0x28) {
         const str = state.src.slice(state.pos + 1, end);
         const parts = str.split(';').map(x => x.match(regexes.citation));
         if (parts.indexOf(null) >= 0) {

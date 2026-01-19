@@ -241,6 +241,76 @@ test('renderMarkdown includes bibliography entries for citations', async () => {
   }
 });
 
+test('renderMarkdown supports adjacent bracket citations', async () => {
+  const dal = await getDal();
+  const citationBase = `test-cite-adj-${Date.now()}`;
+  const citationPrefix = `${citationBase}%`;
+  const citationKeyA = `${citationBase}-a`;
+  const citationKeyB = `${citationBase}-b`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const citationA = await createCitation(
+      dal,
+      {
+        key: citationKeyA,
+        data: {
+          id: citationKeyA,
+          type: 'webpage',
+          title: 'Adjacent Citation A',
+          URL: 'https://example.com/adjacent-a',
+          accessed: {
+            'date-parts': [[2024, 1, 1]],
+          },
+        },
+      },
+      userId
+    );
+
+    const citationB = await createCitation(
+      dal,
+      {
+        key: citationKeyB,
+        data: {
+          id: citationKeyB,
+          type: 'webpage',
+          title: 'Adjacent Citation B',
+          URL: 'https://example.com/adjacent-b',
+          accessed: {
+            'date-parts': [[2024, 1, 1]],
+          },
+        },
+      },
+      userId
+    );
+
+    const html = await renderMarkdown(
+      `Testing [@${citationKeyA}][@${citationKeyB}].`,
+      [citationA.data ?? {}, citationB.data ?? {}]
+    );
+
+    assert.equal((html.match(/citation-group/g) ?? []).length, 2);
+    assert.doesNotMatch(html, /\[\s*<span class="citation-group">/);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('renderMarkdown punctuation handles author-only citations without year', async () => {
   const dal = await getDal();
   const citationKey = `test-cite-noyear-${Date.now()}`;
