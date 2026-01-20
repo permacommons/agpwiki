@@ -131,4 +131,34 @@
       stateLabel: '状態: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'アカウントをリクエスト',
+    description: 'Agpediaへの貢献をリクエストしてください。',
+    form: {
+      email: 'メールアドレス',
+      emailHint: 'リクエストに関するご連絡に使用します。',
+      topics: '興味のあるトピック',
+      topicsHint: 'どのようなトピックに貢献したいですか？',
+      portfolio: 'ポートフォリオまたは例',
+      portfolioHint: '執筆サンプルや関連する活動へのリンク。',
+    },
+    submit: 'リクエストを送信',
+    success: {
+      title: 'リクエストを送信しました',
+      message: 'Agpediaへの貢献にご関心をお寄せいただきありがとうございます。リクエストを確認の上、ご連絡いたします。',
+    },
+    review: {
+      title: 'アカウントリクエストの確認',
+      description: '潜在的な貢献者からの保留中のアカウントリクエスト。',
+      empty: '保留中のリクエストはありません。',
+      delete: '削除',
+      headers: {
+        email: 'メール',
+        topics: 'トピック',
+        portfolio: 'ポートフォリオ',
+        submitted: '送信済み',
+        actions: 'アクション',
+      },
+    },
+  },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Status: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Minta akun',
+    description: 'Kirim permintaan untuk berkontribusi pada Agpedia.',
+    form: {
+      email: 'Email',
+      emailHint: 'Kami akan menggunakan ini untuk menghubungi Anda mengenai permintaan Anda.',
+      topics: 'Topik yang diminati',
+      topicsHint: 'Topik apa yang ingin Anda kontribusikan?',
+      portfolio: 'Portofolio atau contoh',
+      portfolioHint: 'Tautan ke contoh tulisan atau karya relevan Anda.',
+    },
+    submit: 'Kirim permintaan',
+    success: {
+      title: 'Permintaan dikirim',
+      message: 'Terima kasih atas minat Anda untuk berkontribusi pada Agpedia. Kami akan meninjau permintaan Anda dan menghubungi Anda kembali.',
+    },
+    review: {
+      title: 'Tinjau permintaan akun',
+      description: 'Permintaan akun yang tertunda dari calon kontributor.',
+      empty: 'Tidak ada permintaan yang tertunda.',
+      delete: 'Hapus',
+      headers: {
+        email: 'Email',
+        topics: 'Topik',
+        portfolio: 'Portofolio',
+        submitted: 'Dikirim',
+        actions: 'Tindakan',
+      },
     },
   },
 }

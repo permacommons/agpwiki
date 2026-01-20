@@ -131,4 +131,34 @@
       stateLabel: '状态：<code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: '申请账户',
+    description: '提交申请以参与 Agpedia 的贡献。',
+    form: {
+      email: '电子邮件',
+      emailHint: '我们将使用此邮箱联系您关于申请的事宜。',
+      topics: '感兴趣的主题',
+      topicsHint: '您希望在哪些主题上做出贡献？',
+      portfolio: '作品集或示例',
+      portfolioHint: '您的写作样本或相关工作的链接。',
+    },
+    submit: '提交申请',
+    success: {
+      title: '申请已提交',
+      message: '感谢您有兴趣为 Agpedia 做出贡献。我们将审核您的申请并与您联系。',
+    },
+    review: {
+      title: '审核账户申请',
+      description: '来自潜在贡献者的待处理账户申请。',
+      empty: '没有待处理的申请。',
+      delete: '删除',
+      headers: {
+        email: '电子邮件',
+        topics: '主题',
+        portfolio: '作品集',
+        submitted: '已提交',
+        actions: '操作',
+      },
+    },
+  },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Stanje: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Zahtevaj račun',
+    description: 'Pošljite zahtevo za prispevanje k Agpedii.',
+    form: {
+      email: 'E-pošta',
+      emailHint: 'To bomo uporabili za stik z vami glede vaše zahteve.',
+      topics: 'Teme zanimanja',
+      topicsHint: 'K katerim temam bi želeli prispevati?',
+      portfolio: 'Portfelj ali primeri',
+      portfolioHint: 'Povezave do vaših primerov pisanja ali ustreznega dela.',
+    },
+    submit: 'Pošlji zahtevo',
+    success: {
+      title: 'Zahteva poslana',
+      message: 'Hvala za vaše zanimanje za prispevanje k Agpedii. Vašo zahtevo bomo pregledali in vas kontaktirali.',
+    },
+    review: {
+      title: 'Pregled zahtev za račun',
+      description: 'Čakajoče zahteve za račun od potencialnih sodelavcev.',
+      empty: 'Ni čakajočih zahtev.',
+      delete: 'Izbriši',
+      headers: {
+        email: 'E-pošta',
+        topics: 'Teme',
+        portfolio: 'Portfelj',
+        submitted: 'Oddano',
+        actions: 'Dejanja',
+      },
     },
   },
 }

@@ -131,4 +131,34 @@
       stateLabel: '狀態：<code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: '申請帳戶',
+    description: '提交申請以參與 Agpedia 的貢獻。',
+    form: {
+      email: '電子郵件',
+      emailHint: '我們將使用此信箱聯絡您關於申請的事宜。',
+      topics: '感興趣的主題',
+      topicsHint: '您希望在哪些主題上做出貢獻？',
+      portfolio: '作品集或範例',
+      portfolioHint: '您的寫作樣本或相關工作的連結。',
+    },
+    submit: '提交申請',
+    success: {
+      title: '申請已提交',
+      message: '感謝您有興趣為 Agpedia 做出貢獻。我們將審核您的申請並與您聯絡。',
+    },
+    review: {
+      title: '審核帳戶申請',
+      description: '來自潛在貢獻者的待處理帳戶申請。',
+      empty: '沒有待處理的申請。',
+      delete: '刪除',
+      headers: {
+        email: '電子郵件',
+        topics: '主題',
+        portfolio: '作品集',
+        submitted: '已提交',
+        actions: '操作',
+      },
+    },
+  },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'অবস্থা: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'অ্যাকাউন্টের জন্য অনুরোধ',
+    description: 'Agpedia-তে অবদান রাখতে একটি অনুরোধ জমা দিন।',
+    form: {
+      email: 'ইমেল',
+      emailHint: 'আমরা আপনার অনুরোধের বিষয়ে আপনার সাথে যোগাযোগ করতে এটি ব্যবহার করব।',
+      topics: 'আগ্রহের বিষয়',
+      topicsHint: 'আপনি কোন বিষয়গুলিতে অবদান রাখতে চান?',
+      portfolio: 'পোর্টফোলিও বা উদাহরণ',
+      portfolioHint: 'আপনার লেখার নমুনা বা প্রাসঙ্গিক কাজের লিঙ্ক।',
+    },
+    submit: 'অনুরোধ জমা দিন',
+    success: {
+      title: 'অনুরোধ জমা দেওয়া হয়েছে',
+      message: 'Agpedia-তে অবদান রাখার আগ্রহের জন্য ধন্যবাদ। আমরা আপনার অনুরোধ পর্যালোচনা করব এবং আপনার সাথে যোগাযোগ করব।',
+    },
+    review: {
+      title: 'অ্যাকাউন্ট অনুরোধ পর্যালোচনা',
+      description: 'সম্ভাব্য অবদানকারীদের কাছ থেকে অপেক্ষমান অ্যাকাউন্ট অনুরোধ।',
+      empty: 'কোনো অপেক্ষমান অনুরোধ নেই।',
+      delete: 'মুছুন',
+      headers: {
+        email: 'ইমেল',
+        topics: 'বিষয়',
+        portfolio: 'পোর্টফোলিও',
+        submitted: 'জমা দেওয়া হয়েছে',
+        actions: 'ক্রিয়াকলাপ',
+      },
     },
   },
 }

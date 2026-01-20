@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Status: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Begär ett konto',
+    description: 'Skicka en förfrågan om att bidra till Agpedia.',
+    form: {
+      email: 'E-post',
+      emailHint: 'Vi använder detta för att kontakta dig angående din förfrågan.',
+      topics: 'Intresseområden',
+      topicsHint: 'Vilka ämnen skulle du vilja bidra till?',
+      portfolio: 'Portfölj eller exempel',
+      portfolioHint: 'Länkar till dina skrivprov eller relevanta bidrag.',
+    },
+    submit: 'Skicka förfrågan',
+    success: {
+      title: 'Förfrågan skickad',
+      message: 'Tack för ditt intresse att bidra till Agpedia. Vi kommer att granska din förfrågan och återkomma till dig.',
+    },
+    review: {
+      title: 'Granska kontoförfrågningar',
+      description: 'Väntande kontoförfrågningar från potentiella bidragsgivare.',
+      empty: 'Inga väntande förfrågningar.',
+      delete: 'Ta bort',
+      headers: {
+        email: 'E-post',
+        topics: 'Ämnen',
+        portfolio: 'Portfölj',
+        submitted: 'Inskickat',
+        actions: 'Åtgärder',
+      },
     },
   },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Tila: <code>{{state}}</code>',
     },
+  },
+  accountRequest: {
+    title: 'Pyydä tiliä',
+    description: 'Lähetä pyyntö osallistuaksesi Agpediaan.',
+    form: {
+      email: 'Sähköposti',
+      emailHint: 'Käytämme tätä ottaaksemme sinuun yhteyttä pyyntöösi liittyen.',
+      topics: 'Kiinnostuksen kohteet',
+      topicsHint: 'Mihin aiheisiin haluaisit osallistua?',
+      portfolio: 'Portfolio tai esimerkkejä',
+      portfolioHint: 'Linkkejä kirjoitusnäytteisiisi tai asiaankuuluviin projekteihin.',
+    },
+    submit: 'Lähetä pyyntö',
+    success: {
+      title: 'Pyyntö lähetetty',
+      message: 'Kiitos mielenkiinnostasi osallistua Agpediaan. Tarkistamme pyyntösi ja palaamme asiaan.',
+    },
+    review: {
+      title: 'Tarkista tilipyynnöt',
+      description: 'Odottavat tilipyynnöt mahdollisilta osallistujilta.',
+      empty: 'Ei odottavia pyyntöjä.',
+      delete: 'Poista',
+      headers: {
+        email: 'Sähköposti',
+        topics: 'Aiheet',
+        portfolio: 'Portfolio',
+        submitted: 'Lähetetty',
+        actions: 'Toiminnot'
+      }
+    }
   },
 }

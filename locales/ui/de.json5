@@ -131,4 +131,34 @@
       stateLabel: 'Status: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Ein Konto beantragen',
+    description: 'Senden Sie eine Anfrage, um zu Agpedia beizutragen.',
+    form: {
+      email: 'E-Mail',
+      emailHint: 'Wir verwenden dies, um Sie bezüglich Ihrer Anfrage zu kontaktieren.',
+      topics: 'Interessengebiete',
+      topicsHint: 'Zu welchen Themen möchten Sie beitragen?',
+      portfolio: 'Portfolio oder Beispiele',
+      portfolioHint: 'Links zu Ihren Textproben oder relevanten Beiträgen.',
+    },
+    submit: 'Anfrage senden',
+    success: {
+      title: 'Anfrage gesendet',
+      message: 'Vielen Dank für Ihr Interesse an einer Mitarbeit bei Agpedia. Wir werden Ihre Anfrage prüfen und uns bei Ihnen melden.',
+    },
+    review: {
+      title: 'Kontoanfragen überprüfen',
+      description: 'Ausstehende Kontoanfragen von potenziellen Mitwirkenden.',
+      empty: 'Keine ausstehenden Anfragen.',
+      delete: 'Löschen',
+      headers: {
+        email: 'E-Mail',
+        topics: 'Themen',
+        portfolio: 'Portfolio',
+        submitted: 'Eingereicht',
+        actions: 'Aktionen',
+      },
+    },
+  },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Állapot: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Fiók igénylése',
+    description: 'Küldjön kérelmet az Agpedia szerkesztéséhez.',
+    form: {
+      email: 'E-mail',
+      emailHint: 'Ezt fogjuk használni a kapcsolatfelvételre a kérelmével kapcsolatban.',
+      topics: 'Érdeklődési körök',
+      topicsHint: 'Milyen témákban szeretne közreműködni?',
+      portfolio: 'Portfólió vagy példák',
+      portfolioHint: 'Linkek írásmintáihoz vagy releváns projektjeihez.',
+    },
+    submit: 'Kérelem beküldése',
+    success: {
+      title: 'Kérelem elküldve',
+      message: 'Köszönjük érdeklődését az Agpedia iránt. Áttekintjük kérelmét, és felvesszük Önnel a kapcsolatot.',
+    },
+    review: {
+      title: 'Fiókkérelmek áttekintése',
+      description: 'Függőben lévő fiókkérelmek potenciális közreműködőktől.',
+      empty: 'Nincs függőben lévő kérelem.',
+      delete: 'Törlés',
+      headers: {
+        email: 'E-mail',
+        topics: 'Témák',
+        portfolio: 'Portfólió',
+        submitted: 'Beküldve',
+        actions: 'Műveletek',
+      },
     },
   },
 }

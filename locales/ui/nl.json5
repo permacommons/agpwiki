@@ -131,4 +131,34 @@
       stateLabel: 'Status: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Account aanvragen',
+    description: 'Dien een verzoek in om bij te dragen aan Agpedia.',
+    form: {
+      email: 'E-mail',
+      emailHint: 'We gebruiken dit om contact met u op te nemen over uw verzoek.',
+      topics: 'Interessegebieden',
+      topicsHint: 'Aan welke onderwerpen zou u willen bijdragen?',
+      portfolio: 'Portfolio of voorbeelden',
+      portfolioHint: 'Links naar uw schrijfvoorbeelden of relevante bijdragen.',
+    },
+    submit: 'Verzoek indienen',
+    success: {
+      title: 'Verzoek ingediend',
+      message: 'Bedankt voor uw interesse om bij te dragen aan Agpedia. We zullen uw verzoek beoordelen en contact met u opnemen.',
+    },
+    review: {
+      title: 'Accountverzoeken beoordelen',
+      description: 'In afwachting van accountverzoeken van potentiële bijdragers.',
+      empty: 'Geen openstaande verzoeken.',
+      delete: 'Verwijderen',
+      headers: {
+        email: 'E-mail',
+        topics: 'Onderwerpen',
+        portfolio: 'Portfolio',
+        submitted: 'Ingediend',
+        actions: 'Acties',
+      },
+    },
+  },
 }

@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'حالت: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'اکاؤنٹ کی درخواست کریں',
+    description: 'Agpedia میں حصہ ڈالنے کے لیے درخواست جمع کرائیں۔',
+    form: {
+      email: 'ای میل',
+      emailHint: 'ہم آپ کی درخواست کے بارے میں آپ سے رابطہ کرنے کے لیے اس کا استعمال کریں گے۔',
+      topics: 'دلچسپی کے موضوعات',
+      topicsHint: 'آپ کن موضوعات میں حصہ ڈالنا چاہیں گے؟',
+      portfolio: 'پورٹ فولیو یا مثالیں',
+      portfolioHint: 'آپ کے تحریری نمونوں یا متعلقہ کام کے لنکس۔',
+    },
+    submit: 'درخواست جمع کروائیں',
+    success: {
+      title: 'درخواست جمع کر دی گئی',
+      message: 'Agpedia میں حصہ ڈالنے میں آپ کی دلچسپی کا شکریہ۔ ہم آپ کی درخواست کا جائزہ لیں گے اور آپ سے رابطہ کریں گے۔',
+    },
+    review: {
+      title: 'اکاؤنٹ کی درخواستوں کا جائزہ لیں',
+      description: 'ممکنہ تعاون کرنے والوں کی جانب سے زیر التواء اکاؤنٹ کی درخواستیں۔',
+      empty: 'کوئی زیر التواء درخواستیں نہیں ہیں۔',
+      delete: 'حذف کریں',
+      headers: {
+        email: 'ای میل',
+        topics: 'موضوعات',
+        portfolio: 'پورٹ فولیو',
+        submitted: 'جمع کرایا گیا',
+        actions: 'افعال',
+      }
+    }
+  }
 }

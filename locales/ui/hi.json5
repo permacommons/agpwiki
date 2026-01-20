@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'स्थिति: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'खाता अनुरोध करें',
+    description: 'Agpedia में योगदान करने के लिए अनुरोध भेजें।',
+    form: {
+      email: 'ईमेल',
+      emailHint: 'हम आपके अनुरोध के बारे में आपसे संपर्क करने के लिए इसका उपयोग करेंगे।',
+      topics: 'रुचि के विषय',
+      topicsHint: 'आप किन विषयों में योगदान देना चाहेंगे?',
+      portfolio: 'पोर्टफोलियो या उदाहरण',
+      portfolioHint: 'आपके लेखन के नमूने या प्रासंगिक कार्य के लिंक।',
+    },
+    submit: 'अनुरोध भेजें',
+    success: {
+      title: 'अनुरोध भेजा गया',
+      message: 'Agpedia में योगदान करने में आपकी रुचि के लिए धन्यवाद। हम आपके अनुरोध की समीक्षा करेंगे और आपसे संपर्क करेंगे।',
+    },
+    review: {
+      title: 'खाता अनुरोधों की समीक्षा करें',
+      description: 'संभावित योगदानकर्ताओं से लंबित खाता अनुरोध।',
+      empty: 'कोई लंबित अनुरोध नहीं।',
+      delete: 'हटाएं',
+      headers: {
+        email: 'ईमेल',
+        topics: 'विषय',
+        portfolio: 'पोर्टफोलियो',
+        submitted: 'प्रस्तुत किया गया',
+        actions: 'कार्रवाई',
+      },
     },
   },
 }

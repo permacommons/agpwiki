@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Stato: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Peti konton',
+    description: 'Sendu peton por kontribui al Agpedia.',
+    form: {
+      email: 'Retpoŝto',
+      emailHint: 'Ni uzos ĉi tion por kontakti vin pri via peto.',
+      topics: 'Interesaj temoj',
+      topicsHint: 'Pri kiuj temoj vi ŝatus kontribui?',
+      portfolio: 'Biletujo aŭ ekzemploj',
+      portfolioHint: 'Ligoj al viaj skribaj specimenoj aŭ rilata laboro.',
+    },
+    submit: 'Sendu peton',
+    success: {
+      title: 'Peto sendita',
+      message: 'Dankon pro via intereso kontribui al Agpedia. Ni revizios vian peton kaj kontaktos vin.',
+    },
+    review: {
+      title: 'Revizii kontopetojn',
+      description: 'Pendantaj kontopetoj de eblaj kontribuantoj.',
+      empty: 'Neniuj pendantaj petoj.',
+      delete: 'Forigi',
+      headers: {
+        email: 'Retpoŝto',
+        topics: 'Temoj',
+        portfolio: 'Biletujo',
+        submitted: 'Sendita',
+        actions: 'Agoj',
+      },
     },
   },
 }

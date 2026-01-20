@@ -131,4 +131,34 @@
       stateLabel: 'Stan: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Poproś o konto',
+    description: 'Prześlij prośbę o możliwość współtworzenia Agpedii.',
+    form: {
+      email: 'E-mail',
+      emailHint: 'Użyjemy tego adresu, aby skontaktować się z Tobą w sprawie Twojej prośby.',
+      topics: 'Zainteresowania',
+      topicsHint: 'W jakich tematach chciałbyś mieć wkład?',
+      portfolio: 'Portfolio lub przykłady',
+      portfolioHint: 'Linki do Twoich próbek pisarskich lub odpowiednich materiałów.',
+    },
+    submit: 'Wyślij prośbę',
+    success: {
+      title: 'Prośba wysłana',
+      message: 'Dziękujemy za zainteresowanie współtworzeniem Agpedii. Rozpatrzymy Twoją prośbę i skontaktujemy się z Tobą.',
+    },
+    review: {
+      title: 'Przegląd próśb o konto',
+      description: 'Oczekujące prośby o konto od potencjalnych współpracowników.',
+      empty: 'Brak oczekujących próśb.',
+      delete: 'Usuń',
+      headers: {
+        email: 'E-mail',
+        topics: 'Tematy',
+        portfolio: 'Portfolio',
+        submitted: 'Przesłano',
+        actions: 'Akcje',
+      },
+    },
+  },
 }

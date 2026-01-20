@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Stav: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Požiadať o účet',
+    description: 'Odošlite žiadosť o príspevok do Agpedia.',
+    form: {
+      email: 'E-mail',
+      emailHint: 'Použijeme to na kontaktovanie vás ohľadom vašej žiadosti.',
+      topics: 'Témy záujmu',
+      topicsHint: 'Ktorým témam by ste chceli prispieť?',
+      portfolio: 'Portfólio alebo príklady',
+      portfolioHint: 'Odkazy na vaše ukážky písania alebo relevantnú prácu.',
+    },
+    submit: 'Odoslať žiadosť',
+    success: {
+      title: 'Žiadosť odoslaná',
+      message: 'Ďakujeme za váš záujem prispieť do Agpedia. Vašu žiadosť posúdime a ozveme sa vám.',
+    },
+    review: {
+      title: 'Skontrolovať žiadosti o účet',
+      description: 'Čakajúce žiadosti o účet od potenciálnych prispievateľov.',
+      empty: 'Žiadne čakajúce žiadosti.',
+      delete: 'Vymazať',
+      headers: {
+        email: 'E-mail',
+        topics: 'Témy',
+        portfolio: 'Portfólio',
+        submitted: 'Odoslané',
+        actions: 'Akcie',
+      },
     },
   },
 }

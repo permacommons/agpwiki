@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Стан: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Запит на обліковий запис',
+    description: 'Надішліть запит, щоб долучитися до Agpedia.',
+    form: {
+      email: 'Електронна пошта',
+      emailHint: "Ми використаємо це, щоб зв'язатися з вами щодо вашого запиту.",
+      topics: 'Теми інтересів',
+      topicsHint: 'До яких тем ви хотіли б долучитися?',
+      portfolio: 'Портфоліо або приклади',
+      portfolioHint: 'Посилання на ваші зразки текстів або відповідні матеріали.',
+    },
+    submit: 'Надіслати запит',
+    success: {
+      title: 'Запит надіслано',
+      message: "Дякуємо за ваш інтерес до участі в Agpedia. Ми розглянемо ваш запит і зв'яжемося з вами.",
+    },
+    review: {
+      title: 'Перегляд запитів облікових записів',
+      description: 'Очікувані запити облікових записів від потенційних учасників.',
+      empty: 'Немає очікуваних запитів.',
+      delete: 'Видалити',
+      headers: {
+        email: 'Ел. пошта',
+        topics: 'Теми',
+        portfolio: 'Портфоліо',
+        submitted: 'Надіслано',
+        actions: 'Дії',
+      },
     },
   },
 }

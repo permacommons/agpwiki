@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Состојба: <code>{{state}}</code>',
+    },
+  },
+  accountRequest: {
+    title: 'Побарајте сметка',
+    description: 'Испратете барање за придонес кон Agpedia.',
+    form: {
+      email: 'Е-пошта',
+      emailHint: 'Ќе го искористиме ова за да ве контактираме во врска со вашето барање.',
+      topics: 'Теми од интерес',
+      topicsHint: 'На кои теми би сакале да придонесете?',
+      portfolio: 'Портфолио или примери',
+      portfolioHint: 'Врски до ваши примери на пишување или релевантна работа.',
+    },
+    submit: 'Испрати барање',
+    success: {
+      title: 'Барањето е испратено',
+      message: 'Ви благодариме за интересот да придонесете за Agpedia. Ќе го разгледаме вашето барање и ќе ве контактираме.',
+    },
+    review: {
+      title: 'Преглед на барања за сметка',
+      description: 'Барања за сметка на чекање од потенцијални соработници.',
+      empty: 'Нема барања на чекање.',
+      delete: 'Избриши',
+      headers: {
+        email: 'Е-пошта',
+        topics: 'Теми',
+        portfolio: 'Портфолио',
+        submitted: 'Поднесено',
+        actions: 'Дејства',
+      },
     },
   },
 }

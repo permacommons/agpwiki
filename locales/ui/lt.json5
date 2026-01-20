@@ -128,7 +128,37 @@
       title: 'OAuth callback',
       codeLabel: 'Authorization code:',
       noCode: 'No authorization code returned.',
-      stateLabel: 'State: <code>{{state}}</code>',
+      stateLabel: 'Būsena: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Prašyti paskyros',
+    description: 'Pateikite prašymą prisidėti prie Agpedia.',
+    form: {
+      email: 'El. paštas',
+      emailHint: 'Naudosime tai susisiekti su jumis dėl jūsų prašymo.',
+      topics: 'Dominančios temos',
+      topicsHint: 'Kokiomis temomis norėtumėte prisidėti?',
+      portfolio: 'Portfelis arba pavyzdžiai',
+      portfolioHint: 'Nuorodos į jūsų rašymo pavyzdžius ar susijusius darbus.',
+    },
+    submit: 'Pateikti prašymą',
+    success: {
+      title: 'Prašymas pateiktas',
+      message: 'Dėkojame, kad domitės galimybe prisidėti prie Agpedia. Peržiūrėsime jūsų prašymą ir susisieksime su jumis.',
+    },
+    review: {
+      title: 'Peržiūrėti paskyros prašymus',
+      description: 'Laukiantys potencialių bendraautorių paskyros prašymai.',
+      empty: 'Nėra laukiančių prašymų.',
+      delete: 'Ištrinti',
+      headers: {
+        email: 'El. paštas',
+        topics: 'Temos',
+        portfolio: 'Portfelis',
+        submitted: 'Pateikta',
+        actions: 'Veiksmai',
+      }
+    }
+  }
 }

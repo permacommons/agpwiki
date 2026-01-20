@@ -131,4 +131,34 @@
       stateLabel: 'Durum: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Hesap talep et',
+    description: "Agpedia'ya katkıda bulunmak için bir talep gönderin.",
+    form: {
+      email: 'E-posta',
+      emailHint: 'Bunu talebinizle ilgili olarak sizinle iletişime geçmek için kullanacağız.',
+      topics: 'İlgi alanları',
+      topicsHint: 'Hangi konularda katkıda bulunmak istersiniz?',
+      portfolio: 'Portföy veya örnekler',
+      portfolioHint: 'Yazı örneklerinize veya ilgili çalışmalarınıza bağlantılar.',
+    },
+    submit: 'Talebi gönder',
+    success: {
+      title: 'Talep gönderildi',
+      message: "Agpedia'ya katkıda bulunmaya gösterdiğiniz ilgi için teşekkür ederiz. Talebinizi inceleyip size geri döneceğiz.",
+    },
+    review: {
+      title: 'Hesap taleplerini incele',
+      description: 'Potansiyel katkıda bulunanlardan gelen bekleyen hesap talepleri.',
+      empty: 'Bekleyen talep yok.',
+      delete: 'Sil',
+      headers: {
+        email: 'E-posta',
+        topics: 'Konular',
+        portfolio: 'Portföy',
+        submitted: 'Gönderildi',
+        actions: 'Eylemler',
+      },
+    },
+  },
 }

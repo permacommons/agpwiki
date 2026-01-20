@@ -131,4 +131,34 @@
       stateLabel: 'Estado: <code>{{state}}</code>',
     },
   },
+  accountRequest: {
+    title: 'Solicitar uma conta',
+    description: 'Envie um pedido para contribuir para a Agpedia.',
+    form: {
+      email: 'E-mail',
+      emailHint: 'Usaremos isto para o contactar acerca do seu pedido.',
+      topics: 'Tópicos de interesse',
+      topicsHint: 'Em que tópicos gostaria de contribuir?',
+      portfolio: 'Portfólio ou exemplos',
+      portfolioHint: 'Links para as suas amostras de escrita ou contribuições relevantes.',
+    },
+    submit: 'Enviar pedido',
+    success: {
+      title: 'Pedido enviado',
+      message: 'Obrigado pelo seu interesse em contribuir para a Agpedia. Analisaremos o seu pedido e entraremos em contacto consigo.',
+    },
+    review: {
+      title: 'Rever pedidos de conta',
+      description: 'Pedidos de conta pendentes de potenciais colaboradores.',
+      empty: 'Sem pedidos pendentes.',
+      delete: 'Eliminar',
+      headers: {
+        email: 'E-mail',
+        topics: 'Tópicos',
+        portfolio: 'Portfólio',
+        submitted: 'Submetido',
+        actions: 'Ações',
+      },
+    },
+  },
 }

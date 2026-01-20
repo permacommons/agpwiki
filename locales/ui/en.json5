@@ -141,7 +141,8 @@
       "topics": "Topics of interest",
       "topicsHint": "What topics would you like to contribute to?",
       "portfolio": "Portfolio or examples",
-      "portfolioHint": "Links to your writing samples or relevant work."
+      // Translators: This is a volunteer project, not a job application. Please use neutral terms like "contributions", "projects", or "materials" rather than "work/job" if your language makes that distinction.
+      "portfolioHint": "Links to your writing samples or relevant projects."
     },
     "submit": "Submit request",
     "success": {
