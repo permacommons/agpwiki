@@ -1,3 +1,4 @@
+export { default as AccountRequest } from './account-request.js';
 export { default as ApiToken } from './api-token.js';
 export { default as AuthSession } from './auth-session.js';
 export { default as BlogPost } from './blog-post.js';

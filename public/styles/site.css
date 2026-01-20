@@ -485,6 +485,25 @@ footer.site-footer {
 .meta-tooltip.is-pinned {
   border-color: var(--accent);
 }
+.form-field textarea {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+  resize: vertical;
+  min-height: 4rem;
+}
+.form-hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 0.25rem;
+}
+altcha-widget {
+  display: block;
+  margin-bottom: 1rem;
+}
 @media (max-width: 900px) {
   .page-layout { grid-template-columns: 1fr; }
   .sidebar { order: -1; }

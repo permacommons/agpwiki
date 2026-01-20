@@ -6,6 +6,7 @@ import express from 'express';
 import debug from '../util/debug.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
+import { registerAccountRequestRoutes } from './routes/account-requests.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
@@ -36,6 +37,7 @@ registerOAuthRoutes(app);
 registerToolRoutes(app);
 registerBlogRoutes(app);
 registerCitationRoutes(app);
+registerAccountRequestRoutes(app);
 registerPageRoutes(app);
 
 const port = config.get<number>('server.port');

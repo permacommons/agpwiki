@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
 
+export const SITE_ADMIN_ROLE = 'site_admin';
 export const WIKI_ADMIN_ROLE = 'wiki_admin';
 
 /**

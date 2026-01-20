@@ -131,5 +131,35 @@
       "noCode": "No authorization code returned.",
       "stateLabel": "State: <code>{{state}}</code>"
     }
+  },
+  "accountRequest": {
+    "title": "Request an account",
+    "description": "Submit a request to contribute to Agpedia.",
+    "form": {
+      "email": "Email",
+      "emailHint": "We'll use this to contact you about your request.",
+      "topics": "Topics of interest",
+      "topicsHint": "What topics would you like to contribute to?",
+      "portfolio": "Portfolio or examples",
+      "portfolioHint": "Links to your writing samples or relevant work."
+    },
+    "submit": "Submit request",
+    "success": {
+      "title": "Request submitted",
+      "message": "Thank you for your interest in contributing to Agpedia. We'll review your request and get back to you."
+    },
+    "review": {
+      "title": "Review account requests",
+      "description": "Pending account requests from potential contributors.",
+      "empty": "No pending requests.",
+      "delete": "Delete",
+      "headers": {
+        "email": "Email",
+        "topics": "Topics",
+        "portfolio": "Portfolio",
+        "submitted": "Submitted",
+        "actions": "Actions"
+      }
+    }
   }
 }

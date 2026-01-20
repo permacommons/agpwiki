@@ -38,9 +38,23 @@ Example `config/production.json`:
     "max": 20,
     "idleTimeoutMillis": 30000,
     "connectionTimeoutMillis": 2000
+  },
+  "altcha": {
+    "hmacKey": "REPLACE_ME",
+    "enabled": true
   }
 }
 ```
+
+### ALTCHA CAPTCHA
+
+The account request form uses ALTCHA for spam prevention. Generate a secure HMAC key:
+
+```bash
+npm run generate-altcha-key
+```
+
+Add the output to your production config under `altcha.hmacKey`.
 
 ## Database
 

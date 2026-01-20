@@ -19,6 +19,7 @@
     "create-token": "node --import tsx src/scripts/create-token.ts",
     "create-invite": "node --import tsx src/scripts/create-invite.ts",
     "grant-role": "node --import tsx src/scripts/grant-role.ts",
+    "generate-altcha-key": "node --import tsx src/scripts/generate-altcha-key.ts",
     "test": "NODE_ENV=test node --import tsx --test test/**/*.test.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src locales util types",
@@ -27,6 +28,7 @@
   "dependencies": {
     "@citeproc-rs/wasm": "^0.2.0",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "altcha-lib": "^1.4.1",
     "cldr": "^8.0.0",
     "config": "^4.1.1",
     "cookie-parser": "^1.4.7",

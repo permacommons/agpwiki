@@ -22,5 +22,9 @@
     "refreshTokenTtlSeconds": 1209600,
     "allowDynamicClientRegistration": true,
     "defaultScopes": ["mcp.read", "mcp.write"]
+  },
+  "altcha": {
+    "hmacKey": "change-this-in-production",
+    "enabled": true
   }
 }
