@@ -30,6 +30,7 @@ Please follow this workflow:
 Before writing, ensure you're familiar with the wiki's editorial guidelines:
 - Read \`/meta/values\` to understand the wiki's core values
 - Read \`/meta/scope\` to understand what topics are appropriate
+- Read \`/meta/style\` to understand the wiki's style guide
 
 If you haven't read these pages yet, retrieve them now using the wiki_readPage tool.
 
