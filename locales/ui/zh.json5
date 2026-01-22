@@ -49,6 +49,9 @@
     title: '版本历史',
     compare: '比较选定的版本',
   },
+  toc: {
+    title: '目录',
+  },
   tool: {
     view: '查看',
     diff: '差异',

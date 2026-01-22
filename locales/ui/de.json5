@@ -49,6 +49,9 @@
     title: 'Versionsgeschichte',
     compare: 'Ausgewählte Versionen vergleichen',
   },
+  toc: {
+    title: 'Inhaltsverzeichnis',
+  },
   tool: {
     view: 'Ansehen',
     diff: 'Unterschied',

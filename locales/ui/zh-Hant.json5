@@ -49,6 +49,9 @@
     title: '版本歷史',
     compare: '比較選定的版本',
   },
+  toc: {
+    title: '目錄',
+  },
   tool: {
     view: '檢視',
     diff: '差異',

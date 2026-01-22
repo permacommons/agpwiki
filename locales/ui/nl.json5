@@ -49,6 +49,9 @@
     title: 'Versiegeschiedenis',
     compare: 'Vergelijk geselecteerde revisies',
   },
+  toc: {
+    title: 'Inhoud',
+  },
   tool: {
     view: 'Bekijk',
     diff: 'Verschil',

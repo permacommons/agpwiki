@@ -6,8 +6,11 @@ import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
 
 import citationsPlugin from './markdown/citations.js';
+import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
 import { getArticleCount } from './metrics.js';
+
+export { renderToc, type TocItem } from './markdown/toc.js';
 
 export const escapeHtml = (value: string) =>
   value
@@ -79,6 +82,7 @@ const citationStylePath = path.resolve(process.cwd(), 'vendor/csl/agpwiki-author
 const citationStyle = fs.readFileSync(citationStylePath, 'utf8');
 const markdown = new MarkdownIt({ html: false, linkify: true });
 markdown.use(variablesPlugin());
+markdown.use(tocPlugin());
 
 const toBacklinkSuffix = (index: number) => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz';
@@ -199,11 +203,16 @@ markdown.use(citationsPlugin, {
   },
 });
 
+export type RenderResult = {
+  html: string;
+  toc: TocItem[];
+};
+
 export const renderMarkdown = async (
   bodySource: string,
   citationEntries: Array<Record<string, unknown>>
-) => {
-  const env: Record<string, unknown> = { variables: {} };
+): Promise<RenderResult> => {
+  const env: Record<string, unknown> = { variables: {}, toc: [], tocSlugs: new Set() };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries);
   }
@@ -218,7 +227,8 @@ export const renderMarkdown = async (
   if (typeof citeprocInstance?.free === 'function') {
     citeprocInstance.free();
   }
-  return html;
+  const toc = (env.toc ?? []) as TocItem[];
+  return { html, toc };
 };
 
 const { handlebars: Handlebars } = hbs;

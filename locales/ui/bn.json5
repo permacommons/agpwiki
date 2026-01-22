@@ -49,6 +49,9 @@
     title: 'Version history',
     compare: 'Compare selected revisions',
   },
+  toc: {
+    title: 'বিষয়বস্তু',
+  },
   tool: {
     view: 'View',
     diff: 'Diff',

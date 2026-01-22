@@ -49,6 +49,9 @@
     title: 'Version history',
     compare: 'Compare selected revisions',
   },
+  toc: {
+    title: 'Daftar isi',
+  },
   tool: {
     view: 'View',
     diff: 'Diff',

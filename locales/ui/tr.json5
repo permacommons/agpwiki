@@ -49,6 +49,9 @@
     title: 'Sürüm geçmişi',
     compare: 'Seçili revizyonları karşılaştır',
   },
+  toc: {
+    title: 'İçindekiler',
+  },
   tool: {
     view: 'Görüntüle',
     diff: 'Fark',

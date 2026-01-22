@@ -49,6 +49,9 @@
     title: 'Cronologia versioni',
     compare: 'Confronta revisioni selezionate',
   },
+  toc: {
+    title: 'Indice',
+  },
   tool: {
     view: 'Vedi',
     diff: 'Diff',

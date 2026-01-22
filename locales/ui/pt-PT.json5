@@ -49,6 +49,9 @@
     title: 'Histórico de versões',
     compare: 'Comparar revisões selecionadas',
   },
+  toc: {
+    title: 'Índice',
+  },
   tool: {
     view: 'Ver',
     diff: 'Diferença',

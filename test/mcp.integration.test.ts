@@ -225,7 +225,7 @@ test('renderMarkdown includes bibliography entries for citations', async () => {
       userId
     );
 
-    const html = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
+    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
     assert.match(html, /Agpedia Test Citation/);
   } finally {
     try {
@@ -290,7 +290,7 @@ test('renderMarkdown supports adjacent bracket citations', async () => {
       userId
     );
 
-    const html = await renderMarkdown(
+    const { html } = await renderMarkdown(
       `Testing [@${citationKeyA}][@${citationKeyB}].`,
       [citationA.data ?? {}, citationB.data ?? {}]
     );
@@ -339,7 +339,7 @@ test('renderMarkdown punctuation handles author-only citations without year', as
       userId
     );
 
-    const html = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
+    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
     assert.match(html, /Tester, Alex\. Sandbox citation with no year\./);
     assert.doesNotMatch(html, /AlexSandbox/);
   } finally {

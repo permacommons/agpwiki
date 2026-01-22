@@ -7,7 +7,7 @@ import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
-import { formatDateUTC, renderLayout, renderMarkdown } from '../render.js';
+import { formatDateUTC, renderLayout, renderMarkdown, renderToc } from '../render.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
@@ -138,7 +138,7 @@ export const registerPageRoutes = (app: Express) => {
         }
       }
 
-      const bodyHtml = await renderMarkdown(bodySource, citationEntries);
+      const { html: bodyHtml, toc } = await renderMarkdown(bodySource, citationEntries);
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
@@ -179,6 +179,8 @@ export const registerPageRoutes = (app: Express) => {
         userMap,
         t: req.t,
       });
+      const tocHtml = renderToc(toc, { expanded: true, label: req.t('toc.title') });
+      const sidebarHtml = historyHtml + tocHtml;
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const signedIn = Boolean(await resolveSessionUser(req));
@@ -187,7 +189,7 @@ export const registerPageRoutes = (app: Express) => {
         labelHtml: metaLabel,
         bodyHtml,
         topHtml,
-        sidebarHtml: historyHtml,
+        sidebarHtml,
         signedIn,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,

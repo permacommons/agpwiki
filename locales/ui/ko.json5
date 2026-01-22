@@ -49,6 +49,9 @@
     title: '버전 기록',
     compare: '선택한 버전 비교',
   },
+  toc: {
+    title: '목차',
+  },
   tool: {
     view: '보기',
     diff: '차이',

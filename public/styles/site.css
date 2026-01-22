@@ -208,16 +208,33 @@ pre.diff ins { background: #ddf8dd; text-decoration: none; }
 .citation-notes li { margin-bottom: 0.5rem; }
 .ref-backlinks { margin-right: 0.25rem; }
 .ref-backlink { margin-right: 0.25rem; font-size: 0.8em; text-decoration: none; }
-.page-history, .page-diff {
+.page-history, .page-diff, .page-toc {
   background: var(--panel);
   border: 1px solid var(--rule);
   padding: 1rem;
   margin-bottom: 1rem;
 }
-.page-history summary, .page-diff summary {
+.page-history summary, .page-diff summary, .page-toc summary {
   font-weight: 600;
   color: var(--ink);
   font-family: 'IBM Plex Sans', sans-serif;
+  cursor: pointer;
+}
+.page-toc .toc-list {
+  margin: 0.75rem 0 0 0;
+  padding: 0;
+  list-style: none;
+}
+.page-toc .toc-list li {
+  margin: 0.35rem 0;
+  line-height: 1.4;
+}
+.page-toc .toc-list a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.page-toc .toc-list a:hover {
+  text-decoration: underline;
 }
 .history-list { margin-top: 1rem; padding-left: 1.25rem; }
 .history-list li { margin-bottom: 1rem; }
@@ -510,4 +527,5 @@ altcha-widget {
   .search-form { flex: 1 1 100%; }
   header.site-header { flex-direction: column; align-items: flex-start; }
   .article table { display: block; overflow-x: auto; }
+  .page-toc:not([open]) .toc-list { display: none; }
 }

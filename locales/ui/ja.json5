@@ -49,6 +49,9 @@
     title: 'バージョン履歴',
     compare: '選択したリビジョンを比較',
   },
+  toc: {
+    title: '目次',
+  },
   tool: {
     view: '表示',
     diff: '差分',
