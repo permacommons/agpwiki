@@ -157,7 +157,7 @@ export const registerBlogRoutes = (app: Express) => {
         }
       }
 
-      const bodyHtml = await renderMarkdown(bodySource, citationEntries);
+      const { html: bodyHtml } = await renderMarkdown(bodySource, citationEntries);
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
