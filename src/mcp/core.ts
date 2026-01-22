@@ -2,7 +2,8 @@ import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-
+import { getLanguageOptions } from '../../locales/cldr.js';
+import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { resolveAuthUserId } from './auth.js';
 import {
@@ -48,7 +49,34 @@ export interface CreateMcpServerOptions {
   userRoles?: string[];
 }
 
+const ensureMcpErrorMap = () => {
+  const existing = z.getErrorMap();
+  if (existing && (existing as { __agpwikiMcp?: boolean }).__agpwikiMcp) return;
+
+  const mcpErrorMap: z.ZodErrorMap = issue => {
+    const field = issue.path?.length ? issue.path.join('.') : 'value';
+    if (issue.code === 'invalid_type') {
+      if (issue.input === undefined) {
+        return { message: `${field} is required.` };
+      }
+      if (issue.expected === 'string') {
+        return { message: `${field} must be a string.` };
+      }
+      if (issue.expected === 'record' || issue.expected === 'object') {
+        return { message: `${field} must be an object.` };
+      }
+    }
+
+    const fallbackMessage = issue.message ?? 'Invalid input.';
+    return { message: fallbackMessage };
+  };
+
+  (mcpErrorMap as { __agpwikiMcp?: boolean }).__agpwikiMcp = true;
+  z.setErrorMap(mcpErrorMap);
+};
+
 export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
+  ensureMcpErrorMap();
   const { userRoles = [] } = options;
   const server = new McpServer(
     {
@@ -124,6 +152,68 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     return [...agentTags, ...(tags ?? [])];
   };
 
+  const languageTagDescription =
+    'Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".';
+  const localizedMapDescription = (label: string) =>
+    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}.`;
+  const localizedMapError = (label: string) =>
+    `Expected ${label} to be a language-keyed map (e.g., {"en":"..."}). See agpwiki://locales.`;
+
+  const invalidTypeKey = '__agpwiki_invalid_type__';
+  const invalidLanguageSentinel = '__agpwiki_invalid_language_tag__';
+
+  const makeLanguageTagSchema = () => {
+    const base = z.preprocess(
+      value => {
+        if (value === null || value === undefined) return value;
+        if (typeof value !== 'string') {
+          return `${invalidLanguageSentinel}${typeof value}`;
+        }
+        return value;
+      },
+      z.string().superRefine((value, ctx) => {
+        if (value.startsWith(invalidLanguageSentinel)) {
+          ctx.addIssue({ code: 'custom', message: languageTagDescription });
+        }
+      })
+    );
+
+    return {
+      required: base.describe(languageTagDescription),
+      optional: base.optional().describe(languageTagDescription),
+      optionalNullable: base.nullable().optional().describe(languageTagDescription),
+    };
+  };
+
+  const makeLocalizedMapSchemas = (label: string) => {
+    const description = localizedMapDescription(label);
+    const base = z.preprocess(
+      value => {
+        if (value === null || value === undefined) return value;
+        if (typeof value !== 'object' || Array.isArray(value)) {
+          return { [invalidTypeKey]: String(value) };
+        }
+        return value;
+      },
+      z.record(z.string(), z.string()).superRefine((value, ctx) => {
+        if (Object.hasOwn(value, invalidTypeKey)) {
+          ctx.addIssue({ code: 'custom', message: localizedMapError(label) });
+        }
+      })
+    );
+
+    return {
+      required: base.describe(description),
+      optional: base.nullable().optional().describe(description),
+    };
+  };
+
+  const localizedTitleSchema = makeLocalizedMapSchemas('title');
+  const localizedBodySchema = makeLocalizedMapSchemas('body');
+  const localizedSummarySchema = makeLocalizedMapSchemas('summary');
+  const localizedRevisionSummarySchema = makeLocalizedMapSchemas('revision summary');
+  const languageTagSchema = makeLanguageTagSchema();
+
   server.registerResource(
     'Wiki Pages Index',
     'agpwiki://pages',
@@ -166,6 +256,51 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
             uri: uri.toString(),
             mimeType: 'application/json',
             text: JSON.stringify(listing.resources, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  const localeResourceTemplate = new ResourceTemplate('agpwiki://locales{?uiLocale}', {
+    list: undefined,
+  });
+
+  server.registerResource(
+    'Supported Locales',
+    localeResourceTemplate,
+    {
+      title: 'Supported Locales',
+      description: 'List supported locale codes and localized display names.',
+      mimeType: 'application/json',
+    },
+    async uri => {
+      const uiLocale = uri.searchParams.get('uiLocale') ?? 'en';
+      if (!languages.isValid(uiLocale)) {
+        throw new Error(
+          `Unsupported uiLocale "${uiLocale}". Use agpwiki://locales for supported locale codes.`
+        );
+      }
+
+      const supportedLocales = languages.getValidLanguages();
+      const options = getLanguageOptions(uiLocale as AgpWiki.LocaleCode);
+      const labelsByCode = Object.fromEntries(options.map(option => [option.code, option.label]));
+
+      return {
+        contents: [
+          {
+            uri: uri.toString(),
+            mimeType: 'application/json',
+            text: JSON.stringify(
+              {
+                uiLocale,
+                supportedLocales,
+                options,
+                labelsByCode,
+              },
+              null,
+              2
+            ),
           },
         ],
       };
@@ -408,14 +543,15 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_createPage',
     {
       title: 'Create Wiki Page',
-      description: 'Create a new wiki page with initial content.',
+      description:
+        'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
       inputSchema: {
         slug: z.string(),
-        title: z.record(z.string(), z.string()).nullable().optional(),
-        body: z.record(z.string(), z.string()).nullable().optional(),
-        originalLanguage: z.string().nullable().optional(),
+        title: localizedTitleSchema.optional,
+        body: localizedBodySchema.optional,
+        originalLanguage: languageTagSchema.optionalNullable,
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()).nullable().optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -430,12 +566,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'citation_create',
     {
       title: 'Create Citation',
-      description: 'Create a new citation entry with CSL JSON data.',
+      description:
+        'Create a new citation entry with CSL JSON data. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Create citation"}.',
       inputSchema: {
         key: z.string(),
         data: z.record(z.string(), z.unknown()),
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()).nullable().optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -478,15 +615,16 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'blog_createPost',
     {
       title: 'Create Blog Post',
-      description: 'Create a new blog post with initial content.',
+      description:
+        'Create a new blog post with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
       inputSchema: {
         slug: z.string(),
-        title: z.record(z.string(), z.string()).nullable().optional(),
-        body: z.record(z.string(), z.string()).nullable().optional(),
-        summary: z.record(z.string(), z.string()).nullable().optional(),
-        originalLanguage: z.string().nullable().optional(),
+        title: localizedTitleSchema.optional,
+        body: localizedBodySchema.optional,
+        summary: localizedSummarySchema.optional,
+        originalLanguage: languageTagSchema.optionalNullable,
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()).nullable().optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -501,16 +639,17 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'blog_updatePost',
     {
       title: 'Update Blog Post',
-      description: 'Create a new revision for an existing blog post.',
+      description:
+        'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
-        title: z.record(z.string(), z.string()).nullable().optional(),
-        body: z.record(z.string(), z.string()).nullable().optional(),
-        summary: z.record(z.string(), z.string()).nullable().optional(),
-        originalLanguage: z.string().nullable().optional(),
+        title: localizedTitleSchema.optional,
+        body: localizedBodySchema.optional,
+        summary: localizedSummarySchema.optional,
+        originalLanguage: languageTagSchema.optionalNullable,
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -548,7 +687,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
         fromRevId: z.string(),
         toRevId: z.string().optional(),
-        lang: z.string().optional(),
+        lang: languageTagSchema.optional,
       },
     },
     withToolErrorHandling(async args => {
@@ -668,13 +807,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'citation_update',
     {
       title: 'Update Citation',
-      description: 'Create a new revision for an existing citation.',
+      description:
+        'Create a new revision for an existing citation. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
       inputSchema: {
         key: z.string(),
         newKey: z.string().optional(),
         data: z.record(z.string(), z.unknown()).nullable().optional(),
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -712,7 +852,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
         fromRevId: z.string(),
         toRevId: z.string().optional(),
-        lang: z.string().optional(),
+        lang: languageTagSchema.optional,
       },
     },
     withToolErrorHandling(async args => {
@@ -767,10 +907,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
         patch: z.string(),
         format: z.enum(['unified', 'codex']),
-        lang: z.string().optional(),
+        lang: languageTagSchema.optional,
         baseRevId: z.string().optional(),
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -789,15 +929,16 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_updatePage',
     {
       title: 'Update Wiki Page',
-      description: 'Create a new revision for an existing wiki page.',
+      description:
+        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
-        title: z.record(z.string(), z.string()).nullable().optional(),
-        body: z.record(z.string(), z.string()).nullable().optional(),
-        originalLanguage: z.string().nullable().optional(),
+        title: localizedTitleSchema.optional,
+        body: localizedBodySchema.optional,
+        originalLanguage: languageTagSchema.optionalNullable,
         tags: z.array(z.string()).optional(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -816,7 +957,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       inputSchema: {
         slug: z.string(),
         pageSlug: z.string(),
-        lang: z.string().optional(),
+        lang: languageTagSchema.optional,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -851,7 +992,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Soft-delete a wiki page and all its revisions. Requires wiki_admin role.',
       inputSchema: {
         slug: z.string(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {
@@ -869,7 +1010,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Soft-delete a citation and all its revisions. Requires wiki_admin role.',
       inputSchema: {
         key: z.string(),
-        revSummary: z.record(z.string(), z.string()),
+        revSummary: localizedRevisionSummarySchema.required,
       },
     },
     withToolErrorHandling(async (args, extra) => {

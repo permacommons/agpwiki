@@ -1,0 +1,96 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
+import { createMcpServer } from '../src/mcp/core.js';
+
+const getSchemaShape = (schema: unknown): Record<string, { description?: string }> => {
+  if (!schema || typeof schema !== 'object') return {};
+  const asAny = schema as { _zod?: { def?: { shape?: unknown } }; shape?: unknown };
+  const rawShape = asAny._zod?.def?.shape ?? asAny.shape;
+  if (typeof rawShape === 'function') {
+    try {
+      return rawShape() as Record<string, { description?: string }>;
+    } catch {
+      return {};
+    }
+  }
+  return (rawShape ?? {}) as Record<string, { description?: string }>;
+};
+
+test('MCP tool schemas describe localized fields', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiCreate = getSchemaShape(tools.wiki_createPage.inputSchema);
+  assert.ok(wikiCreate.title?.description?.includes('agpwiki://locales'));
+  assert.ok(wikiCreate.body?.description?.includes('agpwiki://locales'));
+  assert.ok(wikiCreate.revSummary?.description?.includes('agpwiki://locales'));
+
+  const blogCreate = getSchemaShape(tools.blog_createPost.inputSchema);
+  assert.ok(blogCreate.summary?.description?.includes('agpwiki://locales'));
+  assert.ok(blogCreate.originalLanguage?.description?.includes('agpwiki://locales'));
+
+  const wikiApply = getSchemaShape(tools.wiki_applyPatch.inputSchema);
+  assert.ok(wikiApply.lang?.description?.includes('agpwiki://locales'));
+});
+
+test('MCP localized field validation errors mention language maps', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiCreateSchema = tools.wiki_createPage.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean; error?: { issues: { message: string }[] } };
+  };
+  const invalidTitle = wikiCreateSchema.safeParse({ slug: 'test', title: 'bad' });
+  assert.equal(invalidTitle.success, false);
+  assert.ok(
+    invalidTitle.error?.issues.some(issue => issue.message.includes('agpwiki://locales'))
+  );
+
+  const wikiDiffSchema = tools.wiki_diffRevisions.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean; error?: { issues: { message: string }[] } };
+  };
+  const invalidLang = wikiDiffSchema.safeParse({ slug: 'test', fromRevId: 'rev', lang: 123 });
+  assert.equal(invalidLang.success, false);
+  assert.ok(invalidLang.error?.issues.some(issue => issue.message.includes('agpwiki://locales')));
+});
+
+test('MCP schema errors use required field messages', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiUpdateSchema = tools.wiki_updatePage.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean; error?: { issues: { message: string }[] } };
+  };
+  const missingRevSummary = wikiUpdateSchema.safeParse({ slug: 'test' });
+  assert.equal(missingRevSummary.success, false);
+  assert.ok(missingRevSummary.error?.issues.some(issue => issue.message === 'revSummary is required.'));
+});
+
+test('MCP locales resource returns supported locales', async () => {
+  const { server } = createMcpServer();
+  const templates = (server as {
+    _registeredResourceTemplates: Record<
+      string,
+      {
+        readCallback: (uri: URL) => Promise<{ contents: { text?: string }[] }>;
+      }
+    >;
+  })._registeredResourceTemplates;
+
+  const localesResource = templates['Supported Locales'];
+  assert.ok(localesResource);
+
+  const result = await localesResource.readCallback(new URL('agpwiki://locales?uiLocale=en'));
+  const payload = JSON.parse(result.contents[0]?.text ?? '{}') as {
+    uiLocale?: string;
+    supportedLocales?: string[];
+  };
+
+  assert.equal(payload.uiLocale, 'en');
+  assert.ok(Array.isArray(payload.supportedLocales));
+  assert.ok(payload.supportedLocales?.includes('en'));
+});
