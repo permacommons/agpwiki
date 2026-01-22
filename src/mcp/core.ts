@@ -1,12 +1,19 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult, ReadResourceResult } from '@modelcontextprotocol/sdk/types.js';
+import {
+  CallToolRequestSchema,
+  type CallToolResult,
+  type ReadResourceResult,
+} from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { resolveAuthUserId } from './auth.js';
 import {
+  type BlogPostDiffInput,
+  type BlogPostUpdateInput,
+  type BlogPostWriteInput,
   createBlogPost,
   diffBlogPostRevisions,
   listBlogPostResources,
@@ -16,10 +23,19 @@ import {
   readBlogPostRevision,
   updateBlogPost,
 } from './blog-handlers.js';
-import { toToolErrorPayload } from './errors.js';
+import {
+  InvalidRequestError,
+  toToolErrorPayload,
+  toValidationErrorFromZod,
+  UnsupportedError,
+} from './errors.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
+  type CitationDeleteInput,
+  type CitationQueryInput,
+  type CitationUpdateInput,
+  type CitationWriteInput,
   createCitation,
   createWikiPage,
   deleteCitation,
@@ -39,9 +55,15 @@ import {
   removeWikiPageAlias,
   updateCitation,
   updateWikiPage,
+  type WikiPageAliasInput,
+  type WikiPageDeleteInput,
+  type WikiPagePatchInput,
+  type WikiPageUpdateInput,
+  type WikiPageWriteInput,
 } from './handlers.js';
 import { registerPrompts } from './prompts.js';
 import { hasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import { createLocalizedSchemas } from './schema.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 
@@ -75,9 +97,40 @@ const ensureMcpErrorMap = () => {
   z.setErrorMap(mcpErrorMap);
 };
 
+const normalizeToolSchema = (schema: unknown): z.ZodTypeAny | undefined => {
+  if (!schema || typeof schema !== 'object') return undefined;
+  const asAny = schema as Record<string, unknown> & {
+    _def?: unknown;
+    _zod?: unknown;
+    safeParse?: unknown;
+    safeParseAsync?: unknown;
+  };
+  if (asAny._def || asAny._zod || typeof asAny.safeParse === 'function') {
+    return schema as z.ZodTypeAny;
+  }
+
+  const values = Object.values(schema as Record<string, unknown>);
+  if (
+    values.length === 0 ||
+    values.every(
+      value =>
+        value &&
+        typeof value === 'object' &&
+        ('_def' in (value as Record<string, unknown>) ||
+          '_zod' in (value as Record<string, unknown>) ||
+          typeof (value as { safeParse?: unknown }).safeParse === 'function')
+    )
+  ) {
+    return z.object(schema as z.ZodRawShape);
+  }
+
+  return undefined;
+};
+
 export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   ensureMcpErrorMap();
   const { userRoles = [] } = options;
+  const uuidSchema = z.string().uuid({ message: 'Must be a valid UUID.' });
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -152,67 +205,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     return [...agentTags, ...(tags ?? [])];
   };
 
-  const languageTagDescription =
-    'Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".';
-  const localizedMapDescription = (label: string) =>
-    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}.`;
-  const localizedMapError = (label: string) =>
-    `Expected ${label} to be a language-keyed map (e.g., {"en":"..."}). See agpwiki://locales.`;
-
-  const invalidTypeKey = '__agpwiki_invalid_type__';
-  const invalidLanguageSentinel = '__agpwiki_invalid_language_tag__';
-
-  const makeLanguageTagSchema = () => {
-    const base = z.preprocess(
-      value => {
-        if (value === null || value === undefined) return value;
-        if (typeof value !== 'string') {
-          return `${invalidLanguageSentinel}${typeof value}`;
-        }
-        return value;
-      },
-      z.string().superRefine((value, ctx) => {
-        if (value.startsWith(invalidLanguageSentinel)) {
-          ctx.addIssue({ code: 'custom', message: languageTagDescription });
-        }
-      })
-    );
-
-    return {
-      required: base.describe(languageTagDescription),
-      optional: base.optional().describe(languageTagDescription),
-      optionalNullable: base.nullable().optional().describe(languageTagDescription),
-    };
-  };
-
-  const makeLocalizedMapSchemas = (label: string) => {
-    const description = localizedMapDescription(label);
-    const base = z.preprocess(
-      value => {
-        if (value === null || value === undefined) return value;
-        if (typeof value !== 'object' || Array.isArray(value)) {
-          return { [invalidTypeKey]: String(value) };
-        }
-        return value;
-      },
-      z.record(z.string(), z.string()).superRefine((value, ctx) => {
-        if (Object.hasOwn(value, invalidTypeKey)) {
-          ctx.addIssue({ code: 'custom', message: localizedMapError(label) });
-        }
-      })
-    );
-
-    return {
-      required: base.describe(description),
-      optional: base.nullable().optional().describe(description),
-    };
-  };
-
-  const localizedTitleSchema = makeLocalizedMapSchemas('title');
-  const localizedBodySchema = makeLocalizedMapSchemas('body');
-  const localizedSummarySchema = makeLocalizedMapSchemas('summary');
-  const localizedRevisionSummarySchema = makeLocalizedMapSchemas('revision summary');
-  const languageTagSchema = makeLanguageTagSchema();
+  const {
+    localizedTitleSchema,
+    localizedBodySchema,
+    localizedSummarySchema,
+    localizedRevisionSummarySchema,
+    languageTagSchema,
+  } = createLocalizedSchemas();
 
   server.registerResource(
     'Wiki Pages Index',
@@ -554,7 +553,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: WikiPageWriteInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -575,7 +574,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: CitationWriteInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -604,7 +603,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         offset: z.number().int().optional(),
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(async (args: CitationQueryInput) => {
       const dal = await initializePostgreSQL();
       const payload = await queryCitations(dal, args);
       return payload;
@@ -627,7 +626,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: BlogPostWriteInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -652,7 +651,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: BlogPostUpdateInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -670,7 +669,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(async (args: { slug: string }) => {
       const dal = await initializePostgreSQL();
       const payload = await listBlogPostRevisions(dal, args.slug);
       return payload;
@@ -685,12 +684,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
-        fromRevId: z.string(),
-        toRevId: z.string().optional(),
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
         lang: languageTagSchema.optional,
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(async (args: BlogPostDiffInput) => {
       const dal = await initializePostgreSQL();
       const payload = await diffBlogPostRevisions(dal, args);
       return payload;
@@ -707,7 +706,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(async (args: { slug: string }) => {
       const dal = await initializePostgreSQL();
       const payload = await readBlogPost(dal, args.slug);
       return payload;
@@ -722,7 +721,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
-        revId: z.string(),
+        revId: uuidSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -757,8 +756,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
-        fromRevId: z.string(),
-        toRevId: z.string().optional(),
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
       },
     },
     withToolErrorHandling(async args => {
@@ -793,7 +792,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         key: z.string(),
-        revId: z.string(),
+        revId: uuidSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -817,7 +816,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: CitationUpdateInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateCitation(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -850,8 +849,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
-        fromRevId: z.string(),
-        toRevId: z.string().optional(),
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
         lang: languageTagSchema.optional,
       },
     },
@@ -887,7 +886,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: { readOnlyHint: true },
       inputSchema: {
         slug: z.string(),
-        revId: z.string(),
+        revId: uuidSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -908,12 +907,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         patch: z.string(),
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
-        baseRevId: z.string().optional(),
+        baseRevId: uuidSchema.optional(),
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: WikiPagePatchInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await applyWikiPagePatch(
@@ -941,7 +940,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: WikiPageUpdateInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
@@ -960,7 +959,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         lang: languageTagSchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: WikiPageAliasInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await addWikiPageAlias(dal, args, userId);
@@ -977,7 +976,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: z.string(),
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: { slug: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await removeWikiPageAlias(dal, args.slug, userId);
@@ -995,7 +994,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: WikiPageDeleteInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await deleteWikiPage(dal, { ...args }, userId);
@@ -1013,7 +1012,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(async (args: CitationDeleteInput, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await deleteCitation(dal, { ...args }, userId);
@@ -1029,6 +1028,67 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   }
 
   registerPrompts(server);
+
+  server.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    type RegisteredTool = {
+      enabled: boolean;
+      inputSchema?: unknown;
+      handler:
+        | ((args: unknown, extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult)
+        | ((extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult);
+    };
+
+    const tools = (server as unknown as { _registeredTools: Record<string, RegisteredTool> })
+      ._registeredTools;
+    const toolName = request.params.name;
+    const tool = tools[toolName];
+
+    if (!tool) {
+      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} not found.`));
+    }
+
+    if (!tool.enabled) {
+      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} disabled.`));
+    }
+
+    if (request.params.task) {
+      return formatToolErrorResult(
+        new UnsupportedError(`Tool ${toolName} does not support task augmentation.`)
+      );
+    }
+
+    let parsedArgs: unknown = request.params.arguments;
+    if (tool.inputSchema) {
+      const schema = normalizeToolSchema(tool.inputSchema);
+      if (schema) {
+        const parseResult = await schema.safeParseAsync(parsedArgs);
+        if (!parseResult.success) {
+          return formatToolErrorResult(
+            toValidationErrorFromZod(
+              `Invalid arguments for tool ${toolName}.`,
+              parseResult.error.issues as {
+                code: string;
+                path?: Array<string | number>;
+                message: string;
+                input?: unknown;
+              }[]
+            )
+          );
+        }
+        parsedArgs = parseResult.data;
+      }
+    }
+
+    try {
+      const handler = tool.handler;
+      if (tool.inputSchema) {
+        return await Promise.resolve(handler(parsedArgs, extra));
+      }
+      return await Promise.resolve(handler(extra));
+    } catch (error) {
+      return formatToolErrorResult(error);
+    }
+  });
 
   return { server, formatToolResult, formatToolErrorResult, adminTools };
 };

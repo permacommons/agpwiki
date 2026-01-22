@@ -129,6 +129,46 @@ export class ValidationCollector {
   }
 }
 
+type ZodIssueLike = {
+  code: string;
+  path?: Array<string | number>;
+  message: string;
+  input?: unknown;
+};
+
+const mapZodIssueToFieldError = (issue: ZodIssueLike): FieldError => {
+  const field = issue.path?.length ? issue.path.join('.') : 'value';
+  let code: string | undefined;
+
+  if (issue.code === 'invalid_type') {
+    if (issue.input === undefined) {
+      if (issue.message.endsWith('is required.')) {
+        code = 'required';
+      } else {
+        code = 'type';
+      }
+    } else {
+      code = 'type';
+    }
+  } else if (issue.code === 'custom') {
+    code = 'invalid';
+  }
+
+  return {
+    field,
+    message: issue.message,
+    code,
+  };
+};
+
+export const toValidationErrorFromZod = (
+  message: string,
+  issues: ZodIssueLike[]
+): ValidationError => {
+  const fieldErrors = issues.map(mapZodIssueToFieldError);
+  return new ValidationError(message, fieldErrors);
+};
+
 const mapMessageToCode = (message: string): ToolErrorCode => {
   const normalized = message.toLowerCase();
   if (normalized.includes('not found')) return 'not_found';
@@ -161,6 +201,22 @@ const mapMessageToCode = (message: string): ToolErrorCode => {
 export const toToolErrorPayload = (error: unknown): ToolErrorPayload => {
   if (error instanceof McpToolError) {
     return error.toPayload();
+  }
+  const dalError = error as { name?: string; message?: string; field?: string | null } | null;
+  if (dalError?.name === 'ValidationError') {
+    const field = dalError.field ?? undefined;
+    const message = dalError.message ?? 'Validation error.';
+    const fieldErrors = field
+      ? [{ field, message, code: 'invalid' } satisfies FieldError]
+      : undefined;
+    return {
+      error: {
+        code: 'validation_error',
+        message,
+        fieldErrors,
+        retryable: false,
+      },
+    };
   }
   const message = error instanceof Error ? error.message : String(error);
   const code = mapMessageToCode(message);

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
+import { toValidationErrorFromZod } from '../src/mcp/errors.js';
 
 const getSchemaShape = (schema: unknown): Record<string, { description?: string }> => {
   if (!schema || typeof schema !== 'object') return {};
@@ -68,6 +69,39 @@ test('MCP schema errors use required field messages', () => {
   const missingRevSummary = wikiUpdateSchema.safeParse({ slug: 'test' });
   assert.equal(missingRevSummary.success, false);
   assert.ok(missingRevSummary.error?.issues.some(issue => issue.message === 'revSummary is required.'));
+});
+
+test('MCP schema validates revision IDs as UUIDs', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiReadRevisionSchema = tools.wiki_readRevision.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean; error?: { issues: { message: string }[] } };
+  };
+  const invalidRevId = wikiReadRevisionSchema.safeParse({
+    slug: 'test',
+    revId: 'not-a-uuid',
+  });
+  assert.equal(invalidRevId.success, false);
+  assert.ok(
+    invalidRevId.error?.issues.some(issue => issue.message.includes('valid UUID'))
+  );
+});
+
+test('Zod issues map to validation errors', () => {
+  const issues = [
+    { code: 'invalid_type', path: ['slug'], message: 'slug is required.', input: undefined },
+    { code: 'invalid_type', path: ['revSummary'], message: 'revSummary is required.', input: undefined },
+    { code: 'custom', path: ['body'], message: 'Expected body to be a language-keyed map.' },
+  ];
+  const error = toValidationErrorFromZod('Invalid arguments for tool test.', issues);
+  assert.equal(error.code, 'validation_error');
+  assert.ok(error.fieldErrors?.some(entry => entry.field === 'slug' && entry.code === 'required'));
+  assert.ok(
+    error.fieldErrors?.some(entry => entry.field === 'revSummary' && entry.code === 'required')
+  );
+  assert.ok(error.fieldErrors?.some(entry => entry.field === 'body' && entry.code === 'invalid'));
 });
 
 test('MCP locales resource returns supported locales', async () => {

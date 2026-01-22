@@ -102,41 +102,57 @@ const ensureOptionalLanguage = (
   }
 };
 
-const ensureObject = (value: unknown, label: string, errors?: ValidationCollector) => {
-  if (value && typeof value === 'object') return;
-  if (errors) {
-    errors.add(label, 'must be an object.', 'type');
-    return;
-  }
-  throw new ValidationError(`${label} must be an object.`, [
-    { field: label, message: 'must be an object.', code: 'type' },
-  ]);
-};
-
 const ensureNonEmptySlug = (slug: string) => normalizeSlugInput(slug, 'slug');
 
 const validateTitle = (
   value: Record<string, string> | null | undefined,
   errors?: ValidationCollector
 ) => {
-  if (value === undefined || value === null) return;
-  ensureObject(value, 'title', errors);
+  if (value === undefined) return;
+  try {
+    mlString.validate(value, { maxLength: 200, allowHTML: false });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid title value.';
+    if (errors) {
+      errors.add('title', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'title', message, code: 'invalid' }]);
+  }
 };
 
 const validateBody = (
   value: Record<string, string> | null | undefined,
   errors?: ValidationCollector
 ) => {
-  if (value === undefined || value === null) return;
-  ensureObject(value, 'body', errors);
+  if (value === undefined) return;
+  try {
+    mlString.validate(value, { maxLength: 20000, allowHTML: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid body value.';
+    if (errors) {
+      errors.add('body', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'body', message, code: 'invalid' }]);
+  }
 };
 
 const validateSummary = (
   value: Record<string, string> | null | undefined,
   errors?: ValidationCollector
 ) => {
-  if (value === undefined || value === null) return;
-  ensureObject(value, 'summary', errors);
+  if (value === undefined) return;
+  try {
+    mlString.validate(value, { maxLength: 500, allowHTML: false });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid summary value.';
+    if (errors) {
+      errors.add('summary', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'summary', message, code: 'invalid' }]);
+  }
 };
 
 const validateRevSummary = (
@@ -144,7 +160,16 @@ const validateRevSummary = (
   errors?: ValidationCollector
 ) => {
   if (value === undefined || value === null) return;
-  ensureObject(value, 'revSummary', errors);
+  try {
+    mlString.validate(value, { maxLength: 300, allowHTML: false });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
+    if (errors) {
+      errors.add('revSummary', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'revSummary', message, code: 'invalid' }]);
+  }
   for (const [lang, summary] of Object.entries(value)) {
     if (summary.length > 300) {
       if (errors) {
