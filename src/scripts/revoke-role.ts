@@ -37,16 +37,16 @@ const main = async () => {
       'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
       [user.id, role]
     );
-    if (existing.rows.length > 0) {
-      throw new Error(`User already has role ${role}.`);
+    if (existing.rows.length === 0) {
+      throw new Error(`User does not have role ${role}.`);
     }
 
-    await dal.query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [
+    await dal.query('DELETE FROM user_roles WHERE user_id = $1 AND role = $2', [
       user.id,
       role,
     ]);
 
-    console.log(`Granted role ${role} to ${user.email}`);
+    console.log(`Revoked role ${role} from ${user.email}`);
   } finally {
     if (dal) {
       await dal.disconnect();
@@ -57,6 +57,6 @@ const main = async () => {
 
 main().catch(error => {
   const message = error instanceof Error ? error.message : String(error);
-  console.error(`Failed to grant role: ${message}`);
+  console.error(`Failed to revoke role: ${message}`);
   process.exitCode = 1;
 });

@@ -12,6 +12,7 @@ import {
 } from '../auth/session.js';
 import { generateApiToken, hashToken } from '../auth/tokens.js';
 import { initializePostgreSQL } from '../db.js';
+import { isValidRole } from '../mcp/roles.js';
 import ApiToken from '../models/api-token.js';
 import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
@@ -383,6 +384,9 @@ export const registerAuthRoutes = (app: Express) => {
       await invite.save();
 
       if (invite.role) {
+        if (!isValidRole(invite.role)) {
+          throw new Error(`Invite contains unsupported role: ${invite.role}`);
+        }
         await dalInstance.query(
           'INSERT INTO user_roles (user_id, role, created_at) VALUES ($1, $2, NOW())',
           [user.id, invite.role]

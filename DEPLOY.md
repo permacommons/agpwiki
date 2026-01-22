@@ -60,6 +60,14 @@ Add the output to your production config under `altcha.hmacKey`.
 
 Provision Postgres and apply grants from `dal/setup-db-grants.sql`. On boot, the app runs migrations automatically.
 
+## Roles
+
+List the supported roles and their meanings:
+
+```bash
+npm run list-roles
+```
+
 ## Build + run (manual)
 
 ```bash

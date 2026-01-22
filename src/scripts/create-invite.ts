@@ -2,6 +2,7 @@ import readline from 'node:readline/promises';
 
 import { generateInviteCode, hashToken } from '../auth/tokens.js';
 import { initializePostgreSQL } from '../db.js';
+import { isValidRole, VALID_ROLES } from '../mcp/roles.js';
 import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
 
@@ -19,13 +20,17 @@ const main = async () => {
   try {
     const issuerEmail = await prompt('Issuer email (optional): ', rl);
     const email = await prompt('Invitee email (optional): ', rl);
-    const role = await prompt('Role to grant (optional): ', rl);
+    const role = await prompt(`Role to grant (optional, ${VALID_ROLES.join(', ')}): `, rl);
     const days = await prompt('Expires in days (default 7): ', rl);
 
     const expiresInDays = days ? Number(days) : 7;
     const expiresAt = Number.isNaN(expiresInDays)
       ? null
       : new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
+
+    if (role && !isValidRole(role)) {
+      throw new Error(`Role must be one of: ${VALID_ROLES.join(', ')}`);
+    }
 
     const dal = await initializePostgreSQL();
     let issuedBy: string | null = null;

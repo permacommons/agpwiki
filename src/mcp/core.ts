@@ -11,10 +11,12 @@ import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { resolveAuthUserId } from './auth.js';
 import {
+  type BlogPostDeleteInput,
   type BlogPostDiffInput,
   type BlogPostUpdateInput,
   type BlogPostWriteInput,
   createBlogPost,
+  deleteBlogPost,
   diffBlogPostRevisions,
   listBlogPostResources,
   listBlogPostRevisions,
@@ -62,7 +64,7 @@ import {
   type WikiPageWriteInput,
 } from './handlers.js';
 import { registerPrompts } from './prompts.js';
-import { hasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from './roles.js';
 import { createLocalizedSchemas } from './schema.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
@@ -731,6 +733,24 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
+  const blogDeleteTool = server.registerTool(
+    'blog_deletePost',
+    {
+      title: 'Delete Blog Post',
+      description: 'Soft-delete a blog post and all its revisions. Requires blog_admin role.',
+      inputSchema: {
+        slug: z.string(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: BlogPostDeleteInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await deleteBlogPost(dal, { ...args }, userId);
+      return payload;
+    })
+  );
+
   server.registerTool(
     'citation_listRevisions',
     {
@@ -1020,11 +1040,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
-  const adminTools = { wikiDeletePageTool, citationDeleteTool };
+  const adminTools = { wikiDeletePageTool, citationDeleteTool, blogDeleteTool };
 
   if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
+  }
+  if (!hasRole(userRoles, BLOG_ADMIN_ROLE)) {
+    blogDeleteTool.disable();
   }
 
   registerPrompts(server);

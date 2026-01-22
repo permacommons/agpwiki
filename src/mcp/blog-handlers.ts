@@ -13,6 +13,7 @@ import {
   ValidationCollector,
   ValidationError,
 } from './errors.js';
+import { BLOG_AUTHOR_ROLE } from './roles.js';
 
 const { mlString } = dal;
 
@@ -288,6 +289,17 @@ export interface BlogPostRevisionReadResult {
   revision: BlogPostRevisionResult;
 }
 
+export interface BlogPostDeleteInput {
+  slug: string;
+  revSummary: Record<string, string> | null | undefined;
+}
+
+export interface BlogPostDeleteResult {
+  id: string;
+  slug: string;
+  deleted: boolean;
+}
+
 export interface BlogPostDiffInput {
   slug: string;
   fromRevId: string;
@@ -379,10 +391,10 @@ const buildFieldDiff = (label: string, fromValue: string, toValue: string): Blog
 const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) => {
   const result = await dalInstance.query(
     'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
-    [userId, 'blog_author']
+    [userId, BLOG_AUTHOR_ROLE]
   );
   if (result.rowCount === 0) {
-    throw new ForbiddenError('User does not have blog_author role.');
+    throw new ForbiddenError(`User does not have ${BLOG_AUTHOR_ROLE} role.`);
   }
 };
 
@@ -649,5 +661,32 @@ export async function diffBlogPostRevisions(
       body: buildFieldDiff('body', fromBody, toBody),
       summary: buildFieldDiff('summary', fromSummary, toSummary),
     },
+  };
+}
+
+export async function deleteBlogPost(
+  _dalInstance: DataAccessLayer,
+  { slug, revSummary }: BlogPostDeleteInput,
+  userId: string
+): Promise<BlogPostDeleteResult> {
+  const errors = new ValidationCollector('Invalid blog post delete input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const post = await findCurrentPostBySlug(normalizedSlug);
+  if (!post) {
+    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  await post.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+
+  return {
+    id: post.id,
+    slug: post.slug,
+    deleted: true,
   };
 }
