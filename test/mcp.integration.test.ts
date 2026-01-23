@@ -4,9 +4,9 @@ import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthUserId } from '../src/mcp/auth.js';
-import { createBlogPost, readBlogPostResource } from '../src/mcp/blog-handlers.js';
+import { createBlogPost } from '../src/mcp/blog-handlers.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import { InvalidRequestError, NotFoundError, ValidationError } from '../src/mcp/errors.js';
+import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
 import {
   applyWikiPagePatch,
   createCitation,
@@ -15,9 +15,7 @@ import {
   deleteWikiPage,
   listWikiPageRevisions,
   readCitation,
-  readCitationResource,
   readWikiPage,
-  readWikiPageResource,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
 import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
@@ -618,41 +616,3 @@ test('MCP admin tools are enabled with wiki_admin role', () => {
   assert.equal(mcpWithRole.adminTools.citationDeleteTool.enabled, true);
 });
 
-test('readWikiPageResource returns helpful error when slug parameter is missing', async () => {
-  const dal = await getDal();
-  await assert.rejects(
-    () => readWikiPageResource(dal, 'agpwiki://page'),
-    error => {
-      assert.ok(error instanceof InvalidRequestError);
-      assert.match(error.message, /Missing required 'slug' parameter/);
-      assert.match(error.message, /agpwiki:\/\/page\?slug=/);
-      return true;
-    }
-  );
-});
-
-test('readCitationResource returns helpful error when key parameter is missing', async () => {
-  const dal = await getDal();
-  await assert.rejects(
-    () => readCitationResource(dal, 'agpwiki://citation'),
-    error => {
-      assert.ok(error instanceof InvalidRequestError);
-      assert.match(error.message, /Missing required 'key' parameter/);
-      assert.match(error.message, /agpwiki:\/\/citation\?key=/);
-      return true;
-    }
-  );
-});
-
-test('readBlogPostResource returns helpful error when slug parameter is missing', async () => {
-  const dal = await getDal();
-  await assert.rejects(
-    () => readBlogPostResource(dal, 'agpwiki://blog'),
-    error => {
-      assert.ok(error instanceof InvalidRequestError);
-      assert.match(error.message, /Missing required 'slug' parameter/);
-      assert.match(error.message, /agpwiki:\/\/blog\?slug=/);
-      return true;
-    }
-  );
-});

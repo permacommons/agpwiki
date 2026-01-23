@@ -1,5 +1,5 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
-import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   CallToolRequestSchema,
   type CallToolResult,
@@ -24,7 +24,6 @@ import {
   listBlogPostResources,
   listBlogPostRevisions,
   readBlogPost,
-  readBlogPostResource,
   readBlogPostRevision,
   updateBlogPost,
 } from './blog-handlers.js';
@@ -52,10 +51,8 @@ import {
   listWikiPageRevisions,
   queryCitations,
   readCitation,
-  readCitationResource,
   readCitationRevision,
   readWikiPage,
-  readWikiPageResource,
   readWikiPageRevision,
   removeWikiPageAlias,
   updateCitation,
@@ -266,16 +263,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     }
   );
 
-  const localeResourceTemplate = new ResourceTemplate('agpwiki://locales{?uiLocale}', {
-    list: undefined,
-  });
-
   server.registerResource(
     'Supported Locales',
-    localeResourceTemplate,
+    'agpwiki://locales',
     {
       title: 'Supported Locales',
-      description: 'List supported locale codes and localized display names.',
+      description:
+        'List supported locale codes and localized display names. Optionally pass ?uiLocale=xx to get labels in that language.',
       mimeType: 'application/json',
     },
     async uri => {
@@ -308,238 +302,6 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           },
         ],
       };
-    }
-  );
-
-  const wikiPageTemplate = new ResourceTemplate('agpwiki://page{?slug}', {
-    list: undefined,
-  });
-
-  server.registerResource(
-    'Wiki Page',
-    wikiPageTemplate,
-    {
-      title: 'Wiki Page',
-      description: 'Read a single wiki page by slug.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const dal = await initializePostgreSQL();
-      const result = await readWikiPageResource(dal, uri.toString());
-      return result as ReadResourceResult;
-    }
-  );
-
-  const blogPostTemplate = new ResourceTemplate('agpwiki://blog{?slug}', {
-    list: undefined,
-  });
-
-  server.registerResource(
-    'Blog Post',
-    blogPostTemplate,
-    {
-      title: 'Blog Post',
-      description: 'Read a single blog post by slug.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const dal = await initializePostgreSQL();
-      const result = await readBlogPostResource(dal, uri.toString());
-      return result as ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Blog Post Revisions',
-    new ResourceTemplate('agpwiki://blog/revisions{?slug}', {
-      list: undefined,
-    }),
-    {
-      title: 'Blog Post Revisions',
-      description: 'List revisions for a blog post.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const slug = uri.searchParams.get('slug');
-      if (!slug) {
-        throw new Error('Missing slug for blog post revisions.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await listBlogPostRevisions(dal, slug);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Blog Post Revision',
-    new ResourceTemplate('agpwiki://blog/revision{?slug,revId}', {
-      list: undefined,
-    }),
-    {
-      title: 'Blog Post Revision',
-      description: 'Read a specific blog post revision by revision ID.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const slug = uri.searchParams.get('slug');
-      const revId = uri.searchParams.get('revId');
-      if (!slug || !revId) {
-        throw new Error('Missing slug or revId for blog post revision.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await readBlogPostRevision(dal, slug, revId);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Wiki Page Revisions',
-    new ResourceTemplate('agpwiki://page/revisions{?slug}', {
-      list: undefined,
-    }),
-    {
-      title: 'Wiki Page Revisions',
-      description: 'List revisions for a wiki page.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const slug = uri.searchParams.get('slug');
-      if (!slug) {
-        throw new Error('Missing slug for wiki page revisions.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await listWikiPageRevisions(dal, slug);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Wiki Page Revision',
-    new ResourceTemplate('agpwiki://page/revision{?slug,revId}', {
-      list: undefined,
-    }),
-    {
-      title: 'Wiki Page Revision',
-      description: 'Read a specific wiki page revision by revision ID.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const slug = uri.searchParams.get('slug');
-      const revId = uri.searchParams.get('revId');
-      if (!slug || !revId) {
-        throw new Error('Missing slug or revId for wiki page revision.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await readWikiPageRevision(dal, slug, revId);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Citation',
-    new ResourceTemplate('agpwiki://citation{?key}', {
-      list: undefined,
-    }),
-    {
-      title: 'Citation',
-      description: 'Read a citation by key.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const dal = await initializePostgreSQL();
-      const result = await readCitationResource(dal, uri.toString());
-      return result as ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Citation Revisions',
-    new ResourceTemplate('agpwiki://citation/revisions{?key}', {
-      list: undefined,
-    }),
-    {
-      title: 'Citation Revisions',
-      description: 'List revisions for a citation.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const key = uri.searchParams.get('key');
-      if (!key) {
-        throw new Error('Missing key for citation revisions.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await listCitationRevisions(dal, key);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
-    }
-  );
-
-  server.registerResource(
-    'Citation Revision',
-    new ResourceTemplate('agpwiki://citation/revision{?key,revId}', {
-      list: undefined,
-    }),
-    {
-      title: 'Citation Revision',
-      description: 'Read a specific citation revision by revision ID.',
-      mimeType: 'application/json',
-    },
-    async uri => {
-      const key = uri.searchParams.get('key');
-      const revId = uri.searchParams.get('revId');
-      if (!key || !revId) {
-        throw new Error('Missing key or revId for citation revision.');
-      }
-      const dal = await initializePostgreSQL();
-      const payload = await readCitationRevision(dal, key, revId);
-      return {
-        contents: [
-          {
-            uri: uri.toString(),
-            mimeType: 'application/json',
-            text: JSON.stringify(payload, null, 2),
-          },
-        ],
-      } satisfies ReadResourceResult;
     }
   );
 
@@ -1157,28 +919,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       }
     }
 
-    // No match found - provide helpful error message based on URI pattern
-    const uriStr = uri.toString();
-    let hint = '';
-
-    if (uriStr.startsWith('agpwiki://pages/')) {
-      const slug = uri.pathname.replace(/^\//, '');
-      hint = ` Did you mean: agpwiki://page?slug=${encodeURIComponent(slug)}`;
-    } else if (uriStr.startsWith('agpwiki://page/')) {
-      const slug = uri.pathname.replace(/^\//, '');
-      hint = ` Did you mean: agpwiki://page?slug=${encodeURIComponent(slug)}`;
-    } else if (uriStr.startsWith('agpwiki://blog/posts/')) {
-      const slug = uriStr.replace('agpwiki://blog/posts/', '');
-      hint = ` Did you mean: agpwiki://blog?slug=${encodeURIComponent(slug)}`;
-    } else if (uriStr.startsWith('agpwiki://citations/')) {
-      const key = uriStr.replace('agpwiki://citations/', '');
-      hint = ` Did you mean: agpwiki://citation?key=${encodeURIComponent(key)}`;
-    } else if (uriStr.startsWith('agpwiki://citation/') && !uriStr.includes('?')) {
-      const key = uri.pathname.replace(/^\//, '');
-      hint = ` Did you mean: agpwiki://citation?key=${encodeURIComponent(key)}`;
-    }
-
-    throw new McpError(ErrorCode.InvalidParams, `Resource not found: ${uri}.${hint}`);
+    // No match found - provide helpful error message
+    throw new McpError(
+      ErrorCode.InvalidParams,
+      `Resource not found: ${uri}. Available resources: agpwiki://pages, agpwiki://blog/posts, agpwiki://locales. To read individual items, use tools: wiki_readPage, blog_readPost, citation_read.`
+    );
   });
 
   return { server, formatToolResult, formatToolErrorResult, adminTools };

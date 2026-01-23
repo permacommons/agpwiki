@@ -109,16 +109,16 @@ test('Zod issues map to validation errors', () => {
 
 test('MCP locales resource returns supported locales', async () => {
   const { server } = createMcpServer();
-  const templates = (server as {
-    _registeredResourceTemplates: Record<
+  const resources = (server as {
+    _registeredResources: Record<
       string,
       {
         readCallback: (uri: URL) => Promise<{ contents: { text?: string }[] }>;
       }
     >;
-  })._registeredResourceTemplates;
+  })._registeredResources;
 
-  const localesResource = templates['Supported Locales'];
+  const localesResource = resources['agpwiki://locales'];
   assert.ok(localesResource);
 
   const result = await localesResource.readCallback(new URL('agpwiki://locales?uiLocale=en'));

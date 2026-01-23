@@ -8,7 +8,6 @@ import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import {
   ConflictError,
   ForbiddenError,
-  InvalidRequestError,
   NotFoundError,
   ValidationCollector,
   ValidationError,
@@ -427,41 +426,6 @@ export async function readBlogPost(
     });
   }
   return toBlogPostResult(post);
-}
-
-export async function readBlogPostResource(
-  _dalInstance: DataAccessLayer,
-  uri: string
-): Promise<{ contents: Array<{ uri: string; mimeType: string; text: string }> }> {
-  const parsed = new URL(uri);
-  if (parsed.hostname !== 'blog') {
-    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
-  }
-  const slug = parsed.searchParams.get('slug') ?? '';
-  if (!slug) {
-    throw new InvalidRequestError(
-      `Missing required 'slug' parameter. Use the format: agpwiki://blog?slug=your-post-slug`
-    );
-  }
-  const normalizedSlug = ensureNonEmptySlug(slug);
-  const post = await findCurrentPostBySlug(normalizedSlug);
-  if (!post) {
-    throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
-      slug: normalizedSlug,
-    });
-  }
-  const payload = {
-    ...toBlogPostResult(post),
-  };
-  return {
-    contents: [
-      {
-        uri,
-        mimeType: 'application/json',
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
-  };
 }
 
 export async function createBlogPost(

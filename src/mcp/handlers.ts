@@ -684,46 +684,6 @@ export async function listWikiPageResources(
   return { resources };
 }
 
-export async function readWikiPageResource(
-  _dalInstance: DataAccessLayer,
-  uri: string
-): Promise<McpReadResourceResult> {
-  const parsed = new URL(uri);
-  if (parsed.hostname !== 'page') {
-    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
-  }
-
-  const slug = parsed.searchParams.get('slug') ?? '';
-  if (!slug) {
-    throw new InvalidRequestError(
-      `Missing required 'slug' parameter. Use the format: agpwiki://page?slug=your-page-slug`
-    );
-  }
-
-  const normalizedSlug = normalizeSlugInput(slug, 'slug');
-  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
-
-  if (!page) {
-    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
-      slug: normalizedSlug,
-    });
-  }
-
-  const payload = {
-    ...toWikiPageResult(page),
-  };
-
-  return {
-    contents: [
-      {
-        uri,
-        mimeType: 'application/json',
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
-  };
-}
-
 export async function readWikiPage(
   _dalInstance: DataAccessLayer,
   slug: string
@@ -1079,44 +1039,6 @@ export async function diffWikiPageRevisions(
       title: buildFieldDiff('title', fromTitle, toTitle),
       body: buildFieldDiff('body', fromBody, toBody),
     },
-  };
-}
-
-export async function readCitationResource(
-  _dalInstance: DataAccessLayer,
-  uri: string
-): Promise<McpReadResourceResult> {
-  const parsed = new URL(uri);
-  if (parsed.hostname !== 'citation') {
-    throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
-  }
-
-  const key = parsed.searchParams.get('key') ?? '';
-  if (!key) {
-    throw new InvalidRequestError(
-      `Missing required 'key' parameter. Use the format: agpwiki://citation?key=your-citation-key`
-    );
-  }
-
-  const citation = await findCurrentCitationByKey(key);
-  if (!citation) {
-    throw new NotFoundError(`Citation not found: ${key}`, {
-      key,
-    });
-  }
-
-  const payload = {
-    ...toCitationResult(citation),
-  };
-
-  return {
-    contents: [
-      {
-        uri,
-        mimeType: 'application/json',
-        text: JSON.stringify(payload, null, 2),
-      },
-    ],
   };
 }
 
