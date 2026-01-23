@@ -9,7 +9,6 @@ The build outputs to `dist/` with a `src/` prefix. The entrypoint is:
 - `dist/src/index.js` (web app)
 - `dist/src/mcp/stdio.js` (MCP server, stdio transport)
 - `dist/src/mcp/http.js` (MCP server, Streamable HTTP transport)
-- `dist/src/mcp/stdio-playwright.js` (local-only MCP with Playwright)
 
 ## Configuration
 
@@ -204,10 +203,6 @@ Notes:
 
 - MCP HTTP requires `Authorization: Bearer <token>`.
 - Rotate tokens via the web UI or CLI.
-
-## Playwright MCP (local only)
-
-`npm run mcp-playwright` is intended for local research (Playwright deps, DISPLAY, etc.). It should not run on the production host.
 
 ## Backups
 

@@ -1,3 +1,3 @@
-- [ ] Split MCP access so local agents can use Playwright locally while targeting a remote production instance, without exposing local dev environment MCP tools.
+- [x] Split MCP access so local agents can use Playwright locally while targeting a remote production instance, without exposing local dev environment MCP tools. (moved to mcp-research-friend)
 - [ ] Add citation tooltips using citeproc's inline `<citation>` layout for hover previews.
 - [ ] Make `dist/` self-contained by copying or bundling assets (like `locales/`) and updating path resolution to be relative to the module instead of `process.cwd()`.
