@@ -695,7 +695,9 @@ export async function readWikiPageResource(
 
   const slug = parsed.searchParams.get('slug') ?? '';
   if (!slug) {
-    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(
+      `Missing required 'slug' parameter. Use the format: agpwiki://page?slug=your-page-slug`
+    );
   }
 
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
@@ -1089,9 +1091,11 @@ export async function readCitationResource(
     throw new InvalidRequestError(`Unknown MCP resource: ${uri}`);
   }
 
-  const key = parsed.pathname.replace(/^\//, '');
+  const key = parsed.searchParams.get('key') ?? '';
   if (!key) {
-    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(
+      `Missing required 'key' parameter. Use the format: agpwiki://citation?key=your-citation-key`
+    );
   }
 
   const citation = await findCurrentCitationByKey(key);

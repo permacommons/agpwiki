@@ -439,7 +439,9 @@ export async function readBlogPostResource(
   }
   const slug = parsed.searchParams.get('slug') ?? '';
   if (!slug) {
-    throw new InvalidRequestError(`Invalid MCP resource: ${uri}`);
+    throw new InvalidRequestError(
+      `Missing required 'slug' parameter. Use the format: agpwiki://blog?slug=your-post-slug`
+    );
   }
   const normalizedSlug = ensureNonEmptySlug(slug);
   const post = await findCurrentPostBySlug(normalizedSlug);

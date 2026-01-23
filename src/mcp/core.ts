@@ -3,6 +3,9 @@ import { McpServer, ResourceTemplate } from '@modelcontextprotocol/sdk/server/mc
 import {
   CallToolRequestSchema,
   type CallToolResult,
+  ErrorCode,
+  McpError,
+  ReadResourceRequestSchema,
   type ReadResourceResult,
 } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
@@ -1111,6 +1114,71 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     } catch (error) {
       return formatToolErrorResult(error);
     }
+  });
+
+  // Override the SDK's resource handler to provide helpful error messages
+  // when clients use incorrect URI formats
+  type RegisteredResource = {
+    enabled: boolean;
+    readCallback: (uri: URL, extra: unknown) => Promise<ReadResourceResult>;
+  };
+  type RegisteredTemplate = {
+    resourceTemplate: { uriTemplate: { match: (uri: string) => Record<string, string> | null } };
+    readCallback: (
+      uri: URL,
+      variables: Record<string, string>,
+      extra: unknown
+    ) => Promise<ReadResourceResult>;
+  };
+
+  server.server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
+    const uri = new URL(request.params.uri);
+
+    // Access private registries (fragile but necessary for custom error handling)
+    const mcpServer = server as unknown as {
+      _registeredResources: Record<string, RegisteredResource>;
+      _registeredResourceTemplates: Record<string, RegisteredTemplate>;
+    };
+
+    // Check for exact resource match
+    const resource = mcpServer._registeredResources[uri.toString()];
+    if (resource) {
+      if (!resource.enabled) {
+        throw new McpError(ErrorCode.InvalidParams, `Resource ${uri} disabled`);
+      }
+      return resource.readCallback(uri, extra);
+    }
+
+    // Check templates
+    for (const template of Object.values(mcpServer._registeredResourceTemplates)) {
+      const variables = template.resourceTemplate.uriTemplate.match(uri.toString());
+      if (variables) {
+        return template.readCallback(uri, variables, extra);
+      }
+    }
+
+    // No match found - provide helpful error message based on URI pattern
+    const uriStr = uri.toString();
+    let hint = '';
+
+    if (uriStr.startsWith('agpwiki://pages/')) {
+      const slug = uri.pathname.replace(/^\//, '');
+      hint = ` Did you mean: agpwiki://page?slug=${encodeURIComponent(slug)}`;
+    } else if (uriStr.startsWith('agpwiki://page/')) {
+      const slug = uri.pathname.replace(/^\//, '');
+      hint = ` Did you mean: agpwiki://page?slug=${encodeURIComponent(slug)}`;
+    } else if (uriStr.startsWith('agpwiki://blog/posts/')) {
+      const slug = uriStr.replace('agpwiki://blog/posts/', '');
+      hint = ` Did you mean: agpwiki://blog?slug=${encodeURIComponent(slug)}`;
+    } else if (uriStr.startsWith('agpwiki://citations/')) {
+      const key = uriStr.replace('agpwiki://citations/', '');
+      hint = ` Did you mean: agpwiki://citation?key=${encodeURIComponent(key)}`;
+    } else if (uriStr.startsWith('agpwiki://citation/') && !uriStr.includes('?')) {
+      const key = uri.pathname.replace(/^\//, '');
+      hint = ` Did you mean: agpwiki://citation?key=${encodeURIComponent(key)}`;
+    }
+
+    throw new McpError(ErrorCode.InvalidParams, `Resource not found: ${uri}.${hint}`);
   });
 
   return { server, formatToolResult, formatToolErrorResult, adminTools };
