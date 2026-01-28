@@ -20,7 +20,6 @@
   },
   "include": [
     "src/**/*.ts",
-    "dal/**/*.ts",
     "locales/**/*.ts",
     "util/**/*.ts",
     "types/**/*.d.ts"

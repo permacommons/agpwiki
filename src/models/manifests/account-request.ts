@@ -1,7 +1,7 @@
-import dal from '../../../dal/index.js';
-import type { ManifestInstance, ManifestModel } from '../../../dal/lib/create-model.js';
-import { referenceModel } from '../../../dal/lib/model-handle.js';
-import type { ModelManifest } from '../../../dal/lib/model-manifest.js';
+import dal from 'rev-dal';
+import type { ManifestInstance, ManifestModel } from 'rev-dal/lib/create-model';
+import { referenceModel } from 'rev-dal/lib/model-handle';
+import type { ModelManifest } from 'rev-dal/lib/model-manifest';
 
 const { types } = dal;
 

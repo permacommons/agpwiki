@@ -1,4 +1,4 @@
-import { defineModel, defineStaticMethods } from '../../dal/lib/create-model.js';
+import { defineModel, defineStaticMethods } from 'rev-dal/lib/create-model';
 import accountRequestManifest, { type AccountRequestModel } from './manifests/account-request.js';
 
 const accountRequestStaticMethods = defineStaticMethods(accountRequestManifest, {

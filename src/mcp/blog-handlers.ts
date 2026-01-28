@@ -1,6 +1,6 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
-import dal from '../../dal/index.js';
-import type { DataAccessLayer } from '../../dal/lib/data-access-layer.js';
+import dal from 'rev-dal';
+import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
