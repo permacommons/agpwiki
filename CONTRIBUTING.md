@@ -64,7 +64,12 @@ sudo -u postgres createdb agpwiki_test -O agpwiki_user
 Run the provided setup script:
 
 ```bash
-sudo -u postgres psql -f dal/setup-db-grants.sql
+sudo -u postgres psql \
+  -v app_db=agpwiki \
+  -v app_user=agpwiki_user \
+  -v test_db=agpwiki_test \
+  -v test_user=agpwiki_user \
+  -f node_modules/rev-dal/setup-db-grants.sql
 ```
 
 This script:
@@ -85,5 +90,5 @@ The application automatically applies pending migrations on startup. You can sto
 ### Troubleshooting
 
 - **Connection failures:** Verify PostgreSQL is running on `localhost:5432`
-- **Permission errors:** Re-run `dal/setup-db-grants.sql`
+- **Permission errors:** Re-run `node_modules/rev-dal/setup-db-grants.sql`
 - **Missing extensions:** Ensure `pgcrypto` exists in both databases

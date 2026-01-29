@@ -1,4 +1,4 @@
-import { defineModel, defineStaticMethods } from '../../dal/lib/create-model.js';
+import { defineModel, defineStaticMethods } from 'rev-dal/lib/create-model';
 import wikiPageManifest, { type WikiPageModel } from './manifests/wiki-page.js';
 
 const wikiPageStaticMethods = defineStaticMethods(wikiPageManifest, {

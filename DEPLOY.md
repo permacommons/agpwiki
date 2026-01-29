@@ -57,7 +57,7 @@ Add the output to your production config under `altcha.hmacKey`.
 
 ## Database
 
-Provision Postgres and apply grants from `dal/setup-db-grants.sql`. On boot, the app runs migrations automatically.
+Provision Postgres and apply grants from `node_modules/rev-dal/setup-db-grants.sql` (see `CONTRIBUTING.md` for the required variables). On boot, the app runs migrations automatically.
 
 ## Roles
 

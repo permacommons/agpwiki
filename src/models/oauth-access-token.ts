@@ -1,4 +1,4 @@
-import { defineModel, defineStaticMethods } from '../../dal/lib/create-model.js';
+import { defineModel, defineStaticMethods } from 'rev-dal/lib/create-model';
 import oauthAccessTokenManifest, {
   type OAuthAccessTokenInstance,
   type OAuthAccessTokenModel,

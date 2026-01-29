@@ -1,4 +1,4 @@
-import { defineModel, defineStaticMethods } from '../../dal/lib/create-model.js';
+import { defineModel, defineStaticMethods } from 'rev-dal/lib/create-model';
 import citationManifest, { type CitationModel } from './manifests/citation.js';
 
 const citationStaticMethods = defineStaticMethods(citationManifest, {

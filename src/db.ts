@@ -1,16 +1,20 @@
 import type { PostgresConfig } from 'config';
 import config from 'config';
 
-import createDataAccessLayer from '../dal/index.js';
-import { initializeManifestModels } from '../dal/lib/create-model.js';
-import type { DataAccessLayer } from '../dal/lib/data-access-layer.js';
-import { setBootstrapResolver } from '../dal/lib/model-handle.js';
+import createDataAccessLayer, { setDebugLogger, setLanguageProvider } from 'rev-dal';
+import { initializeManifestModels } from 'rev-dal/lib/create-model';
+import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { setBootstrapResolver } from 'rev-dal/lib/model-handle';
+import languages from '../locales/languages.js';
 import debug from '../util/debug.js';
 
 type JsonObject = Record<string, unknown>;
 
 let postgresDAL: DataAccessLayer | null = null;
 let connectionPromise: Promise<DataAccessLayer> | null = null;
+
+setLanguageProvider(languages);
+setDebugLogger(debug);
 
 function getPostgresConfig(): PostgresConfig {
   const moduleConfig = config as JsonObject & { postgres?: PostgresConfig };

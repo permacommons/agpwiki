@@ -1,7 +1,7 @@
 import type { Express } from 'express';
 import type { TFunction } from 'i18next';
 
-import dal from '../../dal/index.js';
+import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';

@@ -1,4 +1,4 @@
-import { defineModel, defineStaticMethods } from '../../dal/lib/create-model.js';
+import { defineModel, defineStaticMethods } from 'rev-dal/lib/create-model';
 import signupInviteManifest, { type SignupInviteModel } from './manifests/signup-invite.js';
 
 const signupInviteStaticMethods = defineStaticMethods(signupInviteManifest, {
