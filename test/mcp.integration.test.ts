@@ -437,6 +437,61 @@ test('MCP rejects invalid language codes', async () => {
   }
 });
 
+test('MCP rejects control characters in wiki content', async () => {
+  const dal = await getDal();
+  const slug = `test-control-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Control char test' },
+        body: { en: 'Safe body.' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        updateWikiPage(
+          dal,
+          {
+            slug,
+            body: { en: `Contains control char \u001c here.` },
+            revSummary: { en: 'Try control char.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'body.en'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('MCP aggregates validation errors for wiki patch inputs', async () => {
   const dal = await getDal();
   let userIdForCleanup: string | null = null;
@@ -615,4 +670,3 @@ test('MCP admin tools are enabled with wiki_admin role', () => {
   assert.equal(mcpWithRole.adminTools.wikiDeletePageTool.enabled, true);
   assert.equal(mcpWithRole.adminTools.citationDeleteTool.enabled, true);
 });
-

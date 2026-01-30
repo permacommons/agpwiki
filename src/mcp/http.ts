@@ -10,6 +10,7 @@ import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
 import { resolveAuthInfoFromToken } from './auth.js';
 import { createMcpServer } from './core.js';
+import { isJsonParseError } from './http-errors.js';
 import { getUserRoles } from './roles.js';
 
 type McpConfig = {
@@ -82,6 +83,20 @@ const sendJsonError = (res: Response, status: number, message: string) => {
     id: null,
   });
 };
+
+app.use((error: unknown, _req: Request, res: Response, next: NextFunction) => {
+  if (isJsonParseError(error)) {
+    if (!res.headersSent) {
+      res.status(400).json({
+        jsonrpc: '2.0',
+        error: { code: -32600, message: 'Invalid request: malformed JSON.' },
+        id: null,
+      });
+    }
+    return;
+  }
+  next(error);
+});
 
 app.all('/mcp', authMiddleware, async (req, res) => {
   const authInfo = getAuthInfo(req);

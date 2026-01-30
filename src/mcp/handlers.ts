@@ -518,6 +518,44 @@ const ensureOptionalLanguage = (
   }
 };
 
+const hasDisallowedControlCharacters = (value: string) => {
+  for (const char of value) {
+    const code = char.codePointAt(0) ?? 0;
+    if (code === 0x09 || code === 0x0a || code === 0x0d) {
+      continue;
+    }
+    if (code <= 0x1f || code === 0x7f) {
+      return true;
+    }
+    if (code >= 0x80 && code <= 0x9f) {
+      return true;
+    }
+    if (code >= 0x2400 && code <= 0x241f) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const ensureNoControlCharacters = (
+  value: Record<string, string> | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  if (value === undefined || value === null) return;
+  for (const [lang, text] of Object.entries(value)) {
+    if (typeof text !== 'string') continue;
+    if (!hasDisallowedControlCharacters(text)) continue;
+    const message = `${label} contains disallowed control characters.`;
+    const field = `${label}.${lang || 'unknown'}`;
+    if (errors) {
+      errors.add(field, message, 'invalid');
+      continue;
+    }
+    throw new ValidationError(message, [{ field, message, code: 'invalid' }]);
+  }
+};
+
 const validateTitle = (
   value: Record<string, string> | null | undefined,
   errors?: ValidationCollector
@@ -525,6 +563,7 @@ const validateTitle = (
   if (value === undefined) return;
   try {
     mlString.validate(value, { maxLength: 200, allowHTML: false });
+    ensureNoControlCharacters(value, 'title', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid title value.';
     if (errors) {
@@ -542,6 +581,7 @@ const validateBody = (
   if (value === undefined) return;
   try {
     mlString.validate(value, { maxLength: 20000, allowHTML: true });
+    ensureNoControlCharacters(value, 'body', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid body value.';
     if (errors) {
@@ -559,6 +599,7 @@ const validateRevSummary = (
   if (value === undefined) return;
   try {
     mlString.validate(value, { maxLength: 300, allowHTML: false });
+    ensureNoControlCharacters(value, 'revSummary', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
     if (errors) {
@@ -837,6 +878,7 @@ export async function applyWikiPagePatch(
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
   const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: normalizedSlug });
+  ensureNoControlCharacters({ [lang]: patched }, 'body');
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
 
