@@ -47,3 +47,10 @@
   - `error.fieldErrors`: optional list of `{ field, message, code }` entries for validation failures
   - `error.details`: optional metadata (e.g., `{ slug, revId }`)
   - `error.retryable`: optional boolean
+
+## Commit message guidelines
+
+- Use multiline conventional commits.
+- Subject line: 50 characters max.
+- Body lines: 72 characters max.
+- Use a single `-m` flag.

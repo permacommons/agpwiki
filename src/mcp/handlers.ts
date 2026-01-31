@@ -1,4 +1,5 @@
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
+import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
@@ -98,6 +99,32 @@ export interface WikiPagePatchInput {
   format: PatchFormat;
   lang?: string;
   baseRevId?: string;
+  tags?: string[];
+  revSummary: Record<string, string>;
+}
+
+export interface WikiPageRewriteSectionInput {
+  slug: string;
+  heading: string;
+  headingLevel?: number;
+  occurrence?: number;
+  mode?: 'replace' | 'prepend' | 'append';
+  content: string;
+  lang?: string;
+  expectedRevId?: string;
+  tags?: string[];
+  revSummary: Record<string, string>;
+}
+
+export interface WikiPageRewriteSectionInput {
+  slug: string;
+  heading: string;
+  headingLevel?: number;
+  occurrence?: number;
+  mode?: 'replace' | 'prepend' | 'append';
+  content: string;
+  lang?: string;
+  expectedRevId?: string;
   tags?: string[];
   revSummary: Record<string, string>;
 }
@@ -500,6 +527,32 @@ const ensureOptionalString = (
   }
 };
 
+const ensureString = (
+  value: string | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  if (value === null || value === undefined) {
+    if (errors) {
+      errors.addMissing(label);
+      return false;
+    }
+    throw new ValidationError(`${label} is required.`, [
+      { field: label, message: 'is required.', code: 'required' },
+    ]);
+  }
+  if (typeof value !== 'string') {
+    if (errors) {
+      errors.add(label, 'must be a string.', 'type');
+      return false;
+    }
+    throw new ValidationError(`${label} must be a string.`, [
+      { field: label, message: 'must be a string.', code: 'type' },
+    ]);
+  }
+  return true;
+};
+
 const ensureOptionalLanguage = (
   value: string | null | undefined,
   label: string,
@@ -516,6 +569,100 @@ const ensureOptionalLanguage = (
       { field: label, message: 'must be a supported locale code.', code: 'invalid' },
     ]);
   }
+};
+
+type HeadingSection = {
+  level: number;
+  text: string;
+  line: number;
+  contentStartLine: number;
+  contentEndLine: number;
+};
+
+const sectionParser = new MarkdownIt({ html: false, linkify: true });
+
+const listHeadingSections = (text: string): HeadingSection[] => {
+  const tokens = sectionParser.parse(text, {});
+  const headings: Array<Omit<HeadingSection, 'contentEndLine'>> = [];
+  for (let i = 0; i < tokens.length; i += 1) {
+    const token = tokens[i];
+    if (token.type !== 'heading_open') continue;
+    const map = token.map;
+    if (!map || map.length < 2) continue;
+    const inlineToken = tokens[i + 1];
+    const textValue = inlineToken && inlineToken.type === 'inline' ? inlineToken.content : '';
+    const level = Number.parseInt(token.tag.slice(1), 10);
+    headings.push({
+      level,
+      text: textValue,
+      line: map[0],
+      contentStartLine: map[1] ?? map[0] + 1,
+    });
+  }
+
+  const totalLines = text.split('\n').length;
+  return headings.map((heading, index) => {
+    let contentEndLine = totalLines;
+    for (let i = index + 1; i < headings.length; i += 1) {
+      const next = headings[i];
+      if (next.line > heading.line && next.level <= heading.level) {
+        contentEndLine = next.line;
+        break;
+      }
+    }
+    return { ...heading, contentEndLine };
+  });
+};
+
+const buildHeadingDetails = (sections: HeadingSection[], limit = 25) => {
+  const counts = new Map<string, number>();
+  return sections.slice(0, limit).map(section => {
+    const key = `${section.text}::${section.level}`;
+    const occurrence = (counts.get(key) ?? 0) + 1;
+    counts.set(key, occurrence);
+    return {
+      text: section.text,
+      level: section.level,
+      occurrence,
+      line: section.line + 1,
+    };
+  });
+};
+
+const rewriteSectionBody = (
+  text: string,
+  section: HeadingSection,
+  mode: 'replace' | 'prepend' | 'append',
+  content: string
+) => {
+  const endsWithNewline = text.endsWith('\n');
+  const lines = text.split('\n');
+  const contentLines = content === '' ? [] : content.split('\n');
+  const before = lines.slice(0, section.contentStartLine);
+  const currentSection = lines.slice(section.contentStartLine, section.contentEndLine);
+  const after = lines.slice(section.contentEndLine);
+
+  const nextLines = [...before];
+  if (mode === 'replace') {
+    const nextContent = [...contentLines];
+    if (currentSection.length > 0 && currentSection[currentSection.length - 1] === '') {
+      if (nextContent.length === 0 || nextContent[nextContent.length - 1] !== '') {
+        nextContent.push('');
+      }
+    }
+    nextLines.push(...nextContent);
+  } else if (mode === 'prepend') {
+    nextLines.push(...contentLines, ...currentSection);
+  } else {
+    nextLines.push(...currentSection, ...contentLines);
+  }
+  nextLines.push(...after);
+
+  let nextText = nextLines.join('\n');
+  if (endsWithNewline && !nextText.endsWith('\n')) {
+    nextText += '\n';
+  }
+  return nextText;
 };
 
 const hasDisallowedControlCharacters = (value: string) => {
@@ -885,6 +1032,121 @@ export async function applyWikiPagePatch(
   page.body = {
     ...currentBody,
     [lang]: patched,
+  };
+  if (revSummary !== undefined) page._revSummary = revSummary;
+  page.updatedAt = new Date();
+
+  await page.save();
+
+  return toWikiPageResult(page);
+}
+
+export async function rewriteWikiPageSection(
+  _dalInstance: DataAccessLayer,
+  {
+    slug,
+    heading,
+    headingLevel,
+    occurrence,
+    mode = 'replace',
+    content,
+    lang = 'en',
+    expectedRevId,
+    tags = [],
+    revSummary,
+  }: WikiPageRewriteSectionInput,
+  userId: string
+): Promise<WikiPageResult> {
+  const errors = new ValidationCollector('Invalid wiki section rewrite input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(heading, 'heading', errors);
+  ensureString(content, 'content', errors);
+  ensureOptionalLanguage(lang, 'lang', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
+  if (headingLevel !== undefined) {
+    if (!Number.isInteger(headingLevel) || headingLevel < 1 || headingLevel > 6) {
+      errors.add('headingLevel', 'must be an integer between 1 and 6.', 'invalid');
+    }
+  }
+  if (occurrence !== undefined) {
+    if (!Number.isInteger(occurrence) || occurrence < 1) {
+      errors.add('occurrence', 'must be an integer greater than or equal to 1.', 'invalid');
+    }
+  }
+  if (mode !== 'replace' && mode !== 'prepend' && mode !== 'append') {
+    errors.add('mode', 'must be "replace", "prepend", or "append".', 'invalid');
+  }
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) {
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  if (expectedRevId && expectedRevId !== page._revID) {
+    throw new PreconditionFailedError(
+      `Revision mismatch: current is ${page._revID ?? 'unknown'}, expected was ${expectedRevId}.`,
+      { currentRevId: page._revID ?? null, expectedRevId }
+    );
+  }
+
+  const currentBody = page.body ?? {};
+  const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
+  const sections = listHeadingSections(currentText);
+  const allHeadingDetails = buildHeadingDetails(sections);
+  let matches = sections.filter(section => section.text === heading);
+
+  if (headingLevel !== undefined) {
+    matches = matches.filter(section => section.level === headingLevel);
+  }
+
+  if (matches.length === 0) {
+    throw new NotFoundError(`Section heading not found: ${heading}`, {
+      slug: normalizedSlug,
+      heading,
+      availableHeadings: allHeadingDetails,
+    });
+  }
+
+  if (matches.length > 1 && occurrence === undefined) {
+    throw new ConflictError(`Section heading is not unique: ${heading}`, {
+      slug: normalizedSlug,
+      heading,
+      matches: buildHeadingDetails(matches),
+    });
+  }
+
+  let selected = matches[0];
+  if (occurrence !== undefined) {
+    const index = occurrence - 1;
+    if (!matches[index]) {
+      throw new NotFoundError(`Section heading occurrence not found: ${heading}`, {
+        slug: normalizedSlug,
+        heading,
+        occurrence,
+        matches: buildHeadingDetails(matches),
+      });
+    }
+    selected = matches[index];
+  }
+
+  const updatedText = rewriteSectionBody(currentText, selected, mode, content);
+  if (updatedText === currentText) {
+    throw new PreconditionFailedError('Rewrite did not change content.', {
+      slug: normalizedSlug,
+      heading,
+    });
+  }
+  ensureNoControlCharacters({ [lang]: updatedText }, 'body');
+
+  await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
+
+  page.body = {
+    ...currentBody,
+    [lang]: updatedText,
   };
   if (revSummary !== undefined) page._revSummary = revSummary;
   page.updatedAt = new Date();
