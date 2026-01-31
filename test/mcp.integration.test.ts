@@ -16,6 +16,7 @@ import {
   listWikiPageRevisions,
   readCitation,
   readWikiPage,
+  rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
 import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
@@ -181,6 +182,77 @@ test('MCP apply patch updates wiki page body', async () => {
     );
 
     assert.equal(result.body?.en, 'Hello new world');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rewrite section updates wiki page body', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-rewrite-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const originalBody = [
+      '# Title',
+      '',
+      '## History',
+      'Old line',
+      '',
+      '## Details',
+      'More text',
+    ].join('\n');
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Rewrite Test' },
+        body: { en: originalBody },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const result = await rewriteWikiPageSection(
+      dal,
+      {
+        slug,
+        heading: 'History',
+        content: 'New line',
+        lang: 'en',
+        revSummary: { en: 'Rewrite section.' },
+      },
+      userId
+    );
+
+    const expectedBody = [
+      '# Title',
+      '',
+      '## History',
+      'New line',
+      '',
+      '## Details',
+      'More text',
+    ].join('\n');
+
+    assert.equal(result.body?.en, expectedBody);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {

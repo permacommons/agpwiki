@@ -55,11 +55,13 @@ import {
   readWikiPage,
   readWikiPageRevision,
   removeWikiPageAlias,
+  rewriteWikiPageSection,
   updateCitation,
   updateWikiPage,
   type WikiPageAliasInput,
   type WikiPageDeleteInput,
   type WikiPagePatchInput,
+  type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
 } from './handlers.js';
@@ -701,6 +703,37 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await applyWikiPagePatch(
+        dal,
+        { ...args, tags: mergeTags(args.tags) },
+        userId
+      );
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'wiki_rewriteSection',
+    {
+      title: 'Rewrite Wiki Section',
+      description:
+        'Rewrite a specific section of a wiki page body by heading text. Heading matching is strict and case-sensitive.',
+      inputSchema: {
+        slug: z.string(),
+        heading: z.string(),
+        headingLevel: z.number().int().min(1).max(6).optional(),
+        occurrence: z.number().int().min(1).optional(),
+        mode: z.enum(['replace', 'prepend', 'append']).optional(),
+        content: z.string(),
+        lang: languageTagSchema.optional,
+        expectedRevId: uuidSchema.optional(),
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: WikiPageRewriteSectionInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await rewriteWikiPageSection(
         dal,
         { ...args, tags: mergeTags(args.tags) },
         userId

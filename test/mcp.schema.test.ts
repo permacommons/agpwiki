@@ -35,6 +35,9 @@ test('MCP tool schemas describe localized fields', () => {
   const wikiApply = getSchemaShape(tools.wiki_applyPatch.inputSchema);
   assert.ok(wikiApply.lang?.description?.includes('agpwiki://locales'));
 
+  const wikiRewrite = getSchemaShape(tools.wiki_rewriteSection.inputSchema);
+  assert.ok(wikiRewrite.lang?.description?.includes('agpwiki://locales'));
+
   const blogDelete = getSchemaShape(tools.blog_deletePost.inputSchema);
   assert.ok(blogDelete.revSummary?.description?.includes('agpwiki://locales'));
 });
