@@ -408,7 +408,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Blog Post',
       description:
-        'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
+        'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
@@ -504,7 +504,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'blog_deletePost',
     {
       title: 'Delete Blog Post',
-      description: 'Soft-delete a blog post and all its revisions. Requires blog_admin role.',
+      description:
+        'Soft-delete a blog post and all its revisions. Requires blog_admin role. revSummary is required, e.g., {"en":"Remove duplicate draft of biographical post"}.',
       inputSchema: {
         slug: z.string(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -688,7 +689,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Apply Wiki Patch',
       description:
-        'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch).',
+        'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}.',
       inputSchema: {
         slug: z.string(),
         patch: z.string(),
@@ -716,7 +717,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a specific section of a wiki page body by heading text. Heading matching is strict and case-sensitive.',
+        'Rewrite a specific section of a wiki page body by heading text. Heading matching is strict and case-sensitive. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
       inputSchema: {
         slug: z.string(),
         heading: z.string(),
@@ -747,7 +748,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Wiki Page',
       description:
-        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
+        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
@@ -806,7 +807,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_deletePage',
     {
       title: 'Delete Wiki Page',
-      description: 'Soft-delete a wiki page and all its revisions. Requires wiki_admin role.',
+      description:
+        'Soft-delete a wiki page and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove hoax article; fails reliability policy"}.',
       inputSchema: {
         slug: z.string(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -824,7 +826,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'citation_delete',
     {
       title: 'Delete Citation',
-      description: 'Soft-delete a citation and all its revisions. Requires wiki_admin role.',
+      description:
+        'Soft-delete a citation and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Delete broken URL; replaced by archived source"}.',
       inputSchema: {
         key: z.string(),
         revSummary: localizedRevisionSummarySchema.required,
