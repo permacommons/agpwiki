@@ -848,9 +848,14 @@ const ensureKeyLength = (
 const stringifyCitationData = (value: Record<string, unknown> | null | undefined): string =>
   value ? JSON.stringify(value, null, 2) : '';
 
+export interface WikiPageListResult {
+  hint: string;
+  pages: Array<{ slug: string; name: string }>;
+}
+
 export async function listWikiPageResources(
   _dalInstance: DataAccessLayer
-): Promise<McpListResourcesResult> {
+): Promise<WikiPageListResult> {
   const pages = await WikiPage.filterWhere({
     _oldRevOf: null,
     _revDeleted: false,
@@ -858,18 +863,16 @@ export async function listWikiPageResources(
     .orderBy('slug')
     .run();
 
-  const resources = pages.map(page => {
-    const resolved = mlString.resolve('en', page.title ?? null);
-    const name = resolved?.str || page.slug || 'Untitled page';
-    const slugParam = encodeURIComponent(page.slug);
-    return {
-      uri: `agpwiki://page?slug=${slugParam}`,
-      name,
-      mimeType: 'application/json',
-    } satisfies McpResource;
-  });
-
-  return { resources };
+  return {
+    hint: 'Use wiki_readPage tool with slug to read a page.',
+    pages: pages.map(page => {
+      const resolved = mlString.resolve('en', page.title ?? null);
+      return {
+        slug: page.slug,
+        name: resolved?.str || page.slug || 'Untitled page',
+      };
+    }),
+  };
 }
 
 export async function readWikiPage(
