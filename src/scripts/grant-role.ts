@@ -1,7 +1,7 @@
 import readline from 'node:readline/promises';
 
 import { initializePostgreSQL } from '../db.js';
-import { isValidRole, VALID_ROLES } from '../mcp/roles.js';
+import { grantRole, isValidRole, VALID_ROLES } from '../mcp/roles.js';
 import User from '../models/user.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
@@ -33,18 +33,7 @@ const main = async () => {
       throw new Error(`No user found for email: ${email}`);
     }
 
-    const existing = await dal.query(
-      'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
-      [user.id, role]
-    );
-    if (existing.rows.length > 0) {
-      throw new Error(`User already has role ${role}.`);
-    }
-
-    await dal.query('INSERT INTO user_roles (user_id, role) VALUES ($1, $2)', [
-      user.id,
-      role,
-    ]);
+    await grantRole(dal, user.id, role);
 
     console.log(`Granted role ${role} to ${user.email}`);
   } finally {

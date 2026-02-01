@@ -1,4 +1,4 @@
-import { initializePostgreSQL } from './db.js';
+import WikiPage from './models/wiki-page.js';
 
 type CacheEntry = {
   value: number;
@@ -14,16 +14,11 @@ export const getArticleCount = async () => {
     return articleCountCache.value;
   }
 
-  const dal = await initializePostgreSQL();
-  const result = await dal.query<{ count: string }>(
-    `SELECT COUNT(*) AS count
-     FROM pages
-     WHERE _old_rev_of IS NULL
-       AND _rev_deleted = false
-       AND slug NOT LIKE 'meta/%'
-       AND slug NOT LIKE 'tool/%'`
-  );
-  const count = Number(result.rows[0]?.count ?? 0);
+  const { notLike } = WikiPage.ops;
+  const count = await WikiPage.filterWhere({ slug: notLike('meta/%') })
+    .and({ slug: notLike('tool/%') })
+    .count();
+
   articleCountCache = { value: count, expiresAt: now + ARTICLE_COUNT_TTL_MS };
   return count;
 };

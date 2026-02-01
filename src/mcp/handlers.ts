@@ -380,35 +380,19 @@ const findCurrentCitationByKey = async (key: string) =>
   } as Record<string, unknown>).first();
 
 const fetchPageRevisionByRevId = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   pageId: string,
   revId: string
 ): Promise<WikiPageInstance | null> => {
-  const tableName = WikiPage.tableName;
-  const result = await dalInstance.query(
-    `SELECT * FROM ${tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
-    [revId, pageId]
-  );
-
-  const [row] = result.rows;
-  if (!row) return null;
-  return WikiPage.createFromRow(row);
+  return WikiPage.filterWhere({}).getRevisionByRevId(revId, pageId).first();
 };
 
 const fetchCitationRevisionByRevId = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   citationId: string,
   revId: string
 ): Promise<CitationInstance | null> => {
-  const tableName = Citation.tableName;
-  const result = await dalInstance.query(
-    `SELECT * FROM ${tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
-    [revId, citationId]
-  );
-
-  const [row] = result.rows;
-  if (!row) return null;
-  return Citation.createFromRow(row);
+  return Citation.filterWhere({}).getRevisionByRevId(revId, citationId).first();
 };
 
 const normalizeForDiff = (value: string): string => (value.endsWith('\n') ? value : `${value}\n`);
@@ -1241,7 +1225,7 @@ export async function removeWikiPageAlias(
 }
 
 export async function listWikiPageRevisions(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageRevisionListResult> {
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
@@ -1252,13 +1236,12 @@ export async function listWikiPageRevisions(
     });
   }
 
-  const tableName = WikiPage.tableName;
-  const result = await dalInstance.query(
-    `SELECT * FROM ${tableName} WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date DESC`,
-    [page.id]
-  );
+  const revisionRows = await WikiPage.filterWhere({})
+    .getAllRevisions(page.id)
+    .orderBy('_revDate', 'DESC')
+    .run();
 
-  const revisions = result.rows.map(row => toWikiPageRevisionResult(WikiPage.createFromRow(row)));
+  const revisions = revisionRows.map(row => toWikiPageRevisionResult(row));
 
   return {
     pageId: page.id,
@@ -1448,7 +1431,7 @@ export async function updateCitation(
 }
 
 export async function listCitationRevisions(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   key: string
 ): Promise<CitationRevisionListResult> {
   const citation = await findCurrentCitationByKey(key);
@@ -1458,15 +1441,12 @@ export async function listCitationRevisions(
     });
   }
 
-  const tableName = Citation.tableName;
-  const result = await dalInstance.query(
-    `SELECT * FROM ${tableName} WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date DESC`,
-    [citation.id]
-  );
+  const revisionRows = await Citation.filterWhere({})
+    .getAllRevisions(citation.id)
+    .orderBy('_revDate', 'DESC')
+    .run();
 
-  const revisions = result.rows.map(row =>
-    toCitationRevisionResult(Citation.createFromRow(row))
-  );
+  const revisions = revisionRows.map(row => toCitationRevisionResult(row));
 
   return {
     citationId: citation.id,

@@ -1,7 +1,7 @@
 import readline from 'node:readline/promises';
 
 import { initializePostgreSQL } from '../db.js';
-import { isValidRole, VALID_ROLES } from '../mcp/roles.js';
+import { isValidRole, revokeRole, VALID_ROLES } from '../mcp/roles.js';
 import User from '../models/user.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
@@ -33,18 +33,7 @@ const main = async () => {
       throw new Error(`No user found for email: ${email}`);
     }
 
-    const existing = await dal.query(
-      'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
-      [user.id, role]
-    );
-    if (existing.rows.length === 0) {
-      throw new Error(`User does not have role ${role}.`);
-    }
-
-    await dal.query('DELETE FROM user_roles WHERE user_id = $1 AND role = $2', [
-      user.id,
-      role,
-    ]);
+    await revokeRole(dal, user.id, role);
 
     console.log(`Revoked role ${role} from ${user.email}`);
   } finally {
