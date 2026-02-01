@@ -145,8 +145,8 @@
       emailHint: 'Vi använder detta för att kontakta dig angående din förfrågan.',
       topics: 'Intresseområden',
       topicsHint: 'Vilka ämnen skulle du vilja bidra till?',
-      portfolio: 'Portfölj eller exempel',
-      portfolioHint: 'Länkar till dina skrivprov eller relevanta bidrag.',
+      workedOn: 'Portfölj eller exempel',
+      workedOnHint: 'Länkar till dina skrivprov eller relevanta bidrag.',
     },
     submit: 'Skicka förfrågan',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'E-post',
         topics: 'Ämnen',
-        portfolio: 'Portfölj',
+        workedOn: 'Portfölj',
         submitted: 'Inskickat',
         actions: 'Åtgärder',
       },

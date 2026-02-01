@@ -143,8 +143,8 @@
       emailHint: 'リクエストに関するご連絡に使用します。',
       topics: '興味のあるトピック',
       topicsHint: 'どのようなトピックに貢献したいですか？',
-      portfolio: 'ポートフォリオまたは例',
-      portfolioHint: '執筆サンプルや関連する活動へのリンク。',
+      workedOn: 'ポートフォリオまたは例',
+      workedOnHint: '執筆サンプルや関連する活動へのリンク。',
     },
     submit: 'リクエストを送信',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'メール',
         topics: 'トピック',
-        portfolio: 'ポートフォリオ',
+        workedOn: 'ポートフォリオ',
         submitted: '送信済み',
         actions: 'アクション',
       },

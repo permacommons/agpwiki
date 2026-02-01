@@ -143,8 +143,8 @@
       emailHint: 'Bunu talebinizle ilgili olarak sizinle iletişime geçmek için kullanacağız.',
       topics: 'İlgi alanları',
       topicsHint: 'Hangi konularda katkıda bulunmak istersiniz?',
-      portfolio: 'Portföy veya örnekler',
-      portfolioHint: 'Yazı örneklerinize veya ilgili çalışmalarınıza bağlantılar.',
+      workedOn: 'Portföy veya örnekler',
+      workedOnHint: 'Yazı örneklerinize veya ilgili çalışmalarınıza bağlantılar.',
     },
     submit: 'Talebi gönder',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-posta',
         topics: 'Konular',
-        portfolio: 'Portföy',
+        workedOn: 'Portföy',
         submitted: 'Gönderildi',
         actions: 'Eylemler',
       },

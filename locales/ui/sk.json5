@@ -145,8 +145,8 @@
       emailHint: 'Použijeme to na kontaktovanie vás ohľadom vašej žiadosti.',
       topics: 'Témy záujmu',
       topicsHint: 'Ktorým témam by ste chceli prispieť?',
-      portfolio: 'Portfólio alebo príklady',
-      portfolioHint: 'Odkazy na vaše ukážky písania alebo relevantnú prácu.',
+      workedOn: 'Portfólio alebo príklady',
+      workedOnHint: 'Odkazy na vaše ukážky písania alebo relevantnú prácu.',
     },
     submit: 'Odoslať žiadosť',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Témy',
-        portfolio: 'Portfólio',
+        workedOn: 'Portfólio',
         submitted: 'Odoslané',
         actions: 'Akcie',
       },

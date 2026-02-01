@@ -145,8 +145,8 @@
       emailHint: 'Kami akan menggunakan ini untuk menghubungi Anda tentang permintaan Anda.',
       topics: 'Topik yang diminati',
       topicsHint: 'Topik apa yang ingin Anda kontribusikan?',
-      portfolio: 'Portofolio atau contoh',
-      portfolioHint: 'Tautan ke contoh tulisan atau proyek relevan Anda.',
+      workedOn: 'Portofolio atau contoh',
+      workedOnHint: 'Tautan ke contoh tulisan atau proyek relevan Anda.',
     },
     submit: 'Kirim permintaan',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'Surel',
         topics: 'Topik',
-        portfolio: 'Portofolio',
+        workedOn: 'Portofolio',
         submitted: 'Dikirim',
         actions: 'Tindakan',
       },

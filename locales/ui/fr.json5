@@ -143,8 +143,8 @@
       emailHint: 'Nous utiliserons ceci pour vous contacter à propos de votre demande.',
       topics: "Sujets d'intérêt",
       topicsHint: 'À quels sujets souhaitez-vous contribuer ?',
-      portfolio: 'Portfolio ou exemples',
-      portfolioHint: "Liens vers vos échantillons d'écriture ou contributions pertinentes.",
+      workedOn: 'Partagez quelque chose sur lequel vous avez travaillé',
+      workedOnHint: "Liens vers vos échantillons d'écriture ou contributions pertinentes.",
     },
     submit: 'Envoyer la demande',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'Courriel',
         topics: 'Sujets',
-        portfolio: 'Dossier',
+        workedOn: 'Dossier',
         submitted: 'Soumis',
         actions: 'Opérations',
       },

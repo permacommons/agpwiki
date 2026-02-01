@@ -143,8 +143,8 @@
       emailHint: 'We gebruiken dit om contact met u op te nemen over uw verzoek.',
       topics: 'Interessegebieden',
       topicsHint: 'Aan welke onderwerpen zou u willen bijdragen?',
-      portfolio: 'Portfolio of voorbeelden',
-      portfolioHint: 'Links naar uw schrijfvoorbeelden of relevante bijdragen.',
+      workedOn: 'Deel iets waar je aan hebt gewerkt',
+      workedOnHint: 'Links naar uw schrijfvoorbeelden of relevante bijdragen.',
     },
     submit: 'Verzoek indienen',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Onderwerpen',
-        portfolio: 'Dossier',
+        workedOn: 'Dossier',
         submitted: 'Ingediend',
         actions: 'Acties',
       },

@@ -145,8 +145,8 @@
       emailHint: 'Ni uzos ĉi tion por kontakti vin pri via peto.',
       topics: 'Interesaj temoj',
       topicsHint: 'Pri kiuj temoj vi ŝatus kontribui?',
-      portfolio: 'Dosierujo aŭ ekzemploj',
-      portfolioHint: 'Ligoj al viaj skribaj specimenoj aŭ rilataj kontribuoj.',
+      workedOn: 'Dosierujo aŭ ekzemploj',
+      workedOnHint: 'Ligoj al viaj skribaj specimenoj aŭ rilataj kontribuoj.',
     },
     submit: 'Sendi peton',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'Retpoŝto',
         topics: 'Temoj',
-        portfolio: 'Dosierujo',
+        workedOn: 'Dosierujo',
         submitted: 'Sendita',
         actions: 'Agoj',
       },

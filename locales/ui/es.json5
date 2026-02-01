@@ -143,8 +143,8 @@
       emailHint: 'Usaremos esto para contactarte sobre tu solicitud.',
       topics: 'Temas de interés',
       topicsHint: '¿En qué temas te gustaría contribuir?',
-      portfolio: 'Portafolio o ejemplos',
-      portfolioHint: 'Enlaces a tus muestras de escritura o contribuciones relevantes.',
+      workedOn: 'Portafolio o ejemplos',
+      workedOnHint: 'Enlaces a tus muestras de escritura o contribuciones relevantes.',
     },
     submit: 'Enviar solicitud',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'Correo electrónico',
         topics: 'Temas',
-        portfolio: 'Portafolio',
+        workedOn: 'Portafolio',
         submitted: 'Enviado',
         actions: 'Acciones',
       },

@@ -145,8 +145,8 @@
       emailHint: 'Ezt használjuk a kérelmével kapcsolatos kapcsolatfelvételhez.',
       topics: 'Érdeklődési témák',
       topicsHint: 'Milyen témákban szeretne közreműködni?',
-      portfolio: 'Portfólió vagy példák',
-      portfolioHint: 'Hivatkozások írásmintákra vagy releváns munkákra.',
+      workedOn: 'Portfólió vagy példák',
+      workedOnHint: 'Hivatkozások írásmintákra vagy releváns munkákra.',
     },
     submit: 'Kérelem beküldése',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Témák',
-        portfolio: 'Portfólió',
+        workedOn: 'Portfólió',
         submitted: 'Beküldve',
         actions: 'Műveletek',
       },

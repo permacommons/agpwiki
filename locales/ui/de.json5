@@ -143,8 +143,8 @@
       emailHint: 'Wir verwenden dies, um Sie bezüglich Ihrer Anfrage zu kontaktieren.',
       topics: 'Interessengebiete',
       topicsHint: 'Zu welchen Themen möchten Sie beitragen?',
-      portfolio: 'Portfolio oder Beispiele',
-      portfolioHint: 'Links zu Ihren Textproben oder relevanten Beiträgen.',
+      workedOn: 'Teile etwas, woran du gearbeitet hast',
+      workedOnHint: 'Links zu Ihren Textproben oder relevanten Beiträgen.',
     },
     submit: 'Anfrage senden',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-Mail',
         topics: 'Themen',
-        portfolio: 'Portfoliomappe',
+        workedOn: 'Geteilte Arbeit',
         submitted: 'Eingereicht',
         actions: 'Aktionen',
       },
