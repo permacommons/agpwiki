@@ -1,4 +1,5 @@
 {
+  // Translators: Use informal 2nd-person Dutch ("je/jij/jouw"), not formal ("u/uw"), throughout this file.
   site: {
     name: 'Agpedia',
   },
@@ -140,16 +141,16 @@
     description: 'Dien een verzoek in om bij te dragen aan Agpedia.',
     form: {
       email: 'E-mail',
-      emailHint: 'We gebruiken dit om contact met u op te nemen over uw verzoek.',
+      emailHint: 'We gebruiken dit om contact met je op te nemen over je verzoek.',
       topics: 'Interessegebieden',
-      topicsHint: 'Aan welke onderwerpen zou u willen bijdragen?',
-      portfolio: 'Portfolio of voorbeelden',
-      portfolioHint: 'Links naar uw schrijfvoorbeelden of relevante bijdragen.',
+      topicsHint: 'Aan welke onderwerpen zou je willen bijdragen?',
+      workedOn: 'Deel iets waar je aan hebt gewerkt',
+      workedOnHint: 'Links naar je schrijfvoorbeelden of relevante bijdragen.',
     },
     submit: 'Verzoek indienen',
     success: {
       title: 'Verzoek ingediend',
-      message: 'Bedankt voor uw interesse om bij te dragen aan Agpedia. We zullen uw verzoek beoordelen en contact met u opnemen.',
+      message: 'Bedankt voor je interesse om bij te dragen aan Agpedia. We zullen je verzoek beoordelen en contact met je opnemen.',
     },
     review: {
       title: 'Accountverzoeken beoordelen',
@@ -159,7 +160,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Onderwerpen',
-        portfolio: 'Dossier',
+        workedOn: 'Dossier',
         submitted: 'Ingediend',
         actions: 'Acties',
       },

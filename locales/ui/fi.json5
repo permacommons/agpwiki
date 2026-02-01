@@ -145,8 +145,8 @@
       emailHint: 'Käytämme tätä ottaaksemme sinuun yhteyttä pyyntöösi liittyen.',
       topics: 'Kiinnostuksen kohteet',
       topicsHint: 'Mihin aiheisiin haluaisit osallistua?',
-      portfolio: 'Portfolio tai esimerkkejä',
-      portfolioHint: 'Linkkejä kirjoitusnäytteisiisi tai asiaankuuluviin projekteihin.',
+      workedOn: 'Jaa jotain, mitä olet tehnyt',
+      workedOnHint: 'Linkkejä kirjoitusnäytteisiisi tai asiaankuuluviin projekteihin.',
     },
     submit: 'Lähetä pyyntö',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'Sähköposti',
         topics: 'Aiheet',
-        portfolio: 'Työnäytekansio',
+        workedOn: 'Työnäytekansio',
         submitted: 'Lähetetty',
         actions: 'Toiminnot',
       },

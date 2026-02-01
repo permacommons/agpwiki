@@ -143,8 +143,8 @@
       emailHint: 'Użyjemy tego adresu, aby skontaktować się z Tobą w sprawie Twojej prośby.',
       topics: 'Zainteresowania',
       topicsHint: 'W jakich tematach chciałbyś mieć wkład?',
-      portfolio: 'Portfolio lub przykłady',
-      portfolioHint: 'Linki do Twoich próbek pisarskich lub odpowiednich materiałów.',
+      workedOn: 'Podziel się czymś, nad czym pracowałeś',
+      workedOnHint: 'Linki do Twoich próbek pisarskich lub odpowiednich materiałów.',
     },
     submit: 'Wyślij prośbę',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Tematy',
-        portfolio: 'Teczka',
+        workedOn: 'Teczka',
         submitted: 'Przesłano',
         actions: 'Akcje',
       },

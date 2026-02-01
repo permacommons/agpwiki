@@ -143,8 +143,8 @@
       emailHint: '我们将使用此邮箱联系您关于申请的事宜。',
       topics: '感兴趣的主题',
       topicsHint: '您希望在哪些主题上做出贡献？',
-      portfolio: '作品集或示例',
-      portfolioHint: '您的写作样本或相关工作的链接。',
+      workedOn: '作品集或示例',
+      workedOnHint: '您的写作样本或相关工作的链接。',
     },
     submit: '提交申请',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: '电子邮件',
         topics: '主题',
-        portfolio: '作品集',
+        workedOn: '作品集',
         submitted: '已提交',
         actions: '操作',
       },

@@ -1,4 +1,5 @@
 {
+  // Translators: Use informal 2nd-person German ("du/dein"), not formal ("Sie/Ihr"), throughout this file.
   site: {
     name: 'Agpedia',
   },
@@ -68,7 +69,7 @@
     login: {
       title: 'Anmelden',
       action: 'Anmelden',
-      needInvite: 'Benötigen Sie eine Einladung? Nutzen Sie <code>/tool/auth/signup</code>.',
+      needInvite: 'Brauchst du eine Einladung? Nutze <code>/tool/auth/signup</code>.',
       errorInvalid: 'Ungültige E-Mail oder Passwort.',
     },
     signup: {
@@ -89,7 +90,7 @@
     },
     tokens: {
       title: 'API-Token',
-      description: 'Erstellen und verwalten Sie API-Token für den MCP-Zugriff. Token werden nur einmal angezeigt.',
+      description: 'Erstelle und verwalte API-Token für den MCP-Zugriff. Token werden nur einmal angezeigt.',
       untitled: 'Ohne Titel',
       revoked: 'Widerrufen',
       active: 'Aktiv',
@@ -112,7 +113,7 @@
       errorLabelActive: 'Ein aktives Token verwendet diese Bezeichnung bereits.',
       back: 'Zurück zu den Token',
       newToken: 'Neues Token',
-      copyHelp: 'Kopieren Sie dieses Token jetzt. Sie werden es nicht wieder sehen können.',
+      copyHelp: 'Kopiere dieses Token jetzt. Du wirst es nicht wieder sehen können.',
       errorNotFound: 'Token zum Zurücksetzen nicht gefunden.',
       regenerateTitle: 'Token neu generieren',
       errorLabelConflict: 'Ein anderes aktives Token verwendet diese Bezeichnung bereits.',
@@ -137,19 +138,19 @@
   },
   accountRequest: {
     title: 'Ein Konto beantragen',
-    description: 'Senden Sie eine Anfrage, um zu Agpedia beizutragen.',
+    description: 'Sende eine Anfrage, um zu Agpedia beizutragen.',
     form: {
       email: 'E-Mail',
-      emailHint: 'Wir verwenden dies, um Sie bezüglich Ihrer Anfrage zu kontaktieren.',
+      emailHint: 'Wir verwenden dies, um dich bezüglich deiner Anfrage zu kontaktieren.',
       topics: 'Interessengebiete',
-      topicsHint: 'Zu welchen Themen möchten Sie beitragen?',
-      portfolio: 'Portfolio oder Beispiele',
-      portfolioHint: 'Links zu Ihren Textproben oder relevanten Beiträgen.',
+      topicsHint: 'Zu welchen Themen möchtest du beitragen?',
+      workedOn: 'Teile etwas, woran du gearbeitet hast',
+      workedOnHint: 'Links zu deinen Textproben oder relevanten Beiträgen.',
     },
     submit: 'Anfrage senden',
     success: {
       title: 'Anfrage gesendet',
-      message: 'Vielen Dank für Ihr Interesse an einer Mitarbeit bei Agpedia. Wir werden Ihre Anfrage prüfen und uns bei Ihnen melden.',
+      message: 'Vielen Dank für dein Interesse an einer Mitarbeit bei Agpedia. Wir werden deine Anfrage prüfen und uns bei dir melden.',
     },
     review: {
       title: 'Kontoanfragen überprüfen',
@@ -159,7 +160,7 @@
       headers: {
         email: 'E-Mail',
         topics: 'Themen',
-        portfolio: 'Portfoliomappe',
+        workedOn: 'Geteilte Arbeit',
         submitted: 'Eingereicht',
         actions: 'Aktionen',
       },

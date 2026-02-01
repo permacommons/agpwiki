@@ -1,4 +1,5 @@
 {
+  // Translators: Use informal 2nd-person French ("tu/ton"), not formal ("vous/votre"), throughout this file.
   site: {
     name: 'Agpedia',
   },
@@ -68,7 +69,7 @@
     login: {
       title: 'Connexion',
       action: 'Se connecter',
-      needInvite: "Besoin d'une invitation ? Utilisez <code>/tool/auth/signup</code>.",
+      needInvite: "Besoin d'une invitation ? Utilise <code>/tool/auth/signup</code>.",
       errorInvalid: 'Email ou mot de passe invalide.',
     },
     signup: {
@@ -89,7 +90,7 @@
     },
     tokens: {
       title: 'Tokens API',
-      description: "Créez et gérez des tokens API pour l'accès MCP. Les tokens ne sont affichés qu'une seule fois.",
+      description: "Crée et gère des tokens API pour l'accès MCP. Les tokens ne sont affichés qu'une seule fois.",
       untitled: 'Sans titre',
       revoked: 'Révoqué',
       active: 'Actif',
@@ -112,7 +113,7 @@
       errorLabelActive: 'Un token actif utilise déjà ce libellé.',
       back: 'Retour aux tokens',
       newToken: 'Nouveau token',
-      copyHelp: 'Copiez ce token maintenant. Vous ne pourrez plus le revoir.',
+      copyHelp: 'Copie ce token maintenant. Tu ne pourras plus le revoir.',
       errorNotFound: 'Token introuvable pour la réinitialisation.',
       regenerateTitle: 'Régénérer le token',
       errorLabelConflict: 'Un autre token actif utilise déjà ce libellé.',
@@ -137,19 +138,19 @@
   },
   accountRequest: {
     title: 'Demander un compte',
-    description: 'Soumettez une demande pour contribuer à Agpedia.',
+    description: 'Soumets une demande pour contribuer à Agpedia.',
     form: {
       email: 'Courriel',
-      emailHint: 'Nous utiliserons ceci pour vous contacter à propos de votre demande.',
+      emailHint: 'Nous utiliserons ceci pour te contacter à propos de ta demande.',
       topics: "Sujets d'intérêt",
-      topicsHint: 'À quels sujets souhaitez-vous contribuer ?',
-      portfolio: 'Portfolio ou exemples',
-      portfolioHint: "Liens vers vos échantillons d'écriture ou contributions pertinentes.",
+      topicsHint: 'À quels sujets veux-tu contribuer ?',
+      workedOn: 'Partage quelque chose sur lequel tu as travaillé',
+      workedOnHint: "Liens vers tes échantillons d'écriture ou contributions pertinentes.",
     },
     submit: 'Envoyer la demande',
     success: {
       title: 'Demande envoyée',
-      message: 'Merci de votre intérêt pour la contribution à Agpedia. Nous examinerons votre demande et reviendrons vers vous.',
+      message: 'Merci pour ton intérêt à contribuer à Agpedia. Nous examinerons ta demande et reviendrons vers toi.',
     },
     review: {
       title: 'Examiner les demandes de compte',
@@ -159,7 +160,7 @@
       headers: {
         email: 'Courriel',
         topics: 'Sujets',
-        portfolio: 'Dossier',
+        workedOn: 'Dossier',
         submitted: 'Soumis',
         actions: 'Opérations',
       },

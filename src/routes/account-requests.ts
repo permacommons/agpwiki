@@ -51,9 +51,9 @@ export const registerAccountRequestRoutes = (app: Express) => {
       <div class="form-hint">${req.t('accountRequest.form.topicsHint')}</div>
     </label>
     <label class="form-field">
-      <span>${req.t('accountRequest.form.portfolio')}</span>
-      <textarea name="portfolio" rows="4" required></textarea>
-      <div class="form-hint">${req.t('accountRequest.form.portfolioHint')}</div>
+      <span>${req.t('accountRequest.form.workedOn')}</span>
+      <textarea name="workedOn" rows="4" required></textarea>
+      <div class="form-hint">${req.t('accountRequest.form.workedOnHint')}</div>
     </label>
     ${altchaWidget}
     <div class="form-actions">
@@ -70,7 +70,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
   app.post('/tool/request-account', async (req, res) => {
     const email = String(req.body.email ?? '').trim().toLowerCase();
     const topics = String(req.body.topics ?? '').trim();
-    const portfolio = String(req.body.portfolio ?? '').trim();
+    const workedOn = String(req.body.workedOn ?? '').trim();
     const altchaPayload = String(req.body.altcha ?? '');
 
     const altchaValid = await verifyAltchaSolution(altchaPayload);
@@ -96,9 +96,9 @@ export const registerAccountRequestRoutes = (app: Express) => {
       <div class="form-hint">${req.t('accountRequest.form.topicsHint')}</div>
     </label>
     <label class="form-field">
-      <span>${req.t('accountRequest.form.portfolio')}</span>
-      <textarea name="portfolio" rows="4" required>${escapeHtml(portfolio)}</textarea>
-      <div class="form-hint">${req.t('accountRequest.form.portfolioHint')}</div>
+      <span>${req.t('accountRequest.form.workedOn')}</span>
+      <textarea name="workedOn" rows="4" required>${escapeHtml(workedOn)}</textarea>
+      <div class="form-hint">${req.t('accountRequest.form.workedOnHint')}</div>
     </label>
     ${altchaWidget}
     <div class="form-actions">
@@ -121,7 +121,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
     await AccountRequest.create({
       email,
       topics,
-      portfolio,
+      workedOn,
       ipAddress,
       userAgent,
       createdAt: new Date(),
@@ -162,12 +162,12 @@ export const registerAccountRequestRoutes = (app: Express) => {
       : requests.map(r => {
           const emailCell = escapeHtml(r.email);
           const topicsCell = r.topics ? escapeHtml(r.topics) : '';
-          const portfolioCell = r.portfolio ? escapeHtml(r.portfolio) : '';
+          const workedOnCell = r.workedOn ? escapeHtml(r.workedOn) : '';
           const submittedCell = r.createdAt ? formatDateUTC(r.createdAt) : '';
           return `<tr>
   <td>${emailCell}</td>
   <td>${topicsCell}</td>
-  <td>${portfolioCell}</td>
+  <td>${workedOnCell}</td>
   <td>${submittedCell}</td>
   <td>
     <form method="post" action="/tool/review-requests/delete">
@@ -186,7 +186,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
         <tr>
           <th>${req.t('accountRequest.review.headers.email')}</th>
           <th>${req.t('accountRequest.review.headers.topics')}</th>
-          <th>${req.t('accountRequest.review.headers.portfolio')}</th>
+          <th>${req.t('accountRequest.review.headers.workedOn')}</th>
           <th>${req.t('accountRequest.review.headers.submitted')}</th>
           <th>${req.t('accountRequest.review.headers.actions')}</th>
         </tr>

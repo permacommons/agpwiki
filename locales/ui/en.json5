@@ -179,9 +179,9 @@
       "emailHint": "We'll use this to contact you about your request.",
       "topics": "Topics of interest",
       "topicsHint": "What topics would you like to contribute to?",
-      "portfolio": "Portfolio or examples",
+      "workedOn": "Share something you've worked on",
       // Translators: This is a volunteer project, not a job application. Please use neutral terms like "contributions", "projects", or "materials" rather than "work/job" if your language makes that distinction.
-      "portfolioHint": "Links to your writing samples or relevant projects."
+      "workedOnHint": "Share links to your writing samples or relevant projects."
     },
     "submit": "Submit request",
     "success": {
@@ -196,7 +196,7 @@
       "headers": {
         "email": "Email",
         "topics": "Topics",
-        "portfolio": "Portfolio",
+        "workedOn": "Shared work",
         "submitted": "Submitted",
         "actions": "Actions"
       }

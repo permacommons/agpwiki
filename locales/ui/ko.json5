@@ -143,8 +143,8 @@
       emailHint: '요청과 관련하여 연락드리는 데 사용됩니다.',
       topics: '관심 주제',
       topicsHint: '어떤 주제에 기여하고 싶으신가요?',
-      portfolio: '포트폴리오 또는 예시',
-      portfolioHint: '작문 샘플 또는 관련 작업에 대한 링크입니다.',
+      workedOn: '포트폴리오 또는 예시',
+      workedOnHint: '작문 샘플 또는 관련 작업에 대한 링크입니다.',
     },
     submit: '요청 제출',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: '이메일',
         topics: '주제',
-        portfolio: '포트폴리오',
+        workedOn: '포트폴리오',
         submitted: '제출됨',
         actions: '작업',
       },

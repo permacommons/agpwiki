@@ -145,8 +145,8 @@
       emailHint: 'Naudosime tai susisiekti su jumis dėl jūsų prašymo.',
       topics: 'Dominančios temos',
       topicsHint: 'Kokiomis temomis norėtumėte prisidėti?',
-      portfolio: 'Portfelis arba pavyzdžiai',
-      portfolioHint: 'Nuorodos į jūsų rašymo pavyzdžius ar susijusius darbus.',
+      workedOn: 'Portfelis arba pavyzdžiai',
+      workedOnHint: 'Nuorodos į jūsų rašymo pavyzdžius ar susijusius darbus.',
     },
     submit: 'Pateikti prašymą',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'El. paštas',
         topics: 'Temos',
-        portfolio: 'Portfelis',
+        workedOn: 'Portfelis',
         submitted: 'Pateikta',
         actions: 'Veiksmai',
       },

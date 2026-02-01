@@ -145,8 +145,8 @@
       emailHint: 'To bomo uporabili za stik z vami glede vaše zahteve.',
       topics: 'Teme zanimanja',
       topicsHint: 'K katerim temam bi želeli prispevati?',
-      portfolio: 'Portfelj ali primeri',
-      portfolioHint: 'Povezave do vaših primerov pisanja ali ustreznega dela.',
+      workedOn: 'Portfelj ali primeri',
+      workedOnHint: 'Povezave do vaših primerov pisanja ali ustreznega dela.',
     },
     submit: 'Pošlji zahtevo',
     success: {
@@ -162,7 +162,7 @@
       headers: {
         email: 'E-pošta',
         topics: 'Teme',
-        portfolio: 'Portfelj',
+        workedOn: 'Portfelj',
         submitted: 'Oddano',
         actions: 'Dejanja',
       },

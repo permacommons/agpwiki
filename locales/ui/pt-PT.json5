@@ -143,8 +143,8 @@
       emailHint: 'Usaremos isto para o contactar acerca do seu pedido.',
       topics: 'Tópicos de interesse',
       topicsHint: 'Em que tópicos gostaria de contribuir?',
-      portfolio: 'Portfólio ou exemplos',
-      portfolioHint: 'Links para as suas amostras de escrita ou contribuições relevantes.',
+      workedOn: 'Portfólio ou exemplos',
+      workedOnHint: 'Links para as suas amostras de escrita ou contribuições relevantes.',
     },
     submit: 'Enviar pedido',
     success: {
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Tópicos',
-        portfolio: 'Portfólio',
+        workedOn: 'Portfólio',
         submitted: 'Submetido',
         actions: 'Ações',
       },
