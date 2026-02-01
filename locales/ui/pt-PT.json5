@@ -8,7 +8,7 @@
     recentChanges: 'Alterações recentes',
     signOut: 'Sair',
     contribute: 'Contribuir',
-    menu: 'Menu',
+    menu: 'Menu de navegação',
   },
   search: {
     description: 'Pesquisar títulos de páginas e slugs.',
@@ -102,8 +102,8 @@
       activeTokens: 'Tokens ativos',
       headers: {
         label: 'Rótulo',
-        token: 'Token',
-        status: 'Status',
+        token: 'Token API',
+        status: 'Situação',
         lastUsed: 'Último uso',
         actions: 'Ações',
       },

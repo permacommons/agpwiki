@@ -4,7 +4,7 @@
   },
   nav: {
     home: 'Agpedia',
-    blog: 'Blog',
+    blog: 'Blog bölümü',
     recentChanges: 'Son değişiklikler',
     signOut: 'Çıkış Yap',
     contribute: 'Katkıda Bulun',
@@ -31,7 +31,7 @@
     recentChanges: 'Son Değişiklikler',
     recentCitations: 'Son Alıntılar',
     pages: 'Sayfalar',
-    blog: 'Blog',
+    blog: 'Blog bölümü',
     notFound: 'Bulunamadı',
     revisionNotFound: 'Revizyon bulunamadı',
     serverError: 'Sunucu hatası',
@@ -102,7 +102,7 @@
       activeTokens: 'Aktif tokenlar',
       headers: {
         label: 'Etiket',
-        token: 'Token',
+        token: 'API tokenı',
         status: 'Durum',
         lastUsed: 'Son kullanım',
         actions: 'İşlemler',
