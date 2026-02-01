@@ -47,6 +47,7 @@
   "search": {
     "placeholder": "Search titles...",
     "title": "Search",
+    // Translators: "slug" means the URL-safe page identifier (for example, "barack-obama" in "/wiki/barack-obama"), not a garden slug.
     "description": "Search page titles and slugs."
   },
   "footer": {

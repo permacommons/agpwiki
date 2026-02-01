@@ -11,7 +11,7 @@
     menu: 'Menuo',
   },
   search: {
-    description: 'Serĉu paĝtitolojn kaj ŝlimojn.',
+    description: 'Serĉu paĝtitolojn kaj slugojn.',
     placeholder: 'Serĉi titolojn...',
     title: 'Serĉo',
   },
@@ -131,7 +131,7 @@
       deny: 'Rifuzi',
     },
     callback: {
-      title: 'OAuth-revoko',
+      title: 'OAuth-retvoko',
       codeLabel: 'Rajtigkodo:',
       noCode: 'Neniu rajtigkodo estis redonita.',
       stateLabel: 'Stato: <code>{{state}}</code>',
