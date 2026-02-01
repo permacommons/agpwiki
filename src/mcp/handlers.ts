@@ -105,7 +105,8 @@ export interface WikiPagePatchInput {
 
 export interface WikiPageRewriteSectionInput {
   slug: string;
-  heading: string;
+  target?: 'heading' | 'lead';
+  heading?: string;
   headingLevel?: number;
   occurrence?: number;
   mode?: 'replace' | 'prepend' | 'append';
@@ -116,13 +117,14 @@ export interface WikiPageRewriteSectionInput {
   revSummary: Record<string, string>;
 }
 
-export interface WikiPageRewriteSectionInput {
+export interface WikiPageExactReplacement {
+  from: string;
+  to: string;
+}
+
+export interface WikiPageReplaceExactTextInput {
   slug: string;
-  heading: string;
-  headingLevel?: number;
-  occurrence?: number;
-  mode?: 'replace' | 'prepend' | 'append';
-  content: string;
+  replacements: WikiPageExactReplacement[];
   lang?: string;
   expectedRevId?: string;
   tags?: string[];
@@ -649,6 +651,76 @@ const rewriteSectionBody = (
   return nextText;
 };
 
+const countOccurrences = (text: string, needle: string) => {
+  let count = 0;
+  let index = 0;
+  while (true) {
+    const found = text.indexOf(needle, index);
+    if (found === -1) break;
+    count += 1;
+    index = found + needle.length;
+  }
+  return count;
+};
+
+const applyExactReplacements = (
+  text: string,
+  replacements: WikiPageExactReplacement[]
+) => {
+  type LocatedReplacement = {
+    from: string;
+    to: string;
+    start: number;
+    end: number;
+  };
+
+  const located: LocatedReplacement[] = replacements.map(replacement => {
+    const count = countOccurrences(text, replacement.from);
+    if (count === 0) {
+      throw new NotFoundError(`Exact text not found: "${replacement.from}".`, {
+        text: replacement.from,
+      });
+    }
+    if (count > 1) {
+      throw new ConflictError(
+        `Exact text occurs more than once: "${replacement.from}". Refusing to apply partial replacement.`,
+        { text: replacement.from, occurrences: count }
+      );
+    }
+    const start = text.indexOf(replacement.from);
+    return {
+      ...replacement,
+      start,
+      end: start + replacement.from.length,
+    };
+  });
+
+  located.sort((a, b) => a.start - b.start);
+  for (let i = 1; i < located.length; i += 1) {
+    const previous = located[i - 1];
+    const current = located[i];
+    if (current.start < previous.end) {
+      throw new InvalidRequestError(
+        `Exact replacement ranges overlap: "${previous.from}" and "${current.from}".`,
+        {
+          first: previous.from,
+          second: current.from,
+        }
+      );
+    }
+  }
+
+  let cursor = 0;
+  let nextText = '';
+  for (const replacement of located) {
+    nextText += text.slice(cursor, replacement.start);
+    nextText += replacement.to;
+    cursor = replacement.end;
+  }
+  nextText += text.slice(cursor);
+  return nextText;
+};
+
 const hasDisallowedControlCharacters = (value: string) => {
   for (const char of value) {
     const code = char.codePointAt(0) ?? 0;
@@ -1032,6 +1104,7 @@ export async function rewriteWikiPageSection(
   _dalInstance: DataAccessLayer,
   {
     slug,
+    target = 'heading',
     heading,
     headingLevel,
     occurrence,
@@ -1046,7 +1119,23 @@ export async function rewriteWikiPageSection(
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki section rewrite input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
-  ensureNonEmptyString(heading, 'heading', errors);
+  if (target !== 'heading' && target !== 'lead') {
+    errors.add('target', 'must be "heading" or "lead".', 'invalid');
+  }
+  if (target === 'heading') {
+    ensureNonEmptyString(heading, 'heading', errors);
+  } else {
+    ensureOptionalString(heading, 'heading', errors);
+    if (heading !== undefined) {
+      errors.add('heading', 'must be omitted when target is "lead".', 'invalid');
+    }
+    if (headingLevel !== undefined) {
+      errors.add('headingLevel', 'must be omitted when target is "lead".', 'invalid');
+    }
+    if (occurrence !== undefined) {
+      errors.add('occurrence', 'must be omitted when target is "lead".', 'invalid');
+    }
+  }
   ensureString(content, 'content', errors);
   ensureOptionalLanguage(lang, 'lang', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
@@ -1083,41 +1172,54 @@ export async function rewriteWikiPageSection(
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
   const sections = listHeadingSections(currentText);
-  const allHeadingDetails = buildHeadingDetails(sections);
-  let matches = sections.filter(section => section.text === heading);
+  let selected: HeadingSection;
+  if (target === 'lead') {
+    const totalLines = currentText.split('\n').length;
+    const firstHeadingLine = sections[0]?.line ?? totalLines;
+    selected = {
+      level: 0,
+      text: '',
+      line: 0,
+      contentStartLine: 0,
+      contentEndLine: firstHeadingLine,
+    };
+  } else {
+    const allHeadingDetails = buildHeadingDetails(sections);
+    let matches = sections.filter(section => section.text === heading);
 
-  if (headingLevel !== undefined) {
-    matches = matches.filter(section => section.level === headingLevel);
-  }
+    if (headingLevel !== undefined) {
+      matches = matches.filter(section => section.level === headingLevel);
+    }
 
-  if (matches.length === 0) {
-    throw new NotFoundError(`Section heading not found: ${heading}`, {
-      slug: normalizedSlug,
-      heading,
-      availableHeadings: allHeadingDetails,
-    });
-  }
-
-  if (matches.length > 1 && occurrence === undefined) {
-    throw new ConflictError(`Section heading is not unique: ${heading}`, {
-      slug: normalizedSlug,
-      heading,
-      matches: buildHeadingDetails(matches),
-    });
-  }
-
-  let selected = matches[0];
-  if (occurrence !== undefined) {
-    const index = occurrence - 1;
-    if (!matches[index]) {
-      throw new NotFoundError(`Section heading occurrence not found: ${heading}`, {
+    if (matches.length === 0) {
+      throw new NotFoundError(`Section heading not found: ${heading}`, {
         slug: normalizedSlug,
         heading,
-        occurrence,
+        availableHeadings: allHeadingDetails,
+      });
+    }
+
+    if (matches.length > 1 && occurrence === undefined) {
+      throw new ConflictError(`Section heading is not unique: ${heading}`, {
+        slug: normalizedSlug,
+        heading,
         matches: buildHeadingDetails(matches),
       });
     }
-    selected = matches[index];
+
+    selected = matches[0];
+    if (occurrence !== undefined) {
+      const index = occurrence - 1;
+      if (!matches[index]) {
+        throw new NotFoundError(`Section heading occurrence not found: ${heading}`, {
+          slug: normalizedSlug,
+          heading,
+          occurrence,
+          matches: buildHeadingDetails(matches),
+        });
+      }
+      selected = matches[index];
+    }
   }
 
   const updatedText = rewriteSectionBody(currentText, selected, mode, content);
@@ -1130,6 +1232,77 @@ export async function rewriteWikiPageSection(
   ensureNoControlCharacters({ [lang]: updatedText }, 'body');
 
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
+
+  page.body = {
+    ...currentBody,
+    [lang]: updatedText,
+  };
+  if (revSummary !== undefined) page._revSummary = revSummary;
+  page.updatedAt = new Date();
+
+  await page.save();
+
+  return toWikiPageResult(page);
+}
+
+export async function replaceWikiPageExactText(
+  _dalInstance: DataAccessLayer,
+  {
+    slug,
+    replacements,
+    lang = 'en',
+    expectedRevId,
+    tags = [],
+    revSummary,
+  }: WikiPageReplaceExactTextInput,
+  userId: string
+): Promise<WikiPageResult> {
+  const errors = new ValidationCollector('Invalid wiki exact replacement input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  if (!Array.isArray(replacements) || replacements.length === 0) {
+    errors.add('replacements', 'must be a non-empty array.', 'invalid');
+  } else {
+    replacements.forEach((replacement, index) => {
+      if (!replacement || typeof replacement !== 'object' || Array.isArray(replacement)) {
+        errors.add(`replacements.${index}`, 'must be an object with from and to strings.', 'type');
+        return;
+      }
+      const { from, to } = replacement;
+      ensureNonEmptyString(from, `replacements.${index}.from`, errors);
+      ensureString(to, `replacements.${index}.to`, errors);
+    });
+  }
+  ensureOptionalLanguage(lang, 'lang', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) {
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  if (expectedRevId && expectedRevId !== page._revID) {
+    throw new PreconditionFailedError(
+      `Revision mismatch: current is ${page._revID ?? 'unknown'}, expected was ${expectedRevId}.`,
+      { currentRevId: page._revID ?? null, expectedRevId }
+    );
+  }
+
+  const currentBody = page.body ?? {};
+  const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
+  const updatedText = applyExactReplacements(currentText, replacements);
+
+  if (updatedText === currentText) {
+    throw new PreconditionFailedError('Replace exact text did not change content.', {
+      slug: normalizedSlug,
+    });
+  }
+  ensureNoControlCharacters({ [lang]: updatedText }, 'body');
+
+  await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
 
   page.body = {
     ...currentBody,
