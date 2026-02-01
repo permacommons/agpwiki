@@ -8,6 +8,7 @@
     recentChanges: 'Recente wijzigingen',
     signOut: 'Afmelden',
     contribute: 'Bijdragen',
+    menu: 'Menu',
   },
   search: {
     description: 'Zoek paginatitels en slugs.',

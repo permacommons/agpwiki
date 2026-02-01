@@ -8,6 +8,7 @@
     recentChanges: '最近の更新',
     signOut: 'ログアウト',
     contribute: '貢献する',
+    menu: 'メニュー',
   },
   search: {
     description: 'ページタイトルとスラッグを検索。',

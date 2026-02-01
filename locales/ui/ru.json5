@@ -8,6 +8,7 @@
     recentChanges: 'Свежие правки',
     signOut: 'Выйти',
     contribute: 'Участвовать',
+    menu: 'Меню',
   },
   search: {
     description: 'Поиск по заголовкам страниц и слагам.',

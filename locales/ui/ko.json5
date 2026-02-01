@@ -8,6 +8,7 @@
     recentChanges: '최근 바뀜',
     signOut: '로그아웃',
     contribute: '기여하기',
+    menu: '메뉴',
   },
   search: {
     description: '페이지 제목 및 슬러그 검색.',

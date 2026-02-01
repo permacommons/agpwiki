@@ -8,6 +8,7 @@
     recentChanges: 'Tuoreet muutokset',
     signOut: 'Kirjaudu ulos',
     contribute: 'Osallistu',
+    menu: 'Valikko',
   },
   search: {
     description: 'Search page titles and slugs.',

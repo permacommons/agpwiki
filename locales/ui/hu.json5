@@ -8,6 +8,7 @@
     recentChanges: 'Friss változtatások',
     signOut: 'Kijelentkezés',
     contribute: 'Közreműködés',
+    menu: 'Menü',
   },
   search: {
     description: 'Search page titles and slugs.',

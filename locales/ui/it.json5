@@ -8,6 +8,7 @@
     recentChanges: 'Modifiche recenti',
     signOut: 'Disconnetti',
     contribute: 'Contribuisci',
+    menu: 'Menu',
   },
   search: {
     description: 'Cerca titoli di pagine e slug.',

@@ -8,6 +8,7 @@
     recentChanges: 'حالیہ تبدیلیاں',
     signOut: 'سائن آؤٹ',
     contribute: 'تعاون کریں',
+    menu: 'مینو',
   },
   search: {
     description: 'Search page titles and slugs.',

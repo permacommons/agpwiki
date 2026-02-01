@@ -8,6 +8,7 @@
     recentChanges: 'Скорешни промени',
     signOut: 'Одјави се',
     contribute: 'Придонес',
+    menu: 'Мени',
   },
   search: {
     description: 'Search page titles and slugs.',

@@ -8,6 +8,7 @@
     recentChanges: 'हाल के परिवर्तन',
     signOut: 'साइन आउट',
     contribute: 'योगदान करें',
+    menu: 'मेनू',
   },
   search: {
     description: 'Search page titles and slugs.',

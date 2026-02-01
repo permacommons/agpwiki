@@ -8,6 +8,7 @@
     recentChanges: 'Ostatnie zmiany',
     signOut: 'Wyloguj',
     contribute: 'Współtwórz',
+    menu: 'Menu',
   },
   search: {
     description: 'Przeszukuj tytuły stron i aliasy.',

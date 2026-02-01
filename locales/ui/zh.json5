@@ -8,6 +8,7 @@
     recentChanges: '最近更改',
     signOut: '退出',
     contribute: '贡献',
+    menu: '菜单',
   },
   search: {
     description: '搜索页面标题和别名。',

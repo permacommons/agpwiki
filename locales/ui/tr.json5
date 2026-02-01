@@ -8,6 +8,7 @@
     recentChanges: 'Son değişiklikler',
     signOut: 'Çıkış Yap',
     contribute: 'Katkıda Bulun',
+    menu: 'Menü',
   },
   search: {
     description: 'Sayfa başlıklarını ve kısa adları ara.',
