@@ -55,12 +55,14 @@ import {
   readWikiPage,
   readWikiPageRevision,
   removeWikiPageAlias,
+  replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateCitation,
   updateWikiPage,
   type WikiPageAliasInput,
   type WikiPageDeleteInput,
   type WikiPagePatchInput,
+  type WikiPageReplaceExactTextInput,
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
@@ -717,10 +719,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a specific section of a wiki page body by heading text. Heading matching is strict and case-sensitive. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
+        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
       inputSchema: {
         slug: z.string(),
-        heading: z.string(),
+        target: z.enum(['heading', 'lead']).optional(),
+        heading: z.string().optional(),
         headingLevel: z.number().int().min(1).max(6).optional(),
         occurrence: z.number().int().min(1).optional(),
         mode: z.enum(['replace', 'prepend', 'append']).optional(),
@@ -735,6 +738,40 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await rewriteWikiPageSection(
+        dal,
+        { ...args, tags: mergeTags(args.tags) },
+        userId
+      );
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'wiki_replaceExactText',
+    {
+      title: 'Replace Exact Text',
+      description:
+        'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied.',
+      inputSchema: {
+        slug: z.string(),
+        replacements: z
+          .array(
+            z.object({
+              from: z.string().min(1),
+              to: z.string(),
+            })
+          )
+          .min(1),
+        lang: languageTagSchema.optional,
+        expectedRevId: uuidSchema.optional(),
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: WikiPageReplaceExactTextInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await replaceWikiPageExactText(
         dal,
         { ...args, tags: mergeTags(args.tags) },
         userId

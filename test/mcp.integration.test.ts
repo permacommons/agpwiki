@@ -16,6 +16,7 @@ import {
   listWikiPageRevisions,
   readCitation,
   readWikiPage,
+  replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
@@ -440,6 +441,178 @@ test('MCP rewrite section updates wiki page body', async () => {
     ].join('\n');
 
     assert.equal(result.body?.en, expectedBody);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rewrite section supports lead target', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-rewrite-lead-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const originalBody = ['Lead paragraph.', '', '## History', 'Old line'].join('\n');
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Rewrite Lead Test' },
+        body: { en: originalBody },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const result = await rewriteWikiPageSection(
+      dal,
+      {
+        slug,
+        target: 'lead',
+        content: 'Updated lead paragraph.',
+        lang: 'en',
+        revSummary: { en: 'Rewrite lead section.' },
+      },
+      userId
+    );
+
+    const expectedBody = ['Updated lead paragraph.', '', '## History', 'Old line'].join('\n');
+    assert.equal(result.body?.en, expectedBody);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP replace exact text applies multiple unique replacements atomically', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-replace-exact-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Replace Exact Test' },
+        body: { en: 'foo and bla' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const result = await replaceWikiPageExactText(
+      dal,
+      {
+        slug,
+        replacements: [
+          { from: 'foo', to: 'bar' },
+          { from: 'bla', to: 'boo' },
+        ],
+        lang: 'en',
+        revSummary: { en: 'Replace exact text.' },
+      },
+      userId
+    );
+
+    assert.equal(result.body?.en, 'bar and boo');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP replace exact text rejects ambiguous replacements without partial edits', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-replace-exact-ambiguous-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Replace Exact Ambiguous Test' },
+        body: { en: 'foo and bla and bla' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        replaceWikiPageExactText(
+          dal,
+          {
+            slug,
+            replacements: [
+              { from: 'foo', to: 'bar' },
+              { from: 'bla', to: 'boo' },
+            ],
+            lang: 'en',
+            revSummary: { en: 'Reject ambiguous replacements.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof Error);
+        assert.equal(
+          error.message,
+          'Exact text occurs more than once: "bla". Refusing to apply partial replacement.'
+        );
+        return true;
+      }
+    );
+
+    const page = await readWikiPage(dal, slug);
+    assert.equal(page.body?.en, 'foo and bla and bla');
   } finally {
     try {
       await cleanupTestArtifacts(dal, {
