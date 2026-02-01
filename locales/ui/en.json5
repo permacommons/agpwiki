@@ -1,4 +1,11 @@
 {
+  /*
+   i18n-identical-allowlist:
+   {
+     // Locale -> intentionally identical leaf keys (dot notation).
+     // "eo": ["site.name"]
+   }
+  */
   "site": {
     "name": "Agpedia"
   },
