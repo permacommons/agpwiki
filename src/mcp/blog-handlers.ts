@@ -397,21 +397,28 @@ const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) =
   }
 };
 
+export interface BlogPostListResult {
+  hint: string;
+  posts: Array<{ slug: string; name: string }>;
+}
+
 export async function listBlogPostResources(
   _dalInstance: DataAccessLayer
-): Promise<{ resources: Array<{ uri: string; name: string; mimeType?: string }> }> {
+): Promise<BlogPostListResult> {
   const posts = await BlogPost.filterWhere({
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>)
     .orderBy('slug')
     .run();
-  const resources = posts.map(post => ({
-    uri: `agpwiki://blog?slug=${post.slug}`,
-    name: post.slug,
-    mimeType: 'application/json',
-  }));
-  return { resources };
+
+  return {
+    hint: 'Use blog_readPost tool with slug to read a post.',
+    posts: posts.map(post => ({
+      slug: post.slug,
+      name: post.slug,
+    })),
+  };
 }
 
 export async function readBlogPost(

@@ -234,7 +234,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           {
             uri: uri.toString(),
             mimeType: 'application/json',
-            text: JSON.stringify(listing.resources, null, 2),
+            text: JSON.stringify(listing, null, 2),
           },
         ],
       };
@@ -258,7 +258,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           {
             uri: uri.toString(),
             mimeType: 'application/json',
-            text: JSON.stringify(listing.resources, null, 2),
+            text: JSON.stringify(listing, null, 2),
           },
         ],
       };
