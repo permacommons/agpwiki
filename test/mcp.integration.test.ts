@@ -196,6 +196,193 @@ test('MCP apply patch updates wiki page body', async () => {
   }
 });
 
+test('MCP rejects malformed unified patch hunks', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-patch-invalid-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Patch Invalid Test' },
+        body: { en: 'Hello old world' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const patch = ['--- before', '+++ after', '@@', '-Hello old world', '+Hello new world'].join(
+      '\n'
+    );
+
+    await assert.rejects(
+      () =>
+        applyWikiPagePatch(
+          dal,
+          {
+            slug,
+            patch,
+            format: 'unified',
+            lang: 'en',
+            revSummary: { en: 'Invalid patch update.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof Error);
+        assert.ok(error.message.includes('Invalid @@ hunk header'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects malformed codex patch hunks', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-codex-invalid-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Patch Codex Invalid Test' },
+        body: { en: 'Hello old world' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const patch = [
+      '*** Begin Patch',
+      `*** Update File: ${slug}`,
+      '@@',
+      '-Hello old world',
+      '+Hello new world',
+      '*** End Patch',
+    ].join('\n');
+
+    await assert.rejects(
+      () =>
+        applyWikiPagePatch(
+          dal,
+          {
+            slug,
+            patch,
+            format: 'codex',
+            lang: 'en',
+            revSummary: { en: 'Invalid codex patch update.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof Error);
+        assert.ok(error.message.includes('Invalid @@ hunk header'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP accepts codex patch targets with a leading slash', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-codex-slash-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Patch Codex Slash Test' },
+        body: { en: 'Hello old world' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const patch = [
+      '*** Begin Patch',
+      `*** Update File: /${slug}`,
+      '@@ -1 +1 @@',
+      '-Hello old world',
+      '+Hello new world',
+      '*** End Patch',
+    ].join('\n');
+
+    const result = await applyWikiPagePatch(
+      dal,
+      {
+        slug,
+        patch,
+        format: 'codex',
+        lang: 'en',
+        revSummary: { en: 'Codex patch with leading slash.' },
+      },
+      userId
+    );
+
+    assert.equal(result.body?.en, 'Hello new world');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('MCP rewrite section updates wiki page body', async () => {
   const dal = await getDal();
   const slug = `test-mcp-rewrite-${Date.now()}`;

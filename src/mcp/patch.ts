@@ -6,6 +6,18 @@ type PatchOptions = {
   expectedFile?: string;
 };
 
+const hunkHeaderRegex = /^@@ -\d+(?:,\d+)? \+\d+(?:,\d+)? @@/;
+
+const validateHunkHeaders = (lines: string[]) => {
+  const invalidHunk = lines.find(line => line.startsWith('@@') && !hunkHeaderRegex.test(line));
+  if (invalidHunk) {
+    throw new Error(
+      `Patch format not supported. Invalid @@ hunk header: "${invalidHunk}". ` +
+        'Expected "@@ -<start>,<count> +<start>,<count> @@" with line numbers.'
+    );
+  }
+};
+
 const normalizeCodexPatch = (patch: string, expectedFile?: string) => {
   const lines = patch.split('\n');
   if (lines[0] !== '*** Begin Patch') {
@@ -42,14 +54,16 @@ const normalizeCodexPatch = (patch: string, expectedFile?: string) => {
   if (!updateTarget) {
     throw new Error('Patch format not supported. Missing "*** Update File:" line.');
   }
-  if (expectedFile && updateTarget !== expectedFile) {
+  const normalizedTarget = updateTarget.replace(/^\/+/, '');
+  if (expectedFile && normalizedTarget !== expectedFile) {
     throw new Error(`Patch target mismatch. Expected "${expectedFile}", got "${updateTarget}".`);
   }
   if (!diffLines.some(line => line.startsWith('@@'))) {
     throw new Error('Patch format not supported. Missing @@ hunk header.');
   }
+  validateHunkHeaders(diffLines);
 
-  const headerTarget = expectedFile ?? updateTarget;
+  const headerTarget = expectedFile ?? normalizedTarget;
   const header = `--- a/${headerTarget}\n+++ b/${headerTarget}`;
   return `${header}\n${diffLines.join('\n')}`;
 };
@@ -64,6 +78,7 @@ export const normalizePatch = (patch: string, format: PatchFormat, options?: Pat
   if (patch.includes('*** Begin Patch')) {
     throw new Error('Patch format not supported. Expected unified diff format.');
   }
+  validateHunkHeaders(patch.split('\n'));
   return patch;
 };
 
