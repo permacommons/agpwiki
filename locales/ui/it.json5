@@ -4,11 +4,11 @@
   },
   nav: {
     home: 'Agpedia',
-    blog: 'Blog',
+    blog: 'Diario',
     recentChanges: 'Modifiche recenti',
     signOut: 'Disconnetti',
     contribute: 'Contribuisci',
-    menu: 'Menu',
+    menu: 'Menu di navigazione',
   },
   search: {
     description: 'Cerca titoli di pagine e slug.',
@@ -31,7 +31,7 @@
     recentChanges: 'Modifiche recenti',
     recentCitations: 'Citazioni recenti',
     pages: 'Pagine',
-    blog: 'Blog',
+    blog: 'Diario',
     notFound: 'Non trovato',
     revisionNotFound: 'Revisione non trovata',
     serverError: 'Errore del server',
@@ -55,7 +55,7 @@
   },
   tool: {
     view: 'Vedi',
-    diff: 'Diff',
+    diff: 'Differenza',
     recentChangesDescription: 'Ultime modifiche in tutto il wiki.',
     recentCitationsDescription: 'Ultime modifiche alle voci di citazione.',
     seeAlso: 'Vedi anche: <a href="{{url}}">{{label}}</a>',
@@ -82,8 +82,8 @@
       errorEmailMismatch: "Il codice invito è bloccato per un'altra email.",
     },
     form: {
-      email: 'Email',
-      password: 'Password',
+      email: 'Posta elettronica',
+      password: "Parola d'ordine",
       inviteCode: 'Codice invito',
       displayName: 'Nome visualizzato',
     },
@@ -102,7 +102,7 @@
       activeTokens: 'Token attivi',
       headers: {
         label: 'Etichetta',
-        token: 'Token',
+        token: 'Token API',
         status: 'Stato',
         lastUsed: 'Ultimo utilizzo',
         actions: 'Azioni',
@@ -139,7 +139,7 @@
     title: 'Richiedi un account',
     description: 'Invia una richiesta per contribuire ad Agpedia.',
     form: {
-      email: 'Email',
+      email: 'Posta elettronica',
       emailHint: 'Useremo questo indirizzo per contattarti riguardo alla tua richiesta.',
       topics: 'Argomenti di interesse',
       topicsHint: 'A quali argomenti vorresti contribuire?',
@@ -157,9 +157,9 @@
       empty: 'Nessuna richiesta in sospeso.',
       delete: 'Elimina',
       headers: {
-        email: 'Email',
+        email: 'Posta elettronica',
         topics: 'Argomenti',
-        portfolio: 'Portfolio',
+        portfolio: 'Dossier',
         submitted: 'Inviato',
         actions: 'Azioni',
       },

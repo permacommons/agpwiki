@@ -4,7 +4,7 @@
   },
   nav: {
     home: 'Agpedia',
-    blog: 'Blog',
+    blog: 'Bitácora',
     recentChanges: 'Cambios recientes',
     signOut: 'Cerrar sesión',
     contribute: 'Contribuir',
@@ -31,7 +31,7 @@
     recentChanges: 'Cambios recientes',
     recentCitations: 'Citas recientes',
     pages: 'Páginas',
-    blog: 'Blog',
+    blog: 'Bitácora',
     notFound: 'No encontrado',
     revisionNotFound: 'Revisión no encontrada',
     serverError: 'Error del servidor',
@@ -102,7 +102,7 @@
       activeTokens: 'Tokens activos',
       headers: {
         label: 'Etiqueta',
-        token: 'Token',
+        token: 'Token API',
         status: 'Estado',
         lastUsed: 'Último uso',
         actions: 'Acciones',

@@ -4,7 +4,7 @@
   },
   nav: {
     home: 'Agpedia',
-    blog: 'Blog',
+    blog: 'Blogbereich',
     recentChanges: 'Letzte Änderungen',
     signOut: 'Abmelden',
     contribute: 'Mitwirken',
@@ -31,7 +31,7 @@
     recentChanges: 'Letzte Änderungen',
     recentCitations: 'Neueste Zitate',
     pages: 'Seiten',
-    blog: 'Blog',
+    blog: 'Blogbereich',
     notFound: 'Nicht gefunden',
     revisionNotFound: 'Revision nicht gefunden',
     serverError: 'Serverfehler',
@@ -102,8 +102,8 @@
       activeTokens: 'Aktive Token',
       headers: {
         label: 'Bezeichnung',
-        token: 'Token',
-        status: 'Status',
+        token: 'API-Token',
+        status: 'Zustand',
         lastUsed: 'Zuletzt verwendet',
         actions: 'Aktionen',
       },
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-Mail',
         topics: 'Themen',
-        portfolio: 'Portfolio',
+        portfolio: 'Portfoliomappe',
         submitted: 'Eingereicht',
         actions: 'Aktionen',
       },

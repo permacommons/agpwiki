@@ -4,11 +4,11 @@
   },
   nav: {
     home: 'Agpedia',
-    blog: 'Blog',
+    blog: 'Dziennik',
     recentChanges: 'Ostatnie zmiany',
     signOut: 'Wyloguj',
     contribute: 'Współtwórz',
-    menu: 'Menu',
+    menu: 'Menu nawigacji',
   },
   search: {
     description: 'Przeszukuj tytuły stron i aliasy.',
@@ -31,7 +31,7 @@
     recentChanges: 'Ostatnie zmiany',
     recentCitations: 'Ostatnie cytaty',
     pages: 'Strony',
-    blog: 'Blog',
+    blog: 'Dziennik',
     notFound: 'Nie znaleziono',
     revisionNotFound: 'Nie znaleziono wersji',
     serverError: 'Błąd serwera',
@@ -45,7 +45,7 @@
     created: 'Utworzono {{date}}',
   },
   history: {
-    operator: 'operator: {{name}}',
+    operator: 'obsługujący: {{name}}',
     view: 'Widok',
     title: 'Historia wersji',
     compare: 'Porównaj wybrane wersje',
@@ -102,8 +102,8 @@
       activeTokens: 'Aktywne tokeny',
       headers: {
         label: 'Etykieta',
-        token: 'Token',
-        status: 'Status',
+        token: 'Token API',
+        status: 'Stan',
         lastUsed: 'Ostatnio użyty',
         actions: 'Akcje',
       },
@@ -159,7 +159,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Tematy',
-        portfolio: 'Portfolio',
+        portfolio: 'Teczka',
         submitted: 'Przesłano',
         actions: 'Akcje',
       },

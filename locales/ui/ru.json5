@@ -82,7 +82,7 @@
       errorEmailMismatch: 'Код приглашения привязан к другому email.',
     },
     form: {
-      email: 'Email',
+      email: 'Эл. почта',
       password: 'Пароль',
       inviteCode: 'Код приглашения',
       displayName: 'Отображаемое имя',
@@ -139,7 +139,7 @@
     title: 'Запросить аккаунт',
     description: 'Отправьте запрос, чтобы внести свой вклад в Agpedia.',
     form: {
-      email: 'Email',
+      email: 'Эл. почта',
       emailHint: 'Мы используем это для связи с вами по поводу вашего запроса.',
       topics: 'Темы интересов',
       topicsHint: 'В какие темы вы хотели бы внести свой вклад?',
@@ -157,7 +157,7 @@
       empty: 'Нет ожидающих запросов.',
       delete: 'Удалить',
       headers: {
-        email: 'Email',
+        email: 'Эл. почта',
         topics: 'Темы',
         portfolio: 'Портфолио',
         submitted: 'Отправлено',

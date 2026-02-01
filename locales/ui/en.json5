@@ -1,4 +1,38 @@
 {
+  /*
+   i18n-identical-allowlist:
+   {
+     // Locale -> intentionally identical leaf keys (dot notation).
+     "ar": ["site.name", "nav.home"],
+     "bn": ["site.name", "nav.home"],
+     "de": ["site.name", "nav.home"],
+     "eo": ["site.name", "nav.home"],
+     "es": ["site.name", "nav.home"],
+     "fi": ["site.name", "nav.home"],
+     "fr": ["site.name", "nav.home"],
+     "hi": ["site.name", "nav.home"],
+     "hu": ["site.name", "nav.home"],
+     "id": ["site.name", "nav.home"],
+     "it": ["site.name", "nav.home"],
+     "ja": ["site.name", "nav.home"],
+     "ko": ["site.name", "nav.home"],
+     "lt": ["site.name", "nav.home"],
+     "mk": ["site.name", "nav.home"],
+     "nl": ["site.name", "nav.home"],
+     "pl": ["site.name", "nav.home"],
+     "pt": ["site.name", "nav.home"],
+     "pt-PT": ["site.name", "nav.home"],
+     "ru": ["site.name", "nav.home"],
+     "sk": ["site.name", "nav.home"],
+     "sl": ["site.name", "nav.home"],
+     "sv": ["site.name", "nav.home"],
+     "tr": ["site.name", "nav.home"],
+     "uk": ["site.name", "nav.home"],
+     "ur": ["site.name", "nav.home"],
+     "zh": ["site.name", "nav.home"],
+     "zh-Hant": ["site.name", "nav.home"]
+   }
+  */
   "site": {
     "name": "Agpedia"
   },
@@ -13,6 +47,7 @@
   "search": {
     "placeholder": "Search titles...",
     "title": "Search",
+    // Translators: "slug" means the URL-safe page identifier (for example, "barack-obama" in "/wiki/barack-obama"), not a garden slug.
     "description": "Search page titles and slugs."
   },
   "footer": {
