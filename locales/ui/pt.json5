@@ -8,6 +8,7 @@
     recentChanges: 'Mudanças recentes',
     signOut: 'Sair',
     contribute: 'Contribuir',
+    menu: 'Menu',
   },
   search: {
     description: 'Pesquisar títulos de páginas e slugs.',

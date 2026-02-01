@@ -8,6 +8,7 @@
     recentChanges: 'Senaste ändringar',
     signOut: 'Logga ut',
     contribute: 'Bidra',
+    menu: 'Meny',
   },
   search: {
     description: 'Search page titles and slugs.',

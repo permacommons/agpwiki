@@ -7,7 +7,8 @@
     "blog": "Blog",
     "recentChanges": "Recent changes",
     "signOut": "Sign out",
-    "contribute": "Contribute"
+    "contribute": "Contribute",
+    "menu": "Menu"
   },
   "search": {
     "placeholder": "Search titles...",

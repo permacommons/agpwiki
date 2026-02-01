@@ -8,6 +8,7 @@
     recentChanges: 'সাম্প্রতিক পরিবর্তন',
     signOut: 'সাইন আউট',
     contribute: 'অবদান',
+    menu: 'মেনু',
   },
   search: {
     description: 'Search page titles and slugs.',

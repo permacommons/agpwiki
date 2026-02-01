@@ -8,6 +8,7 @@
     recentChanges: 'Naujausi pakeitimai',
     signOut: 'Atsijungti',
     contribute: 'Prisidėti',
+    menu: 'Meniu',
   },
   search: {
     description: 'Search page titles and slugs.',

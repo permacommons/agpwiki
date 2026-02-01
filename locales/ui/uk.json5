@@ -8,6 +8,7 @@
     recentChanges: 'Останні зміни',
     signOut: 'Вийти',
     contribute: 'Взяти участь',
+    menu: 'Меню',
   },
   search: {
     description: 'Search page titles and slugs.',

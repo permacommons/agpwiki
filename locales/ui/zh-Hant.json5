@@ -8,6 +8,7 @@
     recentChanges: '最近變更',
     signOut: '登出',
     contribute: '貢獻',
+    menu: '選單',
   },
   search: {
     description: '搜尋頁面標題和別名。',

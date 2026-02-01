@@ -8,6 +8,7 @@
     recentChanges: 'أحدث التغييرات',
     signOut: 'خروج',
     contribute: 'ساهم',
+    menu: 'القائمة',
   },
   search: {
     description: 'البحث في عناوين الصفحات والروابط.',
