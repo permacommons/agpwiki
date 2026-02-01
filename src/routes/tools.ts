@@ -5,7 +5,7 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
-import Citation from '../models/citation.js';
+import { getRecentCitationChanges, getRecentWikiChanges } from '../lib/recent-changes.js';
 import WikiPage from '../models/wiki-page.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { fetchUserMap } from './lib/history.js';
@@ -90,43 +90,11 @@ export const registerToolRoutes = (app: Express) => {
     const limit = parseRecentLimit(req.query.limit);
 
     const dalInstance = await initializePostgreSQL();
-    const result = await dalInstance.query(
-      `SELECT slug,
-              _rev_id,
-              _rev_date,
-              _rev_user,
-              _rev_summary,
-              _rev_tags,
-              LEAD(_rev_id) OVER (
-                PARTITION BY COALESCE(_old_rev_of, id)
-                ORDER BY _rev_date DESC, _rev_id DESC
-              ) AS prev_rev_id
-       FROM ${WikiPage.tableName}
-       WHERE _rev_deleted = false
-       ORDER BY _rev_date DESC, _rev_id DESC
-       LIMIT $1`,
-      [limit]
-    );
-
-    const changes = result.rows.map(
-      (row: {
-        slug: string;
-        _rev_id: string;
-        _rev_date: string;
-        _rev_user: string | null;
-        _rev_summary: Record<string, string> | null;
-        _rev_tags: string[] | null;
-        prev_rev_id: string | null;
-      }) => ({
-        slug: row.slug,
-        revId: row._rev_id,
-        revDate: row._rev_date,
-        revUser: row._rev_user,
-        revSummary: resolveRevSummary(row._rev_summary ?? null),
-        revTags: row._rev_tags ?? [],
-        prevRevId: row.prev_rev_id,
-      })
-    );
+    const rawChanges = await getRecentWikiChanges(dalInstance, limit);
+    const changes = rawChanges.map(change => ({
+      ...change,
+      revSummary: resolveRevSummary(change.revSummary),
+    }));
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
@@ -178,46 +146,11 @@ export const registerToolRoutes = (app: Express) => {
     const limit = parseRecentLimit(req.query.limit);
 
     const dalInstance = await initializePostgreSQL();
-    const result = await dalInstance.query(
-      `SELECT key,
-              data,
-              _rev_id,
-              _rev_date,
-              _rev_user,
-              _rev_summary,
-              _rev_tags,
-              LEAD(_rev_id) OVER (
-                PARTITION BY COALESCE(_old_rev_of, id)
-                ORDER BY _rev_date DESC, _rev_id DESC
-              ) AS prev_rev_id
-       FROM ${Citation.tableName}
-       WHERE _rev_deleted = false
-       ORDER BY _rev_date DESC, _rev_id DESC
-       LIMIT $1`,
-      [limit]
-    );
-
-    const changes = result.rows.map(
-      (row: {
-        key: string;
-        data: Record<string, unknown> | null;
-        _rev_id: string;
-        _rev_date: string;
-        _rev_user: string | null;
-        _rev_summary: Record<string, string> | null;
-        _rev_tags: string[] | null;
-        prev_rev_id: string | null;
-      }) => ({
-        key: row.key,
-        data: row.data ?? null,
-        revId: row._rev_id,
-        revDate: row._rev_date,
-        revUser: row._rev_user,
-        revSummary: resolveRevSummary(row._rev_summary ?? null),
-        revTags: row._rev_tags ?? [],
-        prevRevId: row.prev_rev_id,
-      })
-    );
+    const rawChanges = await getRecentCitationChanges(dalInstance, limit);
+    const changes = rawChanges.map(change => ({
+      ...change,
+      revSummary: resolveRevSummary(change.revSummary),
+    }));
 
     const userIds = changes
       .map(change => change.revUser)
@@ -274,34 +207,23 @@ export const registerToolRoutes = (app: Express) => {
     const per = Number.isNaN(perParam) ? 50 : Math.min(Math.max(perParam, 1), 200);
     const offset = (page - 1) * per;
 
-    const dalInstance = await initializePostgreSQL();
-    const countResult = await dalInstance.query<{ count: string }>(
-      `SELECT COUNT(*) AS count
-       FROM ${WikiPage.tableName}
-       WHERE _old_rev_of IS NULL
-         AND _rev_deleted = false
-         AND slug NOT LIKE 'meta/%'
-         AND slug NOT LIKE 'tool/%'`
-    );
-    const total = Number(countResult.rows[0]?.count ?? 0);
+    const { notLike } = WikiPage.ops;
 
-    const result = await dalInstance.query(
-      `SELECT slug, title
-       FROM ${WikiPage.tableName}
-       WHERE _old_rev_of IS NULL
-         AND _rev_deleted = false
-         AND slug NOT LIKE 'meta/%'
-         AND slug NOT LIKE 'tool/%'
-       ORDER BY slug
-       LIMIT $1 OFFSET $2`,
-      [per, offset]
-    );
-    const pages = result.rows.map(
-      (row: { slug: string; title: Record<string, string> | null }) => ({
-        slug: row.slug,
-        title: mlString.resolve('en', row.title ?? null)?.str ?? row.slug,
-      })
-    );
+    const total = await WikiPage.filterWhere({ slug: notLike('meta/%') })
+      .and({ slug: notLike('tool/%') })
+      .count();
+
+    const pageResults = await WikiPage.filterWhere({ slug: notLike('meta/%') })
+      .and({ slug: notLike('tool/%') })
+      .orderBy('slug', 'ASC')
+      .limit(per)
+      .offset(offset)
+      .run();
+
+    const pages = pageResults.map(p => ({
+      slug: p.slug,
+      title: mlString.resolve('en', p.title ?? null)?.str ?? p.slug,
+    }));
 
     const totalPages = Math.max(Math.ceil(total / per), 1);
     const prevLink =

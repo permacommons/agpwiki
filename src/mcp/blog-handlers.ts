@@ -12,7 +12,7 @@ import {
   ValidationCollector,
   ValidationError,
 } from './errors.js';
-import { BLOG_AUTHOR_ROLE } from './roles.js';
+import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 
 const { mlString } = dal;
 
@@ -388,11 +388,8 @@ const buildFieldDiff = (label: string, fromValue: string, toValue: string): Blog
 };
 
 const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) => {
-  const result = await dalInstance.query(
-    'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
-    [userId, BLOG_AUTHOR_ROLE]
-  );
-  if (result.rowCount === 0) {
+  const hasAuthorRole = await userHasRole(dalInstance, userId, BLOG_AUTHOR_ROLE);
+  if (!hasAuthorRole) {
     throw new ForbiddenError(`User does not have ${BLOG_AUTHOR_ROLE} role.`);
   }
 };

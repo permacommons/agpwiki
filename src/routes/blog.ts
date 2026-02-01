@@ -102,19 +102,13 @@ export const registerBlogRoutes = (app: Express) => {
       }
 
       const fetchRevisionByRevId = async (revId: string) => {
-        const result = await dalInstance.query(
-          `SELECT * FROM ${BlogPost.tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
-          [revId, post.id]
-        );
-        const [row] = result.rows;
-        return row ? BlogPost.createFromRow(row) : null;
+        return BlogPost.filterWhere({}).getRevisionByRevId(revId, post.id).first();
       };
 
-      const revisionsResult = await dalInstance.query(
-        `SELECT * FROM ${BlogPost.tableName} WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date DESC`,
-        [post.id]
-      );
-      const revisions = revisionsResult.rows.map(row => BlogPost.createFromRow(row));
+      const revisions = await BlogPost.filterWhere({})
+        .getAllRevisions(post.id)
+        .orderBy('_revDate', 'DESC')
+        .run();
       const userIds = revisions
         .map(rev => rev._revUser)
         .filter((id): id is string => Boolean(id));
