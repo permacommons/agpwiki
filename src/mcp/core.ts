@@ -337,7 +337,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Citation',
       description:
-        'Create a new citation entry with CSL JSON data. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Create citation"}.',
+        'Create a new citation entry with CSL JSON data. data.id is ignored; the citation key is authoritative for identity. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Create citation"}.',
       inputSchema: {
         key: z.string(),
         data: z.record(z.string(), z.unknown()),
@@ -597,11 +597,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Citation',
       description:
-        'Create a new revision for an existing citation. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
+        'Create a new revision for an existing citation. data.id is ignored; the citation key is authoritative for identity. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
       inputSchema: {
         key: z.string(),
         newKey: z.string().optional(),
-        data: z.record(z.string(), z.unknown()).nullable().optional(),
+        data: z.record(z.string(), z.unknown()).optional(),
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },

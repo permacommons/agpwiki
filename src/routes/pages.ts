@@ -128,7 +128,7 @@ export const registerPageRoutes = (app: Express) => {
         for (const row of result.rows) {
           const item = (row.data ?? {}) as Record<string, unknown>;
           const id = row.key;
-          citationEntries.push({ id, ...item });
+          citationEntries.push({ ...item, id });
         }
       }
 
