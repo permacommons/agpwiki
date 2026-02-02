@@ -15,13 +15,23 @@ import { registerOAuthRoutes } from './routes/oauth.js';
 import { registerPageRoutes } from './routes/pages.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerToolRoutes } from './routes/tools.js';
+import { getStaticCacheControl } from './static-cache.js';
 
 const app = express();
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use('/static', express.static(path.resolve(process.cwd(), 'public')));
+app.use(
+  '/static',
+  (req, res, next) => {
+    const version = req.query.v;
+    const hasVersionQuery = typeof version === 'string' && version.length > 0;
+    res.setHeader('Cache-Control', getStaticCacheControl(req.path, hasVersionQuery));
+    next();
+  },
+  express.static(path.resolve(process.cwd(), 'public')),
+);
 app.use(i18nMiddleware.handle(i18next));
 app.use((req, res, next) => {
   const locale = (req.language ?? 'en') as AgpWiki.LocaleCode;

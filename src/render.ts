@@ -5,6 +5,7 @@ import { diffWordsWithSpace } from 'diff';
 import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
 
+import { layoutAssets } from './asset-urls.js';
 import citationsPlugin from './markdown/citations.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
@@ -281,5 +282,6 @@ export const renderLayout = (options: {
     signedIn: Boolean(signedIn),
     locale,
     languageOptions,
+    assets: layoutAssets,
   });
 };

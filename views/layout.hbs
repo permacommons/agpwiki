@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{title}}</title>
-    <link rel="stylesheet" href="/static/styles/site.css" />
+    <link rel="stylesheet" href="{{{assets.siteCss}}}" />
   </head>
   <body>
     {{> header}}
@@ -22,8 +22,8 @@
       {{/if}}
     </div>
     {{> footer}}
-    <script src="/static/scripts/search.js" defer></script>
-    <script src="/static/scripts/meta-tooltips.js" defer></script>
-    <script src="/static/scripts/toc.js" defer></script>
+    <script src="{{{assets.searchJs}}}" defer></script>
+    <script src="{{{assets.metaTooltipsJs}}}" defer></script>
+    <script src="{{{assets.tocJs}}}" defer></script>
   </body>
 </html>
