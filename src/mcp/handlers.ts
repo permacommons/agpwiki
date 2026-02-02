@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { Driver } from '@citeproc-rs/wasm';
 import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
 import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
@@ -21,6 +24,8 @@ import {
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
 
 const { mlString } = dal;
+const citationStylePath = path.resolve(process.cwd(), 'vendor/csl/agpwiki-author-date.csl');
+const citationStyle = fs.readFileSync(citationStylePath, 'utf8');
 
 export interface McpResource {
   uri: string;
@@ -227,6 +232,7 @@ export interface CitationResult {
   data: Record<string, unknown> | null | undefined;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
+  warnings?: string[];
 }
 
 export interface CitationRevisionResult extends CitationResult {
@@ -901,6 +907,132 @@ const ensureKeyLength = (
   }
 };
 
+const ensureCitationStringField = (
+  data: Record<string, unknown>,
+  field: string,
+  errors: ValidationCollector
+) => {
+  const value = data[field];
+  if (value === undefined) return true;
+  if (typeof value === 'string') return true;
+  errors.add(`data.${field}`, 'must be a string.', 'type');
+  return false;
+};
+
+const ensureCitationDatePartsField = (
+  data: Record<string, unknown>,
+  field: string,
+  errors: ValidationCollector
+) => {
+  const value = data[field];
+  if (value === undefined) return true;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.add(`data.${field}`, 'must be an object.', 'type');
+    return false;
+  }
+  const dateParts = (value as Record<string, unknown>)['date-parts'];
+  if (dateParts === undefined) return true;
+  if (!Array.isArray(dateParts)) {
+    errors.add(`data.${field}.date-parts`, 'must be an array of arrays.', 'type');
+    return false;
+  }
+  let valid = true;
+  for (let i = 0; i < dateParts.length; i += 1) {
+    const part = dateParts[i];
+    if (!Array.isArray(part)) {
+      errors.add(`data.${field}.date-parts.${i}`, 'must be an array.', 'type');
+      valid = false;
+      continue;
+    }
+    for (let j = 0; j < part.length; j += 1) {
+      if (typeof part[j] !== 'number') {
+        errors.add(`data.${field}.date-parts.${i}.${j}`, 'must be a number.', 'type');
+        valid = false;
+      }
+    }
+  }
+  return valid;
+};
+
+const validateCitationWithCiteproc = (
+  key: string,
+  data: Record<string, unknown>,
+  errors: ValidationCollector
+) => {
+  const driver = new Driver({
+    style: citationStyle,
+    format: 'html',
+    bibliographyNoSort: true,
+  });
+
+  try {
+    const normalized = { ...data, id: key };
+    driver.insertReferences([normalized]);
+    driver.insertCluster({
+      id: 'cluster-1',
+      cites: [{ id: key }],
+    });
+    driver.setClusterOrder([{ id: 'cluster-1', note: 1 }]);
+    driver.fullRender();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.add('data', `is not valid CSL JSON for rendering: ${message}`, 'invalid');
+  } finally {
+    driver.free();
+  }
+};
+
+const validateCitationData = (
+  key: string,
+  data: Record<string, unknown> | null | undefined,
+  errors: ValidationCollector
+) => {
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return;
+  let hasStructuralErrors = false;
+
+  // Common scalar fields that must stay strings in CSL JSON.
+  for (const field of [
+    'type',
+    'title',
+    'container-title',
+    'publisher',
+    'publisher-place',
+    'DOI',
+    'URL',
+    'ISBN',
+    'ISSN',
+    'page',
+    'volume',
+    'issue',
+    'language',
+  ]) {
+    if (!ensureCitationStringField(data, field, errors)) {
+      hasStructuralErrors = true;
+    }
+  }
+  if (!ensureCitationDatePartsField(data, 'issued', errors)) {
+    hasStructuralErrors = true;
+  }
+  if (!ensureCitationDatePartsField(data, 'accessed', errors)) {
+    hasStructuralErrors = true;
+  }
+
+  if (!hasStructuralErrors) {
+    validateCitationWithCiteproc(key, data, errors);
+  }
+};
+
+const sanitizeCitationData = (data: Record<string, unknown>) => {
+  if (!Object.hasOwn(data, 'id')) {
+    return { sanitized: data, warnings: [] as string[] };
+  }
+  const { id: _ignored, ...rest } = data;
+  return {
+    sanitized: rest,
+    warnings: ['Ignored data.id; citation key is authoritative.'],
+  };
+};
+
 const stringifyCitationData = (value: Record<string, unknown> | null | undefined): string =>
   value ? JSON.stringify(value, null, 2) : '';
 
@@ -1531,6 +1663,8 @@ export async function createCitation(
   }
   ensureNonEmptyString(userId, 'userId', errors);
   ensureObject(data, 'data', {}, errors);
+  const { sanitized: sanitizedData, warnings } = sanitizeCitationData(data);
+  validateCitationData(key, sanitizedData, errors);
   validateRevSummary(revSummary, errors);
   errors.throwIfAny();
 
@@ -1548,14 +1682,17 @@ export async function createCitation(
   );
 
   citation.key = key;
-  citation.data = data;
+  citation.data = sanitizedData;
   if (revSummary !== undefined) citation._revSummary = revSummary;
   citation.createdAt = createdAt;
   citation.updatedAt = createdAt;
 
   await citation.save();
 
-  return toCitationResult(citation);
+  return {
+    ...toCitationResult(citation),
+    ...(warnings.length > 0 ? { warnings } : {}),
+  };
 }
 
 export async function updateCitation(
@@ -1572,6 +1709,11 @@ export async function updateCitation(
   if (newKey) ensureKeyLength(newKey, 'newKey', 200, errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureObject(data, 'data', {}, errors);
+  const { sanitized: sanitizedData, warnings } =
+    data && typeof data === 'object' && !Array.isArray(data)
+      ? sanitizeCitationData(data)
+      : { sanitized: data, warnings: [] as string[] };
+  validateCitationData(newKey ?? key, sanitizedData, errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
 
@@ -1594,13 +1736,16 @@ export async function updateCitation(
   await citation.newRevision({ id: userId }, { tags: ['update', ...tags] });
 
   if (newKey !== undefined) citation.key = newKey;
-  if (data !== undefined) citation.data = data;
+  if (sanitizedData !== undefined) citation.data = sanitizedData;
   if (revSummary !== undefined) citation._revSummary = revSummary;
   citation.updatedAt = new Date();
 
   await citation.save();
 
-  return toCitationResult(citation);
+  return {
+    ...toCitationResult(citation),
+    ...(warnings.length > 0 ? { warnings } : {}),
+  };
 }
 
 export async function listCitationRevisions(

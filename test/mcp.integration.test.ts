@@ -18,6 +18,7 @@ import {
   readWikiPage,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
+  updateCitation,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
 import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
@@ -657,7 +658,9 @@ test('renderMarkdown includes bibliography entries for citations', async () => {
       userId
     );
 
-    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
+    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [
+      { ...(citation.data ?? {}), id: citation.key },
+    ]);
     assert.match(html, /Agpedia Test Citation/);
   } finally {
     try {
@@ -724,7 +727,10 @@ test('renderMarkdown supports adjacent bracket citations', async () => {
 
     const { html } = await renderMarkdown(
       `Testing [@${citationKeyA}][@${citationKeyB}].`,
-      [citationA.data ?? {}, citationB.data ?? {}]
+      [
+        { ...(citationA.data ?? {}), id: citationA.key },
+        { ...(citationB.data ?? {}), id: citationB.key },
+      ]
     );
 
     assert.equal((html.match(/citation-group/g) ?? []).length, 2);
@@ -771,9 +777,230 @@ test('renderMarkdown punctuation handles author-only citations without year', as
       userId
     );
 
-    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [citation.data ?? {}]);
+    const { html } = await renderMarkdown(`Testing [@${citationKey}].`, [
+      { ...(citation.data ?? {}), id: citation.key },
+    ]);
     assert.match(html, /Tester, Alex\. Sandbox citation with no year\./);
     assert.doesNotMatch(html, /AlexSandbox/);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects citation create when ISBN is an array', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-invalid-isbn-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await assert.rejects(
+      () =>
+        createCitation(
+          dal,
+          {
+            key: citationKey,
+            data: {
+              type: 'book',
+              title: 'Invalid ISBN Citation',
+              ISBN: ['9780444525123', '9780080931395'],
+            },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'data.ISBN'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects citation update when CSL shape fails citeproc', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-invalid-author-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Valid Citation',
+          URL: 'https://example.com/valid-citation',
+        },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        updateCitation(
+          dal,
+          {
+            key: citationKey,
+            data: {
+              type: 'webpage',
+              title: 'Invalid Author Shape',
+              author: 'Alice Example',
+              URL: 'https://example.com/invalid-author',
+            },
+            revSummary: { en: 'Introduce invalid author shape.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'data'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP createCitation ignores submitted data.id and returns warning', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-ignore-id-create-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const created = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: 'client-provided-id',
+          type: 'webpage',
+          title: 'Citation with ignored id',
+          URL: 'https://example.com/citation-ignore-id-create',
+        },
+      },
+      userId
+    );
+
+    assert.ok(
+      created.warnings?.includes('Ignored data.id; citation key is authoritative.')
+    );
+    assert.equal(Object.hasOwn(created.data ?? {}, 'id'), false);
+
+    const saved = await readCitation(dal, citationKey);
+    assert.equal(Object.hasOwn(saved.data ?? {}, 'id'), false);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP updateCitation ignores submitted data.id and returns warning', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-ignore-id-update-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Base citation',
+          URL: 'https://example.com/citation-ignore-id-update',
+        },
+      },
+      userId
+    );
+
+    const updated = await updateCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: 'client-update-id',
+          type: 'webpage',
+          title: 'Updated citation',
+          URL: 'https://example.com/citation-ignore-id-update-v2',
+        },
+        revSummary: { en: 'Update citation while submitting data.id.' },
+      },
+      userId
+    );
+
+    assert.ok(
+      updated.warnings?.includes('Ignored data.id; citation key is authoritative.')
+    );
+    assert.equal(Object.hasOwn(updated.data ?? {}, 'id'), false);
+
+    const saved = await readCitation(dal, citationKey);
+    assert.equal(Object.hasOwn(saved.data ?? {}, 'id'), false);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {
