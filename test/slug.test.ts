@@ -21,6 +21,9 @@ test('isBlockedSlug blocks reserved suffixes', () => {
   assert.equal(isBlockedSlug('comments'), true);
   assert.equal(isBlockedSlug('meta/comments'), true);
   assert.equal(isBlockedSlug('foo/comments'), true);
+  assert.equal(isBlockedSlug('checks'), true);
+  assert.equal(isBlockedSlug('meta/checks'), true);
+  assert.equal(isBlockedSlug('foo/checks'), true);
 });
 
 test('isBlockedSlug allows normal page slugs', () => {

@@ -89,9 +89,37 @@
   "checks": {
     "title": "Page checks",
     "empty": "No checks yet.",
+    "type": {
+      "fact_check": "Fact check",
+      "copy_edit": "Copy edit",
+      "structure_review": "Structure review",
+      "freshness_check": "Freshness check",
+      "link_integrity": "Link integrity",
+      "plagiarism_scan": "Plagiarism scan",
+      "accessibility_check": "Accessibility check",
+      "translation_review": "Translation review",
+      "formatting_check": "Formatting check"
+    },
+    "status": {
+      "queued": "Queued",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "fields": {
+      "type": "Type",
+      "status": "Status",
+      "completed": "Completed",
+      "targetRevision": "Target revision",
+      "operator": "Operator"
+    },
     "metrics": {
       "found": "Found",
-      "fixed": "Fixed"
+      "fixed": "Fixed",
+      "severity": "Severity",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
     }
   },
   "toc": {

@@ -9,7 +9,7 @@ const RESERVED_SLUGS = new Set([
   'cite',
 ]);
 
-const RESERVED_SUFFIXES = ['comments'];
+const RESERVED_SUFFIXES = ['comments', 'checks'];
 
 export const normalizeSlug = (slug: string) =>
   slug.trim().replace(/^\/+/, '').replace(/\/+$/, '');

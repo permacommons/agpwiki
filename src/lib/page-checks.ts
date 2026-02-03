@@ -31,8 +31,7 @@ export const PAGE_CHECK_STATUSES = [
   'queued',
   'in_progress',
   'completed',
-  'blocked',
-  'superseded',
+  'cancelled',
 ] as const;
 
 export const PAGE_CHECK_RESULTS_MAX_LENGTH = 2000;
