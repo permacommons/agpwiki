@@ -78,6 +78,8 @@ export const createLocalizedSchemas = () => {
     localizedTitleSchema: makeLocalizedMapSchemas('title'),
     localizedBodySchema: makeLocalizedMapSchemas('body'),
     localizedSummarySchema: makeLocalizedMapSchemas('summary'),
+    localizedCheckResultsSchema: makeLocalizedMapSchemas('check results'),
+    localizedNotesSchema: makeLocalizedMapSchemas('notes'),
     localizedRevisionSummarySchema: makeLocalizedMapSchemas('revision summary'),
     languageTagSchema: makeLanguageTagSchema(),
   };

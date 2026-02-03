@@ -50,6 +50,16 @@
     title: '版本歷史',
     compare: '比較選定的版本',
   },
+  checks: {
+    title: '頁面檢查',
+    empty: '尚無檢查。',
+    metrics: {
+      found: '發現',
+      fixed: '已修復',
+    },
+  },
+
+
   toc: {
     title: '目錄',
   },

@@ -51,6 +51,16 @@
     title: 'História verzií',
     compare: 'Porovnať vybrané revízie',
   },
+  checks: {
+    title: 'Kontroly stránky',
+    empty: 'Zatiaľ žiadne kontroly.',
+    metrics: {
+      found: 'Nájdené',
+      fixed: 'Opravené',
+    },
+  },
+
+
   toc: {
     title: 'Obsah',
   },

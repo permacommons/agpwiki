@@ -50,6 +50,16 @@
     title: '版本历史',
     compare: '比较选定的版本',
   },
+  checks: {
+    title: '页面检查',
+    empty: '暂无检查。',
+    metrics: {
+      found: '发现',
+      fixed: '已修复',
+    },
+  },
+
+
   toc: {
     title: '目录',
   },

@@ -12,6 +12,12 @@ import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
+import {
+  PAGE_CHECK_NOTES_MAX_LENGTH,
+  PAGE_CHECK_RESULTS_MAX_LENGTH,
+  PAGE_CHECK_STATUSES,
+  PAGE_CHECK_TYPES,
+} from '../lib/page-checks.js';
 import { resolveAuthUserId } from './auth.js';
 import {
   type BlogPostDeleteInput,
@@ -41,23 +47,30 @@ import {
   type CitationUpdateInput,
   type CitationWriteInput,
   createCitation,
+  createPageCheck,
   createWikiPage,
   deleteCitation,
   deleteWikiPage,
   diffCitationRevisions,
   diffWikiPageRevisions,
   listCitationRevisions,
+  listPageCheckRevisions,
+  listPageChecks,
   listWikiPageResources,
   listWikiPageRevisions,
+  type PageCheckUpdateInput,
+  type PageCheckWriteInput,
   queryCitations,
   readCitation,
   readCitationRevision,
+  readPageCheckRevision,
   readWikiPage,
   readWikiPageRevision,
   removeWikiPageAlias,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateCitation,
+  updatePageCheck,
   updateWikiPage,
   type WikiPageAliasInput,
   type WikiPageDeleteInput,
@@ -137,6 +150,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   ensureMcpErrorMap();
   const { userRoles = [] } = options;
   const uuidSchema = z.string().uuid({ message: 'Must be a valid UUID.' });
+  const pageCheckTypeSchema = z.enum(
+    [...PAGE_CHECK_TYPES] as [string, ...string[]]
+  );
+  const pageCheckStatusSchema = z.enum(
+    [...PAGE_CHECK_STATUSES] as [string, ...string[]]
+  );
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -215,9 +234,44 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     localizedTitleSchema,
     localizedBodySchema,
     localizedSummarySchema,
+    localizedCheckResultsSchema,
+    localizedNotesSchema,
     localizedRevisionSummarySchema,
     languageTagSchema,
   } = createLocalizedSchemas();
+
+  const pageCheckMetricsSchema = z
+    .object({
+      issues_found: z
+        .object({
+          high: z.number().int().min(0),
+          medium: z.number().int().min(0),
+          low: z.number().int().min(0),
+        })
+        .strict(),
+      issues_fixed: z
+        .object({
+          high: z.number().int().min(0),
+          medium: z.number().int().min(0),
+          low: z.number().int().min(0),
+        })
+        .strict(),
+    })
+    .strict()
+    .superRefine((value, ctx) => {
+      (['high', 'medium', 'low'] as const).forEach(level => {
+        if (value.issues_fixed[level] > value.issues_found[level]) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['issues_fixed', level],
+            message: `issues_fixed.${level} must be less than or equal to issues_found.${level}.`,
+          });
+        }
+      });
+    });
+
+  const checkResultsDescription = `Localized check results map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
+  const notesDescription = `Localized notes map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
 
   server.registerResource(
     'Wiki Pages Index',
@@ -682,6 +736,112 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPageRevision(dal, args.slug, args.revId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'page_check_create',
+    {
+      title: 'Create Page Check',
+      description:
+        'Create a new page check for a wiki page revision. checkResults and notes use language-keyed maps keyed by supported locale codes (see agpwiki://locales). metrics is required and reports issue counts.',
+      inputSchema: {
+        slug: z.string(),
+        type: pageCheckTypeSchema,
+        status: pageCheckStatusSchema,
+        checkResults: localizedCheckResultsSchema.required.describe(checkResultsDescription),
+        notes: localizedNotesSchema.optional.describe(notesDescription),
+        metrics: pageCheckMetricsSchema,
+        targetRevId: uuidSchema,
+        completedAt: z.string().datetime().optional().nullable(),
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args: PageCheckWriteInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await createPageCheck(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'page_check_update',
+    {
+      title: 'Update Page Check',
+      description:
+        'Create a new revision for a page check. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+      inputSchema: {
+        checkId: uuidSchema,
+        type: pageCheckTypeSchema.optional(),
+        status: pageCheckStatusSchema.optional(),
+        checkResults: localizedCheckResultsSchema.optional.describe(checkResultsDescription),
+        notes: localizedNotesSchema.optional.describe(notesDescription),
+        metrics: pageCheckMetricsSchema.optional(),
+        targetRevId: uuidSchema.optional(),
+        completedAt: z.string().datetime().optional().nullable(),
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: PageCheckUpdateInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await updatePageCheck(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'page_check_list',
+    {
+      title: 'List Page Checks',
+      description: 'List the current page checks for a wiki page by slug.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await listPageChecks(dal, args.slug);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'page_check_listRevisions',
+    {
+      title: 'List Page Check Revisions',
+      description: 'List revisions for a page check by check ID.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        checkId: uuidSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await listPageCheckRevisions(dal, args.checkId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'page_check_readRevision',
+    {
+      title: 'Read Page Check Revision',
+      description: 'Read a specific page check revision by revision ID.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        checkId: uuidSchema,
+        revId: uuidSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readPageCheckRevision(dal, args.checkId, args.revId);
       return payload;
     })
   );

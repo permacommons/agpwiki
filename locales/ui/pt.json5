@@ -50,6 +50,16 @@
     title: 'Histórico de versões',
     compare: 'Comparar revisões selecionadas',
   },
+  checks: {
+    title: 'Verificações da página',
+    empty: 'Ainda não há verificações.',
+    metrics: {
+      found: 'Encontradas',
+      fixed: 'Corrigidas',
+    },
+  },
+
+
   toc: {
     title: 'Índice',
   },

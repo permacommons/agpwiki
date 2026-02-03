@@ -6,12 +6,22 @@ import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
+import {
+  getPageCheckMetricsErrors,
+  PAGE_CHECK_NOTES_MAX_LENGTH,
+  PAGE_CHECK_RESULTS_MAX_LENGTH,
+  PAGE_CHECK_STATUSES,
+  PAGE_CHECK_TYPES,
+  type PageCheckMetrics,
+} from '../lib/page-checks.js';
 import { isBlockedSlug, normalizeSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
+import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
+import PageCheck from '../models/page-check.js';
 import WikiPage from '../models/wiki-page.js';
 import {
   ConflictError,
@@ -177,6 +187,70 @@ export interface CitationDeleteResult {
   id: string;
   key: string;
   deleted: boolean;
+}
+
+export interface PageCheckWriteInput {
+  slug: string;
+  type: string;
+  status: string;
+  checkResults: Record<string, string>;
+  notes?: Record<string, string> | null;
+  metrics: PageCheckMetrics;
+  targetRevId: string;
+  completedAt?: string | null;
+  tags?: string[];
+  revSummary?: Record<string, string> | null;
+}
+
+export interface PageCheckUpdateInput {
+  checkId: string;
+  type?: string;
+  status?: string;
+  checkResults?: Record<string, string> | null;
+  notes?: Record<string, string> | null;
+  metrics?: PageCheckMetrics;
+  targetRevId?: string;
+  completedAt?: string | null;
+  tags?: string[];
+  revSummary: Record<string, string>;
+}
+
+export interface PageCheckResult {
+  id: string;
+  pageId: string;
+  type: string;
+  status: string;
+  checkResults: Record<string, string> | null | undefined;
+  notes: Record<string, string> | null | undefined;
+  metrics: PageCheckMetrics | null | undefined;
+  createdAt: Date | null | undefined;
+  completedAt: Date | null | undefined;
+  targetRevId: string;
+}
+
+export interface PageCheckRevisionResult extends PageCheckResult {
+  revId: string;
+  revDate: Date;
+  revUser: string | null | undefined;
+  revTags: string[] | null | undefined;
+  revSummary: Record<string, string> | null | undefined;
+  revDeleted: boolean;
+  oldRevOf: string | null | undefined;
+}
+
+export interface PageCheckListResult {
+  pageId: string;
+  checks: PageCheckResult[];
+}
+
+export interface PageCheckRevisionListResult {
+  checkId: string;
+  revisions: PageCheckRevisionResult[];
+}
+
+export interface PageCheckRevisionReadResult {
+  checkId: string;
+  revision: PageCheckRevisionResult;
 }
 
 export interface WikiPageDiffResult {
@@ -346,6 +420,30 @@ const toCitationRevisionResult = (citation: CitationInstance): CitationRevisionR
   oldRevOf: citation._oldRevOf ?? null,
 });
 
+const toPageCheckResult = (check: PageCheckInstance): PageCheckResult => ({
+  id: check.id,
+  pageId: check.pageId,
+  type: check.type,
+  status: check.status,
+  checkResults: check.checkResults ?? null,
+  notes: check.notes ?? null,
+  metrics: (check.metrics ?? null) as PageCheckMetrics | null,
+  createdAt: check.createdAt ?? null,
+  completedAt: check.completedAt ?? null,
+  targetRevId: check.targetRevId,
+});
+
+const toPageCheckRevisionResult = (check: PageCheckInstance): PageCheckRevisionResult => ({
+  ...toPageCheckResult(check),
+  revId: check._revID,
+  revDate: check._revDate,
+  revUser: check._revUser ?? null,
+  revTags: check._revTags ?? null,
+  revSummary: check._revSummary ?? null,
+  revDeleted: check._revDeleted ?? false,
+  oldRevOf: check._oldRevOf ?? null,
+});
+
 const toWikiPageAliasResult = (alias: PageAliasInstance): WikiPageAliasResult => ({
   id: alias.id,
   pageId: alias.pageId,
@@ -387,6 +485,13 @@ const findCurrentCitationByKey = async (key: string) =>
     _revDeleted: false,
   } as Record<string, unknown>).first();
 
+const findCurrentPageCheckById = async (id: string) =>
+  PageCheck.filterWhere({
+    id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+
 const fetchPageRevisionByRevId = async (
   _dalInstance: DataAccessLayer,
   pageId: string,
@@ -401,6 +506,14 @@ const fetchCitationRevisionByRevId = async (
   revId: string
 ): Promise<CitationInstance | null> => {
   return Citation.filterWhere({}).getRevisionByRevId(revId, citationId).first();
+};
+
+const fetchPageCheckRevisionByRevId = async (
+  _dalInstance: DataAccessLayer,
+  checkId: string,
+  revId: string
+): Promise<PageCheckInstance | null> => {
+  return PageCheck.filterWhere({}).getRevisionByRevId(revId, checkId).first();
 };
 
 const normalizeForDiff = (value: string): string => (value.endsWith('\n') ? value : `${value}\n`);
@@ -517,6 +630,34 @@ const ensureOptionalString = (
       { field: label, message: 'must be a string.', code: 'type' },
     ]);
   }
+};
+
+const parseOptionalDate = (
+  value: string | null | undefined,
+  label: string,
+  errors?: ValidationCollector
+) => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value !== 'string') {
+    if (errors) {
+      errors.add(label, 'must be an ISO date string.', 'type');
+      return undefined;
+    }
+    throw new ValidationError(`${label} must be an ISO date string.`, [
+      { field: label, message: 'must be an ISO date string.', code: 'type' },
+    ]);
+  }
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    if (errors) {
+      errors.add(label, 'must be a valid ISO date string.', 'invalid');
+      return undefined;
+    }
+    throw new ValidationError(`${label} must be a valid ISO date string.`, [
+      { field: label, message: 'must be a valid ISO date string.', code: 'invalid' },
+    ]);
+  }
+  return parsed;
 };
 
 const ensureString = (
@@ -818,6 +959,147 @@ const validateRevSummary = (
     throw new ValidationError(message, [
       { field: 'revSummary', message, code: 'invalid' },
     ]);
+  }
+};
+
+const validateCheckResults = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === undefined) return;
+  try {
+    mlString.validate(value, { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH, allowHTML: false });
+    ensureNoControlCharacters(value, 'checkResults', errors);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid checkResults value.';
+    if (errors) {
+      errors.add('checkResults', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [
+      { field: 'checkResults', message, code: 'invalid' },
+    ]);
+  }
+};
+
+const requireCheckResults = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === null || value === undefined) {
+    if (errors) {
+      errors.addMissing('checkResults');
+      return;
+    }
+    throw new ValidationError('checkResults is required.', [
+      { field: 'checkResults', message: 'is required.', code: 'required' },
+    ]);
+  }
+  validateCheckResults(value, errors);
+  const entries = Object.entries(value);
+  if (entries.length === 0) {
+    if (errors) {
+      errors.add('checkResults', 'must include at least one language entry.', 'invalid');
+      return;
+    }
+    throw new ValidationError('checkResults must include at least one language entry.', [
+      { field: 'checkResults', message: 'must include at least one language entry.', code: 'invalid' },
+    ]);
+  }
+  for (const [lang, text] of entries) {
+    if (!lang || !text || text.trim().length === 0) {
+      if (errors) {
+        errors.add(`checkResults.${lang || 'unknown'}`, 'must be a non-empty string.', 'invalid');
+        continue;
+      }
+      throw new ValidationError('checkResults entries must be non-empty strings.', [
+        {
+          field: `checkResults.${lang || 'unknown'}`,
+          message: 'must be a non-empty string.',
+          code: 'invalid',
+        },
+      ]);
+    }
+  }
+};
+
+const validateNotes = (
+  value: Record<string, string> | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === undefined) return;
+  try {
+    mlString.validate(value, { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH, allowHTML: false });
+    ensureNoControlCharacters(value, 'notes', errors);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Invalid notes value.';
+    if (errors) {
+      errors.add('notes', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'notes', message, code: 'invalid' }]);
+  }
+};
+
+const validateMetrics = (
+  value: PageCheckMetrics | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === undefined) return;
+  const metricErrors = getPageCheckMetricsErrors(value);
+  if (!metricErrors.length) return;
+  if (errors) {
+    for (const metricError of metricErrors) {
+      errors.add(metricError.field, metricError.message, metricError.code);
+    }
+    return;
+  }
+  const first = metricErrors[0];
+  throw new ValidationError('Invalid metrics.', [
+    { field: first.field, message: first.message, code: first.code },
+  ]);
+};
+
+const requireMetrics = (
+  value: PageCheckMetrics | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === null || value === undefined) {
+    if (errors) {
+      errors.addMissing('metrics');
+      return;
+    }
+    throw new ValidationError('metrics is required.', [
+      { field: 'metrics', message: 'is required.', code: 'required' },
+    ]);
+  }
+  validateMetrics(value, errors);
+};
+
+const validatePageCheckType = (value: string | null | undefined, errors?: ValidationCollector) => {
+  if (value === undefined) return;
+  if (!PAGE_CHECK_TYPES.includes(value as (typeof PAGE_CHECK_TYPES)[number])) {
+    const message = `type must be one of: ${PAGE_CHECK_TYPES.join(', ')}`;
+    if (errors) {
+      errors.add('type', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'type', message, code: 'invalid' }]);
+  }
+};
+
+const validatePageCheckStatus = (
+  value: string | null | undefined,
+  errors?: ValidationCollector
+) => {
+  if (value === undefined) return;
+  if (!PAGE_CHECK_STATUSES.includes(value as (typeof PAGE_CHECK_STATUSES)[number])) {
+    const message = `status must be one of: ${PAGE_CHECK_STATUSES.join(', ')}`;
+    if (errors) {
+      errors.add('status', message, 'invalid');
+      return;
+    }
+    throw new ValidationError(message, [{ field: 'status', message, code: 'invalid' }]);
   }
 };
 
@@ -1794,6 +2076,232 @@ export async function readCitationRevision(
   return {
     citationId: citation.id,
     revision: toCitationRevisionResult(revision),
+  };
+}
+
+export async function createPageCheck(
+  dalInstance: DataAccessLayer,
+  {
+    slug,
+    type,
+    status,
+    checkResults,
+    notes,
+    metrics,
+    targetRevId,
+    completedAt,
+    tags = [],
+    revSummary,
+  }: PageCheckWriteInput,
+  userId: string
+): Promise<PageCheckResult> {
+  const errors = new ValidationCollector('Invalid page check input.');
+  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  validatePageCheckType(type, errors);
+  validatePageCheckStatus(status, errors);
+  requireCheckResults(checkResults, errors);
+  validateNotes(notes, errors);
+  requireMetrics(metrics, errors);
+  ensureNonEmptyString(targetRevId, 'targetRevId', errors);
+  validateRevSummary(revSummary, errors);
+  const parsedCompletedAt = parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
+  errors.throwIfAny();
+
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) {
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  const targetRevision = await fetchPageRevisionByRevId(dalInstance, page.id, targetRevId);
+  if (!targetRevision) {
+    throw new ValidationError('targetRevId does not match a revision for this page.', [
+      {
+        field: 'targetRevId',
+        message: 'does not match a revision for this page.',
+        code: 'invalid',
+      },
+    ]);
+  }
+
+  const createdAt = new Date();
+  const check = await PageCheck.createFirstRevision(
+    { id: userId },
+    { tags: ['create', ...tags], date: createdAt }
+  );
+
+  check.pageId = page.id;
+  check.type = type;
+  check.status = status;
+  check.checkResults = checkResults;
+  if (notes !== undefined) check.notes = notes;
+  check.metrics = metrics;
+  check.createdAt = createdAt;
+  if (parsedCompletedAt !== undefined) check.completedAt = parsedCompletedAt;
+  check.targetRevId = targetRevId;
+  if (revSummary !== undefined) check._revSummary = revSummary;
+
+  await check.save();
+
+  return toPageCheckResult(check);
+}
+
+export async function updatePageCheck(
+  dalInstance: DataAccessLayer,
+  {
+    checkId,
+    type,
+    status,
+    checkResults,
+    notes,
+    metrics,
+    targetRevId,
+    completedAt,
+    tags = [],
+    revSummary,
+  }: PageCheckUpdateInput,
+  userId: string
+): Promise<PageCheckResult> {
+  const errors = new ValidationCollector('Invalid page check update input.');
+  ensureNonEmptyString(checkId, 'checkId', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  validatePageCheckType(type, errors);
+  validatePageCheckStatus(status, errors);
+  if (checkResults !== undefined) {
+    if (checkResults === null) {
+      errors.add('checkResults', 'cannot be null.', 'invalid');
+    } else {
+      validateCheckResults(checkResults, errors);
+    }
+  }
+  validateNotes(notes, errors);
+  if (metrics !== undefined) {
+    if (metrics === null) {
+      errors.add('metrics', 'cannot be null.', 'invalid');
+    } else {
+      validateMetrics(metrics, errors);
+    }
+  }
+  if (targetRevId !== undefined) {
+    ensureNonEmptyString(targetRevId, 'targetRevId', errors);
+  }
+  requireRevSummary(revSummary, errors);
+  const parsedCompletedAt =
+    completedAt === null ? null : parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
+  errors.throwIfAny();
+
+  const check = await findCurrentPageCheckById(checkId);
+  if (!check) {
+    throw new NotFoundError(`Page check not found: ${checkId}`, {
+      checkId,
+    });
+  }
+
+  if (targetRevId) {
+    const targetRevision = await fetchPageRevisionByRevId(dalInstance, check.pageId, targetRevId);
+    if (!targetRevision) {
+      throw new ValidationError('targetRevId does not match a revision for this page.', [
+        {
+          field: 'targetRevId',
+          message: 'does not match a revision for this page.',
+          code: 'invalid',
+        },
+      ]);
+    }
+  }
+
+  await check.newRevision({ id: userId }, { tags: ['update', ...tags] });
+
+  if (type !== undefined) check.type = type;
+  if (status !== undefined) check.status = status;
+  if (checkResults !== undefined && checkResults !== null) check.checkResults = checkResults;
+  if (notes !== undefined) check.notes = notes;
+  if (metrics !== undefined && metrics !== null) check.metrics = metrics;
+  if (targetRevId !== undefined) check.targetRevId = targetRevId;
+  if (completedAt === null) {
+    check.completedAt = null;
+  } else if (parsedCompletedAt !== undefined) {
+    check.completedAt = parsedCompletedAt;
+  }
+  if (revSummary !== undefined) check._revSummary = revSummary;
+
+  await check.save();
+
+  return toPageCheckResult(check);
+}
+
+export async function listPageChecks(
+  _dalInstance: DataAccessLayer,
+  slug: string
+): Promise<PageCheckListResult> {
+  const normalizedSlug = normalizeSlugInput(slug, 'slug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) {
+    throw new NotFoundError(`Wiki page not found: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
+  const checks = await PageCheck.filterWhere({
+    pageId: page.id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>)
+    .orderBy('_revDate', 'DESC')
+    .run();
+
+  return {
+    pageId: page.id,
+    checks: checks.map(check => toPageCheckResult(check)),
+  };
+}
+
+export async function listPageCheckRevisions(
+  _dalInstance: DataAccessLayer,
+  checkId: string
+): Promise<PageCheckRevisionListResult> {
+  const check = await findCurrentPageCheckById(checkId);
+  if (!check) {
+    throw new NotFoundError(`Page check not found: ${checkId}`, {
+      checkId,
+    });
+  }
+
+  const revisionRows = await PageCheck.filterWhere({})
+    .getAllRevisions(check.id)
+    .orderBy('_revDate', 'DESC')
+    .run();
+
+  return {
+    checkId: check.id,
+    revisions: revisionRows.map(row => toPageCheckRevisionResult(row)),
+  };
+}
+
+export async function readPageCheckRevision(
+  dalInstance: DataAccessLayer,
+  checkId: string,
+  revId: string
+): Promise<PageCheckRevisionReadResult> {
+  const check = await findCurrentPageCheckById(checkId);
+  if (!check) {
+    throw new NotFoundError(`Page check not found: ${checkId}`, {
+      checkId,
+    });
+  }
+
+  const revision = await fetchPageCheckRevisionByRevId(dalInstance, check.id, revId);
+  if (!revision) {
+    throw new NotFoundError(`Revision not found: ${revId}`, {
+      revId,
+    });
+  }
+
+  return {
+    checkId: check.id,
+    revision: toPageCheckRevisionResult(revision),
   };
 }
 

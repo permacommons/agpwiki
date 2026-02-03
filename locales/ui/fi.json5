@@ -51,6 +51,16 @@
     title: 'Versiohistoria',
     compare: 'Vertaa valittuja versioita',
   },
+  checks: {
+    title: 'Sivutarkistukset',
+    empty: 'Tarkistuksia ei vielä ole.',
+    metrics: {
+      found: 'Löydetty',
+      fixed: 'Korjattu',
+    },
+  },
+
+
   toc: {
     title: 'Sisällys',
   },

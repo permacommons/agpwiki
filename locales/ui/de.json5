@@ -51,6 +51,14 @@
     title: 'Versionsgeschichte',
     compare: 'Ausgewählte Versionen vergleichen',
   },
+  checks: {
+    title: 'Seitenprüfungen',
+    empty: 'Noch keine Prüfungen.',
+    metrics: {
+      found: 'Gefunden',
+      fixed: 'Behoben',
+    },
+  },
   toc: {
     title: 'Inhaltsverzeichnis',
   },

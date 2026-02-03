@@ -50,6 +50,16 @@
     title: '버전 기록',
     compare: '선택한 버전 비교',
   },
+  checks: {
+    title: '페이지 점검',
+    empty: '아직 점검이 없습니다.',
+    metrics: {
+      found: '발견',
+      fixed: '수정',
+    },
+  },
+
+
   toc: {
     title: '목차',
   },

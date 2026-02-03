@@ -51,6 +51,16 @@
     title: 'Verzióelőzmények',
     compare: 'Kiválasztott verziók összehasonlítása',
   },
+  checks: {
+    title: 'Oldalellenőrzések',
+    empty: 'Még nincs ellenőrzés.',
+    metrics: {
+      found: 'Talált',
+      fixed: 'Javított',
+    },
+  },
+
+
   toc: {
     title: 'Tartalom',
   },

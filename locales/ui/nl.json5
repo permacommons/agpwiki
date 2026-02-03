@@ -51,6 +51,16 @@
     title: 'Versiegeschiedenis',
     compare: 'Vergelijk geselecteerde revisies',
   },
+  checks: {
+    title: 'Paginacontroles',
+    empty: 'Nog geen controles.',
+    metrics: {
+      found: 'Gevonden',
+      fixed: 'Gecorrigeerd',
+    },
+  },
+
+
   toc: {
     title: 'Inhoud',
   },

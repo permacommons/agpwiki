@@ -51,6 +51,16 @@
     title: 'Riwayat versi',
     compare: 'Bandingkan revisi yang dipilih',
   },
+  checks: {
+    title: 'Pemeriksaan halaman',
+    empty: 'Belum ada pemeriksaan.',
+    metrics: {
+      found: 'Ditemukan',
+      fixed: 'Diperbaiki',
+    },
+  },
+
+
   toc: {
     title: 'Daftar isi',
   },

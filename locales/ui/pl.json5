@@ -50,6 +50,16 @@
     title: 'Historia wersji',
     compare: 'Porównaj wybrane wersje',
   },
+  checks: {
+    title: 'Kontrole strony',
+    empty: 'Brak kontroli jeszcze.',
+    metrics: {
+      found: 'Znalezione',
+      fixed: 'Naprawione',
+    },
+  },
+
+
   toc: {
     title: 'Spis treści',
   },

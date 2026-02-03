@@ -50,6 +50,16 @@
     title: 'Sürüm geçmişi',
     compare: 'Seçili revizyonları karşılaştır',
   },
+  checks: {
+    title: 'Sayfa kontrolleri',
+    empty: 'Henüz kontrol yok.',
+    metrics: {
+      found: 'Bulunan',
+      fixed: 'Düzeltilen',
+    },
+  },
+
+
   toc: {
     title: 'İçindekiler',
   },

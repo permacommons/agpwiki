@@ -51,6 +51,16 @@
     title: 'Versionshistorik',
     compare: 'Jämför valda revisioner',
   },
+  checks: {
+    title: 'Sidkontroller',
+    empty: 'Inga kontroller ännu.',
+    metrics: {
+      found: 'Hittade',
+      fixed: 'Åtgärdade',
+    },
+  },
+
+
   toc: {
     title: 'Innehåll',
   },

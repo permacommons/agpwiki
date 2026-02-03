@@ -50,6 +50,16 @@
     title: 'Cronologia versioni',
     compare: 'Confronta revisioni selezionate',
   },
+  checks: {
+    title: 'Verifiche pagina',
+    empty: 'Nessuna verifica ancora.',
+    metrics: {
+      found: 'Trovate',
+      fixed: 'Corrette',
+    },
+  },
+
+
   toc: {
     title: 'Indice',
   },

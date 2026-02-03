@@ -51,6 +51,16 @@
     title: 'Versijų istorija',
     compare: 'Palyginti pasirinktas versijas',
   },
+  checks: {
+    title: 'Puslapio patikros',
+    empty: 'Patikrų dar nėra.',
+    metrics: {
+      found: 'Rasta',
+      fixed: 'Pataisyta',
+    },
+  },
+
+
   toc: {
     title: 'Turinys',
   },

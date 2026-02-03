@@ -86,6 +86,14 @@
     "title": "Version history",
     "compare": "Compare selected revisions"
   },
+  "checks": {
+    "title": "Page checks",
+    "empty": "No checks yet.",
+    "metrics": {
+      "found": "Found",
+      "fixed": "Fixed"
+    }
+  },
   "toc": {
     "title": "Contents"
   },

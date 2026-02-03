@@ -3,13 +3,16 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import PageAlias from '../models/page-alias.js';
+import PageCheck from '../models/page-check.js';
 import WikiPage from '../models/wiki-page.js';
 import { formatDateUTC, renderLayout, renderMarkdown, renderToc } from '../render.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
+import { renderPageChecks } from './lib/page-checks.js';
 
 const { mlString } = dal;
 
@@ -22,6 +25,12 @@ const extractCitationKeys = (value: string) => {
     keys.add(match[1]);
   }
   return keys;
+};
+
+const formatLabel = (value: string) => {
+  if (!value) return '';
+  const normalized = value.replace(/_/g, ' ');
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
 };
 
 const findCurrentPageBySlug = async (slug: string) =>
@@ -173,8 +182,38 @@ export const registerPageRoutes = (app: Express) => {
         userMap,
         t: req.t,
       });
+
+      const pageChecks = await PageCheck.filterWhere({
+        pageId: page.id,
+        _oldRevOf: null,
+        _revDeleted: false,
+      } as Record<string, unknown>)
+        .orderBy('_revDate', 'DESC')
+        .run();
+
+      const checkItems = pageChecks.map(check => {
+        const metrics = (check.metrics ?? {
+          issues_found: { high: 0, medium: 0, low: 0 },
+          issues_fixed: { high: 0, medium: 0, low: 0 },
+        }) as PageCheckMetrics;
+        const checkResults = mlString.resolve('en', check.checkResults ?? null)?.str ?? '';
+        const notes = mlString.resolve('en', check.notes ?? null)?.str ?? '';
+        const dateLabel = formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt);
+        return {
+          typeLabel: formatLabel(check.type),
+          statusLabel: formatLabel(check.status),
+          dateLabel,
+          checkResults,
+          notes: notes || undefined,
+          metrics: {
+            issuesFound: metrics.issues_found ?? { high: 0, medium: 0, low: 0 },
+            issuesFixed: metrics.issues_fixed ?? { high: 0, medium: 0, low: 0 },
+          },
+        };
+      });
+      const checksHtml = renderPageChecks({ checks: checkItems, t: req.t });
       const tocHtml = renderToc(toc, { expanded: true, label: req.t('toc.title') });
-      const sidebarHtml = historyHtml + tocHtml;
+      const sidebarHtml = checksHtml + historyHtml + tocHtml;
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const signedIn = Boolean(await resolveSessionUser(req));

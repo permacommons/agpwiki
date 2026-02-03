@@ -51,6 +51,16 @@
     title: 'Historique des versions',
     compare: 'Comparer les révisions sélectionnées',
   },
+  checks: {
+    title: 'Contrôles de page',
+    empty: 'Aucun contrôle pour le moment.',
+    metrics: {
+      found: 'Trouvés',
+      fixed: 'Corrigés',
+    },
+  },
+
+
   toc: {
     title: 'Sommaire',
   },

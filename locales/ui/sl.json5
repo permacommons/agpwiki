@@ -51,6 +51,16 @@
     title: 'Zgodovina različic',
     compare: 'Primerjaj izbrane revizije',
   },
+  checks: {
+    title: 'Preverjanja strani',
+    empty: 'Zaenkrat ni preverjanj.',
+    metrics: {
+      found: 'Najdeno',
+      fixed: 'Popravljeno',
+    },
+  },
+
+
   toc: {
     title: 'Vsebina',
   },

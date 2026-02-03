@@ -50,6 +50,16 @@
     title: 'バージョン履歴',
     compare: '選択したリビジョンを比較',
   },
+  checks: {
+    title: 'ページチェック',
+    empty: 'まだチェックはありません。',
+    metrics: {
+      found: '検出',
+      fixed: '修正',
+    },
+  },
+
+
   toc: {
     title: '目次',
   },

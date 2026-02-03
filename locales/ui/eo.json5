@@ -51,6 +51,14 @@
     title: 'Historio de versioj',
     compare: 'Komparu elektitajn reviziojn',
   },
+  checks: {
+    title: 'Paĝaj kontroloj',
+    empty: 'Neniuj kontroloj ankoraŭ.',
+    metrics: {
+      found: 'Trovitaj',
+      fixed: 'Riparitaj',
+    },
+  },
   toc: {
     title: 'Enhavo',
   },
