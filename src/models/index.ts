@@ -8,6 +8,7 @@ export { default as OAuthAuthorizationCode } from './oauth-authorization-code.js
 export { default as OAuthClient } from './oauth-client.js';
 export { default as OAuthRefreshToken } from './oauth-refresh-token.js';
 export { default as PageAlias } from './page-alias.js';
+export { default as PageCheck } from './page-check.js';
 export { default as SignupInvite } from './signup-invite.js';
 export { default as User } from './user.js';
 export { default as WikiPage } from './wiki-page.js';

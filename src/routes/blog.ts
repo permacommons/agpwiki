@@ -3,9 +3,16 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { resolveSafeText } from '../lib/safe-text.js';
 import BlogPost from '../models/blog-post.js';
 import Citation from '../models/citation.js';
-import { escapeHtml, formatDateUTC, renderLayout, renderMarkdown } from '../render.js';
+import {
+  escapeHtml,
+  formatDateUTC,
+  renderLayout,
+  renderMarkdown,
+  renderText,
+} from '../render.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
@@ -34,8 +41,8 @@ export const registerBlogRoutes = (app: Express) => {
       const posts = result.rows.map(row => BlogPost.createFromRow(row));
       const items = posts
         .map(post => {
-          const title = mlString.resolve('en', post.title ?? null)?.str ?? post.slug;
-          const summary = mlString.resolve('en', post.summary ?? null)?.str ?? '';
+          const title = resolveSafeText(mlString.resolve, 'en', post.title, post.slug);
+          const summary = resolveSafeText(mlString.resolve, 'en', post.summary, '');
           const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
           const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
           const updatedHtml =
@@ -45,10 +52,10 @@ export const registerBlogRoutes = (app: Express) => {
                 })}</span>`
               : '';
           const summaryHtml = summary
-            ? `<div class="post-summary">${escapeHtml(summary)}</div>`
+            ? `<div class="post-summary">${renderText(summary)}</div>`
             : '';
           return `<li>
-  <h2><a href="/blog/${escapeHtml(post.slug)}">${escapeHtml(title)}</a></h2>
+  <h2><a href="/blog/${escapeHtml(post.slug)}">${renderText(title)}</a></h2>
   <div class="post-meta">
     <span class="post-created">${req.t('blog.created', {
       date: escapeHtml(createdLabel),
@@ -77,7 +84,7 @@ export const registerBlogRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render blog list:', message);
     }
   });
@@ -97,7 +104,7 @@ export const registerBlogRoutes = (app: Express) => {
       } as Record<string, unknown>).first();
 
       if (!post) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -116,16 +123,14 @@ export const registerBlogRoutes = (app: Express) => {
 
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : post;
       if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send('Revision not found');
+        res.status(404).type('text').send(req.t('page.revisionNotFound'));
         return;
       }
 
-      const resolvedTitle = mlString.resolve('en', selectedRevision.title ?? null);
       const resolvedBody = mlString.resolve('en', selectedRevision.body ?? null);
-      const resolvedSummary = mlString.resolve('en', selectedRevision.summary ?? null);
 
-      const title = resolvedTitle?.str ?? post.slug;
-      const summary = resolvedSummary?.str ?? '';
+      const title = resolveSafeText(mlString.resolve, 'en', selectedRevision.title, post.slug);
+      const summary = resolveSafeText(mlString.resolve, 'en', selectedRevision.summary, '');
       const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
       const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
       const updatedHtml =
@@ -178,8 +183,8 @@ export const registerBlogRoutes = (app: Express) => {
       const historyRevisions = revisions.map(rev => ({
         revId: rev._revID,
         dateLabel: formatDateUTC(rev._revDate),
-        title: mlString.resolve('en', rev.title ?? null)?.str ?? slug,
-        summary: mlString.resolve('en', rev._revSummary ?? null)?.str ?? '',
+        title: resolveSafeText(mlString.resolve, 'en', rev.title, slug),
+        summary: resolveSafeText(mlString.resolve, 'en', rev._revSummary, ''),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));
@@ -195,7 +200,7 @@ export const registerBlogRoutes = (app: Express) => {
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const summaryHtml = summary
-        ? `<div class="post-summary">${escapeHtml(summary)}</div>`
+        ? `<div class="post-summary">${renderText(summary)}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">
   <span class="post-created">${req.t('blog.created', {
@@ -218,7 +223,7 @@ export const registerBlogRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render blog post:', message);
     }
   });

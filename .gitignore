@@ -6,3 +6,4 @@ npm-debug.log*
 research/
 CLAUDE.md
 .gemini/
+.browser-data/

@@ -87,3 +87,36 @@ test('findLocaleIssues merges multiple allowlist blocks in en.json5 comments', (
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('findLocaleIssues reports extra locale keys', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agpwiki-locale-test-'));
+  try {
+    writeLocale(
+      dir,
+      'en.json5',
+      `{
+  "site": { "name": "Agpedia" },
+  "nav": { "home": "Home" }
+}
+`
+    );
+
+    writeLocale(
+      dir,
+      'es.json5',
+      `{
+  "site": { "name": "Agpedia" },
+  "nav": { "home": "Inicio", "extra": "Extra" }
+}
+`
+    );
+
+    const issues = findLocaleIssues(dir);
+    assert.deepEqual(issues, [
+      { locale: 'es', key: 'nav.extra', issue: 'extra_in_locale' },
+      { locale: 'es', key: 'site.name', issue: 'identical_to_en' },
+    ]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

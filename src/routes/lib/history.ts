@@ -1,14 +1,14 @@
 import type { TFunction } from 'i18next';
 import type { initializePostgreSQL } from '../../db.js';
-import { escapeHtml } from '../../render.js';
+import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
 export type HistoryRevision = {
   revId: string;
   dateLabel: string;
-  title: string;
-  summary: string;
+  title: SafeText | string;
+  summary: SafeText | string;
   revUser: string | null;
   revTags: string[] | null;
 };
@@ -49,7 +49,7 @@ export const renderRevisionHistory = ({
   const historyItems = revisions
     .map((rev, index) => {
       const summaryHtml = rev.summary
-        ? `<div class="rev-summary">${escapeHtml(rev.summary)}</div>`
+        ? `<div class="rev-summary">${renderText(rev.summary)}</div>`
         : '';
       const fromChecked = diffFrom ? diffFrom === rev.revId : index === 1;
       const toChecked = diffTo ? diffTo === rev.revId : index === 0;
@@ -78,7 +78,7 @@ export const renderRevisionHistory = ({
     <span class="rev-radio"><input type="radio" name="diffTo" value="${rev.revId}" ${
       toChecked ? 'checked' : ''
     } /></span>
-    <strong>${escapeHtml(rev.title)}</strong>
+    <strong>${renderText(rev.title)}</strong>
     <span>${escapeHtml(rev.dateLabel)}</span>
   </div>
   ${summaryHtml}

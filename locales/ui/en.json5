@@ -65,9 +65,12 @@
   },
   "page": {
     "recentChanges": "Recent Changes",
+    "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
     "pages": "Pages",
     "blog": "Blog",
+    "forbidden": "Forbidden",
+    "accessDenied": "Access denied.",
     "notFound": "Not found",
     "revisionNotFound": "Revision not found",
     "serverError": "Server error"
@@ -86,6 +89,47 @@
     "title": "Version history",
     "compare": "Compare selected revisions"
   },
+  "checks": {
+    "title": "Page checks",
+    "viewAll": "See all checks",
+    "empty": "No checks yet.",
+    "type": {
+      "fact_check": "Fact check",
+      "copy_edit": "Copy edit",
+      "structure_review": "Structure review",
+      // Checks that content is up to date (recent developments, current roles,
+      // and the latest statistics/numbers).
+      "freshness_check": "Freshness check",
+      "link_integrity": "Link integrity",
+      "plagiarism_scan": "Plagiarism scan",
+      "accessibility_check": "Accessibility check",
+      "translation_review": "Translation review",
+      "formatting_check": "Formatting check"
+    },
+    "status": {
+      "queued": "Queued",
+      "in_progress": "In progress",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "fields": {
+      "type": "Type",
+      "status": "Status",
+      "completed": "Completed",
+      "targetRevision": "Target revision",
+      "operator": "Operator",
+      "checkResults": "Check results",
+      "notes": "Notes"
+    },
+    "metrics": {
+      "found": "Found",
+      "fixed": "Fixed",
+      "severity": "Severity",
+      "high": "High",
+      "medium": "Medium",
+      "low": "Low"
+    }
+  },
   "toc": {
     "title": "Contents"
   },
@@ -93,7 +137,9 @@
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",
+    "recentChecksDescription": "Latest page checks submitted across the wiki.",
     "recentCitationsDescription": "Latest edits to citation entries.",
+    "relatedLabel": "Related",
     "seeAlso": "See also: <a href=\"{{url}}\">{{label}}</a>",
     "pagesDescription": "Encyclopedia pages ({{total}} total).",
     "previous": "Previous",

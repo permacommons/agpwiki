@@ -4,6 +4,7 @@ import WikiPage from '../models/wiki-page.js';
 
 export interface WikiPageChange {
   slug: string;
+  title: Record<string, string> | null;
   revId: string;
   revDate: string;
   revUser: string | null;
@@ -35,6 +36,7 @@ export async function getRecentWikiChanges(
 ): Promise<WikiPageChange[]> {
   const result = await dal.query(
     `SELECT slug,
+            title,
             _rev_id,
             _rev_date,
             _rev_user,
@@ -54,6 +56,7 @@ export async function getRecentWikiChanges(
   return result.rows.map(
     (row: {
       slug: string;
+      title: Record<string, string> | null;
       _rev_id: string;
       _rev_date: string;
       _rev_user: string | null;
@@ -62,6 +65,7 @@ export async function getRecentWikiChanges(
       prev_rev_id: string | null;
     }) => ({
       slug: row.slug,
+      title: row.title ?? null,
       revId: row._rev_id,
       revDate: row._rev_date,
       revUser: row._rev_user,

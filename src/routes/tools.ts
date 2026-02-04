@@ -6,9 +6,19 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import { getRecentCitationChanges, getRecentWikiChanges } from '../lib/recent-changes.js';
+import { getRecentPageChecks } from '../lib/recent-checks.js';
+import { resolveSafeText } from '../lib/safe-text.js';
 import WikiPage from '../models/wiki-page.js';
-import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import {
+  concatSafeText,
+  escapeHtml,
+  formatDateUTC,
+  renderLayout,
+  renderText,
+  type SafeText,
+} from '../render.js';
 import { fetchUserMap } from './lib/history.js';
+import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 
 const { mlString } = dal;
 
@@ -18,10 +28,10 @@ type RecentListAction = {
 };
 
 type RecentListItem = {
-  primaryLabel: string;
+  primaryLabel: SafeText | string;
   primaryHref?: string;
   dateLabel: string;
-  summary?: string;
+  summary?: SafeText | string;
   revUser: string | null;
   revTags: string[];
   actions?: RecentListAction[];
@@ -33,7 +43,7 @@ const parseRecentLimit = (limitQuery: unknown) => {
 };
 
 const resolveRevSummary = (value: Record<string, string> | null) =>
-  mlString.resolve('en', value ?? null)?.str ?? '';
+  resolveSafeText(mlString.resolve, 'en', value, '');
 
 const renderRecentList = (
   items: RecentListItem[],
@@ -61,9 +71,9 @@ const renderRecentList = (
       );
       const tags = visibleTags.length ? `· ${escapeHtml(visibleTags.join(', '))}` : '';
       const summary = item.summary
-        ? `<div class="change-summary">${escapeHtml(item.summary)}</div>`
+        ? `<div class="change-summary">${renderText(item.summary)}</div>`
         : '';
-      const primaryLabel = escapeHtml(item.primaryLabel);
+      const primaryLabel = renderText(item.primaryLabel);
       const primaryHtml = item.primaryHref
         ? `<a href="${escapeHtml(item.primaryHref)}">${primaryLabel}</a>`
         : `<span>${primaryLabel}</span>`;
@@ -84,6 +94,25 @@ const renderRecentList = (
 </li>`;
     })
     .join('');
+
+const renderRelatedTools = (
+  links: Array<{ href: string; label: string }>,
+  t: TFunction
+) => {
+  if (!links.length) return '';
+  const items = links
+    .map(
+      (link, index) =>
+        `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>${
+          index < links.length - 1 ? ' · ' : ''
+        }`
+    )
+    .join('');
+  return `<div class="tool-related">
+  <span class="tool-related-label">${escapeHtml(t('tool.relatedLabel'))}</span>
+  <span class="tool-related-links">${items}</span>
+</div>`;
+};
 
 export const registerToolRoutes = (app: Express) => {
   app.get('/tool/recent-changes', async (req, res) => {
@@ -109,8 +138,9 @@ export const registerToolRoutes = (app: Express) => {
           href: `/${change.slug}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
         });
       }
+      const pageTitle = resolveSafeText(mlString.resolve, 'en', change.title, change.slug);
       return {
-        primaryLabel: change.slug,
+        primaryLabel: concatSafeText(pageTitle, ` · /${change.slug}`),
         primaryHref: `/${change.slug}`,
         dateLabel: formatDateUTC(change.revDate),
         summary: change.revSummary,
@@ -121,12 +151,16 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
+    const relatedHtml = renderRelatedTools(
+      [
+      { href: '/tool/recent-citations', label: req.t('page.recentCitations') },
+      { href: '/tool/recent-checks', label: req.t('page.recentChecks') },
+      ],
+      req.t
+    );
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChangesDescription')}</p>
-  <p>${req.t('tool.seeAlso', {
-    url: '/tool/recent-citations',
-    label: req.t('page.recentCitations'),
-  })}</p>
+  ${relatedHtml}
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
@@ -167,8 +201,9 @@ export const registerToolRoutes = (app: Express) => {
           href: `/cite/${encodedKey}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
         });
       }
+      const citationTitle = formatCitationLabel(change.key, change.data);
       return {
-        primaryLabel: formatCitationLabel(change.key, change.data),
+        primaryLabel: `${citationTitle} · ${change.key}`,
         primaryHref: `/cite/${encodedKey}`,
         dateLabel: formatDateUTC(change.revDate),
         summary: change.revSummary,
@@ -179,18 +214,90 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
+    const relatedHtml = renderRelatedTools(
+      [
+      { href: '/tool/recent-changes', label: req.t('page.recentChanges') },
+      { href: '/tool/recent-checks', label: req.t('page.recentChecks') },
+      ],
+      req.t
+    );
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentCitationsDescription')}</p>
-  <p>${req.t('tool.seeAlso', {
-    url: '/tool/recent-changes',
-    label: req.t('page.recentChanges'),
-  })}</p>
+  ${relatedHtml}
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
       title: req.t('page.recentCitations'),
+      labelHtml,
+      bodyHtml,
+      signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
+    });
+    res.type('html').send(html);
+  });
+
+  app.get('/tool/recent-checks', async (req, res) => {
+    const limit = parseRecentLimit(req.query.limit);
+
+    const dalInstance = await initializePostgreSQL();
+    const checks = await getRecentPageChecks(dalInstance, limit);
+    const userIds = checks
+      .map(check => check.revUser)
+      .filter((id): id is string => Boolean(id));
+    const userMap = await fetchUserMap(dalInstance, userIds);
+
+    const items: RecentListItem[] = checks.map(check => {
+      const pageTitle = resolveSafeText(mlString.resolve, 'en', check.title, check.slug);
+      const primaryLabel = concatSafeText(pageTitle, ` · /${check.slug}`);
+      const summary = `${formatCheckType(check.type, req.t)} · ${formatCheckStatus(
+        check.status,
+        req.t
+      )}`;
+      return {
+        primaryLabel,
+        primaryHref: `/${check.slug}`,
+        dateLabel: formatDateUTC(check.revDate),
+        summary,
+        revUser: check.revUser,
+        revTags: check.revTags ?? [],
+        actions: [
+          {
+            label: req.t('tool.view'),
+            href: `/${check.slug}/checks/${check.id}?rev=${check.revId}`,
+          },
+          ...(check.prevRevId
+            ? [
+                {
+                  label: req.t('tool.diff'),
+                  href: `/${check.slug}/checks/${check.id}?diffFrom=${check.prevRevId}&diffTo=${check.revId}`,
+                },
+              ]
+            : []),
+        ],
+      };
+    });
+
+    const itemsHtml = renderRecentList(items, userMap, req.t);
+
+    const relatedHtml = renderRelatedTools(
+      [
+      { href: '/tool/recent-changes', label: req.t('page.recentChanges') },
+      { href: '/tool/recent-citations', label: req.t('page.recentCitations') },
+      ],
+      req.t
+    );
+    const bodyHtml = `<div class="tool-page">
+  <p>${req.t('tool.recentChecksDescription')}</p>
+  ${relatedHtml}
+  <ul class="change-list">${itemsHtml}</ul>
+</div>`;
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
+    const signedIn = Boolean(await resolveSessionUser(req));
+    const html = renderLayout({
+      title: req.t('page.recentChecks'),
       labelHtml,
       bodyHtml,
       signedIn,
@@ -222,7 +329,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const pages = pageResults.map(p => ({
       slug: p.slug,
-      title: mlString.resolve('en', p.title ?? null)?.str ?? p.slug,
+      title: resolveSafeText(mlString.resolve, 'en', p.title, p.slug),
     }));
 
     const totalPages = Math.max(Math.ceil(total / per), 1);
@@ -234,7 +341,7 @@ export const registerToolRoutes = (app: Express) => {
     const listItems = pages
       .map(
         item =>
-          `<li><a href="/${escapeHtml(item.slug)}">${escapeHtml(item.title)}</a></li>`
+          `<li><a href="/${escapeHtml(item.slug)}">${renderText(item.title)}</a></li>`
       )
       .join('');
 

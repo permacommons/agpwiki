@@ -1,3 +1,7 @@
 - [x] Split MCP access so local agents can use Playwright locally while targeting a remote production instance, without exposing local dev environment MCP tools. (moved to mcp-research-friend)
 - [ ] Add citation tooltips using citeproc's inline `<citation>` layout for hover previews.
 - [ ] Make `dist/` self-contained by copying or bundling assets (like `locales/`) and updating path resolution to be relative to the module instead of `process.cwd()`.
+- [ ] Localize checks route error strings ("Not found", "Revision not found", "Server error") and wire to i18n keys.
+- [ ] Deduplicate history revision mapping for pages/blog (safeText + summaries).
+- [ ] Consider a per-page terminology glossary to support translation reviews.
+- [ ] Revisit safeText semantics (possibly encode on write + clarify MCP hints); consider handling in rev-dal.

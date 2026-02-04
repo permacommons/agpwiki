@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 
@@ -11,6 +14,102 @@ const META_PAGES_INSTRUCTION = `Before proceeding, ensure you're familiar with t
 - Read \`/meta/citations\` to understand citation standards and expectations
 
 If you haven't read these pages yet, retrieve them now using the wiki_readPage tool.`;
+
+const PROMPT_LIBRARY_ROOT = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  'prompt-library'
+);
+
+type PromptTemplateSpec = {
+  id: string;
+  title: string;
+  description: string;
+  templatePath: string;
+};
+
+const PAGE_CHECK_PROMPTS: PromptTemplateSpec[] = [
+  {
+    id: 'fact-check',
+    title: 'Fact-Check Article',
+    description: 'Verify factual accuracy, citation integrity, and internal consistency',
+    templatePath: 'page-checks/fact-check.md',
+  },
+  {
+    id: 'copy-edit',
+    title: 'Copy Edit Article',
+    description: 'Improve grammar, clarity, and style while preserving meaning',
+    templatePath: 'page-checks/copy-edit.md',
+  },
+  {
+    id: 'structure-review',
+    title: 'Structure Review',
+    description: 'Review organization, sectioning, and flow',
+    templatePath: 'page-checks/structure-review.md',
+  },
+  {
+    id: 'freshness-check',
+    title: 'Freshness Check',
+    description: 'Identify outdated claims, stats, and roles',
+    templatePath: 'page-checks/freshness-check.md',
+  },
+  {
+    id: 'link-integrity',
+    title: 'Link Integrity Check',
+    description: 'Verify links resolve and point to intended destinations',
+    templatePath: 'page-checks/link-integrity.md',
+  },
+  {
+    id: 'plagiarism-scan',
+    title: 'Plagiarism Scan',
+    description: 'Check for uncredited copying and attribution risks',
+    templatePath: 'page-checks/plagiarism-scan.md',
+  },
+  {
+    id: 'accessibility-check',
+    title: 'Accessibility Check',
+    description: 'Review readability and accessibility expectations',
+    templatePath: 'page-checks/accessibility-check.md',
+  },
+  {
+    id: 'translation-review',
+    title: 'Translation Review',
+    description: 'Verify correctness against the source language',
+    templatePath: 'page-checks/translation-review.md',
+  },
+  {
+    id: 'formatting-check',
+    title: 'Formatting Check',
+    description: 'Check Markdown correctness and rendering expectations',
+    templatePath: 'page-checks/formatting-check.md',
+  },
+];
+
+const promptTemplateCache = new Map<string, string>();
+
+function resolvePromptPath(libraryPath: string): string {
+  const resolved = path.resolve(PROMPT_LIBRARY_ROOT, libraryPath);
+  if (!resolved.startsWith(PROMPT_LIBRARY_ROOT + path.sep)) {
+    throw new Error(`Invalid prompt template path: ${libraryPath}`);
+  }
+  return resolved;
+}
+
+function loadPromptTemplate(libraryPath: string): string {
+  const cached = promptTemplateCache.get(libraryPath);
+  if (cached) {
+    return cached;
+  }
+  const resolvedPath = resolvePromptPath(libraryPath);
+  const contents = readFileSync(resolvedPath, 'utf8');
+  promptTemplateCache.set(libraryPath, contents);
+  return contents;
+}
+
+function renderPromptTemplate(template: string, slug: string): string {
+  return template
+    .replaceAll('{{metaPages}}', META_PAGES_INSTRUCTION)
+    .replaceAll('{{slug}}', slug);
+}
 
 /**
  * Registers MCP prompts that guide agents through common workflows.
@@ -75,93 +174,31 @@ Please begin with Step 1.`,
     }
   );
 
-  server.registerPrompt(
-    'fact-check',
-    {
-      title: 'Fact-Check Article',
-      description:
-        'Verify an article for factual accuracy, citation integrity, and internal consistency',
-      argsSchema: {
-        slug: z.string().describe('The slug of the article to fact-check'),
+  PAGE_CHECK_PROMPTS.forEach(spec => {
+    server.registerPrompt(
+      spec.id,
+      {
+        title: spec.title,
+        description: spec.description,
+        argsSchema: {
+          slug: z.string().describe('The slug of the article to review'),
+        },
       },
-    },
-    async ({ slug }) => {
-      return {
-        description: `Fact-checking article: ${slug}`,
-        messages: [
-          {
-            role: 'user' as const,
-            content: {
-              type: 'text' as const,
-              text: `Please fact-check the wiki article at "${slug}".
-
-## Purpose
-
-The goal is to identify content that is **clearly FALSE or MISATTRIBUTED**. This is not about nit-picking or stylistic preferences—focus on substantive factual problems.
-
-## Step 1: Understand editorial standards
-${META_PAGES_INSTRUCTION}
-
-## Step 2: Retrieve the article
-Use wiki_readPage to retrieve the article content. Identify:
-- All inline citations (e.g., \`[@key]\` or \`[@key1; @key2]\`)
-- Key factual claims, especially those that are central to the article's argument
-- Any analytical conclusions the article draws from its facts
-
-## Step 3: Verify citations
-For each citation referenced in the article:
-1. Use citation_read to retrieve the citation record
-2. If the citation has a URL, use web tools to access the source content—or check if the source is available to you through other tools (e.g., local filesystem resources, databases, or other configured integrations)
-3. Check whether the source actually supports the claim it's attached to
-
-Flag any **MISATTRIBUTED** citations where:
-- The source doesn't say what the article claims it says
-- The source is misrepresented (e.g., cherry-picked, taken out of context)
-- The citation points to an inaccessible or non-existent source
-
-## Step 4: Check internal consistency
-Review the article for internal contradictions:
-- Does the article contradict itself between sections?
-- If the article presents analysis, is that analysis consistent with the facts it cites?
-- Are there logical gaps where conclusions don't follow from premises?
-
-## Step 5: Flag unsourced claims
-Identify any **key claims** that lack citations. Not every sentence needs a citation, but central factual assertions—especially surprising, contested, or quantitative claims—should be sourced.
-
-## Step 6: World knowledge check (lower confidence)
-With appropriate epistemic humility, note any claims that appear to contradict widely-established facts. Mark these as "may benefit from verification" rather than definitive errors.
-
-**Important caveats:**
-- Your training data has a cutoff and may be incomplete
-- LLMs are prone to hallucination—this applies both to content you're fact-checking (which may have been written or assisted by an LLM) and to your own fact-checking (you may confidently "recall" facts that are incorrect)
-- When in doubt, flag for human verification rather than asserting error
-
-## Step 7: Report findings
-
-Structure your report as:
-
-### Issues Found
-
-**Critical (FALSE or MISATTRIBUTED):**
-- List any statements that are demonstrably false or where citations don't support the claims
-
-**Unsourced Key Claims:**
-- List important claims that should have citations but don't
-
-**Internal Inconsistencies:**
-- List any logical contradictions within the article
-
-**Potential Concerns (verify independently):**
-- List anything that contradicts your world knowledge, with the caveat that independent verification is recommended
-
-### Minor Suggestions (if any)
-At the end only, you may briefly note any nuances that could be explained better—but keep this section minimal. The focus is on factual accuracy, not style.
-
-Please begin with Step 1.`,
+      async ({ slug }) => {
+        const template = loadPromptTemplate(spec.templatePath);
+        return {
+          description: `${spec.title}: ${slug}`,
+          messages: [
+            {
+              role: 'user' as const,
+              content: {
+                type: 'text' as const,
+                text: renderPromptTemplate(template, slug),
+              },
             },
-          },
-        ],
-      };
-    }
-  );
+          ],
+        };
+      }
+    );
+  });
 };
