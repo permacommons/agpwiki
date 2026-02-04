@@ -7,7 +7,7 @@ const localesDir = path.resolve(process.cwd(), 'locales/ui');
 const identicalAllowlistBlockRegex =
   /\/\*\s*i18n-identical-allowlist\s*:\s*([\s\S]*?)\*\//g;
 
-export type LocaleIssueType = 'missing' | 'identical_to_en';
+export type LocaleIssueType = 'missing' | 'identical_to_en' | 'extra_in_locale';
 
 export type LocaleIssue = {
   locale: string;
@@ -140,6 +140,12 @@ export function findLocaleIssues(localesDirectory: string): LocaleIssue[] {
           !isAllowlisted(allowlist, langCode, key)
         ) {
           issues.push({ locale: langCode, key, issue: 'identical_to_en' });
+        }
+      }
+
+      for (const key of existingKeys) {
+        if (!canonicalKeys.has(key)) {
+          issues.push({ locale: langCode, key, issue: 'extra_in_locale' });
         }
       }
     } catch (error) {

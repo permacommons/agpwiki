@@ -95,6 +95,8 @@
       "fact_check": "Fact check",
       "copy_edit": "Copy edit",
       "structure_review": "Structure review",
+      // Checks that content is up to date (recent developments, current roles,
+      // and the latest statistics/numbers).
       "freshness_check": "Freshness check",
       "link_integrity": "Link integrity",
       "plagiarism_scan": "Plagiarism scan",
