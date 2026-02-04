@@ -4,12 +4,22 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
+import { resolveOptionalSafeText, resolveSafeText, resolveSafeTextRequired } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
+import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageAlias from '../models/page-alias.js';
 import PageCheck from '../models/page-check.js';
 import WikiPage from '../models/wiki-page.js';
-import { escapeHtml, formatDateUTC, renderLayout, renderMarkdown, renderToc } from '../render.js';
+import {
+  concatSafeText,
+  escapeHtml,
+  formatDateUTC,
+  renderLayout,
+  renderMarkdown,
+  renderSafeText,
+  renderToc,
+} from '../render.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 import {
@@ -69,6 +79,27 @@ const resolvePageBySlug = async (slug: string) => {
 };
 
 export const registerPageRoutes = (app: Express) => {
+  app.use((req, res, next) => {
+    if (!req.originalUrl || req.originalUrl === '/') {
+      next();
+      return;
+    }
+
+    const url = new URL(`http://local${req.originalUrl}`);
+    if (!url.pathname.endsWith('/')) {
+      next();
+      return;
+    }
+
+    const normalizedPath = url.pathname.replace(/\/+$/, '') || '/';
+    if (normalizedPath === url.pathname) {
+      next();
+      return;
+    }
+
+    res.redirect(308, `${normalizedPath}${url.search}`);
+  });
+
   app.get('/', (_req, res) => {
     res.redirect(302, '/meta/welcome');
   });
@@ -114,8 +145,8 @@ export const registerPageRoutes = (app: Express) => {
           typeLabel: formatCheckType(check.type, req.t),
           statusLabel: formatCheckStatus(check.status, req.t),
           dateLabel: formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt),
-          checkResults: mlString.resolve('en', check.checkResults ?? null)?.str ?? '',
-          notes: mlString.resolve('en', check.notes ?? null)?.str ?? '',
+          checkResults: resolveSafeTextRequired(mlString.resolve, 'en', check.checkResults),
+          notes: resolveOptionalSafeText(mlString.resolve, 'en', check.notes),
           metrics: {
             issuesFound: metrics.issues_found,
             issuesFixed: metrics.issues_fixed,
@@ -125,9 +156,8 @@ export const registerPageRoutes = (app: Express) => {
         };
       });
 
-      const resolvedTitle = mlString.resolve('en', page.title ?? null);
-      const pageTitle = resolvedTitle?.str ?? page.slug;
-      const title = `${pageTitle} · ${req.t('checks.title')}`;
+      const pageTitle = resolveSafeText(mlString.resolve, 'en', page.title, page.slug);
+      const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
       const bodyHtml = `<section class="check-list">${renderPageChecksList({
         checks: items,
         userMap,
@@ -158,6 +188,8 @@ export const registerPageRoutes = (app: Express) => {
     const slug = req.params[0];
     const checkId = req.params[1];
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
+    const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
+    const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
 
     if (isBlockedSlug(slug)) {
       res.status(404).type('text').send('Not found');
@@ -204,14 +236,44 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
 
+      const resolveRevisionText = (rev: PageCheckInstance) => {
+        const resolvedMetrics = resolveCheckMetrics(rev.metrics as PageCheckMetrics | null);
+        const resolvedCheckResults = renderSafeText(
+          resolveSafeTextRequired(mlString.resolve, 'en', rev.checkResults)
+        );
+        const resolvedNotes = renderSafeText(
+          resolveSafeTextRequired(mlString.resolve, 'en', rev.notes, '')
+        );
+        const resolvedDate = formatDateUTC(rev.completedAt ?? rev._revDate ?? rev.createdAt);
+        const lines = [
+          `${req.t('checks.fields.type')}: ${formatCheckType(rev.type, req.t)}`,
+          `${req.t('checks.fields.status')}: ${formatCheckStatus(rev.status, req.t)}`,
+          `${req.t('checks.fields.completed')}: ${resolvedDate}`,
+          `${req.t('checks.fields.targetRevision')}: ${rev.targetRevId ?? ''}`,
+          `${req.t('checks.metrics.found')}: ${resolvedMetrics.issues_found.high}/${resolvedMetrics.issues_found.medium}/${resolvedMetrics.issues_found.low}`,
+          `${req.t('checks.metrics.fixed')}: ${resolvedMetrics.issues_fixed.high}/${resolvedMetrics.issues_fixed.medium}/${resolvedMetrics.issues_fixed.low}`,
+          '',
+          `${req.t('checks.fields.checkResults')}:`,
+          resolvedCheckResults,
+        ];
+        if (resolvedNotes) {
+          lines.push('', `${req.t('checks.fields.notes')}:`, resolvedNotes);
+        }
+        return lines.join('\n');
+      };
+
       const metrics = resolveCheckMetrics(selectedRevision.metrics as PageCheckMetrics | null);
       const typeLabel = formatCheckType(selectedRevision.type, req.t);
       const statusLabel = formatCheckStatus(selectedRevision.status, req.t);
       const dateLabel = formatDateUTC(
         selectedRevision.completedAt ?? selectedRevision._revDate ?? selectedRevision.createdAt
       );
-      const checkResults = mlString.resolve('en', selectedRevision.checkResults ?? null)?.str ?? '';
-      const notes = mlString.resolve('en', selectedRevision.notes ?? null)?.str ?? '';
+      const checkResults = resolveSafeTextRequired(
+        mlString.resolve,
+        'en',
+        selectedRevision.checkResults
+      );
+      const notes = resolveOptionalSafeText(mlString.resolve, 'en', selectedRevision.notes);
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
@@ -277,13 +339,15 @@ export const registerPageRoutes = (app: Express) => {
     </tr>
   </tbody>
 </table>`;
-      const notesHtml = notes ? `<div class="check-notes">${escapeHtml(notes)}</div>` : '';
+      const notesHtml = notes
+        ? `<div class="check-notes">${renderSafeText(notes)}</div>`
+        : '';
       const bodyHtml = `<div class="check-card">
   <div class="check-meta">
     <dl class="citation-fields">${fieldsHtml}</dl>
   </div>
   ${metricsHtml}
-  <div class="check-results">${escapeHtml(checkResults)}</div>
+  <div class="check-results">${renderSafeText(checkResults)}</div>
   ${notesHtml}
 </div>`;
 
@@ -308,19 +372,37 @@ export const registerPageRoutes = (app: Express) => {
         userMap,
         slug: page.slug,
         checkId: check.id,
+        diffFrom,
+        diffTo,
         t: req.t,
       });
 
-      const resolvedTitle = mlString.resolve('en', page.title ?? null);
-      const pageTitle = resolvedTitle?.str ?? page.slug;
-      const title = `${pageTitle} · ${req.t('checks.title')}`;
+      const pageTitle = resolveSafeText(mlString.resolve, 'en', page.title, page.slug);
+      const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
       const labelHtml = `<div class="page-label">${req.t('checks.title')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
+      let diffHtml = '';
+      if (diffFrom && diffTo) {
+        const fromRev = await fetchRevisionByRevId(diffFrom);
+        const toRev = await fetchRevisionByRevId(diffTo);
+        if (fromRev && toRev) {
+          const fromLabel = `${diffFrom} (${formatDateUTC(fromRev._revDate)})`;
+          const toLabel = `${diffTo} (${formatDateUTC(toRev._revDate)})`;
+          diffHtml = renderRevisionDiff({
+            fromLabel,
+            toLabel,
+            fromText: resolveRevisionText(fromRev),
+            toText: resolveRevisionText(toRev),
+          });
+        }
+      }
+
+      const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const sidebarHtml = historyHtml;
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml,
+        bodyHtml: topHtml + bodyHtml,
         sidebarHtml,
         signedIn,
         locale: res.locals.locale,
@@ -372,11 +454,10 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
 
-      const resolvedTitle = mlString.resolve('en', selectedRevision.title ?? null);
       const resolvedBody = mlString.resolve('en', selectedRevision.body ?? null);
 
       const canonicalSlug = page.slug;
-      const title = resolvedTitle?.str ?? canonicalSlug;
+      const title = resolveSafeText(mlString.resolve, 'en', selectedRevision.title, canonicalSlug);
       const metaLabel = canonicalSlug.startsWith('meta/')
         ? `<div class="page-label">${req.t('label.meta')}</div>`
         : canonicalSlug.startsWith('tool/')
@@ -434,6 +515,7 @@ export const registerPageRoutes = (app: Express) => {
         _revDeleted: false,
       } as Record<string, unknown>)
         .orderBy('_revDate', 'DESC')
+        .limit(10)
         .run();
 
       const userIds = new Set<string>();
@@ -448,8 +530,8 @@ export const registerPageRoutes = (app: Express) => {
       const historyRevisions = revisions.map(rev => ({
         revId: rev._revID,
         dateLabel: formatDateUTC(rev._revDate),
-        title: mlString.resolve('en', rev.title ?? null)?.str ?? canonicalSlug,
-        summary: mlString.resolve('en', rev._revSummary ?? null)?.str ?? '',
+        title: resolveSafeText(mlString.resolve, 'en', rev.title, canonicalSlug),
+        summary: resolveSafeText(mlString.resolve, 'en', rev._revSummary, ''),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { escapeHtml } from '../../render.js';
+import { escapeHtml, renderSafeText, type SafeText } from '../../render.js';
 
 export type PageCheckMetricSummary = {
   issuesFound: { high: number; medium: number; low: number };
@@ -22,8 +22,8 @@ export type PageCheckDetailItem = {
   statusLabel: string;
   dateLabel: string;
   metrics: PageCheckMetricSummary;
-  checkResults: string;
-  notes?: string;
+  checkResults: SafeText;
+  notes?: SafeText;
   revUser: string | null;
   revTags: string[] | null;
 };
@@ -47,6 +47,8 @@ type PageCheckHistoryOptions = {
   userMap: Map<string, string>;
   slug: string;
   checkId: string;
+  diffFrom?: string;
+  diffTo?: string;
   t: TFunction;
 };
 
@@ -136,6 +138,9 @@ export const renderPageChecksSummary = ({ checks, userMap, slug, t }: PageChecks
   return `<details class="page-history page-checks">
   <summary>${t('checks.title')}</summary>
   <ol class="history-list">${itemsHtml}</ol>
+  <div class="history-actions">
+    <a href="/${escapeHtml(slug)}/checks">${t('checks.viewAll')}</a>
+  </div>
 </details>`;
 };
 
@@ -146,21 +151,35 @@ export const renderPageChecksList = ({ checks, userMap, slug, t }: PageChecksDet
 
   return checks
     .map(check => {
-      const metaAttrs = buildCheckMetaAttrs(check.revUser, check.revTags, userMap, t);
+      const meta = getCheckMetaParts(check.revUser, check.revTags, userMap, t);
       const metaParts = [check.typeLabel, check.statusLabel, check.dateLabel].filter(Boolean);
-      const notesHtml = check.notes
-        ? `<div class="check-notes">${escapeHtml(check.notes)}</div>`
+      const agentLabel = [meta.agentTag, meta.agentVersion].filter(Boolean).join(' · ');
+      const operatorValue = meta.displayName ?? agentLabel;
+      const operatorMeta = meta.displayName && agentLabel ? agentLabel : '';
+      const operatorHtml = operatorValue
+        ? `<div class="check-operator">
+  <div class="check-operator-label">${escapeHtml(t('checks.fields.operator'))}</div>
+  <div class="check-operator-value">
+    ${escapeHtml(operatorValue)}
+    ${operatorMeta ? `<div class="check-operator-meta">${escapeHtml(operatorMeta)}</div>` : ''}
+  </div>
+</div>`
         : '';
+      const notes = check.notes ? renderSafeText(check.notes).trim() : '';
+      const notesHtml = notes ? `<div class="check-notes">${notes}</div>` : '';
       return `<article class="check-card">
-  <div class="rev-meta"${metaAttrs}>
-    <strong>${escapeHtml(metaParts.join(' · '))}</strong>
+  <div class="check-header">
+    <div class="check-title">${escapeHtml(metaParts.join(' · '))}</div>
+    <div class="rev-actions">
+      <a href="/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}">${t('history.view')}</a>
+    </div>
   </div>
-  <div class="check-metrics">${escapeHtml(renderMetricsCompact(check.metrics, t))}</div>
-  <div class="check-results">${escapeHtml(check.checkResults)}</div>
+  <div class="check-meta">
+    <div class="check-metrics">${escapeHtml(renderMetricsCompact(check.metrics, t))}</div>
+    ${operatorHtml}
+  </div>
+  <div class="check-results">${renderSafeText(check.checkResults).trim()}</div>
   ${notesHtml}
-  <div class="rev-actions">
-    <a href="/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}">${t('history.view')}</a>
-  </div>
 </article>`;
     })
     .join('\n');
@@ -171,14 +190,24 @@ export const renderPageCheckHistory = ({
   userMap,
   slug,
   checkId,
+  diffFrom,
+  diffTo,
   t,
 }: PageCheckHistoryOptions) => {
   const itemsHtml = revisions
-    .map(rev => {
+    .map((rev, index) => {
       const metaAttrs = buildCheckMetaAttrs(rev.revUser, rev.revTags, userMap, t);
       const metaParts = [rev.typeLabel, rev.statusLabel, rev.dateLabel].filter(Boolean);
+      const fromChecked = diffFrom ? diffFrom === rev.id : index === 1;
+      const toChecked = diffTo ? diffTo === rev.id : index === 0;
       return `<li>
   <div class="rev-meta"${metaAttrs}>
+    <span class="rev-radio"><input type="radio" name="diffFrom" value="${escapeHtml(rev.id)}" ${
+      fromChecked ? 'checked' : ''
+    } /></span>
+    <span class="rev-radio"><input type="radio" name="diffTo" value="${escapeHtml(rev.id)}" ${
+      toChecked ? 'checked' : ''
+    } /></span>
     <strong>${escapeHtml(metaParts.join(' · '))}</strong>
   </div>
   <div class="check-metrics">${escapeHtml(renderMetricsCompact(rev.metrics, t))}</div>
@@ -193,6 +222,13 @@ export const renderPageCheckHistory = ({
 
   return `<details class="page-history page-checks">
   <summary>${t('history.title')}</summary>
-  <ol class="history-list">${itemsHtml}</ol>
+  <form class="history-form" method="get" action="/${escapeHtml(slug)}/checks/${escapeHtml(
+    checkId
+  )}">
+    <div class="history-actions">
+      <button type="submit">${t('history.compare')}</button>
+    </div>
+    <ol class="history-list">${itemsHtml}</ol>
+  </form>
 </details>`;
 };

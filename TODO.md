@@ -2,3 +2,5 @@
 - [ ] Add citation tooltips using citeproc's inline `<citation>` layout for hover previews.
 - [ ] Make `dist/` self-contained by copying or bundling assets (like `locales/`) and updating path resolution to be relative to the module instead of `process.cwd()`.
 - [ ] Localize checks route error strings ("Not found", "Revision not found", "Server error") and wire to i18n keys.
+- [ ] Deduplicate history revision mapping for pages/blog (safeText + summaries).
+- [ ] Revisit safeText semantics (possibly encode on write + clarify MCP hints); consider handling in rev-dal.

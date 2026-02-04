@@ -6,8 +6,11 @@ import {
   formatDateUTC,
   normalizeForDiff,
   renderMarkdown,
+  renderSafeText,
+  renderText,
   renderToc,
   renderUnifiedDiff,
+  toSafeText,
 } from '../src/render.js';
 
 test('escapeHtml escapes basic characters', () => {
@@ -17,6 +20,13 @@ test('escapeHtml escapes basic characters', () => {
     output,
     '&lt;div class=&quot;x&quot;&gt;Tom &amp; Jerry&#39;s&lt;/div&gt;',
   );
+});
+
+test('renderText preserves safeText entities and escapes strings', () => {
+  const safeValue = toSafeText('Tom &amp; Jerry');
+  assert.equal(renderSafeText(safeValue), 'Tom &amp; Jerry');
+  assert.equal(renderText(safeValue), 'Tom &amp; Jerry');
+  assert.equal(renderText('Tom & Jerry'), 'Tom &amp; Jerry');
 });
 
 test('formatDateUTC returns a UTC string or empty', () => {

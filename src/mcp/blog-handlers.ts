@@ -1,4 +1,4 @@
-import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
+import { createTwoFilesPatch, diffLines } from 'diff';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
@@ -332,7 +332,6 @@ export interface BlogPostDiffResult {
 
 export interface BlogPostFieldDiff {
   unifiedDiff: string;
-  wordDiff: Array<{ type: 'added' | 'removed' | 'unchanged'; value: string }>;
   stats: {
     addedLines: number;
     removedLines: number;
@@ -369,17 +368,8 @@ const buildFieldDiff = (label: string, fromValue: string, toValue: string): Blog
     '',
     { context: 2 }
   );
-  const wordDiff = diffWordsWithSpace(fromValue, toValue).map(change => {
-    const type: 'added' | 'removed' | 'unchanged' = change.added
-      ? 'added'
-      : change.removed
-        ? 'removed'
-        : 'unchanged';
-    return { type, value: change.value };
-  });
   return {
     unifiedDiff,
-    wordDiff,
     stats: {
       addedLines,
       removedLines,

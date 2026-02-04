@@ -6,8 +6,15 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import { getRecentCitationChanges, getRecentWikiChanges } from '../lib/recent-changes.js';
+import { resolveSafeText } from '../lib/safe-text.js';
 import WikiPage from '../models/wiki-page.js';
-import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import {
+  escapeHtml,
+  formatDateUTC,
+  renderLayout,
+  renderText,
+  type SafeText,
+} from '../render.js';
 import { fetchUserMap } from './lib/history.js';
 
 const { mlString } = dal;
@@ -21,7 +28,7 @@ type RecentListItem = {
   primaryLabel: string;
   primaryHref?: string;
   dateLabel: string;
-  summary?: string;
+  summary?: SafeText | string;
   revUser: string | null;
   revTags: string[];
   actions?: RecentListAction[];
@@ -33,7 +40,7 @@ const parseRecentLimit = (limitQuery: unknown) => {
 };
 
 const resolveRevSummary = (value: Record<string, string> | null) =>
-  mlString.resolve('en', value ?? null)?.str ?? '';
+  resolveSafeText(mlString.resolve, 'en', value, '');
 
 const renderRecentList = (
   items: RecentListItem[],
@@ -61,7 +68,7 @@ const renderRecentList = (
       );
       const tags = visibleTags.length ? `· ${escapeHtml(visibleTags.join(', '))}` : '';
       const summary = item.summary
-        ? `<div class="change-summary">${escapeHtml(item.summary)}</div>`
+        ? `<div class="change-summary">${renderText(item.summary)}</div>`
         : '';
       const primaryLabel = escapeHtml(item.primaryLabel);
       const primaryHtml = item.primaryHref
@@ -222,7 +229,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const pages = pageResults.map(p => ({
       slug: p.slug,
-      title: mlString.resolve('en', p.title ?? null)?.str ?? p.slug,
+      title: resolveSafeText(mlString.resolve, 'en', p.title, p.slug),
     }));
 
     const totalPages = Math.max(Math.ceil(total / per), 1);
@@ -234,7 +241,7 @@ export const registerToolRoutes = (app: Express) => {
     const listItems = pages
       .map(
         item =>
-          `<li><a href="/${escapeHtml(item.slug)}">${escapeHtml(item.title)}</a></li>`
+          `<li><a href="/${escapeHtml(item.slug)}">${renderText(item.title)}</a></li>`
       )
       .join('');
 

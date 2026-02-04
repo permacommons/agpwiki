@@ -21,6 +21,39 @@ export const escapeHtml = (value: string) =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+/**
+ * SafeText represents HTML-safe text. It may include HTML entities or special
+ * characters, but it must not contain HTML tags.
+ * It should be rendered without additional escaping to avoid double-encoding
+ * when entities are already encoded.
+ */
+export type SafeText = { __safeText: true; value: string };
+
+/**
+ * Wrap a string that is HTML-safe (no tags; may include entities or special characters).
+ */
+export const toSafeText = (value: string): SafeText => ({
+  __safeText: true,
+  value,
+});
+
+export const isSafeText = (value: unknown): value is SafeText =>
+  typeof value === 'object' && value !== null && (value as SafeText).__safeText === true;
+
+/**
+ * Render SafeText without escaping (entities, if present, remain as-is).
+ */
+export const renderSafeText = (value: SafeText) => value.value;
+
+/**
+ * Render any text as HTML-safe, escaping only when needed.
+ */
+export const renderText = (value: SafeText | string) =>
+  isSafeText(value) ? renderSafeText(value) : escapeHtml(value);
+
+export const concatSafeText = (...parts: Array<SafeText | string>) =>
+  toSafeText(parts.map(part => renderText(part)).join(''));
+
 export const formatDateUTC = (value: Date | string | null | undefined) => {
   if (!value) return '';
   const date = value instanceof Date ? value : new Date(value);
@@ -37,6 +70,7 @@ export const renderUnifiedDiff = (diffText: string) => {
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i];
     const isOld = line.startsWith('-') && !line.startsWith('---');
+    const isAdded = line.startsWith('+') && !line.startsWith('+++');
 
     if (isOld && i + 1 < lines.length) {
       const nextLine = lines[i + 1];
@@ -64,11 +98,33 @@ export const renderUnifiedDiff = (diffText: string) => {
           })
           .join('');
 
-        rendered.push(`-${oldHtml}`);
-        rendered.push(`+${newHtml}`);
+        rendered.push(
+          `<span class="diff-line removed"><span class="diff-sign">-</span><span class="diff-text">${oldHtml}</span></span>`
+        );
+        rendered.push(
+          `<span class="diff-line added"><span class="diff-sign">+</span><span class="diff-text">${newHtml}</span></span>`
+        );
         i += 1;
         continue;
       }
+    }
+
+    if (isOld) {
+      rendered.push(
+        `<span class="diff-line removed"><span class="diff-sign">-</span><span class="diff-text">${escapeHtml(
+          line.slice(1)
+        )}</span></span>`
+      );
+      continue;
+    }
+
+    if (isAdded) {
+      rendered.push(
+        `<span class="diff-line added"><span class="diff-sign">+</span><span class="diff-text">${escapeHtml(
+          line.slice(1)
+        )}</span></span>`
+      );
+      continue;
     }
 
     rendered.push(escapeHtml(line));
@@ -253,7 +309,7 @@ export interface LanguageOption {
 }
 
 export const renderLayout = (options: {
-  title: string;
+  title: SafeText | string;
   bodyHtml: string;
   labelHtml?: string;
   sidebarHtml?: string;
@@ -272,8 +328,10 @@ export const renderLayout = (options: {
     locale = 'en',
     languageOptions = [],
   } = options;
+  const titleHtml = renderText(title);
+  const safeTitle = new hbs.handlebars.SafeString(titleHtml);
   return layoutTemplate({
-    title,
+    title: safeTitle,
     bodyHtml,
     labelHtml,
     sidebarHtml,

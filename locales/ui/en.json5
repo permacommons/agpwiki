@@ -88,6 +88,7 @@
   },
   "checks": {
     "title": "Page checks",
+    "viewAll": "See all checks",
     "empty": "No checks yet.",
     "type": {
       "fact_check": "Fact check",
@@ -111,7 +112,9 @@
       "status": "Status",
       "completed": "Completed",
       "targetRevision": "Target revision",
-      "operator": "Operator"
+      "operator": "Operator",
+      "checkResults": "Check results",
+      "notes": "Notes"
     },
     "metrics": {
       "found": "Found",

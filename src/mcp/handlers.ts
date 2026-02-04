@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Driver } from '@citeproc-rs/wasm';
-import { createTwoFilesPatch, diffLines, diffWordsWithSpace } from 'diff';
+import { createTwoFilesPatch, diffLines } from 'diff';
 import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
@@ -189,6 +189,16 @@ export interface CitationDeleteResult {
   deleted: boolean;
 }
 
+export interface PageCheckDeleteInput {
+  checkId: string;
+  revSummary: Record<string, string>;
+}
+
+export interface PageCheckDeleteResult {
+  id: string;
+  deleted: boolean;
+}
+
 export interface PageCheckWriteInput {
   slug: string;
   type: string;
@@ -278,7 +288,6 @@ export interface WikiPageDiffResult {
 
 export interface WikiPageFieldDiff {
   unifiedDiff: string;
-  wordDiff: Array<{ type: 'added' | 'removed' | 'unchanged'; value: string }>;
   stats: {
     addedLines: number;
     removedLines: number;
@@ -355,6 +364,33 @@ export interface CitationDiffResult {
     key: WikiPageFieldDiff;
     data: WikiPageFieldDiff;
   };
+}
+
+export interface PageCheckDiffInput {
+  checkId: string;
+  fromRevId: string;
+  toRevId?: string;
+  lang?: string;
+}
+
+export interface PageCheckDiffResult {
+  checkId: string;
+  fromRevId: string;
+  toRevId: string;
+  language: string;
+  from: {
+    revId: string;
+    revDate: Date;
+    revUser: string | null | undefined;
+    revTags: string[] | null | undefined;
+  };
+  to: {
+    revId: string;
+    revDate: Date;
+    revUser: string | null | undefined;
+    revTags: string[] | null | undefined;
+  };
+  fields: Record<string, WikiPageFieldDiff>;
 }
 
 export interface CitationQueryInput {
@@ -534,13 +570,6 @@ const buildFieldDiff = (
     '',
     { context: 2 }
   );
-  const wordDiff = diffWordsWithSpace(fromValue, toValue).map(part => ({
-    type: (part.added ? 'added' : part.removed ? 'removed' : 'unchanged') as
-      | 'added'
-      | 'removed'
-      | 'unchanged',
-    value: part.value,
-  }));
   const lineDiff = diffLines(fromNormalized, toNormalized);
   let addedLines = 0;
   let removedLines = 0;
@@ -558,10 +587,30 @@ const buildFieldDiff = (
 
   return {
     unifiedDiff,
-    wordDiff,
     stats: { addedLines, removedLines },
   };
 };
+
+const toRevisionMeta = (rev: {
+  _revID?: string | null;
+  _revDate?: Date | null;
+  _revUser?: string | null;
+  _revTags?: string[] | null;
+}) => ({
+  revId: rev._revID ?? '',
+  revDate: rev._revDate ?? new Date(0),
+  revUser: rev._revUser ?? null,
+  revTags: rev._revTags ?? null,
+});
+
+const buildDiffFields = <T extends string>(
+  fields: Array<{ key: T; from: string; to: string }>
+): Record<T, WikiPageFieldDiff> =>
+  Object.fromEntries(
+    fields.map(field => [field.key, buildFieldDiff(field.key, field.from, field.to)])
+  ) as Record<T, WikiPageFieldDiff>;
+
+const stringifyJsonValue = (value: unknown) => JSON.stringify(value ?? null, null, 2);
 
 const ensureNonEmptyString = (
   value: string | null | undefined,
@@ -1900,22 +1949,12 @@ export async function diffWikiPageRevisions(
     fromRevId: fromRev._revID,
     toRevId: toRev._revID,
     language: lang,
-    from: {
-      revId: fromRev._revID,
-      revDate: fromRev._revDate,
-      revUser: fromRev._revUser ?? null,
-      revTags: fromRev._revTags ?? null,
-    },
-    to: {
-      revId: toRev._revID,
-      revDate: toRev._revDate,
-      revUser: toRev._revUser ?? null,
-      revTags: toRev._revTags ?? null,
-    },
-    fields: {
-      title: buildFieldDiff('title', fromTitle, toTitle),
-      body: buildFieldDiff('body', fromBody, toBody),
-    },
+    from: toRevisionMeta(fromRev),
+    to: toRevisionMeta(toRev),
+    fields: buildDiffFields([
+      { key: 'title', from: fromTitle, to: toTitle },
+      { key: 'body', from: fromBody, to: toBody },
+    ]),
   };
 }
 
@@ -2305,6 +2344,65 @@ export async function readPageCheckRevision(
   };
 }
 
+export async function diffPageCheckRevisions(
+  dalInstance: DataAccessLayer,
+  { checkId, fromRevId, toRevId, lang = 'en' }: PageCheckDiffInput
+): Promise<PageCheckDiffResult> {
+  ensureOptionalLanguage(lang, 'lang');
+  const check = await findCurrentPageCheckById(checkId);
+  if (!check) {
+    throw new NotFoundError(`Page check not found: ${checkId}`, {
+      checkId,
+    });
+  }
+
+  const fromRev = await fetchPageCheckRevisionByRevId(dalInstance, check.id, fromRevId);
+  if (!fromRev) {
+    throw new NotFoundError(`Revision not found: ${fromRevId}`, {
+      revId: fromRevId,
+    });
+  }
+
+  const toRevisionId = toRevId ?? check._revID;
+  const toRev = await fetchPageCheckRevisionByRevId(dalInstance, check.id, toRevisionId);
+  if (!toRev) {
+    throw new NotFoundError(`Revision not found: ${toRevisionId}`, {
+      revId: toRevisionId,
+    });
+  }
+
+  const fromResults = mlString.resolve(lang, fromRev.checkResults ?? null)?.str ?? '';
+  const toResults = mlString.resolve(lang, toRev.checkResults ?? null)?.str ?? '';
+  const fromNotes = mlString.resolve(lang, fromRev.notes ?? null)?.str ?? '';
+  const toNotes = mlString.resolve(lang, toRev.notes ?? null)?.str ?? '';
+
+  return {
+    checkId: check.id,
+    fromRevId: fromRev._revID,
+    toRevId: toRev._revID,
+    language: lang,
+    from: toRevisionMeta(fromRev),
+    to: toRevisionMeta(toRev),
+    fields: buildDiffFields([
+      { key: 'type', from: fromRev.type ?? '', to: toRev.type ?? '' },
+      { key: 'status', from: fromRev.status ?? '', to: toRev.status ?? '' },
+      { key: 'checkResults', from: fromResults, to: toResults },
+      { key: 'notes', from: fromNotes, to: toNotes },
+      {
+        key: 'metrics',
+        from: stringifyJsonValue(fromRev.metrics ?? null),
+        to: stringifyJsonValue(toRev.metrics ?? null),
+      },
+      { key: 'targetRevId', from: fromRev.targetRevId ?? '', to: toRev.targetRevId ?? '' },
+      {
+        key: 'completedAt',
+        from: fromRev.completedAt?.toISOString() ?? '',
+        to: toRev.completedAt?.toISOString() ?? '',
+      },
+    ]),
+  };
+}
+
 export async function diffCitationRevisions(
   dalInstance: DataAccessLayer,
   { key, fromRevId, toRevId }: CitationDiffInput
@@ -2340,22 +2438,12 @@ export async function diffCitationRevisions(
     citationId: citation.id,
     fromRevId: fromRev._revID,
     toRevId: toRev._revID,
-    from: {
-      revId: fromRev._revID,
-      revDate: fromRev._revDate,
-      revUser: fromRev._revUser ?? null,
-      revTags: fromRev._revTags ?? null,
-    },
-    to: {
-      revId: toRev._revID,
-      revDate: toRev._revDate,
-      revUser: toRev._revUser ?? null,
-      revTags: toRev._revTags ?? null,
-    },
-    fields: {
-      key: buildFieldDiff('key', fromKey, toKey),
-      data: buildFieldDiff('data', fromData, toData),
-    },
+    from: toRevisionMeta(fromRev),
+    to: toRevisionMeta(toRev),
+    fields: buildDiffFields([
+      { key: 'key', from: fromKey, to: toKey },
+      { key: 'data', from: fromData, to: toData },
+    ]),
   };
 }
 
@@ -2485,6 +2573,32 @@ export async function deleteCitation(
   return {
     id: citation.id,
     key: citation.key,
+    deleted: true,
+  };
+}
+
+export async function deletePageCheck(
+  _dalInstance: DataAccessLayer,
+  { checkId, revSummary }: PageCheckDeleteInput,
+  userId: string
+): Promise<PageCheckDeleteResult> {
+  const errors = new ValidationCollector('Invalid page check delete input.');
+  ensureNonEmptyString(checkId, 'checkId', errors);
+  ensureNonEmptyString(userId, 'userId', errors);
+  requireRevSummary(revSummary, errors);
+  errors.throwIfAny();
+
+  const check = await findCurrentPageCheckById(checkId);
+  if (!check) {
+    throw new NotFoundError(`Page check not found: ${checkId}`, {
+      checkId,
+    });
+  }
+
+  await check.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+
+  return {
+    id: check.id,
     deleted: true,
   };
 }

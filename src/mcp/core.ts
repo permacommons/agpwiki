@@ -50,14 +50,17 @@ import {
   createPageCheck,
   createWikiPage,
   deleteCitation,
+  deletePageCheck,
   deleteWikiPage,
   diffCitationRevisions,
+  diffPageCheckRevisions,
   diffWikiPageRevisions,
   listCitationRevisions,
   listPageCheckRevisions,
   listPageChecks,
   listWikiPageResources,
   listWikiPageRevisions,
+  type PageCheckDeleteInput,
   type PageCheckUpdateInput,
   type PageCheckWriteInput,
   queryCitations,
@@ -847,6 +850,26 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   );
 
   server.registerTool(
+    'page_check_diffRevisions',
+    {
+      title: 'Diff Page Check Revisions',
+      description: 'Generate a unified diff between two page check revisions.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        checkId: uuidSchema,
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
+        lang: languageTagSchema.optional,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await diffPageCheckRevisions(dal, args);
+      return payload;
+    })
+  );
+
+  server.registerTool(
     'wiki_applyPatch',
     {
       title: 'Apply Wiki Patch',
@@ -1038,11 +1061,31 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
-  const adminTools = { wikiDeletePageTool, citationDeleteTool, blogDeleteTool };
+  const pageCheckDeleteTool = server.registerTool(
+    'page_check_delete',
+    {
+      title: 'Delete Page Check',
+      description:
+        'Soft-delete a page check and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove duplicate check"}.',
+      inputSchema: {
+        checkId: uuidSchema,
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: PageCheckDeleteInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await deletePageCheck(dal, { ...args }, userId);
+      return payload;
+    })
+  );
+
+  const adminTools = { wikiDeletePageTool, citationDeleteTool, pageCheckDeleteTool, blogDeleteTool };
 
   if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
+    pageCheckDeleteTool.disable();
   }
   if (!hasRole(userRoles, BLOG_ADMIN_ROLE)) {
     blogDeleteTool.disable();

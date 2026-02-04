@@ -10,6 +10,7 @@ import {
   formatCitationLabel,
   formatCitationPageTitle,
 } from '../lib/citation.js';
+import { resolveSafeText } from '../lib/safe-text.js';
 import Citation from '../models/citation.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { renderRevisionDiff } from './lib/diff.js';
@@ -27,7 +28,7 @@ const normalizeField = (value: unknown) => {
 };
 
 const resolveSummary = (value: Record<string, string> | null) =>
-  mlString.resolve('en', value ?? null)?.str ?? '';
+  resolveSafeText(mlString.resolve, 'en', value, '');
 
 const findCurrentCitationByKey = async (key: string) =>
   Citation.filterWhere({
