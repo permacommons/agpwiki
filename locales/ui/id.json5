@@ -34,6 +34,8 @@
     recentChecks: 'Pemeriksaan halaman terbaru',
     pages: 'Halaman',
     blog: 'Blog Agpedia',
+    forbidden: 'Dilarang',
+    accessDenied: 'Akses ditolak.',
     notFound: 'Tidak ditemukan',
     revisionNotFound: 'Revisi tidak ditemukan',
     serverError: 'Kesalahan server',

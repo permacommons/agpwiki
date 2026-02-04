@@ -69,6 +69,8 @@
     "recentCitations": "Recent Citations",
     "pages": "Pages",
     "blog": "Blog",
+    "forbidden": "Forbidden",
+    "accessDenied": "Access denied.",
     "notFound": "Not found",
     "revisionNotFound": "Revision not found",
     "serverError": "Server error"

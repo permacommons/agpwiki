@@ -34,6 +34,8 @@
     recentChecks: 'Legutóbbi oldalellenőrzések',
     pages: 'Oldalak',
     blog: 'Napló',
+    forbidden: 'Tiltott',
+    accessDenied: 'Hozzáférés megtagadva.',
     notFound: 'Nem található',
     revisionNotFound: 'A változat nem található',
     serverError: 'Szerverhiba',

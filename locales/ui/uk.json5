@@ -34,6 +34,8 @@
     recentChecks: 'Останні перевірки сторінок',
     pages: 'Сторінки',
     blog: 'Блог',
+    forbidden: 'Заборонено',
+    accessDenied: 'Доступ заборонено.',
     notFound: 'Не знайдено',
     revisionNotFound: 'Ревізію не знайдено',
     serverError: 'Помилка сервера',

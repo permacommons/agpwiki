@@ -34,6 +34,8 @@
     recentChecks: 'সাম্প্রতিক পৃষ্ঠা যাচাই',
     pages: 'পৃষ্ঠা',
     blog: 'ব্লগ',
+    forbidden: 'নিষিদ্ধ',
+    accessDenied: 'অ্যাক্সেস প্রত্যাখ্যান করা হয়েছে।',
     notFound: 'পাওয়া যায়নি',
     revisionNotFound: 'রিভিশন পাওয়া যায়নি',
     serverError: 'সার্ভার ত্রুটি',

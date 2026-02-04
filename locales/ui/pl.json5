@@ -33,6 +33,8 @@
     recentChecks: 'Najnowsze kontrole strony',
     pages: 'Strony',
     blog: 'Dziennik',
+    forbidden: 'Zabronione',
+    accessDenied: 'Dostęp odmówiony.',
     notFound: 'Nie znaleziono',
     revisionNotFound: 'Nie znaleziono wersji',
     serverError: 'Błąd serwera',

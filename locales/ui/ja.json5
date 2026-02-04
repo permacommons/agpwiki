@@ -33,6 +33,8 @@
     recentChecks: '最近のページチェック',
     pages: 'ページ',
     blog: 'ブログ',
+    forbidden: '禁止',
+    accessDenied: 'アクセスが拒否されました。',
     notFound: '見つかりません',
     revisionNotFound: 'リビジョンが見つかりません',
     serverError: 'サーバーエラー',

@@ -34,6 +34,8 @@
     recentChecks: 'हाल के पृष्ठ जाँच',
     pages: 'पेज',
     blog: 'ब्लॉग',
+    forbidden: 'निषिद्ध',
+    accessDenied: 'पहुंच अस्वीकृत है।',
     notFound: 'नहीं मिला',
     revisionNotFound: 'संशोधन नहीं मिला',
     serverError: 'सर्वर त्रुटि',

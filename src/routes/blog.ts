@@ -84,7 +84,7 @@ export const registerBlogRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render blog list:', message);
     }
   });
@@ -104,7 +104,7 @@ export const registerBlogRoutes = (app: Express) => {
       } as Record<string, unknown>).first();
 
       if (!post) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -123,7 +123,7 @@ export const registerBlogRoutes = (app: Express) => {
 
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : post;
       if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send('Revision not found');
+        res.status(404).type('text').send(req.t('page.revisionNotFound'));
         return;
       }
 
@@ -223,7 +223,7 @@ export const registerBlogRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render blog post:', message);
     }
   });

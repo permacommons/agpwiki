@@ -111,7 +111,7 @@ export const registerPageRoutes = (app: Express) => {
   app.get(/^\/(.+)\/checks$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug)) {
-      res.status(404).type('text').send('Not found');
+      res.status(404).type('text').send(req.t('page.notFound'));
       return;
     }
 
@@ -120,7 +120,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const page = await resolvePageBySlug(slug);
       if (!page) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -179,7 +179,7 @@ export const registerPageRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render checks list:', message);
     }
   });
@@ -192,7 +192,7 @@ export const registerPageRoutes = (app: Express) => {
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
 
     if (isBlockedSlug(slug)) {
-      res.status(404).type('text').send('Not found');
+      res.status(404).type('text').send(req.t('page.notFound'));
       return;
     }
 
@@ -201,7 +201,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const page = await resolvePageBySlug(slug);
       if (!page) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -214,7 +214,7 @@ export const registerPageRoutes = (app: Express) => {
       } as Record<string, unknown>).first();
 
       if (!check) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -232,7 +232,7 @@ export const registerPageRoutes = (app: Express) => {
       };
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : check;
       if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send('Revision not found');
+        res.status(404).type('text').send(req.t('page.revisionNotFound'));
         return;
       }
 
@@ -411,7 +411,7 @@ export const registerPageRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render check detail:', message);
     }
   });
@@ -424,7 +424,7 @@ export const registerPageRoutes = (app: Express) => {
     const formatParam = typeof req.query.format === 'string' ? req.query.format : undefined;
 
     if (isBlockedSlug(slug)) {
-      res.status(404).type('text').send('Not found');
+      res.status(404).type('text').send(req.t('page.notFound'));
       return;
     }
 
@@ -434,7 +434,7 @@ export const registerPageRoutes = (app: Express) => {
       const page = await resolvePageBySlug(slug);
 
       if (!page) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -450,7 +450,7 @@ export const registerPageRoutes = (app: Express) => {
         .run();
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : page;
       if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send('Revision not found');
+        res.status(404).type('text').send(req.t('page.revisionNotFound'));
         return;
       }
 
@@ -585,7 +585,7 @@ export const registerPageRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render wiki page:', message);
     }
   });

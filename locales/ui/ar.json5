@@ -33,6 +33,8 @@
     recentChecks: 'عمليات فحص الصفحات الأخيرة',
     pages: 'صفحات',
     blog: 'مدونة',
+    forbidden: 'ممنوع',
+    accessDenied: 'تم رفض الوصول.',
     notFound: 'غير موجود',
     revisionNotFound: 'مراجعة غير موجودة',
     serverError: 'خطأ في الخادم',

@@ -150,7 +150,13 @@ export const registerAccountRequestRoutes = (app: Express) => {
     const roles = await getUserRoles(dalInstance, session.userId);
     if (!hasRole(roles, SITE_ADMIN_ROLE)) {
       res.status(403).type('html').send(
-        renderToolLayout(req.t, res, 'Forbidden', '<div class="tool-page"><p>Access denied.</p></div>', true)
+        renderToolLayout(
+          req.t,
+          res,
+          req.t('page.forbidden'),
+          `<div class="tool-page"><p>${req.t('page.accessDenied')}</p></div>`,
+          true
+        )
       );
       return;
     }
@@ -214,7 +220,13 @@ export const registerAccountRequestRoutes = (app: Express) => {
     const roles = await getUserRoles(dalInstance, session.userId);
     if (!hasRole(roles, SITE_ADMIN_ROLE)) {
       res.status(403).type('html').send(
-        renderToolLayout(req.t, res, 'Forbidden', '<div class="tool-page"><p>Access denied.</p></div>', true)
+        renderToolLayout(
+          req.t,
+          res,
+          req.t('page.forbidden'),
+          `<div class="tool-page"><p>${req.t('page.accessDenied')}</p></div>`,
+          true
+        )
       );
       return;
     }

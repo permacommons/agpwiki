@@ -33,6 +33,8 @@
     recentChecks: '最近的頁面檢查',
     pages: '頁面',
     blog: '網誌',
+    forbidden: '禁止',
+    accessDenied: '訪問被拒絕。',
     notFound: '未找到',
     revisionNotFound: '未找到修訂版',
     serverError: '伺服器錯誤',

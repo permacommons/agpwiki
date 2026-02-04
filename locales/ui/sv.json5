@@ -34,6 +34,8 @@
     recentChecks: 'Senaste sidkontroller',
     pages: 'Sidor',
     blog: 'Blogg',
+    forbidden: 'Förbjudet',
+    accessDenied: 'Åtkomst nekad.',
     notFound: 'Hittades inte',
     revisionNotFound: 'Revision hittades inte',
     serverError: 'Serverfel',

@@ -33,6 +33,8 @@
     recentChecks: 'Verificações de página recentes',
     pages: 'Páginas',
     blog: 'Blogue',
+    forbidden: 'Proibido',
+    accessDenied: 'Acesso negado.',
     notFound: 'Não encontrado',
     revisionNotFound: 'Revisão não encontrada',
     serverError: 'Erro do servidor',

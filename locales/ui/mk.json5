@@ -34,6 +34,8 @@
     recentChecks: 'Неодамнешни проверки на страница',
     pages: 'Страници',
     blog: 'Блог',
+    forbidden: 'Забрането',
+    accessDenied: 'Пристапот е одбиен.',
     notFound: 'Не е пронајдено',
     revisionNotFound: 'Ревизијата не е пронајдена',
     serverError: 'Грешка на серверот',

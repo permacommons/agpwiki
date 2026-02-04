@@ -34,6 +34,8 @@
     recentChecks: 'حال ہی کے صفحہ جانچ',
     pages: 'صفحات',
     blog: 'بلاگ',
+    forbidden: 'ممنوع',
+    accessDenied: 'رسائی مسترد کر دی گئی۔',
     notFound: 'نہیں ملا',
     revisionNotFound: 'نظرثانی نہیں ملی',
     serverError: 'سرور کی خرابی',

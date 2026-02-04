@@ -34,6 +34,8 @@
     recentChecks: 'Nedavna preverjanja strani',
     pages: 'Strani',
     blog: 'Blogovni del',
+    forbidden: 'Prepovedano',
+    accessDenied: 'Dostop zavrnjen.',
     notFound: 'Ni najdeno',
     revisionNotFound: 'Revizija ni najdena',
     serverError: 'Napaka strežnika',

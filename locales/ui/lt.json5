@@ -34,6 +34,8 @@
     recentChecks: 'Naujausios puslapio patikros',
     pages: 'Puslapiai',
     blog: 'Tinklaraštis',
+    forbidden: 'Draudžiama',
+    accessDenied: 'Prieiga atmesta.',
     notFound: 'Nerasta',
     revisionNotFound: 'Versija nerasta',
     serverError: 'Serverio klaida',

@@ -33,6 +33,8 @@
     recentChecks: '최근 페이지 점검',
     pages: '문서',
     blog: '블로그',
+    forbidden: '접근 금지',
+    accessDenied: '접근이 거부되었습니다.',
     notFound: '찾을 수 없음',
     revisionNotFound: '판을 찾을 수 없음',
     serverError: '서버 오류',

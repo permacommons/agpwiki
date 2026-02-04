@@ -34,6 +34,8 @@
     recentChecks: 'Nedávne kontroly stránok',
     pages: 'Stránky',
     blog: 'Blogová sekcia',
+    forbidden: 'Zakázané',
+    accessDenied: 'Prístup odmietnutý.',
     notFound: 'Nenájdené',
     revisionNotFound: 'Revízia sa nenašla',
     serverError: 'Chyba servera',

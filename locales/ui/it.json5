@@ -33,6 +33,8 @@
     recentChecks: 'Verifiche pagina recenti',
     pages: 'Pagine',
     blog: 'Diario',
+    forbidden: 'Vietato',
+    accessDenied: 'Accesso negato.',
     notFound: 'Non trovato',
     revisionNotFound: 'Revisione non trovata',
     serverError: 'Errore del server',

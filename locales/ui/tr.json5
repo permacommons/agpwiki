@@ -33,6 +33,8 @@
     recentChecks: 'Son sayfa kontrolleri',
     pages: 'Sayfalar',
     blog: 'Blog bölümü',
+    forbidden: 'Yasak',
+    accessDenied: 'Erişim reddedildi.',
     notFound: 'Bulunamadı',
     revisionNotFound: 'Revizyon bulunamadı',
     serverError: 'Sunucu hatası',

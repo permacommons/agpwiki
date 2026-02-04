@@ -34,6 +34,8 @@
     recentChecks: 'Neueste Seitenprüfungen',
     pages: 'Seiten',
     blog: 'Blogbereich',
+    forbidden: 'Verboten',
+    accessDenied: 'Zugriff verweigert.',
     notFound: 'Nicht gefunden',
     revisionNotFound: 'Revision nicht gefunden',
     serverError: 'Serverfehler',

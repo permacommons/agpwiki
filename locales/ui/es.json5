@@ -33,6 +33,8 @@
     recentChecks: 'Chequeos de página recientes',
     pages: 'Páginas',
     blog: 'Bitácora',
+    forbidden: 'Prohibido',
+    accessDenied: 'Acceso denegado.',
     notFound: 'No encontrado',
     revisionNotFound: 'Revisión no encontrada',
     serverError: 'Error del servidor',

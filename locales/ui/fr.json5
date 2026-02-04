@@ -34,6 +34,8 @@
     recentChecks: 'Contrôles de page récents',
     pages: 'Articles',
     blog: 'Carnet',
+    forbidden: 'Interdit',
+    accessDenied: 'Accès refusé.',
     notFound: 'Non trouvé',
     revisionNotFound: 'Révision non trouvée',
     serverError: 'Erreur serveur',

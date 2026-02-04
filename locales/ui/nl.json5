@@ -34,6 +34,8 @@
     recentChecks: 'Recente paginacontroles',
     pages: "Pagina's",
     blog: 'Bloggedeelte',
+    forbidden: 'Verboden',
+    accessDenied: 'Toegang geweigerd.',
     notFound: 'Niet gevonden',
     revisionNotFound: 'Versie niet gevonden',
     serverError: 'Serverfout',

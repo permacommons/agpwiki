@@ -52,7 +52,7 @@ export const registerCitationRoutes = (app: Express) => {
     const formatParam = typeof req.query.format === 'string' ? req.query.format : undefined;
 
     if (!key) {
-      res.status(404).type('text').send('Not found');
+      res.status(404).type('text').send(req.t('page.notFound'));
       return;
     }
 
@@ -61,7 +61,7 @@ export const registerCitationRoutes = (app: Express) => {
 
       const citation = await findCurrentCitationByKey(key);
       if (!citation) {
-        res.status(404).type('text').send('Not found');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
@@ -81,7 +81,7 @@ export const registerCitationRoutes = (app: Express) => {
 
       const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : citation;
       if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send('Revision not found');
+        res.status(404).type('text').send(req.t('page.revisionNotFound'));
         return;
       }
 
@@ -210,7 +210,7 @@ export const registerCitationRoutes = (app: Express) => {
       res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      res.status(500).type('text').send('Server error');
+      res.status(500).type('text').send(req.t('page.serverError'));
       console.error('Failed to render citation:', message);
     }
   });
