@@ -65,6 +65,7 @@
   },
   "page": {
     "recentChanges": "Recent Changes",
+    "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
     "pages": "Pages",
     "blog": "Blog",
@@ -132,7 +133,9 @@
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",
+    "recentChecksDescription": "Latest page checks submitted across the wiki.",
     "recentCitationsDescription": "Latest edits to citation entries.",
+    "relatedLabel": "Related",
     "seeAlso": "See also: <a href=\"{{url}}\">{{label}}</a>",
     "pagesDescription": "Encyclopedia pages ({{total}} total).",
     "previous": "Previous",

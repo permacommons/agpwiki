@@ -298,6 +298,32 @@ pre.diff ins {
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
+.tool-related {
+  margin: 0.75rem 0 1rem;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  align-items: center;
+  font-size: 0.95rem;
+}
+.tool-related-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+.tool-related-links a {
+  color: var(--ink);
+  text-decoration: underline;
+}
+.tool-related-links a:hover {
+  text-decoration: underline;
+}
 .citation-card {
   background: var(--panel);
   border: 1px solid var(--rule);
