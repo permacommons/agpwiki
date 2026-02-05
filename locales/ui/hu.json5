@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Friss változtatások',
     recentCitations: 'Friss idézetek',
+    recentClaims: 'Legutóbbi állítások',
     recentChecks: 'Legutóbbi oldalellenőrzések',
     pages: 'Oldalak',
     blog: 'Napló',
@@ -103,6 +104,7 @@
     diff: 'Eltérés',
     recentChangesDescription: 'Legújabb szerkesztések a teljes wikiben.',
     recentCitationsDescription: 'Legújabb szerkesztések az idézetbejegyzéseken.',
+    recentClaimsDescription: 'A hivatkozási állítások legutóbbi módosításai.',
     recentChecksDescription: 'Az egész wikin beküldött legutóbbi oldalellenőrzések.',
     relatedLabel: 'Kapcsolódó',
     seeAlso: 'Lásd még: <a href="{{url}}">{{label}}</a>',

@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'हाल के बदलाव',
     recentCitations: 'हाल के उद्धरण',
+    recentClaims: 'हालिया दावे',
     recentChecks: 'हाल के पृष्ठ जाँच',
     pages: 'पेज',
     blog: 'ब्लॉग',
@@ -103,6 +104,7 @@
     diff: 'अंतर',
     recentChangesDescription: 'पूरे विकि में हाल के संपादन।',
     recentCitationsDescription: 'उद्धरण प्रविष्टियों में हाल के संपादन।',
+    recentClaimsDescription: 'उद्धरण दावों में नवीनतम संशोधन।',
     recentChecksDescription: 'पूरे विकि में सबमिट की गई हाल की पृष्ठ जाँच।',
     relatedLabel: 'संबंधित',
     seeAlso: 'यह भी देखें: <a href="{{url}}">{{label}}</a>',

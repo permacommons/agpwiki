@@ -37,11 +37,17 @@ const { mlString } = dal;
 
 const citationKeyRegex = /@([\w][\w:.#$%&\-+?<>~/]*)/g;
 
+const normalizeCitationKey = (value: string) => {
+  const separatorIndex = value.indexOf(':');
+  if (separatorIndex <= 0) return value;
+  return value.slice(0, separatorIndex);
+};
+
 const extractCitationKeys = (value: string) => {
   const keys = new Set<string>();
   if (!value) return keys;
   for (const match of value.matchAll(citationKeyRegex)) {
-    keys.add(match[1]);
+    keys.add(normalizeCitationKey(match[1]));
   }
   return keys;
 };

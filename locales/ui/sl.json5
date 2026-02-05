@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Nedavne spremembe',
     recentCitations: 'Nedavni citati',
+    recentClaims: 'Nedavne trditve',
     recentChecks: 'Nedavna preverjanja strani',
     pages: 'Strani',
     blog: 'Blogovni del',
@@ -103,6 +104,7 @@
     diff: 'Razlika',
     recentChangesDescription: 'Najnovejša urejanja po celotni wiki zbirki.',
     recentCitationsDescription: 'Najnovejša urejanja zapisov citatov.',
+    recentClaimsDescription: 'Najnovejše spremembe trditev v citatih.',
     recentChecksDescription: 'Najnovejša preverjanja strani, poslana po celotnem wikiju.',
     relatedLabel: 'Povezano',
     seeAlso: 'Glej tudi: <a href="{{url}}">{{label}}</a>',

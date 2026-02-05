@@ -63,10 +63,57 @@
     "citation": "CITATION — REFERENCE ENTRY",
     "blogPost": "BLOG POST — FROM THE AGPEDIA TEAM"
   },
+  "citation": {
+    "claimTitle": "{{claimId}} · {{key}}",
+    "claimsTitle": "Claims",
+    "rawCsl": "Raw CSL JSON",
+    "revisionMeta": "Revision {{revId}} · {{date}}",
+    "revisionMetaNoDate": "Revision {{revId}}",
+    "field": {
+      "key": "Key",
+      "authors": "Authors",
+      // "Issued" is the publication/release date of the cited source.
+      "issued": "Issued",
+      "type": "Type",
+      // "Container" is the larger work the source appears in (journal, book, site).
+      "container": "Container",
+      "publisher": "Publisher",
+      // The location of the publisher (city/region), not the URL.
+      "publisherPlace": "Publisher place",
+      "volume": "Volume",
+      "issue": "Issue",
+      "pages": "Pages",
+      "edition": "Edition",
+      "doi": "DOI",
+      "url": "URL",
+      "citation": "Citation",
+      "claimId": "Claim ID",
+      // "Assertion" is the claim being supported by the citation.
+      "assertion": "Assertion",
+      // "Quote" is a verbatim excerpt from the source (may include ellipses).
+      "quote": "Quote",
+      // Language of the source quote; not the article language.
+      "quoteLanguage": "Quote language",
+      // "Locator" indicates where the quoted text appears (page/section/etc.).
+      "locator": "Locator"
+    },
+    "meta": {
+      "locator": "Locator: {{locator}}",
+      "quoteLanguage": "Quote language: {{lang}}"
+    },
+    "diff": {
+      "claimId": "Claim ID: {{value}}",
+      "assertion": "Assertion: {{value}}",
+      "quote": "Quote: {{value}}",
+      "quoteLanguage": "Quote language: {{value}}",
+      "locator": "Locator: {{value}}"
+    }
+  },
   "page": {
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
+    "recentClaims": "Recent Claims",
     "pages": "Pages",
     "blog": "Blog",
     "forbidden": "Forbidden",
@@ -139,6 +186,7 @@
     "recentChangesDescription": "Latest edits across the wiki.",
     "recentChecksDescription": "Latest page checks submitted across the wiki.",
     "recentCitationsDescription": "Latest edits to citation entries.",
+    "recentClaimsDescription": "Latest edits to citation claims.",
     "relatedLabel": "Related",
     "seeAlso": "See also: <a href=\"{{url}}\">{{label}}</a>",
     "pagesDescription": "Encyclopedia pages ({{total}} total).",

@@ -30,6 +30,7 @@
   page: {
     recentChanges: 'Modifiche recenti',
     recentCitations: 'Citazioni recenti',
+    recentClaims: 'Affermazioni recenti',
     recentChecks: 'Verifiche pagina recenti',
     pages: 'Pagine',
     blog: 'Diario',
@@ -102,6 +103,7 @@
     diff: 'Differenza',
     recentChangesDescription: 'Ultime modifiche in tutto il wiki.',
     recentCitationsDescription: 'Ultime modifiche alle voci di citazione.',
+    recentClaimsDescription: 'Ultime modifiche alle affermazioni delle citazioni.',
     recentChecksDescription: 'Ultime verifiche pagina inviate in tutto il wiki.',
     relatedLabel: 'Correlati',
     seeAlso: 'Vedi anche: <a href="{{url}}">{{label}}</a>',

@@ -30,6 +30,7 @@
   page: {
     recentChanges: 'أحدث التغييرات',
     recentCitations: 'اقتباسات حديثة',
+    recentClaims: 'المطالبات الحديثة',
     recentChecks: 'عمليات فحص الصفحات الأخيرة',
     pages: 'صفحات',
     blog: 'مدونة',
@@ -100,6 +101,7 @@
     diff: 'فرق',
     recentChangesDescription: 'أحدث التعديلات في الويكي.',
     recentCitationsDescription: 'أحدث التعديلات على إدخالات الاقتباس.',
+    recentClaimsDescription: 'أحدث التعديلات على مطالبات الاستشهادات.',
     recentChecksDescription: 'أحدث فحوصات الصفحات المرسلة عبر الويكي.',
     relatedLabel: 'ذات صلة',
     seeAlso: 'انظر أيضًا: <a href="{{url}}">{{label}}</a>',

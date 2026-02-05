@@ -30,6 +30,7 @@
   page: {
     recentChanges: 'Cambios recientes',
     recentCitations: 'Citas recientes',
+    recentClaims: 'Afirmaciones recientes',
     recentChecks: 'Chequeos de página recientes',
     pages: 'Páginas',
     blog: 'Bitácora',
@@ -102,6 +103,7 @@
     diff: 'Diferencia',
     recentChangesDescription: 'Últimas ediciones en todo el wiki.',
     recentCitationsDescription: 'Últimas ediciones en las entradas de citas.',
+    recentClaimsDescription: 'Últimas ediciones de afirmaciones de citas.',
     recentChecksDescription: 'Últimos chequeos de página enviados en todo el wiki.',
     relatedLabel: 'Relacionado',
     seeAlso: 'Ver también: <a href="{{url}}">{{label}}</a>',

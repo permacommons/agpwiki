@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Свежие правки',
     recentCitations: 'Недавние цитаты',
+    recentClaims: 'Недавние утверждения',
     recentChecks: 'Недавние проверки страниц',
     pages: 'Страницы',
     blog: 'Блог',
@@ -103,6 +104,7 @@
     diff: 'Различия',
     recentChangesDescription: 'Последние правки во всей вики.',
     recentCitationsDescription: 'Последние правки в записях цитирования.',
+    recentClaimsDescription: 'Последние правки утверждений в цитатах.',
     recentChecksDescription: 'Последние проверки страниц, отправленные по всему вики.',
     relatedLabel: 'Связанные',
     seeAlso: 'См. также: <a href="{{url}}">{{label}}</a>',

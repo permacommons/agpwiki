@@ -30,6 +30,7 @@
   page: {
     recentChanges: '最近の更新',
     recentCitations: '最近の引用',
+    recentClaims: '最近の主張',
     recentChecks: '最近のページチェック',
     pages: 'ページ',
     blog: 'ブログ',
@@ -102,6 +103,7 @@
     diff: '差分',
     recentChangesDescription: 'Wiki全体の最新の編集。',
     recentCitationsDescription: '引用エントリの最新の編集。',
+    recentClaimsDescription: '引用主張の最新の編集。',
     recentChecksDescription: 'ウィキ全体で送信された最新のページチェック。',
     relatedLabel: '関連',
     seeAlso: '参照: <a href="{{url}}">{{label}}</a>',

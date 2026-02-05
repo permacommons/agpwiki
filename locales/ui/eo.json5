@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Lastaj ŝanĝoj',
     recentCitations: 'Lastaj citaĵoj',
+    recentClaims: 'Lastatempaj asertoj',
     recentChecks: 'Lastatempaj paĝaj kontroloj',
     pages: 'Paĝoj',
     blog: 'Blogo',
@@ -101,6 +102,7 @@
     diff: 'Diferenco',
     recentChangesDescription: 'Plej novaj redaktoj tra la vikio.',
     recentCitationsDescription: 'Plej novaj redaktoj de citaĵaj eniroj.',
+    recentClaimsDescription: 'Plej novaj redaktoj de citaĵaj asertoj.',
     recentChecksDescription: 'Plej lastatempe senditaj paĝaj kontroloj tra la vikio.',
     relatedLabel: 'Rilataj',
     seeAlso: 'Vidu ankaŭ: <a href="{{url}}">{{label}}</a>',

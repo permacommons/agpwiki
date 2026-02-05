@@ -9,8 +9,10 @@ import { createMcpServer } from '../src/mcp/core.js';
 import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
 import {
   applyWikiPagePatch,
+  createCitationClaim,
   createCitation,
   createWikiPage,
+  readCitationClaim,
   deleteCitation,
   deleteWikiPage,
   listWikiPageRevisions,
@@ -18,6 +20,7 @@ import {
   readWikiPage,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
+  updateCitationClaim,
   updateCitation,
   updateWikiPage,
 } from '../src/mcp/handlers.js';
@@ -70,14 +73,22 @@ const cleanupTestArtifacts = async (
   {
     slugPrefix,
     citationPrefix,
+    claimPrefix,
     userId,
-  }: { slugPrefix?: string; citationPrefix?: string; userId?: string }
+  }: { slugPrefix?: string; citationPrefix?: string; claimPrefix?: string; userId?: string }
 ) => {
   if (slugPrefix) {
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
   }
   if (citationPrefix) {
+    await dal.query(
+      'DELETE FROM citation_claims WHERE citation_id IN (SELECT id FROM citations WHERE key LIKE $1)',
+      [citationPrefix]
+    );
     await dal.query('DELETE FROM citations WHERE key LIKE $1', [citationPrefix]);
+  }
+  if (claimPrefix) {
+    await dal.query('DELETE FROM citation_claims WHERE claim_id LIKE $1', [claimPrefix]);
   }
   if (userId) {
     await dal.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
@@ -749,6 +760,52 @@ test('renderMarkdown supports adjacent bracket citations', async () => {
   }
 });
 
+test('renderMarkdown links citation claims in bibliography', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-claim-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    const citation = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation with claim',
+          URL: 'https://example.com/test-claim',
+        },
+      },
+      userId
+    );
+
+    const { html } = await renderMarkdown(`Testing [@${citationKey}:birthdate].`, [
+      { ...(citation.data ?? {}), id: citation.key },
+    ]);
+
+    assert.match(html, new RegExp(`/cite/${citationKey}#claim-birthdate`));
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('renderMarkdown punctuation handles author-only citations without year', async () => {
   const dal = await getDal();
   const citationKey = `test-cite-noyear-${Date.now()}`;
@@ -1015,6 +1072,141 @@ test('MCP updateCitation ignores submitted data.id and returns warning', async (
   }
 });
 
+test('MCP createCitationClaim requires quoteLanguage when quote provided', async () => {
+  const dal = await getDal();
+  const citationKey = `test-claim-quote-lang-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  const claimId = 'birthdate';
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Claim test citation',
+          URL: 'https://example.com/claim-test',
+        },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        createCitationClaim(
+          dal,
+          {
+            key: citationKey,
+            claimId,
+            assertion: { en: 'A test claim.' },
+            quote: { en: 'A test quote.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'quoteLanguage'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP createCitationClaim and updateCitationClaim write revisions', async () => {
+  const dal = await getDal();
+  const citationKey = `test-claim-revisions-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  const claimId = `claim-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Claim test citation',
+          URL: 'https://example.com/claim-test-revisions',
+        },
+      },
+      userId
+    );
+
+    const created = await createCitationClaim(
+      dal,
+      {
+        key: citationKey,
+        claimId,
+        assertion: { en: 'Initial claim assertion.' },
+        quote: { en: 'Initial quoted text.' },
+        quoteLanguage: 'en',
+        locatorType: 'page',
+        locatorValue: { und: '42' },
+      },
+      userId
+    );
+
+    assert.equal(created.claimId, claimId);
+    assert.equal(created.locatorValue?.und, '42');
+
+    const updatedClaimId = `${claimId}-updated`;
+    const updated = await updateCitationClaim(
+      dal,
+      {
+        key: citationKey,
+        claimId,
+        newClaimId: updatedClaimId,
+        assertion: { en: 'Updated claim assertion.' },
+        revSummary: { en: 'Update claim assertion.' },
+      },
+      userId
+    );
+
+    assert.equal(updated.claimId, updatedClaimId);
+    assert.equal(updated.assertion?.en, 'Updated claim assertion.');
+
+    const readBack = await readCitationClaim(dal, citationKey, updatedClaimId);
+    assert.equal(readBack.claimId, updatedClaimId);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('MCP rejects invalid language codes', async () => {
   const dal = await getDal();
   let userIdForCleanup: string | null = null;
@@ -1195,6 +1387,68 @@ test('MCP aggregates validation errors for wiki patch inputs', async () => {
   }
 });
 
+test('MCP rejects unknown citation claim references', async () => {
+  const dal = await getDal();
+  const slug = `test-claim-ref-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-claim-ref-cite-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Claim validation test',
+          URL: 'https://example.com/claim-validation',
+        },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug,
+            title: { en: 'Claim validation' },
+            body: { en: `See [@${citationKey}:missing-claim].` },
+            revSummary: { en: 'Add claim reference.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'body.en'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
 test('MCP deleteWikiPage soft-deletes a page', async () => {
   const dal = await getDal();
   const slug = `test-mcp-delete-page-${Date.now()}`;
@@ -1316,16 +1570,20 @@ test('MCP admin tools are disabled without wiki_admin role', () => {
   const mcpWithoutRole = createMcpServer({ userRoles: [] });
   assert.ok(mcpWithoutRole.adminTools.wikiDeletePageTool);
   assert.ok(mcpWithoutRole.adminTools.citationDeleteTool);
+  assert.ok(mcpWithoutRole.adminTools.claimDeleteTool);
 
   assert.equal(mcpWithoutRole.adminTools.wikiDeletePageTool.enabled, false);
   assert.equal(mcpWithoutRole.adminTools.citationDeleteTool.enabled, false);
+  assert.equal(mcpWithoutRole.adminTools.claimDeleteTool.enabled, false);
 });
 
 test('MCP admin tools are enabled with wiki_admin role', () => {
   const mcpWithRole = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
   assert.ok(mcpWithRole.adminTools.wikiDeletePageTool);
   assert.ok(mcpWithRole.adminTools.citationDeleteTool);
+  assert.ok(mcpWithRole.adminTools.claimDeleteTool);
 
   assert.equal(mcpWithRole.adminTools.wikiDeletePageTool.enabled, true);
   assert.equal(mcpWithRole.adminTools.citationDeleteTool.enabled, true);
+  assert.equal(mcpWithRole.adminTools.claimDeleteTool.enabled, true);
 });

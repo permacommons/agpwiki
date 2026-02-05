@@ -30,6 +30,7 @@
   page: {
     recentChanges: 'Son Değişiklikler',
     recentCitations: 'Son Alıntılar',
+    recentClaims: 'Son iddialar',
     recentChecks: 'Son sayfa kontrolleri',
     pages: 'Sayfalar',
     blog: 'Blog bölümü',
@@ -102,6 +103,7 @@
     diff: 'Fark',
     recentChangesDescription: 'Vikideki son değişiklikler.',
     recentCitationsDescription: 'Alıntı girişlerindeki son değişiklikler.',
+    recentClaimsDescription: 'Atıf iddialarındaki en son düzenlemeler.',
     recentChecksDescription: 'Wiki genelinde gönderilen en yeni sayfa kontrolleri.',
     relatedLabel: 'İlgili',
     seeAlso: 'Ayrıca bakınız: <a href="{{url}}">{{label}}</a>',

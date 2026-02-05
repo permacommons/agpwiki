@@ -30,6 +30,7 @@
   page: {
     recentChanges: '최근 바뀜',
     recentCitations: '최근 인용',
+    recentClaims: '최근 주장',
     recentChecks: '최근 페이지 점검',
     pages: '문서',
     blog: '블로그',
@@ -102,6 +103,7 @@
     diff: '차이',
     recentChangesDescription: '위키 전체의 최근 수정.',
     recentCitationsDescription: '인용 항목의 최근 수정.',
+    recentClaimsDescription: '인용 주장에 대한 최신 편집.',
     recentChecksDescription: '위키 전체에 제출된 최신 페이지 점검.',
     relatedLabel: '관련',
     seeAlso: '참고: <a href="{{url}}">{{label}}</a>',

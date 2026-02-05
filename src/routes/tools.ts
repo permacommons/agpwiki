@@ -5,7 +5,11 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
-import { getRecentCitationChanges, getRecentWikiChanges } from '../lib/recent-changes.js';
+import {
+  getRecentCitationChanges,
+  getRecentCitationClaimChanges,
+  getRecentWikiChanges,
+} from '../lib/recent-changes.js';
 import { getRecentPageChecks } from '../lib/recent-checks.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import WikiPage from '../models/wiki-page.js';
@@ -84,9 +88,9 @@ const renderRecentList = (
               .join(' ')}</div>`
           : '';
       return `<li>
-  <div class="change-meta"${metaAttrs}>
+  <div class="change-meta">
     ${primaryHtml}
-    <span>${escapeHtml(item.dateLabel)}</span>
+    <span${metaAttrs}>${escapeHtml(item.dateLabel)}</span>
     ${tags ? `<span>${tags}</span>` : ''}
   </div>
   ${summary}
@@ -112,6 +116,19 @@ const renderRelatedTools = (
   <span class="tool-related-label">${escapeHtml(t('tool.relatedLabel'))}</span>
   <span class="tool-related-links">${items}</span>
 </div>`;
+};
+
+type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks';
+
+const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
+  const links = [
+    { key: 'changes', href: '/tool/recent-changes', label: t('page.recentChanges') },
+    { key: 'citations', href: '/tool/recent-citations', label: t('page.recentCitations') },
+    { key: 'claims', href: '/tool/recent-claims', label: t('page.recentClaims') },
+    { key: 'checks', href: '/tool/recent-checks', label: t('page.recentChecks') },
+  ];
+
+  return links.filter(link => link.key !== current);
 };
 
 export const registerToolRoutes = (app: Express) => {
@@ -151,13 +168,7 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(
-      [
-      { href: '/tool/recent-citations', label: req.t('page.recentCitations') },
-      { href: '/tool/recent-checks', label: req.t('page.recentChecks') },
-      ],
-      req.t
-    );
+    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('changes', req.t), req.t);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChangesDescription')}</p>
   ${relatedHtml}
@@ -214,13 +225,7 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(
-      [
-      { href: '/tool/recent-changes', label: req.t('page.recentChanges') },
-      { href: '/tool/recent-checks', label: req.t('page.recentChecks') },
-      ],
-      req.t
-    );
+    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('citations', req.t), req.t);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentCitationsDescription')}</p>
   ${relatedHtml}
@@ -230,6 +235,67 @@ export const registerToolRoutes = (app: Express) => {
     const signedIn = Boolean(await resolveSessionUser(req));
     const html = renderLayout({
       title: req.t('page.recentCitations'),
+      labelHtml,
+      bodyHtml,
+      signedIn,
+      locale: res.locals.locale,
+      languageOptions: res.locals.languageOptions,
+    });
+    res.type('html').send(html);
+  });
+
+  app.get('/tool/recent-claims', async (req, res) => {
+    const limit = parseRecentLimit(req.query.limit);
+
+    const dalInstance = await initializePostgreSQL();
+    const rawChanges = await getRecentCitationClaimChanges(dalInstance, limit);
+    const changes = rawChanges.map(change => ({
+      ...change,
+      revSummary: resolveRevSummary(change.revSummary),
+      assertion: resolveSafeText(mlString.resolve, 'en', change.assertion, ''),
+    }));
+
+    const userIds = changes
+      .map(change => change.revUser)
+      .filter((id): id is string => Boolean(id));
+    const userMap = await fetchUserMap(dalInstance, userIds);
+    const items: RecentListItem[] = changes.map(change => {
+      const encodedKey = encodeURIComponent(change.key);
+      const encodedClaim = encodeURIComponent(change.claimId);
+      const actions: RecentListAction[] = [
+        {
+          label: req.t('tool.view'),
+          href: `/cite/${encodedKey}/claims/${encodedClaim}?rev=${change.revId}`,
+        },
+      ];
+      if (change.prevRevId) {
+        actions.push({
+          label: req.t('tool.diff'),
+          href: `/cite/${encodedKey}/claims/${encodedClaim}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
+        });
+      }
+      return {
+        primaryLabel: `${change.claimId} · ${change.key}`,
+        primaryHref: `/cite/${encodedKey}/claims/${encodedClaim}`,
+        dateLabel: formatDateUTC(change.revDate),
+        summary: change.revSummary || change.assertion,
+        revUser: change.revUser,
+        revTags: change.revTags,
+        actions,
+      };
+    });
+
+    const itemsHtml = renderRecentList(items, userMap, req.t);
+    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('claims', req.t), req.t);
+    const bodyHtml = `<div class="tool-page">
+  <p>${req.t('tool.recentClaimsDescription')}</p>
+  ${relatedHtml}
+  <ul class="change-list">${itemsHtml}</ul>
+</div>`;
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
+    const signedIn = Boolean(await resolveSessionUser(req));
+    const html = renderLayout({
+      title: req.t('page.recentClaims'),
       labelHtml,
       bodyHtml,
       signedIn,
@@ -282,13 +348,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(
-      [
-      { href: '/tool/recent-changes', label: req.t('page.recentChanges') },
-      { href: '/tool/recent-citations', label: req.t('page.recentCitations') },
-      ],
-      req.t
-    );
+    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('checks', req.t), req.t);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChecksDescription')}</p>
   ${relatedHtml}

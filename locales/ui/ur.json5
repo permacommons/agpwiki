@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'حالیہ تبدیلیاں',
     recentCitations: 'حالیہ حوالہ جات',
+    recentClaims: 'حالیہ دعوے',
     recentChecks: 'حال ہی کے صفحہ جانچ',
     pages: 'صفحات',
     blog: 'بلاگ',
@@ -103,6 +104,7 @@
     diff: 'فرق',
     recentChangesDescription: 'پورے وکی میں تازہ ترین ترامیم۔',
     recentCitationsDescription: 'حوالہ اندراجات میں تازہ ترین ترامیم۔',
+    recentClaimsDescription: 'حوالہ جاتی دعوؤں میں تازہ ترین ترامیم۔',
     recentChecksDescription: 'وکی بھر میں جمع کرائی گئی تازہ ترین صفحہ جانچیں۔',
     relatedLabel: 'متعلقہ',
     seeAlso: 'مزید دیکھیں: <a href="{{url}}">{{label}}</a>',

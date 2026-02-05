@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Nedávne zmeny',
     recentCitations: 'Nedávne citácie',
+    recentClaims: 'Nedávne tvrdenia',
     recentChecks: 'Nedávne kontroly stránok',
     pages: 'Stránky',
     blog: 'Blogová sekcia',
@@ -103,6 +104,7 @@
     diff: 'Rozdiel',
     recentChangesDescription: 'Najnovšie úpravy v celej wiki.',
     recentCitationsDescription: 'Najnovšie úpravy záznamov citácií.',
+    recentClaimsDescription: 'Najnovšie úpravy tvrdení v citáciách.',
     recentChecksDescription: 'Najnovšie kontroly stránok odoslané v rámci celého wiki.',
     relatedLabel: 'Súvisiace',
     seeAlso: 'Pozri aj: <a href="{{url}}">{{label}}</a>',

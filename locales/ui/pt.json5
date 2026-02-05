@@ -30,6 +30,7 @@
   page: {
     recentChanges: 'Mudanças recentes',
     recentCitations: 'Citações recentes',
+    recentClaims: 'Afirmações recentes',
     recentChecks: 'Verificações de página recentes',
     pages: 'Páginas',
     blog: 'Blog da Agpedia',
@@ -102,6 +103,7 @@
     diff: 'Diferença',
     recentChangesDescription: 'Últimas edições em todo o wiki.',
     recentCitationsDescription: 'Últimas edições em entradas de citação.',
+    recentClaimsDescription: 'Últimas edições de afirmações de citação.',
     recentChecksDescription: 'Verificações de página mais recentes enviadas em todo o wiki.',
     relatedLabel: 'Relacionado',
     seeAlso: 'Veja também: <a href="{{url}}">{{label}}</a>',

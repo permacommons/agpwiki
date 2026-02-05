@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Senaste ändringar',
     recentCitations: 'Senaste citeringar',
+    recentClaims: 'Senaste påståenden',
     recentChecks: 'Senaste sidkontroller',
     pages: 'Sidor',
     blog: 'Blogg',
@@ -103,6 +104,7 @@
     diff: 'Skillnad',
     recentChangesDescription: 'Senaste redigeringar i hela wikin.',
     recentCitationsDescription: 'Senaste redigeringar i citeringsposter.',
+    recentClaimsDescription: 'Senaste redigeringarna av citeringspåståenden.',
     recentChecksDescription: 'De senaste sidkontrollerna som skickats in i hela wikin.',
     relatedLabel: 'Relaterat',
     seeAlso: 'Se även: <a href="{{url}}">{{label}}</a>',

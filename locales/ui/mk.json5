@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Скорешни промени',
     recentCitations: 'Скорешни цитати',
+    recentClaims: 'Најнови тврдења',
     recentChecks: 'Неодамнешни проверки на страница',
     pages: 'Страници',
     blog: 'Блог',
@@ -103,6 +104,7 @@
     diff: 'Разлики',
     recentChangesDescription: 'Најнови уредувања низ викито.',
     recentCitationsDescription: 'Најнови уредувања на цитатни записи.',
+    recentClaimsDescription: 'Најнови уредувања на тврдењата за цитати.',
     recentChecksDescription: 'Најнови проверки на страница поднесени низ викито.',
     relatedLabel: 'Поврзано',
     seeAlso: 'Види и: <a href="{{url}}">{{label}}</a>',

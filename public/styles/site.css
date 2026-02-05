@@ -262,7 +262,8 @@ pre.diff ins {
 .citation-notes { padding-left: 1.25rem; }
 .citation-notes li { margin-bottom: 0.5rem; }
 .ref-backlinks { margin-right: 0.25rem; }
-.ref-backlink { margin-right: 0.25rem; font-size: 0.8em; text-decoration: none; }
+.ref-backlink,
+.ref-claim-link { margin-right: 0.25rem; font-size: 0.8em; text-decoration: none; }
 .page-history, .page-diff, .page-toc {
   background: var(--panel);
   border: 1px solid var(--rule);
@@ -329,6 +330,45 @@ pre.diff ins {
   border: 1px solid var(--rule);
   padding: 1.5rem;
   margin-bottom: 1rem;
+}
+.citation-claims {
+  margin-top: 1.5rem;
+}
+.citation-claims h2 {
+  font-size: 1.1rem;
+  margin-bottom: 0.75rem;
+}
+.citation-claims-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 1rem;
+}
+.citation-claim {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+}
+.citation-claim-id {
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.4rem;
+}
+.citation-claim-assertion {
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
+}
+.citation-claim-quote {
+  margin: 0 0 0.6rem 0;
+  padding: 0.75rem 1rem;
+  border-left: 3px solid var(--rule);
+  background: #f7f3ea;
+  color: #333;
+}
+.citation-claim-meta {
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 .check-card {
   background: var(--panel);

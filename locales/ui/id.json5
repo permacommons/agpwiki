@@ -31,6 +31,7 @@
   page: {
     recentChanges: 'Perubahan terbaru',
     recentCitations: 'Sitasi terbaru',
+    recentClaims: 'Klaim terbaru',
     recentChecks: 'Pemeriksaan halaman terbaru',
     pages: 'Halaman',
     blog: 'Blog Agpedia',
@@ -103,6 +104,7 @@
     diff: 'Perbedaan',
     recentChangesDescription: 'Suntingan terbaru di seluruh wiki.',
     recentCitationsDescription: 'Suntingan terbaru pada entri sitasi.',
+    recentClaimsDescription: 'Perubahan terbaru pada klaim sitasi.',
     recentChecksDescription: 'Pemeriksaan halaman terbaru yang dikirim di seluruh wiki.',
     relatedLabel: 'Terkait',
     seeAlso: 'Lihat juga: <a href="{{url}}">{{label}}</a>',

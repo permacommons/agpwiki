@@ -71,7 +71,7 @@ export const renderRevisionHistory = ({
           )}" title="${escapeHtml(metaLabel)}"`
         : '';
       return `<li>
-  <div class="rev-meta"${metaAttrs}>
+  <div class="rev-meta">
     <span class="rev-radio"><input type="radio" name="diffFrom" value="${rev.revId}" ${
       fromChecked ? 'checked' : ''
     } /></span>
@@ -79,7 +79,7 @@ export const renderRevisionHistory = ({
       toChecked ? 'checked' : ''
     } /></span>
     <strong>${renderText(rev.title)}</strong>
-    <span>${escapeHtml(rev.dateLabel)}</span>
+    <span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span>
   </div>
   ${summaryHtml}
   <div class="rev-actions">
