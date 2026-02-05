@@ -2,6 +2,7 @@ import { createTwoFilesPatch, diffLines } from 'diff';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
+import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
@@ -435,6 +436,12 @@ export async function createBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   validateRevSummary(revSummary, errors);
+  if (body) {
+    for (const [lang, text] of Object.entries(body)) {
+      if (!text) continue;
+      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+    }
+  }
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
@@ -477,6 +484,12 @@ export async function updateBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   requireRevSummary(revSummary, errors);
+  if (body) {
+    for (const [lang, text] of Object.entries(body)) {
+      if (!text) continue;
+      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+    }
+  }
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 

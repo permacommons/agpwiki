@@ -12,6 +12,7 @@ import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
+import { CITATION_CLAIM_LOCATOR_TYPES } from '../lib/citation-claims.js';
 import {
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
@@ -42,19 +43,27 @@ import {
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
+  type CitationClaimDeleteInput,
+  type CitationClaimDiffInput,
+  type CitationClaimUpdateInput,
+  type CitationClaimWriteInput,
   type CitationDeleteInput,
   type CitationQueryInput,
   type CitationUpdateInput,
   type CitationWriteInput,
   createCitation,
+  createCitationClaim,
   createPageCheck,
   createWikiPage,
   deleteCitation,
+  deleteCitationClaim,
   deletePageCheck,
   deleteWikiPage,
+  diffCitationClaimRevisions,
   diffCitationRevisions,
   diffPageCheckRevisions,
   diffWikiPageRevisions,
+  listCitationClaimRevisions,
   listCitationRevisions,
   listPageCheckRevisions,
   listPageChecks,
@@ -65,6 +74,8 @@ import {
   type PageCheckWriteInput,
   queryCitations,
   readCitation,
+  readCitationClaim,
+  readCitationClaimRevision,
   readCitationRevision,
   readPageCheckRevision,
   readWikiPage,
@@ -73,6 +84,7 @@ import {
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateCitation,
+  updateCitationClaim,
   updatePageCheck,
   updateWikiPage,
   type WikiPageAliasInput,
@@ -159,6 +171,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   const pageCheckStatusSchema = z.enum(
     [...PAGE_CHECK_STATUSES] as [string, ...string[]]
   );
+  const claimLocatorTypeSchema = z
+    .enum([...CITATION_CLAIM_LOCATOR_TYPES] as [string, ...string[]])
+    .optional()
+    .nullable();
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -237,6 +253,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     localizedTitleSchema,
     localizedBodySchema,
     localizedSummarySchema,
+    localizedAssertionSchema,
+    localizedQuoteSchema,
+    localizedLocatorValueSchema,
+    localizedLocatorLabelSchema,
     localizedCheckResultsSchema,
     localizedNotesSchema,
     localizedRevisionSummarySchema,
@@ -672,6 +692,137 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   );
 
   server.registerTool(
+    'claim_create',
+    {
+      title: 'Create Citation Claim',
+      description:
+        'Create a new claim linked to a citation. assertion and quote are localized maps. quoteLanguage identifies the source language when quote is provided. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+        assertion: localizedAssertionSchema.required,
+        quote: localizedQuoteSchema.optional,
+        quoteLanguage: languageTagSchema.optionalNullable,
+        locatorType: claimLocatorTypeSchema,
+        locatorValue: localizedLocatorValueSchema.optional,
+        locatorLabel: localizedLocatorLabelSchema.optional,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args: CitationClaimWriteInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await createCitationClaim(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'claim_update',
+    {
+      title: 'Update Citation Claim',
+      description:
+        'Create a new revision for an existing claim. assertion and quote are localized maps. quoteLanguage identifies the source language when quote is provided. revSummary is required.',
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+        newClaimId: z.string().optional(),
+        assertion: localizedAssertionSchema.optional,
+        quote: localizedQuoteSchema.optional,
+        quoteLanguage: languageTagSchema.optionalNullable,
+        locatorType: claimLocatorTypeSchema,
+        locatorValue: localizedLocatorValueSchema.optional,
+        locatorLabel: localizedLocatorLabelSchema.optional,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: CitationClaimUpdateInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await updateCitationClaim(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'claim_listRevisions',
+    {
+      title: 'List Citation Claim Revisions',
+      description: 'List revisions for a citation claim by key and claimId.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await listCitationClaimRevisions(dal, args.key, args.claimId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'claim_diffRevisions',
+    {
+      title: 'Diff Citation Claim Revisions',
+      description: 'Generate a unified diff between two citation claim revisions.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
+        lang: languageTagSchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args: CitationClaimDiffInput) => {
+      const dal = await initializePostgreSQL();
+      const payload = await diffCitationClaimRevisions(dal, args);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'claim_read',
+    {
+      title: 'Read Citation Claim',
+      description: 'Read a citation claim by key and claimId.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readCitationClaim(dal, args.key, args.claimId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'claim_readRevision',
+    {
+      title: 'Read Citation Claim Revision',
+      description: 'Read a specific citation claim revision by revision ID.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+        revId: uuidSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readCitationClaimRevision(dal, args.key, args.claimId, args.revId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
     'wiki_listRevisions',
     {
       title: 'List Wiki Page Revisions',
@@ -1061,6 +1212,26 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
+  const claimDeleteTool = server.registerTool(
+    'claim_delete',
+    {
+      title: 'Delete Citation Claim',
+      description:
+        'Soft-delete a citation claim and all its revisions. Requires wiki_admin role. revSummary is required.',
+      inputSchema: {
+        key: z.string(),
+        claimId: z.string(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: CitationClaimDeleteInput, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const payload = await deleteCitationClaim(dal, { ...args }, userId);
+      return payload;
+    })
+  );
+
   const pageCheckDeleteTool = server.registerTool(
     'page_check_delete',
     {
@@ -1080,11 +1251,18 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
-  const adminTools = { wikiDeletePageTool, citationDeleteTool, pageCheckDeleteTool, blogDeleteTool };
+  const adminTools = {
+    wikiDeletePageTool,
+    citationDeleteTool,
+    claimDeleteTool,
+    pageCheckDeleteTool,
+    blogDeleteTool,
+  };
 
   if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
+    claimDeleteTool.disable();
     pageCheckDeleteTool.disable();
   }
   if (!hasRole(userRoles, BLOG_ADMIN_ROLE)) {

@@ -152,6 +152,8 @@ const toBacklinkSuffix = (index: number) => {
   return suffix;
 };
 
+type CitationClusterItem = { citationId: string; claimId?: string };
+
 const buildCiteproc = (references: Array<Record<string, unknown>>) => {
   const driver = new Driver({
     style: citationStyle,
@@ -162,10 +164,11 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
   driver.insertReferences(references);
 
   const clusters: CiteprocCluster[] = [];
-  const clusterMap = new Map<string, string[]>();
+  const clusterMap = new Map<string, CitationClusterItem[]>();
   const refOrder: string[] = [];
   const refNumberById = new Map<string, number>();
   const refBacklinks = new Map<string, string[]>();
+  const refClaimByAnchor = new Map<string, string>();
   let renderCache: ReturnType<Driver['fullRender']> | null = null;
   let noteCounter = 0;
 
@@ -177,11 +180,11 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
   };
 
   return {
-    appendCluster(cluster: Array<{ citationId: string }>) {
+    appendCluster(cluster: CitationClusterItem[]) {
       const id = `cluster-${noteCounter + 1}`;
       noteCounter += 1;
       const citationIds = cluster.map(cite => cite.citationId);
-      clusterMap.set(id, citationIds);
+      clusterMap.set(id, cluster);
       clusters.push({ id, note: noteCounter });
       driver.insertCluster({
         id,
@@ -190,10 +193,10 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
       return id;
     },
     renderCluster(id: string) {
-      const citationIds = clusterMap.get(id) ?? [];
-      if (citationIds.length === 0) return '';
+      const cluster = clusterMap.get(id) ?? [];
+      if (cluster.length === 0) return '';
 
-      const parts = citationIds.map(citationId => {
+      const parts = cluster.map(({ citationId, claimId }) => {
         let refNumber = refNumberById.get(citationId);
         if (!refNumber) {
           refNumber = refOrder.length + 1;
@@ -206,6 +209,9 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
         const anchorId = `cite-ref-${refNumber}-${suffix}`;
         backlinkList.push(anchorId);
         refBacklinks.set(citationId, backlinkList);
+        if (claimId) {
+          refClaimByAnchor.set(anchorId, claimId);
+        }
         return `<sup class="citation-ref" id="${anchorId}">[<a href="#ref-${refNumber}">${refNumber}</a>]</sup>`;
       });
 
@@ -220,19 +226,34 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
           const entry = entryMap.get(citationId);
           if (!entry) return '';
           const anchors = refBacklinks.get(citationId) ?? [];
-          let backlinks = '';
+          let linkPairs = '';
           if (anchors.length === 1) {
-            backlinks = `<a class="ref-backlink" href="#${anchors[0]}" aria-label="Back to citation">^</a>`;
+            const anchorId = anchors[0];
+            const claimId = refClaimByAnchor.get(anchorId);
+            const backlink = `<a class="ref-backlink" href="#${anchorId}" aria-label="Back to citation">^</a>`;
+            const claimLink = claimId
+              ? `<a class="ref-claim-link" href="/cite/${encodeURIComponent(
+                  citationId
+                )}#claim-${encodeURIComponent(claimId)}">↗ ${escapeHtml(claimId)}</a>`
+              : '';
+            linkPairs = [backlink, claimLink].filter(Boolean).join(' ');
           } else if (anchors.length > 1) {
-            backlinks = anchors
+            linkPairs = anchors
               .map((anchorId, backlinkIndex) => {
                 const suffix = toBacklinkSuffix(backlinkIndex);
-                return `<a class="ref-backlink" href="#${anchorId}" aria-label="Back to citation">^${suffix}</a>`;
+                const claimId = refClaimByAnchor.get(anchorId);
+                const backlink = `<a class="ref-backlink" href="#${anchorId}" aria-label="Back to citation">^${suffix}</a>`;
+                const claimLink = claimId
+                  ? `<a class="ref-claim-link" href="/cite/${encodeURIComponent(
+                      citationId
+                    )}#claim-${encodeURIComponent(claimId)}">↗ ${escapeHtml(claimId)}</a>`
+                  : '';
+                return [backlink, claimLink].filter(Boolean).join(' ');
               })
               .join(' ');
           }
-          const backlinkHtml = backlinks ? `<span class="ref-backlinks">${backlinks}</span> ` : '';
-          return `<li id="ref-${refNumber}">${backlinkHtml}${entry}</li>`;
+          const linkHtml = linkPairs ? `<span class="ref-claim-pairs">${linkPairs}</span> ` : '';
+          return `<li id="ref-${refNumber}">${linkHtml}${entry}</li>`;
         })
         .filter(Boolean)
         .join('\n');

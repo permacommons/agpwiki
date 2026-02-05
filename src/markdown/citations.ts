@@ -6,6 +6,7 @@ type CitationMode = 'AuthorInText' | 'SuppressAuthor' | 'NormalCitation';
 
 export interface Citation {
   citationId: string;
+  claimId?: string;
   citationPrefix: Token[];
   citationSuffix: Token[];
   citationMode: CitationMode;
@@ -32,6 +33,17 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
     allowedBefore: /^[^a-zA-Z.0-9]$/,
   };
 
+  const splitCitationKey = (value: string) => {
+    const separatorIndex = value.indexOf(':');
+    if (separatorIndex <= 0) {
+      return { citationId: value };
+    }
+    return {
+      citationId: value.slice(0, separatorIndex),
+      claimId: value.slice(separatorIndex + 1),
+    };
+  };
+
   md.inline.ruler.after('emphasis', 'citation', (state, silent) => {
     const char = state.src.charCodeAt(state.pos);
     if (
@@ -50,8 +62,10 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
         }
         const nextNoteNum = (state.env.noteNum ?? 0) + 1;
         state.env.noteNum = nextNoteNum;
+        const { citationId, claimId } = splitCitationKey(match[1]);
         const citation: Citation = {
-          citationId: match[1],
+          citationId,
+          claimId,
           citationPrefix: [],
           citationSuffix: [],
           citationMode: 'AuthorInText',
@@ -62,7 +76,7 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
         if (!silent) {
           token = state.push('cite_open', 'span', 1);
           token.attrSet('class', 'citation');
-          token.attrSet('data-cites', match[1]);
+          token.attrSet('data-cites', citationId);
         }
         if (match[3]) {
           const suffixStart = state.pos + match[0].length;
@@ -106,14 +120,18 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
         }
         const nextNoteNum = (state.env.noteNum ?? 0) + 1;
         state.env.noteNum = nextNoteNum;
-        const cites: Citation[] = (parts as RegExpMatchArray[]).map(x => ({
-          citationId: x[3],
-          citationPrefix: x[1] ? state.md.parseInline(x[1], state.env) : [],
-          citationSuffix: x[4] ? state.md.parseInline(x[4], state.env) : [],
-          citationMode: x[2] ? 'SuppressAuthor' : 'NormalCitation',
-          citationNoteNum: nextNoteNum,
-          citationHash: 0,
-        }));
+        const cites: Citation[] = (parts as RegExpMatchArray[]).map(x => {
+          const { citationId, claimId } = splitCitationKey(x[3]);
+          return {
+            citationId,
+            claimId,
+            citationPrefix: x[1] ? state.md.parseInline(x[1], state.env) : [],
+            citationSuffix: x[4] ? state.md.parseInline(x[4], state.env) : [],
+            citationMode: x[2] ? 'SuppressAuthor' : 'NormalCitation',
+            citationNoteNum: nextNoteNum,
+            citationHash: 0,
+          };
+        });
         if (!silent) {
           const token = state.push('cite_open', 'span', 1);
           token.meta = citeproc?.appendCluster(cites);

@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import Citation from '../models/citation.js';
+import CitationClaim from '../models/citation-claim.js';
 import WikiPage from '../models/wiki-page.js';
 
 export interface WikiPageChange {
@@ -16,6 +17,18 @@ export interface WikiPageChange {
 export interface CitationChange {
   key: string;
   data: Record<string, unknown> | null;
+  revId: string;
+  revDate: string;
+  revUser: string | null;
+  revSummary: Record<string, string> | null;
+  revTags: string[];
+  prevRevId: string | null;
+}
+
+export interface CitationClaimChange {
+  key: string;
+  claimId: string;
+  assertion: Record<string, string> | null;
   revId: string;
   revDate: string;
   revUser: string | null;
@@ -118,6 +131,60 @@ export async function getRecentCitationChanges(
     }) => ({
       key: row.key,
       data: row.data ?? null,
+      revId: row._rev_id,
+      revDate: row._rev_date,
+      revUser: row._rev_user,
+      revSummary: row._rev_summary,
+      revTags: row._rev_tags ?? [],
+      prevRevId: row.prev_rev_id,
+    })
+  );
+}
+
+/**
+ * Fetch recent citation claim changes with window function to find previous revision.
+ */
+export async function getRecentCitationClaimChanges(
+  dal: DataAccessLayer,
+  limit: number
+): Promise<CitationClaimChange[]> {
+  const result = await dal.query(
+    `SELECT citations.key,
+            ${CitationClaim.tableName}.claim_id,
+            ${CitationClaim.tableName}.assertion,
+            ${CitationClaim.tableName}._rev_id,
+            ${CitationClaim.tableName}._rev_date,
+            ${CitationClaim.tableName}._rev_user,
+            ${CitationClaim.tableName}._rev_summary,
+            ${CitationClaim.tableName}._rev_tags,
+            LEAD(${CitationClaim.tableName}._rev_id) OVER (
+              PARTITION BY COALESCE(${CitationClaim.tableName}._old_rev_of, ${CitationClaim.tableName}.id)
+              ORDER BY ${CitationClaim.tableName}._rev_date DESC, ${CitationClaim.tableName}._rev_id DESC
+            ) AS prev_rev_id
+     FROM ${CitationClaim.tableName}
+     JOIN ${Citation.tableName}
+       ON ${Citation.tableName}.id = ${CitationClaim.tableName}.citation_id
+     WHERE ${CitationClaim.tableName}._rev_deleted = false
+     ORDER BY ${CitationClaim.tableName}._rev_date DESC, ${CitationClaim.tableName}._rev_id DESC
+     LIMIT $1`,
+    [limit]
+  );
+
+  return result.rows.map(
+    (row: {
+      key: string;
+      claim_id: string;
+      assertion: Record<string, string> | null;
+      _rev_id: string;
+      _rev_date: string;
+      _rev_user: string | null;
+      _rev_summary: Record<string, string> | null;
+      _rev_tags: string[] | null;
+      prev_rev_id: string | null;
+    }) => ({
+      key: row.key,
+      claimId: row.claim_id,
+      assertion: row.assertion ?? null,
       revId: row._rev_id,
       revDate: row._rev_date,
       revUser: row._rev_user,
