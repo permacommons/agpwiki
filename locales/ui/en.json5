@@ -122,7 +122,8 @@
     "serverError": "Server error"
   },
   "language": {
-    "selector": "Language"
+    "selector": "Language",
+    "available": "Available in"
   },
   "blog": {
     "description": "Blog posts from Agpedia editors.",

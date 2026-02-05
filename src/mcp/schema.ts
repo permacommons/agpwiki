@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-type LocalizedMap = Record<string, string>;
+type LocalizedMap = Record<string, string | null>;
 type LocalizedMapOptional = LocalizedMap | null | undefined;
 type LanguageTag = string;
 type OptionalLanguageTag = LanguageTag | undefined;
@@ -21,7 +21,7 @@ export const createLocalizedSchemas = () => {
   const languageTagDescription =
     'Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".';
   const localizedMapDescription = (label: string) =>
-    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}.`;
+    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}. Set a language key to null to remove it.`;
   const localizedMapError = (label: string) =>
     `Expected ${label} to be a language-keyed map (e.g., {"en":"..."}). See agpwiki://locales.`;
 
@@ -61,7 +61,7 @@ export const createLocalizedSchemas = () => {
         }
         return value;
       },
-      z.record(z.string(), z.string()).superRefine((value, ctx) => {
+      z.record(z.string(), z.union([z.string(), z.null()])).superRefine((value, ctx) => {
         if (Object.hasOwn(value, invalidTypeKey)) {
           ctx.addIssue({ code: 'custom', message: localizedMapError(label) });
         }

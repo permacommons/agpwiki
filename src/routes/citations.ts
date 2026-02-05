@@ -14,6 +14,13 @@ import { resolveSafeText } from '../lib/safe-text.js';
 import Citation from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
 import { escapeHtml, formatDateUTC, renderLayout, renderText } from '../render.js';
+import {
+  extractQueryParams,
+  getAvailableLanguages,
+  normalizeOverrideLang,
+  renderContentLanguageRow,
+  resolveContentLanguage,
+} from './lib/content-language.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
@@ -28,8 +35,8 @@ const normalizeField = (value: unknown) => {
   return '';
 };
 
-const resolveSummary = (value: Record<string, string> | null) =>
-  resolveSafeText(mlString.resolve, 'en', value, '');
+const resolveSummary = (value: Record<string, string> | null, lang: string) =>
+  resolveSafeText(mlString.resolve, lang, value, '');
 
 const findCurrentCitationByKey = async (key: string) =>
   Citation.filterWhere({
@@ -115,6 +122,8 @@ export const registerCitationRoutes = (app: Express) => {
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
 
     if (!key || !claimId) {
       res.status(404).type('text').send(req.t('page.notFound'));
@@ -156,12 +165,33 @@ export const registerCitationRoutes = (app: Express) => {
         return;
       }
 
-      const assertion = resolveSafeText(mlString.resolve, 'en', selectedRevision.assertion, '');
-      const quote = resolveSafeText(mlString.resolve, 'en', selectedRevision.quote, '');
+      const availableLangs = getAvailableLanguages(
+        selectedRevision.assertion ?? null,
+        selectedRevision.quote ?? null,
+        selectedRevision.locatorValue ?? null,
+        selectedRevision.locatorLabel ?? null
+      );
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+      const assertion = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.assertion,
+        ''
+      );
+      const quote = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.quote,
+        ''
+      );
       const { locatorValue, locatorLabel } = resolveLocatorStrings(
         selectedRevision.locatorValue ?? null,
         selectedRevision.locatorLabel ?? null,
-        'en'
+        contentLang
       );
       const locator = formatLocatorLabel(
         selectedRevision.locatorType ?? null,
@@ -175,12 +205,15 @@ export const registerCitationRoutes = (app: Express) => {
             date: revisionLabel,
           })
         : req.t('citation.revisionMetaNoDate', { revId: selectedRevision._revID });
+      const citationHref = langOverride
+        ? `/cite/${encodeURIComponent(key)}?lang=${encodeURIComponent(langOverride)}`
+        : `/cite/${encodeURIComponent(key)}`;
 
       const fields = [
         {
           label: req.t('citation.field.citation'),
           value: key,
-          href: `/cite/${encodeURIComponent(key)}`,
+          href: citationHref,
         },
         { label: req.t('citation.field.claimId'), value: selectedRevision.claimId ?? claimId },
         { label: req.t('citation.field.assertion'), valueHtml: renderText(assertion) },
@@ -219,8 +252,8 @@ export const registerCitationRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = formatClaimDiffText(fromRev, 'en', req.t);
-          const toText = formatClaimDiffText(toRev, 'en', req.t);
+          const fromText = formatClaimDiffText(fromRev, contentLang, req.t);
+          const toText = formatClaimDiffText(toRev, contentLang, req.t);
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
@@ -240,17 +273,29 @@ export const registerCitationRoutes = (app: Express) => {
         revId: rev._revID,
         dateLabel: formatDateUTC(rev._revDate),
         title: rev.claimId ?? claimId,
-        summary: resolveSummary(rev._revSummary ?? null),
+        summary: resolveSummary(rev._revSummary ?? null, contentLang),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));
+      const queryParams = extractQueryParams(req.query);
+      const historyAction = langOverride
+        ? `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(
+            claimId
+          )}?lang=${encodeURIComponent(langOverride)}`
+        : `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(claimId)}`;
       const historyHtml = renderRevisionHistory({
         revisions: historyRevisions,
         diffFrom,
         diffTo,
-        action: `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(claimId)}`,
+        action: historyAction,
         viewHref: revId =>
-          `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(claimId)}?rev=${revId}`,
+          langOverride
+            ? `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(
+                claimId
+              )}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
+            : `/cite/${encodeURIComponent(key)}/claims/${encodeURIComponent(
+                claimId
+              )}?rev=${revId}`,
         userMap,
         t: req.t,
       });
@@ -258,10 +303,18 @@ export const registerCitationRoutes = (app: Express) => {
       const labelHtml = `<div class="page-label">${req.t('label.citation')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams,
+      });
       const bodyHtml = `<div class="citation-card">
   <div class="citation-meta">${escapeHtml(revisionMeta)}</div>
   <dl class="citation-fields">${fieldsHtml}</dl>
-</div>`;
+</div>${languageRow}`;
       const html = renderLayout({
         title: `${claimId} · ${key}`,
         labelHtml,
@@ -292,6 +345,8 @@ export const registerCitationRoutes = (app: Express) => {
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
     const formatParam = typeof req.query.format === 'string' ? req.query.format : undefined;
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
 
     if (!key) {
       res.status(404).type('text').send(req.t('page.notFound'));
@@ -365,6 +420,22 @@ export const registerCitationRoutes = (app: Express) => {
       } as Record<string, unknown>)
         .orderBy('claimId', 'ASC')
         .run();
+      const claimLanguageSources: Array<Record<string, string> | null> = [];
+      for (const claim of claims) {
+        claimLanguageSources.push(
+          claim.assertion ?? null,
+          claim.quote ?? null,
+          claim.locatorValue ?? null,
+          claim.locatorLabel ?? null
+        );
+      }
+      const availableLangs = getAvailableLanguages(...claimLanguageSources);
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+      const queryParams = extractQueryParams(req.query);
 
       const fields = [
         { label: req.t('citation.field.key'), value: revisionKey },
@@ -400,12 +471,17 @@ export const registerCitationRoutes = (app: Express) => {
   <h2>${req.t('citation.claimsTitle')}</h2>
   <ol class="citation-claims-list">${claims
     .map(claim => {
-      const assertion = resolveSafeText(mlString.resolve, 'en', claim.assertion, '');
-      const quote = resolveSafeText(mlString.resolve, 'en', claim.quote, '');
+      const assertion = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        claim.assertion,
+        ''
+      );
+      const quote = resolveSafeText(mlString.resolve, contentLang, claim.quote, '');
       const { locatorValue, locatorLabel } = resolveLocatorStrings(
         claim.locatorValue ?? null,
         claim.locatorLabel ?? null,
-        'en'
+        contentLang
       );
       const locator = formatLocatorLabel(
         claim.locatorType ?? null,
@@ -424,10 +500,16 @@ export const registerCitationRoutes = (app: Express) => {
       const quoteHtml = quote
         ? `<blockquote class="citation-claim-quote">"${renderText(quote)}"</blockquote>`
         : '';
+      const claimHrefBase = `/cite/${encodeURIComponent(
+        revisionKey
+      )}/claims/${encodeURIComponent(claim.claimId)}`;
+      const claimHref = langOverride
+        ? `${claimHrefBase}?lang=${encodeURIComponent(langOverride)}`
+        : claimHrefBase;
       return `<li class="citation-claim" id="claim-${escapeHtml(claim.claimId)}">
-  <div class="citation-claim-id"><a href="/cite/${encodeURIComponent(
-    revisionKey
-  )}/claims/${encodeURIComponent(claim.claimId)}">${escapeHtml(claim.claimId)}</a></div>
+  <div class="citation-claim-id"><a href="${escapeHtml(claimHref)}">${escapeHtml(
+        claim.claimId
+      )}</a></div>
   <div class="citation-claim-assertion">${renderText(assertion)}</div>
   ${quoteHtml}
   ${metaHtml}
@@ -437,6 +519,14 @@ export const registerCitationRoutes = (app: Express) => {
 </section>`
         : '';
 
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams,
+      });
       const bodyHtml = `<div class="citation-card">
   <div class="citation-meta">${escapeHtml(revisionMeta)}</div>
   <dl class="citation-fields">${fieldsHtml}</dl>
@@ -444,7 +534,7 @@ export const registerCitationRoutes = (app: Express) => {
     <summary>${req.t('citation.rawCsl')}</summary>
     <pre>${escapeHtml(rawJson)}</pre>
   </details>
-</div>${claimsHtml}`;
+</div>${claimsHtml}${languageRow}`;
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
@@ -475,16 +565,24 @@ export const registerCitationRoutes = (app: Express) => {
           rev.key ?? revisionKey,
           (rev.data ?? null) as Record<string, unknown> | null
         ),
-        summary: resolveSummary(rev._revSummary ?? null),
+        summary: resolveSummary(rev._revSummary ?? null, contentLang),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));
+      const historyAction = langOverride
+        ? `/cite/${encodeURIComponent(key)}?lang=${encodeURIComponent(langOverride)}`
+        : `/cite/${encodeURIComponent(key)}`;
       const historyHtml = renderRevisionHistory({
         revisions: historyRevisions,
         diffFrom,
         diffTo,
-        action: `/cite/${encodeURIComponent(key)}`,
-        viewHref: revId => `/cite/${encodeURIComponent(key)}?rev=${revId}`,
+        action: historyAction,
+        viewHref: revId =>
+          langOverride
+            ? `/cite/${encodeURIComponent(key)}?rev=${revId}&lang=${encodeURIComponent(
+                langOverride
+              )}`
+            : `/cite/${encodeURIComponent(key)}?rev=${revId}`,
         userMap,
         t: req.t,
       });

@@ -13,6 +13,13 @@ import {
   renderMarkdown,
   renderText,
 } from '../render.js';
+import {
+  extractQueryParams,
+  getAvailableLanguages,
+  normalizeOverrideLang,
+  renderContentLanguageRow,
+  resolveContentLanguage,
+} from './lib/content-language.js';
 import { renderRevisionDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
@@ -100,6 +107,8 @@ export const registerBlogRoutes = (app: Express) => {
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
 
     try {
       const dalInstance = await initializePostgreSQL();
@@ -133,10 +142,30 @@ export const registerBlogRoutes = (app: Express) => {
         return;
       }
 
-      const resolvedBody = mlString.resolve('en', selectedRevision.body ?? null);
+      const availableLangs = getAvailableLanguages(
+        selectedRevision.body ?? null,
+        selectedRevision.title ?? null,
+        selectedRevision.summary ?? null
+      );
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+      const resolvedBody = mlString.resolve(contentLang, selectedRevision.body ?? null);
 
-      const title = resolveSafeText(mlString.resolve, 'en', selectedRevision.title, post.slug);
-      const summary = resolveSafeText(mlString.resolve, 'en', selectedRevision.summary, '');
+      const title = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.title,
+        post.slug
+      );
+      const summary = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.summary,
+        ''
+      );
       const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
       const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
       const updatedHtml =
@@ -169,8 +198,8 @@ export const registerBlogRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = mlString.resolve('en', fromRev.body ?? null)?.str ?? '';
-          const toText = mlString.resolve('en', toRev.body ?? null)?.str ?? '';
+          const fromText = mlString.resolve(contentLang, fromRev.body ?? null)?.str ?? '';
+          const toText = mlString.resolve(contentLang, toRev.body ?? null)?.str ?? '';
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
@@ -189,17 +218,24 @@ export const registerBlogRoutes = (app: Express) => {
       const historyRevisions = revisions.map(rev => ({
         revId: rev._revID,
         dateLabel: formatDateUTC(rev._revDate),
-        title: resolveSafeText(mlString.resolve, 'en', rev.title, slug),
-        summary: resolveSafeText(mlString.resolve, 'en', rev._revSummary, ''),
+        title: resolveSafeText(mlString.resolve, contentLang, rev.title, slug),
+        summary: resolveSafeText(mlString.resolve, contentLang, rev._revSummary, ''),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));
+      const queryParams = extractQueryParams(req.query);
+      const historyAction = langOverride
+        ? `/blog/${slug}?lang=${encodeURIComponent(langOverride)}`
+        : `/blog/${slug}`;
       const historyHtml = renderRevisionHistory({
         revisions: historyRevisions,
         diffFrom,
         diffTo,
-        action: `/blog/${slug}`,
-        viewHref: revId => `/blog/${slug}?rev=${revId}`,
+        action: historyAction,
+        viewHref: revId =>
+          langOverride
+            ? `/blog/${slug}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
+            : `/blog/${slug}?rev=${revId}`,
         userMap,
         t: req.t,
       });
@@ -214,12 +250,20 @@ export const registerBlogRoutes = (app: Express) => {
   })}</span>
   ${updatedHtml}
 </div>`;
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams,
+      });
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}`,
+        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
