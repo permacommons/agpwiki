@@ -806,6 +806,12 @@ test('renderMarkdown links citation claims in bibliography', async () => {
   }
 });
 
+test('renderMarkdown ignores bare @key tokens', async () => {
+  const { html } = await renderMarkdown('Contact @no-such-citation:bad-claim.', []);
+  assert.doesNotMatch(html, /citation-group/);
+  assert.doesNotMatch(html, /citation-ref/);
+});
+
 test('renderMarkdown punctuation handles author-only citations without year', async () => {
   const dal = await getDal();
   const citationKey = `test-cite-noyear-${Date.now()}`;
@@ -1434,6 +1440,178 @@ test('MCP rejects unknown citation claim references', async () => {
         return true;
       }
     );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects unknown citation keys', async () => {
+  const dal = await getDal();
+  const slug = `test-cite-key-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-cite-key-valid-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation key validation test',
+          URL: 'https://example.com/citation-key-validation',
+        },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug,
+            title: { en: 'Citation key validation' },
+            body: { en: `See [@${citationKey}; @no-such-citation].` },
+            revSummary: { en: 'Add citation references.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'body.en'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP allows citation-like text in inline code spans', async () => {
+  const dal = await getDal();
+  const slug = `test-claim-ref-code-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-claim-ref-code-cite-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Claim validation inline code test',
+          URL: 'https://example.com/claim-validation-code',
+        },
+      },
+      userId
+    );
+
+    const created = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Claim validation inline code' },
+        body: { en: `Literal \`[@${citationKey}:bad-claim]\` should not validate.` },
+        revSummary: { en: 'Add inline code example.' },
+      },
+      userId
+    );
+    assert.equal(created.slug, slug);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP allows non-citation @key:claim text', async () => {
+  const dal = await getDal();
+  const slug = `test-claim-ref-plain-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-claim-ref-plain-cite-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Claim validation plain text test',
+          URL: 'https://example.com/claim-validation-plain',
+        },
+      },
+      userId
+    );
+
+    const created = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Claim validation plain text' },
+        body: { en: `Reach out to @${citationKey}:bad-claim for details.` },
+        revSummary: { en: 'Add plain text example.' },
+      },
+      userId
+    );
+    assert.equal(created.slug, slug);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {

@@ -1,27 +1,18 @@
 import type { ValidationCollector } from '../mcp/errors.js';
-import Citation from '../models/citation.js';
+import CitationModel from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
+import type { ContentValidator, MarkdownAnalysis } from './content-validation.js';
 
-const citationKeyRegex = /@([\w][\w:.#$%&\-+?<>~/]*)/g;
-
-const splitClaimRef = (value: string) => {
-  const separatorIndex = value.indexOf(':');
-  if (separatorIndex <= 0) return null;
-  const key = value.slice(0, separatorIndex);
-  const claimId = value.slice(separatorIndex + 1);
-  return { key, claimId };
-};
-
-const extractClaimRefs = (text: string) => {
+const extractClaimRefs = (analysis: MarkdownAnalysis) => {
   const refs = new Map<string, Set<string>>();
-  for (const match of text.matchAll(citationKeyRegex)) {
-    const ref = splitClaimRef(match[1]);
-    if (!ref) continue;
-    const claimId = ref.claimId.trim();
-    if (!refs.has(ref.key)) {
-      refs.set(ref.key, new Set());
+  for (const citation of analysis.citations) {
+    if (!citation.claimId) continue;
+    const key = citation.citationId;
+    const claimId = citation.claimId.trim();
+    if (!refs.has(key)) {
+      refs.set(key, new Set());
     }
-    refs.get(ref.key)?.add(claimId);
+    refs.get(key)?.add(claimId);
   }
   return refs;
 };
@@ -42,53 +33,38 @@ const addMissingClaimErrors = (
   }
 };
 
+const addMissingCitationErrors = (
+  errors: ValidationCollector,
+  fieldLabel: string,
+  missing: Iterable<string>
+) => {
+  for (const key of missing) {
+    const normalized = key.trim();
+    if (!normalized) continue;
+    errors.add(fieldLabel, `citation not found: ${normalized}`, 'invalid');
+  }
+};
+
 const toNonEmptyArray = <T>(values: T[]) => {
   if (values.length === 0) return null;
   const [first, ...rest] = values;
   return [first, ...rest] as [T, ...T[]];
 };
 
-export const validateCitationClaimRefs = async (
-  body: Record<string, string> | string | null | undefined,
-  fieldLabel: string,
-  errors: ValidationCollector
-) => {
-  if (!body) return;
+export const validateCitationClaimRefs: ContentValidator = async ({ analysis, fieldLabel, errors }) => {
+  const refsByKey = extractClaimRefs(analysis);
+  const citationKeys = new Set(analysis.citations.map(citation => citation.citationId));
+  if (refsByKey.size === 0 && citationKeys.size === 0) return;
 
-  const refsByKey = new Map<string, Set<string>>();
-
-  const mergeRefs = (refs: Map<string, Set<string>>) => {
-    for (const [key, claimIds] of refs.entries()) {
-      if (!refsByKey.has(key)) {
-        refsByKey.set(key, new Set());
-      }
-      const target = refsByKey.get(key);
-      for (const claimId of claimIds) {
-        target?.add(claimId);
-      }
-    }
-  };
-
-  if (typeof body === 'string') {
-    mergeRefs(extractClaimRefs(body));
-  } else {
-    for (const [_lang, text] of Object.entries(body)) {
-      if (!text) continue;
-      const refs = extractClaimRefs(text);
-      if (refs.size > 0) {
-        mergeRefs(refs);
-      }
-    }
-  }
-
-  if (refsByKey.size === 0) return;
-
-  const { in: inOp } = Citation.ops;
-  const citationKeys = Array.from(refsByKey.keys());
-  const citationKeyList = toNonEmptyArray(citationKeys);
+  const { in: inOp } = CitationModel.ops;
+  const citationKeyList = toNonEmptyArray(Array.from(citationKeys));
   if (!citationKeyList) return;
-  const citations = await Citation.filterWhere({ key: inOp(citationKeyList) }).run();
+  const citations = await CitationModel.filterWhere({ key: inOp(citationKeyList) }).run();
   const citationMap = new Map(citations.map(citation => [citation.key, citation]));
+  const missingCitationKeys = Array.from(citationKeys).filter(key => !citationMap.has(key));
+  if (missingCitationKeys.length > 0) {
+    addMissingCitationErrors(errors, fieldLabel, missingCitationKeys);
+  }
   const requestedByCitationId = new Map<string, Set<string>>();
   const citationKeyById = new Map<string, string>();
 

@@ -3,6 +3,7 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
+import { validateMarkdownContent } from '../lib/content-validation.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
@@ -439,7 +440,7 @@ export async function createBlogPost(
   if (body) {
     for (const [lang, text] of Object.entries(body)) {
       if (!text) continue;
-      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
     }
   }
   errors.throwIfAny();
@@ -487,7 +488,7 @@ export async function updateBlogPost(
   if (body) {
     for (const [lang, text] of Object.entries(body)) {
       if (!text) continue;
-      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
     }
   }
   errors.throwIfAny();
