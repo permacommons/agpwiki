@@ -263,7 +263,7 @@ export const registerCitationRoutes = (app: Express) => {
   <dl class="citation-fields">${fieldsHtml}</dl>
 </div>`;
       const html = renderLayout({
-        title: req.t('citation.claimTitle', { claimId, key }),
+        title: `${claimId} · ${key}`,
         labelHtml,
         bodyHtml,
         topHtml,
