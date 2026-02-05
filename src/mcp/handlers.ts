@@ -14,6 +14,7 @@ import {
   CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH,
   CITATION_CLAIM_QUOTE_MAX_LENGTH,
 } from '../lib/citation-claims.js';
+import { validateMarkdownContent } from '../lib/content-validation.js';
 import {
   getPageCheckMetricsErrors,
   PAGE_CHECK_NOTES_MAX_LENGTH,
@@ -1761,7 +1762,7 @@ export async function createWikiPage(
   if (body) {
     for (const [lang, text] of Object.entries(body)) {
       if (!text) continue;
-      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
     }
   }
   errors.throwIfAny();
@@ -1822,7 +1823,7 @@ export async function updateWikiPage(
   if (body) {
     for (const [lang, text] of Object.entries(body)) {
       if (!text) continue;
-      await validateCitationClaimRefs(text, `body.${lang}`, errors);
+      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
     }
   }
   errors.throwIfAny();
@@ -1898,7 +1899,7 @@ export async function applyWikiPagePatch(
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
   const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: normalizedSlug });
   ensureNoControlCharacters({ [lang]: patched }, 'body');
-  await validateCitationClaimRefs(patched, `body.${lang}`, errors);
+  await validateMarkdownContent(patched, `body.${lang}`, errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
@@ -2045,7 +2046,7 @@ export async function rewriteWikiPageSection(
     });
   }
   ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateCitationClaimRefs(updatedText, `body.${lang}`, errors);
+  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
@@ -2118,7 +2119,7 @@ export async function replaceWikiPageExactText(
     });
   }
   ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateCitationClaimRefs(updatedText, `body.${lang}`, errors);
+  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
