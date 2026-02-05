@@ -54,8 +54,14 @@ export const registerBlogRoutes = (app: Express) => {
       const posts = result.rows.map(row => BlogPost.createFromRow(row));
       const items = posts
         .map(post => {
-          const title = resolveSafeText(mlString.resolve, 'en', post.title, post.slug);
-          const summary = resolveSafeText(mlString.resolve, 'en', post.summary, '');
+          const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+          const contentLang = resolveContentLanguage({
+            uiLocale: res.locals.locale,
+            override: undefined,
+            availableLangs,
+          });
+          const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
+          const summary = resolveSafeText(mlString.resolve, contentLang, post.summary, '');
           const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
           const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
           const updatedHtml =

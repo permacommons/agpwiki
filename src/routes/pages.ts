@@ -123,6 +123,8 @@ export const registerPageRoutes = (app: Express) => {
 
   app.get(/^\/(.+)\/checks$/, async (req, res) => {
     const slug = req.params[0];
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
     if (isBlockedSlug(slug)) {
       res.status(404).type('text').send(req.t('page.notFound'));
       return;
@@ -151,6 +153,19 @@ export const registerPageRoutes = (app: Express) => {
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
 
+      const languageSources: Array<Record<string, string> | null> = [
+        page.title ?? null,
+      ];
+      for (const check of checks) {
+        languageSources.push(check.checkResults ?? null, check.notes ?? null);
+      }
+      const availableLangs = getAvailableLanguages(...languageSources);
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+
       const items: PageCheckDetailItem[] = checks.map(check => {
         const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
         return {
@@ -158,8 +173,12 @@ export const registerPageRoutes = (app: Express) => {
           typeLabel: formatCheckType(check.type, req.t),
           statusLabel: formatCheckStatus(check.status, req.t),
           dateLabel: formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt),
-          checkResults: resolveSafeTextRequired(mlString.resolve, 'en', check.checkResults),
-          notes: resolveOptionalSafeText(mlString.resolve, 'en', check.notes),
+          checkResults: resolveSafeTextRequired(
+            mlString.resolve,
+            contentLang,
+            check.checkResults
+          ),
+          notes: resolveOptionalSafeText(mlString.resolve, contentLang, check.notes),
           metrics: {
             issuesFound: metrics.issues_found,
             issuesFixed: metrics.issues_fixed,
@@ -169,21 +188,30 @@ export const registerPageRoutes = (app: Express) => {
         };
       });
 
-      const pageTitle = resolveSafeText(mlString.resolve, 'en', page.title, page.slug);
+      const pageTitle = resolveSafeText(mlString.resolve, contentLang, page.title, page.slug);
       const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
       const bodyHtml = `<section class="check-list">${renderPageChecksList({
         checks: items,
         userMap,
         slug: page.slug,
+        langOverride,
         t: req.t,
       })}</section>`;
       const sidebarHtml = '';
       const signedIn = Boolean(await resolveSessionUser(req));
       const labelHtml = `<div class="page-label">${req.t('checks.title')}</div>`;
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams: extractQueryParams(req.query),
+      });
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml,
+        bodyHtml: `${bodyHtml}${languageRow}`,
         sidebarHtml,
         signedIn,
         locale: res.locals.locale,
@@ -203,6 +231,8 @@ export const registerPageRoutes = (app: Express) => {
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
 
     if (isBlockedSlug(slug)) {
       res.status(404).type('text').send(req.t('page.notFound'));
@@ -249,13 +279,23 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
 
+      const availableLangs = getAvailableLanguages(
+        selectedRevision.checkResults ?? null,
+        selectedRevision.notes ?? null
+      );
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+
       const resolveRevisionText = (rev: PageCheckInstance) => {
         const resolvedMetrics = resolveCheckMetrics(rev.metrics as PageCheckMetrics | null);
         const resolvedCheckResults = renderSafeText(
-          resolveSafeTextRequired(mlString.resolve, 'en', rev.checkResults)
+          resolveSafeTextRequired(mlString.resolve, contentLang, rev.checkResults)
         );
         const resolvedNotes = renderSafeText(
-          resolveSafeTextRequired(mlString.resolve, 'en', rev.notes, '')
+          resolveSafeTextRequired(mlString.resolve, contentLang, rev.notes, '')
         );
         const resolvedDate = formatDateUTC(rev.completedAt ?? rev._revDate ?? rev.createdAt);
         const lines = [
@@ -283,10 +323,10 @@ export const registerPageRoutes = (app: Express) => {
       );
       const checkResults = resolveSafeTextRequired(
         mlString.resolve,
-        'en',
+        contentLang,
         selectedRevision.checkResults
       );
-      const notes = resolveOptionalSafeText(mlString.resolve, 'en', selectedRevision.notes);
+      const notes = resolveOptionalSafeText(mlString.resolve, contentLang, selectedRevision.notes);
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
@@ -306,7 +346,11 @@ export const registerPageRoutes = (app: Express) => {
         {
           label: req.t('checks.fields.targetRevision'),
           value: targetRevId,
-          href: targetRevId ? `/${encodeURIComponent(page.slug)}?rev=${targetRevId}` : '',
+          href: targetRevId
+            ? `/${encodeURIComponent(page.slug)}?rev=${targetRevId}${
+                langOverride ? `&lang=${encodeURIComponent(langOverride)}` : ''
+              }`
+            : '',
         },
         ...(operatorValue
           ? [{ label: req.t('checks.fields.operator'), value: operatorValue }]
@@ -385,12 +429,13 @@ export const registerPageRoutes = (app: Express) => {
         userMap,
         slug: page.slug,
         checkId: check.id,
+        langOverride,
         diffFrom,
         diffTo,
         t: req.t,
       });
 
-      const pageTitle = resolveSafeText(mlString.resolve, 'en', page.title, page.slug);
+      const pageTitle = resolveSafeText(mlString.resolve, contentLang, page.title, page.slug);
       const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
       const labelHtml = `<div class="page-label">${req.t('checks.title')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
@@ -410,12 +455,20 @@ export const registerPageRoutes = (app: Express) => {
         }
       }
 
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams: extractQueryParams(req.query),
+      });
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const sidebarHtml = historyHtml;
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml: topHtml + bodyHtml,
+        bodyHtml: `${topHtml}${bodyHtml}${languageRow}`,
         sidebarHtml,
         signedIn,
         locale: res.locals.locale,
