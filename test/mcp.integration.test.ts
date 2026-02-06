@@ -1662,6 +1662,15 @@ test('MCP deleteWikiPage soft-deletes a page', async () => {
 
     assert.equal(deleteResult.deleted, true);
     assert.equal(deleteResult.slug, slug);
+    const pageDeleteRow = await dal.query(
+      'SELECT _rev_summary FROM pages WHERE slug = $1 AND _old_rev_of IS NULL AND _rev_deleted = true',
+      [slug]
+    );
+    assert.equal(pageDeleteRow.rowCount, 1);
+    assert.deepEqual(
+      (pageDeleteRow.rows[0] as { _rev_summary: Record<string, string> | null })._rev_summary,
+      { en: 'Admin deletion.' }
+    );
 
     await assert.rejects(
       () => readWikiPage(dal, slug),
@@ -1722,6 +1731,15 @@ test('MCP deleteCitation soft-deletes a citation', async () => {
 
     assert.equal(deleteResult.deleted, true);
     assert.equal(deleteResult.key, citationKey);
+    const citationDeleteRow = await dal.query(
+      'SELECT _rev_summary FROM citations WHERE key = $1 AND _old_rev_of IS NULL AND _rev_deleted = true',
+      [citationKey]
+    );
+    assert.equal(citationDeleteRow.rowCount, 1);
+    assert.deepEqual(
+      (citationDeleteRow.rows[0] as { _rev_summary: Record<string, string> | null })._rev_summary,
+      { en: 'Admin deletion.' }
+    );
 
     await assert.rejects(
       () => readCitation(dal, citationKey),

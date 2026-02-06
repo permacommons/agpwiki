@@ -9,7 +9,12 @@ import {
   diffStructuredField,
 } from '../lib/diff-engine.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
-import { resolveOptionalSafeText, resolveSafeText, resolveSafeTextRequired } from '../lib/safe-text.js';
+import {
+  resolveOptionalSafeText,
+  resolveSafeText,
+  resolveSafeTextRequired,
+  resolveSafeTextWithFallback,
+} from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
 import PageAlias from '../models/page-alias.js';
@@ -393,6 +398,12 @@ export const registerPageRoutes = (app: Express) => {
           typeLabel: formatCheckType(rev.type, req.t),
           statusLabel: formatCheckStatus(rev.status, req.t),
           dateLabel: formatDateUTC(rev._revDate),
+          summary: resolveSafeTextWithFallback(
+            mlString.resolve,
+            contentLang,
+            rev._revSummary,
+            ''
+          ),
           metrics: {
             issuesFound: revMetrics.issues_found,
             issuesFixed: revMetrics.issues_fixed,

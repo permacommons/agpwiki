@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { escapeHtml, renderSafeText, type SafeText } from '../../render.js';
+import { escapeHtml, renderSafeText, renderText, type SafeText } from '../../render.js';
 
 export type PageCheckMetricSummary = {
   issuesFound: { high: number; medium: number; low: number };
@@ -11,6 +11,7 @@ export type PageCheckSummaryItem = {
   typeLabel: string;
   statusLabel: string;
   dateLabel: string;
+  summary?: SafeText | string;
   metrics: PageCheckMetricSummary;
   revUser: string | null;
   revTags: string[] | null;
@@ -232,6 +233,9 @@ export const renderPageCheckHistory = ({
       const metaParts = [rev.typeLabel, rev.statusLabel, rev.dateLabel].filter(Boolean);
       const fromChecked = diffFrom ? diffFrom === rev.id : index === 1;
       const toChecked = diffTo ? diffTo === rev.id : index === 0;
+      const summaryHtml = rev.summary
+        ? `<div class="rev-summary">${renderText(rev.summary)}</div>`
+        : '';
       const viewHref = appendLangParam(
         `/${escapeHtml(slug)}/checks/${escapeHtml(checkId)}?rev=${escapeHtml(rev.id)}`,
         langOverride
@@ -246,6 +250,7 @@ export const renderPageCheckHistory = ({
     } /></span>
     <strong>${escapeHtml(metaParts.join(' · '))}</strong>
   </div>
+  ${summaryHtml}
   <div class="check-metrics">${escapeHtml(renderMetricsCompact(rev.metrics, t))}</div>
   <div class="rev-actions">
     <a href="${viewHref}">${t('history.view')}</a>
