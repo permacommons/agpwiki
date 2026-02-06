@@ -66,6 +66,14 @@
       locator: 'Lokator: {{value}}',
     },
   },
+  diff: {
+    revision: 'Razlika revizij',
+    from: 'Od',
+    to: 'Do',
+    addedLanguages: 'Dodani jeziki',
+    removedLanguages: 'Odstranjeni jeziki',
+    modifiedLanguages: 'Spremenjeni jeziki',
+  },
   page: {
     recentChanges: 'Nedavne spremembe',
     recentCitations: 'Nedavni citati',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Jezik',
+    available: 'Na voljo v',
   },
   blog: {
     description: 'Blog objave urednikov Agpedie.',

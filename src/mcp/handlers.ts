@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Driver } from '@citeproc-rs/wasm';
-import { createTwoFilesPatch, diffLines } from 'diff';
 import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
@@ -15,6 +14,8 @@ import {
   CITATION_CLAIM_QUOTE_MAX_LENGTH,
 } from '../lib/citation-claims.js';
 import { validateMarkdownContent } from '../lib/content-validation.js';
+import type { FieldDiff } from '../lib/diff-engine.js';
+import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
 import {
   getPageCheckMetricsErrors,
   PAGE_CHECK_NOTES_MAX_LENGTH,
@@ -42,6 +43,7 @@ import {
   ValidationCollector,
   ValidationError,
 } from './errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
 
 const { mlString } = dal;
@@ -70,16 +72,16 @@ export interface McpReadResourceResult {
 
 export interface WikiPageWriteInput {
   slug: string;
-  title?: Record<string, string> | null;
-  body?: Record<string, string> | null;
+  title?: LocalizedMapInput;
+  body?: LocalizedMapInput;
   originalLanguage?: string | null;
   tags?: string[];
-  revSummary?: Record<string, string> | null;
+  revSummary?: LocalizedMapInput;
 }
 
 export interface WikiPageUpdateInput extends WikiPageWriteInput {
   newSlug?: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface WikiPageResult {
@@ -180,7 +182,7 @@ export interface WikiPageAliasDeleteResult {
 
 export interface WikiPageDeleteInput {
   slug: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface WikiPageDeleteResult {
@@ -191,7 +193,7 @@ export interface WikiPageDeleteResult {
 
 export interface CitationDeleteInput {
   key: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface CitationDeleteResult {
@@ -203,7 +205,7 @@ export interface CitationDeleteResult {
 export interface CitationClaimDeleteInput {
   key: string;
   claimId: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface CitationClaimDeleteResult {
@@ -215,7 +217,7 @@ export interface CitationClaimDeleteResult {
 
 export interface PageCheckDeleteInput {
   checkId: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface PageCheckDeleteResult {
@@ -227,26 +229,26 @@ export interface PageCheckWriteInput {
   slug: string;
   type: string;
   status: string;
-  checkResults: Record<string, string>;
-  notes?: Record<string, string> | null;
+  checkResults: Record<string, string | null>;
+  notes?: Record<string, string | null> | null;
   metrics: PageCheckMetrics;
   targetRevId: string;
   completedAt?: string | null;
   tags?: string[];
-  revSummary?: Record<string, string> | null;
+  revSummary?: Record<string, string | null> | null;
 }
 
 export interface PageCheckUpdateInput {
   checkId: string;
   type?: string;
   status?: string;
-  checkResults?: Record<string, string> | null;
-  notes?: Record<string, string> | null;
+  checkResults?: Record<string, string | null> | null;
+  notes?: Record<string, string | null> | null;
   metrics?: PageCheckMetrics;
   targetRevId?: string;
   completedAt?: string | null;
   tags?: string[];
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface PageCheckResult {
@@ -304,25 +306,16 @@ export interface WikiPageDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    title: WikiPageFieldDiff;
-    body: WikiPageFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
-export interface WikiPageFieldDiff {
-  unifiedDiff: string;
-  stats: {
-    addedLines: number;
-    removedLines: number;
-  };
-}
+export type WikiPageFieldDiff = FieldDiff;
 
 export interface CitationWriteInput {
   key: string;
   data: Record<string, unknown>;
   tags?: string[];
-  revSummary?: Record<string, string> | null;
+  revSummary?: Record<string, string | null> | null;
 }
 
 export interface CitationUpdateInput {
@@ -330,7 +323,7 @@ export interface CitationUpdateInput {
   newKey?: string;
   data?: Record<string, unknown> | null;
   tags?: string[];
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface CitationResult {
@@ -384,10 +377,7 @@ export interface CitationDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    key: WikiPageFieldDiff;
-    data: WikiPageFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
 export interface PageCheckDiffInput {
@@ -414,7 +404,7 @@ export interface PageCheckDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: Record<string, WikiPageFieldDiff>;
+  fields: Record<string, FieldDiff>;
 }
 
 export interface CitationQueryInput {
@@ -443,18 +433,18 @@ export interface CitationQueryResult {
 export interface CitationClaimWriteInput {
   key: string;
   claimId: string;
-  assertion: Record<string, string>;
-  quote?: Record<string, string> | null;
+  assertion: Record<string, string | null>;
+  quote?: Record<string, string | null> | null;
   quoteLanguage?: string | null;
   locatorType?: string | null;
-  locatorValue?: Record<string, string> | null;
-  locatorLabel?: Record<string, string> | null;
+  locatorValue?: Record<string, string | null> | null;
+  locatorLabel?: Record<string, string | null> | null;
   tags?: string[];
-  revSummary?: Record<string, string> | null;
+  revSummary?: Record<string, string | null> | null;
 }
 
 export interface CitationClaimUpdateInput extends CitationClaimWriteInput {
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
   newClaimId?: string;
 }
 
@@ -520,7 +510,7 @@ export interface CitationClaimDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: Record<string, WikiPageFieldDiff>;
+  fields: Record<string, FieldDiff>;
 }
 
 const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
@@ -702,45 +692,6 @@ const fetchPageCheckRevisionByRevId = async (
   return PageCheck.filterWhere({}).getRevisionByRevId(revId, checkId).first();
 };
 
-const normalizeForDiff = (value: string): string => (value.endsWith('\n') ? value : `${value}\n`);
-
-const buildFieldDiff = (
-  fieldName: string,
-  fromValue: string,
-  toValue: string
-): WikiPageFieldDiff => {
-  const fromNormalized = normalizeForDiff(fromValue);
-  const toNormalized = normalizeForDiff(toValue);
-  const unifiedDiff = createTwoFilesPatch(
-    fieldName,
-    fieldName,
-    fromNormalized,
-    toNormalized,
-    '',
-    '',
-    { context: 2 }
-  );
-  const lineDiff = diffLines(fromNormalized, toNormalized);
-  let addedLines = 0;
-  let removedLines = 0;
-
-  const countLines = (text: string) => {
-    if (!text) return 0;
-    const lines = text.split('\n');
-    return text.endsWith('\n') ? lines.length - 1 : lines.length;
-  };
-
-  for (const chunk of lineDiff) {
-    if (chunk.added) addedLines += countLines(chunk.value);
-    if (chunk.removed) removedLines += countLines(chunk.value);
-  }
-
-  return {
-    unifiedDiff,
-    stats: { addedLines, removedLines },
-  };
-};
-
 const toRevisionMeta = (rev: {
   _revID?: string | null;
   _revDate?: Date | null;
@@ -752,15 +703,6 @@ const toRevisionMeta = (rev: {
   revUser: rev._revUser ?? null,
   revTags: rev._revTags ?? null,
 });
-
-const buildDiffFields = <T extends string>(
-  fields: Array<{ key: T; from: string; to: string }>
-): Record<T, WikiPageFieldDiff> =>
-  Object.fromEntries(
-    fields.map(field => [field.key, buildFieldDiff(field.key, field.from, field.to)])
-  ) as Record<T, WikiPageFieldDiff>;
-
-const stringifyJsonValue = (value: unknown) => JSON.stringify(value ?? null, null, 2);
 
 const ensureNonEmptyString = (
   value: string | null | undefined,
@@ -1088,7 +1030,7 @@ const hasDisallowedControlCharacters = (value: string) => {
 };
 
 const ensureNoControlCharacters = (
-  value: Record<string, string> | null | undefined,
+  value: Record<string, string | null> | null | undefined,
   label: string,
   errors?: ValidationCollector
 ) => {
@@ -1106,14 +1048,13 @@ const ensureNoControlCharacters = (
   }
 };
 
-const validateTitle = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateTitle = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 200, allowHTML: false });
-    ensureNoControlCharacters(value, 'title', errors);
+    mlString.validate(normalized, { maxLength: 200, allowHTML: false });
+    ensureNoControlCharacters(normalized, 'title', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid title value.';
     if (errors) {
@@ -1124,14 +1065,13 @@ const validateTitle = (
   }
 };
 
-const validateBody = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateBody = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 20000, allowHTML: true });
-    ensureNoControlCharacters(value, 'body', errors);
+    mlString.validate(normalized, { maxLength: 20000, allowHTML: true });
+    ensureNoControlCharacters(normalized, 'body', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid body value.';
     if (errors) {
@@ -1142,14 +1082,13 @@ const validateBody = (
   }
 };
 
-const validateRevSummary = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 300, allowHTML: false });
-    ensureNoControlCharacters(value, 'revSummary', errors);
+    mlString.validate(normalized, { maxLength: 300, allowHTML: false });
+    ensureNoControlCharacters(normalized, 'revSummary', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
     if (errors) {
@@ -1162,17 +1101,16 @@ const validateRevSummary = (
   }
 };
 
-const validateAssertion = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateAssertion = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, {
+    mlString.validate(normalized, {
       maxLength: CITATION_CLAIM_ASSERTION_MAX_LENGTH,
       allowHTML: false,
     });
-    ensureNoControlCharacters(value, 'assertion', errors);
+    ensureNoControlCharacters(normalized, 'assertion', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid assertion value.';
     if (errors) {
@@ -1183,17 +1121,16 @@ const validateAssertion = (
   }
 };
 
-const validateQuote = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateQuote = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined || value === null) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, {
+    mlString.validate(normalized, {
       maxLength: CITATION_CLAIM_QUOTE_MAX_LENGTH,
       allowHTML: false,
     });
-    ensureNoControlCharacters(value, 'quote', errors);
+    ensureNoControlCharacters(normalized, 'quote', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid quote value.';
     if (errors) {
@@ -1204,17 +1141,16 @@ const validateQuote = (
   }
 };
 
-const validateLocatorValue = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateLocatorValue = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined || value === null) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, {
+    mlString.validate(normalized, {
       maxLength: CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH,
       allowHTML: false,
     });
-    ensureNoControlCharacters(value, 'locatorValue', errors);
+    ensureNoControlCharacters(normalized, 'locatorValue', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid locator value.';
     if (errors) {
@@ -1227,17 +1163,16 @@ const validateLocatorValue = (
   }
 };
 
-const validateLocatorLabel = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateLocatorLabel = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined || value === null) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, {
+    mlString.validate(normalized, {
       maxLength: CITATION_CLAIM_LOCATOR_LABEL_MAX_LENGTH,
       allowHTML: false,
     });
-    ensureNoControlCharacters(value, 'locatorLabel', errors);
+    ensureNoControlCharacters(normalized, 'locatorLabel', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid locator label.';
     if (errors) {
@@ -1269,11 +1204,12 @@ const ensureLocatorType = (
 };
 
 const requireMlString = (
-  value: Record<string, string> | null | undefined,
+  value: LocalizedMapInput,
   label: string,
   errors?: ValidationCollector
 ) => {
-  if (value === null || value === undefined) {
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (!normalized) {
     if (errors) {
       errors.addMissing(label);
       return false;
@@ -1286,11 +1222,12 @@ const requireMlString = (
 };
 
 const validateQuoteLanguage = (
-  quote: Record<string, string> | null | undefined,
+  quote: LocalizedMapInput,
   quoteLanguage: string | null | undefined,
   errors?: ValidationCollector
 ) => {
-  if (!quote) {
+  const normalizedQuote = sanitizeLocalizedMapInput(quote);
+  if (!normalizedQuote) {
     if (quoteLanguage) {
       if (errors) {
         errors.add('quoteLanguage', 'requires quote to be provided.', 'invalid');
@@ -1315,7 +1252,7 @@ const validateQuoteLanguage = (
 
   ensureOptionalLanguage(quoteLanguage, 'quoteLanguage', errors);
   if (!quoteLanguage) return;
-  const sourceQuote = quote[quoteLanguage];
+  const sourceQuote = normalizedQuote[quoteLanguage];
   if (!sourceQuote || typeof sourceQuote !== 'string' || sourceQuote.trim().length === 0) {
     if (errors) {
       errors.add(`quote.${quoteLanguage}`, 'is required for the source language.', 'required');
@@ -1331,14 +1268,13 @@ const validateQuoteLanguage = (
   }
 };
 
-const validateCheckResults = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateCheckResults = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH, allowHTML: false });
-    ensureNoControlCharacters(value, 'checkResults', errors);
+    mlString.validate(normalized, { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH, allowHTML: false });
+    ensureNoControlCharacters(normalized, 'checkResults', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid checkResults value.';
     if (errors) {
@@ -1351,11 +1287,9 @@ const validateCheckResults = (
   }
 };
 
-const requireCheckResults = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
-  if (value === null || value === undefined) {
+const requireCheckResults = (value: LocalizedMapInput, errors?: ValidationCollector) => {
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (!normalized) {
     if (errors) {
       errors.addMissing('checkResults');
       return;
@@ -1365,7 +1299,7 @@ const requireCheckResults = (
     ]);
   }
   validateCheckResults(value, errors);
-  const entries = Object.entries(value);
+  const entries = Object.entries(normalized);
   if (entries.length === 0) {
     if (errors) {
       errors.add('checkResults', 'must include at least one language entry.', 'invalid');
@@ -1392,14 +1326,13 @@ const requireCheckResults = (
   }
 };
 
-const validateNotes = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateNotes = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH, allowHTML: false });
-    ensureNoControlCharacters(value, 'notes', errors);
+    mlString.validate(normalized, { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH, allowHTML: false });
+    ensureNoControlCharacters(normalized, 'notes', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid notes value.';
     if (errors) {
@@ -1472,11 +1405,9 @@ const validatePageCheckStatus = (
   }
 };
 
-const requireRevSummary = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
-  if (value === null || value === undefined) {
+const requireRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (!normalized) {
     if (errors) {
       errors.addMissing('revSummary');
       return;
@@ -1486,7 +1417,7 @@ const requireRevSummary = (
     ]);
   }
   validateRevSummary(value, errors);
-  const entries = Object.entries(value);
+  const entries = Object.entries(normalized);
   if (entries.length === 0) {
     if (errors) {
       errors.add('revSummary', 'must include at least one language entry.', 'invalid');
@@ -1703,9 +1634,6 @@ const sanitizeCitationData = (data: Record<string, unknown>) => {
   };
 };
 
-const stringifyCitationData = (value: Record<string, unknown> | null | undefined): string =>
-  value ? JSON.stringify(value, null, 2) : '';
-
 export interface WikiPageListResult {
   hint: string;
   pages: Array<{ slug: string; name: string }>;
@@ -1787,10 +1715,13 @@ export async function createWikiPage(
   );
 
   page.slug = normalizedSlug;
-  if (title !== undefined) page.title = title;
-  if (body !== undefined) page.body = body;
+  const normalizedTitle = sanitizeLocalizedMapInput(title);
+  const normalizedBody = sanitizeLocalizedMapInput(body);
+  if (normalizedTitle !== undefined) page.title = normalizedTitle;
+  if (normalizedBody !== undefined) page.body = normalizedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
-  if (revSummary !== undefined) page._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.createdAt = createdAt;
   page.updatedAt = createdAt;
 
@@ -1853,10 +1784,13 @@ export async function updateWikiPage(
   await page.newRevision({ id: userId }, { tags: ['update', ...tags] });
 
   if (normalizedNewSlug !== undefined) page.slug = normalizedNewSlug;
-  if (title !== undefined) page.title = title;
-  if (body !== undefined) page.body = body;
+  const mergedTitle = mergeLocalizedMap(page.title ?? null, title);
+  const mergedBody = mergeLocalizedMap(page.body ?? null, body);
+  if (mergedTitle !== undefined) page.title = mergedTitle;
+  if (mergedBody !== undefined) page.body = mergedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
-  if (revSummary !== undefined) page._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
   await page.save();
@@ -1908,7 +1842,8 @@ export async function applyWikiPagePatch(
     ...currentBody,
     [lang]: patched,
   };
-  if (revSummary !== undefined) page._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
   await page.save();
@@ -2055,7 +1990,8 @@ export async function rewriteWikiPageSection(
     ...currentBody,
     [lang]: updatedText,
   };
-  if (revSummary !== undefined) page._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
   await page.save();
@@ -2128,7 +2064,8 @@ export async function replaceWikiPageExactText(
     ...currentBody,
     [lang]: updatedText,
   };
-  if (revSummary !== undefined) page._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
   await page.save();
@@ -2296,10 +2233,19 @@ export async function diffWikiPageRevisions(
     });
   }
 
-  const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
-  const toTitle = mlString.resolve(lang, toRev.title ?? null)?.str ?? '';
-  const fromBody = mlString.resolve(lang, fromRev.body ?? null)?.str ?? '';
-  const toBody = mlString.resolve(lang, toRev.body ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+  if (titleDiff) fields.title = titleDiff;
+  const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+  if (bodyDiff) fields.body = bodyDiff;
+  const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+  if (slugDiff) fields.slug = slugDiff;
+  const originalLangDiff = diffScalarField(
+    'originalLanguage',
+    fromRev.originalLanguage ?? null,
+    toRev.originalLanguage ?? null
+  );
+  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
 
   return {
     pageId: page.id,
@@ -2308,10 +2254,7 @@ export async function diffWikiPageRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'title', from: fromTitle, to: toTitle },
-      { key: 'body', from: fromBody, to: toBody },
-    ]),
+    fields,
   };
 }
 
@@ -2361,7 +2304,8 @@ export async function createCitation(
 
   citation.key = key;
   citation.data = sanitizedData;
-  if (revSummary !== undefined) citation._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) citation._revSummary = normalizedRevSummary;
   citation.createdAt = createdAt;
   citation.updatedAt = createdAt;
 
@@ -2415,7 +2359,8 @@ export async function updateCitation(
 
   if (newKey !== undefined) citation.key = newKey;
   if (sanitizedData !== undefined) citation.data = sanitizedData;
-  if (revSummary !== undefined) citation._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) citation._revSummary = normalizedRevSummary;
   citation.updatedAt = new Date();
 
   await citation.save();
@@ -2554,13 +2499,18 @@ export async function createCitationClaim(
 
   claim.citationId = citation.id;
   claim.claimId = claimId;
-  claim.assertion = assertion;
-  claim.quote = quote ?? null;
+  const normalizedAssertion = sanitizeLocalizedMapInput(assertion);
+  const normalizedQuote = sanitizeLocalizedMapInput(quote ?? undefined);
+  const normalizedLocatorValue = sanitizeLocalizedMapInput(locatorValue ?? undefined);
+  const normalizedLocatorLabel = sanitizeLocalizedMapInput(locatorLabel ?? undefined);
+  claim.assertion = normalizedAssertion ?? null;
+  claim.quote = normalizedQuote ?? null;
   claim.quoteLanguage = quoteLanguage ?? null;
   claim.locatorType = locatorType ?? null;
-  claim.locatorValue = locatorValue ?? null;
-  claim.locatorLabel = locatorLabel ?? null;
-  if (revSummary !== undefined) claim._revSummary = revSummary;
+  claim.locatorValue = normalizedLocatorValue ?? null;
+  claim.locatorLabel = normalizedLocatorLabel ?? null;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) claim._revSummary = normalizedRevSummary;
   claim.createdAt = createdAt;
   claim.updatedAt = createdAt;
 
@@ -2643,13 +2593,25 @@ export async function updateCitationClaim(
   await claim.newRevision({ id: userId }, { tags: ['update', ...tags] });
 
   if (newClaimId !== undefined) claim.claimId = newClaimId;
-  if (assertion !== undefined) claim.assertion = assertion;
-  if (quote !== undefined) claim.quote = quote;
+  const mergedAssertion = mergeLocalizedMap(claim.assertion ?? null, assertion);
+  const mergedQuote = mergeLocalizedMap(claim.quote ?? null, quote);
+  const mergedLocatorValue = mergeLocalizedMap(claim.locatorValue ?? null, locatorValue);
+  const mergedLocatorLabel = mergeLocalizedMap(claim.locatorLabel ?? null, locatorLabel);
+  if (mergedAssertion !== undefined) {
+    if (!mergedAssertion) {
+      throw new ValidationError('assertion cannot be null.', [
+        { field: 'assertion', message: 'cannot be null.', code: 'invalid' },
+      ]);
+    }
+    claim.assertion = mergedAssertion;
+  }
+  if (mergedQuote !== undefined) claim.quote = mergedQuote;
   if (quoteLanguage !== undefined) claim.quoteLanguage = quoteLanguage;
   if (locatorType !== undefined) claim.locatorType = locatorType;
-  if (locatorValue !== undefined) claim.locatorValue = locatorValue;
-  if (locatorLabel !== undefined) claim.locatorLabel = locatorLabel;
-  if (revSummary !== undefined) claim._revSummary = revSummary;
+  if (mergedLocatorValue !== undefined) claim.locatorValue = mergedLocatorValue;
+  if (mergedLocatorLabel !== undefined) claim.locatorLabel = mergedLocatorLabel;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) claim._revSummary = normalizedRevSummary;
   claim.updatedAt = new Date();
 
   await claim.save();
@@ -2784,13 +2746,16 @@ export async function createPageCheck(
   check.pageId = page.id;
   check.type = type;
   check.status = status;
-  check.checkResults = checkResults;
-  if (notes !== undefined) check.notes = notes;
+  const normalizedCheckResults = sanitizeLocalizedMapInput(checkResults);
+  const normalizedNotes = sanitizeLocalizedMapInput(notes ?? undefined);
+  check.checkResults = normalizedCheckResults ?? null;
+  if (normalizedNotes !== undefined) check.notes = normalizedNotes;
   check.metrics = metrics;
   check.createdAt = createdAt;
   if (parsedCompletedAt !== undefined) check.completedAt = parsedCompletedAt;
   check.targetRevId = targetRevId;
-  if (revSummary !== undefined) check._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) check._revSummary = normalizedRevSummary;
 
   await check.save();
 
@@ -2865,8 +2830,19 @@ export async function updatePageCheck(
 
   if (type !== undefined) check.type = type;
   if (status !== undefined) check.status = status;
-  if (checkResults !== undefined && checkResults !== null) check.checkResults = checkResults;
-  if (notes !== undefined) check.notes = notes;
+  if (checkResults !== undefined && checkResults !== null) {
+    const mergedCheckResults = mergeLocalizedMap(check.checkResults ?? null, checkResults);
+    if (!mergedCheckResults) {
+      throw new ValidationError('checkResults cannot be null.', [
+        { field: 'checkResults', message: 'cannot be null.', code: 'invalid' },
+      ]);
+    }
+    check.checkResults = mergedCheckResults;
+  }
+  if (notes !== undefined) {
+    const mergedNotes = mergeLocalizedMap(check.notes ?? null, notes);
+    if (mergedNotes !== undefined) check.notes = mergedNotes;
+  }
   if (metrics !== undefined && metrics !== null) check.metrics = metrics;
   if (targetRevId !== undefined) check.targetRevId = targetRevId;
   if (completedAt === null) {
@@ -2874,7 +2850,8 @@ export async function updatePageCheck(
   } else if (parsedCompletedAt !== undefined) {
     check.completedAt = parsedCompletedAt;
   }
-  if (revSummary !== undefined) check._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) check._revSummary = normalizedRevSummary;
 
   await check.save();
 
@@ -2981,10 +2958,37 @@ export async function diffPageCheckRevisions(
     });
   }
 
-  const fromResults = mlString.resolve(lang, fromRev.checkResults ?? null)?.str ?? '';
-  const toResults = mlString.resolve(lang, toRev.checkResults ?? null)?.str ?? '';
-  const fromNotes = mlString.resolve(lang, fromRev.notes ?? null)?.str ?? '';
-  const toNotes = mlString.resolve(lang, toRev.notes ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const typeDiff = diffScalarField('type', fromRev.type ?? null, toRev.type ?? null);
+  if (typeDiff) fields.type = typeDiff;
+  const statusDiff = diffScalarField('status', fromRev.status ?? null, toRev.status ?? null);
+  if (statusDiff) fields.status = statusDiff;
+  const checkResultsDiff = diffLocalizedField(
+    'checkResults',
+    fromRev.checkResults ?? null,
+    toRev.checkResults ?? null
+  );
+  if (checkResultsDiff) fields.checkResults = checkResultsDiff;
+  const notesDiff = diffLocalizedField('notes', fromRev.notes ?? null, toRev.notes ?? null);
+  if (notesDiff) fields.notes = notesDiff;
+  const metricsDiff = diffStructuredField(
+    'metrics',
+    fromRev.metrics ?? null,
+    toRev.metrics ?? null
+  );
+  if (metricsDiff) fields.metrics = metricsDiff;
+  const targetDiff = diffScalarField(
+    'targetRevId',
+    fromRev.targetRevId ?? null,
+    toRev.targetRevId ?? null
+  );
+  if (targetDiff) fields.targetRevId = targetDiff;
+  const completedDiff = diffScalarField(
+    'completedAt',
+    fromRev.completedAt ?? null,
+    toRev.completedAt ?? null
+  );
+  if (completedDiff) fields.completedAt = completedDiff;
 
   return {
     checkId: check.id,
@@ -2993,23 +2997,7 @@ export async function diffPageCheckRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'type', from: fromRev.type ?? '', to: toRev.type ?? '' },
-      { key: 'status', from: fromRev.status ?? '', to: toRev.status ?? '' },
-      { key: 'checkResults', from: fromResults, to: toResults },
-      { key: 'notes', from: fromNotes, to: toNotes },
-      {
-        key: 'metrics',
-        from: stringifyJsonValue(fromRev.metrics ?? null),
-        to: stringifyJsonValue(toRev.metrics ?? null),
-      },
-      { key: 'targetRevId', from: fromRev.targetRevId ?? '', to: toRev.targetRevId ?? '' },
-      {
-        key: 'completedAt',
-        from: fromRev.completedAt?.toISOString() ?? '',
-        to: toRev.completedAt?.toISOString() ?? '',
-      },
-    ]),
+    fields,
   };
 }
 
@@ -3039,10 +3027,11 @@ export async function diffCitationRevisions(
     });
   }
 
-  const fromKey = fromRev.key ?? '';
-  const toKey = toRev.key ?? '';
-  const fromData = stringifyCitationData(fromRev.data ?? null);
-  const toData = stringifyCitationData(toRev.data ?? null);
+  const fields: Record<string, FieldDiff> = {};
+  const keyDiff = diffScalarField('key', fromRev.key ?? null, toRev.key ?? null);
+  if (keyDiff) fields.key = keyDiff;
+  const dataDiff = diffStructuredField('data', fromRev.data ?? null, toRev.data ?? null);
+  if (dataDiff) fields.data = dataDiff;
 
   return {
     citationId: citation.id,
@@ -3050,10 +3039,7 @@ export async function diffCitationRevisions(
     toRevId: toRev._revID,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'key', from: fromKey, to: toKey },
-      { key: 'data', from: fromData, to: toData },
-    ]),
+    fields,
   };
 }
 
@@ -3093,14 +3079,41 @@ export async function diffCitationClaimRevisions(
     });
   }
 
-  const fromAssertion = mlString.resolve(lang, fromRev.assertion ?? null)?.str ?? '';
-  const toAssertion = mlString.resolve(lang, toRev.assertion ?? null)?.str ?? '';
-  const fromQuote = mlString.resolve(lang, fromRev.quote ?? null)?.str ?? '';
-  const toQuote = mlString.resolve(lang, toRev.quote ?? null)?.str ?? '';
-  const fromLocatorValue = mlString.resolve(lang, fromRev.locatorValue ?? null)?.str ?? '';
-  const toLocatorValue = mlString.resolve(lang, toRev.locatorValue ?? null)?.str ?? '';
-  const fromLocatorLabel = mlString.resolve(lang, fromRev.locatorLabel ?? null)?.str ?? '';
-  const toLocatorLabel = mlString.resolve(lang, toRev.locatorLabel ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const claimIdDiff = diffScalarField('claimId', fromRev.claimId ?? null, toRev.claimId ?? null);
+  if (claimIdDiff) fields.claimId = claimIdDiff;
+  const assertionDiff = diffLocalizedField(
+    'assertion',
+    fromRev.assertion ?? null,
+    toRev.assertion ?? null
+  );
+  if (assertionDiff) fields.assertion = assertionDiff;
+  const quoteDiff = diffLocalizedField('quote', fromRev.quote ?? null, toRev.quote ?? null);
+  if (quoteDiff) fields.quote = quoteDiff;
+  const quoteLangDiff = diffScalarField(
+    'quoteLanguage',
+    fromRev.quoteLanguage ?? null,
+    toRev.quoteLanguage ?? null
+  );
+  if (quoteLangDiff) fields.quoteLanguage = quoteLangDiff;
+  const locatorTypeDiff = diffScalarField(
+    'locatorType',
+    fromRev.locatorType ?? null,
+    toRev.locatorType ?? null
+  );
+  if (locatorTypeDiff) fields.locatorType = locatorTypeDiff;
+  const locatorValueDiff = diffLocalizedField(
+    'locatorValue',
+    fromRev.locatorValue ?? null,
+    toRev.locatorValue ?? null
+  );
+  if (locatorValueDiff) fields.locatorValue = locatorValueDiff;
+  const locatorLabelDiff = diffLocalizedField(
+    'locatorLabel',
+    fromRev.locatorLabel ?? null,
+    toRev.locatorLabel ?? null
+  );
+  if (locatorLabelDiff) fields.locatorLabel = locatorLabelDiff;
 
   return {
     citationId: citation.id,
@@ -3110,15 +3123,7 @@ export async function diffCitationClaimRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'claimId', from: fromRev.claimId ?? '', to: toRev.claimId ?? '' },
-      { key: 'assertion', from: fromAssertion, to: toAssertion },
-      { key: 'quote', from: fromQuote, to: toQuote },
-      { key: 'quoteLanguage', from: fromRev.quoteLanguage ?? '', to: toRev.quoteLanguage ?? '' },
-      { key: 'locatorType', from: fromRev.locatorType ?? '', to: toRev.locatorType ?? '' },
-      { key: 'locatorValue', from: fromLocatorValue, to: toLocatorValue },
-      { key: 'locatorLabel', from: fromLocatorLabel, to: toLocatorLabel },
-    ]),
+    fields,
   };
 }
 

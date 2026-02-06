@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import BlogPost from '../models/blog-post.js';
 import Citation from '../models/citation.js';
@@ -13,7 +14,14 @@ import {
   renderMarkdown,
   renderText,
 } from '../render.js';
-import { renderRevisionDiff } from './lib/diff.js';
+import {
+  extractQueryParams,
+  getAvailableLanguages,
+  normalizeOverrideLang,
+  renderContentLanguageRow,
+  resolveContentLanguage,
+} from './lib/content-language.js';
+import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
@@ -47,8 +55,14 @@ export const registerBlogRoutes = (app: Express) => {
       const posts = result.rows.map(row => BlogPost.createFromRow(row));
       const items = posts
         .map(post => {
-          const title = resolveSafeText(mlString.resolve, 'en', post.title, post.slug);
-          const summary = resolveSafeText(mlString.resolve, 'en', post.summary, '');
+          const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+          const contentLang = resolveContentLanguage({
+            uiLocale: res.locals.locale,
+            override: undefined,
+            availableLangs,
+          });
+          const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
+          const summary = resolveSafeText(mlString.resolve, contentLang, post.summary, '');
           const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
           const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
           const updatedHtml =
@@ -100,6 +114,8 @@ export const registerBlogRoutes = (app: Express) => {
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
     const diffFrom = typeof req.query.diffFrom === 'string' ? req.query.diffFrom : undefined;
     const diffTo = typeof req.query.diffTo === 'string' ? req.query.diffTo : undefined;
+    const langParam = typeof req.query.lang === 'string' ? req.query.lang : undefined;
+    const langOverride = normalizeOverrideLang(langParam);
 
     try {
       const dalInstance = await initializePostgreSQL();
@@ -133,10 +149,30 @@ export const registerBlogRoutes = (app: Express) => {
         return;
       }
 
-      const resolvedBody = mlString.resolve('en', selectedRevision.body ?? null);
+      const availableLangs = getAvailableLanguages(
+        selectedRevision.body ?? null,
+        selectedRevision.title ?? null,
+        selectedRevision.summary ?? null
+      );
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: langOverride,
+        availableLangs,
+      });
+      const resolvedBody = mlString.resolve(contentLang, selectedRevision.body ?? null);
 
-      const title = resolveSafeText(mlString.resolve, 'en', selectedRevision.title, post.slug);
-      const summary = resolveSafeText(mlString.resolve, 'en', selectedRevision.summary, '');
+      const title = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.title,
+        post.slug
+      );
+      const summary = resolveSafeText(
+        mlString.resolve,
+        contentLang,
+        selectedRevision.summary,
+        ''
+      );
       const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
       const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
       const updatedHtml =
@@ -169,19 +205,46 @@ export const registerBlogRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = mlString.resolve('en', fromRev.body ?? null)?.str ?? '';
-          const toText = mlString.resolve('en', toRev.body ?? null)?.str ?? '';
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/blog/${encodeURIComponent(slug)}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+          if (titleDiff) fields.push({ key: 'title', diff: titleDiff });
+          const summaryDiff = diffLocalizedField(
+            'summary',
+            fromRev.summary ?? null,
+            toRev.summary ?? null
+          );
+          if (summaryDiff) fields.push({ key: 'summary', diff: summaryDiff });
+          const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+          if (bodyDiff) fields.push({ key: 'body', diff: bodyDiff });
+          const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+          if (slugDiff) fields.push({ key: 'slug', diff: slugDiff });
+          const originalLangDiff = diffScalarField(
+            'originalLanguage',
+            fromRev.originalLanguage ?? null,
+            toRev.originalLanguage ?? null
+          );
+          if (originalLangDiff) fields.push({ key: 'originalLanguage', diff: originalLangDiff });
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText,
-            toText,
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }
@@ -189,17 +252,24 @@ export const registerBlogRoutes = (app: Express) => {
       const historyRevisions = revisions.map(rev => ({
         revId: rev._revID,
         dateLabel: formatDateUTC(rev._revDate),
-        title: resolveSafeText(mlString.resolve, 'en', rev.title, slug),
-        summary: resolveSafeText(mlString.resolve, 'en', rev._revSummary, ''),
+        title: resolveSafeText(mlString.resolve, contentLang, rev.title, slug),
+        summary: resolveSafeText(mlString.resolve, contentLang, rev._revSummary, ''),
         revUser: rev._revUser ?? null,
         revTags: rev._revTags ?? null,
       }));
+      const queryParams = extractQueryParams(req.query);
+      const historyAction = langOverride
+        ? `/blog/${slug}?lang=${encodeURIComponent(langOverride)}`
+        : `/blog/${slug}`;
       const historyHtml = renderRevisionHistory({
         revisions: historyRevisions,
         diffFrom,
         diffTo,
-        action: `/blog/${slug}`,
-        viewHref: revId => `/blog/${slug}?rev=${revId}`,
+        action: historyAction,
+        viewHref: revId =>
+          langOverride
+            ? `/blog/${slug}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
+            : `/blog/${slug}?rev=${revId}`,
         userMap,
         t: req.t,
       });
@@ -214,12 +284,20 @@ export const registerBlogRoutes = (app: Express) => {
   })}</span>
   ${updatedHtml}
 </div>`;
+      const languageRow = renderContentLanguageRow({
+        label: req.t('language.available'),
+        currentLang: contentLang,
+        availableLangs,
+        languageOptions: res.locals.languageOptions,
+        path: req.path,
+        queryParams,
+      });
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       const signedIn = Boolean(await resolveSessionUser(req));
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}`,
+        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,

@@ -108,6 +108,14 @@
       "locator": "Locator: {{value}}"
     }
   },
+  "diff": {
+    "revision": "Revision diff",
+    "from": "From",
+    "to": "To",
+    "addedLanguages": "Added languages",
+    "removedLanguages": "Removed languages",
+    "modifiedLanguages": "Modified languages"
+  },
   "page": {
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
@@ -122,7 +130,8 @@
     "serverError": "Server error"
   },
   "language": {
-    "selector": "Language"
+    "selector": "Language",
+    "available": "Available in"
   },
   "blog": {
     "description": "Blog posts from Agpedia editors.",

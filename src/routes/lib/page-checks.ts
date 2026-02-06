@@ -32,6 +32,7 @@ type PageChecksSummaryOptions = {
   checks: PageCheckSummaryItem[];
   userMap: Map<string, string>;
   slug: string;
+  langOverride?: string;
   t: TFunction;
 };
 
@@ -39,6 +40,7 @@ type PageChecksDetailOptions = {
   checks: PageCheckDetailItem[];
   userMap: Map<string, string>;
   slug: string;
+  langOverride?: string;
   t: TFunction;
 };
 
@@ -47,6 +49,7 @@ type PageCheckHistoryOptions = {
   userMap: Map<string, string>;
   slug: string;
   checkId: string;
+  langOverride?: string;
   diffFrom?: string;
   diffTo?: string;
   t: TFunction;
@@ -114,7 +117,19 @@ export const buildCheckMetaAttrs = (
 const renderMetricsCompact = (metrics: PageCheckMetricSummary, t: TFunction) =>
   `${t('checks.metrics.found')}: ${metrics.issuesFound.high + metrics.issuesFound.medium + metrics.issuesFound.low} · ${t('checks.metrics.fixed')}: ${metrics.issuesFixed.high + metrics.issuesFixed.medium + metrics.issuesFixed.low}`;
 
-export const renderPageChecksSummary = ({ checks, userMap, slug, t }: PageChecksSummaryOptions) => {
+const appendLangParam = (href: string, langOverride?: string) => {
+  if (!langOverride) return href;
+  const joiner = href.includes('?') ? '&' : '?';
+  return `${href}${joiner}lang=${encodeURIComponent(langOverride)}`;
+};
+
+export const renderPageChecksSummary = ({
+  checks,
+  userMap,
+  slug,
+  langOverride,
+  t,
+}: PageChecksSummaryOptions) => {
   if (!checks.length) {
     return '';
   }
@@ -123,28 +138,40 @@ export const renderPageChecksSummary = ({ checks, userMap, slug, t }: PageChecks
     .map(check => {
       const metaAttrs = buildCheckMetaAttrs(check.revUser, check.revTags, userMap, t);
       const metaParts = [check.typeLabel, check.statusLabel, check.dateLabel].filter(Boolean);
+      const viewHref = appendLangParam(
+        `/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}`,
+        langOverride
+      );
       return `<li>
   <div class="rev-meta"${metaAttrs}>
     <strong>${escapeHtml(metaParts.join(' · '))}</strong>
   </div>
   <div class="check-metrics">${escapeHtml(renderMetricsCompact(check.metrics, t))}</div>
   <div class="rev-actions">
-    <a href="/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}">${t('history.view')}</a>
+    <a href="${viewHref}">${t('history.view')}</a>
   </div>
 </li>`;
     })
     .join('\n');
 
+  const viewAllHref = appendLangParam(`/${escapeHtml(slug)}/checks`, langOverride);
+
   return `<details class="page-history page-checks">
   <summary>${t('checks.title')}</summary>
   <ol class="history-list">${itemsHtml}</ol>
   <div class="history-actions">
-    <a href="/${escapeHtml(slug)}/checks">${t('checks.viewAll')}</a>
+    <a href="${viewAllHref}">${t('checks.viewAll')}</a>
   </div>
 </details>`;
 };
 
-export const renderPageChecksList = ({ checks, userMap, slug, t }: PageChecksDetailOptions) => {
+export const renderPageChecksList = ({
+  checks,
+  userMap,
+  slug,
+  langOverride,
+  t,
+}: PageChecksDetailOptions) => {
   if (!checks.length) {
     return `<div class="page-checks-empty">${t('checks.empty')}</div>`;
   }
@@ -167,11 +194,15 @@ export const renderPageChecksList = ({ checks, userMap, slug, t }: PageChecksDet
         : '';
       const notes = check.notes ? renderSafeText(check.notes).trim() : '';
       const notesHtml = notes ? `<div class="check-notes">${notes}</div>` : '';
+      const viewHref = appendLangParam(
+        `/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}`,
+        langOverride
+      );
       return `<article class="check-card">
   <div class="check-header">
     <div class="check-title">${escapeHtml(metaParts.join(' · '))}</div>
     <div class="rev-actions">
-      <a href="/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}">${t('history.view')}</a>
+      <a href="${viewHref}">${t('history.view')}</a>
     </div>
   </div>
   <div class="check-meta">
@@ -190,6 +221,7 @@ export const renderPageCheckHistory = ({
   userMap,
   slug,
   checkId,
+  langOverride,
   diffFrom,
   diffTo,
   t,
@@ -200,6 +232,10 @@ export const renderPageCheckHistory = ({
       const metaParts = [rev.typeLabel, rev.statusLabel, rev.dateLabel].filter(Boolean);
       const fromChecked = diffFrom ? diffFrom === rev.id : index === 1;
       const toChecked = diffTo ? diffTo === rev.id : index === 0;
+      const viewHref = appendLangParam(
+        `/${escapeHtml(slug)}/checks/${escapeHtml(checkId)}?rev=${escapeHtml(rev.id)}`,
+        langOverride
+      );
       return `<li>
   <div class="rev-meta"${metaAttrs}>
     <span class="rev-radio"><input type="radio" name="diffFrom" value="${escapeHtml(rev.id)}" ${
@@ -212,19 +248,20 @@ export const renderPageCheckHistory = ({
   </div>
   <div class="check-metrics">${escapeHtml(renderMetricsCompact(rev.metrics, t))}</div>
   <div class="rev-actions">
-    <a href="/${escapeHtml(slug)}/checks/${escapeHtml(checkId)}?rev=${escapeHtml(
-        rev.id
-      )}">${t('history.view')}</a>
+    <a href="${viewHref}">${t('history.view')}</a>
   </div>
 </li>`;
     })
     .join('\n');
 
+  const actionHref = appendLangParam(
+    `/${escapeHtml(slug)}/checks/${escapeHtml(checkId)}`,
+    langOverride
+  );
+
   return `<details class="page-history page-checks">
   <summary>${t('history.title')}</summary>
-  <form class="history-form" method="get" action="/${escapeHtml(slug)}/checks/${escapeHtml(
-    checkId
-  )}">
+  <form class="history-form" method="get" action="${actionHref}">
     <div class="history-actions">
       <button type="submit">${t('history.compare')}</button>
     </div>

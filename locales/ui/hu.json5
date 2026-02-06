@@ -66,6 +66,14 @@
       locator: 'Helymeghatározó: {{value}}',
     },
   },
+  diff: {
+    revision: 'Verziókülönbség',
+    from: 'Ettől',
+    to: 'Eddig',
+    addedLanguages: 'Hozzáadott nyelvek',
+    removedLanguages: 'Eltávolított nyelvek',
+    modifiedLanguages: 'Módosított nyelvek',
+  },
   page: {
     recentChanges: 'Friss változtatások',
     recentCitations: 'Friss idézetek',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Nyelv',
+    available: 'Elérhető',
   },
   blog: {
     description: 'Az Agpedia szerkesztőinek naplóbejegyzései.',

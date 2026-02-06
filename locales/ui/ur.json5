@@ -66,6 +66,14 @@
       locator: 'مقام: {{value}}',
     },
   },
+  diff: {
+    revision: 'نظرثانی فرق',
+    from: 'سے',
+    to: 'تک',
+    addedLanguages: 'شامل کی گئی زبانیں',
+    removedLanguages: 'ہٹائی گئی زبانیں',
+    modifiedLanguages: 'تبدیل شدہ زبانیں',
+  },
   page: {
     recentChanges: 'حالیہ تبدیلیاں',
     recentCitations: 'حالیہ حوالہ جات',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'زبان',
+    available: 'میں دستیاب',
   },
   blog: {
     description: 'Agpedia کے مدیران کی بلاگ پوسٹس۔',

@@ -65,6 +65,14 @@
       locator: 'Konum: {{value}}',
     },
   },
+  diff: {
+    revision: 'Sürüm farkı',
+    from: 'Kaynak',
+    to: 'Hedef',
+    addedLanguages: 'Eklenen diller',
+    removedLanguages: 'Kaldırılan diller',
+    modifiedLanguages: 'Değiştirilen diller',
+  },
   page: {
     recentChanges: 'Son Değişiklikler',
     recentCitations: 'Son Alıntılar',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: 'Dil',
+    available: 'Şu dillerde mevcut',
   },
   blog: {
     description: 'Agpedia editörlerinden blog yazıları.',

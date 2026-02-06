@@ -65,6 +65,14 @@
       locator: '定位: {{value}}',
     },
   },
+  diff: {
+    revision: '修订差异',
+    from: '从',
+    to: '到',
+    addedLanguages: '新增语言',
+    removedLanguages: '移除的语言',
+    modifiedLanguages: '修改的语言',
+  },
   page: {
     recentChanges: '最近更改',
     recentCitations: '最近引用',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: '语言',
+    available: '可用语言',
   },
   blog: {
     description: 'Agpedia 编辑的博客文章。',

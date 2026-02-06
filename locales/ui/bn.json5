@@ -66,6 +66,14 @@
       locator: 'অবস্থান: {{value}}',
     },
   },
+  diff: {
+    revision: 'সংস্করণ তুলনা',
+    from: 'থেকে',
+    to: 'পর্যন্ত',
+    addedLanguages: 'যোগ করা ভাষা',
+    removedLanguages: 'অপসারিত ভাষা',
+    modifiedLanguages: 'পরিবর্তিত ভাষা',
+  },
   page: {
     recentChanges: 'সাম্প্রতিক পরিবর্তন',
     recentCitations: 'সাম্প্রতিক উদ্ধৃতি',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'ভাষা',
+    available: 'উপলব্ধ ভাষা',
   },
   blog: {
     description: 'Agpedia সম্পাদকদের ব্লগ পোস্ট।',

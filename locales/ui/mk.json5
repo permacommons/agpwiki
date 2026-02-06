@@ -66,6 +66,14 @@
       locator: 'Локатор: {{value}}',
     },
   },
+  diff: {
+    revision: 'Разлика на ревизии',
+    from: 'Од',
+    to: 'До',
+    addedLanguages: 'Додадени јазици',
+    removedLanguages: 'Отстранети јазици',
+    modifiedLanguages: 'Изменети јазици',
+  },
   page: {
     recentChanges: 'Скорешни промени',
     recentCitations: 'Скорешни цитати',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Јазик',
+    available: 'Достапно на',
   },
   blog: {
     description: 'Блог објави од уредниците на Agpedia.',

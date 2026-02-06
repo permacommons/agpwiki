@@ -1,9 +1,10 @@
-import { createTwoFilesPatch, diffLines } from 'diff';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateMarkdownContent } from '../lib/content-validation.js';
+import type { FieldDiff } from '../lib/diff-engine.js';
+import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
@@ -14,6 +15,7 @@ import {
   ValidationCollector,
   ValidationError,
 } from './errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 
 const { mlString } = dal;
@@ -106,13 +108,12 @@ const ensureOptionalLanguage = (
 
 const ensureNonEmptySlug = (slug: string) => normalizeSlugInput(slug, 'slug');
 
-const validateTitle = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateTitle = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 200, allowHTML: false });
+    mlString.validate(normalized, { maxLength: 200, allowHTML: false });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid title value.';
     if (errors) {
@@ -123,13 +124,12 @@ const validateTitle = (
   }
 };
 
-const validateBody = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateBody = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 20000, allowHTML: true });
+    mlString.validate(normalized, { maxLength: 20000, allowHTML: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid body value.';
     if (errors) {
@@ -140,13 +140,12 @@ const validateBody = (
   }
 };
 
-const validateSummary = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 500, allowHTML: false });
+    mlString.validate(normalized, { maxLength: 500, allowHTML: false });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid summary value.';
     if (errors) {
@@ -157,13 +156,12 @@ const validateSummary = (
   }
 };
 
-const validateRevSummary = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
+const validateRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined || value === null) return;
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (normalized === null) return;
   try {
-    mlString.validate(value, { maxLength: 300, allowHTML: false });
+    mlString.validate(normalized, { maxLength: 300, allowHTML: false });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
     if (errors) {
@@ -172,7 +170,7 @@ const validateRevSummary = (
     }
     throw new ValidationError(message, [{ field: 'revSummary', message, code: 'invalid' }]);
   }
-  for (const [lang, summary] of Object.entries(value)) {
+  for (const [lang, summary] of Object.entries(normalized)) {
     if (summary.length > 300) {
       if (errors) {
         errors.add(`revSummary.${lang}`, 'must be 300 characters or less.', 'max_length');
@@ -189,11 +187,9 @@ const validateRevSummary = (
   }
 };
 
-const requireRevSummary = (
-  value: Record<string, string> | null | undefined,
-  errors?: ValidationCollector
-) => {
-  if (value === null || value === undefined) {
+const requireRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
+  const normalized = sanitizeLocalizedMapInput(value);
+  if (!normalized) {
     if (errors) {
       errors.addMissing('revSummary');
       return;
@@ -203,7 +199,7 @@ const requireRevSummary = (
     ]);
   }
   validateRevSummary(value, errors);
-  const entries = Object.entries(value);
+  const entries = Object.entries(normalized);
   if (entries.length === 0) {
     if (errors) {
       errors.add('revSummary', 'must include at least one language entry.', 'invalid');
@@ -246,17 +242,17 @@ const toBlogPostResult = (post: BlogPostInstance) => ({
 
 export interface BlogPostWriteInput {
   slug: string;
-  title?: Record<string, string> | null;
-  body?: Record<string, string> | null;
-  summary?: Record<string, string> | null;
+  title?: LocalizedMapInput;
+  body?: LocalizedMapInput;
+  summary?: LocalizedMapInput;
   originalLanguage?: string | null;
   tags?: string[];
-  revSummary?: Record<string, string> | null;
+  revSummary?: LocalizedMapInput;
 }
 
 export interface BlogPostUpdateInput extends BlogPostWriteInput {
   newSlug?: string;
-  revSummary: Record<string, string>;
+  revSummary: Record<string, string | null>;
 }
 
 export interface BlogPostResult {
@@ -292,7 +288,7 @@ export interface BlogPostRevisionReadResult {
 
 export interface BlogPostDeleteInput {
   slug: string;
-  revSummary: Record<string, string> | null | undefined;
+  revSummary: LocalizedMapInput;
 }
 
 export interface BlogPostDeleteResult {
@@ -325,20 +321,10 @@ export interface BlogPostDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    title: BlogPostFieldDiff;
-    body: BlogPostFieldDiff;
-    summary: BlogPostFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
-export interface BlogPostFieldDiff {
-  unifiedDiff: string;
-  stats: {
-    addedLines: number;
-    removedLines: number;
-  };
-}
+export type BlogPostFieldDiff = FieldDiff;
 
 const toBlogPostRevisionResult = (post: BlogPostInstance): BlogPostRevisionResult => ({
   ...toBlogPostResult(post),
@@ -350,34 +336,6 @@ const toBlogPostRevisionResult = (post: BlogPostInstance): BlogPostRevisionResul
   revDeleted: post._revDeleted ?? false,
   oldRevOf: post._oldRevOf ?? null,
 });
-
-const buildFieldDiff = (label: string, fromValue: string, toValue: string): BlogPostFieldDiff => {
-  const fromLines = fromValue.split('\n');
-  const toLines = toValue.split('\n');
-  const lineDiffs = diffLines(fromValue, toValue);
-  let addedLines = 0;
-  let removedLines = 0;
-  for (const diff of lineDiffs) {
-    if (diff.added) addedLines += diff.count ?? 0;
-    if (diff.removed) removedLines += diff.count ?? 0;
-  }
-  const unifiedDiff = createTwoFilesPatch(
-    label,
-    label,
-    fromLines.join('\n'),
-    toLines.join('\n'),
-    '',
-    '',
-    { context: 2 }
-  );
-  return {
-    unifiedDiff,
-    stats: {
-      addedLines,
-      removedLines,
-    },
-  };
-};
 
 const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) => {
   const hasAuthorRole = await userHasRole(dalInstance, userId, BLOG_AUTHOR_ROLE);
@@ -459,11 +417,15 @@ export async function createBlogPost(
     { tags: ['create', ...tags], date: createdAt }
   );
   post.slug = normalizedSlug;
-  if (title !== undefined) post.title = title;
-  if (body !== undefined) post.body = body;
-  if (summary !== undefined) post.summary = summary;
+  const normalizedTitle = sanitizeLocalizedMapInput(title);
+  const normalizedBody = sanitizeLocalizedMapInput(body);
+  const normalizedSummary = sanitizeLocalizedMapInput(summary);
+  if (normalizedTitle !== undefined) post.title = normalizedTitle;
+  if (normalizedBody !== undefined) post.body = normalizedBody;
+  if (normalizedSummary !== undefined) post.summary = normalizedSummary;
   if (originalLanguage !== undefined) post.originalLanguage = originalLanguage;
-  if (revSummary !== undefined) post._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.createdAt = createdAt;
   post.updatedAt = createdAt;
   await post.save();
@@ -511,11 +473,15 @@ export async function updateBlogPost(
 
   await post.newRevision({ id: userId }, { tags: ['update', ...tags] });
   if (normalizedNewSlug !== undefined) post.slug = normalizedNewSlug;
-  if (title !== undefined) post.title = title;
-  if (body !== undefined) post.body = body;
-  if (summary !== undefined) post.summary = summary;
+  const mergedTitle = mergeLocalizedMap(post.title ?? null, title);
+  const mergedBody = mergeLocalizedMap(post.body ?? null, body);
+  const mergedSummary = mergeLocalizedMap(post.summary ?? null, summary);
+  if (mergedTitle !== undefined) post.title = mergedTitle;
+  if (mergedBody !== undefined) post.body = mergedBody;
+  if (mergedSummary !== undefined) post.summary = mergedSummary;
   if (originalLanguage !== undefined) post.originalLanguage = originalLanguage;
-  if (revSummary !== undefined) post._revSummary = revSummary;
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.updatedAt = new Date();
   await post.save();
 
@@ -607,12 +573,25 @@ export async function diffBlogPostRevisions(
       revId: toRevisionId,
     });
   }
-  const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
-  const toTitle = mlString.resolve(lang, toRev.title ?? null)?.str ?? '';
-  const fromBody = mlString.resolve(lang, fromRev.body ?? null)?.str ?? '';
-  const toBody = mlString.resolve(lang, toRev.body ?? null)?.str ?? '';
-  const fromSummary = mlString.resolve(lang, fromRev.summary ?? null)?.str ?? '';
-  const toSummary = mlString.resolve(lang, toRev.summary ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+  if (titleDiff) fields.title = titleDiff;
+  const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+  if (bodyDiff) fields.body = bodyDiff;
+  const summaryDiff = diffLocalizedField(
+    'summary',
+    fromRev.summary ?? null,
+    toRev.summary ?? null
+  );
+  if (summaryDiff) fields.summary = summaryDiff;
+  const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+  if (slugDiff) fields.slug = slugDiff;
+  const originalLangDiff = diffScalarField(
+    'originalLanguage',
+    fromRev.originalLanguage ?? null,
+    toRev.originalLanguage ?? null
+  );
+  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
   return {
     postId: post.id,
     fromRevId: fromRev._revID,
@@ -630,11 +609,7 @@ export async function diffBlogPostRevisions(
       revUser: toRev._revUser ?? null,
       revTags: toRev._revTags ?? null,
     },
-    fields: {
-      title: buildFieldDiff('title', fromTitle, toTitle),
-      body: buildFieldDiff('body', fromBody, toBody),
-      summary: buildFieldDiff('summary', fromSummary, toSummary),
-    },
+    fields,
   };
 }
 

@@ -66,6 +66,14 @@
       locator: 'Vieta: {{value}}',
     },
   },
+  diff: {
+    revision: 'Versijų skirtumas',
+    from: 'Iš',
+    to: 'Į',
+    addedLanguages: 'Pridėtos kalbos',
+    removedLanguages: 'Pašalintos kalbos',
+    modifiedLanguages: 'Pakeistos kalbos',
+  },
   page: {
     recentChanges: 'Naujausi pakeitimai',
     recentCitations: 'Naujausios citatos',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Kalba',
+    available: 'Prieinama',
   },
   blog: {
     description: 'Agpedia redaktorių tinklaraščio įrašai.',

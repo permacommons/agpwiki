@@ -67,6 +67,22 @@ test('MCP localized field validation errors mention language maps', () => {
   assert.ok(invalidLang.error?.issues.some(issue => issue.message.includes('agpwiki://locales')));
 });
 
+test('MCP localized maps accept null language values', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiUpdateSchema = tools.wiki_updatePage.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean };
+  };
+  const result = wikiUpdateSchema.safeParse({
+    slug: 'test',
+    revSummary: { en: 'update' },
+    title: { de: null },
+  });
+  assert.equal(result.success, true);
+});
+
 test('MCP schema errors use required field messages', () => {
   const { server } = createMcpServer();
   const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })

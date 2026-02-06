@@ -65,6 +65,14 @@
       locator: '定位: {{value}}',
     },
   },
+  diff: {
+    revision: '修訂差異',
+    from: '從',
+    to: '到',
+    addedLanguages: '新增語言',
+    removedLanguages: '移除的語言',
+    modifiedLanguages: '修改的語言',
+  },
   page: {
     recentChanges: '最近變更',
     recentCitations: '最近引用',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: '語言',
+    available: '可用語言',
   },
   blog: {
     description: 'Agpedia 編輯的部落格文章。',

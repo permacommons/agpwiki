@@ -65,6 +65,14 @@
       locator: 'الموضع: {{value}}',
     },
   },
+  diff: {
+    revision: 'فروق المراجعة',
+    from: 'من',
+    to: 'إلى',
+    addedLanguages: 'اللغات المضافة',
+    removedLanguages: 'اللغات المحذوفة',
+    modifiedLanguages: 'اللغات المعدلة',
+  },
   page: {
     recentChanges: 'أحدث التغييرات',
     recentCitations: 'اقتباسات حديثة',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: 'اللغة',
+    available: 'متوفر بـ',
   },
   blog: {
     description: 'مشاركات المدونة من محرري Agpedia.',

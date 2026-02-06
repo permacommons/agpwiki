@@ -65,6 +65,14 @@
       locator: '위치: {{value}}',
     },
   },
+  diff: {
+    revision: '개정 차이',
+    from: '에서',
+    to: '까지',
+    addedLanguages: '추가된 언어',
+    removedLanguages: '삭제된 언어',
+    modifiedLanguages: '수정된 언어',
+  },
   page: {
     recentChanges: '최근 바뀜',
     recentCitations: '최근 인용',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: '언어',
+    available: '다음 언어로 제공',
   },
   blog: {
     description: 'Agpedia 에디터들의 블로그 게시물.',

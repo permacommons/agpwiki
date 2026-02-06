@@ -276,6 +276,44 @@ pre.diff ins {
   font-family: 'IBM Plex Sans', sans-serif;
   cursor: pointer;
 }
+.page-diff .diff-heading {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  margin-bottom: 0.75rem;
+}
+.diff-field {
+  margin: 0.75rem 0;
+}
+.diff-field > .diff-language,
+.diff-field > .diff-structured,
+.diff-field > .diff-scalar,
+.diff-field > pre.diff {
+  margin-top: 0.5rem;
+}
+.diff-language {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #e3ded4;
+}
+.diff-language-item {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #efe9dd;
+}
+.diff-language-item summary {
+  margin-left: -0.75rem;
+}
+.diff-structured-change {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px dashed #e3ded4;
+}
+.diff-structured-meta {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
 .page-toc .toc-list {
   margin: 0.75rem 0 0 0;
   padding: 0;
@@ -640,6 +678,50 @@ button {
   font-family: 'IBM Plex Sans', sans-serif;
   color: var(--ink);
   margin-bottom: 1.2rem;
+}
+.content-language-row {
+  margin-top: 1.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--rule);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+}
+.content-language-label {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+.content-language-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.5rem;
+}
+.content-language-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.85rem;
+}
+.content-language-chip--active {
+  border-color: var(--accent);
+  background: rgba(45, 95, 115, 0.1);
+  color: var(--accent);
+  font-weight: 600;
+}
+.content-language-chip:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 footer.site-footer {
   border-top: 1px solid var(--rule);
