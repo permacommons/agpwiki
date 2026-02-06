@@ -1,7 +1,11 @@
 import type { PostgresConfig } from 'config';
 import config from 'config';
 
-import createDataAccessLayer, { setDebugLogger, setLanguageProvider } from 'rev-dal';
+import createDataAccessLayer, {
+  setDebugLogger,
+  setLanguageProvider,
+  setRevisionSummaryEnabled,
+} from 'rev-dal';
 import { initializeManifestModels } from 'rev-dal/lib/create-model';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { setBootstrapResolver } from 'rev-dal/lib/model-handle';
@@ -15,6 +19,7 @@ let connectionPromise: Promise<DataAccessLayer> | null = null;
 
 setLanguageProvider(languages);
 setDebugLogger(debug);
+setRevisionSummaryEnabled(true);
 
 function getPostgresConfig(): PostgresConfig {
   const moduleConfig = config as JsonObject & { postgres?: PostgresConfig };

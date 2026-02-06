@@ -11,7 +11,7 @@ type ResolveFn = (
  */
 export const resolveSafeText = (
   resolve: ResolveFn,
-  lang: string,
+  lang: string | string[],
   value: Record<string, string> | null | undefined,
   fallback: string = ''
 ): SafeText | string => {
@@ -24,7 +24,7 @@ export const resolveSafeText = (
  */
 export const resolveSafeTextRequired = (
   resolve: ResolveFn,
-  lang: string,
+  lang: string | string[],
   value: Record<string, string> | null | undefined,
   fallback: string = ''
 ): SafeText => {
@@ -37,9 +37,19 @@ export const resolveSafeTextRequired = (
  */
 export const resolveOptionalSafeText = (
   resolve: ResolveFn,
-  lang: string,
+  lang: string | string[],
   value: Record<string, string> | null | undefined
 ): SafeText | undefined => {
   const resolved = resolve(lang, value ?? null);
   return resolved?.str ? toSafeText(resolved.str) : undefined;
 };
+
+/**
+ * Resolve multilingual safe-text preferring a locale with a fallback chain.
+ */
+export const resolveSafeTextWithFallback = (
+  resolve: ResolveFn,
+  preferredLang: string,
+  value: Record<string, string> | null | undefined,
+  fallback: string = ''
+): SafeText | string => resolveSafeText(resolve, [preferredLang, 'en'], value, fallback);

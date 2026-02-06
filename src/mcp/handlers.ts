@@ -45,6 +45,7 @@ import {
 } from './errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
 import { applyUnifiedPatch, type PatchFormat } from './patch.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 
 const { mlString } = dal;
 const citationStylePath = path.resolve(process.cwd(), 'vendor/csl/agpwiki-author-date.csl');
@@ -3221,7 +3222,8 @@ export async function deleteWikiPage(
     });
   }
 
-  await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {
     id: page.id,
@@ -3248,7 +3250,8 @@ export async function deleteCitation(
     });
   }
 
-  await citation.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await citation.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {
     id: citation.id,
@@ -3285,7 +3288,11 @@ export async function deleteCitationClaim(
     });
   }
 
-  await claim.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await claim.deleteAllRevisions(
+    { id: userId },
+    { tags: ['admin-delete'] }
+  );
+  await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {
     id: claim.id,
@@ -3313,7 +3320,8 @@ export async function deletePageCheck(
     });
   }
 
-  await check.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await check.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {
     id: check.id,

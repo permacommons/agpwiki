@@ -16,6 +16,7 @@ import {
   ValidationError,
 } from './errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 
 const { mlString } = dal;
@@ -631,7 +632,8 @@ export async function deleteBlogPost(
     });
   }
 
-  await post.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await post.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {
     id: post.id,

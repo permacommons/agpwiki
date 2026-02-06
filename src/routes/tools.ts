@@ -11,7 +11,7 @@ import {
   getRecentWikiChanges,
 } from '../lib/recent-changes.js';
 import { getRecentPageChecks } from '../lib/recent-checks.js';
-import { resolveSafeText } from '../lib/safe-text.js';
+import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import WikiPage from '../models/wiki-page.js';
 import {
   concatSafeText,
@@ -46,8 +46,10 @@ const parseRecentLimit = (limitQuery: unknown) => {
   return Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
 };
 
-const resolveRevSummary = (value: Record<string, string> | null) =>
-  resolveSafeText(mlString.resolve, 'en', value, '');
+const resolvePreferredText = (
+  value: Record<string, string> | null,
+  preferredLang: string
+) => resolveSafeTextWithFallback(mlString.resolve, preferredLang, value, '');
 
 const renderRecentList = (
   items: RecentListItem[],
@@ -134,12 +136,13 @@ const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
 export const registerToolRoutes = (app: Express) => {
   app.get('/tool/recent-changes', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
+    const preferredLang = res.locals.locale;
 
     const dalInstance = await initializePostgreSQL();
     const rawChanges = await getRecentWikiChanges(dalInstance, limit);
     const changes = rawChanges.map(change => ({
       ...change,
-      revSummary: resolveRevSummary(change.revSummary),
+      revSummary: resolvePreferredText(change.revSummary, preferredLang),
     }));
     const userIds = changes
       .map(change => change.revUser)
@@ -155,7 +158,12 @@ export const registerToolRoutes = (app: Express) => {
           href: `/${change.slug}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
         });
       }
-      const pageTitle = resolveSafeText(mlString.resolve, 'en', change.title, change.slug);
+      const pageTitle = resolveSafeTextWithFallback(
+        mlString.resolve,
+        preferredLang,
+        change.title,
+        change.slug
+      );
       return {
         primaryLabel: concatSafeText(pageTitle, ` · /${change.slug}`),
         primaryHref: `/${change.slug}`,
@@ -189,12 +197,13 @@ export const registerToolRoutes = (app: Express) => {
 
   app.get('/tool/recent-citations', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
+    const preferredLang = res.locals.locale;
 
     const dalInstance = await initializePostgreSQL();
     const rawChanges = await getRecentCitationChanges(dalInstance, limit);
     const changes = rawChanges.map(change => ({
       ...change,
-      revSummary: resolveRevSummary(change.revSummary),
+      revSummary: resolvePreferredText(change.revSummary, preferredLang),
     }));
 
     const userIds = changes
@@ -246,13 +255,19 @@ export const registerToolRoutes = (app: Express) => {
 
   app.get('/tool/recent-claims', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
+    const preferredLang = res.locals.locale;
 
     const dalInstance = await initializePostgreSQL();
     const rawChanges = await getRecentCitationClaimChanges(dalInstance, limit);
     const changes = rawChanges.map(change => ({
       ...change,
-      revSummary: resolveRevSummary(change.revSummary),
-      assertion: resolveSafeText(mlString.resolve, 'en', change.assertion, ''),
+      revSummary: resolvePreferredText(change.revSummary, preferredLang),
+      assertion: resolveSafeTextWithFallback(
+        mlString.resolve,
+        preferredLang,
+        change.assertion,
+        ''
+      ),
     }));
 
     const userIds = changes
@@ -307,6 +322,7 @@ export const registerToolRoutes = (app: Express) => {
 
   app.get('/tool/recent-checks', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
+    const preferredLang = res.locals.locale;
 
     const dalInstance = await initializePostgreSQL();
     const checks = await getRecentPageChecks(dalInstance, limit);
@@ -316,12 +332,17 @@ export const registerToolRoutes = (app: Express) => {
     const userMap = await fetchUserMap(dalInstance, userIds);
 
     const items: RecentListItem[] = checks.map(check => {
-      const pageTitle = resolveSafeText(mlString.resolve, 'en', check.title, check.slug);
+      const pageTitle = resolveSafeTextWithFallback(
+        mlString.resolve,
+        preferredLang,
+        check.title,
+        check.slug
+      );
       const primaryLabel = concatSafeText(pageTitle, ` · /${check.slug}`);
-      const summary = `${formatCheckType(check.type, req.t)} · ${formatCheckStatus(
-        check.status,
-        req.t
-      )}`;
+      const revSummary = resolvePreferredText(check.revSummary, preferredLang);
+      const summary =
+        revSummary ||
+        `${formatCheckType(check.type, req.t)} · ${formatCheckStatus(check.status, req.t)}`;
       return {
         primaryLabel,
         primaryHref: `/${check.slug}`,
@@ -389,7 +410,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const pages = pageResults.map(p => ({
       slug: p.slug,
-      title: resolveSafeText(mlString.resolve, 'en', p.title, p.slug),
+      title: resolveSafeTextWithFallback(mlString.resolve, 'en', p.title, p.slug),
     }));
 
     const totalPages = Math.max(Math.ceil(total / per), 1);
