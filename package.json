@@ -10,6 +10,7 @@
     "generate-locales": "tsx src/scripts/generate-language-options.ts",
     "missing-translations": "node --import tsx src/scripts/find-missing-translations.ts",
     "build": "tsc -p tsconfig.build.json",
+    "postbuild": "node util/copy-assets.mjs",
     "start": "node dist/src/index.js",
     "mcp": "tsx src/mcp/stdio.ts",
     "mcp-http": "tsx src/mcp/http.ts",
