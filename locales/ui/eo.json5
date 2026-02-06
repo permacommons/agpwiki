@@ -66,6 +66,14 @@
       locator: 'Lokalizilo: {{value}}',
     },
   },
+  diff: {
+    revision: 'Revizia diferenco',
+    from: 'De',
+    to: 'Al',
+    addedLanguages: 'Aldonitaj lingvoj',
+    removedLanguages: 'Forigitaj lingvoj',
+    modifiedLanguages: 'Ŝanĝitaj lingvoj',
+  },
   page: {
     recentChanges: 'Lastaj ŝanĝoj',
     recentCitations: 'Lastaj citaĵoj',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Lingvo',
+    available: 'Havebla en',
   },
   blog: {
     description: 'Blogaj afiŝoj de Agpedia-redaktoroj.',

@@ -66,6 +66,14 @@
       locator: 'Локатор: {{value}}',
     },
   },
+  diff: {
+    revision: 'Разница ревизий',
+    from: 'От',
+    to: 'До',
+    addedLanguages: 'Добавленные языки',
+    removedLanguages: 'Удалённые языки',
+    modifiedLanguages: 'Изменённые языки',
+  },
   page: {
     recentChanges: 'Свежие правки',
     recentCitations: 'Недавние цитаты',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Язык',
+    available: 'Доступно на',
   },
   blog: {
     description: 'Записи блога от редакторов Agpedia.',

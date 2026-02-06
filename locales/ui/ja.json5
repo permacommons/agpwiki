@@ -65,6 +65,14 @@
       locator: '位置: {{value}}',
     },
   },
+  diff: {
+    revision: '改訂差分',
+    from: '元',
+    to: '先',
+    addedLanguages: '追加された言語',
+    removedLanguages: '削除された言語',
+    modifiedLanguages: '変更された言語',
+  },
   page: {
     recentChanges: '最近の更新',
     recentCitations: '最近の引用',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: '言語',
+    available: '利用可能な言語',
   },
   blog: {
     description: 'Agpedia編集者によるブログ記事。',

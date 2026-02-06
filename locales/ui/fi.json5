@@ -66,6 +66,14 @@
       locator: 'Paikannin: {{value}}',
     },
   },
+  diff: {
+    revision: 'Versiovertailu',
+    from: 'Alkaen',
+    to: 'Asti',
+    addedLanguages: 'Lisätyt kielet',
+    removedLanguages: 'Poistetut kielet',
+    modifiedLanguages: 'Muutetut kielet',
+  },
   page: {
     recentChanges: 'Tuoreet muutokset',
     recentCitations: 'Tuoreet sitaatit',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Kieli',
+    available: 'Saatavilla',
   },
   blog: {
     description: 'Agpedian toimittajien blogikirjoitukset.',

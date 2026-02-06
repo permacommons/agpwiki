@@ -65,6 +65,14 @@
       locator: 'Localizador: {{value}}',
     },
   },
+  diff: {
+    revision: 'Diferencia de revisión',
+    from: 'De',
+    to: 'A',
+    addedLanguages: 'Idiomas añadidos',
+    removedLanguages: 'Idiomas eliminados',
+    modifiedLanguages: 'Idiomas modificados',
+  },
   page: {
     recentChanges: 'Cambios recientes',
     recentCitations: 'Citas recientes',
@@ -80,6 +88,7 @@
   },
   language: {
     selector: 'Idioma',
+    available: 'Disponible en',
   },
   blog: {
     description: 'Entradas de blog de los editores de Agpedia.',

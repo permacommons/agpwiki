@@ -66,6 +66,14 @@
       locator: 'Lokaliserare: {{value}}',
     },
   },
+  diff: {
+    revision: 'Revisionsdiff',
+    from: 'Från',
+    to: 'Till',
+    addedLanguages: 'Tillagda språk',
+    removedLanguages: 'Borttagna språk',
+    modifiedLanguages: 'Ändrade språk',
+  },
   page: {
     recentChanges: 'Senaste ändringar',
     recentCitations: 'Senaste citeringar',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Språk',
+    available: 'Tillgänglig på',
   },
   blog: {
     description: 'Blogginlägg från Agpedias redaktörer.',

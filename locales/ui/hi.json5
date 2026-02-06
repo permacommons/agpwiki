@@ -66,6 +66,14 @@
       locator: 'स्थान: {{value}}',
     },
   },
+  diff: {
+    revision: 'संशोधन अंतर',
+    from: 'से',
+    to: 'तक',
+    addedLanguages: 'जोड़ी गई भाषाएँ',
+    removedLanguages: 'हटाई गई भाषाएँ',
+    modifiedLanguages: 'बदली गई भाषाएँ',
+  },
   page: {
     recentChanges: 'हाल के बदलाव',
     recentCitations: 'हाल के उद्धरण',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'भाषा',
+    available: 'उपलब्ध भाषाएँ',
   },
   blog: {
     description: 'Agpedia संपादकों की ब्लॉग पोस्टें।',

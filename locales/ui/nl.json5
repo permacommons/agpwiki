@@ -66,6 +66,14 @@
       locator: 'Locatie: {{value}}',
     },
   },
+  diff: {
+    revision: 'Revisieverschil',
+    from: 'Van',
+    to: 'Naar',
+    addedLanguages: 'Toegevoegde talen',
+    removedLanguages: 'Verwijderde talen',
+    modifiedLanguages: 'Gewijzigde talen',
+  },
   page: {
     recentChanges: 'Recente wijzigingen',
     recentCitations: 'Recente citaten',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Taal',
+    available: 'Beschikbaar in',
   },
   blog: {
     description: 'Blogposts van Agpedia-redacteuren.',

@@ -66,6 +66,14 @@
       locator: 'Lokator: {{value}}',
     },
   },
+  diff: {
+    revision: 'Perbedaan revisi',
+    from: 'Dari',
+    to: 'Ke',
+    addedLanguages: 'Bahasa ditambahkan',
+    removedLanguages: 'Bahasa dihapus',
+    modifiedLanguages: 'Bahasa diubah',
+  },
   page: {
     recentChanges: 'Perubahan terbaru',
     recentCitations: 'Sitasi terbaru',
@@ -81,6 +89,7 @@
   },
   language: {
     selector: 'Bahasa',
+    available: 'Tersedia dalam',
   },
   blog: {
     description: 'Posting blog dari editor Agpedia.',
