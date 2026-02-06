@@ -10,6 +10,11 @@ import {
   formatCitationLabel,
   formatCitationPageTitle,
 } from '../lib/citation.js';
+import {
+  diffLocalizedField,
+  diffScalarField,
+  diffStructuredField,
+} from '../lib/diff-engine.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import Citation from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
@@ -21,7 +26,7 @@ import {
   renderContentLanguageRow,
   resolveContentLanguage,
 } from './lib/content-language.js';
-import { renderRevisionDiff } from './lib/diff.js';
+import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
@@ -71,40 +76,6 @@ const resolveLocatorStrings = (
   locatorValue: mlString.resolve(lang, value ?? null)?.str ?? '',
   locatorLabel: mlString.resolve(lang, label ?? null)?.str ?? '',
 });
-
-const formatClaimDiffText = (
-  claim: {
-    claimId?: string | null;
-    assertion?: Record<string, string> | null;
-    quote?: Record<string, string> | null;
-    quoteLanguage?: string | null;
-    locatorType?: string | null;
-    locatorValue?: Record<string, string> | null;
-    locatorLabel?: Record<string, string> | null;
-  },
-  lang: string,
-  t: (key: string, options?: Record<string, string>) => string
-) => {
-  const assertion = mlString.resolve(lang, claim.assertion ?? null)?.str ?? '';
-  const quote = mlString.resolve(lang, claim.quote ?? null)?.str ?? '';
-  const { locatorValue, locatorLabel } = resolveLocatorStrings(
-    claim.locatorValue ?? null,
-    claim.locatorLabel ?? null,
-    lang
-  );
-  const locator = formatLocatorLabel(
-    claim.locatorType ?? null,
-    locatorValue,
-    locatorLabel
-  );
-  return [
-    t('citation.diff.claimId', { value: claim.claimId ?? '' }),
-    t('citation.diff.assertion', { value: assertion }),
-    t('citation.diff.quote', { value: quote }),
-    t('citation.diff.quoteLanguage', { value: claim.quoteLanguage ?? '' }),
-    t('citation.diff.locator', { value: locator }),
-  ].join('\n');
-};
 
 export const registerCitationRoutes = (app: Express) => {
   app.get(/^\/cite\/(.+)\/claims\/([^/]+)$/, async (req, res) => {
@@ -252,19 +223,100 @@ export const registerCitationRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = formatClaimDiffText(fromRev, contentLang, req.t);
-          const toText = formatClaimDiffText(toRev, contentLang, req.t);
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/cite/${encodeURIComponent(key)}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const claimIdDiff = diffScalarField(
+            'claimId',
+            fromRev.claimId ?? null,
+            toRev.claimId ?? null
+          );
+          if (claimIdDiff) {
+            fields.push({
+              key: 'claimId',
+              label: req.t('citation.field.claimId'),
+              diff: claimIdDiff,
+            });
+          }
+          const assertionDiff = diffLocalizedField(
+            'assertion',
+            fromRev.assertion ?? null,
+            toRev.assertion ?? null
+          );
+          if (assertionDiff) {
+            fields.push({
+              key: 'assertion',
+              label: req.t('citation.field.assertion'),
+              diff: assertionDiff,
+            });
+          }
+          const quoteDiff = diffLocalizedField(
+            'quote',
+            fromRev.quote ?? null,
+            toRev.quote ?? null
+          );
+          if (quoteDiff) {
+            fields.push({
+              key: 'quote',
+              label: req.t('citation.field.quote'),
+              diff: quoteDiff,
+            });
+          }
+          const quoteLangDiff = diffScalarField(
+            'quoteLanguage',
+            fromRev.quoteLanguage ?? null,
+            toRev.quoteLanguage ?? null
+          );
+          if (quoteLangDiff) {
+            fields.push({
+              key: 'quoteLanguage',
+              label: req.t('citation.field.quoteLanguage'),
+              diff: quoteLangDiff,
+            });
+          }
+          const locatorTypeDiff = diffScalarField(
+            'locatorType',
+            fromRev.locatorType ?? null,
+            toRev.locatorType ?? null
+          );
+          if (locatorTypeDiff) {
+            fields.push({ key: 'locatorType', diff: locatorTypeDiff });
+          }
+          const locatorValueDiff = diffLocalizedField(
+            'locatorValue',
+            fromRev.locatorValue ?? null,
+            toRev.locatorValue ?? null
+          );
+          if (locatorValueDiff) {
+            fields.push({ key: 'locatorValue', diff: locatorValueDiff });
+          }
+          const locatorLabelDiff = diffLocalizedField(
+            'locatorLabel',
+            fromRev.locatorLabel ?? null,
+            toRev.locatorLabel ?? null
+          );
+          if (locatorLabelDiff) {
+            fields.push({ key: 'locatorLabel', diff: locatorLabelDiff });
+          }
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText,
-            toText,
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }
@@ -541,19 +593,40 @@ export const registerCitationRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = formatCitationJson(fromRev.data ?? null);
-          const toText = formatCitationJson(toRev.data ?? null);
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/cite/${encodeURIComponent(key)}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const keyDiff = diffScalarField('key', fromRev.key ?? null, toRev.key ?? null);
+          if (keyDiff) {
+            fields.push({ key: 'key', label: req.t('citation.field.key'), diff: keyDiff });
+          }
+          const dataDiff = diffStructuredField(
+            'data',
+            fromRev.data ?? null,
+            toRev.data ?? null
+          );
+          if (dataDiff) {
+            fields.push({ key: 'data', diff: dataDiff });
+          }
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText,
-            toText,
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }

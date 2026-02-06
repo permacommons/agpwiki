@@ -3,11 +3,15 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import {
+  diffLocalizedField,
+  diffScalarField,
+  diffStructuredField,
+} from '../lib/diff-engine.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { resolveOptionalSafeText, resolveSafeText, resolveSafeTextRequired } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import Citation from '../models/citation.js';
-import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageAlias from '../models/page-alias.js';
 import PageCheck from '../models/page-check.js';
 import WikiPage from '../models/wiki-page.js';
@@ -27,7 +31,7 @@ import {
   renderContentLanguageRow,
   resolveContentLanguage,
 } from './lib/content-language.js';
-import { renderRevisionDiff } from './lib/diff.js';
+import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 import {
   formatCheckStatus,
@@ -289,32 +293,6 @@ export const registerPageRoutes = (app: Express) => {
         availableLangs,
       });
 
-      const resolveRevisionText = (rev: PageCheckInstance) => {
-        const resolvedMetrics = resolveCheckMetrics(rev.metrics as PageCheckMetrics | null);
-        const resolvedCheckResults = renderSafeText(
-          resolveSafeTextRequired(mlString.resolve, contentLang, rev.checkResults)
-        );
-        const resolvedNotes = renderSafeText(
-          resolveSafeTextRequired(mlString.resolve, contentLang, rev.notes, '')
-        );
-        const resolvedDate = formatDateUTC(rev.completedAt ?? rev._revDate ?? rev.createdAt);
-        const lines = [
-          `${req.t('checks.fields.type')}: ${formatCheckType(rev.type, req.t)}`,
-          `${req.t('checks.fields.status')}: ${formatCheckStatus(rev.status, req.t)}`,
-          `${req.t('checks.fields.completed')}: ${resolvedDate}`,
-          `${req.t('checks.fields.targetRevision')}: ${rev.targetRevId ?? ''}`,
-          `${req.t('checks.metrics.found')}: ${resolvedMetrics.issues_found.high}/${resolvedMetrics.issues_found.medium}/${resolvedMetrics.issues_found.low}`,
-          `${req.t('checks.metrics.fixed')}: ${resolvedMetrics.issues_fixed.high}/${resolvedMetrics.issues_fixed.medium}/${resolvedMetrics.issues_fixed.low}`,
-          '',
-          `${req.t('checks.fields.checkResults')}:`,
-          resolvedCheckResults,
-        ];
-        if (resolvedNotes) {
-          lines.push('', `${req.t('checks.fields.notes')}:`, resolvedNotes);
-        }
-        return lines.join('\n');
-      };
-
       const metrics = resolveCheckMetrics(selectedRevision.metrics as PageCheckMetrics | null);
       const typeLabel = formatCheckType(selectedRevision.type, req.t);
       const statusLabel = formatCheckStatus(selectedRevision.status, req.t);
@@ -446,11 +424,92 @@ export const registerPageRoutes = (app: Express) => {
         if (fromRev && toRev) {
           const fromLabel = `${diffFrom} (${formatDateUTC(fromRev._revDate)})`;
           const toLabel = `${diffTo} (${formatDateUTC(toRev._revDate)})`;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/${encodeURIComponent(page.slug)}/checks/${encodeURIComponent(
+            check.id
+          )}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const checkResultsDiff = diffLocalizedField(
+            'checkResults',
+            fromRev.checkResults ?? null,
+            toRev.checkResults ?? null
+          );
+          if (checkResultsDiff) {
+            fields.push({
+              key: 'checkResults',
+              label: req.t('checks.fields.checkResults'),
+              diff: checkResultsDiff,
+            });
+          }
+          const notesDiff = diffLocalizedField('notes', fromRev.notes ?? null, toRev.notes ?? null);
+          if (notesDiff) {
+            fields.push({
+              key: 'notes',
+              label: req.t('checks.fields.notes'),
+              diff: notesDiff,
+            });
+          }
+          const typeDiff = diffScalarField('type', fromRev.type, toRev.type);
+          if (typeDiff) {
+            fields.push({
+              key: 'type',
+              label: req.t('checks.fields.type'),
+              diff: typeDiff,
+            });
+          }
+          const statusDiff = diffScalarField('status', fromRev.status, toRev.status);
+          if (statusDiff) {
+            fields.push({
+              key: 'status',
+              label: req.t('checks.fields.status'),
+              diff: statusDiff,
+            });
+          }
+          const completedDiff = diffScalarField(
+            'completedAt',
+            fromRev.completedAt ?? null,
+            toRev.completedAt ?? null
+          );
+          if (completedDiff) {
+            fields.push({
+              key: 'completedAt',
+              label: req.t('checks.fields.completed'),
+              diff: completedDiff,
+            });
+          }
+          const targetDiff = diffScalarField(
+            'targetRevId',
+            fromRev.targetRevId ?? null,
+            toRev.targetRevId ?? null
+          );
+          if (targetDiff) {
+            fields.push({
+              key: 'targetRevId',
+              label: req.t('checks.fields.targetRevision'),
+              diff: targetDiff,
+            });
+          }
+          const metricsDiff = diffStructuredField(
+            'metrics',
+            fromRev.metrics ?? null,
+            toRev.metrics ?? null
+          );
+          if (metricsDiff) {
+            fields.push({ key: 'metrics', diff: metricsDiff });
+          }
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText: resolveRevisionText(fromRev),
-            toText: resolveRevisionText(toRev),
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }
@@ -574,19 +633,48 @@ export const registerPageRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = mlString.resolve(contentLang, fromRev.body ?? null)?.str ?? '';
-          const toText = mlString.resolve(contentLang, toRev.body ?? null)?.str ?? '';
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/${encodeURIComponent(canonicalSlug)}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+          if (titleDiff) {
+            fields.push({ key: 'title', diff: titleDiff });
+          }
+          const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+          if (bodyDiff) {
+            fields.push({ key: 'body', diff: bodyDiff });
+          }
+          const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+          if (slugDiff) {
+            fields.push({ key: 'slug', diff: slugDiff });
+          }
+          const originalLangDiff = diffScalarField(
+            'originalLanguage',
+            fromRev.originalLanguage ?? null,
+            toRev.originalLanguage ?? null
+          );
+          if (originalLangDiff) {
+            fields.push({ key: 'originalLanguage', diff: originalLangDiff });
+          }
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText,
-            toText,
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }

@@ -1,16 +1,28 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { renderRevisionDiff } from '../src/routes/lib/diff.js';
+import { getDiffLabels, renderEntityDiff } from '../src/routes/lib/diff.js';
 
-test('renderRevisionDiff builds a diff details block', () => {
-  const html = renderRevisionDiff({
+test('renderEntityDiff builds a diff block', () => {
+  const html = renderEntityDiff({
     fromLabel: 'abc (2024-01-01)',
     toLabel: 'def (2024-01-02)',
-    fromText: 'line one',
-    toText: 'line two',
+    fromHref: '/revs/abc',
+    toHref: '/revs/def',
+    labels: getDiffLabels(key => key),
+    fields: [
+      {
+        key: 'title',
+        diff: { kind: 'scalar', from: 'old', to: 'new' },
+      },
+    ],
   });
-  assert.match(html, /<details class="page-diff" open>/);
-  assert.match(html, /rev:abc \(2024-01-01\)/);
-  assert.match(html, /rev:def \(2024-01-02\)/);
+  assert.match(html, /<section class="page-diff">/);
+  assert.match(
+    html,
+    /<strong>diff\.revision:<\/strong> <a href="\/revs\/abc">abc<\/a> \(2024-01-01\) → <a href="\/revs\/def">def<\/a> \(2024-01-02\)/
+  );
+  assert.match(html, /href="\/revs\/abc"/);
+  assert.match(html, /href="\/revs\/def"/);
+  assert.match(html, /<details class="diff-field" open>/);
 });

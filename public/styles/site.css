@@ -276,6 +276,44 @@ pre.diff ins {
   font-family: 'IBM Plex Sans', sans-serif;
   cursor: pointer;
 }
+.page-diff .diff-heading {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 400;
+  margin-bottom: 0.75rem;
+}
+.diff-field {
+  margin: 0.75rem 0;
+}
+.diff-field > .diff-language,
+.diff-field > .diff-structured,
+.diff-field > .diff-scalar,
+.diff-field > pre.diff {
+  margin-top: 0.5rem;
+}
+.diff-language {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #e3ded4;
+}
+.diff-language-item {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #efe9dd;
+}
+.diff-language-item summary {
+  margin-left: -0.75rem;
+}
+.diff-structured-change {
+  margin: 0.5rem 0 0.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px dashed #e3ded4;
+}
+.diff-structured-meta {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
 .page-toc .toc-list {
   margin: 0.75rem 0 0 0;
   padding: 0;

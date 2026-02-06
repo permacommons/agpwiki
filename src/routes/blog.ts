@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import BlogPost from '../models/blog-post.js';
 import Citation from '../models/citation.js';
@@ -20,7 +21,7 @@ import {
   renderContentLanguageRow,
   resolveContentLanguage,
 } from './lib/content-language.js';
-import { renderRevisionDiff } from './lib/diff.js';
+import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
@@ -204,19 +205,46 @@ export const registerBlogRoutes = (app: Express) => {
         const fromRev = await fetchRevisionByRevId(diffFrom);
         const toRev = await fetchRevisionByRevId(diffTo);
         if (fromRev && toRev) {
-          const fromText = mlString.resolve(contentLang, fromRev.body ?? null)?.str ?? '';
-          const toText = mlString.resolve(contentLang, toRev.body ?? null)?.str ?? '';
           const fromLabel = formatDateUTC(fromRev._revDate)
             ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
             : diffFrom;
           const toLabel = formatDateUTC(toRev._revDate)
             ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
             : diffTo;
-          diffHtml = renderRevisionDiff({
+          const diffLabels = getDiffLabels(req.t);
+          const baseHref = `/blog/${encodeURIComponent(slug)}`;
+          const fromHref = langOverride
+            ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffFrom}`;
+          const toHref = langOverride
+            ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
+            : `${baseHref}?rev=${diffTo}`;
+          const fields = [];
+          const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+          if (titleDiff) fields.push({ key: 'title', diff: titleDiff });
+          const summaryDiff = diffLocalizedField(
+            'summary',
+            fromRev.summary ?? null,
+            toRev.summary ?? null
+          );
+          if (summaryDiff) fields.push({ key: 'summary', diff: summaryDiff });
+          const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+          if (bodyDiff) fields.push({ key: 'body', diff: bodyDiff });
+          const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+          if (slugDiff) fields.push({ key: 'slug', diff: slugDiff });
+          const originalLangDiff = diffScalarField(
+            'originalLanguage',
+            fromRev.originalLanguage ?? null,
+            toRev.originalLanguage ?? null
+          );
+          if (originalLangDiff) fields.push({ key: 'originalLanguage', diff: originalLangDiff });
+          diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
-            fromText,
-            toText,
+            fromHref,
+            toHref,
+            fields,
+            labels: diffLabels,
           });
         }
       }

@@ -1,9 +1,10 @@
-import { createTwoFilesPatch, diffLines } from 'diff';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateMarkdownContent } from '../lib/content-validation.js';
+import type { FieldDiff } from '../lib/diff-engine.js';
+import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { normalizeSlug } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
@@ -320,20 +321,10 @@ export interface BlogPostDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    title: BlogPostFieldDiff;
-    body: BlogPostFieldDiff;
-    summary: BlogPostFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
-export interface BlogPostFieldDiff {
-  unifiedDiff: string;
-  stats: {
-    addedLines: number;
-    removedLines: number;
-  };
-}
+export type BlogPostFieldDiff = FieldDiff;
 
 const toBlogPostRevisionResult = (post: BlogPostInstance): BlogPostRevisionResult => ({
   ...toBlogPostResult(post),
@@ -345,34 +336,6 @@ const toBlogPostRevisionResult = (post: BlogPostInstance): BlogPostRevisionResul
   revDeleted: post._revDeleted ?? false,
   oldRevOf: post._oldRevOf ?? null,
 });
-
-const buildFieldDiff = (label: string, fromValue: string, toValue: string): BlogPostFieldDiff => {
-  const fromLines = fromValue.split('\n');
-  const toLines = toValue.split('\n');
-  const lineDiffs = diffLines(fromValue, toValue);
-  let addedLines = 0;
-  let removedLines = 0;
-  for (const diff of lineDiffs) {
-    if (diff.added) addedLines += diff.count ?? 0;
-    if (diff.removed) removedLines += diff.count ?? 0;
-  }
-  const unifiedDiff = createTwoFilesPatch(
-    label,
-    label,
-    fromLines.join('\n'),
-    toLines.join('\n'),
-    '',
-    '',
-    { context: 2 }
-  );
-  return {
-    unifiedDiff,
-    stats: {
-      addedLines,
-      removedLines,
-    },
-  };
-};
 
 const requireBlogAuthor = async (dalInstance: DataAccessLayer, userId: string) => {
   const hasAuthorRole = await userHasRole(dalInstance, userId, BLOG_AUTHOR_ROLE);
@@ -610,12 +573,25 @@ export async function diffBlogPostRevisions(
       revId: toRevisionId,
     });
   }
-  const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
-  const toTitle = mlString.resolve(lang, toRev.title ?? null)?.str ?? '';
-  const fromBody = mlString.resolve(lang, fromRev.body ?? null)?.str ?? '';
-  const toBody = mlString.resolve(lang, toRev.body ?? null)?.str ?? '';
-  const fromSummary = mlString.resolve(lang, fromRev.summary ?? null)?.str ?? '';
-  const toSummary = mlString.resolve(lang, toRev.summary ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+  if (titleDiff) fields.title = titleDiff;
+  const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+  if (bodyDiff) fields.body = bodyDiff;
+  const summaryDiff = diffLocalizedField(
+    'summary',
+    fromRev.summary ?? null,
+    toRev.summary ?? null
+  );
+  if (summaryDiff) fields.summary = summaryDiff;
+  const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+  if (slugDiff) fields.slug = slugDiff;
+  const originalLangDiff = diffScalarField(
+    'originalLanguage',
+    fromRev.originalLanguage ?? null,
+    toRev.originalLanguage ?? null
+  );
+  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
   return {
     postId: post.id,
     fromRevId: fromRev._revID,
@@ -633,11 +609,7 @@ export async function diffBlogPostRevisions(
       revUser: toRev._revUser ?? null,
       revTags: toRev._revTags ?? null,
     },
-    fields: {
-      title: buildFieldDiff('title', fromTitle, toTitle),
-      body: buildFieldDiff('body', fromBody, toBody),
-      summary: buildFieldDiff('summary', fromSummary, toSummary),
-    },
+    fields,
   };
 }
 

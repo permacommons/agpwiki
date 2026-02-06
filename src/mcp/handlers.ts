@@ -1,7 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { Driver } from '@citeproc-rs/wasm';
-import { createTwoFilesPatch, diffLines } from 'diff';
 import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
@@ -15,6 +14,8 @@ import {
   CITATION_CLAIM_QUOTE_MAX_LENGTH,
 } from '../lib/citation-claims.js';
 import { validateMarkdownContent } from '../lib/content-validation.js';
+import type { FieldDiff } from '../lib/diff-engine.js';
+import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
 import {
   getPageCheckMetricsErrors,
   PAGE_CHECK_NOTES_MAX_LENGTH,
@@ -305,19 +306,10 @@ export interface WikiPageDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    title: WikiPageFieldDiff;
-    body: WikiPageFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
-export interface WikiPageFieldDiff {
-  unifiedDiff: string;
-  stats: {
-    addedLines: number;
-    removedLines: number;
-  };
-}
+export type WikiPageFieldDiff = FieldDiff;
 
 export interface CitationWriteInput {
   key: string;
@@ -385,10 +377,7 @@ export interface CitationDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: {
-    key: WikiPageFieldDiff;
-    data: WikiPageFieldDiff;
-  };
+  fields: Record<string, FieldDiff>;
 }
 
 export interface PageCheckDiffInput {
@@ -415,7 +404,7 @@ export interface PageCheckDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: Record<string, WikiPageFieldDiff>;
+  fields: Record<string, FieldDiff>;
 }
 
 export interface CitationQueryInput {
@@ -521,7 +510,7 @@ export interface CitationClaimDiffResult {
     revUser: string | null | undefined;
     revTags: string[] | null | undefined;
   };
-  fields: Record<string, WikiPageFieldDiff>;
+  fields: Record<string, FieldDiff>;
 }
 
 const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
@@ -703,45 +692,6 @@ const fetchPageCheckRevisionByRevId = async (
   return PageCheck.filterWhere({}).getRevisionByRevId(revId, checkId).first();
 };
 
-const normalizeForDiff = (value: string): string => (value.endsWith('\n') ? value : `${value}\n`);
-
-const buildFieldDiff = (
-  fieldName: string,
-  fromValue: string,
-  toValue: string
-): WikiPageFieldDiff => {
-  const fromNormalized = normalizeForDiff(fromValue);
-  const toNormalized = normalizeForDiff(toValue);
-  const unifiedDiff = createTwoFilesPatch(
-    fieldName,
-    fieldName,
-    fromNormalized,
-    toNormalized,
-    '',
-    '',
-    { context: 2 }
-  );
-  const lineDiff = diffLines(fromNormalized, toNormalized);
-  let addedLines = 0;
-  let removedLines = 0;
-
-  const countLines = (text: string) => {
-    if (!text) return 0;
-    const lines = text.split('\n');
-    return text.endsWith('\n') ? lines.length - 1 : lines.length;
-  };
-
-  for (const chunk of lineDiff) {
-    if (chunk.added) addedLines += countLines(chunk.value);
-    if (chunk.removed) removedLines += countLines(chunk.value);
-  }
-
-  return {
-    unifiedDiff,
-    stats: { addedLines, removedLines },
-  };
-};
-
 const toRevisionMeta = (rev: {
   _revID?: string | null;
   _revDate?: Date | null;
@@ -753,15 +703,6 @@ const toRevisionMeta = (rev: {
   revUser: rev._revUser ?? null,
   revTags: rev._revTags ?? null,
 });
-
-const buildDiffFields = <T extends string>(
-  fields: Array<{ key: T; from: string; to: string }>
-): Record<T, WikiPageFieldDiff> =>
-  Object.fromEntries(
-    fields.map(field => [field.key, buildFieldDiff(field.key, field.from, field.to)])
-  ) as Record<T, WikiPageFieldDiff>;
-
-const stringifyJsonValue = (value: unknown) => JSON.stringify(value ?? null, null, 2);
 
 const ensureNonEmptyString = (
   value: string | null | undefined,
@@ -1693,9 +1634,6 @@ const sanitizeCitationData = (data: Record<string, unknown>) => {
   };
 };
 
-const stringifyCitationData = (value: Record<string, unknown> | null | undefined): string =>
-  value ? JSON.stringify(value, null, 2) : '';
-
 export interface WikiPageListResult {
   hint: string;
   pages: Array<{ slug: string; name: string }>;
@@ -2295,10 +2233,19 @@ export async function diffWikiPageRevisions(
     });
   }
 
-  const fromTitle = mlString.resolve(lang, fromRev.title ?? null)?.str ?? '';
-  const toTitle = mlString.resolve(lang, toRev.title ?? null)?.str ?? '';
-  const fromBody = mlString.resolve(lang, fromRev.body ?? null)?.str ?? '';
-  const toBody = mlString.resolve(lang, toRev.body ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
+  if (titleDiff) fields.title = titleDiff;
+  const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
+  if (bodyDiff) fields.body = bodyDiff;
+  const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
+  if (slugDiff) fields.slug = slugDiff;
+  const originalLangDiff = diffScalarField(
+    'originalLanguage',
+    fromRev.originalLanguage ?? null,
+    toRev.originalLanguage ?? null
+  );
+  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
 
   return {
     pageId: page.id,
@@ -2307,10 +2254,7 @@ export async function diffWikiPageRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'title', from: fromTitle, to: toTitle },
-      { key: 'body', from: fromBody, to: toBody },
-    ]),
+    fields,
   };
 }
 
@@ -3014,10 +2958,37 @@ export async function diffPageCheckRevisions(
     });
   }
 
-  const fromResults = mlString.resolve(lang, fromRev.checkResults ?? null)?.str ?? '';
-  const toResults = mlString.resolve(lang, toRev.checkResults ?? null)?.str ?? '';
-  const fromNotes = mlString.resolve(lang, fromRev.notes ?? null)?.str ?? '';
-  const toNotes = mlString.resolve(lang, toRev.notes ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const typeDiff = diffScalarField('type', fromRev.type ?? null, toRev.type ?? null);
+  if (typeDiff) fields.type = typeDiff;
+  const statusDiff = diffScalarField('status', fromRev.status ?? null, toRev.status ?? null);
+  if (statusDiff) fields.status = statusDiff;
+  const checkResultsDiff = diffLocalizedField(
+    'checkResults',
+    fromRev.checkResults ?? null,
+    toRev.checkResults ?? null
+  );
+  if (checkResultsDiff) fields.checkResults = checkResultsDiff;
+  const notesDiff = diffLocalizedField('notes', fromRev.notes ?? null, toRev.notes ?? null);
+  if (notesDiff) fields.notes = notesDiff;
+  const metricsDiff = diffStructuredField(
+    'metrics',
+    fromRev.metrics ?? null,
+    toRev.metrics ?? null
+  );
+  if (metricsDiff) fields.metrics = metricsDiff;
+  const targetDiff = diffScalarField(
+    'targetRevId',
+    fromRev.targetRevId ?? null,
+    toRev.targetRevId ?? null
+  );
+  if (targetDiff) fields.targetRevId = targetDiff;
+  const completedDiff = diffScalarField(
+    'completedAt',
+    fromRev.completedAt ?? null,
+    toRev.completedAt ?? null
+  );
+  if (completedDiff) fields.completedAt = completedDiff;
 
   return {
     checkId: check.id,
@@ -3026,23 +2997,7 @@ export async function diffPageCheckRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'type', from: fromRev.type ?? '', to: toRev.type ?? '' },
-      { key: 'status', from: fromRev.status ?? '', to: toRev.status ?? '' },
-      { key: 'checkResults', from: fromResults, to: toResults },
-      { key: 'notes', from: fromNotes, to: toNotes },
-      {
-        key: 'metrics',
-        from: stringifyJsonValue(fromRev.metrics ?? null),
-        to: stringifyJsonValue(toRev.metrics ?? null),
-      },
-      { key: 'targetRevId', from: fromRev.targetRevId ?? '', to: toRev.targetRevId ?? '' },
-      {
-        key: 'completedAt',
-        from: fromRev.completedAt?.toISOString() ?? '',
-        to: toRev.completedAt?.toISOString() ?? '',
-      },
-    ]),
+    fields,
   };
 }
 
@@ -3072,10 +3027,11 @@ export async function diffCitationRevisions(
     });
   }
 
-  const fromKey = fromRev.key ?? '';
-  const toKey = toRev.key ?? '';
-  const fromData = stringifyCitationData(fromRev.data ?? null);
-  const toData = stringifyCitationData(toRev.data ?? null);
+  const fields: Record<string, FieldDiff> = {};
+  const keyDiff = diffScalarField('key', fromRev.key ?? null, toRev.key ?? null);
+  if (keyDiff) fields.key = keyDiff;
+  const dataDiff = diffStructuredField('data', fromRev.data ?? null, toRev.data ?? null);
+  if (dataDiff) fields.data = dataDiff;
 
   return {
     citationId: citation.id,
@@ -3083,10 +3039,7 @@ export async function diffCitationRevisions(
     toRevId: toRev._revID,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'key', from: fromKey, to: toKey },
-      { key: 'data', from: fromData, to: toData },
-    ]),
+    fields,
   };
 }
 
@@ -3126,14 +3079,41 @@ export async function diffCitationClaimRevisions(
     });
   }
 
-  const fromAssertion = mlString.resolve(lang, fromRev.assertion ?? null)?.str ?? '';
-  const toAssertion = mlString.resolve(lang, toRev.assertion ?? null)?.str ?? '';
-  const fromQuote = mlString.resolve(lang, fromRev.quote ?? null)?.str ?? '';
-  const toQuote = mlString.resolve(lang, toRev.quote ?? null)?.str ?? '';
-  const fromLocatorValue = mlString.resolve(lang, fromRev.locatorValue ?? null)?.str ?? '';
-  const toLocatorValue = mlString.resolve(lang, toRev.locatorValue ?? null)?.str ?? '';
-  const fromLocatorLabel = mlString.resolve(lang, fromRev.locatorLabel ?? null)?.str ?? '';
-  const toLocatorLabel = mlString.resolve(lang, toRev.locatorLabel ?? null)?.str ?? '';
+  const fields: Record<string, FieldDiff> = {};
+  const claimIdDiff = diffScalarField('claimId', fromRev.claimId ?? null, toRev.claimId ?? null);
+  if (claimIdDiff) fields.claimId = claimIdDiff;
+  const assertionDiff = diffLocalizedField(
+    'assertion',
+    fromRev.assertion ?? null,
+    toRev.assertion ?? null
+  );
+  if (assertionDiff) fields.assertion = assertionDiff;
+  const quoteDiff = diffLocalizedField('quote', fromRev.quote ?? null, toRev.quote ?? null);
+  if (quoteDiff) fields.quote = quoteDiff;
+  const quoteLangDiff = diffScalarField(
+    'quoteLanguage',
+    fromRev.quoteLanguage ?? null,
+    toRev.quoteLanguage ?? null
+  );
+  if (quoteLangDiff) fields.quoteLanguage = quoteLangDiff;
+  const locatorTypeDiff = diffScalarField(
+    'locatorType',
+    fromRev.locatorType ?? null,
+    toRev.locatorType ?? null
+  );
+  if (locatorTypeDiff) fields.locatorType = locatorTypeDiff;
+  const locatorValueDiff = diffLocalizedField(
+    'locatorValue',
+    fromRev.locatorValue ?? null,
+    toRev.locatorValue ?? null
+  );
+  if (locatorValueDiff) fields.locatorValue = locatorValueDiff;
+  const locatorLabelDiff = diffLocalizedField(
+    'locatorLabel',
+    fromRev.locatorLabel ?? null,
+    toRev.locatorLabel ?? null
+  );
+  if (locatorLabelDiff) fields.locatorLabel = locatorLabelDiff;
 
   return {
     citationId: citation.id,
@@ -3143,15 +3123,7 @@ export async function diffCitationClaimRevisions(
     language: lang,
     from: toRevisionMeta(fromRev),
     to: toRevisionMeta(toRev),
-    fields: buildDiffFields([
-      { key: 'claimId', from: fromRev.claimId ?? '', to: toRev.claimId ?? '' },
-      { key: 'assertion', from: fromAssertion, to: toAssertion },
-      { key: 'quote', from: fromQuote, to: toQuote },
-      { key: 'quoteLanguage', from: fromRev.quoteLanguage ?? '', to: toRev.quoteLanguage ?? '' },
-      { key: 'locatorType', from: fromRev.locatorType ?? '', to: toRev.locatorType ?? '' },
-      { key: 'locatorValue', from: fromLocatorValue, to: toLocatorValue },
-      { key: 'locatorLabel', from: fromLocatorLabel, to: toLocatorLabel },
-    ]),
+    fields,
   };
 }
 
