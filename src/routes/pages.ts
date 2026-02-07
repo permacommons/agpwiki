@@ -10,9 +10,7 @@ import {
 } from '../lib/diff-engine.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
-  resolveOptionalSafeText,
   resolveSafeText,
-  resolveSafeTextRequired,
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
@@ -26,7 +24,6 @@ import {
   formatDateUTC,
   renderLayout,
   renderMarkdown,
-  renderSafeText,
   renderToc,
 } from '../render.js';
 import {
@@ -175,27 +172,29 @@ export const registerPageRoutes = (app: Express) => {
         availableLangs,
       });
 
-      const items: PageCheckDetailItem[] = checks.map(check => {
-        const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
-        return {
-          id: check.id,
-          typeLabel: formatCheckType(check.type, req.t),
-          statusLabel: formatCheckStatus(check.status, req.t),
-          dateLabel: formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt),
-          checkResults: resolveSafeTextRequired(
-            mlString.resolve,
-            contentLang,
-            check.checkResults
-          ),
-          notes: resolveOptionalSafeText(mlString.resolve, contentLang, check.notes),
-          metrics: {
-            issuesFound: metrics.issues_found,
-            issuesFixed: metrics.issues_fixed,
-          },
-          revUser: check._revUser ?? null,
-          revTags: check._revTags ?? null,
-        };
-      });
+      const items: PageCheckDetailItem[] = await Promise.all(
+        checks.map(async check => {
+          const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
+          const checkResultsSource = mlString.resolve(contentLang, check.checkResults ?? null)?.str ?? '';
+          const notesSource = mlString.resolve(contentLang, check.notes ?? null)?.str ?? '';
+          const checkResultsHtml = (await renderMarkdown(checkResultsSource, [])).html;
+          const notesHtml = notesSource ? (await renderMarkdown(notesSource, [])).html : '';
+          return {
+            id: check.id,
+            typeLabel: formatCheckType(check.type, req.t),
+            statusLabel: formatCheckStatus(check.status, req.t),
+            dateLabel: formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt),
+            checkResultsHtml,
+            notesHtml,
+            metrics: {
+              issuesFound: metrics.issues_found,
+              issuesFixed: metrics.issues_fixed,
+            },
+            revUser: check._revUser ?? null,
+            revTags: check._revTags ?? null,
+          };
+        })
+      );
 
       const pageTitle = resolveSafeText(mlString.resolve, contentLang, page.title, page.slug);
       const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
@@ -304,12 +303,9 @@ export const registerPageRoutes = (app: Express) => {
       const dateLabel = formatDateUTC(
         selectedRevision.completedAt ?? selectedRevision._revDate ?? selectedRevision.createdAt
       );
-      const checkResults = resolveSafeTextRequired(
-        mlString.resolve,
-        contentLang,
-        selectedRevision.checkResults
-      );
-      const notes = resolveOptionalSafeText(mlString.resolve, contentLang, selectedRevision.notes);
+      const checkResultsSource =
+        mlString.resolve(contentLang, selectedRevision.checkResults ?? null)?.str ?? '';
+      const notesSource = mlString.resolve(contentLang, selectedRevision.notes ?? null)?.str ?? '';
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
@@ -379,15 +375,16 @@ export const registerPageRoutes = (app: Express) => {
     </tr>
   </tbody>
 </table>`;
-      const notesHtml = notes
-        ? `<div class="check-notes">${renderSafeText(notes)}</div>`
+      const checkResultsHtml = (await renderMarkdown(checkResultsSource, [])).html;
+      const notesHtml = notesSource
+        ? `<div class="check-notes">${(await renderMarkdown(notesSource, [])).html}</div>`
         : '';
       const bodyHtml = `<div class="check-card">
   <div class="check-meta">
     <dl class="citation-fields">${fieldsHtml}</dl>
   </div>
   ${metricsHtml}
-  <div class="check-results">${renderSafeText(checkResults)}</div>
+  <div class="check-results">${checkResultsHtml}</div>
   ${notesHtml}
 </div>`;
 

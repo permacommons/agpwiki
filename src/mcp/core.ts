@@ -293,8 +293,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       });
     });
 
-  const checkResultsDescription = `Localized check results map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
-  const notesDescription = `Localized notes map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
+  const checkResultsDescription = `Localized check results Markdown map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
+  const notesDescription = `Localized notes Markdown map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
 
   server.registerResource(
     'Wiki Pages Index',
@@ -696,7 +696,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Citation Claim',
       description:
-        'Create a new claim linked to a citation. assertion and quote are localized maps. quoteLanguage identifies the source language when quote is provided. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+        'Create a new claim linked to a citation. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
       inputSchema: {
         key: z.string(),
         claimId: z.string(),
@@ -723,7 +723,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Citation Claim',
       description:
-        'Create a new revision for an existing claim. assertion and quote are localized maps. quoteLanguage identifies the source language when quote is provided. revSummary is required.',
+        'Create a new revision for an existing claim. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary is required.',
       inputSchema: {
         key: z.string(),
         claimId: z.string(),

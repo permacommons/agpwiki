@@ -43,6 +43,12 @@ test('MCP tool schemas describe localized fields', () => {
 
   const blogDelete = getSchemaShape(tools.blog_deletePost.inputSchema);
   assert.ok(blogDelete.revSummary?.description?.includes('agpwiki://locales'));
+
+  const claimCreate = getSchemaShape(tools.claim_create.inputSchema);
+  assert.ok(claimCreate.assertion?.description?.includes('plain-text assertion'));
+  assert.ok(claimCreate.assertion?.description?.includes('not Markdown'));
+  assert.ok(claimCreate.quote?.description?.includes('plain-text quote'));
+  assert.ok(claimCreate.quote?.description?.includes('not Markdown'));
 });
 
 test('MCP localized field validation errors mention language maps', () => {

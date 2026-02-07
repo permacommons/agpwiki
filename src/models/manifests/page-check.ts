@@ -39,10 +39,8 @@ const pageCheckManifest = {
         }
         return true;
       }),
-    checkResults: mlString
-      .getSafeTextSchema({ maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH })
-      .required(),
-    notes: mlString.getSafeTextSchema({ maxLength: PAGE_CHECK_NOTES_MAX_LENGTH }),
+    checkResults: mlString.getHTMLSchema({ maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH }).required(),
+    notes: mlString.getHTMLSchema({ maxLength: PAGE_CHECK_NOTES_MAX_LENGTH }),
     metrics: types.object().required().validator(assertValidPageCheckMetrics),
     createdAt: types.date().default(() => new Date()),
     completedAt: types.date(),
