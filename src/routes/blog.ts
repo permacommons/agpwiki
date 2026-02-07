@@ -3,10 +3,10 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import BlogPost from '../models/blog-post.js';
-import Citation from '../models/citation.js';
 import {
   escapeHtml,
   formatDateUTC,
@@ -25,22 +25,6 @@ import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
-const citationKeyRegex = /@([\w][\w:.#$%&\-+?<>~/]*)/g;
-
-const normalizeCitationKey = (value: string) => {
-  const separatorIndex = value.indexOf(':');
-  if (separatorIndex <= 0) return value;
-  return value.slice(0, separatorIndex);
-};
-
-const extractCitationKeys = (value: string) => {
-  const keys = new Set<string>();
-  if (!value) return keys;
-  for (const match of value.matchAll(citationKeyRegex)) {
-    keys.add(normalizeCitationKey(match[1]));
-  }
-  return keys;
-};
 
 export const registerBlogRoutes = (app: Express) => {
   app.get('/blog', async (req, res) => {
@@ -53,6 +37,16 @@ export const registerBlogRoutes = (app: Express) => {
          ORDER BY created_at DESC, _rev_date DESC`
       );
       const posts = result.rows.map(row => BlogPost.createFromRow(row));
+      const summaries = posts.map(post => {
+        const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+        const contentLang = resolveContentLanguage({
+          uiLocale: res.locals.locale,
+          override: undefined,
+          availableLangs,
+        });
+        return mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
+      });
+      const citationEntries = await loadCitationEntriesForSources(dalInstance, summaries);
       const items = (
         await Promise.all(
           posts.map(async post => {
@@ -73,7 +67,7 @@ export const registerBlogRoutes = (app: Express) => {
                   })}</span>`
                 : '';
             const summaryHtml = summary
-              ? `<div class="post-summary">${(await renderMarkdown(summary, [])).html}</div>`
+              ? `<div class="post-summary">${(await renderMarkdown(summary, citationEntries)).html}</div>`
               : '';
             return `<li>
   <h2><a href="/blog/${escapeHtml(post.slug)}">${renderText(title)}</a></h2>
@@ -179,21 +173,7 @@ export const registerBlogRoutes = (app: Express) => {
             })}</span>`
           : '';
       const bodySource = resolvedBody?.str ?? '';
-      const citationKeys = extractCitationKeys(bodySource);
-      const citationEntries: Array<Record<string, unknown>> = [];
-
-      if (citationKeys.size > 0) {
-        const keys = Array.from(citationKeys);
-        const result = await dalInstance.query(
-          `SELECT * FROM ${Citation.tableName} WHERE key = ANY($1) AND _old_rev_of IS NULL AND _rev_deleted = false`,
-          [keys]
-        );
-        for (const row of result.rows) {
-          const item = (row.data ?? {}) as Record<string, unknown>;
-          const id = row.key;
-          citationEntries.push({ ...item, id });
-        }
-      }
+      const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource, summary]);
 
       const { html: bodyHtml } = await renderMarkdown(bodySource, citationEntries);
 
@@ -273,7 +253,7 @@ export const registerBlogRoutes = (app: Express) => {
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const summaryHtml = summary
-        ? `<div class="post-summary">${(await renderMarkdown(summary, [])).html}</div>`
+        ? `<div class="post-summary">${(await renderMarkdown(summary, citationEntries)).html}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">
   <span class="post-created">${req.t('blog.created', {

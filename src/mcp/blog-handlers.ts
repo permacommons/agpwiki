@@ -2,7 +2,7 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import languages from '../../locales/languages.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
-import { validateMarkdownContent } from '../lib/content-validation.js';
+import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
 import { normalizeSlug } from '../lib/slug.js';
@@ -396,18 +396,8 @@ export async function createBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   validateRevSummary(revSummary, errors);
-  if (body) {
-    for (const [lang, text] of Object.entries(body)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
-    }
-  }
-  if (summary) {
-    for (const [lang, text] of Object.entries(summary)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `summary.${lang}`, errors, []);
-    }
-  }
+  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(summary, 'summary', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
@@ -454,18 +444,8 @@ export async function updateBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   requireRevSummary(revSummary, errors);
-  if (body) {
-    for (const [lang, text] of Object.entries(body)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
-    }
-  }
-  if (summary) {
-    for (const [lang, text] of Object.entries(summary)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `summary.${lang}`, errors, []);
-    }
-  }
+  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(summary, 'summary', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
