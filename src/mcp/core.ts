@@ -13,13 +13,13 @@ import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { CITATION_CLAIM_LOCATOR_TYPES } from '../lib/citation-claims.js';
+import { InvalidRequestError, UnsupportedError } from '../lib/errors.js';
 import {
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
   PAGE_CHECK_STATUSES,
   PAGE_CHECK_TYPES,
 } from '../lib/page-checks.js';
-import { resolveAuthUserId } from './auth.js';
 import {
   type BlogPostDeleteInput,
   type BlogPostDiffInput,
@@ -33,7 +33,20 @@ import {
   readBlogPost,
   readBlogPostRevision,
   updateBlogPost,
-} from './blog-handlers.js';
+} from '../services/blog-post-service.js';
+import {
+  type CitationClaimDeleteInput,
+  type CitationClaimDiffInput,
+  type CitationClaimUpdateInput,
+  type CitationClaimWriteInput,
+  createCitationClaim,
+  deleteCitationClaim,
+  diffCitationClaimRevisions,
+  listCitationClaimRevisions,
+  readCitationClaim,
+  readCitationClaimRevision,
+  updateCitationClaim,
+} from '../services/citation-claim-service.js';
 import {
   type CitationDeleteInput,
   type CitationQueryInput,
@@ -47,26 +60,7 @@ import {
   readCitation,
   readCitationRevision,
   updateCitation,
-} from './citation-handlers.js';
-import {
-  type CitationClaimDeleteInput,
-  type CitationClaimDiffInput,
-  type CitationClaimUpdateInput,
-  type CitationClaimWriteInput,
-  createCitationClaim,
-  deleteCitationClaim,
-  diffCitationClaimRevisions,
-  listCitationClaimRevisions,
-  readCitationClaim,
-  readCitationClaimRevision,
-  updateCitationClaim,
-} from './claim-handlers.js';
-import {
-  InvalidRequestError,
-  toToolErrorPayload,
-  toValidationErrorFromZod,
-  UnsupportedError,
-} from './errors.js';
+} from '../services/citation-service.js';
 import {
   createPageCheck,
   deletePageCheck,
@@ -78,10 +72,8 @@ import {
   type PageCheckWriteInput,
   readPageCheckRevision,
   updatePageCheck,
-} from './page-check-handlers.js';
-import { registerPrompts } from './prompts.js';
-import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from './roles.js';
-import { createLocalizedSchemas } from './schema.js';
+} from '../services/page-check-service.js';
+import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from '../services/roles.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -103,7 +95,11 @@ import {
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
-} from './wiki-handlers.js';
+} from '../services/wiki-page-service.js';
+import { resolveAuthUserId } from './auth.js';
+import { toToolErrorPayload, toValidationErrorFromZod } from './errors.js';
+import { registerPrompts } from './prompts.js';
+import { createLocalizedSchemas } from './schema.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 

@@ -9,15 +9,17 @@ import {
 } from '../lib/citation-claims.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
-import CitationClaim from '../models/citation-claim.js';
-import type { CitationClaimInstance } from '../models/manifests/citation-claim.js';
-import { findCurrentCitationByKey } from './citation-handlers.js';
 import {
   ConflictError,
   NotFoundError,
   ValidationCollector,
   ValidationError,
-} from './errors.js';
+} from '../lib/errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import CitationClaim from '../models/citation-claim.js';
+import type { CitationClaimInstance } from '../models/manifests/citation-claim.js';
+import { findCurrentCitationByKey } from './citation-service.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
   ensureNoControlCharacters,
@@ -27,9 +29,7 @@ import {
   requireRevSummary,
   toRevisionMeta,
   validateRevSummary,
-} from './handler-utils.js';
-import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
-import { applyDeletionRevisionSummary } from './revision-summary.js';
+} from './validation.js';
 
 const { mlString } = dal;
 

@@ -4,15 +4,18 @@ import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
-import BlogPost from '../models/blog-post.js';
-import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationCollector,
   ValidationError,
-} from './errors.js';
+} from '../lib/errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import BlogPost from '../models/blog-post.js';
+import type { BlogPostInstance } from '../models/manifests/blog-post.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
+import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 import {
   ensureNonEmptyString,
   ensureOptionalLanguage,
@@ -22,10 +25,7 @@ import {
   validateBody,
   validateRevSummary,
   validateTitle,
-} from './handler-utils.js';
-import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
-import { applyDeletionRevisionSummary } from './revision-summary.js';
-import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
+} from './validation.js';
 
 const { mlString } = dal;
 

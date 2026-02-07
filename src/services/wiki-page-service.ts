@@ -8,18 +8,21 @@ import {
 } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
-import { isBlockedSlug } from '../lib/slug.js';
-import type { PageAliasInstance } from '../models/manifests/page-alias.js';
-import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
-import PageAlias from '../models/page-alias.js';
-import WikiPage from '../models/wiki-page.js';
 import {
   ConflictError,
   InvalidRequestError,
   NotFoundError,
   PreconditionFailedError,
   ValidationCollector,
-} from './errors.js';
+} from '../lib/errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
+import { isBlockedSlug } from '../lib/slug.js';
+import type { PageAliasInstance } from '../models/manifests/page-alias.js';
+import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
+import PageAlias from '../models/page-alias.js';
+import WikiPage from '../models/wiki-page.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
   ensureNonEmptyString,
@@ -33,10 +36,7 @@ import {
   validateBody,
   validateRevSummary,
   validateTitle,
-} from './handler-utils.js';
-import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
-import { applyUnifiedPatch, type PatchFormat } from './patch.js';
-import { applyDeletionRevisionSummary } from './revision-summary.js';
+} from './validation.js';
 
 const { mlString } = dal;
 

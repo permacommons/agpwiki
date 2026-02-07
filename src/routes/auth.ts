@@ -12,11 +12,11 @@ import {
 } from '../auth/session.js';
 import { generateApiToken, hashToken } from '../auth/tokens.js';
 import { initializePostgreSQL } from '../db.js';
-import { grantRoleUpsert, isValidRole } from '../mcp/roles.js';
 import ApiToken from '../models/api-token.js';
 import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import { grantRoleUpsert, isValidRole } from '../services/roles.js';
 
 const renderAuthLayout = (
   t: TFunction,

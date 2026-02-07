@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { mergeLocalizedMap, sanitizeLocalizedMapInput } from '../src/mcp/localized.js';
+import { mergeLocalizedMap, sanitizeLocalizedMapInput } from '../src/lib/localized.js';
 
 test('sanitizeLocalizedMapInput strips nulls and empties', () => {
   assert.equal(sanitizeLocalizedMapInput(undefined), undefined);

@@ -4,13 +4,15 @@ import { Driver } from '@citeproc-rs/wasm';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
-import Citation from '../models/citation.js';
-import type { CitationInstance } from '../models/manifests/citation.js';
 import {
   ConflictError,
   NotFoundError,
   ValidationCollector,
-} from './errors.js';
+} from '../lib/errors.js';
+import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import Citation from '../models/citation.js';
+import type { CitationInstance } from '../models/manifests/citation.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
   ensureNonEmptyString,
@@ -19,9 +21,7 @@ import {
   requireRevSummary,
   toRevisionMeta,
   validateRevSummary,
-} from './handler-utils.js';
-import { sanitizeLocalizedMapInput } from './localized.js';
-import { applyDeletionRevisionSummary } from './revision-summary.js';
+} from './validation.js';
 
 const citationStylePath = path.resolve(process.cwd(), 'vendor/csl/agpwiki-author-date.csl');
 const citationStyle = fs.readFileSync(citationStylePath, 'utf8');

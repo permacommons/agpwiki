@@ -4,21 +4,21 @@ import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthUserId } from '../src/mcp/auth.js';
-import { createBlogPost } from '../src/mcp/blog-handlers.js';
+import { createBlogPost } from '../src/services/blog-post-service.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
+import { NotFoundError, ValidationError } from '../src/lib/errors.js';
 import {
   createCitation,
   deleteCitation,
   readCitation,
   updateCitation,
-} from '../src/mcp/citation-handlers.js';
+} from '../src/services/citation-service.js';
 import {
   createCitationClaim,
   readCitationClaim,
   updateCitationClaim,
-} from '../src/mcp/claim-handlers.js';
-import { createPageCheck } from '../src/mcp/page-check-handlers.js';
+} from '../src/services/citation-claim-service.js';
+import { createPageCheck } from '../src/services/page-check-service.js';
 import {
   applyWikiPagePatch,
   createWikiPage,
@@ -28,8 +28,8 @@ import {
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateWikiPage,
-} from '../src/mcp/wiki-handlers.js';
-import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
+} from '../src/services/wiki-page-service.js';
+import { WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import ApiToken from '../src/models/api-token.js';
 import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';

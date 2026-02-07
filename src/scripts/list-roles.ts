@@ -1,4 +1,4 @@
-import { listRoles } from '../mcp/roles.js';
+import { listRoles } from '../services/roles.js';
 
 const roles = listRoles();
 

@@ -5,6 +5,12 @@ import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
 import {
+  NotFoundError,
+  ValidationCollector,
+  ValidationError,
+} from '../lib/errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import {
   getPageCheckMetricsErrors,
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
@@ -14,11 +20,7 @@ import {
 } from '../lib/page-checks.js';
 import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageCheck from '../models/page-check.js';
-import {
-  NotFoundError,
-  ValidationCollector,
-  ValidationError,
-} from './errors.js';
+import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
   ensureNonEmptyString,
@@ -28,10 +30,8 @@ import {
   requireRevSummary,
   toRevisionMeta,
   validateRevSummary,
-} from './handler-utils.js';
-import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
-import { applyDeletionRevisionSummary } from './revision-summary.js';
-import { fetchPageRevisionByRevId, findCurrentPageBySlugOrAlias } from './wiki-handlers.js';
+} from './validation.js';
+import { fetchPageRevisionByRevId, findCurrentPageBySlugOrAlias } from './wiki-page-service.js';
 
 const { mlString } = dal;
 

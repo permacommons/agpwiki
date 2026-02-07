@@ -8,10 +8,10 @@ import type { NextFunction, Request, Response } from 'express';
 
 import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
+import { getUserRoles } from '../services/roles.js';
 import { resolveAuthInfoFromToken } from './auth.js';
 import { createMcpServer } from './core.js';
 import { isJsonParseError } from './http-errors.js';
-import { getUserRoles } from './roles.js';
 
 type McpConfig = {
   host?: string;

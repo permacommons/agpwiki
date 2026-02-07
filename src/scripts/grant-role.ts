@@ -1,8 +1,8 @@
 import readline from 'node:readline/promises';
 
 import { initializePostgreSQL } from '../db.js';
-import { grantRole, isValidRole, VALID_ROLES } from '../mcp/roles.js';
 import User from '../models/user.js';
+import { grantRole, isValidRole, VALID_ROLES } from '../services/roles.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
   const value = await rl.question(label);
