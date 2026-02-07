@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { escapeHtml, renderSafeText, renderText, type SafeText } from '../../render.js';
+import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 export type PageCheckMetricSummary = {
   issuesFound: { high: number; medium: number; low: number };
@@ -23,8 +23,8 @@ export type PageCheckDetailItem = {
   statusLabel: string;
   dateLabel: string;
   metrics: PageCheckMetricSummary;
-  checkResults: SafeText;
-  notes?: SafeText;
+  checkResultsHtml: string;
+  notesHtml?: string;
   revUser: string | null;
   revTags: string[] | null;
 };
@@ -193,8 +193,7 @@ export const renderPageChecksList = ({
   </div>
 </div>`
         : '';
-      const notes = check.notes ? renderSafeText(check.notes).trim() : '';
-      const notesHtml = notes ? `<div class="check-notes">${notes}</div>` : '';
+      const notesHtml = check.notesHtml ? `<div class="check-notes">${check.notesHtml}</div>` : '';
       const viewHref = appendLangParam(
         `/${escapeHtml(slug)}/checks/${escapeHtml(check.id)}`,
         langOverride
@@ -210,7 +209,7 @@ export const renderPageChecksList = ({
     <div class="check-metrics">${escapeHtml(renderMetricsCompact(check.metrics, t))}</div>
     ${operatorHtml}
   </div>
-  <div class="check-results">${renderSafeText(check.checkResults).trim()}</div>
+  <div class="check-results">${check.checkResultsHtml}</div>
   ${notesHtml}
 </article>`;
     })

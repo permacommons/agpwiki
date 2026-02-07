@@ -13,7 +13,7 @@ const blogPostManifest = {
     slug: types.string().max(200).required(),
     title: mlString.getSafeTextSchema({ maxLength: 200 }),
     body: mlString.getHTMLSchema({ maxLength: 20000 }),
-    summary: mlString.getSafeTextSchema({ maxLength: 500 }),
+    summary: mlString.getHTMLSchema({ maxLength: 500 }),
     originalLanguage: types.string().max(8),
     createdAt: types.date(),
     updatedAt: types.date(),

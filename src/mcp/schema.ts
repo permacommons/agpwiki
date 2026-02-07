@@ -77,13 +77,13 @@ export const createLocalizedSchemas = () => {
   return {
     localizedTitleSchema: makeLocalizedMapSchemas('title'),
     localizedBodySchema: makeLocalizedMapSchemas('body'),
-    localizedSummarySchema: makeLocalizedMapSchemas('summary'),
-    localizedAssertionSchema: makeLocalizedMapSchemas('assertion'),
-    localizedQuoteSchema: makeLocalizedMapSchemas('quote'),
+    localizedSummarySchema: makeLocalizedMapSchemas('summary Markdown'),
+    localizedAssertionSchema: makeLocalizedMapSchemas('plain-text assertion (not Markdown)'),
+    localizedQuoteSchema: makeLocalizedMapSchemas('plain-text quote (not Markdown)'),
     localizedLocatorValueSchema: makeLocalizedMapSchemas('locator value'),
     localizedLocatorLabelSchema: makeLocalizedMapSchemas('locator label'),
-    localizedCheckResultsSchema: makeLocalizedMapSchemas('check results'),
-    localizedNotesSchema: makeLocalizedMapSchemas('notes'),
+    localizedCheckResultsSchema: makeLocalizedMapSchemas('check results Markdown'),
+    localizedNotesSchema: makeLocalizedMapSchemas('notes Markdown'),
     localizedRevisionSummarySchema: makeLocalizedMapSchemas('revision summary'),
     languageTagSchema: makeLanguageTagSchema(),
   };

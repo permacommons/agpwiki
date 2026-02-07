@@ -146,7 +146,7 @@ const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector)
   const normalized = sanitizeLocalizedMapInput(value);
   if (normalized === null) return;
   try {
-    mlString.validate(normalized, { maxLength: 500, allowHTML: false });
+    mlString.validate(normalized, { maxLength: 500, allowHTML: true });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid summary value.';
     if (errors) {
@@ -402,6 +402,12 @@ export async function createBlogPost(
       await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
     }
   }
+  if (summary) {
+    for (const [lang, text] of Object.entries(summary)) {
+      if (!text) continue;
+      await validateMarkdownContent(text, `summary.${lang}`, errors, []);
+    }
+  }
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
@@ -452,6 +458,12 @@ export async function updateBlogPost(
     for (const [lang, text] of Object.entries(body)) {
       if (!text) continue;
       await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
+    }
+  }
+  if (summary) {
+    for (const [lang, text] of Object.entries(summary)) {
+      if (!text) continue;
+      await validateMarkdownContent(text, `summary.${lang}`, errors, []);
     }
   }
   errors.throwIfAny();

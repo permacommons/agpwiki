@@ -53,28 +53,29 @@ export const registerBlogRoutes = (app: Express) => {
          ORDER BY created_at DESC, _rev_date DESC`
       );
       const posts = result.rows.map(row => BlogPost.createFromRow(row));
-      const items = posts
-        .map(post => {
-          const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
-          const contentLang = resolveContentLanguage({
-            uiLocale: res.locals.locale,
-            override: undefined,
-            availableLangs,
-          });
-          const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
-          const summary = resolveSafeText(mlString.resolve, contentLang, post.summary, '');
-          const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
-          const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
-          const updatedHtml =
-            updatedLabel && updatedLabel !== createdLabel
-              ? `<span class="post-updated">${req.t('blog.updated', {
-                  date: escapeHtml(updatedLabel),
-                })}</span>`
+      const items = (
+        await Promise.all(
+          posts.map(async post => {
+            const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+            const contentLang = resolveContentLanguage({
+              uiLocale: res.locals.locale,
+              override: undefined,
+              availableLangs,
+            });
+            const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
+            const summary = mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
+            const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
+            const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
+            const updatedHtml =
+              updatedLabel && updatedLabel !== createdLabel
+                ? `<span class="post-updated">${req.t('blog.updated', {
+                    date: escapeHtml(updatedLabel),
+                  })}</span>`
+                : '';
+            const summaryHtml = summary
+              ? `<div class="post-summary">${(await renderMarkdown(summary, [])).html}</div>`
               : '';
-          const summaryHtml = summary
-            ? `<div class="post-summary">${renderText(summary)}</div>`
-            : '';
-          return `<li>
+            return `<li>
   <h2><a href="/blog/${escapeHtml(post.slug)}">${renderText(title)}</a></h2>
   <div class="post-meta">
     <span class="post-created">${req.t('blog.created', {
@@ -84,8 +85,9 @@ export const registerBlogRoutes = (app: Express) => {
   </div>
   ${summaryHtml}
 </li>`;
-        })
-        .join('');
+          })
+        )
+      ).join('');
 
       const bodyHtml = `<div class="blog-list">
   <p>${req.t('blog.description')}</p>
@@ -167,12 +169,7 @@ export const registerBlogRoutes = (app: Express) => {
         selectedRevision.title,
         post.slug
       );
-      const summary = resolveSafeText(
-        mlString.resolve,
-        contentLang,
-        selectedRevision.summary,
-        ''
-      );
+      const summary = mlString.resolve(contentLang, selectedRevision.summary ?? null)?.str ?? '';
       const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
       const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
       const updatedHtml =
@@ -276,7 +273,7 @@ export const registerBlogRoutes = (app: Express) => {
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const summaryHtml = summary
-        ? `<div class="post-summary">${renderText(summary)}</div>`
+        ? `<div class="post-summary">${(await renderMarkdown(summary, [])).html}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">
   <span class="post-created">${req.t('blog.created', {

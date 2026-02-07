@@ -1274,7 +1274,7 @@ const validateCheckResults = (value: LocalizedMapInput, errors?: ValidationColle
   const normalized = sanitizeLocalizedMapInput(value);
   if (normalized === null) return;
   try {
-    mlString.validate(normalized, { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH, allowHTML: false });
+    mlString.validate(normalized, { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH, allowHTML: true });
     ensureNoControlCharacters(normalized, 'checkResults', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid checkResults value.';
@@ -1332,7 +1332,7 @@ const validateNotes = (value: LocalizedMapInput, errors?: ValidationCollector) =
   const normalized = sanitizeLocalizedMapInput(value);
   if (normalized === null) return;
   try {
-    mlString.validate(normalized, { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH, allowHTML: false });
+    mlString.validate(normalized, { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH, allowHTML: true });
     ensureNoControlCharacters(normalized, 'notes', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid notes value.';
@@ -2718,6 +2718,16 @@ export async function createPageCheck(
   ensureNonEmptyString(targetRevId, 'targetRevId', errors);
   validateRevSummary(revSummary, errors);
   const parsedCompletedAt = parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
+  for (const [lang, text] of Object.entries(checkResults)) {
+    if (!text) continue;
+    await validateMarkdownContent(text, `checkResults.${lang}`, errors, []);
+  }
+  if (notes) {
+    for (const [lang, text] of Object.entries(notes)) {
+      if (!text) continue;
+      await validateMarkdownContent(text, `notes.${lang}`, errors, []);
+    }
+  }
   errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
@@ -2805,6 +2815,18 @@ export async function updatePageCheck(
   requireRevSummary(revSummary, errors);
   const parsedCompletedAt =
     completedAt === null ? null : parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
+  if (checkResults && checkResults !== null) {
+    for (const [lang, text] of Object.entries(checkResults)) {
+      if (!text) continue;
+      await validateMarkdownContent(text, `checkResults.${lang}`, errors, []);
+    }
+  }
+  if (notes && notes !== null) {
+    for (const [lang, text] of Object.entries(notes)) {
+      if (!text) continue;
+      await validateMarkdownContent(text, `notes.${lang}`, errors, []);
+    }
+  }
   errors.throwIfAny();
 
   const check = await findCurrentPageCheckById(checkId);
