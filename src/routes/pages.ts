@@ -339,7 +339,7 @@ export const registerPageRoutes = (app: Express) => {
             ? `<a href="${escapeHtml(field.href)}">${escapeHtml(value)}</a>`
             : escapeHtml(value);
           const valueHtml = renderedValue.replace(/\n/g, '<br />');
-          return `<div class="citation-field">
+          return `<div class="detail-field">
   <dt>${escapeHtml(field.label)}</dt>
   <dd>${valueHtml}</dd>
 </div>`;
@@ -376,7 +376,7 @@ export const registerPageRoutes = (app: Express) => {
         : '';
       const bodyHtml = `<div class="check-card">
   <div class="check-meta">
-    <dl class="citation-fields">${fieldsHtml}</dl>
+    <dl class="detail-fields">${fieldsHtml}</dl>
   </div>
   ${metricsHtml}
   <div class="check-results">${checkResultsHtml}</div>
