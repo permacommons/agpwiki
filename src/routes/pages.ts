@@ -3,6 +3,7 @@ import type { Express } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import {
   diffLocalizedField,
   diffScalarField,
@@ -14,7 +15,6 @@ import {
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
-import Citation from '../models/citation.js';
 import PageAlias from '../models/page-alias.js';
 import PageCheck from '../models/page-check.js';
 import WikiPage from '../models/wiki-page.js';
@@ -47,23 +47,6 @@ import {
 } from './lib/page-checks.js';
 
 const { mlString } = dal;
-
-const citationKeyRegex = /@([\w][\w:.#$%&\-+?<>~/]*)/g;
-
-const normalizeCitationKey = (value: string) => {
-  const separatorIndex = value.indexOf(':');
-  if (separatorIndex <= 0) return value;
-  return value.slice(0, separatorIndex);
-};
-
-const extractCitationKeys = (value: string) => {
-  const keys = new Set<string>();
-  if (!value) return keys;
-  for (const match of value.matchAll(citationKeyRegex)) {
-    keys.add(normalizeCitationKey(match[1]));
-  }
-  return keys;
-};
 
 const resolveCheckMetrics = (metrics: PageCheckMetrics | null | undefined) => {
   const fallback = {
@@ -171,14 +154,22 @@ export const registerPageRoutes = (app: Express) => {
         override: langOverride,
         availableLangs,
       });
+      const checkSources = checks.flatMap(check => {
+        const checkResultsSource = mlString.resolve(contentLang, check.checkResults ?? null)?.str ?? '';
+        const notesSource = mlString.resolve(contentLang, check.notes ?? null)?.str ?? '';
+        return [checkResultsSource, notesSource];
+      });
+      const citationEntries = await loadCitationEntriesForSources(dalInstance, checkSources);
 
       const items: PageCheckDetailItem[] = await Promise.all(
         checks.map(async check => {
           const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
           const checkResultsSource = mlString.resolve(contentLang, check.checkResults ?? null)?.str ?? '';
           const notesSource = mlString.resolve(contentLang, check.notes ?? null)?.str ?? '';
-          const checkResultsHtml = (await renderMarkdown(checkResultsSource, [])).html;
-          const notesHtml = notesSource ? (await renderMarkdown(notesSource, [])).html : '';
+          const checkResultsHtml = (await renderMarkdown(checkResultsSource, citationEntries)).html;
+          const notesHtml = notesSource
+            ? (await renderMarkdown(notesSource, citationEntries)).html
+            : '';
           return {
             id: check.id,
             typeLabel: formatCheckType(check.type, req.t),
@@ -306,6 +297,10 @@ export const registerPageRoutes = (app: Express) => {
       const checkResultsSource =
         mlString.resolve(contentLang, selectedRevision.checkResults ?? null)?.str ?? '';
       const notesSource = mlString.resolve(contentLang, selectedRevision.notes ?? null)?.str ?? '';
+      const citationEntries = await loadCitationEntriesForSources(dalInstance, [
+        checkResultsSource,
+        notesSource,
+      ]);
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
@@ -375,9 +370,9 @@ export const registerPageRoutes = (app: Express) => {
     </tr>
   </tbody>
 </table>`;
-      const checkResultsHtml = (await renderMarkdown(checkResultsSource, [])).html;
+      const checkResultsHtml = (await renderMarkdown(checkResultsSource, citationEntries)).html;
       const notesHtml = notesSource
-        ? `<div class="check-notes">${(await renderMarkdown(notesSource, [])).html}</div>`
+        ? `<div class="check-notes">${(await renderMarkdown(notesSource, citationEntries)).html}</div>`
         : '';
       const bodyHtml = `<div class="check-card">
   <div class="check-meta">
@@ -618,21 +613,7 @@ export const registerPageRoutes = (app: Express) => {
         res.type('text/plain').send(bodySource);
         return;
       }
-      const citationKeys = extractCitationKeys(bodySource);
-      const citationEntries: Array<Record<string, unknown>> = [];
-
-      if (citationKeys.size > 0) {
-        const keys = Array.from(citationKeys);
-        const result = await dalInstance.query(
-          `SELECT * FROM ${Citation.tableName} WHERE key = ANY($1) AND _old_rev_of IS NULL AND _rev_deleted = false`,
-          [keys]
-        );
-        for (const row of result.rows) {
-          const item = (row.data ?? {}) as Record<string, unknown>;
-          const id = row.key;
-          citationEntries.push({ ...item, id });
-        }
-      }
+      const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource]);
 
       const { html: bodyHtml, toc } = await renderMarkdown(bodySource, citationEntries);
 

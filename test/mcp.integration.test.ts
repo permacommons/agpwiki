@@ -9,6 +9,7 @@ import { createMcpServer } from '../src/mcp/core.js';
 import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
 import {
   applyWikiPagePatch,
+  createPageCheck,
   createCitationClaim,
   createCitation,
   createWikiPage,
@@ -1499,6 +1500,153 @@ test('MCP rejects unknown citation keys', async () => {
       error => {
         assert.ok(error instanceof ValidationError);
         assert.ok(error.fieldErrors?.some(entry => entry.field === 'body.en'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects unknown citation keys in blog summary', async () => {
+  const dal = await getDal();
+  const slug = `test-blog-cite-key-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-blog-cite-valid-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Blog citation key validation test',
+          URL: 'https://example.com/blog-citation-key-validation',
+        },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        createBlogPost(
+          dal,
+          {
+            slug,
+            title: { en: 'Blog citation key validation' },
+            body: { en: 'Body is fine.' },
+            summary: { en: `See [@${citationKey}; @no-such-citation].` },
+            revSummary: { en: 'Add citation references in summary.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'summary.en'));
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+    delete process.env.AGPWIKI_MCP_TOKEN;
+  }
+});
+
+test('MCP rejects unknown citation keys in page check markdown', async () => {
+  const dal = await getDal();
+  const slug = `test-check-cite-key-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  const citationKey = `test-check-cite-valid-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const { user, token } = await createTestUser(dal);
+    userIdForCleanup = user.id;
+
+    process.env.AGPWIKI_MCP_TOKEN = token;
+    const userId = await resolveAuthUserId();
+
+    await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Page check citation key validation test',
+          URL: 'https://example.com/check-citation-key-validation',
+        },
+      },
+      userId
+    );
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Page check citation key validation' },
+        body: { en: 'Base article text.' },
+        revSummary: { en: 'Create page for check test.' },
+      },
+      userId
+    );
+    const revisions = await listWikiPageRevisions(dal, slug);
+    const targetRevId = revisions.revisions[0]?.revId;
+    assert.ok(targetRevId);
+
+    await assert.rejects(
+      () =>
+        createPageCheck(
+          dal,
+          {
+            slug,
+            type: 'fact_check',
+            status: 'issues_found',
+            checkResults: { en: `Result cites [@${citationKey}; @no-such-citation].` },
+            notes: { en: `Note cites [@${citationKey}; @missing-note-cite].` },
+            metrics: {
+              issues_found: { high: 1, medium: 0, low: 0 },
+              issues_fixed: { high: 0, medium: 0, low: 0 },
+            },
+            targetRevId,
+            revSummary: { en: 'Create check with citation references.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof ValidationError);
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'checkResults.en'));
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'notes.en'));
         return true;
       }
     );

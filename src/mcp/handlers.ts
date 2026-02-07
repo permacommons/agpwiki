@@ -13,7 +13,10 @@ import {
   CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH,
   CITATION_CLAIM_QUOTE_MAX_LENGTH,
 } from '../lib/citation-claims.js';
-import { validateMarkdownContent } from '../lib/content-validation.js';
+import {
+  validateLocalizedMarkdownContent,
+  validateMarkdownContent,
+} from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
 import {
@@ -1688,12 +1691,7 @@ export async function createWikiPage(
   validateTitle(title, errors);
   validateBody(body, errors);
   validateRevSummary(revSummary, errors);
-  if (body) {
-    for (const [lang, text] of Object.entries(body)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
-    }
-  }
+  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
@@ -1752,12 +1750,7 @@ export async function updateWikiPage(
   validateTitle(title, errors);
   validateBody(body, errors);
   requireRevSummary(revSummary, errors);
-  if (body) {
-    for (const [lang, text] of Object.entries(body)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `body.${lang}`, errors, [validateCitationClaimRefs]);
-    }
-  }
+  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
@@ -2718,16 +2711,13 @@ export async function createPageCheck(
   ensureNonEmptyString(targetRevId, 'targetRevId', errors);
   validateRevSummary(revSummary, errors);
   const parsedCompletedAt = parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
-  for (const [lang, text] of Object.entries(checkResults)) {
-    if (!text) continue;
-    await validateMarkdownContent(text, `checkResults.${lang}`, errors, []);
-  }
-  if (notes) {
-    for (const [lang, text] of Object.entries(notes)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `notes.${lang}`, errors, []);
-    }
-  }
+  await validateLocalizedMarkdownContent(
+    checkResults,
+    'checkResults',
+    errors,
+    [validateCitationClaimRefs]
+  );
+  await validateLocalizedMarkdownContent(notes, 'notes', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
@@ -2815,18 +2805,13 @@ export async function updatePageCheck(
   requireRevSummary(revSummary, errors);
   const parsedCompletedAt =
     completedAt === null ? null : parseOptionalDate(completedAt ?? undefined, 'completedAt', errors);
-  if (checkResults && checkResults !== null) {
-    for (const [lang, text] of Object.entries(checkResults)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `checkResults.${lang}`, errors, []);
-    }
-  }
-  if (notes && notes !== null) {
-    for (const [lang, text] of Object.entries(notes)) {
-      if (!text) continue;
-      await validateMarkdownContent(text, `notes.${lang}`, errors, []);
-    }
-  }
+  await validateLocalizedMarkdownContent(
+    checkResults,
+    'checkResults',
+    errors,
+    [validateCitationClaimRefs]
+  );
+  await validateLocalizedMarkdownContent(notes, 'notes', errors, [validateCitationClaimRefs]);
   errors.throwIfAny();
 
   const check = await findCurrentPageCheckById(checkId);

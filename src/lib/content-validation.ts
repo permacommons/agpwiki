@@ -53,3 +53,16 @@ export const validateMarkdownContent = async (
     await validator({ fieldLabel, errors, analysis });
   }
 };
+
+export const validateLocalizedMarkdownContent = async (
+  value: Record<string, string | null> | null | undefined,
+  fieldLabel: string,
+  errors: ValidationCollector,
+  validators: ContentValidator[]
+) => {
+  if (!value) return;
+  for (const [lang, text] of Object.entries(value)) {
+    if (!text) continue;
+    await validateMarkdownContent(text, `${fieldLabel}.${lang}`, errors, validators);
+  }
+};
