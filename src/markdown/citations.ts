@@ -142,7 +142,7 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
             env.citeproc = citeproc;
           }
         }
-        return citeproc?.renderBibliography() || '<NO CITEPROC CONFIGURED>';
+        return citeproc?.renderBibliography() ?? '';
       };
     }
   }
