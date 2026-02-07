@@ -211,7 +211,7 @@ export const registerCitationRoutes = (app: Express) => {
           const valueHtml = field.href
             ? `<a href="${escapeHtml(field.href)}">${escapeHtml(field.value ?? '')}</a>`
             : field.valueHtml ?? escapeHtml(field.value ?? '');
-          return `<div class="citation-field">
+          return `<div class="detail-field">
   <dt>${escapeHtml(field.label)}</dt>
   <dd>${valueHtml}</dd>
 </div>`;
@@ -365,7 +365,7 @@ export const registerCitationRoutes = (app: Express) => {
       });
       const bodyHtml = `<div class="citation-card">
   <div class="citation-meta">${escapeHtml(revisionMeta)}</div>
-  <dl class="citation-fields">${fieldsHtml}</dl>
+  <dl class="detail-fields">${fieldsHtml}</dl>
 </div>${languageRow}`;
       const html = renderLayout({
         title: `${claimId} · ${key}`,
@@ -511,7 +511,7 @@ export const registerCitationRoutes = (app: Express) => {
           const valueHtml = field.href
             ? `<a href="${escapeHtml(field.href)}">${escapeHtml(field.value)}</a>`
             : escapeHtml(field.value);
-          return `<div class="citation-field">
+          return `<div class="detail-field">
   <dt>${escapeHtml(field.label)}</dt>
   <dd>${valueHtml}</dd>
 </div>`;
@@ -581,7 +581,7 @@ export const registerCitationRoutes = (app: Express) => {
       });
       const bodyHtml = `<div class="citation-card">
   <div class="citation-meta">${escapeHtml(revisionMeta)}</div>
-  <dl class="citation-fields">${fieldsHtml}</dl>
+  <dl class="detail-fields">${fieldsHtml}</dl>
   <details class="citation-raw">
     <summary>${req.t('citation.rawCsl')}</summary>
     <pre>${escapeHtml(rawJson)}</pre>

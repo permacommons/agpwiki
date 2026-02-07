@@ -458,7 +458,6 @@ pre.diff ins {
 }
 .check-results {
   margin-top: 1rem;
-  white-space: pre-wrap;
   text-indent: 0;
 }
 .check-notes {
@@ -466,28 +465,27 @@ pre.diff ins {
   padding: 0.75rem;
   border-left: 3px solid var(--rule);
   background: #fffdf7;
-  white-space: pre-wrap;
 }
 .citation-meta {
   margin-top: 0.5rem;
   color: #555;
   font-size: 0.9rem;
 }
-.citation-fields {
+.detail-fields {
   margin: 1rem 0 0;
 }
-.citation-field {
+.detail-field {
   display: grid;
   grid-template-columns: 140px 1fr;
   gap: 0.5rem 1rem;
   margin-bottom: 0.5rem;
 }
-.citation-field dt {
+.detail-field dt {
   font-weight: 600;
   color: var(--ink);
   font-family: 'IBM Plex Sans', sans-serif;
 }
-.citation-field dd {
+.detail-field dd {
   margin: 0;
 }
 .citation-raw {
@@ -500,7 +498,7 @@ pre.diff ins {
   overflow: auto;
 }
 @media (max-width: 640px) {
-  .citation-field {
+  .detail-field {
     grid-template-columns: 1fr;
   }
 }
