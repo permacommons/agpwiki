@@ -10,20 +10,24 @@ export {
   type CitationUpdateInput,
   type CitationWriteInput,
   createCitation,
-  createWikiPage,
   diffCitationRevisions,
-  diffWikiPageRevisions,
   listCitationRevisions,
-  listWikiPageResources,
-  listWikiPageRevisions,
-  type McpListResourcesResult,
-  type McpReadResourceResult,
-  type McpResource,
-  type McpResourceContents,
   queryCitations,
   readCitationRevision,
-  readWikiPageRevision,
   updateCitation,
+} from './citation-handlers.js';
+export type {
+  McpListResourcesResult,
+  McpReadResourceResult,
+  McpResource,
+  McpResourceContents,
+} from './handler-utils.js';
+export {
+  createWikiPage,
+  diffWikiPageRevisions,
+  listWikiPageResources,
+  listWikiPageRevisions,
+  readWikiPageRevision,
   updateWikiPage,
   type WikiPageDiffInput,
   type WikiPageDiffResult,
@@ -33,4 +37,4 @@ export {
   type WikiPageRevisionResult,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
-} from './handlers.js';
+} from './wiki-handlers.js';

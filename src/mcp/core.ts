@@ -35,57 +35,66 @@ import {
   updateBlogPost,
 } from './blog-handlers.js';
 import {
+  type CitationDeleteInput,
+  type CitationQueryInput,
+  type CitationUpdateInput,
+  type CitationWriteInput,
+  createCitation,
+  deleteCitation,
+  diffCitationRevisions,
+  listCitationRevisions,
+  queryCitations,
+  readCitation,
+  readCitationRevision,
+  updateCitation,
+} from './citation-handlers.js';
+import {
+  type CitationClaimDeleteInput,
+  type CitationClaimDiffInput,
+  type CitationClaimUpdateInput,
+  type CitationClaimWriteInput,
+  createCitationClaim,
+  deleteCitationClaim,
+  diffCitationClaimRevisions,
+  listCitationClaimRevisions,
+  readCitationClaim,
+  readCitationClaimRevision,
+  updateCitationClaim,
+} from './claim-handlers.js';
+import {
   InvalidRequestError,
   toToolErrorPayload,
   toValidationErrorFromZod,
   UnsupportedError,
 } from './errors.js';
 import {
-  addWikiPageAlias,
-  applyWikiPagePatch,
-  type CitationClaimDeleteInput,
-  type CitationClaimDiffInput,
-  type CitationClaimUpdateInput,
-  type CitationClaimWriteInput,
-  type CitationDeleteInput,
-  type CitationQueryInput,
-  type CitationUpdateInput,
-  type CitationWriteInput,
-  createCitation,
-  createCitationClaim,
   createPageCheck,
-  createWikiPage,
-  deleteCitation,
-  deleteCitationClaim,
   deletePageCheck,
-  deleteWikiPage,
-  diffCitationClaimRevisions,
-  diffCitationRevisions,
   diffPageCheckRevisions,
-  diffWikiPageRevisions,
-  listCitationClaimRevisions,
-  listCitationRevisions,
   listPageCheckRevisions,
   listPageChecks,
-  listWikiPageResources,
-  listWikiPageRevisions,
   type PageCheckDeleteInput,
   type PageCheckUpdateInput,
   type PageCheckWriteInput,
-  queryCitations,
-  readCitation,
-  readCitationClaim,
-  readCitationClaimRevision,
-  readCitationRevision,
   readPageCheckRevision,
+  updatePageCheck,
+} from './page-check-handlers.js';
+import { registerPrompts } from './prompts.js';
+import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import { createLocalizedSchemas } from './schema.js';
+import {
+  addWikiPageAlias,
+  applyWikiPagePatch,
+  createWikiPage,
+  deleteWikiPage,
+  diffWikiPageRevisions,
+  listWikiPageResources,
+  listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
   removeWikiPageAlias,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
-  updateCitation,
-  updateCitationClaim,
-  updatePageCheck,
   updateWikiPage,
   type WikiPageAliasInput,
   type WikiPageDeleteInput,
@@ -94,10 +103,7 @@ import {
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
-} from './handlers.js';
-import { registerPrompts } from './prompts.js';
-import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from './roles.js';
-import { createLocalizedSchemas } from './schema.js';
+} from './wiki-handlers.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 

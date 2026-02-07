@@ -8,23 +8,27 @@ import { createBlogPost } from '../src/mcp/blog-handlers.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import { NotFoundError, ValidationError } from '../src/mcp/errors.js';
 import {
-  applyWikiPagePatch,
-  createPageCheck,
-  createCitationClaim,
   createCitation,
-  createWikiPage,
-  readCitationClaim,
   deleteCitation,
+  readCitation,
+  updateCitation,
+} from '../src/mcp/citation-handlers.js';
+import {
+  createCitationClaim,
+  readCitationClaim,
+  updateCitationClaim,
+} from '../src/mcp/claim-handlers.js';
+import { createPageCheck } from '../src/mcp/page-check-handlers.js';
+import {
+  applyWikiPagePatch,
+  createWikiPage,
   deleteWikiPage,
   listWikiPageRevisions,
-  readCitation,
   readWikiPage,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
-  updateCitationClaim,
-  updateCitation,
   updateWikiPage,
-} from '../src/mcp/handlers.js';
+} from '../src/mcp/wiki-handlers.js';
 import { WIKI_ADMIN_ROLE } from '../src/mcp/roles.js';
 import ApiToken from '../src/models/api-token.js';
 import User from '../src/models/user.js';
