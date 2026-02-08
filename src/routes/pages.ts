@@ -4,20 +4,14 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import {
-  diffLocalizedField,
-  diffScalarField,
-  diffStructuredField,
-} from '../lib/diff-engine.js';
+import { NotFoundError } from '../lib/errors.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
   resolveSafeText,
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
-import PageAlias from '../models/page-alias.js';
 import PageCheck from '../models/page-check.js';
-import WikiPage from '../models/wiki-page.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -26,6 +20,18 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import {
+  diffPageCheckRevisions,
+  listPageCheckRevisions,
+  listPageChecks,
+  readPageCheckRevision,
+} from '../services/page-check-service.js';
+import {
+  diffWikiPageRevisions,
+  listWikiPageRevisions,
+  readWikiPage,
+  readWikiPageRevision,
+} from '../services/wiki-page-service.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -54,30 +60,6 @@ const resolveCheckMetrics = (metrics: PageCheckMetrics | null | undefined) => {
     issues_fixed: { high: 0, medium: 0, low: 0 },
   };
   return metrics ?? fallback;
-};
-
-const findCurrentPageBySlug = async (slug: string) =>
-  WikiPage.filterWhere({
-    slug,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-const findCurrentPageById = async (id: string) =>
-  WikiPage.filterWhere({
-    id,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-const resolvePageBySlug = async (slug: string) => {
-  const direct = await findCurrentPageBySlug(slug);
-  if (direct) return direct;
-
-  const alias = await PageAlias.filterWhere({ slug }).first();
-  if (!alias) return null;
-
-  return findCurrentPageById(alias.pageId);
 };
 
 export const registerPageRoutes = (app: Express) => {
@@ -122,11 +104,18 @@ export const registerPageRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
 
-      const page = await resolvePageBySlug(slug);
-      if (!page) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
+      const page = await (async () => {
+        try {
+          return await readWikiPage(await initializePostgreSQL(), slug);
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!page) return;
 
       const dalInstance = await initializePostgreSQL();
       const checks = await PageCheck.filterWhere({
@@ -241,42 +230,46 @@ export const registerPageRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
 
-      const page = await resolvePageBySlug(slug);
-      if (!page) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
+      const page = await (async () => {
+        try {
+          return await readWikiPage(await initializePostgreSQL(), slug);
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!page) return;
 
       const dalInstance = await initializePostgreSQL();
-      const check = await PageCheck.filterWhere({
-        id: checkId,
-        pageId: page.id,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>).first();
-
+      const checksResult = await listPageChecks(dalInstance, slug);
+      const check = checksResult.checks.find(entry => entry.id === checkId);
       if (!check) {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
-
-      const revisions = await PageCheck.filterWhere({})
-        .getAllRevisions(check.id)
-        .orderBy('_revDate', 'DESC')
-        .run();
+      const revisionsResult = await listPageCheckRevisions(dalInstance, checkId);
+      const revisions = revisionsResult.revisions;
       const userIds = revisions
-        .map(rev => rev._revUser)
+        .map(rev => rev.revUser)
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
-
-      const fetchRevisionByRevId = async (revId: string) => {
-        return PageCheck.filterWhere({}).getRevisionByRevId(revId, check.id).first();
-      };
-      const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : check;
-      if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send(req.t('page.revisionNotFound'));
-        return;
-      }
+      const selectedRevision = revIdParam
+        ? await (async () => {
+            try {
+              return (await readPageCheckRevision(dalInstance, checkId, revIdParam)).revision;
+            } catch (error) {
+              if (error instanceof NotFoundError) {
+                res.status(404).type('text').send(req.t('page.revisionNotFound'));
+                return null;
+              }
+              throw error;
+            }
+          })()
+        : revisions[0];
+      if (!selectedRevision) return;
 
       const availableLangs = getAvailableLanguages(
         selectedRevision.checkResults ?? null,
@@ -292,11 +285,11 @@ export const registerPageRoutes = (app: Express) => {
       const typeLabel = formatCheckType(selectedRevision.type, req.t);
       const statusLabel = formatCheckStatus(selectedRevision.status, req.t);
       const dateLabel = formatDateUTC(
-        selectedRevision.completedAt ?? selectedRevision._revDate ?? selectedRevision.createdAt
+        selectedRevision.completedAt ?? selectedRevision.revDate ?? selectedRevision.createdAt
       );
       const checkResultsSource =
-        mlString.resolve(contentLang, selectedRevision.checkResults ?? null)?.str ?? '';
-      const notesSource = mlString.resolve(contentLang, selectedRevision.notes ?? null)?.str ?? '';
+        mlString.resolve(contentLang, selectedRevision.checkResults)?.str ?? '';
+      const notesSource = mlString.resolve(contentLang, selectedRevision.notes)?.str ?? '';
       const citationEntries = await loadCitationEntriesForSources(dalInstance, [
         checkResultsSource,
         notesSource,
@@ -304,8 +297,8 @@ export const registerPageRoutes = (app: Express) => {
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
-        selectedRevision._revUser ?? null,
-        selectedRevision._revTags ?? null,
+        selectedRevision.revUser ?? null,
+        selectedRevision.revTags ?? null,
         userMap,
         req.t
       );
@@ -386,22 +379,22 @@ export const registerPageRoutes = (app: Express) => {
       const historyRevisions: PageCheckSummaryItem[] = revisions.map(rev => {
         const revMetrics = resolveCheckMetrics(rev.metrics as PageCheckMetrics | null);
         return {
-          id: rev._revID,
+          id: rev.revId,
           typeLabel: formatCheckType(rev.type, req.t),
           statusLabel: formatCheckStatus(rev.status, req.t),
-          dateLabel: formatDateUTC(rev._revDate),
+          dateLabel: formatDateUTC(rev.revDate),
           summary: resolveSafeTextWithFallback(
             mlString.resolve,
             contentLang,
-            rev._revSummary,
+            rev.revSummary,
             ''
           ),
           metrics: {
             issuesFound: revMetrics.issues_found,
             issuesFixed: revMetrics.issues_fixed,
           },
-          revUser: rev._revUser ?? null,
-          revTags: rev._revTags ?? null,
+          revUser: rev.revUser ?? null,
+          revTags: rev.revTags ?? null,
         };
       });
 
@@ -422,11 +415,15 @@ export const registerPageRoutes = (app: Express) => {
       const signedIn = Boolean(await resolveSessionUser(req));
       let diffHtml = '';
       if (diffFrom && diffTo) {
-        const fromRev = await fetchRevisionByRevId(diffFrom);
-        const toRev = await fetchRevisionByRevId(diffTo);
-        if (fromRev && toRev) {
-          const fromLabel = `${diffFrom} (${formatDateUTC(fromRev._revDate)})`;
-          const toLabel = `${diffTo} (${formatDateUTC(toRev._revDate)})`;
+        try {
+          const diff = await diffPageCheckRevisions(dalInstance, {
+            checkId: check.id,
+            fromRevId: diffFrom,
+            toRevId: diffTo,
+            lang: contentLang,
+          });
+          const fromLabel = `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`;
+          const toLabel = `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`;
           const diffLabels = getDiffLabels(req.t);
           const baseHref = `/${encodeURIComponent(page.slug)}/checks/${encodeURIComponent(
             check.id
@@ -437,75 +434,19 @@ export const registerPageRoutes = (app: Express) => {
           const toHref = langOverride
             ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffTo}`;
-          const fields = [];
-          const checkResultsDiff = diffLocalizedField(
-            'checkResults',
-            fromRev.checkResults ?? null,
-            toRev.checkResults ?? null
-          );
-          if (checkResultsDiff) {
-            fields.push({
-              key: 'checkResults',
-              label: req.t('checks.fields.checkResults'),
-              diff: checkResultsDiff,
-            });
-          }
-          const notesDiff = diffLocalizedField('notes', fromRev.notes ?? null, toRev.notes ?? null);
-          if (notesDiff) {
-            fields.push({
-              key: 'notes',
-              label: req.t('checks.fields.notes'),
-              diff: notesDiff,
-            });
-          }
-          const typeDiff = diffScalarField('type', fromRev.type, toRev.type);
-          if (typeDiff) {
-            fields.push({
-              key: 'type',
-              label: req.t('checks.fields.type'),
-              diff: typeDiff,
-            });
-          }
-          const statusDiff = diffScalarField('status', fromRev.status, toRev.status);
-          if (statusDiff) {
-            fields.push({
-              key: 'status',
-              label: req.t('checks.fields.status'),
-              diff: statusDiff,
-            });
-          }
-          const completedDiff = diffScalarField(
-            'completedAt',
-            fromRev.completedAt ?? null,
-            toRev.completedAt ?? null
-          );
-          if (completedDiff) {
-            fields.push({
-              key: 'completedAt',
-              label: req.t('checks.fields.completed'),
-              diff: completedDiff,
-            });
-          }
-          const targetDiff = diffScalarField(
-            'targetRevId',
-            fromRev.targetRevId ?? null,
-            toRev.targetRevId ?? null
-          );
-          if (targetDiff) {
-            fields.push({
-              key: 'targetRevId',
-              label: req.t('checks.fields.targetRevision'),
-              diff: targetDiff,
-            });
-          }
-          const metricsDiff = diffStructuredField(
-            'metrics',
-            fromRev.metrics ?? null,
-            toRev.metrics ?? null
-          );
-          if (metricsDiff) {
-            fields.push({ key: 'metrics', diff: metricsDiff });
-          }
+          const fieldLabels: Record<string, string> = {
+            checkResults: req.t('checks.fields.checkResults'),
+            notes: req.t('checks.fields.notes'),
+            type: req.t('checks.fields.type'),
+            status: req.t('checks.fields.status'),
+            completedAt: req.t('checks.fields.completed'),
+            targetRevId: req.t('checks.fields.targetRevision'),
+          };
+          const fields = Object.entries(diff.fields).map(([fieldKey, fieldDiff]) => ({
+            key: fieldKey,
+            ...(fieldLabels[fieldKey] ? { label: fieldLabels[fieldKey] } : {}),
+            diff: fieldDiff,
+          }));
           diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
@@ -514,6 +455,10 @@ export const registerPageRoutes = (app: Express) => {
             fields,
             labels: diffLabels,
           });
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
         }
       }
 
@@ -560,40 +505,49 @@ export const registerPageRoutes = (app: Express) => {
 
     try {
       await initializePostgreSQL();
-
-      const page = await resolvePageBySlug(slug);
-
-      if (!page) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
-
       const dalInstance = await initializePostgreSQL();
+      const pageResult = await (async () => {
+        try {
+          const page = await readWikiPage(dalInstance, slug);
+          const revisionsResult = await listWikiPageRevisions(dalInstance, slug);
+          return { page, revisionsResult };
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!pageResult) return;
+      const { page, revisionsResult } = pageResult;
 
-      const fetchRevisionByRevId = async (revId: string) => {
-        return WikiPage.filterWhere({}).getRevisionByRevId(revId, page.id).first();
-      };
-
-      const revisions = await WikiPage.filterWhere({})
-        .getAllRevisions(page.id)
-        .orderBy('_revDate', 'DESC')
-        .run();
-      const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : page;
-      if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send(req.t('page.revisionNotFound'));
-        return;
-      }
+      const revisions = revisionsResult.revisions;
+      const selectedRevision = revIdParam
+        ? await (async () => {
+            try {
+              return (await readWikiPageRevision(dalInstance, slug, revIdParam)).revision;
+            } catch (error) {
+              if (error instanceof NotFoundError) {
+                res.status(404).type('text').send(req.t('page.revisionNotFound'));
+                return null;
+              }
+              throw error;
+            }
+          })()
+        : revisions[0];
+      if (!selectedRevision) return;
 
       const availableLangs = getAvailableLanguages(
-        selectedRevision.body ?? null,
-        selectedRevision.title ?? null
+        selectedRevision.body,
+        selectedRevision.title
       );
       const contentLang = resolveContentLanguage({
         uiLocale: res.locals.locale,
         override: langOverride,
         availableLangs,
       });
-      const resolvedBody = mlString.resolve(contentLang, selectedRevision.body ?? null);
+      const resolvedBody = mlString.resolve(contentLang, selectedRevision.body);
 
       const canonicalSlug = page.slug;
       const title = resolveSafeText(
@@ -619,15 +573,19 @@ export const registerPageRoutes = (app: Express) => {
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
-        const fromRev = await fetchRevisionByRevId(diffFrom);
-        const toRev = await fetchRevisionByRevId(diffTo);
-        if (fromRev && toRev) {
-          const fromLabel = formatDateUTC(fromRev._revDate)
-            ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
-            : diffFrom;
-          const toLabel = formatDateUTC(toRev._revDate)
-            ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
-            : diffTo;
+        try {
+          const diff = await diffWikiPageRevisions(dalInstance, {
+            slug,
+            fromRevId: diffFrom,
+            toRevId: diffTo,
+            lang: contentLang,
+          });
+          const fromLabel = formatDateUTC(diff.from.revDate)
+            ? `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`
+            : diff.fromRevId;
+          const toLabel = formatDateUTC(diff.to.revDate)
+            ? `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`
+            : diff.toRevId;
           const diffLabels = getDiffLabels(req.t);
           const baseHref = `/${encodeURIComponent(canonicalSlug)}`;
           const fromHref = langOverride
@@ -636,27 +594,10 @@ export const registerPageRoutes = (app: Express) => {
           const toHref = langOverride
             ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffTo}`;
-          const fields = [];
-          const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
-          if (titleDiff) {
-            fields.push({ key: 'title', diff: titleDiff });
-          }
-          const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
-          if (bodyDiff) {
-            fields.push({ key: 'body', diff: bodyDiff });
-          }
-          const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
-          if (slugDiff) {
-            fields.push({ key: 'slug', diff: slugDiff });
-          }
-          const originalLangDiff = diffScalarField(
-            'originalLanguage',
-            fromRev.originalLanguage ?? null,
-            toRev.originalLanguage ?? null
-          );
-          if (originalLangDiff) {
-            fields.push({ key: 'originalLanguage', diff: originalLangDiff });
-          }
+          const fields = Object.entries(diff.fields).map(([fieldKey, fieldDiff]) => ({
+            key: fieldKey,
+            diff: fieldDiff,
+          }));
           diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
@@ -665,6 +606,10 @@ export const registerPageRoutes = (app: Express) => {
             fields,
             labels: diffLabels,
           });
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
         }
       }
 
@@ -679,7 +624,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const userIds = new Set<string>();
       for (const rev of revisions) {
-        if (rev._revUser) userIds.add(rev._revUser);
+        if (rev.revUser) userIds.add(rev.revUser);
       }
       for (const check of pageChecks) {
         if (check._revUser) userIds.add(check._revUser);
@@ -687,12 +632,12 @@ export const registerPageRoutes = (app: Express) => {
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
-        revId: rev._revID,
-        dateLabel: formatDateUTC(rev._revDate),
+        revId: rev.revId,
+        dateLabel: formatDateUTC(rev.revDate),
         title: resolveSafeText(mlString.resolve, contentLang, rev.title, canonicalSlug),
-        summary: resolveSafeText(mlString.resolve, contentLang, rev._revSummary, ''),
-        revUser: rev._revUser ?? null,
-        revTags: rev._revTags ?? null,
+        summary: resolveSafeText(mlString.resolve, contentLang, rev.revSummary, ''),
+        revUser: rev.revUser ?? null,
+        revTags: rev.revTags ?? null,
       }));
       const queryParams = extractQueryParams(req.query);
       const historyAction = langOverride

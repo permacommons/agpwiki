@@ -10,15 +10,22 @@ import {
   formatCitationLabel,
   formatCitationPageTitle,
 } from '../lib/citation.js';
-import {
-  diffLocalizedField,
-  diffScalarField,
-  diffStructuredField,
-} from '../lib/diff-engine.js';
+import { NotFoundError } from '../lib/errors.js';
 import { resolveSafeText } from '../lib/safe-text.js';
-import Citation from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
 import { escapeHtml, formatDateUTC, renderLayout, renderText } from '../render.js';
+import {
+  diffCitationClaimRevisions,
+  listCitationClaimRevisions,
+  readCitationClaim,
+  readCitationClaimRevision,
+} from '../services/citation-claim-service.js';
+import {
+  diffCitationRevisions,
+  listCitationRevisions,
+  readCitation,
+  readCitationRevision,
+} from '../services/citation-service.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -42,21 +49,6 @@ const normalizeField = (value: unknown) => {
 
 const resolveSummary = (value: Record<string, string> | null, lang: string) =>
   resolveSafeText(mlString.resolve, lang, value, '');
-
-const findCurrentCitationByKey = async (key: string) =>
-  Citation.filterWhere({
-    key,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-const findCurrentCitationClaim = async (citationId: string, claimId: string) =>
-  CitationClaim.filterWhere({
-    citationId,
-    claimId,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
 
 const formatLocatorLabel = (
   locatorType: string | null | undefined,
@@ -103,38 +95,40 @@ export const registerCitationRoutes = (app: Express) => {
 
     try {
       await initializePostgreSQL();
-
-      const citation = await findCurrentCitationByKey(key);
-      if (!citation) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
-
-      const claim = await findCurrentCitationClaim(citation.id, claimId);
-      if (!claim) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
-
       const dalInstance = await initializePostgreSQL();
-      const fetchRevisionByRevId = async (revId: string) => {
-        return CitationClaim.filterWhere({}).getRevisionByRevId(revId, claim.id).first();
-      };
+      const revisionsResult = await (async () => {
+        try {
+          await readCitationClaim(dalInstance, key, claimId);
+          return await listCitationClaimRevisions(dalInstance, key, claimId);
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!revisionsResult) return;
 
-      const revisions = await CitationClaim.filterWhere({})
-        .getAllRevisions(claim.id)
-        .orderBy('_revDate', 'DESC')
-        .run();
+      const revisions = revisionsResult.revisions;
       const userIds = revisions
-        .map(rev => rev._revUser)
+        .map(rev => rev.revUser)
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
-
-      const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : claim;
-      if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send(req.t('page.revisionNotFound'));
-        return;
-      }
+      const selectedRevision = revIdParam
+        ? await (async () => {
+            try {
+              return (await readCitationClaimRevision(dalInstance, key, claimId, revIdParam)).revision;
+            } catch (error) {
+              if (error instanceof NotFoundError) {
+                res.status(404).type('text').send(req.t('page.revisionNotFound'));
+                return null;
+              }
+              throw error;
+            }
+          })()
+        : revisions[0];
+      if (!selectedRevision) return;
 
       const availableLangs = getAvailableLanguages(
         selectedRevision.assertion ?? null,
@@ -169,13 +163,13 @@ export const registerCitationRoutes = (app: Express) => {
         locatorValue,
         locatorLabel
       );
-      const revisionLabel = formatDateUTC(selectedRevision._revDate);
+      const revisionLabel = formatDateUTC(selectedRevision.revDate);
       const revisionMeta = revisionLabel
         ? req.t('citation.revisionMeta', {
-            revId: selectedRevision._revID,
+            revId: selectedRevision.revId,
             date: revisionLabel,
           })
-        : req.t('citation.revisionMetaNoDate', { revId: selectedRevision._revID });
+        : req.t('citation.revisionMetaNoDate', { revId: selectedRevision.revId });
       const citationHref = langOverride
         ? `/cite/${encodeURIComponent(key)}?lang=${encodeURIComponent(langOverride)}`
         : `/cite/${encodeURIComponent(key)}`;
@@ -220,15 +214,20 @@ export const registerCitationRoutes = (app: Express) => {
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
-        const fromRev = await fetchRevisionByRevId(diffFrom);
-        const toRev = await fetchRevisionByRevId(diffTo);
-        if (fromRev && toRev) {
-          const fromLabel = formatDateUTC(fromRev._revDate)
-            ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
-            : diffFrom;
-          const toLabel = formatDateUTC(toRev._revDate)
-            ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
-            : diffTo;
+        try {
+          const diff = await diffCitationClaimRevisions(dalInstance, {
+            key,
+            claimId,
+            fromRevId: diffFrom,
+            toRevId: diffTo,
+            lang: contentLang,
+          });
+          const fromLabel = formatDateUTC(diff.from.revDate)
+            ? `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`
+            : diff.fromRevId;
+          const toLabel = formatDateUTC(diff.to.revDate)
+            ? `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`
+            : diff.toRevId;
           const diffLabels = getDiffLabels(req.t);
           const baseHref = `/cite/${encodeURIComponent(key)}`;
           const fromHref = langOverride
@@ -237,79 +236,17 @@ export const registerCitationRoutes = (app: Express) => {
           const toHref = langOverride
             ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffTo}`;
-          const fields = [];
-          const claimIdDiff = diffScalarField(
-            'claimId',
-            fromRev.claimId ?? null,
-            toRev.claimId ?? null
-          );
-          if (claimIdDiff) {
-            fields.push({
-              key: 'claimId',
-              label: req.t('citation.field.claimId'),
-              diff: claimIdDiff,
-            });
-          }
-          const assertionDiff = diffLocalizedField(
-            'assertion',
-            fromRev.assertion ?? null,
-            toRev.assertion ?? null
-          );
-          if (assertionDiff) {
-            fields.push({
-              key: 'assertion',
-              label: req.t('citation.field.assertion'),
-              diff: assertionDiff,
-            });
-          }
-          const quoteDiff = diffLocalizedField(
-            'quote',
-            fromRev.quote ?? null,
-            toRev.quote ?? null
-          );
-          if (quoteDiff) {
-            fields.push({
-              key: 'quote',
-              label: req.t('citation.field.quote'),
-              diff: quoteDiff,
-            });
-          }
-          const quoteLangDiff = diffScalarField(
-            'quoteLanguage',
-            fromRev.quoteLanguage ?? null,
-            toRev.quoteLanguage ?? null
-          );
-          if (quoteLangDiff) {
-            fields.push({
-              key: 'quoteLanguage',
-              label: req.t('citation.field.quoteLanguage'),
-              diff: quoteLangDiff,
-            });
-          }
-          const locatorTypeDiff = diffScalarField(
-            'locatorType',
-            fromRev.locatorType ?? null,
-            toRev.locatorType ?? null
-          );
-          if (locatorTypeDiff) {
-            fields.push({ key: 'locatorType', diff: locatorTypeDiff });
-          }
-          const locatorValueDiff = diffLocalizedField(
-            'locatorValue',
-            fromRev.locatorValue ?? null,
-            toRev.locatorValue ?? null
-          );
-          if (locatorValueDiff) {
-            fields.push({ key: 'locatorValue', diff: locatorValueDiff });
-          }
-          const locatorLabelDiff = diffLocalizedField(
-            'locatorLabel',
-            fromRev.locatorLabel ?? null,
-            toRev.locatorLabel ?? null
-          );
-          if (locatorLabelDiff) {
-            fields.push({ key: 'locatorLabel', diff: locatorLabelDiff });
-          }
+          const fieldLabels: Record<string, string> = {
+            claimId: req.t('citation.field.claimId'),
+            assertion: req.t('citation.field.assertion'),
+            quote: req.t('citation.field.quote'),
+            quoteLanguage: req.t('citation.field.quoteLanguage'),
+          };
+          const fields = Object.entries(diff.fields).map(([fieldKey, fieldDiff]) => ({
+            key: fieldKey,
+            ...(fieldLabels[fieldKey] ? { label: fieldLabels[fieldKey] } : {}),
+            diff: fieldDiff,
+          }));
           diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
@@ -318,16 +255,20 @@ export const registerCitationRoutes = (app: Express) => {
             fields,
             labels: diffLabels,
           });
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
         }
       }
 
       const historyRevisions = revisions.map(rev => ({
-        revId: rev._revID,
-        dateLabel: formatDateUTC(rev._revDate),
-        title: rev.claimId ?? claimId,
-        summary: resolveSummary(rev._revSummary ?? null, contentLang),
-        revUser: rev._revUser ?? null,
-        revTags: rev._revTags ?? null,
+        revId: rev.revId,
+        dateLabel: formatDateUTC(rev.revDate),
+        title: rev.claimId,
+        summary: resolveSummary(rev.revSummary ?? null, contentLang),
+        revUser: rev.revUser ?? null,
+        revTags: rev.revTags ?? null,
       }));
       const queryParams = extractQueryParams(req.query);
       const historyAction = langOverride
@@ -407,32 +348,43 @@ export const registerCitationRoutes = (app: Express) => {
 
     try {
       await initializePostgreSQL();
-
-      const citation = await findCurrentCitationByKey(key);
-      if (!citation) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
-
       const dalInstance = await initializePostgreSQL();
-      const fetchRevisionByRevId = async (revId: string) => {
-        return Citation.filterWhere({}).getRevisionByRevId(revId, citation.id).first();
-      };
+      const citationResult = await (async () => {
+        try {
+          const citation = await readCitation(dalInstance, key);
+          const revisionsResult = await listCitationRevisions(dalInstance, key);
+          return { citation, revisionsResult };
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!citationResult) return;
+      const { citation, revisionsResult } = citationResult;
 
-      const revisions = await Citation.filterWhere({})
-        .getAllRevisions(citation.id)
-        .orderBy('_revDate', 'DESC')
-        .run();
+      const revisions = revisionsResult.revisions;
       const userIds = revisions
-        .map(rev => rev._revUser)
+        .map(rev => rev.revUser)
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
 
-      const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : citation;
-      if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send(req.t('page.revisionNotFound'));
-        return;
-      }
+      const selectedRevision = revIdParam
+        ? await (async () => {
+            try {
+              return (await readCitationRevision(dalInstance, key, revIdParam)).revision;
+            } catch (error) {
+              if (error instanceof NotFoundError) {
+                res.status(404).type('text').send(req.t('page.revisionNotFound'));
+                return null;
+              }
+              throw error;
+            }
+          })()
+        : revisions[0];
+      if (!selectedRevision) return;
 
       const data = (selectedRevision.data ?? null) as Record<string, unknown> | null;
       const revisionKey = selectedRevision.key ?? key;
@@ -457,13 +409,13 @@ export const registerCitationRoutes = (app: Express) => {
       const url = normalizeField(data?.URL);
       const doiUrl = doi ? `https://doi.org/${doi}` : '';
       const rawJson = formatCitationJson(data);
-      const revisionLabel = formatDateUTC(selectedRevision._revDate);
+      const revisionLabel = formatDateUTC(selectedRevision.revDate);
       const revisionMeta = revisionLabel
         ? req.t('citation.revisionMeta', {
-            revId: selectedRevision._revID,
+            revId: selectedRevision.revId,
             date: revisionLabel,
           })
-        : req.t('citation.revisionMetaNoDate', { revId: selectedRevision._revID });
+        : req.t('citation.revisionMetaNoDate', { revId: selectedRevision.revId });
 
       const claims = await CitationClaim.filterWhere({
         citationId: citation.id,
@@ -590,15 +542,18 @@ export const registerCitationRoutes = (app: Express) => {
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
-        const fromRev = await fetchRevisionByRevId(diffFrom);
-        const toRev = await fetchRevisionByRevId(diffTo);
-        if (fromRev && toRev) {
-          const fromLabel = formatDateUTC(fromRev._revDate)
-            ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
-            : diffFrom;
-          const toLabel = formatDateUTC(toRev._revDate)
-            ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
-            : diffTo;
+        try {
+          const diff = await diffCitationRevisions(dalInstance, {
+            key,
+            fromRevId: diffFrom,
+            toRevId: diffTo,
+          });
+          const fromLabel = formatDateUTC(diff.from.revDate)
+            ? `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`
+            : diff.fromRevId;
+          const toLabel = formatDateUTC(diff.to.revDate)
+            ? `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`
+            : diff.toRevId;
           const diffLabels = getDiffLabels(req.t);
           const baseHref = `/cite/${encodeURIComponent(key)}`;
           const fromHref = langOverride
@@ -607,19 +562,11 @@ export const registerCitationRoutes = (app: Express) => {
           const toHref = langOverride
             ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffTo}`;
-          const fields = [];
-          const keyDiff = diffScalarField('key', fromRev.key ?? null, toRev.key ?? null);
-          if (keyDiff) {
-            fields.push({ key: 'key', label: req.t('citation.field.key'), diff: keyDiff });
-          }
-          const dataDiff = diffStructuredField(
-            'data',
-            fromRev.data ?? null,
-            toRev.data ?? null
-          );
-          if (dataDiff) {
-            fields.push({ key: 'data', diff: dataDiff });
-          }
+          const fields = Object.entries(diff.fields).map(([fieldKey, fieldDiff]) => ({
+            key: fieldKey,
+            ...(fieldKey === 'key' ? { label: req.t('citation.field.key') } : {}),
+            diff: fieldDiff,
+          }));
           diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
@@ -628,19 +575,23 @@ export const registerCitationRoutes = (app: Express) => {
             fields,
             labels: diffLabels,
           });
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
         }
       }
 
       const historyRevisions = revisions.map(rev => ({
-        revId: rev._revID,
-        dateLabel: formatDateUTC(rev._revDate),
+        revId: rev.revId,
+        dateLabel: formatDateUTC(rev.revDate),
         title: formatCitationLabel(
           rev.key ?? revisionKey,
           (rev.data ?? null) as Record<string, unknown> | null
         ),
-        summary: resolveSummary(rev._revSummary ?? null, contentLang),
-        revUser: rev._revUser ?? null,
-        revTags: rev._revTags ?? null,
+        summary: resolveSummary(rev.revSummary ?? null, contentLang),
+        revUser: rev.revUser ?? null,
+        revTags: rev.revTags ?? null,
       }));
       const historyAction = langOverride
         ? `/cite/${encodeURIComponent(key)}?lang=${encodeURIComponent(langOverride)}`
