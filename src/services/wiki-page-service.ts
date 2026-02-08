@@ -22,6 +22,7 @@ import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
+import { assertCanDeleteWikiPage } from './authorization.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
@@ -1025,7 +1026,7 @@ export async function diffWikiPageRevisions(
 }
 
 export async function deleteWikiPage(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, revSummary }: WikiPageDeleteInput,
   userId: string
 ): Promise<WikiPageDeleteResult> {
@@ -1034,6 +1035,7 @@ export async function deleteWikiPage(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeleteWikiPage(dalInstance, userId);
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {

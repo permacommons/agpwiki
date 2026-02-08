@@ -18,6 +18,7 @@ import {
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import CitationClaim from '../models/citation-claim.js';
 import type { CitationClaimInstance } from '../models/manifests/citation-claim.js';
+import { assertCanDeleteCitationClaim } from './authorization.js';
 import { findCurrentCitationByKey } from './citation-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
@@ -713,7 +714,7 @@ export async function diffCitationClaimRevisions(
 }
 
 export async function deleteCitationClaim(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { key, claimId, revSummary }: CitationClaimDeleteInput,
   userId: string
 ): Promise<CitationClaimDeleteResult> {
@@ -724,6 +725,7 @@ export async function deleteCitationClaim(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeleteCitationClaim(dalInstance, userId);
 
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {

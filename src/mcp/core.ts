@@ -20,6 +20,7 @@ import {
   PAGE_CHECK_STATUSES,
   PAGE_CHECK_TYPES,
 } from '../lib/page-checks.js';
+import { canUseBlogAdminTools, canUseWikiAdminTools } from '../services/authorization.js';
 import {
   type BlogPostDeleteInput,
   type BlogPostDiffInput,
@@ -73,7 +74,6 @@ import {
   readPageCheckRevision,
   updatePageCheck,
 } from '../services/page-check-service.js';
-import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from '../services/roles.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -1261,13 +1261,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     blogDeleteTool,
   };
 
-  if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
+  if (!canUseWikiAdminTools(userRoles)) {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
     claimDeleteTool.disable();
     pageCheckDeleteTool.disable();
   }
-  if (!hasRole(userRoles, BLOG_ADMIN_ROLE)) {
+  if (!canUseBlogAdminTools(userRoles)) {
     blogDeleteTool.disable();
   }
 

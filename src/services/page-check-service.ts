@@ -20,6 +20,7 @@ import {
 } from '../lib/page-checks.js';
 import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageCheck from '../models/page-check.js';
+import { assertCanDeletePageCheck } from './authorization.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
@@ -638,7 +639,7 @@ export async function diffPageCheckRevisions(
 }
 
 export async function deletePageCheck(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { checkId, revSummary }: PageCheckDeleteInput,
   userId: string
 ): Promise<PageCheckDeleteResult> {
@@ -647,6 +648,7 @@ export async function deletePageCheck(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeletePageCheck(dalInstance, userId);
 
   const check = await findCurrentPageCheckById(checkId);
   if (!check) {

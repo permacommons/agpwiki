@@ -12,6 +12,7 @@ import {
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
+import { assertCanDeleteCitation } from './authorization.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
@@ -569,7 +570,7 @@ export async function queryCitations(
 }
 
 export async function deleteCitation(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { key, revSummary }: CitationDeleteInput,
   userId: string
 ): Promise<CitationDeleteResult> {
@@ -578,6 +579,7 @@ export async function deleteCitation(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeleteCitation(dalInstance, userId);
 
   const citation = await findCurrentCitationByKey(key);
   if (!citation) {

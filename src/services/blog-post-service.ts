@@ -14,6 +14,7 @@ import {
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
+import { assertCanDeleteBlogPost } from './authorization.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 import {
@@ -427,7 +428,7 @@ export async function diffBlogPostRevisions(
 }
 
 export async function deleteBlogPost(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, revSummary }: BlogPostDeleteInput,
   userId: string
 ): Promise<BlogPostDeleteResult> {
@@ -436,6 +437,7 @@ export async function deleteBlogPost(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeleteBlogPost(dalInstance, userId);
 
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
