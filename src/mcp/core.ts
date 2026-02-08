@@ -13,13 +13,14 @@ import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { CITATION_CLAIM_LOCATOR_TYPES } from '../lib/citation-claims.js';
+import { InvalidRequestError, UnsupportedError } from '../lib/errors.js';
 import {
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
   PAGE_CHECK_STATUSES,
   PAGE_CHECK_TYPES,
 } from '../lib/page-checks.js';
-import { resolveAuthUserId } from './auth.js';
+import { canUseBlogAdminTools, canUseWikiAdminTools } from '../services/authorization.js';
 import {
   type BlogPostDeleteInput,
   type BlogPostDiffInput,
@@ -33,59 +34,59 @@ import {
   readBlogPost,
   readBlogPostRevision,
   updateBlogPost,
-} from './blog-handlers.js';
+} from '../services/blog-post-service.js';
 import {
-  InvalidRequestError,
-  toToolErrorPayload,
-  toValidationErrorFromZod,
-  UnsupportedError,
-} from './errors.js';
-import {
-  addWikiPageAlias,
-  applyWikiPagePatch,
   type CitationClaimDeleteInput,
   type CitationClaimDiffInput,
   type CitationClaimUpdateInput,
   type CitationClaimWriteInput,
+  createCitationClaim,
+  deleteCitationClaim,
+  diffCitationClaimRevisions,
+  listCitationClaimRevisions,
+  readCitationClaim,
+  readCitationClaimRevision,
+  updateCitationClaim,
+} from '../services/citation-claim-service.js';
+import {
   type CitationDeleteInput,
   type CitationQueryInput,
   type CitationUpdateInput,
   type CitationWriteInput,
   createCitation,
-  createCitationClaim,
-  createPageCheck,
-  createWikiPage,
   deleteCitation,
-  deleteCitationClaim,
-  deletePageCheck,
-  deleteWikiPage,
-  diffCitationClaimRevisions,
   diffCitationRevisions,
-  diffPageCheckRevisions,
-  diffWikiPageRevisions,
-  listCitationClaimRevisions,
   listCitationRevisions,
+  queryCitations,
+  readCitation,
+  readCitationRevision,
+  updateCitation,
+} from '../services/citation-service.js';
+import {
+  createPageCheck,
+  deletePageCheck,
+  diffPageCheckRevisions,
   listPageCheckRevisions,
   listPageChecks,
-  listWikiPageResources,
-  listWikiPageRevisions,
   type PageCheckDeleteInput,
   type PageCheckUpdateInput,
   type PageCheckWriteInput,
-  queryCitations,
-  readCitation,
-  readCitationClaim,
-  readCitationClaimRevision,
-  readCitationRevision,
   readPageCheckRevision,
+  updatePageCheck,
+} from '../services/page-check-service.js';
+import {
+  addWikiPageAlias,
+  applyWikiPagePatch,
+  createWikiPage,
+  deleteWikiPage,
+  diffWikiPageRevisions,
+  listWikiPageResources,
+  listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
   removeWikiPageAlias,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
-  updateCitation,
-  updateCitationClaim,
-  updatePageCheck,
   updateWikiPage,
   type WikiPageAliasInput,
   type WikiPageDeleteInput,
@@ -94,9 +95,10 @@ import {
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
-} from './handlers.js';
+} from '../services/wiki-page-service.js';
+import { resolveAuthUserId } from './auth.js';
+import { toToolErrorPayload, toValidationErrorFromZod } from './errors.js';
 import { registerPrompts } from './prompts.js';
-import { BLOG_ADMIN_ROLE, hasRole, WIKI_ADMIN_ROLE } from './roles.js';
 import { createLocalizedSchemas } from './schema.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
@@ -165,9 +167,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   ensureMcpErrorMap();
   const { userRoles = [] } = options;
   const uuidSchema = z.string().uuid({ message: 'Must be a valid UUID.' });
-  const pageCheckTypeSchema = z.enum(
-    [...PAGE_CHECK_TYPES] as [string, ...string[]]
-  );
+  const pageCheckTypeSchema = z
+    .string()
+    .refine(
+      value => PAGE_CHECK_TYPES.includes(value as (typeof PAGE_CHECK_TYPES)[number]),
+      {
+        message: `Must be one of: ${PAGE_CHECK_TYPES.join(', ')}.`,
+      }
+    );
   const pageCheckStatusSchema = z.enum(
     [...PAGE_CHECK_STATUSES] as [string, ...string[]]
   );
@@ -295,6 +302,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   const checkResultsDescription = `Localized check results Markdown map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
   const notesDescription = `Localized notes Markdown map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
+  const rewriteContentDescription =
+    'Section content to write. For target "heading", provide body text only; the heading line is preserved automatically. For target "lead", this replaces/prepends/appends the lead text before the first heading.';
 
   server.registerResource(
     'Wiki Pages Index',
@@ -1053,15 +1062,18 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
+        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
       inputSchema: {
         slug: z.string(),
         target: z.enum(['heading', 'lead']).optional(),
-        heading: z.string().optional(),
+        heading: z
+          .string()
+          .optional()
+          .describe('Required when target is "heading"; omitted for target "lead".'),
         headingLevel: z.number().int().min(1).max(6).optional(),
         occurrence: z.number().int().min(1).optional(),
         mode: z.enum(['replace', 'prepend', 'append']).optional(),
-        content: z.string(),
+        content: z.string().describe(rewriteContentDescription),
         lang: languageTagSchema.optional,
         expectedRevId: uuidSchema.optional(),
         tags: z.array(z.string()).optional(),
@@ -1259,13 +1271,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     blogDeleteTool,
   };
 
-  if (!hasRole(userRoles, WIKI_ADMIN_ROLE)) {
+  if (!canUseWikiAdminTools(userRoles)) {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
     claimDeleteTool.disable();
     pageCheckDeleteTool.disable();
   }
-  if (!hasRole(userRoles, BLOG_ADMIN_ROLE)) {
+  if (!canUseBlogAdminTools(userRoles)) {
     blogDeleteTool.disable();
   }
 

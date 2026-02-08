@@ -120,6 +120,40 @@ test('MCP schema validates revision IDs as UUIDs', () => {
   );
 });
 
+test('MCP page check type validation lists allowed values', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const pageCheckCreateSchema = tools.page_check_create.inputSchema as {
+    safeParse: (value: unknown) => { success: boolean; error?: { issues: { message: string }[] } };
+  };
+  const invalidType = pageCheckCreateSchema.safeParse({
+    slug: 'test',
+    type: 'manual',
+    status: 'completed',
+    checkResults: { en: 'ok' },
+    metrics: {
+      issues_found: { high: 0, medium: 0, low: 0 },
+      issues_fixed: { high: 0, medium: 0, low: 0 },
+    },
+    targetRevId: '00000000-0000-0000-0000-000000000001',
+  });
+  assert.equal(invalidType.success, false);
+  assert.ok(invalidType.error?.issues.some(issue => issue.message.includes('Must be one of:')));
+  assert.ok(invalidType.error?.issues.some(issue => issue.message.includes('fact_check')));
+});
+
+test('MCP rewrite section content hint explains heading behavior', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiRewrite = getSchemaShape(tools.wiki_rewriteSection.inputSchema);
+  assert.ok(wikiRewrite.content?.description?.includes('body text only'));
+  assert.ok(wikiRewrite.content?.description?.includes('heading line is preserved'));
+});
+
 test('Zod issues map to validation errors', () => {
   const issues = [
     { code: 'invalid_type', path: ['slug'], message: 'slug is required.', input: undefined },

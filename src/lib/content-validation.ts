@@ -1,7 +1,7 @@
 import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 import citationsPlugin, { type Citation } from '../markdown/citations.js';
-import type { ValidationCollector } from '../mcp/errors.js';
+import type { ValidationCollector } from './errors.js';
 
 export type MarkdownAnalysis = {
   tokens: Token[];

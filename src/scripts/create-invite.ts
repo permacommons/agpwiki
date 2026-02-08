@@ -2,9 +2,9 @@ import readline from 'node:readline/promises';
 
 import { generateInviteCode, hashToken } from '../auth/tokens.js';
 import { initializePostgreSQL } from '../db.js';
-import { isValidRole, VALID_ROLES } from '../mcp/roles.js';
 import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
+import { isValidRole, VALID_ROLES } from '../services/roles.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
   const value = await rl.question(label);

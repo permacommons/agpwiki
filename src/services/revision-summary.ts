@@ -1,4 +1,4 @@
-import { sanitizeLocalizedMapInput } from './localized.js';
+import { sanitizeLocalizedMapInput } from '../lib/localized.js';
 
 type RevisionWithSummary = {
   _revSummary?: Record<string, string> | null;

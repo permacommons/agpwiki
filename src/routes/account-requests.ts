@@ -4,9 +4,9 @@ import type { TFunction } from 'i18next';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { createAltchaChallenge, isAltchaEnabled, verifyAltchaSolution } from '../lib/altcha.js';
-import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from '../mcp/roles.js';
 import AccountRequest from '../models/account-request.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from '../services/roles.js';
 
 const renderToolLayout = (
   t: TFunction,

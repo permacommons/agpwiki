@@ -4,9 +4,8 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
+import { NotFoundError } from '../lib/errors.js';
 import { resolveSafeText } from '../lib/safe-text.js';
-import BlogPost from '../models/blog-post.js';
 import {
   escapeHtml,
   formatDateUTC,
@@ -14,6 +13,13 @@ import {
   renderMarkdown,
   renderText,
 } from '../render.js';
+import {
+  diffBlogPostRevisions,
+  listBlogPostRevisions,
+  listBlogPosts,
+  readBlogPost,
+  readBlogPostRevision,
+} from '../services/blog-post-service.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -31,35 +37,31 @@ export const registerBlogRoutes = (app: Express) => {
     try {
       const dalInstance = await initializePostgreSQL();
       const signedIn = Boolean(await resolveSessionUser(req));
-      const result = await dalInstance.query(
-        `SELECT * FROM ${BlogPost.tableName}
-         WHERE _old_rev_of IS NULL AND _rev_deleted = false
-         ORDER BY created_at DESC, _rev_date DESC`
-      );
-      const posts = result.rows.map(row => BlogPost.createFromRow(row));
+      // Use service-level list query so web and MCP read paths share filtering rules.
+      const posts = await listBlogPosts(dalInstance);
       const summaries = posts.map(post => {
-        const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+        const availableLangs = getAvailableLanguages(post.title, post.summary);
         const contentLang = resolveContentLanguage({
           uiLocale: res.locals.locale,
           override: undefined,
           availableLangs,
         });
-        return mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
+        return mlString.resolve(contentLang, post.summary)?.str ?? '';
       });
       const citationEntries = await loadCitationEntriesForSources(dalInstance, summaries);
       const items = (
         await Promise.all(
           posts.map(async post => {
-            const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+            const availableLangs = getAvailableLanguages(post.title, post.summary);
             const contentLang = resolveContentLanguage({
               uiLocale: res.locals.locale,
               override: undefined,
               availableLangs,
             });
             const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
-            const summary = mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
-            const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
-            const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
+            const summary = mlString.resolve(contentLang, post.summary)?.str ?? '';
+            const createdLabel = formatDateUTC(post.createdAt);
+            const updatedLabel = formatDateUTC(post.updatedAt);
             const updatedHtml =
               updatedLabel && updatedLabel !== createdLabel
                 ? `<span class="post-updated">${req.t('blog.updated', {
@@ -115,40 +117,50 @@ export const registerBlogRoutes = (app: Express) => {
 
     try {
       const dalInstance = await initializePostgreSQL();
-      const post = await BlogPost.filterWhere({
-        slug,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>).first();
+      const post = await (async () => {
+        try {
+          return await readBlogPost(dalInstance, slug);
+        } catch (error) {
+          if (error instanceof NotFoundError) {
+            res.status(404).type('text').send(req.t('page.notFound'));
+            return null;
+          }
+          throw error;
+        }
+      })();
+      if (!post) return;
 
-      if (!post) {
+      const revisionsResult = await listBlogPostRevisions(dalInstance, slug);
+      const revisions = revisionsResult.revisions;
+      if (revisions.length === 0) {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
 
-      const fetchRevisionByRevId = async (revId: string) => {
-        return BlogPost.filterWhere({}).getRevisionByRevId(revId, post.id).first();
-      };
-
-      const revisions = await BlogPost.filterWhere({})
-        .getAllRevisions(post.id)
-        .orderBy('_revDate', 'DESC')
-        .run();
       const userIds = revisions
-        .map(rev => rev._revUser)
+        .map(rev => rev.revUser)
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
 
-      const selectedRevision = revIdParam ? await fetchRevisionByRevId(revIdParam) : post;
-      if (revIdParam && !selectedRevision) {
-        res.status(404).type('text').send(req.t('page.revisionNotFound'));
-        return;
-      }
+      const selectedRevision = revIdParam
+        ? await (async () => {
+            try {
+              return (await readBlogPostRevision(dalInstance, slug, revIdParam)).revision;
+            } catch (error) {
+              if (error instanceof NotFoundError) {
+                res.status(404).type('text').send(req.t('page.revisionNotFound'));
+                return null;
+              }
+              throw error;
+            }
+          })()
+        : revisions[0];
+      if (!selectedRevision) return;
 
       const availableLangs = getAvailableLanguages(
-        selectedRevision.body ?? null,
-        selectedRevision.title ?? null,
-        selectedRevision.summary ?? null
+        selectedRevision.body,
+        selectedRevision.title,
+        selectedRevision.summary
       );
       const contentLang = resolveContentLanguage({
         uiLocale: res.locals.locale,
@@ -163,9 +175,9 @@ export const registerBlogRoutes = (app: Express) => {
         selectedRevision.title,
         post.slug
       );
-      const summary = mlString.resolve(contentLang, selectedRevision.summary ?? null)?.str ?? '';
-      const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
-      const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision._revDate);
+      const summary = mlString.resolve(contentLang, selectedRevision.summary)?.str ?? '';
+      const createdLabel = formatDateUTC(post.createdAt);
+      const updatedLabel = formatDateUTC(selectedRevision.updatedAt ?? selectedRevision.revDate);
       const updatedHtml =
         updatedLabel && updatedLabel !== createdLabel
           ? `<span class="post-updated">${req.t('blog.updated', {
@@ -179,15 +191,19 @@ export const registerBlogRoutes = (app: Express) => {
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
-        const fromRev = await fetchRevisionByRevId(diffFrom);
-        const toRev = await fetchRevisionByRevId(diffTo);
-        if (fromRev && toRev) {
-          const fromLabel = formatDateUTC(fromRev._revDate)
-            ? `${diffFrom} (${formatDateUTC(fromRev._revDate)})`
-            : diffFrom;
-          const toLabel = formatDateUTC(toRev._revDate)
-            ? `${diffTo} (${formatDateUTC(toRev._revDate)})`
-            : diffTo;
+        try {
+          const diff = await diffBlogPostRevisions(dalInstance, {
+            slug,
+            fromRevId: diffFrom,
+            toRevId: diffTo,
+            lang: contentLang,
+          });
+          const fromLabel = formatDateUTC(diff.from.revDate)
+            ? `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`
+            : diff.fromRevId;
+          const toLabel = formatDateUTC(diff.to.revDate)
+            ? `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`
+            : diff.toRevId;
           const diffLabels = getDiffLabels(req.t);
           const baseHref = `/blog/${encodeURIComponent(slug)}`;
           const fromHref = langOverride
@@ -196,25 +212,10 @@ export const registerBlogRoutes = (app: Express) => {
           const toHref = langOverride
             ? `${baseHref}?rev=${diffTo}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffTo}`;
-          const fields = [];
-          const titleDiff = diffLocalizedField('title', fromRev.title ?? null, toRev.title ?? null);
-          if (titleDiff) fields.push({ key: 'title', diff: titleDiff });
-          const summaryDiff = diffLocalizedField(
-            'summary',
-            fromRev.summary ?? null,
-            toRev.summary ?? null
-          );
-          if (summaryDiff) fields.push({ key: 'summary', diff: summaryDiff });
-          const bodyDiff = diffLocalizedField('body', fromRev.body ?? null, toRev.body ?? null);
-          if (bodyDiff) fields.push({ key: 'body', diff: bodyDiff });
-          const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
-          if (slugDiff) fields.push({ key: 'slug', diff: slugDiff });
-          const originalLangDiff = diffScalarField(
-            'originalLanguage',
-            fromRev.originalLanguage ?? null,
-            toRev.originalLanguage ?? null
-          );
-          if (originalLangDiff) fields.push({ key: 'originalLanguage', diff: originalLangDiff });
+          const fields = Object.entries(diff.fields).map(([key, fieldDiff]) => ({
+            key,
+            diff: fieldDiff,
+          }));
           diffHtml = renderEntityDiff({
             fromLabel,
             toLabel,
@@ -223,16 +224,20 @@ export const registerBlogRoutes = (app: Express) => {
             fields,
             labels: diffLabels,
           });
+        } catch (error) {
+          if (!(error instanceof NotFoundError)) {
+            throw error;
+          }
         }
       }
 
       const historyRevisions = revisions.map(rev => ({
-        revId: rev._revID,
-        dateLabel: formatDateUTC(rev._revDate),
+        revId: rev.revId,
+        dateLabel: formatDateUTC(rev.revDate),
         title: resolveSafeText(mlString.resolve, contentLang, rev.title, slug),
-        summary: resolveSafeText(mlString.resolve, contentLang, rev._revSummary, ''),
-        revUser: rev._revUser ?? null,
-        revTags: rev._revTags ?? null,
+        summary: resolveSafeText(mlString.resolve, contentLang, rev.revSummary, ''),
+        revUser: rev.revUser ?? null,
+        revTags: rev.revTags ?? null,
       }));
       const queryParams = extractQueryParams(req.query);
       const historyAction = langOverride

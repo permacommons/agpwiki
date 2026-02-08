@@ -1,145 +1,36 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import languages from '../../locales/languages.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
-import { normalizeSlug } from '../lib/slug.js';
-import BlogPost from '../models/blog-post.js';
-import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import {
   ConflictError,
   ForbiddenError,
   NotFoundError,
   ValidationCollector,
   ValidationError,
-} from './errors.js';
-import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from './localized.js';
+} from '../lib/errors.js';
+import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import BlogPost from '../models/blog-post.js';
+import type { BlogPostInstance } from '../models/manifests/blog-post.js';
+import { assertCanDeleteBlogPost } from './authorization.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
+import {
+  ensureNonEmptyString,
+  ensureOptionalLanguage,
+  normalizeOptionalSlug,
+  normalizeSlugInput,
+  requireRevSummary,
+  validateBody,
+  validateRevSummary,
+  validateTitle,
+} from './validation.js';
 
 const { mlString } = dal;
 
-const ensureNonEmptyString = (
-  value: string | undefined | null,
-  label: string,
-  errors?: ValidationCollector
-) => {
-  if (!value || !value.trim()) {
-    if (errors) {
-      errors.add(label, 'is required.', 'required');
-      return false;
-    }
-    throw new ValidationError(`${label} is required.`, [
-      { field: label, message: 'is required.', code: 'required' },
-    ]);
-  }
-  return true;
-};
-
-const normalizeSlugInput = (value: string, label: string, errors?: ValidationCollector) => {
-  if (!ensureNonEmptyString(value, label, errors)) return '';
-  const normalized = normalizeSlug(value);
-  if (!normalized) {
-    if (errors) {
-      errors.add(label, 'is required.', 'required');
-      return '';
-    }
-    throw new ValidationError(`${label} is required.`, [
-      { field: label, message: 'is required.', code: 'required' },
-    ]);
-  }
-  return normalized;
-};
-
-const normalizeOptionalSlug = (
-  value: string | undefined | null,
-  label: string,
-  errors?: ValidationCollector
-) => {
-  ensureOptionalString(value, label, errors);
-  if (!value) return undefined;
-  const normalized = normalizeSlug(value);
-  if (!normalized) {
-    if (errors) {
-      errors.add(label, 'is required.', 'required');
-      return undefined;
-    }
-    throw new ValidationError(`${label} is required.`, [
-      { field: label, message: 'is required.', code: 'required' },
-    ]);
-  }
-  return normalized;
-};
-
-const ensureOptionalString = (
-  value: string | undefined | null,
-  label: string,
-  errors?: ValidationCollector
-) => {
-  if (value !== undefined && value !== null && typeof value !== 'string') {
-    if (errors) {
-      errors.add(label, 'must be a string.', 'type');
-      return;
-    }
-    throw new ValidationError(`${label} must be a string.`, [
-      { field: label, message: 'must be a string.', code: 'type' },
-    ]);
-  }
-};
-
-const ensureOptionalLanguage = (
-  value: string | undefined | null,
-  label: string,
-  errors?: ValidationCollector
-) => {
-  ensureOptionalString(value, label, errors);
-  if (!value) return;
-  if (!languages.isValid(value)) {
-    if (errors) {
-      errors.add(label, 'must be a supported locale code.', 'invalid');
-      return;
-    }
-    throw new ValidationError(`${label} must be a supported locale code.`, [
-      { field: label, message: 'must be a supported locale code.', code: 'invalid' },
-    ]);
-  }
-};
-
 const ensureNonEmptySlug = (slug: string) => normalizeSlugInput(slug, 'slug');
-
-const validateTitle = (value: LocalizedMapInput, errors?: ValidationCollector) => {
-  if (value === undefined) return;
-  const normalized = sanitizeLocalizedMapInput(value);
-  if (normalized === null) return;
-  try {
-    mlString.validate(normalized, { maxLength: 200, allowHTML: false });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid title value.';
-    if (errors) {
-      errors.add('title', message, 'invalid');
-      return;
-    }
-    throw new ValidationError(message, [{ field: 'title', message, code: 'invalid' }]);
-  }
-};
-
-const validateBody = (value: LocalizedMapInput, errors?: ValidationCollector) => {
-  if (value === undefined) return;
-  const normalized = sanitizeLocalizedMapInput(value);
-  if (normalized === null) return;
-  try {
-    mlString.validate(normalized, { maxLength: 20000, allowHTML: true });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid body value.';
-    if (errors) {
-      errors.add('body', message, 'invalid');
-      return;
-    }
-    throw new ValidationError(message, [{ field: 'body', message, code: 'invalid' }]);
-  }
-};
 
 const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
   if (value === undefined) return;
@@ -154,76 +45,6 @@ const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector)
       return;
     }
     throw new ValidationError(message, [{ field: 'summary', message, code: 'invalid' }]);
-  }
-};
-
-const validateRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
-  if (value === undefined || value === null) return;
-  const normalized = sanitizeLocalizedMapInput(value);
-  if (normalized === null) return;
-  try {
-    mlString.validate(normalized, { maxLength: 300, allowHTML: false });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid revSummary value.';
-    if (errors) {
-      errors.add('revSummary', message, 'invalid');
-      return;
-    }
-    throw new ValidationError(message, [{ field: 'revSummary', message, code: 'invalid' }]);
-  }
-  for (const [lang, summary] of Object.entries(normalized)) {
-    if (summary.length > 300) {
-      if (errors) {
-        errors.add(`revSummary.${lang}`, 'must be 300 characters or less.', 'max_length');
-        continue;
-      }
-      throw new ValidationError(`revSummary for ${lang} must be 300 characters or less.`, [
-        {
-          field: `revSummary.${lang}`,
-          message: 'must be 300 characters or less.',
-          code: 'max_length',
-        },
-      ]);
-    }
-  }
-};
-
-const requireRevSummary = (value: LocalizedMapInput, errors?: ValidationCollector) => {
-  const normalized = sanitizeLocalizedMapInput(value);
-  if (!normalized) {
-    if (errors) {
-      errors.addMissing('revSummary');
-      return;
-    }
-    throw new ValidationError('revSummary is required for updates.', [
-      { field: 'revSummary', message: 'is required.', code: 'required' },
-    ]);
-  }
-  validateRevSummary(value, errors);
-  const entries = Object.entries(normalized);
-  if (entries.length === 0) {
-    if (errors) {
-      errors.add('revSummary', 'must include at least one language entry.', 'invalid');
-      return;
-    }
-    throw new ValidationError('revSummary must include at least one language entry.', [
-      { field: 'revSummary', message: 'must include at least one language entry.', code: 'invalid' },
-    ]);
-  }
-  for (const [lang, summary] of entries) {
-    if (!lang || !summary || summary.trim().length === 0) {
-      if (errors) {
-        errors.add(`revSummary.${lang || 'unknown'}`, 'must be a non-empty string.', 'invalid');
-        continue;
-      }
-      throw new ValidationError('revSummary entries must be non-empty strings.', [
-        {
-          field: `revSummary.${lang || 'unknown'}`,
-          message: 'must be a non-empty string.',
-          code: 'invalid',
-        },
-      ]);
-    }
   }
 };
 
@@ -350,6 +171,11 @@ export interface BlogPostListResult {
   posts: Array<{ slug: string; name: string }>;
 }
 
+export interface BlogPostListQueryInput {
+  limit?: number;
+  offset?: number;
+}
+
 export async function listBlogPostResources(
   _dalInstance: DataAccessLayer
 ): Promise<BlogPostListResult> {
@@ -367,6 +193,23 @@ export async function listBlogPostResources(
       name: post.slug,
     })),
   };
+}
+
+export async function listBlogPosts(
+  dalInstance: DataAccessLayer,
+  { limit, offset }: BlogPostListQueryInput = {}
+): Promise<BlogPostResult[]> {
+  const normalizedLimit = Math.min(Math.max(limit ?? 100, 1), 500);
+  const normalizedOffset = Math.max(offset ?? 0, 0);
+  // Route list pages and APIs can share this read model without touching ORM directly.
+  const result = await dalInstance.query(
+    `SELECT * FROM ${BlogPost.tableName}
+     WHERE _old_rev_of IS NULL AND _rev_deleted = false
+     ORDER BY created_at DESC, _rev_date DESC
+     LIMIT $1 OFFSET $2`,
+    [normalizedLimit, normalizedOffset]
+  );
+  return result.rows.map(row => toBlogPostResult(BlogPost.createFromRow(row)));
 }
 
 export async function readBlogPost(
@@ -607,7 +450,7 @@ export async function diffBlogPostRevisions(
 }
 
 export async function deleteBlogPost(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, revSummary }: BlogPostDeleteInput,
   userId: string
 ): Promise<BlogPostDeleteResult> {
@@ -616,6 +459,7 @@ export async function deleteBlogPost(
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
+  await assertCanDeleteBlogPost(dalInstance, userId);
 
   const post = await findCurrentPostBySlug(normalizedSlug);
   if (!post) {
