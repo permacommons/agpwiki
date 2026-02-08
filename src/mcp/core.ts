@@ -167,9 +167,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   ensureMcpErrorMap();
   const { userRoles = [] } = options;
   const uuidSchema = z.string().uuid({ message: 'Must be a valid UUID.' });
-  const pageCheckTypeSchema = z.enum(
-    [...PAGE_CHECK_TYPES] as [string, ...string[]]
-  );
+  const pageCheckTypeSchema = z
+    .string()
+    .refine(
+      value => PAGE_CHECK_TYPES.includes(value as (typeof PAGE_CHECK_TYPES)[number]),
+      {
+        message: `Must be one of: ${PAGE_CHECK_TYPES.join(', ')}.`,
+      }
+    );
   const pageCheckStatusSchema = z.enum(
     [...PAGE_CHECK_STATUSES] as [string, ...string[]]
   );
@@ -297,6 +302,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   const checkResultsDescription = `Localized check results Markdown map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
   const notesDescription = `Localized notes Markdown map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
+  const rewriteContentDescription =
+    'Section content to write. For target "heading", provide body text only; the heading line is preserved automatically. For target "lead", this replaces/prepends/appends the lead text before the first heading.';
 
   server.registerResource(
     'Wiki Pages Index',
@@ -1055,15 +1062,18 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
+        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
       inputSchema: {
         slug: z.string(),
         target: z.enum(['heading', 'lead']).optional(),
-        heading: z.string().optional(),
+        heading: z
+          .string()
+          .optional()
+          .describe('Required when target is "heading"; omitted for target "lead".'),
         headingLevel: z.number().int().min(1).max(6).optional(),
         occurrence: z.number().int().min(1).optional(),
         mode: z.enum(['replace', 'prepend', 'append']).optional(),
-        content: z.string(),
+        content: z.string().describe(rewriteContentDescription),
         lang: languageTagSchema.optional,
         expectedRevId: uuidSchema.optional(),
         tags: z.array(z.string()).optional(),
