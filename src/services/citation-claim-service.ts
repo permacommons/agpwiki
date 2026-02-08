@@ -130,6 +130,11 @@ export interface CitationClaimDeleteResult {
   deleted: boolean;
 }
 
+export interface CitationClaimListResult {
+  citationId: string;
+  claims: CitationClaimResult[];
+}
+
 const toCitationClaimResult = (claim: CitationClaimInstance): CitationClaimResult => ({
   id: claim.id,
   citationId: claim.citationId,
@@ -589,6 +594,33 @@ export async function listCitationClaimRevisions(
     citationId: citation.id,
     claimId: claim.claimId,
     revisions: revisionRows.map(row => toCitationClaimRevisionResult(row)),
+  };
+}
+
+export async function listCitationClaims(
+  _dalInstance: DataAccessLayer,
+  key: string
+): Promise<CitationClaimListResult> {
+  ensureNonEmptyString(key, 'key');
+  const citation = await findCurrentCitationByKey(key);
+  if (!citation) {
+    throw new NotFoundError(`Citation not found: ${key}`, {
+      key,
+    });
+  }
+
+  const claims = await CitationClaim.filterWhere({
+    citationId: citation.id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>)
+    .orderBy('claimId', 'ASC')
+    .run();
+
+  // Keep claim-list ordering and filtering centralized for route and MCP callers.
+  return {
+    citationId: citation.id,
+    claims: claims.map(claim => toCitationClaimResult(claim)),
   };
 }
 

@@ -6,7 +6,6 @@ import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
 import { resolveSafeText } from '../lib/safe-text.js';
-import BlogPost from '../models/blog-post.js';
 import {
   escapeHtml,
   formatDateUTC,
@@ -17,6 +16,7 @@ import {
 import {
   diffBlogPostRevisions,
   listBlogPostRevisions,
+  listBlogPosts,
   readBlogPost,
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
@@ -37,35 +37,31 @@ export const registerBlogRoutes = (app: Express) => {
     try {
       const dalInstance = await initializePostgreSQL();
       const signedIn = Boolean(await resolveSessionUser(req));
-      const result = await dalInstance.query(
-        `SELECT * FROM ${BlogPost.tableName}
-         WHERE _old_rev_of IS NULL AND _rev_deleted = false
-         ORDER BY created_at DESC, _rev_date DESC`
-      );
-      const posts = result.rows.map(row => BlogPost.createFromRow(row));
+      // Use service-level list query so web and MCP read paths share filtering rules.
+      const posts = await listBlogPosts(dalInstance);
       const summaries = posts.map(post => {
-        const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+        const availableLangs = getAvailableLanguages(post.title, post.summary);
         const contentLang = resolveContentLanguage({
           uiLocale: res.locals.locale,
           override: undefined,
           availableLangs,
         });
-        return mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
+        return mlString.resolve(contentLang, post.summary)?.str ?? '';
       });
       const citationEntries = await loadCitationEntriesForSources(dalInstance, summaries);
       const items = (
         await Promise.all(
           posts.map(async post => {
-            const availableLangs = getAvailableLanguages(post.title ?? null, post.summary ?? null);
+            const availableLangs = getAvailableLanguages(post.title, post.summary);
             const contentLang = resolveContentLanguage({
               uiLocale: res.locals.locale,
               override: undefined,
               availableLangs,
             });
             const title = resolveSafeText(mlString.resolve, contentLang, post.title, post.slug);
-            const summary = mlString.resolve(contentLang, post.summary ?? null)?.str ?? '';
-            const createdLabel = formatDateUTC(post.createdAt ?? post._revDate);
-            const updatedLabel = formatDateUTC(post.updatedAt ?? post._revDate);
+            const summary = mlString.resolve(contentLang, post.summary)?.str ?? '';
+            const createdLabel = formatDateUTC(post.createdAt);
+            const updatedLabel = formatDateUTC(post.updatedAt);
             const updatedHtml =
               updatedLabel && updatedLabel !== createdLabel
                 ? `<span class="post-updated">${req.t('blog.updated', {

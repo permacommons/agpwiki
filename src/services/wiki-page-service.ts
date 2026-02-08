@@ -189,6 +189,16 @@ export interface WikiPageListResult {
   pages: Array<{ slug: string; name: string }>;
 }
 
+export interface WikiPageSearchInput {
+  query: string;
+  limit?: number;
+}
+
+export interface WikiPageSearchItem {
+  slug: string;
+  title: string;
+}
+
 const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   id: page.id,
   slug: page.slug,
@@ -436,6 +446,29 @@ export async function listWikiPageResources(
       };
     }),
   };
+}
+
+export async function searchWikiPages(
+  dalInstance: DataAccessLayer,
+  { query, limit }: WikiPageSearchInput
+): Promise<WikiPageSearchItem[]> {
+  ensureNonEmptyString(query, 'query');
+  const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
+  // Search is intentionally simple and locale-stable for web + API callers.
+  const result = await dalInstance.query(
+    `SELECT slug, title->>'en' as title
+     FROM ${WikiPage.tableName}
+     WHERE _old_rev_of IS NULL AND _rev_deleted = false
+       AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
+     ORDER BY slug
+     LIMIT $2`,
+    [`%${query}%`, normalizedLimit]
+  );
+
+  return result.rows.map((row: { slug: string; title: string | null }) => ({
+    slug: row.slug,
+    title: row.title ?? row.slug,
+  }));
 }
 
 export async function readWikiPage(

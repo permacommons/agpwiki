@@ -11,7 +11,6 @@ import {
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
-import PageCheck from '../models/page-check.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -104,6 +103,7 @@ export const registerPageRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
 
+      // Keep route concerns (HTTP + rendering) separate from domain lookup logic.
       const page = await (async () => {
         try {
           return await readWikiPage(await initializePostgreSQL(), slug);
@@ -118,16 +118,11 @@ export const registerPageRoutes = (app: Express) => {
       if (!page) return;
 
       const dalInstance = await initializePostgreSQL();
-      const checks = await PageCheck.filterWhere({
-        pageId: page.id,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>)
-        .orderBy('_revDate', 'DESC')
-        .run();
+      const checksResult = await listPageChecks(dalInstance, slug);
+      const checks = checksResult.checks;
 
       const userIds = checks
-        .map(check => check._revUser)
+        .map(check => check.revUser)
         .filter((id): id is string => Boolean(id));
       const userMap = await fetchUserMap(dalInstance, userIds);
 
@@ -135,7 +130,7 @@ export const registerPageRoutes = (app: Express) => {
         page.title ?? null,
       ];
       for (const check of checks) {
-        languageSources.push(check.checkResults ?? null, check.notes ?? null);
+        languageSources.push(check.checkResults, check.notes);
       }
       const availableLangs = getAvailableLanguages(...languageSources);
       const contentLang = resolveContentLanguage({
@@ -144,8 +139,8 @@ export const registerPageRoutes = (app: Express) => {
         availableLangs,
       });
       const checkSources = checks.flatMap(check => {
-        const checkResultsSource = mlString.resolve(contentLang, check.checkResults ?? null)?.str ?? '';
-        const notesSource = mlString.resolve(contentLang, check.notes ?? null)?.str ?? '';
+        const checkResultsSource = mlString.resolve(contentLang, check.checkResults)?.str ?? '';
+        const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
         return [checkResultsSource, notesSource];
       });
       const citationEntries = await loadCitationEntriesForSources(dalInstance, checkSources);
@@ -153,8 +148,8 @@ export const registerPageRoutes = (app: Express) => {
       const items: PageCheckDetailItem[] = await Promise.all(
         checks.map(async check => {
           const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
-          const checkResultsSource = mlString.resolve(contentLang, check.checkResults ?? null)?.str ?? '';
-          const notesSource = mlString.resolve(contentLang, check.notes ?? null)?.str ?? '';
+          const checkResultsSource = mlString.resolve(contentLang, check.checkResults)?.str ?? '';
+          const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
           const checkResultsHtml = (await renderMarkdown(checkResultsSource, citationEntries)).html;
           const notesHtml = notesSource
             ? (await renderMarkdown(notesSource, citationEntries)).html
@@ -163,15 +158,15 @@ export const registerPageRoutes = (app: Express) => {
             id: check.id,
             typeLabel: formatCheckType(check.type, req.t),
             statusLabel: formatCheckStatus(check.status, req.t),
-            dateLabel: formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt),
+            dateLabel: formatDateUTC(check.completedAt ?? check.revDate ?? check.createdAt),
             checkResultsHtml,
             notesHtml,
             metrics: {
               issuesFound: metrics.issues_found,
               issuesFixed: metrics.issues_fixed,
             },
-            revUser: check._revUser ?? null,
-            revTags: check._revTags ?? null,
+            revUser: check.revUser ?? null,
+            revTags: check.revTags ?? null,
           };
         })
       );
@@ -416,6 +411,7 @@ export const registerPageRoutes = (app: Express) => {
       let diffHtml = '';
       if (diffFrom && diffTo) {
         try {
+          // Reuse service-level diff semantics so MCP and web stay aligned.
           const diff = await diffPageCheckRevisions(dalInstance, {
             checkId: check.id,
             fromRevId: diffFrom,
@@ -506,6 +502,7 @@ export const registerPageRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
       const dalInstance = await initializePostgreSQL();
+      // Route handles response mapping; service handles not-found/validation behavior.
       const pageResult = await (async () => {
         try {
           const page = await readWikiPage(dalInstance, slug);
@@ -574,6 +571,7 @@ export const registerPageRoutes = (app: Express) => {
       let diffHtml = '';
       if (diffFrom && diffTo) {
         try {
+          // Service diff output is rendered directly into route-specific UI.
           const diff = await diffWikiPageRevisions(dalInstance, {
             slug,
             fromRevId: diffFrom,
@@ -613,21 +611,15 @@ export const registerPageRoutes = (app: Express) => {
         }
       }
 
-      const pageChecks = await PageCheck.filterWhere({
-        pageId: page.id,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>)
-        .orderBy('_revDate', 'DESC')
-        .limit(10)
-        .run();
+      const pageChecksResult = await listPageChecks(dalInstance, slug);
+      const pageChecks = pageChecksResult.checks.slice(0, 10);
 
       const userIds = new Set<string>();
       for (const rev of revisions) {
         if (rev.revUser) userIds.add(rev.revUser);
       }
       for (const check of pageChecks) {
-        if (check._revUser) userIds.add(check._revUser);
+        if (check.revUser) userIds.add(check.revUser);
       }
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
@@ -658,7 +650,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const checkItems: PageCheckSummaryItem[] = pageChecks.map(check => {
         const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
-        const dateLabel = formatDateUTC(check.completedAt ?? check._revDate ?? check.createdAt);
+        const dateLabel = formatDateUTC(check.completedAt ?? check.revDate ?? check.createdAt);
         return {
           id: check.id,
           typeLabel: formatCheckType(check.type, req.t),
@@ -668,8 +660,8 @@ export const registerPageRoutes = (app: Express) => {
             issuesFound: metrics.issues_found,
             issuesFixed: metrics.issues_fixed,
           },
-          revUser: check._revUser ?? null,
-          revTags: check._revTags ?? null,
+          revUser: check.revUser ?? null,
+          revTags: check.revTags ?? null,
         };
       });
       const checksHtml = renderPageChecksSummary({

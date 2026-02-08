@@ -67,6 +67,9 @@ export interface PageCheckResult {
   pageId: string;
   type: string;
   status: string;
+  revDate: Date;
+  revUser: string | null | undefined;
+  revTags: string[] | null | undefined;
   checkResults: Record<string, string> | null | undefined;
   notes: Record<string, string> | null | undefined;
   metrics: PageCheckMetrics | null | undefined;
@@ -142,6 +145,9 @@ const toPageCheckResult = (check: PageCheckInstance): PageCheckResult => ({
   pageId: check.pageId,
   type: check.type,
   status: check.status,
+  revDate: check._revDate,
+  revUser: check._revUser ?? null,
+  revTags: check._revTags ?? null,
   checkResults: check.checkResults ?? null,
   notes: check.notes ?? null,
   metrics: (check.metrics ?? null) as PageCheckMetrics | null,

@@ -12,18 +12,17 @@ import {
 } from '../lib/citation.js';
 import { NotFoundError } from '../lib/errors.js';
 import { resolveSafeText } from '../lib/safe-text.js';
-import CitationClaim from '../models/citation-claim.js';
 import { escapeHtml, formatDateUTC, renderLayout, renderText } from '../render.js';
 import {
   diffCitationClaimRevisions,
   listCitationClaimRevisions,
+  listCitationClaims,
   readCitationClaim,
   readCitationClaimRevision,
 } from '../services/citation-claim-service.js';
 import {
   diffCitationRevisions,
   listCitationRevisions,
-  readCitation,
   readCitationRevision,
 } from '../services/citation-service.js';
 import {
@@ -96,6 +95,7 @@ export const registerCitationRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
       const dalInstance = await initializePostgreSQL();
+      // Route maps service errors to HTTP responses; domain logic stays in services.
       const revisionsResult = await (async () => {
         try {
           await readCitationClaim(dalInstance, key, claimId);
@@ -215,6 +215,7 @@ export const registerCitationRoutes = (app: Express) => {
       let diffHtml = '';
       if (diffFrom && diffTo) {
         try {
+          // Keep claim diff behavior consistent with MCP by using service output.
           const diff = await diffCitationClaimRevisions(dalInstance, {
             key,
             claimId,
@@ -349,11 +350,11 @@ export const registerCitationRoutes = (app: Express) => {
     try {
       await initializePostgreSQL();
       const dalInstance = await initializePostgreSQL();
+      // Service call defines search/lookup semantics; route focuses on rendering.
       const citationResult = await (async () => {
         try {
-          const citation = await readCitation(dalInstance, key);
           const revisionsResult = await listCitationRevisions(dalInstance, key);
-          return { citation, revisionsResult };
+          return { revisionsResult };
         } catch (error) {
           if (error instanceof NotFoundError) {
             res.status(404).type('text').send(req.t('page.notFound'));
@@ -363,7 +364,7 @@ export const registerCitationRoutes = (app: Express) => {
         }
       })();
       if (!citationResult) return;
-      const { citation, revisionsResult } = citationResult;
+      const { revisionsResult } = citationResult;
 
       const revisions = revisionsResult.revisions;
       const userIds = revisions
@@ -417,13 +418,8 @@ export const registerCitationRoutes = (app: Express) => {
           })
         : req.t('citation.revisionMetaNoDate', { revId: selectedRevision.revId });
 
-      const claims = await CitationClaim.filterWhere({
-        citationId: citation.id,
-        _oldRevOf: null,
-        _revDeleted: false,
-      } as Record<string, unknown>)
-        .orderBy('claimId', 'ASC')
-        .run();
+      const claimsResult = await listCitationClaims(dalInstance, key);
+      const claims = claimsResult.claims;
       const claimLanguageSources: Array<Record<string, string> | null> = [];
       for (const claim of claims) {
         claimLanguageSources.push(

@@ -2,8 +2,8 @@ import type { Express } from 'express';
 
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
-import WikiPage from '../models/wiki-page.js';
 import { escapeHtml, renderLayout } from '../render.js';
+import { searchWikiPages } from '../services/wiki-page-service.js';
 
 export const registerSearchRoutes = (app: Express) => {
   app.get('/search', async (req, res) => {
@@ -12,19 +12,7 @@ export const registerSearchRoutes = (app: Express) => {
     let results: Array<{ slug: string; title: string }> = [];
 
     if (query) {
-      const result = await dalInstance.query(
-        `SELECT slug, title->>'en' as title
-         FROM ${WikiPage.tableName}
-         WHERE _old_rev_of IS NULL AND _rev_deleted = false
-           AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
-         ORDER BY slug
-         LIMIT 20`,
-        [`%${query}%`]
-      );
-      results = result.rows.map((row: { slug: string; title: string | null }) => ({
-        slug: row.slug,
-        title: row.title ?? row.slug,
-      }));
+      results = await searchWikiPages(dalInstance, { query, limit: 20 });
     }
 
     const resultsHtml = results
@@ -62,20 +50,7 @@ export const registerSearchRoutes = (app: Express) => {
     }
 
     const dalInstance = await initializePostgreSQL();
-    const result = await dalInstance.query(
-      `SELECT slug, title->>'en' as title
-       FROM ${WikiPage.tableName}
-       WHERE _old_rev_of IS NULL AND _rev_deleted = false
-         AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
-       ORDER BY slug
-       LIMIT 10`,
-      [`%${query}%`]
-    );
-
-    const results = result.rows.map((row: { slug: string; title: string | null }) => ({
-      slug: row.slug,
-      title: row.title ?? row.slug,
-    }));
+    const results = await searchWikiPages(dalInstance, { query, limit: 10 });
 
     res.json({ results });
   });

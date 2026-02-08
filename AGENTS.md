@@ -16,7 +16,7 @@
 ## Source layout
 
 - `src/lib/` — Pure, stateless utilities that never call the database or coordinate workflows (error classes, localized map helpers, patch application, slug validation, content validation, diff engine, citation formatting)
-- `src/services/` — Business logic that orchestrates domain operations: calls the DAL, enforces authorization, validates inputs in context, and composes lib utilities (per-entity services: wiki-page, citation, citation-claim, page-check, blog-post; plus shared validation, roles, revision-summary)
+- `src/services/` — Business logic that orchestrates domain operations: calls the DAL, enforces authorization, validates inputs in context, and composes lib utilities (per-entity services: wiki-page, citation, citation-claim, page-check, blog-post; plus shared validation, authorization, roles, revision-summary)
 - `src/mcp/` — MCP transport layer that wires services to MCP tools and resources (core server setup, HTTP/stdio transports, auth, Zod schemas, error formatters, prompts)
 - `src/routes/` — Express routes for the web UI
 - `src/models/` — Sequelize-style models with rev-dal
