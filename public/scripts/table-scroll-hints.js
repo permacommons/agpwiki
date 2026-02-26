@@ -1,3 +1,5 @@
+// Adds directional chevron cues to horizontally scrollable tables.
+// Cues are shown only when overflow exists and update with scroll position.
 (function () {
   const scrollers = Array.from(document.querySelectorAll('.table-scroll'));
   if (!scrollers.length) return;
