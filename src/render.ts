@@ -141,6 +141,132 @@ const markdown = new MarkdownIt({ html: false, linkify: true });
 markdown.use(variablesPlugin());
 markdown.use(tocPlugin());
 
+type TableRenderContext = {
+  headerLabels: string[];
+  stackOnMobile: boolean;
+  cellIndex: number;
+};
+
+const MAX_STACK_COLUMNS = 3;
+const normalizeLabel = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+// Extracts first-header-row labels so we can annotate body cells with
+// data-label attributes for CSS-only mobile card rendering.
+const getInlineTextUntilClose = (
+  tokens: MarkdownIt.Token[],
+  startIdx: number,
+  closeType: string
+): { text: string; nextIdx: number } => {
+  let text = '';
+  let depth = 1;
+  let idx = startIdx;
+  const openType = closeType.replace('_close', '_open');
+
+  while (idx < tokens.length) {
+    const token = tokens[idx];
+    if (token.type === closeType) {
+      depth -= 1;
+      if (depth === 0) break;
+    } else if (token.type === openType) {
+      depth += 1;
+    } else if (token.type === 'inline') {
+      text += token.content;
+    }
+    idx += 1;
+  }
+
+  return { text: normalizeLabel(text), nextIdx: idx };
+};
+
+const getTableHeaderLabels = (tokens: MarkdownIt.Token[], tableOpenIdx: number): string[] => {
+  const labels: string[] = [];
+  let idx = tableOpenIdx + 1;
+  let inThead = false;
+  let headRowIndex = -1;
+
+  while (idx < tokens.length) {
+    const token = tokens[idx];
+    if (token.type === 'table_close') break;
+    if (token.type === 'thead_open') {
+      inThead = true;
+      idx += 1;
+      continue;
+    }
+    if (token.type === 'thead_close') break;
+    if (!inThead) {
+      idx += 1;
+      continue;
+    }
+    if (token.type === 'tr_open') {
+      headRowIndex += 1;
+      idx += 1;
+      continue;
+    }
+    if (token.type === 'tr_close' || headRowIndex > 0) {
+      idx += 1;
+      continue;
+    }
+    if (token.type === 'th_open') {
+      const { text, nextIdx } = getInlineTextUntilClose(tokens, idx + 1, 'th_close');
+      labels.push(text);
+      idx = nextIdx + 1;
+      continue;
+    }
+    idx += 1;
+  }
+
+  return labels;
+};
+
+type RuleName = 'table_open' | 'table_close' | 'tr_open' | 'td_open';
+const getRuleOrDefault = (name: RuleName) =>
+  markdown.renderer.rules[name] ??
+  ((tokens: MarkdownIt.Token[], idx: number, options: MarkdownIt.Options, _env: unknown, self: MarkdownIt.Renderer) =>
+    self.renderToken(tokens, idx, options));
+
+const defaultTableOpen = getRuleOrDefault('table_open');
+const defaultTableClose = getRuleOrDefault('table_close');
+const defaultTrOpen = getRuleOrDefault('tr_open');
+const defaultTdOpen = getRuleOrDefault('td_open');
+
+// Tracks per-table header labels while markdown-it streams tokens so we can:
+// 1) add wrapper classes based on column count and
+// 2) map each <td> to its column label without client-side JavaScript.
+const tableRenderContexts: TableRenderContext[] = [];
+
+markdown.renderer.rules.table_open = (tokens, idx, options, env, self) => {
+  const headerLabels = getTableHeaderLabels(tokens, idx);
+  // Small tables are much more readable as stacked cards on narrow screens.
+  const stackOnMobile = headerLabels.length > 0 && headerLabels.length <= MAX_STACK_COLUMNS;
+  tableRenderContexts.push({
+    headerLabels,
+    stackOnMobile,
+    cellIndex: 0,
+  });
+  const wrapperClass = stackOnMobile ? 'table-scroll table-stack-mobile' : 'table-scroll';
+  return `<div class="${wrapperClass}">${defaultTableOpen(tokens, idx, options, env, self)}`;
+};
+markdown.renderer.rules.table_close = (tokens, idx, options, env, self) => {
+  tableRenderContexts.pop();
+  return `${defaultTableClose(tokens, idx, options, env, self)}</div>`;
+};
+markdown.renderer.rules.tr_open = (tokens, idx, options, env, self) => {
+  const current = tableRenderContexts.at(-1);
+  if (current) current.cellIndex = 0;
+  return defaultTrOpen(tokens, idx, options, env, self);
+};
+markdown.renderer.rules.td_open = (tokens, idx, options, env, self) => {
+  const current = tableRenderContexts.at(-1);
+  if (current?.stackOnMobile) {
+    const label = current.headerLabels[current.cellIndex];
+    if (label) {
+      tokens[idx].attrSet('data-label', label);
+    }
+    current.cellIndex += 1;
+  }
+  return defaultTdOpen(tokens, idx, options, env, self);
+};
+
 const toBacklinkSuffix = (index: number) => {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz';
   let value = index;
