@@ -1,3 +1,5 @@
+// Replaces native title tooltips for metadata pills with a custom tooltip
+// that supports hover/focus and optional click-to-pin behavior.
 (function () {
   const targets = Array.from(document.querySelectorAll('[data-meta="true"]'));
   if (!targets.length) return;

@@ -1,3 +1,5 @@
+// Progressive enhancement for header search: fetches and renders live
+// suggestions from /api/search while the user types.
 (function () {
   const form = document.querySelector('.search-form');
   if (!form) return;

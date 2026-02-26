@@ -242,6 +242,49 @@ pre.diff ins {
   background: #fffdf7;
   -webkit-overflow-scrolling: touch;
 }
+.table-scroll-frame {
+  position: relative;
+}
+.table-scroll-cue {
+  position: absolute;
+  top: 0.35rem;
+  z-index: 3;
+  width: 1.35rem;
+  height: 1.35rem;
+  transform: none;
+  border-radius: 999px;
+  border: 1px solid var(--rule);
+  background: rgba(247, 241, 231, 0.96);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease-out;
+}
+.table-scroll-cue-icon {
+  width: 0.7rem;
+  height: 0.7rem;
+  stroke: currentColor;
+  stroke-width: 2.25;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.table-scroll-cue--left {
+  left: -0.75rem;
+}
+/* Mirror the shared right-pointing chevron path for the left cue. */
+.table-scroll-cue--left .table-scroll-cue-icon {
+  transform: scaleX(-1);
+}
+.table-scroll-cue--right {
+  right: -0.75rem;
+}
+.table-scroll-cue.is-visible {
+  opacity: 1;
+}
 .article th,
 .article td {
   padding: 0.6rem 0.75rem;
