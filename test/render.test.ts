@@ -120,3 +120,28 @@ test('renderToc returns empty string for no items', () => {
   const result = renderToc([], { expanded: true, label: 'Contents' });
   assert.equal(result, '');
 });
+
+test('renderMarkdown marks 3-column tables for mobile stacking and labels cells', async () => {
+  const markdown = `| One | Two | Three |
+| --- | --- | --- |
+| A | B | C |`;
+
+  const { html } = await renderMarkdown(markdown, []);
+
+  assert.match(html, /<div class="table-scroll table-stack-mobile"><table>/);
+  assert.match(html, /<td data-label="One">A<\/td>/);
+  assert.match(html, /<td data-label="Two">B<\/td>/);
+  assert.match(html, /<td data-label="Three">C<\/td>/);
+});
+
+test('renderMarkdown keeps 4-column tables in horizontal scroll mode', async () => {
+  const markdown = `| One | Two | Three | Four |
+| --- | --- | --- | --- |
+| A | B | C | D |`;
+
+  const { html } = await renderMarkdown(markdown, []);
+
+  assert.match(html, /<div class="table-scroll"><table>/);
+  assert.doesNotMatch(html, /table-stack-mobile/);
+  assert.doesNotMatch(html, /data-label=/);
+});

@@ -181,6 +181,7 @@ header.site-header {
   padding: 2rem 2.5rem;
   border: 1px solid var(--rule);
   box-shadow: 0 6px 16px rgba(31, 29, 26, 0.08);
+  min-width: 0;
 }
 .sidebar {
   font-family: 'IBM Plex Sans', sans-serif;
@@ -229,11 +230,17 @@ pre.diff ins {
 .article table {
   width: 100%;
   border-collapse: collapse;
-  margin: 1.25rem 0;
-  border: 1px solid var(--rule);
-  background: #fffdf7;
+  margin: 0;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.95rem;
+}
+.table-scroll {
+  position: relative;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  -webkit-overflow-scrolling: touch;
 }
 .article th,
 .article td {
@@ -243,6 +250,9 @@ pre.diff ins {
   vertical-align: top;
 }
 .article thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: var(--panel);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -867,6 +877,62 @@ altcha-widget {
     margin-right: 0;
     margin-top: 0.75rem;
   }
-  .article table { display: block; overflow-x: auto; }
+  .article .citation-group {
+    white-space: normal;
+  }
   .page-toc:not([open]) .toc-list { display: none; }
+}
+@media (max-width: 640px) {
+  .table-stack-mobile {
+    overflow-x: visible;
+    border: none;
+    background: transparent;
+  }
+  .table-stack-mobile > table {
+    width: 100%;
+    border: none;
+    background: transparent;
+  }
+  .table-stack-mobile thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .table-stack-mobile tbody,
+  .table-stack-mobile tr,
+  .table-stack-mobile td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .table-stack-mobile tbody tr {
+    margin: 0 0 0.85rem;
+    border: 1px solid var(--rule);
+    background: #fffdf7;
+  }
+  .table-stack-mobile tbody tr:nth-child(even) {
+    background: #fffdf7;
+  }
+  .table-stack-mobile td {
+    border-bottom: 1px solid var(--rule);
+  }
+  .table-stack-mobile td:last-child {
+    border-bottom: none;
+  }
+  .table-stack-mobile td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 0.2rem;
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
 }
