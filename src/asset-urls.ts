@@ -15,5 +15,6 @@ export const layoutAssets = {
   siteCss: versionedAssetUrl('styles/site.css'),
   searchJs: versionedAssetUrl('scripts/search.js'),
   metaTooltipsJs: versionedAssetUrl('scripts/meta-tooltips.js'),
+  tableScrollHintsJs: versionedAssetUrl('scripts/table-scroll-hints.js'),
   tocJs: versionedAssetUrl('scripts/toc.js'),
 };
