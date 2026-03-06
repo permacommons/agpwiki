@@ -37,6 +37,11 @@ export const registerBlogRoutes = (app: Express) => {
     try {
       const dalInstance = await initializePostgreSQL();
       const signedIn = Boolean(await resolveSessionUser(req));
+      const markdownOptions = {
+        backToCitationLabel: req.t('citation.backToCitationAria', {
+          defaultValue: 'Back to citation',
+        }),
+      };
       // Use service-level list query so web and MCP read paths share filtering rules.
       const posts = await listBlogPosts(dalInstance);
       const summaries = posts.map(post => {
@@ -69,7 +74,11 @@ export const registerBlogRoutes = (app: Express) => {
                   })}</span>`
                 : '';
             const summaryHtml = summary
-              ? `<div class="post-summary">${(await renderMarkdown(summary, citationEntries)).html}</div>`
+              ? `<div class="post-summary">${(await renderMarkdown(
+                  summary,
+                  citationEntries,
+                  markdownOptions
+                )).html}</div>`
               : '';
             return `<li>
   <h2><a href="/blog/${escapeHtml(post.slug)}">${renderText(title)}</a></h2>
@@ -167,6 +176,11 @@ export const registerBlogRoutes = (app: Express) => {
         override: langOverride,
         availableLangs,
       });
+      const markdownOptions = {
+        backToCitationLabel: req.t('citation.backToCitationAria', {
+          defaultValue: 'Back to citation',
+        }),
+      };
       const resolvedBody = mlString.resolve(contentLang, selectedRevision.body ?? null);
 
       const title = resolveSafeText(
@@ -187,7 +201,7 @@ export const registerBlogRoutes = (app: Express) => {
       const bodySource = resolvedBody?.str ?? '';
       const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource, summary]);
 
-      const { html: bodyHtml } = await renderMarkdown(bodySource, citationEntries);
+      const { html: bodyHtml } = await renderMarkdown(bodySource, citationEntries, markdownOptions);
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
@@ -258,7 +272,11 @@ export const registerBlogRoutes = (app: Express) => {
 
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const summaryHtml = summary
-        ? `<div class="post-summary">${(await renderMarkdown(summary, citationEntries)).html}</div>`
+        ? `<div class="post-summary">${(await renderMarkdown(
+            summary,
+            citationEntries,
+            markdownOptions
+          )).html}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">
   <span class="post-created">${req.t('blog.created', {

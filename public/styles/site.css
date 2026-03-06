@@ -317,6 +317,18 @@ pre.diff ins {
 .ref-backlinks { margin-right: 0.25rem; }
 .ref-backlink,
 .ref-claim-link { margin-right: 0.25rem; font-size: 0.8em; text-decoration: none; }
+.ref-claim-pair {
+  display: inline-block;
+  border-radius: 0.2rem;
+  transition: background-color 220ms ease, box-shadow 220ms ease;
+}
+.ref-claim-pairs .ref-claim-pair + .ref-claim-pair {
+  margin-left: 0.2rem;
+}
+.ref-claim-pair:target {
+  background-color: #f2e7c8;
+  box-shadow: 0 0 0 1px #c5a24a;
+}
 .page-history, .page-diff, .page-toc {
   background: var(--panel);
   border: 1px solid var(--rule);

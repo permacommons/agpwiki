@@ -65,6 +65,7 @@
   },
   "citation": {
     "claimsTitle": "Claims",
+    "backToCitationAria": "Back to citation",
     "rawCsl": "Raw CSL JSON",
     "revisionMeta": "Revision {{revId}} · {{date}}",
     "revisionMetaNoDate": "Revision {{revId}}",
