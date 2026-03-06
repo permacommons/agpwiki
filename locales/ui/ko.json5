@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: '주장',
+    backToCitationAria: '인용으로 돌아가기',
     rawCsl: '원본 CSL JSON',
     revisionMeta: '수정본 {{revId}} · {{date}}',
     revisionMetaNoDate: '수정본 {{revId}}',

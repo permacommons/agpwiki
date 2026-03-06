@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Påståenden',
+    backToCitationAria: 'Tillbaka till källhänvisningen',
     rawCsl: 'Rå CSL JSON',
     revisionMeta: 'Version {{revId}} · {{date}}',
     revisionMetaNoDate: 'Version {{revId}}',

@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Tvrdenia',
+    backToCitationAria: 'Späť na citáciu',
     rawCsl: 'Surový CSL JSON',
     revisionMeta: 'Revízia {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revízia {{revId}}',

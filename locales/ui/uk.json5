@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Твердження',
+    backToCitationAria: 'Повернутися до цитати',
     rawCsl: 'Сирий CSL JSON',
     revisionMeta: 'Редакція {{revId}} · {{date}}',
     revisionMetaNoDate: 'Редакція {{revId}}',

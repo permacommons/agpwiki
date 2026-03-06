@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: 'İddialar',
+    backToCitationAria: 'Atfa geri dön',
     rawCsl: 'Ham CSL JSON',
     revisionMeta: 'Revizyon {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revizyon {{revId}}',

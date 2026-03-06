@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Aussagen',
+    backToCitationAria: 'Zurück zur Fundstelle',
     rawCsl: 'Rohes CSL-JSON',
     revisionMeta: 'Überarbeitung {{revId}} · {{date}}',
     revisionMetaNoDate: 'Überarbeitung {{revId}}',

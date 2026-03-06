@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: '主张',
+    backToCitationAria: '返回引用',
     rawCsl: '原始CSL JSON',
     revisionMeta: '修订 {{revId}} · {{date}}',
     revisionMetaNoDate: '修订 {{revId}}',

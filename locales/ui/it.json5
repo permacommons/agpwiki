@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: 'Affermazioni',
+    backToCitationAria: 'Torna alla citazione',
     rawCsl: 'CSL JSON grezzo',
     revisionMeta: 'Revisione {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revisione {{revId}}',

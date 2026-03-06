@@ -759,6 +759,146 @@ test('renderMarkdown links citation claims in bibliography', async () => {
   }
 });
 
+test('renderMarkdown disambiguates multiple claim refs with numeric slots', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-claim-multi-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    const citation = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation with multiple claim refs',
+          URL: 'https://example.com/test-claim-multi',
+        },
+      },
+      userId
+    );
+
+    const { html } = await renderMarkdown(
+      `Testing [@${citationKey}:alpha][@${citationKey}:beta].`,
+      [{ ...(citation.data ?? {}), id: citation.key }]
+    );
+
+    assert.match(html, /href="#ref-1-1">1:1<\/a>/);
+    assert.match(html, /href="#ref-1-2">1:2<\/a>/);
+    assert.match(html, /id="ref-1-1" class="ref-claim-pair"/);
+    assert.match(html, /id="ref-1-2" class="ref-claim-pair"/);
+    assert.match(html, new RegExp(`/cite/${citationKey}#claim-alpha`));
+    assert.match(html, new RegExp(`/cite/${citationKey}#claim-beta`));
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('renderMarkdown keeps non-claim duplicate refs unsuffixed', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-noclaim-dup-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    const citation = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation with duplicate non-claim refs',
+          URL: 'https://example.com/test-noclaim-dup',
+        },
+      },
+      userId
+    );
+
+    const { html } = await renderMarkdown(
+      `Testing [@${citationKey}][@${citationKey}].`,
+      [{ ...(citation.data ?? {}), id: citation.key }]
+    );
+
+    assert.equal((html.match(/href="#ref-1">1<\/a>/g) ?? []).length, 2);
+    assert.doesNotMatch(html, /href="#ref-1a">1a<\/a>/);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('renderMarkdown groups repeated same-claim refs under one claim slot', async () => {
+  const dal = await getDal();
+  const citationKey = `test-cite-claim-repeat-${Date.now()}`;
+  const citationPrefix = `${citationKey}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    const citation = await createCitation(
+      dal,
+      {
+        key: citationKey,
+        data: {
+          id: citationKey,
+          type: 'webpage',
+          title: 'Citation with repeated claim refs',
+          URL: 'https://example.com/test-claim-repeat',
+        },
+      },
+      userId
+    );
+
+    const { html } = await renderMarkdown(
+      `Testing [@${citationKey}:alpha] and later [@${citationKey}:alpha].`,
+      [{ ...(citation.data ?? {}), id: citation.key }]
+    );
+
+    assert.equal((html.match(/href="#ref-1-1">1:1<\/a>/g) ?? []).length, 2);
+    assert.equal((html.match(/id="ref-1-1" class="ref-claim-pair"/g) ?? []).length, 1);
+    assert.match(html, /id="ref-1-1" class="ref-claim-pair">[\s\S]*\^a[\s\S]*\^b/);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        citationPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
 test('renderMarkdown ignores bare @key tokens', async () => {
   const { html } = await renderMarkdown('Contact @no-such-citation:bad-claim.', []);
   assert.doesNotMatch(html, /citation-group/);

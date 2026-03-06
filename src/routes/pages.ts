@@ -138,6 +138,11 @@ export const registerPageRoutes = (app: Express) => {
         override: langOverride,
         availableLangs,
       });
+      const markdownOptions = {
+        backToCitationLabel: req.t('citation.backToCitationAria', {
+          defaultValue: 'Back to citation',
+        }),
+      };
       const checkSources = checks.flatMap(check => {
         const checkResultsSource = mlString.resolve(contentLang, check.checkResults)?.str ?? '';
         const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
@@ -150,9 +155,11 @@ export const registerPageRoutes = (app: Express) => {
           const metrics = resolveCheckMetrics(check.metrics as PageCheckMetrics | null);
           const checkResultsSource = mlString.resolve(contentLang, check.checkResults)?.str ?? '';
           const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
-          const checkResultsHtml = (await renderMarkdown(checkResultsSource, citationEntries)).html;
+          const checkResultsHtml = (
+            await renderMarkdown(checkResultsSource, citationEntries, markdownOptions)
+          ).html;
           const notesHtml = notesSource
-            ? (await renderMarkdown(notesSource, citationEntries)).html
+            ? (await renderMarkdown(notesSource, citationEntries, markdownOptions)).html
             : '';
           return {
             id: check.id,
@@ -285,6 +292,11 @@ export const registerPageRoutes = (app: Express) => {
       const checkResultsSource =
         mlString.resolve(contentLang, selectedRevision.checkResults)?.str ?? '';
       const notesSource = mlString.resolve(contentLang, selectedRevision.notes)?.str ?? '';
+      const markdownOptions = {
+        backToCitationLabel: req.t('citation.backToCitationAria', {
+          defaultValue: 'Back to citation',
+        }),
+      };
       const citationEntries = await loadCitationEntriesForSources(dalInstance, [
         checkResultsSource,
         notesSource,
@@ -358,9 +370,15 @@ export const registerPageRoutes = (app: Express) => {
     </tr>
   </tbody>
 </table>`;
-      const checkResultsHtml = (await renderMarkdown(checkResultsSource, citationEntries)).html;
+      const checkResultsHtml = (
+        await renderMarkdown(checkResultsSource, citationEntries, markdownOptions)
+      ).html;
       const notesHtml = notesSource
-        ? `<div class="check-notes">${(await renderMarkdown(notesSource, citationEntries)).html}</div>`
+        ? `<div class="check-notes">${(await renderMarkdown(
+            notesSource,
+            citationEntries,
+            markdownOptions
+          )).html}</div>`
         : '';
       const bodyHtml = `<div class="check-card">
   <div class="check-meta">
@@ -544,6 +562,11 @@ export const registerPageRoutes = (app: Express) => {
         override: langOverride,
         availableLangs,
       });
+      const markdownOptions = {
+        backToCitationLabel: req.t('citation.backToCitationAria', {
+          defaultValue: 'Back to citation',
+        }),
+      };
       const resolvedBody = mlString.resolve(contentLang, selectedRevision.body);
 
       const canonicalSlug = page.slug;
@@ -566,7 +589,11 @@ export const registerPageRoutes = (app: Express) => {
       }
       const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource]);
 
-      const { html: bodyHtml, toc } = await renderMarkdown(bodySource, citationEntries);
+      const { html: bodyHtml, toc } = await renderMarkdown(
+        bodySource,
+        citationEntries,
+        markdownOptions
+      );
 
       let diffHtml = '';
       if (diffFrom && diffTo) {

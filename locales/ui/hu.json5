@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Állítások',
+    backToCitationAria: 'Vissza a hivatkozáshoz',
     rawCsl: 'Nyers CSL JSON',
     revisionMeta: 'Revízió {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revízió {{revId}}',

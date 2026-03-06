@@ -279,8 +279,17 @@ const toBacklinkSuffix = (index: number) => {
 };
 
 type CitationClusterItem = { citationId: string; claimId?: string };
+type BacklinkEntry = {
+  anchorId: string;
+  claimId?: string;
+  targetId?: string;
+  claimSlot?: number;
+};
 
-const buildCiteproc = (references: Array<Record<string, unknown>>) => {
+const buildCiteproc = (
+  references: Array<Record<string, unknown>>,
+  backToCitationLabel: string
+) => {
   const driver = new Driver({
     style: citationStyle,
     format: 'html',
@@ -293,16 +302,54 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
   const clusterMap = new Map<string, CitationClusterItem[]>();
   const refOrder: string[] = [];
   const refNumberById = new Map<string, number>();
-  const refBacklinks = new Map<string, string[]>();
-  const refClaimByAnchor = new Map<string, string>();
+  const refBacklinks = new Map<string, BacklinkEntry[]>();
+  const citationClaimSlots = new Map<string, Map<string, number>>();
   let renderCache: ReturnType<Driver['fullRender']> | null = null;
   let noteCounter = 0;
+  let claimSuffixesReady = false;
+  const escapedBackToCitationLabel = escapeHtml(backToCitationLabel);
 
   const ensureRender = () => {
     if (renderCache) return renderCache;
     driver.setClusterOrder(clusters);
     renderCache = driver.fullRender();
     return renderCache;
+  };
+
+  const normalizeClaimId = (claimId: string | undefined) => {
+    const normalized = claimId?.trim();
+    return normalized ? normalized : undefined;
+  };
+
+  const ensureClaimSlots = () => {
+    if (claimSuffixesReady) return;
+    claimSuffixesReady = true;
+    const claimIdsByCitation = new Map<string, string[]>();
+
+    for (const { id } of clusters) {
+      const cluster = clusterMap.get(id) ?? [];
+      for (const cite of cluster) {
+        const claimId = normalizeClaimId(cite.claimId);
+        if (!claimId) continue;
+        if (!claimIdsByCitation.has(cite.citationId)) {
+          claimIdsByCitation.set(cite.citationId, []);
+        }
+        const claimIds = claimIdsByCitation.get(cite.citationId);
+        if (claimIds && !claimIds.includes(claimId)) {
+          claimIds.push(claimId);
+        }
+      }
+    }
+
+    // Slots are per-citation and stable by first-seen claim order in the rendered doc.
+    // This keeps in-text labels deterministic: 12:1 always means the same claim.
+    for (const [citationId, claimIds] of claimIdsByCitation.entries()) {
+      const slots = new Map<string, number>();
+      for (const [index, claimId] of claimIds.entries()) {
+        slots.set(claimId, index + 1);
+      }
+      citationClaimSlots.set(citationId, slots);
+    }
   };
 
   return {
@@ -319,6 +366,7 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
       return id;
     },
     renderCluster(id: string) {
+      ensureClaimSlots();
       const cluster = clusterMap.get(id) ?? [];
       if (cluster.length === 0) return '';
 
@@ -333,12 +381,16 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
         const backlinkIndex = backlinkList.length;
         const suffix = toBacklinkSuffix(backlinkIndex);
         const anchorId = `cite-ref-${refNumber}-${suffix}`;
-        backlinkList.push(anchorId);
+        const normalizedClaimId = normalizeClaimId(claimId);
+        const claimSlots = citationClaimSlots.get(citationId);
+        const claimSlot = normalizedClaimId ? claimSlots?.get(normalizedClaimId) : undefined;
+        const refLabel = claimSlot ? `${refNumber}:${claimSlot}` : `${refNumber}`;
+        // Claim-specific refs target claim anchors; plain refs keep the legacy #ref-N target.
+        const targetId = claimSlot ? `ref-${refNumber}-${claimSlot}` : undefined;
+        backlinkList.push({ anchorId, claimId: normalizedClaimId, targetId, claimSlot });
         refBacklinks.set(citationId, backlinkList);
-        if (claimId) {
-          refClaimByAnchor.set(anchorId, claimId);
-        }
-        return `<sup class="citation-ref" id="${anchorId}">[<a href="#ref-${refNumber}">${refNumber}</a>]</sup>`;
+        const targetHref = targetId ? `#${targetId}` : `#ref-${refNumber}`;
+        return `<sup class="citation-ref" id="${anchorId}">[<a href="${targetHref}">${refLabel}</a>]</sup>`;
       });
 
       return `<span class="citation-group">${parts.join('')}</span>`;
@@ -353,30 +405,62 @@ const buildCiteproc = (references: Array<Record<string, unknown>>) => {
           if (!entry) return '';
           const anchors = refBacklinks.get(citationId) ?? [];
           let linkPairs = '';
-          if (anchors.length === 1) {
-            const anchorId = anchors[0];
-            const claimId = refClaimByAnchor.get(anchorId);
-            const backlink = `<a class="ref-backlink" href="#${anchorId}" aria-label="Back to citation">^</a>`;
-            const claimLink = claimId
-              ? `<a class="ref-claim-link" href="/cite/${encodeURIComponent(
+          if (anchors.length > 0) {
+            const claimGroups = new Map<
+              string,
+              { claimId: string; claimSlot: number; targetId: string; anchorIds: string[] }
+            >();
+            const nonClaimAnchors: string[] = [];
+
+            for (const entry of anchors) {
+              const claimId = entry.claimId?.trim();
+              if (claimId && entry.claimSlot && entry.targetId) {
+                const key = `${entry.claimSlot}:${claimId}`;
+                if (!claimGroups.has(key)) {
+                  claimGroups.set(key, {
+                    claimId,
+                    claimSlot: entry.claimSlot,
+                    targetId: entry.targetId,
+                    anchorIds: [],
+                  });
+                }
+                claimGroups.get(key)?.anchorIds.push(entry.anchorId);
+              } else {
+                nonClaimAnchors.push(entry.anchorId);
+              }
+            }
+
+            // Deduplicate by claim slot: repeated cites to the same claim share one
+            // bibliography target and collect multiple backlinks (^a, ^b, ...).
+            const claimGroupHtml = Array.from(claimGroups.values())
+              .sort((a, b) => a.claimSlot - b.claimSlot)
+              .map(group => {
+                const backlinks = group.anchorIds
+                  .map((anchorId, backlinkIndex) => {
+                    const suffix = toBacklinkSuffix(backlinkIndex);
+                    const backlinkLabel = group.anchorIds.length === 1 ? '^' : `^${suffix}`;
+                    return `<a class="ref-backlink" href="#${anchorId}" aria-label="${escapedBackToCitationLabel}">${backlinkLabel}</a>`;
+                  })
+                  .join(' ');
+                const claimLink = `<a class="ref-claim-link" href="/cite/${encodeURIComponent(
                   citationId
-                )}#claim-${encodeURIComponent(claimId)}">↗ ${escapeHtml(claimId)}</a>`
-              : '';
-            linkPairs = [backlink, claimLink].filter(Boolean).join(' ');
-          } else if (anchors.length > 1) {
-            linkPairs = anchors
-              .map((anchorId, backlinkIndex) => {
-                const suffix = toBacklinkSuffix(backlinkIndex);
-                const claimId = refClaimByAnchor.get(anchorId);
-                const backlink = `<a class="ref-backlink" href="#${anchorId}" aria-label="Back to citation">^${suffix}</a>`;
-                const claimLink = claimId
-                  ? `<a class="ref-claim-link" href="/cite/${encodeURIComponent(
-                      citationId
-                    )}#claim-${encodeURIComponent(claimId)}">↗ ${escapeHtml(claimId)}</a>`
-                  : '';
-                return [backlink, claimLink].filter(Boolean).join(' ');
-              })
-              .join(' ');
+                )}#claim-${encodeURIComponent(group.claimId)}">↗ ${escapeHtml(group.claimId)}</a>`;
+                return `<span id="${group.targetId}" class="ref-claim-pair">${backlinks} ${claimLink}</span>`;
+              });
+
+            const nonClaimHtml =
+              nonClaimAnchors.length > 0
+                ? `<span class="ref-claim-pair">${nonClaimAnchors
+                    .map((anchorId, backlinkIndex) => {
+                      const suffix = toBacklinkSuffix(backlinkIndex);
+                      const backlinkLabel =
+                        nonClaimAnchors.length === 1 ? '^' : `^${suffix}`;
+                      return `<a class="ref-backlink" href="#${anchorId}" aria-label="${escapedBackToCitationLabel}">${backlinkLabel}</a>`;
+                    })
+                    .join(' ')}</span>`
+                : '';
+
+            linkPairs = [...claimGroupHtml, nonClaimHtml].filter(Boolean).join(' ');
           }
           const linkHtml = linkPairs ? `<span class="ref-claim-pairs">${linkPairs}</span> ` : '';
           return `<li id="ref-${refNumber}">${linkHtml}${entry}</li>`;
@@ -412,13 +496,19 @@ export type RenderResult = {
   toc: TocItem[];
 };
 
+export type RenderMarkdownOptions = {
+  backToCitationLabel?: string;
+};
+
 export const renderMarkdown = async (
   bodySource: string,
-  citationEntries: Array<Record<string, unknown>>
+  citationEntries: Array<Record<string, unknown>>,
+  options: RenderMarkdownOptions = {}
 ): Promise<RenderResult> => {
+  const backToCitationLabel = options.backToCitationLabel ?? 'Back to citation';
   const env: Record<string, unknown> = { variables: {}, toc: [], tocSlugs: new Set() };
   if (citationEntries.length > 0) {
-    env.citeprocFactory = () => buildCiteproc(citationEntries);
+    env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);
   }
 
   if (bodySource.includes('{{article_count}}')) {

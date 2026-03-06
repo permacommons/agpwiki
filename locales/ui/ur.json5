@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'دعوے',
+    backToCitationAria: 'حوالہ پر واپس جائیں',
     rawCsl: 'خام CSL JSON',
     revisionMeta: 'نظرِ ثانی {{revId}} · {{date}}',
     revisionMetaNoDate: 'نظرِ ثانی {{revId}}',
