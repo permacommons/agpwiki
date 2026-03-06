@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Beweringen',
+    backToCitationAria: 'Terug naar de citatie',
     rawCsl: 'Ruwe CSL JSON',
     revisionMeta: 'Revisie {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revisie {{revId}}',

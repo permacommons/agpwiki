@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: 'Twierdzenia',
+    backToCitationAria: 'Wróć do cytowania',
     rawCsl: 'Surowy CSL JSON',
     revisionMeta: 'Rewizja {{revId}} · {{date}}',
     revisionMetaNoDate: 'Rewizja {{revId}}',

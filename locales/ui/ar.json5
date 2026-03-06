@@ -29,6 +29,7 @@
   },
   citation: {
     claimsTitle: 'الادعاءات',
+    backToCitationAria: 'العودة إلى الاستشهاد',
     rawCsl: 'CSL JSON خام',
     revisionMeta: 'المراجعة {{revId}} · {{date}}',
     revisionMetaNoDate: 'المراجعة {{revId}}',

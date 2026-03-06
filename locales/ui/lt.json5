@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Teiginiai',
+    backToCitationAria: 'Grįžti į citatą',
     rawCsl: 'Žalias CSL JSON',
     revisionMeta: 'Revizija {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revizija {{revId}}',

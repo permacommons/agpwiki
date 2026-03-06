@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'দাবিসমূহ',
+    backToCitationAria: 'উদ্ধৃতিতে ফিরে যান',
     rawCsl: 'কাঁচা CSL JSON',
     revisionMeta: 'সংস্করণ {{revId}} · {{date}}',
     revisionMetaNoDate: 'সংস্করণ {{revId}}',

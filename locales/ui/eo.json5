@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Asertoj',
+    backToCitationAria: 'Reen al citaĵo',
     rawCsl: 'Kruda CSL JSON',
     revisionMeta: 'Revizio {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revizio {{revId}}',

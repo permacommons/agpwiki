@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Klaim',
+    backToCitationAria: 'Kembali ke sitasi',
     rawCsl: 'CSL JSON mentah',
     revisionMeta: 'Revisi {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revisi {{revId}}',

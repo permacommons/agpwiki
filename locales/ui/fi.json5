@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Väitteet',
+    backToCitationAria: 'Palaa viitteeseen',
     rawCsl: 'Raaka CSL-JSON',
     revisionMeta: 'Revisio {{revId}} · {{date}}',
     revisionMetaNoDate: 'Revisio {{revId}}',

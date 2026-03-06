@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'Тврдења',
+    backToCitationAria: 'Назад кон цитатот',
     rawCsl: 'Суров CSL JSON',
     revisionMeta: 'Ревизија {{revId}} · {{date}}',
     revisionMetaNoDate: 'Ревизија {{revId}}',

@@ -30,6 +30,7 @@
   },
   citation: {
     claimsTitle: 'दावे',
+    backToCitationAria: 'उद्धरण पर वापस जाएँ',
     rawCsl: 'रॉ CSL JSON',
     revisionMeta: 'संशोधन {{revId}} · {{date}}',
     revisionMetaNoDate: 'संशोधन {{revId}}',
