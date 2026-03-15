@@ -189,6 +189,10 @@
   "toc": {
     "title": "Contents"
   },
+  "warning": {
+    // Shown on article pages that have never had a completed fact-check.
+    "neverFactChecked": "This article has not yet undergone a formal fact-check and should be considered a draft. The information it contains may be incomplete or inaccurate. Readers are advised to verify claims carefully against the cited sources before relying on them."
+  },
   "tool": {
     "view": "View",
     "diff": "Diff",

@@ -15,6 +15,7 @@ import {
   concatSafeText,
   escapeHtml,
   formatDateUTC,
+  iconWarningTriangle,
   renderLayout,
   renderMarkdown,
   renderToc,
@@ -640,6 +641,12 @@ export const registerPageRoutes = (app: Express) => {
 
       const pageChecksResult = await listPageChecks(dalInstance, slug);
       const pageChecks = pageChecksResult.checks.slice(0, 10);
+      const isArticle = !canonicalSlug.startsWith('meta/') && !canonicalSlug.startsWith('tool/');
+      const hasCompletedCheck = pageChecksResult.checks.some(c => c.status === 'completed');
+      const draftNoticeHtml =
+        isArticle && !hasCompletedCheck
+          ? `<aside class="article-draft-notice" role="note"><span class="article-draft-notice-icon" aria-hidden="true">${iconWarningTriangle}</span><span>${escapeHtml(req.t('warning.neverFactChecked'))}</span></aside>`
+          : '';
 
       const userIds = new Set<string>();
       for (const rev of revisions) {
@@ -713,7 +720,7 @@ export const registerPageRoutes = (app: Express) => {
       const html = renderLayout({
         title,
         labelHtml: metaLabel,
-        bodyHtml: `${bodyHtml}${languageRow}`,
+        bodyHtml: `${draftNoticeHtml}${bodyHtml}${languageRow}`,
         topHtml,
         sidebarHtml,
         signedIn,
