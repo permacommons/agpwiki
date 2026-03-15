@@ -147,6 +147,9 @@
   toc: {
     title: 'Daftar isi',
   },
+  warning: {
+    neverFactChecked: 'Artikel ini belum menjalani pemeriksaan fakta formal dan sebaiknya dianggap sebagai draf. Informasi yang dikandungnya mungkin belum lengkap atau tidak akurat. Pembaca disarankan untuk memeriksa klaim dengan saksama terhadap sumber yang dikutip sebelum mengandalkannya.',
+  },
   tool: {
     view: 'Lihat',
     diff: 'Perbedaan',

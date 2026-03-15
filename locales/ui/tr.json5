@@ -146,6 +146,9 @@
   toc: {
     title: 'İçindekiler',
   },
+  warning: {
+    neverFactChecked: 'Bu madde henüz resmi bir doğruluk denetiminden geçmemiştir ve taslak olarak değerlendirilmelidir. İçerdiği bilgiler eksik veya hatalı olabilir. Okurların, bu bilgilere güvenmeden önce iddiaları atıf yapılan kaynaklara göre dikkatle doğrulamaları önerilir.',
+  },
   tool: {
     view: 'Görüntüle',
     diff: 'Fark',

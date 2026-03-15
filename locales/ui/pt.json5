@@ -146,6 +146,9 @@
   toc: {
     title: 'Índice',
   },
+  warning: {
+    neverFactChecked: 'Este artigo ainda não passou por uma verificação formal de fatos e deve ser considerado um rascunho. As informações nele contidas podem estar incompletas ou imprecisas. Recomenda-se que os leitores verifiquem cuidadosamente as alegações com base nas fontes citadas antes de confiar nelas.',
+  },
   tool: {
     view: 'Ver',
     diff: 'Diferença',

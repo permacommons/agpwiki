@@ -145,6 +145,9 @@
   toc: {
     title: 'Inhaltsverzeichnis',
   },
+  warning: {
+    neverFactChecked: 'Dieser Artikel wurde noch keiner formalen Faktenprüfung unterzogen und sollte als Entwurf betrachtet werden. Die darin enthaltenen Informationen können unvollständig oder ungenau sein. Leserinnen und Leser sollten die Angaben sorgfältig anhand der zitierten Quellen überprüfen, bevor sie sich darauf verlassen.',
+  },
   tool: {
     view: 'Ansehen',
     diff: 'Unterschied',

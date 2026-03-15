@@ -146,6 +146,9 @@
   toc: {
     title: 'Spis treści',
   },
+  warning: {
+    neverFactChecked: 'Ten artykuł nie przeszedł jeszcze formalnej weryfikacji faktów i należy go traktować jako wersję roboczą. Zawarte w nim informacje mogą być niepełne lub niedokładne. Czytelnikom zaleca się, aby przed poleganiem na nich uważnie zweryfikowali twierdzenia na podstawie cytowanych źródeł.',
+  },
   tool: {
     view: 'Widok',
     diff: 'Różnica',
