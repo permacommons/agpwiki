@@ -147,6 +147,9 @@
   toc: {
     title: 'Tartalom',
   },
+  warning: {
+    neverFactChecked: 'Ez a cikk még nem esett át hivatalos tényellenőrzésen, ezért piszkozatként kezelendő. A benne szereplő információk hiányosak vagy pontatlanok lehetnek. Az olvasóknak azt javasoljuk, hogy mielőtt ezekre támaszkodnának, gondosan ellenőrizzék az állításokat a hivatkozott források alapján.',
+  },
   tool: {
     view: 'Megtekintés',
     diff: 'Eltérés',

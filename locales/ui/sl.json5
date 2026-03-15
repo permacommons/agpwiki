@@ -147,6 +147,9 @@
   toc: {
     title: 'Vsebina',
   },
+  warning: {
+    neverFactChecked: 'Ta članek še ni bil formalno preverjen glede dejstev in ga je treba obravnavati kot osnutek. Informacije, ki jih vsebuje, so lahko nepopolne ali netočne. Bralcem svetujemo, da trditve pred zanašanjem nanje skrbno preverijo glede na navedene vire.',
+  },
   tool: {
     view: 'Prikaži',
     diff: 'Razlika',

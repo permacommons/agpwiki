@@ -146,6 +146,9 @@
   toc: {
     title: 'Indice',
   },
+  warning: {
+    neverFactChecked: 'Questo articolo non è ancora stato sottoposto a una verifica formale dei fatti e deve essere considerato una bozza. Le informazioni che contiene potrebbero essere incomplete o inaccurate. Si consiglia ai lettori di verificare con attenzione le affermazioni confrontandole con le fonti citate prima di farvi affidamento.',
+  },
   tool: {
     view: 'Vedi',
     diff: 'Differenza',

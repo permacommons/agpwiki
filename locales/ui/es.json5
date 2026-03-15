@@ -146,6 +146,9 @@
   toc: {
     title: 'Contenidos',
   },
+  warning: {
+    neverFactChecked: 'Este artículo aún no ha pasado por una verificación formal de hechos y debe considerarse un borrador. La información que contiene puede estar incompleta o ser inexacta. Se recomienda a las personas lectoras que verifiquen cuidadosamente las afirmaciones con las fuentes citadas antes de basarse en ellas.',
+  },
   tool: {
     view: 'Ver',
     diff: 'Diferencia',

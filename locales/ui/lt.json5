@@ -147,6 +147,9 @@
   toc: {
     title: 'Turinys',
   },
+  warning: {
+    neverFactChecked: 'Šiam straipsniui dar nebuvo atliktas oficialus faktų patikrinimas, todėl jį reikėtų laikyti juodraščiu. Jame pateikta informacija gali būti neišsami arba netiksli. Prieš ja remiantis skaitytojams patariama atidžiai patikrinti teiginius pagal nurodytus šaltinius.',
+  },
   tool: {
     view: 'Peržiūrėti',
     diff: 'Skirtumas',
