@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Cet article n\'a pas encore fait l\'objet d\'une vérification formelle des faits et doit être considéré comme un brouillon. Les informations qu\'il contient peuvent être incomplètes ou inexactes. Il est conseillé aux lectrices et lecteurs de vérifier soigneusement les affirmations à partir des sources citées avant de s\'y fier.',
+    highSeverityIssues: 'De <a href="{{checksHref}}">récents contrôles de page</a> ont identifié dans cet article des problèmes de gravité élevée qui ne sont pas résolus :',
+    unresolvedIssues_one: '{{count}} problème',
+    unresolvedIssues_other: '{{count}} problèmes',
   },
   tool: {
     view: 'Voir',

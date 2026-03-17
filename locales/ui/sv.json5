@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Den här artikeln har ännu inte genomgått någon formell faktagranskning och bör betraktas som ett utkast. Informationen i den kan vara ofullständig eller felaktig. Läsare rekommenderas att noggrant kontrollera påståenden mot de angivna källorna innan de förlitar sig på dem.',
+    highSeverityIssues: '<a href="{{checksHref}}">Senaste sidkontroller</a> har identifierat olösta problem med hög allvarlighetsgrad i den här artikeln:',
+    unresolvedIssues_one: '{{count}} problem',
+    unresolvedIssues_other: '{{count}} problem',
   },
   tool: {
     view: 'Visa',

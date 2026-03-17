@@ -148,6 +148,9 @@
   },
   warning: {
     neverFactChecked: 'Questo articolo non è ancora stato sottoposto a una verifica formale dei fatti e deve essere considerato una bozza. Le informazioni che contiene potrebbero essere incomplete o inaccurate. Si consiglia ai lettori di verificare con attenzione le affermazioni confrontandole con le fonti citate prima di farvi affidamento.',
+    highSeverityIssues: '<a href="{{checksHref}}">Verifiche pagina recenti</a> hanno individuato in questo articolo problemi irrisolti ad alta gravità:',
+    unresolvedIssues_one: '{{count}} problema',
+    unresolvedIssues_other: '{{count}} problemi',
   },
   tool: {
     view: 'Vedi',

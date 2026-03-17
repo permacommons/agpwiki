@@ -648,6 +648,29 @@ export const registerPageRoutes = (app: Express) => {
           ? `<aside class="article-draft-notice" role="note"><span class="article-draft-notice-icon" aria-hidden="true">${iconWarningTriangle}</span><span>${escapeHtml(req.t('warning.neverFactChecked'))}</span></aside>`
           : '';
 
+      const latestRevDate = revisions[0]?.revDate;
+      const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+      const highSeverityRows = isArticle
+        ? pageChecksResult.checks
+            .filter(c => {
+              if (c.status !== 'completed' || !c.metrics) return false;
+              const checkDate = c.completedAt ?? c.revDate ?? c.createdAt;
+              if (latestRevDate && checkDate && latestRevDate.getTime() - checkDate.getTime() > thirtyDaysMs)
+                return false;
+              const unresolved = c.metrics.issues_found.high - c.metrics.issues_fixed.high;
+              return unresolved > 0;
+            })
+            .map(c => ({
+              id: c.id,
+              typeLabel: formatCheckType(c.type, req.t),
+              unresolved: (c.metrics?.issues_found.high ?? 0) - (c.metrics?.issues_fixed.high ?? 0),
+            }))
+        : [];
+      const issuesNoticeHtml =
+        highSeverityRows.length > 0
+          ? `<aside class="article-issues-notice" role="note"><span class="article-issues-notice-icon" aria-hidden="true">${iconWarningTriangle}</span><div class="article-issues-notice-body"><span>${req.t('warning.highSeverityIssues', { checksHref: `/${encodeURIComponent(canonicalSlug)}/checks` })}</span><div class="article-issues-rows">${highSeverityRows.map(row => `<div class="article-issues-row"><a href="/${encodeURIComponent(canonicalSlug)}/checks/${encodeURIComponent(row.id)}">${escapeHtml(row.typeLabel)}</a><span>${escapeHtml(req.t('warning.unresolvedIssues', { count: row.unresolved }))}</span></div>`).join('')}</div></div></aside>`
+          : '';
+
       const userIds = new Set<string>();
       for (const rev of revisions) {
         if (rev.revUser) userIds.add(rev.revUser);
@@ -720,7 +743,7 @@ export const registerPageRoutes = (app: Express) => {
       const html = renderLayout({
         title,
         labelHtml: metaLabel,
-        bodyHtml: `${draftNoticeHtml}${bodyHtml}${languageRow}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}`,
         topHtml,
         sidebarHtml,
         signedIn,

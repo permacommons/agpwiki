@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Artikel ini belum menjalani pemeriksaan fakta formal dan sebaiknya dianggap sebagai draf. Informasi yang dikandungnya mungkin belum lengkap atau tidak akurat. Pembaca disarankan untuk memeriksa klaim dengan saksama terhadap sumber yang dikutip sebelum mengandalkannya.',
+    highSeverityIssues: '<a href="{{checksHref}}">Pemeriksaan halaman terbaru</a> telah mengidentifikasi masalah berkeparahan tinggi yang belum terselesaikan dalam artikel ini:',
+    unresolvedIssues_one: '{{count}} masalah',
+    unresolvedIssues_other: '{{count}} masalah',
   },
   tool: {
     view: 'Lihat',

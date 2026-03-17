@@ -148,6 +148,9 @@
   },
   warning: {
     neverFactChecked: 'Bu madde henüz resmi bir doğruluk denetiminden geçmemiştir ve taslak olarak değerlendirilmelidir. İçerdiği bilgiler eksik veya hatalı olabilir. Okurların, bu bilgilere güvenmeden önce iddiaları atıf yapılan kaynaklara göre dikkatle doğrulamaları önerilir.',
+    highSeverityIssues: '<a href="{{checksHref}}">Son sayfa kontrolleri</a> bu maddede çözülmemiş yüksek şiddetli sorunlar tespit etti:',
+    unresolvedIssues_one: '{{count}} sorun',
+    unresolvedIssues_other: '{{count}} sorun',
   },
   tool: {
     view: 'Görüntüle',

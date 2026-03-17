@@ -147,6 +147,9 @@
   },
   warning: {
     neverFactChecked: 'Dieser Artikel wurde noch keiner formalen Faktenprüfung unterzogen und sollte als Entwurf betrachtet werden. Die darin enthaltenen Informationen können unvollständig oder ungenau sein. Leserinnen und Leser sollten die Angaben sorgfältig anhand der zitierten Quellen überprüfen, bevor sie sich darauf verlassen.',
+    highSeverityIssues: '<a href="{{checksHref}}">Letzte Seitenprüfungen</a> haben in diesem Artikel ungelöste Probleme mit hohem Schweregrad festgestellt:',
+    unresolvedIssues_one: '{{count}} Problem',
+    unresolvedIssues_other: '{{count}} Probleme',
   },
   tool: {
     view: 'Ansehen',

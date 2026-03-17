@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Šiam straipsniui dar nebuvo atliktas oficialus faktų patikrinimas, todėl jį reikėtų laikyti juodraščiu. Jame pateikta informacija gali būti neišsami arba netiksli. Prieš ja remiantis skaitytojams patariama atidžiai patikrinti teiginius pagal nurodytus šaltinius.',
+    highSeverityIssues: '<a href="{{checksHref}}">Naujausios puslapio patikros</a> šiame straipsnyje nustatė neišspręstų didelio sunkumo problemų:',
+    unresolvedIssues_one: '{{count}} problema',
+    unresolvedIssues_other: '{{count}} problemos',
   },
   tool: {
     view: 'Peržiūrėti',

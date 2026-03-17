@@ -191,7 +191,11 @@
   },
   "warning": {
     // Shown on article pages that have never had a completed fact-check.
-    "neverFactChecked": "This article has not yet undergone a formal fact-check and should be considered a draft. The information it contains may be incomplete or inaccurate. Readers are advised to verify claims carefully against the cited sources before relying on them."
+    "neverFactChecked": "This article has not yet undergone a formal fact-check and should be considered a draft. The information it contains may be incomplete or inaccurate. Readers are advised to verify claims carefully against the cited sources before relying on them.",
+    // Shown when recent checks have unresolved high-severity issues.
+    "highSeverityIssues": "<a href=\"{{checksHref}}\">Recent checks</a> have identified unresolved high-severity issues in this article:",
+    "unresolvedIssues_one": "{{count}} issue",
+    "unresolvedIssues_other": "{{count}} issues"
   },
   "tool": {
     "view": "View",
