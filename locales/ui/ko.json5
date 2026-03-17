@@ -148,6 +148,9 @@
   },
   warning: {
     neverFactChecked: '이 문서는 아직 공식적인 사실 확인을 거치지 않았으므로 초안으로 간주해야 합니다. 여기에 담긴 정보는 불완전하거나 부정확할 수 있습니다. 독자는 이를 신뢰하기 전에 인용된 출처를 바탕으로 주장 내용을 주의 깊게 확인하는 것이 좋습니다.',
+    highSeverityIssues: '<a href="{{checksHref}}">최근 페이지 점검</a>에서 이 문서의 미해결 고심각도 문제를 확인했습니다:',
+    unresolvedIssues_one: '{{count}}개 문제',
+    unresolvedIssues_other: '{{count}}개 문제',
   },
   tool: {
     view: '보기',

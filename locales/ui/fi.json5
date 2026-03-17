@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Tälle artikkelille ei ole vielä tehty virallista faktantarkistusta, ja sitä pitäisi pitää luonnoksena. Sen sisältämät tiedot voivat olla puutteellisia tai epätarkkoja. Lukijoita kehotetaan tarkistamaan väitteet huolellisesti viitattujen lähteiden perusteella ennen kuin niihin luotetaan.',
+    highSeverityIssues: '<a href="{{checksHref}}">Viimeisimmät sivutarkistukset</a> ovat tunnistaneet tässä artikkelissa ratkaisemattomia vakavia ongelmia:',
+    unresolvedIssues_one: '{{count}} ongelma',
+    unresolvedIssues_other: '{{count}} ongelmaa',
   },
   tool: {
     view: 'Näytä',

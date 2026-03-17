@@ -147,6 +147,9 @@
   },
   warning: {
     neverFactChecked: 'Ĉi tiu artikolo ankoraŭ ne spertis formalan faktokontrolon kaj devas esti konsiderata malneto. La informoj, kiujn ĝi enhavas, povas esti nekompletaj aŭ malprecizaj. Legantoj estas konsilitaj zorge kontroli asertojn laŭ la cititaj fontoj antaŭ ol fidi ilin.',
+    highSeverityIssues: '<a href="{{checksHref}}">Lastatempaj paĝaj kontroloj</a> identigis nesolvitajn altegravajn problemojn en ĉi tiu artikolo:',
+    unresolvedIssues_one: '{{count}} problemo',
+    unresolvedIssues_other: '{{count}} problemoj',
   },
   tool: {
     view: 'Vidi',

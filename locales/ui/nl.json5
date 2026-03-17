@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Dit artikel heeft nog geen formele factcheck ondergaan en moet als een concept worden beschouwd. De informatie die het bevat kan onvolledig of onjuist zijn. Lezers wordt aangeraden beweringen zorgvuldig aan de hand van de aangehaalde bronnen te controleren voordat zij erop vertrouwen.',
+    highSeverityIssues: '<a href="{{checksHref}}">Recente paginacontroles</a> hebben onopgeloste problemen met hoge ernst in dit artikel vastgesteld:',
+    unresolvedIssues_one: '{{count}} probleem',
+    unresolvedIssues_other: '{{count}} problemen',
   },
   tool: {
     view: 'Bekijk',

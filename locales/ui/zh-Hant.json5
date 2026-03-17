@@ -148,6 +148,9 @@
   },
   warning: {
     neverFactChecked: '這篇文章尚未經過正式的事實查核，應視為草稿。其中包含的資訊可能不完整或不準確。建議讀者在依賴這些內容之前，先根據所引用的來源仔細核實其中的說法。',
+    highSeverityIssues: '<a href="{{checksHref}}">最近的頁面檢查</a>已發現這篇文章中仍有未解決的高嚴重程度問題：',
+    unresolvedIssues_one: '{{count}} 個問題',
+    unresolvedIssues_other: '{{count}} 個問題',
   },
   tool: {
     view: '檢視',

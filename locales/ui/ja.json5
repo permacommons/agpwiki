@@ -148,6 +148,9 @@
   },
   warning: {
     neverFactChecked: 'この記事はまだ正式なファクトチェックを受けておらず、草稿として扱うべきです。含まれている情報は不完全または不正確である可能性があります。依拠する前に、引用された情報源に照らして主張を注意深く確認することを読者に勧めます。',
+    highSeverityIssues: '<a href="{{checksHref}}">最近のページチェック</a>により、この記事で未解決の高重大度の問題が特定されています:',
+    unresolvedIssues_one: '{{count}} 件の問題',
+    unresolvedIssues_other: '{{count}} 件の問題',
   },
   tool: {
     view: '表示',

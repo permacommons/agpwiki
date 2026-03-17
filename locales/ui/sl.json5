@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Ta članek še ni bil formalno preverjen glede dejstev in ga je treba obravnavati kot osnutek. Informacije, ki jih vsebuje, so lahko nepopolne ali netočne. Bralcem svetujemo, da trditve pred zanašanjem nanje skrbno preverijo glede na navedene vire.',
+    highSeverityIssues: '<a href="{{checksHref}}">Nedavna preverjanja strani</a> so v tem članku prepoznala nerešene težave z visoko resnostjo:',
+    unresolvedIssues_one: '{{count}} težava',
+    unresolvedIssues_other: '{{count}} težavi',
   },
   tool: {
     view: 'Prikaži',

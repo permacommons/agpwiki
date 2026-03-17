@@ -149,6 +149,9 @@
   },
   warning: {
     neverFactChecked: 'Ez a cikk még nem esett át hivatalos tényellenőrzésen, ezért piszkozatként kezelendő. A benne szereplő információk hiányosak vagy pontatlanok lehetnek. Az olvasóknak azt javasoljuk, hogy mielőtt ezekre támaszkodnának, gondosan ellenőrizzék az állításokat a hivatkozott források alapján.',
+    highSeverityIssues: 'A <a href="{{checksHref}}">legutóbbi oldalellenőrzések</a> feloldatlan, magas súlyosságú problémákat azonosítottak ebben a cikkben:',
+    unresolvedIssues_one: '{{count}} probléma',
+    unresolvedIssues_other: '{{count}} probléma',
   },
   tool: {
     view: 'Megtekintés',
