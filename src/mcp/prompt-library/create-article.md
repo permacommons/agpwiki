@@ -14,6 +14,8 @@ Please follow this workflow:
 1. The citations are real and accessible
 2. They actually support the claims you want to make with them
 
+**On source accessibility**: Only propose citations you can actually access — you must have read the relevant section yourself, either by fetching it from the web or via another available tool. Do not cite sources based on titles or abstracts alone, or sources that are paywalled or otherwise inaccessible to you. If you cannot verify that a source says what you think it says, do not include it.
+
 ## Step 3: Review checkpoint
 Present your outline and proposed citations for my review. Wait for my approval before proceeding.
 
