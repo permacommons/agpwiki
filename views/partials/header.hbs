@@ -7,7 +7,7 @@
       <a class="nav-link" href="/blog">{{__ "nav.blog"}}</a>
       <a class="nav-link" href="/tool/recent-changes">{{__ "nav.recentChanges"}}</a>
       {{#if signedIn}}
-      <form class="nav-form" method="post" action="/tool/auth/logout">
+      <form class="nav-form" method="post" action="/tool/logout">
         <button class="nav-link nav-button" type="submit">{{__ "nav.signOut"}}</button>
       </form>
       {{else}}

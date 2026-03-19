@@ -171,7 +171,7 @@
     login: {
       title: 'Вход',
       action: 'Войти',
-      needInvite: 'Нужно приглашение? Используй <code>/tool/auth/signup</code>.',
+      needInvite: 'Нужно приглашение? Используй <code>/tool/signup</code>.',
       errorInvalid: 'Неверный email или пароль.',
     },
     signup: {

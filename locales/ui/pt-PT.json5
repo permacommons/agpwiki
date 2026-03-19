@@ -170,7 +170,7 @@
     login: {
       title: 'Entrar',
       action: 'Entrar',
-      needInvite: 'Precisa de um convite? Use <code>/tool/auth/signup</code>.',
+      needInvite: 'Precisa de um convite? Use <code>/tool/signup</code>.',
       errorInvalid: 'E-mail ou senha inválidos.',
     },
     signup: {

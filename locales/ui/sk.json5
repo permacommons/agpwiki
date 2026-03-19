@@ -171,7 +171,7 @@
     login: {
       title: 'Prihlásiť sa',
       action: 'Prihlásiť sa',
-      needInvite: 'Potrebujete pozvánku? Použite <code>/tool/auth/signup</code>.',
+      needInvite: 'Potrebujete pozvánku? Použite <code>/tool/signup</code>.',
       errorInvalid: 'Neplatný e-mail alebo heslo.',
     },
     signup: {

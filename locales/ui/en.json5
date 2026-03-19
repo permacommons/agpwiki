@@ -215,7 +215,7 @@
     "login": {
       "title": "Log in",
       "action": "Log in",
-      "needInvite": "Need an invite? Use <code>/tool/auth/signup</code>.",
+      "needInvite": "Need an invite? Use <code>/tool/signup</code>.",
       "errorInvalid": "Invalid email or password."
     },
     "signup": {

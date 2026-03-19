@@ -171,7 +171,7 @@
     login: {
       title: 'Masuk',
       action: 'Masuk',
-      needInvite: 'Butuh undangan? Gunakan <code>/tool/auth/signup</code>.',
+      needInvite: 'Butuh undangan? Gunakan <code>/tool/signup</code>.',
       errorInvalid: 'Email atau kata sandi tidak valid.',
     },
     signup: {

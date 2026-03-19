@@ -169,7 +169,7 @@
     login: {
       title: 'Ensaluti',
       action: 'Ensaluti',
-      needInvite: 'Ĉu vi bezonas inviton? Uzu <code>/tool/auth/signup</code>.',
+      needInvite: 'Ĉu vi bezonas inviton? Uzu <code>/tool/signup</code>.',
       errorInvalid: 'Nevalida retpoŝto aŭ pasvorto.',
     },
     signup: {

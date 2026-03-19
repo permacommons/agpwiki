@@ -221,7 +221,7 @@ export const registerOAuthRoutes = (app: Express) => {
 
     const session = await resolveSessionUser(req);
     if (!session) {
-      const loginUrl = `/tool/auth/login?redirect=${encodeURIComponent(req.originalUrl)}`;
+      const loginUrl = `/tool/login?redirect=${encodeURIComponent(req.originalUrl)}`;
       res.redirect(302, loginUrl);
       return;
     }
@@ -305,7 +305,7 @@ export const registerOAuthRoutes = (app: Express) => {
 
     const session = await resolveSessionUser(req);
     if (!session) {
-      const loginUrl = `/tool/auth/login?redirect=${encodeURIComponent(req.originalUrl)}`;
+      const loginUrl = `/tool/login?redirect=${encodeURIComponent(req.originalUrl)}`;
       res.redirect(302, loginUrl);
       return;
     }

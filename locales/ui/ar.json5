@@ -168,7 +168,7 @@
     login: {
       title: 'تسجيل الدخول',
       action: 'تسجيل الدخول',
-      needInvite: 'هل تحتاج إلى دعوة؟ استخدم <code>/tool/auth/signup</code>.',
+      needInvite: 'هل تحتاج إلى دعوة؟ استخدم <code>/tool/signup</code>.',
       errorInvalid: 'البريد الإلكتروني أو كلمة المرور غير صالحة.',
     },
     signup: {

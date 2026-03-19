@@ -171,7 +171,7 @@
     login: {
       title: 'Bejelentkezés',
       action: 'Bejelentkezés',
-      needInvite: 'Meghívóra van szüksége? Használja: <code>/tool/auth/signup</code>.',
+      needInvite: 'Meghívóra van szüksége? Használja: <code>/tool/signup</code>.',
       errorInvalid: 'Érvénytelen e-mail vagy jelszó.',
     },
     signup: {

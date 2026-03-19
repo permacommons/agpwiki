@@ -171,7 +171,7 @@
     login: {
       title: 'Prisijungti',
       action: 'Prisijungti',
-      needInvite: 'Reikia kvietimo? Naudokite <code>/tool/auth/signup</code>.',
+      needInvite: 'Reikia kvietimo? Naudokite <code>/tool/signup</code>.',
       errorInvalid: 'Neteisingas el. paštas arba slaptažodis.',
     },
     signup: {

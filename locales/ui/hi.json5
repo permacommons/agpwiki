@@ -171,7 +171,7 @@
     login: {
       title: 'लॉग इन',
       action: 'लॉग इन',
-      needInvite: 'निमंत्रण चाहिए? <code>/tool/auth/signup</code> का उपयोग करें।',
+      needInvite: 'निमंत्रण चाहिए? <code>/tool/signup</code> का उपयोग करें।',
       errorInvalid: 'ईमेल या पासवर्ड अमान्य है।',
     },
     signup: {

@@ -171,7 +171,7 @@
     login: {
       title: 'Kirjaudu sisään',
       action: 'Kirjaudu sisään',
-      needInvite: 'Tarvitsetko kutsun? Käytä <code>/tool/auth/signup</code>.',
+      needInvite: 'Tarvitsetko kutsun? Käytä <code>/tool/signup</code>.',
       errorInvalid: 'Virheellinen sähköposti tai salasana.',
     },
     signup: {

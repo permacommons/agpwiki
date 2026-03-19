@@ -169,7 +169,7 @@
     login: {
       title: 'লগ ইন',
       action: 'লগ ইন',
-      needInvite: 'আমন্ত্রণ দরকার? <code>/tool/auth/signup</code> ব্যবহার করুন।',
+      needInvite: 'আমন্ত্রণ দরকার? <code>/tool/signup</code> ব্যবহার করুন।',
       errorInvalid: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
     },
     signup: {

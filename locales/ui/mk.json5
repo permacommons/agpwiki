@@ -171,7 +171,7 @@
     login: {
       title: 'Најави се',
       action: 'Најави се',
-      needInvite: 'Треба покана? Користи <code>/tool/auth/signup</code>.',
+      needInvite: 'Треба покана? Користи <code>/tool/signup</code>.',
       errorInvalid: 'Невалидна е-пошта или лозинка.',
     },
     signup: {

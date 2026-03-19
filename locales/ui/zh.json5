@@ -170,7 +170,7 @@
     login: {
       title: '登录',
       action: '登录',
-      needInvite: '需要邀请码？请使用 <code>/tool/auth/signup</code>。',
+      needInvite: '需要邀请码？请使用 <code>/tool/signup</code>。',
       errorInvalid: '邮箱或密码无效。',
     },
     signup: {

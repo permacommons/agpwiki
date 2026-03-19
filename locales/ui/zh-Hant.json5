@@ -170,7 +170,7 @@
     login: {
       title: '登入',
       action: '登入',
-      needInvite: '需要邀請碼？請使用 <code>/tool/auth/signup</code>。',
+      needInvite: '需要邀請碼？請使用 <code>/tool/signup</code>。',
       errorInvalid: '電子郵件或密碼無效。',
     },
     signup: {

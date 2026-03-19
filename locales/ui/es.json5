@@ -170,7 +170,7 @@
     login: {
       title: 'Iniciar sesión',
       action: 'Iniciar sesión',
-      needInvite: '¿Necesitas una invitación? Usa <code>/tool/auth/signup</code>.',
+      needInvite: '¿Necesitas una invitación? Usa <code>/tool/signup</code>.',
       errorInvalid: 'Correo o contraseña inválidos.',
     },
     signup: {

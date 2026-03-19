@@ -171,7 +171,7 @@
     login: {
       title: 'Prijava',
       action: 'Prijavi se',
-      needInvite: 'Potrebujete povabilo? Uporabite <code>/tool/auth/signup</code>.',
+      needInvite: 'Potrebujete povabilo? Uporabite <code>/tool/signup</code>.',
       errorInvalid: 'Neveljaven e-naslov ali geslo.',
     },
     signup: {

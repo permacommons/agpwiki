@@ -170,7 +170,7 @@
     login: {
       title: 'ログイン',
       action: 'ログイン',
-      needInvite: '招待コードが必要ですか？ <code>/tool/auth/signup</code> を使用してください。',
+      needInvite: '招待コードが必要ですか？ <code>/tool/signup</code> を使用してください。',
       errorInvalid: 'メールアドレスまたはパスワードが無効です。',
     },
     signup: {

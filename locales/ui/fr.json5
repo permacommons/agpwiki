@@ -171,7 +171,7 @@
     login: {
       title: 'Connexion',
       action: 'Se connecter',
-      needInvite: "Besoin d'une invitation ? Utilise <code>/tool/auth/signup</code>.",
+      needInvite: "Besoin d'une invitation ? Utilise <code>/tool/signup</code>.",
       errorInvalid: 'Email ou mot de passe invalide.',
     },
     signup: {

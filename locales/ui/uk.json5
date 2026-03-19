@@ -171,7 +171,7 @@
     login: {
       title: 'Увійти',
       action: 'Увійти',
-      needInvite: 'Потрібне запрошення? Використайте <code>/tool/auth/signup</code>.',
+      needInvite: 'Потрібне запрошення? Використайте <code>/tool/signup</code>.',
       errorInvalid: 'Неправильна ел. пошта або пароль.',
     },
     signup: {
