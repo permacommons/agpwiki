@@ -7,7 +7,7 @@
     blog: 'Tinklaraštis',
     recentChanges: 'Naujausi pakeitimai',
     signOut: 'Atsijungti',
-    help: 'Prisidėti',
+    help: 'Pagalba',
     menu: 'Meniu',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Prisijungti',
       action: 'Prisijungti',
-      needInvite: 'Reikia kvietimo? Naudokite <code>/tool/request-account</code>.',
+      needInvite: 'Dar neturite paskyros? <a href="/tool/request-account">Pateikite užklausą!</a>',
       errorInvalid: 'Neteisingas el. paštas arba slaptažodis.',
     },
     signup: {

@@ -7,7 +7,7 @@
     blog: 'Bitácora',
     recentChanges: 'Cambios recientes',
     signOut: 'Cerrar sesión',
-    help: 'Contribuir',
+    help: 'Ayuda',
     menu: 'Menú',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Iniciar sesión',
       action: 'Iniciar sesión',
-      needInvite: '¿Necesitas una invitación? Usa <code>/tool/request-account</code>.',
+      needInvite: '¿Aún no tienes una cuenta? <a href="/tool/request-account">¡Solicita una!</a>',
       errorInvalid: 'Correo o contraseña inválidos.',
     },
     signup: {

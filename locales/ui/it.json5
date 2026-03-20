@@ -7,7 +7,7 @@
     blog: 'Diario',
     recentChanges: 'Modifiche recenti',
     signOut: 'Disconnetti',
-    help: 'Contribuisci',
+    help: 'Aiuto',
     menu: 'Menu di navigazione',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Accedi',
       action: 'Accedi',
-      needInvite: 'Hai bisogno di un invito? Usa <code>/tool/request-account</code>.',
+      needInvite: 'Non hai ancora un account? <a href="/tool/request-account">Richiedine uno!</a>',
       errorInvalid: 'Email o password non validi.',
     },
     signup: {

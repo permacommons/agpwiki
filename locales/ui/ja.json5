@@ -7,7 +7,7 @@
     blog: 'ブログ',
     recentChanges: '最近の更新',
     signOut: 'ログアウト',
-    help: '貢献する',
+    help: 'ヘルプ',
     menu: 'メニュー',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'ログイン',
       action: 'ログイン',
-      needInvite: '招待コードが必要ですか？ <code>/tool/request-account</code> を使用してください。',
+      needInvite: 'まだアカウントをお持ちではありませんか？ <a href="/tool/request-account">申請してください。</a>',
       errorInvalid: 'メールアドレスまたはパスワードが無効です。',
     },
     signup: {

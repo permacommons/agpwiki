@@ -8,7 +8,7 @@
     blog: 'Blogbereich',
     recentChanges: 'Letzte Änderungen',
     signOut: 'Abmelden',
-    help: 'Mitwirken',
+    help: 'Hilfe',
     menu: 'Menü',
   },
   search: {
@@ -169,7 +169,7 @@
     login: {
       title: 'Anmelden',
       action: 'Anmelden',
-      needInvite: 'Brauchst du eine Einladung? Nutze <code>/tool/request-account</code>.',
+      needInvite: 'Noch kein Konto? <a href="/tool/request-account">Beantrage eines!</a>',
       errorInvalid: 'Ungültige E-Mail oder Passwort.',
     },
     signup: {

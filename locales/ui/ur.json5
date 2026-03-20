@@ -7,7 +7,7 @@
     blog: 'بلاگ',
     recentChanges: 'حالیہ تبدیلیاں',
     signOut: 'لاگ آؤٹ',
-    help: 'تعاون کریں',
+    help: 'مدد',
     menu: 'مینو',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'لاگ اِن',
       action: 'لاگ اِن',
-      needInvite: 'دعوت نامہ چاہیے؟ <code>/tool/request-account</code> استعمال کریں۔',
+      needInvite: 'ابھی تک اکاؤنٹ نہیں ہے؟ <a href="/tool/request-account">ایک کے لیے درخواست دیں!</a>',
       errorInvalid: 'ای میل یا پاس ورڈ غلط ہے۔',
     },
     signup: {

@@ -7,7 +7,7 @@
     blog: 'Blog da Agpedia',
     recentChanges: 'Mudanças recentes',
     signOut: 'Sair',
-    help: 'Contribuir',
+    help: 'Ajuda',
     menu: 'Menu de navegação',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Entrar',
       action: 'Entrar',
-      needInvite: 'Precisa de um convite? Use <code>/tool/request-account</code>.',
+      needInvite: 'Ainda não tem uma conta? <a href="/tool/request-account">Solicite uma!</a>',
       errorInvalid: 'E-mail ou senha inválidos.',
     },
     signup: {

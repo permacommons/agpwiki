@@ -7,7 +7,7 @@
     blog: 'Blogg',
     recentChanges: 'Senaste ändringar',
     signOut: 'Logga ut',
-    help: 'Bidra',
+    help: 'Hjälp',
     menu: 'Meny',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Logga in',
       action: 'Logga in',
-      needInvite: 'Behöver du en inbjudan? Använd <code>/tool/request-account</code>.',
+      needInvite: 'Har du inget konto än? <a href="/tool/request-account">Be om ett!</a>',
       errorInvalid: 'Ogiltig e-post eller lösenord.',
     },
     signup: {

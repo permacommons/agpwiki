@@ -8,7 +8,7 @@
     blog: 'Bloggedeelte',
     recentChanges: 'Recente wijzigingen',
     signOut: 'Afmelden',
-    help: 'Bijdragen',
+    help: 'Hulp',
     menu: 'Navigatiemenu',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Inloggen',
       action: 'Inloggen',
-      needInvite: 'Heb je een uitnodiging nodig? Gebruik <code>/tool/request-account</code>.',
+      needInvite: 'Nog geen account? <a href="/tool/request-account">Vraag er een aan!</a>',
       errorInvalid: 'Ongeldig e-mailadres of wachtwoord.',
     },
     signup: {
