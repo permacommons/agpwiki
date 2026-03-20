@@ -156,20 +156,6 @@ header.site-header {
   box-shadow: 0 10px 20px rgba(31, 29, 26, 0.1);
   z-index: 20;
 }
-.user-menu-heading {
-  padding: 0.45rem 0.65rem 0.75rem;
-  margin-bottom: 0.35rem;
-  border-bottom: 1px solid var(--rule);
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .user-menu-link,
 .user-menu-action {
   display: block;
@@ -1098,11 +1084,6 @@ altcha-widget {
     border-top: 1px solid var(--rule);
     box-shadow: none;
     background: transparent;
-  }
-  .nav-menu-content .user-menu-heading {
-    padding: 0.5rem 1rem 0.75rem;
-    margin-bottom: 0;
-    border-bottom: none;
   }
   .nav-menu-content .user-menu-link,
   .nav-menu-content .user-menu-action {

@@ -20,9 +20,6 @@
           </span>
         </summary>
         <div class="user-menu-panel">
-          {{#if currentUserName}}
-          <div class="user-menu-heading">{{currentUserName}}</div>
-          {{/if}}
           <a class="user-menu-link" href="/tool/tokens">{{__ "auth.tokens.title"}}</a>
           <form class="user-menu-form" method="post" action="/tool/logout">
             <button class="user-menu-action" type="submit">{{__ "nav.signOut"}}</button>
