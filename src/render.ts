@@ -543,6 +543,9 @@ Handlebars.registerPartial(
 );
 
 Handlebars.registerHelper('eq', (a: unknown, b: unknown) => a === b);
+Handlebars.registerHelper('urlencode', (value: unknown) =>
+  encodeURIComponent(typeof value === 'string' ? value : '')
+);
 
 export interface LanguageOption {
   code: string;
@@ -556,6 +559,8 @@ export const renderLayout = (options: {
   sidebarHtml?: string;
   topHtml?: string;
   signedIn?: boolean;
+  currentUserName?: string | null;
+  currentPath?: string;
   locale?: string;
   languageOptions?: LanguageOption[];
 }) => {
@@ -566,6 +571,8 @@ export const renderLayout = (options: {
     sidebarHtml = '',
     topHtml = '',
     signedIn,
+    currentUserName = null,
+    currentPath = '/',
     locale = 'en',
     languageOptions = [],
   } = options;
@@ -579,6 +586,8 @@ export const renderLayout = (options: {
     topHtml,
     hasSidebar: Boolean(sidebarHtml),
     signedIn: Boolean(signedIn),
+    currentUserName,
+    currentPath,
     locale,
     languageOptions,
     assets: layoutAssets,

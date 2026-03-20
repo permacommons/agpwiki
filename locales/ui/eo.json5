@@ -7,7 +7,7 @@
     blog: 'Blogo',
     recentChanges: 'Lastaj ŝanĝoj',
     signOut: 'Elsaluti',
-    contribute: 'Kontribui',
+    help: 'Kontribui',
     menu: 'Menuo',
   },
   search: {
@@ -169,7 +169,7 @@
     login: {
       title: 'Ensaluti',
       action: 'Ensaluti',
-      needInvite: 'Ĉu vi bezonas inviton? Uzu <code>/tool/signup</code>.',
+      needInvite: 'Ĉu vi bezonas inviton? Uzu <code>/tool/request-account</code>.',
       errorInvalid: 'Nevalida retpoŝto aŭ pasvorto.',
     },
     signup: {

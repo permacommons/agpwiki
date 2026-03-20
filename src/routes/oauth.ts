@@ -35,6 +35,8 @@ const renderOAuthLayout = (
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    currentUserName: res.locals.currentUserName,
+    currentPath: res.locals.currentPath,
     locale: res.locals.locale,
     languageOptions: res.locals.languageOptions,
   });

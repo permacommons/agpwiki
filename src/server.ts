@@ -4,8 +4,10 @@ import cookieParser from 'cookie-parser';
 import express from 'express';
 
 import debug from '../util/debug.js';
+import { resolveSessionUser } from './auth/session.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
+import User from './models/user.js';
 import { registerAccountRequestRoutes } from './routes/account-requests.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
@@ -37,6 +39,19 @@ app.use((req, res, next) => {
   const locale = (req.language ?? 'en') as AgpWiki.LocaleCode;
   res.locals.locale = locale;
   res.locals.languageOptions = getLanguageOptions(locale);
+  next();
+});
+app.use(async (req, res, next) => {
+  const session = await resolveSessionUser(req);
+  res.locals.signedIn = Boolean(session);
+  res.locals.currentUserName = null;
+  res.locals.currentPath = req.originalUrl || '/';
+
+  if (session) {
+    const user = await User.filterWhere({ id: session.userId }).first();
+    res.locals.currentUserName = user?.displayName ?? null;
+  }
+
   next();
 });
 

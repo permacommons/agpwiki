@@ -189,6 +189,8 @@ export const registerToolRoutes = (app: Express) => {
       labelHtml,
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });
@@ -247,6 +249,8 @@ export const registerToolRoutes = (app: Express) => {
       labelHtml,
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });
@@ -314,6 +318,8 @@ export const registerToolRoutes = (app: Express) => {
       labelHtml,
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });
@@ -382,6 +388,8 @@ export const registerToolRoutes = (app: Express) => {
       labelHtml,
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });
@@ -445,6 +453,8 @@ export const registerToolRoutes = (app: Express) => {
       labelHtml,
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });

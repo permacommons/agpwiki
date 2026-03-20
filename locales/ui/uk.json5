@@ -7,7 +7,7 @@
     blog: 'Блог',
     recentChanges: 'Останні зміни',
     signOut: 'Вийти',
-    contribute: 'Долучитися',
+    help: 'Долучитися',
     menu: 'Меню',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Увійти',
       action: 'Увійти',
-      needInvite: 'Потрібне запрошення? Використайте <code>/tool/signup</code>.',
+      needInvite: 'Потрібне запрошення? Використайте <code>/tool/request-account</code>.',
       errorInvalid: 'Неправильна ел. пошта або пароль.',
     },
     signup: {

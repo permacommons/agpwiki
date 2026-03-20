@@ -7,7 +7,7 @@
     blog: 'Blogi',
     recentChanges: 'Tuoreet muutokset',
     signOut: 'Kirjaudu ulos',
-    contribute: 'Osallistu',
+    help: 'Osallistu',
     menu: 'Valikko',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Kirjaudu sisään',
       action: 'Kirjaudu sisään',
-      needInvite: 'Tarvitsetko kutsun? Käytä <code>/tool/signup</code>.',
+      needInvite: 'Tarvitsetko kutsun? Käytä <code>/tool/request-account</code>.',
       errorInvalid: 'Virheellinen sähköposti tai salasana.',
     },
     signup: {

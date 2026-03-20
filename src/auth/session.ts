@@ -5,6 +5,7 @@ import AuthSession from '../models/auth-session.js';
 
 const SESSION_COOKIE = 'agpwiki_session';
 const SESSION_DAYS = 30;
+const sessionUserCache = new WeakMap<Request, Promise<{ userId: string; sessionId: string } | null>>();
 
 const hashToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
@@ -62,15 +63,23 @@ export const clearSessionCookie = (res: Response) => {
 };
 
 export const resolveSessionUser = async (req: Request) => {
-  const cookies = parseCookies(req.headers.cookie);
-  const raw = cookies[SESSION_COOKIE];
-  if (!raw) return null;
-  const tokenHash = hashToken(raw);
-  const session = await AuthSession.findActiveByHash(tokenHash);
-  if (!session) return null;
-  session.lastUsedAt = new Date();
-  await session.save();
-  return { userId: session.userId, sessionId: session.id };
+  const cached = sessionUserCache.get(req);
+  if (cached) return cached;
+
+  const promise = (async () => {
+    const cookies = parseCookies(req.headers.cookie);
+    const raw = cookies[SESSION_COOKIE];
+    if (!raw) return null;
+    const tokenHash = hashToken(raw);
+    const session = await AuthSession.findActiveByHash(tokenHash);
+    if (!session) return null;
+    session.lastUsedAt = new Date();
+    await session.save();
+    return { userId: session.userId, sessionId: session.id };
+  })();
+
+  sessionUserCache.set(req, promise);
+  return promise;
 };
 
 export const revokeSession = async (token: string) => {

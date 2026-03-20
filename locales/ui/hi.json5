@@ -7,7 +7,7 @@
     blog: 'ब्लॉग',
     recentChanges: 'हाल के बदलाव',
     signOut: 'साइन आउट',
-    contribute: 'योगदान करें',
+    help: 'योगदान करें',
     menu: 'मेनू',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'लॉग इन',
       action: 'लॉग इन',
-      needInvite: 'निमंत्रण चाहिए? <code>/tool/signup</code> का उपयोग करें।',
+      needInvite: 'निमंत्रण चाहिए? <code>/tool/request-account</code> का उपयोग करें।',
       errorInvalid: 'ईमेल या पासवर्ड अमान्य है।',
     },
     signup: {

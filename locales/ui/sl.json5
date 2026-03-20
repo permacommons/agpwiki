@@ -7,7 +7,7 @@
     blog: 'Blogovni del',
     recentChanges: 'Nedavne spremembe',
     signOut: 'Odjava',
-    contribute: 'Prispevaj',
+    help: 'Prispevaj',
     menu: 'Meni',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Prijava',
       action: 'Prijavi se',
-      needInvite: 'Potrebujete povabilo? Uporabite <code>/tool/signup</code>.',
+      needInvite: 'Potrebujete povabilo? Uporabite <code>/tool/request-account</code>.',
       errorInvalid: 'Neveljaven e-naslov ali geslo.',
     },
     signup: {

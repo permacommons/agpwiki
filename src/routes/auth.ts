@@ -30,6 +30,8 @@ const renderAuthLayout = (
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    currentUserName: res.locals.currentUserName,
+    currentPath: res.locals.currentPath,
     locale: res.locals.locale,
     languageOptions: res.locals.languageOptions,
   });
@@ -41,11 +43,12 @@ const TOOL_LOGIN_PATH = '/tool/login';
 const TOOL_SIGNUP_PATH = '/tool/signup';
 const TOOL_LOGOUT_PATH = '/tool/logout';
 const TOOL_TOKENS_PATH = '/tool/tokens';
+const DEFAULT_LOGIN_REDIRECT_PATH = '/meta/welcome';
 
 const getSafeRedirect = (value: string | null) => {
   if (!value) return null;
-  if (!value.startsWith('/tool/')) return null;
-  if (value.includes('://') || value.includes('\\')) return null;
+  if (!value.startsWith('/')) return null;
+  if (value.startsWith('//') || value.includes('\\')) return null;
   return value;
 };
 
@@ -62,15 +65,15 @@ const isValidEmail = (value: string) => Boolean(value?.includes('@') && value.in
 
 export const registerAuthRoutes = (app: Express) => {
   app.get(TOOL_LOGIN_PATH, async (req, res) => {
-    const session = await resolveSessionUser(req);
-    if (session) {
-      res.redirect(302, TOOL_TOKENS_PATH);
-      return;
-    }
-
     const redirectTo = getSafeRedirect(
       typeof req.query.redirect === 'string' ? req.query.redirect : null
     );
+    const session = await resolveSessionUser(req);
+    if (session) {
+      res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
+      return;
+    }
+
     const redirectField = redirectTo
       ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
       : '';
@@ -141,7 +144,7 @@ export const registerAuthRoutes = (app: Express) => {
 
     const session = await createSession(user.id);
     setSessionCookie(res, session.token, session.expiresAt);
-    res.redirect(302, redirectTo ?? TOOL_TOKENS_PATH);
+    res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
   };
 
   app.post(TOOL_LOGIN_PATH, handleLogin);

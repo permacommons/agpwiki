@@ -205,6 +205,8 @@ export const registerPageRoutes = (app: Express) => {
         bodyHtml: `${bodyHtml}${languageRow}`,
         sidebarHtml,
         signedIn,
+        currentUserName: res.locals.currentUserName,
+        currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
       });
@@ -493,6 +495,8 @@ export const registerPageRoutes = (app: Express) => {
         bodyHtml: `${topHtml}${bodyHtml}${languageRow}`,
         sidebarHtml,
         signedIn,
+        currentUserName: res.locals.currentUserName,
+        currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
       });
@@ -747,6 +751,8 @@ export const registerPageRoutes = (app: Express) => {
         topHtml,
         sidebarHtml,
         signedIn,
+        currentUserName: res.locals.currentUserName,
+        currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
       });

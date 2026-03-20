@@ -7,7 +7,7 @@
     blog: '博客',
     recentChanges: '最近更改',
     signOut: '退出',
-    contribute: '贡献',
+    help: '贡献',
     menu: '菜单',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: '登录',
       action: '登录',
-      needInvite: '需要邀请码？请使用 <code>/tool/signup</code>。',
+      needInvite: '需要邀请码？请使用 <code>/tool/request-account</code>。',
       errorInvalid: '邮箱或密码无效。',
     },
     signup: {

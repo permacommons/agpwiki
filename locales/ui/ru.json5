@@ -8,7 +8,7 @@
     blog: 'Блог',
     recentChanges: 'Свежие правки',
     signOut: 'Выйти',
-    contribute: 'Участвовать',
+    help: 'Участвовать',
     menu: 'Меню',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Вход',
       action: 'Войти',
-      needInvite: 'Нужно приглашение? Используй <code>/tool/signup</code>.',
+      needInvite: 'Нужно приглашение? Используй <code>/tool/request-account</code>.',
       errorInvalid: 'Неверный email или пароль.',
     },
     signup: {
