@@ -7,7 +7,7 @@
     blog: 'مدونة',
     recentChanges: 'أحدث التغييرات',
     signOut: 'خروج',
-    contribute: 'ساهم',
+    help: 'مساعدة',
     menu: 'القائمة',
   },
   search: {
@@ -168,7 +168,7 @@
     login: {
       title: 'تسجيل الدخول',
       action: 'تسجيل الدخول',
-      needInvite: 'هل تحتاج إلى دعوة؟ استخدم <code>/tool/auth/signup</code>.',
+      needInvite: 'ليس لديك حساب بعد؟ <a href="/tool/request-account">اطلب حسابًا!</a>',
       errorInvalid: 'البريد الإلكتروني أو كلمة المرور غير صالحة.',
     },
     signup: {

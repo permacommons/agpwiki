@@ -316,6 +316,8 @@ export const registerCitationRoutes = (app: Express) => {
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
+        currentUserName: res.locals.currentUserName,
+        currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
       });
@@ -617,6 +619,8 @@ export const registerCitationRoutes = (app: Express) => {
         topHtml,
         sidebarHtml: historyHtml,
         signedIn,
+        currentUserName: res.locals.currentUserName,
+        currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
       });

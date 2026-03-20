@@ -7,7 +7,7 @@
     blog: 'Блог',
     recentChanges: 'Скорешни промени',
     signOut: 'Одјави се',
-    contribute: 'Придонеси',
+    help: 'Помош',
     menu: 'Мени',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Најави се',
       action: 'Најави се',
-      needInvite: 'Треба покана? Користи <code>/tool/auth/signup</code>.',
+      needInvite: 'Сè уште немате сметка? <a href="/tool/request-account">Побарајте ја!</a>',
       errorInvalid: 'Невалидна е-пошта или лозинка.',
     },
     signup: {

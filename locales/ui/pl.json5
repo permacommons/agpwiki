@@ -7,7 +7,7 @@
     blog: 'Dziennik',
     recentChanges: 'Ostatnie zmiany',
     signOut: 'Wyloguj',
-    contribute: 'Współtwórz',
+    help: 'Pomoc',
     menu: 'Menu nawigacji',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Zaloguj się',
       action: 'Zaloguj się',
-      needInvite: 'Potrzebujesz zaproszenia? Użyj <code>/tool/auth/signup</code>.',
+      needInvite: 'Nie masz jeszcze konta? <a href="/tool/request-account">Poproś o nie!</a>',
       errorInvalid: 'Nieprawidłowy e-mail lub hasło.',
     },
     signup: {

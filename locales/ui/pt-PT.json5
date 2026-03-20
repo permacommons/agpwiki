@@ -7,7 +7,7 @@
     blog: 'Blogue',
     recentChanges: 'Alterações recentes',
     signOut: 'Sair',
-    contribute: 'Contribuir',
+    help: 'Ajuda',
     menu: 'Menu de navegação',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Entrar',
       action: 'Entrar',
-      needInvite: 'Precisa de um convite? Use <code>/tool/auth/signup</code>.',
+      needInvite: 'Ainda não tem uma conta? <a href="/tool/request-account">Peça uma!</a>',
       errorInvalid: 'E-mail ou senha inválidos.',
     },
     signup: {

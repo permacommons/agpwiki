@@ -7,7 +7,7 @@
     blog: 'Napló',
     recentChanges: 'Friss változtatások',
     signOut: 'Kijelentkezés',
-    contribute: 'Közreműködés',
+    help: 'Súgó',
     menu: 'Menü',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Bejelentkezés',
       action: 'Bejelentkezés',
-      needInvite: 'Meghívóra van szüksége? Használja: <code>/tool/auth/signup</code>.',
+      needInvite: 'Még nincs fiókja? <a href="/tool/request-account">Igényeljen egyet!</a>',
       errorInvalid: 'Érvénytelen e-mail vagy jelszó.',
     },
     signup: {

@@ -7,7 +7,7 @@
     blog: '블로그',
     recentChanges: '최근 바뀜',
     signOut: '로그아웃',
-    contribute: '기여하기',
+    help: '도움말',
     menu: '메뉴',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: '로그인',
       action: '로그인',
-      needInvite: '초대장이 필요하신가요? <code>/tool/auth/signup</code>을 사용하세요.',
+      needInvite: '아직 계정이 없으신가요? <a href="/tool/request-account">요청해 보세요!</a>',
       errorInvalid: '이메일 또는 비밀번호가 잘못되었습니다.',
     },
     signup: {

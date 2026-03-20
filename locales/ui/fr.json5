@@ -8,7 +8,7 @@
     blog: 'Carnet',
     recentChanges: 'Modifications récentes',
     signOut: 'Déconnexion',
-    contribute: 'Contribuer',
+    help: 'Aide',
     menu: 'Navigation',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Connexion',
       action: 'Se connecter',
-      needInvite: "Besoin d'une invitation ? Utilise <code>/tool/auth/signup</code>.",
+      needInvite: "Tu n’as pas encore de compte ? <a href=\"/tool/request-account\">Demande-en un !</a>",
       errorInvalid: 'Email ou mot de passe invalide.',
     },
     signup: {

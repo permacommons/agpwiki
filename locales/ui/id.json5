@@ -7,7 +7,7 @@
     blog: 'Blog Agpedia',
     recentChanges: 'Perubahan terbaru',
     signOut: 'Keluar',
-    contribute: 'Berkontribusi',
+    help: 'Bantuan',
     menu: 'Menu navigasi',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Masuk',
       action: 'Masuk',
-      needInvite: 'Butuh undangan? Gunakan <code>/tool/auth/signup</code>.',
+      needInvite: 'Belum punya akun? <a href="/tool/request-account">Minta satu!</a>',
       errorInvalid: 'Email atau kata sandi tidak valid.',
     },
     signup: {

@@ -30,6 +30,8 @@ const renderAuthLayout = (
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    currentUserName: res.locals.currentUserName,
+    currentPath: res.locals.currentPath,
     locale: res.locals.locale,
     languageOptions: res.locals.languageOptions,
   });
@@ -37,17 +39,23 @@ const renderAuthLayout = (
 const renderError = (message: string) =>
   `<div class="form-error">${escapeHtml(message)}</div>`;
 
+const TOOL_LOGIN_PATH = '/tool/login';
+const TOOL_SIGNUP_PATH = '/tool/signup';
+const TOOL_LOGOUT_PATH = '/tool/logout';
+const TOOL_TOKENS_PATH = '/tool/tokens';
+const DEFAULT_LOGIN_REDIRECT_PATH = '/meta/welcome';
+
 const getSafeRedirect = (value: string | null) => {
   if (!value) return null;
-  if (!value.startsWith('/tool/')) return null;
-  if (value.includes('://') || value.includes('\\')) return null;
+  if (!value.startsWith('/')) return null;
+  if (value.startsWith('//') || value.includes('\\')) return null;
   return value;
 };
 
 const requireAuthUser = async (req: Request, res: Response) => {
   const session = await resolveSessionUser(req);
   if (!session) {
-    res.redirect(302, '/tool/auth/login');
+    res.redirect(302, TOOL_LOGIN_PATH);
     return null;
   }
   return session.userId;
@@ -56,16 +64,16 @@ const requireAuthUser = async (req: Request, res: Response) => {
 const isValidEmail = (value: string) => Boolean(value?.includes('@') && value.includes('.'));
 
 export const registerAuthRoutes = (app: Express) => {
-  app.get('/tool/auth/login', async (req, res) => {
-    const session = await resolveSessionUser(req);
-    if (session) {
-      res.redirect(302, '/tool/account/tokens');
-      return;
-    }
-
+  app.get(TOOL_LOGIN_PATH, async (req, res) => {
     const redirectTo = getSafeRedirect(
       typeof req.query.redirect === 'string' ? req.query.redirect : null
     );
+    const session = await resolveSessionUser(req);
+    if (session) {
+      res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
+      return;
+    }
+
     const redirectField = redirectTo
       ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
       : '';
@@ -95,7 +103,7 @@ export const registerAuthRoutes = (app: Express) => {
       );
   });
 
-  app.post('/tool/auth/login', async (req, res) => {
+  const handleLogin = async (req: Request, res: Response) => {
     const email = String(req.body.email ?? '').trim().toLowerCase();
     const password = String(req.body.password ?? '');
     const redirectTo = getSafeRedirect(String(req.body.redirect ?? '').trim()) ?? null;
@@ -136,19 +144,23 @@ export const registerAuthRoutes = (app: Express) => {
 
     const session = await createSession(user.id);
     setSessionCookie(res, session.token, session.expiresAt);
-    res.redirect(302, redirectTo ?? '/tool/account/tokens');
-  });
+    res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
+  };
 
-  app.post('/tool/auth/logout', async (req, res) => {
+  app.post(TOOL_LOGIN_PATH, handleLogin);
+
+  const handleLogout = async (req: Request, res: Response) => {
     const token = getSessionToken(req);
     if (token) {
       await revokeSession(token);
     }
     clearSessionCookie(res);
-    res.redirect(302, '/tool/auth/login');
-  });
+    res.redirect(302, TOOL_LOGIN_PATH);
+  };
 
-  app.get('/tool/auth/signup', async (req, res) => {
+  app.post(TOOL_LOGOUT_PATH, handleLogout);
+
+  app.get(TOOL_SIGNUP_PATH, async (req, res) => {
     const codeParam = typeof req.query.code === 'string' ? req.query.code.trim() : '';
     if (codeParam) {
       await initializePostgreSQL();
@@ -243,7 +255,7 @@ export const registerAuthRoutes = (app: Express) => {
       );
   });
 
-  app.post('/tool/auth/signup', async (req, res) => {
+  const handleSignup = async (req: Request, res: Response) => {
     const code = String(req.body.code ?? '').trim();
     const displayName = String(req.body.displayName ?? '').trim();
     const email = String(req.body.email ?? '').trim().toLowerCase();
@@ -392,7 +404,7 @@ export const registerAuthRoutes = (app: Express) => {
 
       const session = await createSession(user.id);
       setSessionCookie(res, session.token, session.expiresAt);
-      res.redirect(302, '/tool/account/tokens');
+      res.redirect(302, TOOL_TOKENS_PATH);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       const bodyHtml = `<div class="tool-page">
@@ -428,9 +440,11 @@ export const registerAuthRoutes = (app: Express) => {
           )
         );
     }
-  });
+  };
 
-  app.get('/tool/account/tokens', async (req, res) => {
+  app.post(TOOL_SIGNUP_PATH, handleSignup);
+
+  app.get(TOOL_TOKENS_PATH, async (req, res) => {
     const userId = await requireAuthUser(req, res);
     if (!userId) return;
 
@@ -454,11 +468,11 @@ export const registerAuthRoutes = (app: Express) => {
   <td>${escapeHtml(status)}</td>
   <td>${escapeHtml(lastUsed)}</td>
   <td>
-    <form method="post" action="/tool/account/tokens/revoke">
+    <form method="post" action="${TOOL_TOKENS_PATH}/revoke">
       <input type="hidden" name="tokenId" value="${escapeHtml(token.id)}" />
       <button type="submit">${req.t('auth.tokens.revoke')}</button>
     </form>
-    <form method="post" action="/tool/account/tokens/reset">
+    <form method="post" action="${TOOL_TOKENS_PATH}/reset">
       <input type="hidden" name="tokenId" value="${escapeHtml(token.id)}" />
       <button type="submit">${req.t('auth.tokens.regenerate')}</button>
     </form>
@@ -468,14 +482,14 @@ export const registerAuthRoutes = (app: Express) => {
       .join('');
 
     const toggleLink = showRevoked
-      ? `<a href="/tool/account/tokens">${req.t('auth.tokens.hideRevoked')}</a>`
-      : `<a href="/tool/account/tokens?show=revoked">${req.t(
+      ? `<a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.hideRevoked')}</a>`
+      : `<a href="${TOOL_TOKENS_PATH}?show=revoked">${req.t(
           'auth.tokens.showRevoked'
         )}</a>`;
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
     <p class="form-help">${req.t('auth.tokens.description')}</p>
-    <form method="post" action="/tool/account/tokens/create" class="form-inline">
+    <form method="post" action="${TOOL_TOKENS_PATH}/create" class="form-inline">
       <label>
         <span>${req.t('auth.tokens.label')}</span>
         <input type="text" name="label" />
@@ -501,7 +515,7 @@ export const registerAuthRoutes = (app: Express) => {
       </tbody>
     </table>
   </div>
-  <form method="post" action="/tool/auth/logout" class="form-card">
+  <form method="post" action="${TOOL_LOGOUT_PATH}" class="form-card">
     <button type="submit">${req.t('auth.tokens.logout')}</button>
   </form>
 </div>`;
@@ -519,7 +533,7 @@ export const registerAuthRoutes = (app: Express) => {
       );
   });
 
-  app.post('/tool/account/tokens/create', async (req, res) => {
+  const handleCreateToken = async (req: Request, res: Response) => {
     const userId = await requireAuthUser(req, res);
     if (!userId) return;
 
@@ -532,7 +546,7 @@ export const registerAuthRoutes = (app: Express) => {
   <div class="form-card">
     ${renderError(req.t('auth.tokens.errorLabelActive'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
+      <a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
@@ -569,7 +583,7 @@ export const registerAuthRoutes = (app: Express) => {
     <p class="form-help">${req.t('auth.tokens.copyHelp')}</p>
     <div class="token-display">${escapeHtml(token)}</div>
     <div class="form-actions">
-      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
+      <a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
@@ -585,14 +599,16 @@ export const registerAuthRoutes = (app: Express) => {
           true
         )
       );
-  });
+  };
 
-  app.post('/tool/account/tokens/revoke', async (req, res) => {
+  app.post(`${TOOL_TOKENS_PATH}/create`, handleCreateToken);
+
+  const handleRevokeToken = async (req: Request, res: Response) => {
     const userId = await requireAuthUser(req, res);
     if (!userId) return;
     const tokenId = String(req.body.tokenId ?? '').trim();
     if (!tokenId) {
-      res.redirect(302, '/tool/account/tokens');
+      res.redirect(302, TOOL_TOKENS_PATH);
       return;
     }
 
@@ -602,15 +618,17 @@ export const registerAuthRoutes = (app: Express) => {
       await token.save();
     }
 
-    res.redirect(302, '/tool/account/tokens');
-  });
+    res.redirect(302, TOOL_TOKENS_PATH);
+  };
 
-  app.post('/tool/account/tokens/reset', async (req, res) => {
+  app.post(`${TOOL_TOKENS_PATH}/revoke`, handleRevokeToken);
+
+  const handleResetToken = async (req: Request, res: Response) => {
     const userId = await requireAuthUser(req, res);
     if (!userId) return;
     const tokenId = String(req.body.tokenId ?? '').trim();
     if (!tokenId) {
-      res.redirect(302, '/tool/account/tokens');
+      res.redirect(302, TOOL_TOKENS_PATH);
       return;
     }
 
@@ -620,7 +638,7 @@ export const registerAuthRoutes = (app: Express) => {
   <div class="form-card">
     ${renderError(req.t('auth.tokens.errorNotFound'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
+      <a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
@@ -650,7 +668,7 @@ export const registerAuthRoutes = (app: Express) => {
   <div class="form-card">
     ${renderError(req.t('auth.tokens.errorLabelConflict'))}
     <div class="form-actions">
-      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
+      <a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
@@ -692,7 +710,7 @@ export const registerAuthRoutes = (app: Express) => {
     <p class="form-help">${req.t('auth.tokens.copyHelp')}</p>
     <div class="token-display">${escapeHtml(token)}</div>
     <div class="form-actions">
-      <a href="/tool/account/tokens">${req.t('auth.tokens.back')}</a>
+      <a href="${TOOL_TOKENS_PATH}">${req.t('auth.tokens.back')}</a>
     </div>
   </div>
 </div>`;
@@ -708,5 +726,7 @@ export const registerAuthRoutes = (app: Express) => {
           true
         )
       );
-  });
+  };
+
+  app.post(`${TOOL_TOKENS_PATH}/reset`, handleResetToken);
 };

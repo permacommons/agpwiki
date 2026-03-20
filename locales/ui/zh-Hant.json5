@@ -7,7 +7,7 @@
     blog: '網誌',
     recentChanges: '最近變更',
     signOut: '登出',
-    contribute: '貢獻',
+    help: '幫助',
     menu: '選單',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: '登入',
       action: '登入',
-      needInvite: '需要邀請碼？請使用 <code>/tool/auth/signup</code>。',
+      needInvite: '還沒有帳號嗎？<a href="/tool/request-account">申請一個！</a>',
       errorInvalid: '電子郵件或密碼無效。',
     },
     signup: {

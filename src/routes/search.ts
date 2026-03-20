@@ -36,6 +36,8 @@ export const registerSearchRoutes = (app: Express) => {
       title: req.t('search.title'),
       bodyHtml,
       signedIn,
+      currentUserName: res.locals.currentUserName,
+      currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
     });

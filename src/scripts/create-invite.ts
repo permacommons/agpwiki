@@ -68,7 +68,7 @@ const main = async () => {
     if (role) {
       console.log(`  role: ${role}`);
     }
-    console.log('Share the signup link: /tool/auth/signup');
+    console.log('Share the signup link: /tool/signup');
 
     await dal.disconnect();
   } finally {

@@ -7,7 +7,7 @@
     blog: 'ব্লগ',
     recentChanges: 'সাম্প্রতিক পরিবর্তন',
     signOut: 'সাইন আউট',
-    contribute: 'অবদান রাখুন',
+    help: 'সহায়তা',
     menu: 'মেনু',
   },
   search: {
@@ -169,7 +169,7 @@
     login: {
       title: 'লগ ইন',
       action: 'লগ ইন',
-      needInvite: 'আমন্ত্রণ দরকার? <code>/tool/auth/signup</code> ব্যবহার করুন।',
+      needInvite: 'এখনও কোনো অ্যাকাউন্ট নেই? <a href="/tool/request-account">একটির জন্য অনুরোধ করুন!</a>',
       errorInvalid: 'ইমেইল বা পাসওয়ার্ড সঠিক নয়।',
     },
     signup: {

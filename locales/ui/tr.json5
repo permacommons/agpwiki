@@ -7,7 +7,7 @@
     blog: 'Blog bölümü',
     recentChanges: 'Son değişiklikler',
     signOut: 'Çıkış Yap',
-    contribute: 'Katkıda Bulun',
+    help: 'Yardım',
     menu: 'Menü',
   },
   search: {
@@ -170,7 +170,7 @@
     login: {
       title: 'Giriş yap',
       action: 'Giriş yap',
-      needInvite: 'Davetiyeye mi ihtiyacınız var? <code>/tool/auth/signup</code> kullanın.',
+      needInvite: 'Henüz bir hesabınız yok mu? <a href="/tool/request-account">Bir tane isteyin!</a>',
       errorInvalid: 'Geçersiz e-posta veya şifre.',
     },
     signup: {

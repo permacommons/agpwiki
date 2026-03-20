@@ -97,6 +97,96 @@ header.site-header {
   display: flex;
   align-items: center;
 }
+.user-menu {
+  order: 1;
+  margin-left: 0.75rem;
+  position: relative;
+}
+.user-menu-summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: #fffdf7;
+  color: var(--ink);
+  cursor: pointer;
+}
+.user-menu-summary::-webkit-details-marker {
+  display: none;
+}
+.user-menu-summary-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+.user-menu-icon {
+  display: inline-flex;
+  width: 1.05rem;
+  height: 1.05rem;
+  color: var(--accent);
+  flex: none;
+}
+.user-menu-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+.user-menu-name {
+  max-width: 14ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--accent);
+}
+.user-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  padding: 0.5rem;
+  background: #fffdf7;
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 20px rgba(31, 29, 26, 0.1);
+  z-index: 20;
+}
+.user-menu-link,
+.user-menu-action {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 0.85rem;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 0.35rem;
+  background: none;
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.user-menu-form {
+  margin: 0;
+}
+.user-menu-summary:hover,
+.user-menu-summary:focus-visible,
+.user-menu-link:hover,
+.user-menu-link:focus-visible,
+.user-menu-action:hover,
+.user-menu-action:focus-visible {
+  background: var(--panel);
+  outline: none;
+}
+.user-menu:not([open]) .user-menu-panel {
+  display: none;
+}
 .nav-button {
   background: none;
   border: none;
@@ -970,6 +1060,35 @@ altcha-widget {
   }
   .nav-menu-content .nav-form {
     margin: 0 0.5rem;
+  }
+  .nav-menu-content .user-menu {
+    margin: 0 0.5rem;
+  }
+  .nav-menu-content .user-menu-summary {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    border: none;
+    border-radius: 0.25rem;
+    background: transparent;
+  }
+  .nav-menu-content .user-menu-name {
+    max-width: none;
+  }
+  .nav-menu-content .user-menu-panel {
+    position: static;
+    min-width: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.35rem 0 0;
+    border: none;
+    border-top: 1px solid var(--rule);
+    box-shadow: none;
+    background: transparent;
+  }
+  .nav-menu-content .user-menu-link,
+  .nav-menu-content .user-menu-action {
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem;
   }
   .nav-menu-content .nav-button {
     margin: 0;

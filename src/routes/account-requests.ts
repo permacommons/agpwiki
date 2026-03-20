@@ -20,6 +20,8 @@ const renderToolLayout = (
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
     signedIn,
+    currentUserName: res.locals.currentUserName,
+    currentPath: res.locals.currentPath,
     locale: res.locals.locale,
     languageOptions: res.locals.languageOptions,
   });
@@ -142,7 +144,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
   app.get('/tool/review-requests', async (req, res) => {
     const session = await resolveSessionUser(req);
     if (!session) {
-      res.redirect(302, '/tool/auth/login?redirect=/tool/review-requests');
+      res.redirect(302, '/tool/login?redirect=/tool/review-requests');
       return;
     }
 
@@ -212,7 +214,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
   app.post('/tool/review-requests/delete', async (req, res) => {
     const session = await resolveSessionUser(req);
     if (!session) {
-      res.redirect(302, '/tool/auth/login?redirect=/tool/review-requests');
+      res.redirect(302, '/tool/login?redirect=/tool/review-requests');
       return;
     }
 

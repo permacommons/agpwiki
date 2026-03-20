@@ -7,7 +7,7 @@
     blog: 'Blogová sekcia',
     recentChanges: 'Nedávne zmeny',
     signOut: 'Odhlásiť sa',
-    contribute: 'Prispieť',
+    help: 'Pomoc',
     menu: 'Navigačné menu',
   },
   search: {
@@ -171,7 +171,7 @@
     login: {
       title: 'Prihlásiť sa',
       action: 'Prihlásiť sa',
-      needInvite: 'Potrebujete pozvánku? Použite <code>/tool/auth/signup</code>.',
+      needInvite: 'Ešte nemáte účet? <a href="/tool/request-account">Požiadajte oň!</a>',
       errorInvalid: 'Neplatný e-mail alebo heslo.',
     },
     signup: {

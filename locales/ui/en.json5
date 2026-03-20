@@ -41,7 +41,7 @@
     "blog": "Blog",
     "recentChanges": "Recent changes",
     "signOut": "Sign out",
-    "contribute": "Contribute",
+    "help": "Help",
     "menu": "Menu"
   },
   "search": {
@@ -215,7 +215,7 @@
     "login": {
       "title": "Log in",
       "action": "Log in",
-      "needInvite": "Need an invite? Use <code>/tool/auth/signup</code>.",
+      "needInvite": "Don’t have an account yet? <a href=\"/tool/request-account\">Request one!</a>",
       "errorInvalid": "Invalid email or password."
     },
     "signup": {
