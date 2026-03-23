@@ -546,6 +546,27 @@ Handlebars.registerHelper('eq', (a: unknown, b: unknown) => a === b);
 Handlebars.registerHelper('urlencode', (value: unknown) =>
   encodeURIComponent(typeof value === 'string' ? value : '')
 );
+Handlebars.registerHelper(
+  'findLanguageLabel',
+  (languageOptions: unknown, code: unknown) => {
+    if (!Array.isArray(languageOptions) || typeof code !== 'string') {
+      return '';
+    }
+
+    const match = languageOptions.find(
+      (option): option is LanguageOption =>
+        Boolean(option) &&
+        typeof option === 'object' &&
+        'code' in option &&
+        'label' in option &&
+        typeof option.code === 'string' &&
+        typeof option.label === 'string' &&
+        option.code === code
+    );
+
+    return match?.label ?? code;
+  }
+);
 
 export interface LanguageOption {
   code: string;
