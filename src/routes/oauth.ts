@@ -494,9 +494,6 @@ export const registerOAuthRoutes = (app: Express) => {
         return;
       }
 
-      storedRefresh.rotatedAt = new Date();
-      await storedRefresh.save();
-
       const { accessTokenTtlSeconds, refreshTokenTtlSeconds } = getOAuthConfig();
       const accessToken = generateOAuthAccessToken();
       const newRefreshToken = generateOAuthRefreshToken();
@@ -525,6 +522,9 @@ export const registerOAuthRoutes = (app: Express) => {
         issuedAt: now,
         expiresAt: refreshExpiresAt,
       });
+
+      storedRefresh.rotatedAt = new Date();
+      await storedRefresh.save();
 
       res.json({
         access_token: accessToken,
