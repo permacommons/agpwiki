@@ -400,7 +400,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
+        'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
         slug: z.string(),
         title: localizedTitleSchema.optional,
@@ -1034,7 +1034,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Apply Wiki Patch',
       description:
-        'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}.',
+        'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
         slug: z.string(),
         patch: z.string(),
@@ -1062,7 +1062,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}.',
+        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
         slug: z.string(),
         target: z.enum(['heading', 'lead']).optional(),
@@ -1097,7 +1097,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Replace Exact Text',
       description:
-        'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}.',
+        'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
         slug: z.string(),
         replacements: z
@@ -1131,7 +1131,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Wiki Page',
       description:
-        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}.',
+        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
