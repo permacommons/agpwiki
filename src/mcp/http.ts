@@ -148,7 +148,7 @@ app.all('/mcp', authMiddleware, async (req, res) => {
 
     await server.connect(transport);
   } else {
-    sendJsonError(res, 400, 'Bad Request: No valid session ID provided.');
+    sendJsonError(res, 404, 'Session not found or expired.');
     return;
   }
 
