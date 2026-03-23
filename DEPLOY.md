@@ -212,6 +212,14 @@ At minimum, run `pg_dump` nightly. For example:
 pg_dump -Fc agpwiki > /var/backups/agpwiki-$(date +%F).dump
 ```
 
+If you also publish a sanitized public dump, generate it separately:
+
+```bash
+npm run dump-public-data
+```
+
+This writes a redacted content-only archive to `public/downloads/dumps/`.
+
 ## Smoke checks
 
 - `GET /health` returns `{"status":"ok"}`
