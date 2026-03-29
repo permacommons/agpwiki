@@ -31,7 +31,7 @@ After creating the citations, check in with me to confirm we're ready to create 
 ## Step 6: Create the article
 Once approved:
 - Use the wiki_createPage tool to create the article
-- Use `[@citation-key]` syntax for inline citations
+- Use `[@citation-key]` syntax for inline citations, optionally with `:claim-id`
 - The bibliography will be auto-generated from your citations
 
 Please begin with Step 1.
