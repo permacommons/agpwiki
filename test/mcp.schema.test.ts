@@ -49,14 +49,48 @@ test('MCP tool schemas describe localized fields', () => {
   const wikiUpdate = getSchemaShape(tools.wiki_updatePage.inputSchema);
   assert.ok(wikiUpdate.policyHash);
 
+  const wikiAddAlias = getSchemaShape(tools.wiki_addAlias.inputSchema);
+  assert.ok(wikiAddAlias.policyHash);
+
+  const wikiRemoveAlias = getSchemaShape(tools.wiki_removeAlias.inputSchema);
+  assert.ok(wikiRemoveAlias.policyHash);
+
   const blogDelete = getSchemaShape(tools.blog_deletePost.inputSchema);
   assert.ok(blogDelete.revSummary?.description?.includes('agpwiki://locales'));
 
+  const citationCreate = getSchemaShape(tools.citation_create.inputSchema);
+  assert.ok(citationCreate.policyHash);
+
+  const citationUpdate = getSchemaShape(tools.citation_update.inputSchema);
+  assert.ok(citationUpdate.policyHash);
+
   const claimCreate = getSchemaShape(tools.claim_create.inputSchema);
+  assert.ok(claimCreate.policyHash);
   assert.ok(claimCreate.assertion?.description?.includes('plain-text assertion'));
   assert.ok(claimCreate.assertion?.description?.includes('not Markdown'));
   assert.ok(claimCreate.quote?.description?.includes('plain-text quote'));
   assert.ok(claimCreate.quote?.description?.includes('not Markdown'));
+
+  const claimUpdate = getSchemaShape(tools.claim_update.inputSchema);
+  assert.ok(claimUpdate.policyHash);
+
+  const pageCheckCreate = getSchemaShape(tools.page_check_create.inputSchema);
+  assert.ok(pageCheckCreate.policyHash);
+
+  const pageCheckUpdate = getSchemaShape(tools.page_check_update.inputSchema);
+  assert.ok(pageCheckUpdate.policyHash);
+
+  const wikiDelete = getSchemaShape(tools.wiki_deletePage.inputSchema);
+  assert.ok(wikiDelete.policyHash);
+
+  const citationDelete = getSchemaShape(tools.citation_delete.inputSchema);
+  assert.ok(citationDelete.policyHash);
+
+  const claimDelete = getSchemaShape(tools.claim_delete.inputSchema);
+  assert.ok(claimDelete.policyHash);
+
+  const pageCheckDelete = getSchemaShape(tools.page_check_delete.inputSchema);
+  assert.ok(pageCheckDelete.policyHash);
 });
 
 test('MCP localized field validation errors mention language maps', () => {
@@ -91,6 +125,7 @@ test('MCP localized maps accept null language values', () => {
   };
   const result = wikiUpdateSchema.safeParse({
     slug: 'test',
+    policyHash: 'hash',
     revSummary: { en: 'update' },
     title: { de: null },
   });
@@ -108,6 +143,13 @@ test('MCP schema errors use required field messages', () => {
   const missingRevSummary = wikiUpdateSchema.safeParse({ slug: 'test' });
   assert.equal(missingRevSummary.success, false);
   assert.ok(missingRevSummary.error?.issues.some(issue => issue.message === 'revSummary is required.'));
+
+  const missingPolicyHash = wikiUpdateSchema.safeParse({
+    slug: 'test',
+    revSummary: { en: 'update' },
+  });
+  assert.equal(missingPolicyHash.success, false);
+  assert.ok(missingPolicyHash.error?.issues.some(issue => issue.message === 'policyHash is required.'));
 });
 
 test('MCP schema validates revision IDs as UUIDs', () => {

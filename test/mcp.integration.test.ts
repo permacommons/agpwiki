@@ -279,3 +279,81 @@ test('MCP wiki write tools require the latest policy hash', async () => {
     });
   }
 });
+
+test('MCP citation_create rejects a stale or wrong policy hash', async () => {
+  const dal = await getDal();
+  const citationKey = `test-mcp-policy-cite-${Date.now()}`;
+  const user = await createTestUser();
+  let userIdForCleanup: string | null = user.id;
+
+  try {
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+
+    await createWikiPage(
+      dal,
+      {
+        slug: 'meta/policy',
+        title: { en: 'Policy' },
+        body: { en: 'Current policy text.' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const rejected = await tools.citation_create.handler(
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Blocked with wrong policy hash',
+          URL: 'https://example.com/policy-test',
+        },
+        policyHash: 'wrong-hash',
+      },
+      { authInfo }
+    );
+    const rejectedPayload = rejected.structuredContent as {
+      error: {
+        code: string;
+        message?: string;
+      };
+    };
+
+    assert.equal(rejected.isError, true);
+    assert.equal(rejectedPayload.error.code, 'precondition_failed');
+    assert.equal(
+      rejectedPayload.error.message,
+      'Read /meta/policy and linked pages with wiki_readPage. Submit the contentHash of /meta/policy as policyHash.'
+    );
+
+    const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
+    const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
+
+    const accepted = await tools.citation_create.handler(
+      {
+        key: citationKey,
+        data: {
+          type: 'webpage',
+          title: 'Allowed with policy hash',
+          URL: 'https://example.com/policy-test',
+        },
+        policyHash,
+      },
+      { authInfo }
+    );
+    const acceptedPayload = accepted.structuredContent as { key?: string };
+
+    assert.equal(accepted.isError, undefined);
+    assert.equal(acceptedPayload.key, citationKey);
+  } finally {
+    await dal.query('DELETE FROM citations WHERE key LIKE $1', [`${citationKey}%`]);
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+    await cleanupTestArtifacts(dal, {
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
