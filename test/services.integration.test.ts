@@ -136,6 +136,61 @@ test('Service auth + wiki create/update writes revisions', async () => {
   }
 });
 
+test('Service readWikiPage returns a stable content hash that changes on update', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-content-hash-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Hash Test' },
+        body: { en: 'Initial content.' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    const firstRead = await readWikiPage(dal, slug);
+    const secondRead = await readWikiPage(dal, slug);
+    assert.match(firstRead.currentRevId, /^[0-9a-f-]{36}$/);
+    assert.equal(firstRead.contentHash.length, 64);
+    assert.equal(firstRead.contentHash, secondRead.contentHash);
+    assert.equal(firstRead.currentRevId, secondRead.currentRevId);
+
+    await updateWikiPage(
+      dal,
+      {
+        slug,
+        body: { en: 'Updated content.' },
+        revSummary: { en: 'Update hash source.' },
+      },
+      userId
+    );
+
+    const updatedRead = await readWikiPage(dal, slug);
+    assert.notEqual(updatedRead.contentHash, firstRead.contentHash);
+    assert.notEqual(updatedRead.currentRevId, firstRead.currentRevId);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
 test('Service apply patch updates wiki page body', async () => {
   const dal = await getDal();
   const slug = `test-mcp-patch-${Date.now()}`;
