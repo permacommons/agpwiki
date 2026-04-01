@@ -76,6 +76,7 @@ export interface WikiPageUpdateInput extends WikiPageWriteInput {
 export interface WikiPageResult {
   id: string;
   slug: string;
+  currentRevId: string;
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
@@ -221,6 +222,7 @@ export interface WikiPageSearchItem {
 const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   id: page.id,
   slug: page.slug,
+  currentRevId: page._revID,
   title: page.title ?? null,
   body: page.body ?? null,
   originalLanguage: page.originalLanguage ?? null,

@@ -90,7 +90,7 @@ test('MCP blog admin tool is enabled with blog_admin role', () => {
   assert.equal(mcpWithBlogAdmin.adminTools.pageCheckDeleteTool.enabled, false);
 });
 
-test('MCP wiki_readPage returns a content hash', async () => {
+test('MCP wiki_readPage returns content hash and current revision id', async () => {
   const dal = await getDal();
   const slug = `test-mcp-read-hash-${Date.now()}`;
   const slugPrefix = `${slug}%`;
@@ -114,15 +114,88 @@ test('MCP wiki_readPage returns a content hash', async () => {
     const { server } = createMcpServer();
     const tools = getToolHandlers(server);
     const result = await tools.wiki_readPage.handler({ slug });
-    const payload = result.structuredContent as { contentHash?: string; slug?: string };
+    const payload = result.structuredContent as {
+      contentHash?: string;
+      currentRevId?: string;
+      slug?: string;
+    };
 
     assert.equal(result.isError, undefined);
     assert.equal(payload.slug, slug);
     assert.equal(typeof payload.contentHash, 'string');
     assert.equal(payload.contentHash?.length, 64);
+    assert.match(payload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
   } finally {
     await cleanupTestArtifacts(dal, {
       slugPrefix,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-expected-rev-${Date.now()}`;
+  const user = await createTestUser();
+  let userIdForCleanup: string | null = user.id;
+
+  try {
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+
+    await createWikiPage(
+      dal,
+      {
+        slug: 'meta/policy',
+        title: { en: 'Policy' },
+        body: { en: 'Current policy text.' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Expected Rev Test' },
+        body: { en: 'Hello world' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+    const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
+    const pageRead = await tools.wiki_readPage.handler({ slug });
+    const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
+    const currentRevId = (pageRead.structuredContent as { currentRevId: string }).currentRevId;
+
+    const result = await tools.wiki_replaceExactText.handler(
+      {
+        slug,
+        replacements: [{ from: 'Hello world', to: 'Hello revised world' }],
+        expectedRevId: currentRevId,
+        policyHash,
+        revSummary: { en: 'Use currentRevId from readPage.' },
+      },
+      { authInfo }
+    );
+    const payload = result.structuredContent as {
+      body?: Record<string, string>;
+      currentRevId?: string;
+    };
+
+    assert.equal(result.isError, undefined);
+    assert.equal(payload.body?.en, 'Hello revised world');
+    assert.notEqual(payload.currentRevId, currentRevId);
+  } finally {
+    const pagePrefixes = ['meta/policy', slug];
+    for (const pagePrefix of pagePrefixes) {
+      await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
+    }
+    await cleanupTestArtifacts(dal, {
       userId: userIdForCleanup ?? undefined,
     });
   }

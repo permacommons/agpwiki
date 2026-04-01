@@ -160,8 +160,10 @@ test('Service readWikiPage returns a stable content hash that changes on update'
 
     const firstRead = await readWikiPage(dal, slug);
     const secondRead = await readWikiPage(dal, slug);
+    assert.match(firstRead.currentRevId, /^[0-9a-f-]{36}$/);
     assert.equal(firstRead.contentHash.length, 64);
     assert.equal(firstRead.contentHash, secondRead.contentHash);
+    assert.equal(firstRead.currentRevId, secondRead.currentRevId);
 
     await updateWikiPage(
       dal,
@@ -175,6 +177,7 @@ test('Service readWikiPage returns a stable content hash that changes on update'
 
     const updatedRead = await readWikiPage(dal, slug);
     assert.notEqual(updatedRead.contentHash, firstRead.contentHash);
+    assert.notEqual(updatedRead.currentRevId, firstRead.currentRevId);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {
