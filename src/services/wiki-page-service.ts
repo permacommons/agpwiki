@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import MarkdownIt from 'markdown-it';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
@@ -41,6 +42,23 @@ import {
 
 const { mlString } = dal;
 
+const computeWikiPageContentHash = (page: {
+  slug: string;
+  title: Record<string, string> | null | undefined;
+  body: Record<string, string> | null | undefined;
+  originalLanguage: string | null | undefined;
+}) =>
+  createHash('sha256')
+    .update(
+      JSON.stringify({
+        slug: page.slug,
+        title: page.title ?? null,
+        body: page.body ?? null,
+        originalLanguage: page.originalLanguage ?? null,
+      })
+    )
+    .digest('hex');
+
 export interface WikiPageWriteInput {
   slug: string;
   title?: LocalizedMapInput;
@@ -61,6 +79,7 @@ export interface WikiPageResult {
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
+  contentHash: string;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
 }
@@ -205,6 +224,12 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   title: page.title ?? null,
   body: page.body ?? null,
   originalLanguage: page.originalLanguage ?? null,
+  contentHash: computeWikiPageContentHash({
+    slug: page.slug,
+    title: page.title ?? null,
+    body: page.body ?? null,
+    originalLanguage: page.originalLanguage ?? null,
+  }),
   createdAt: page.createdAt ?? null,
   updatedAt: page.updatedAt ?? null,
 });

@@ -13,7 +13,11 @@ import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
 import { CITATION_CLAIM_LOCATOR_TYPES } from '../lib/citation-claims.js';
-import { InvalidRequestError, UnsupportedError } from '../lib/errors.js';
+import {
+  InvalidRequestError,
+  PreconditionFailedError,
+  UnsupportedError,
+} from '../lib/errors.js';
 import {
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
@@ -106,6 +110,10 @@ export type FormatToolResult = (payload: unknown) => CallToolResult;
 export interface CreateMcpServerOptions {
   userRoles?: string[];
 }
+
+const POLICY_PAGE_SLUG = 'meta/policy';
+const POLICY_HASH_ERROR_MESSAGE =
+  'Read /meta/policy and linked pages with wiki_readPage. Submit the contentHash of /meta/policy as policyHash.';
 
 const ensureMcpErrorMap = () => {
   const existing = z.getErrorMap();
@@ -256,6 +264,18 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     return [...agentTags, ...(tags ?? [])];
   };
 
+  const requireCurrentPolicyHash = async (
+    dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
+    policyHash?: string
+  ) => {
+    const policyPage = await readWikiPage(dal, POLICY_PAGE_SLUG);
+    if (policyHash === policyPage.contentHash) return;
+    throw new PreconditionFailedError(POLICY_HASH_ERROR_MESSAGE, {
+      requiredPageSlug: POLICY_PAGE_SLUG,
+      requiredParam: 'policyHash',
+    });
+  };
+
   const {
     localizedTitleSchema,
     localizedBodySchema,
@@ -304,6 +324,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   const notesDescription = `Localized notes Markdown map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
   const rewriteContentDescription =
     'Section content to write. For target "heading", provide body text only; the heading line is preserved automatically. For target "lead", this replaces/prepends/appends the lead text before the first heading.';
+  const policyHashSchema = z
+    .string()
+    .optional()
+    .describe(
+      'Submit the contentHash returned by wiki_readPage for /meta/policy after reviewing that page and its linked guidance pages.'
+    );
 
   server.registerResource(
     'Wiki Pages Index',
@@ -406,14 +432,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args: WikiPageWriteInput, extra) => {
+    withToolErrorHandling(async (args: WikiPageWriteInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
-      const payload = await createWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await createWikiPage(
+        dal,
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
+        userId
+      );
       return payload;
     })
   );
@@ -1041,16 +1074,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
         baseRevId: uuidSchema.optional(),
+        policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPagePatchInput, extra) => {
+    withToolErrorHandling(async (args: WikiPagePatchInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
       const payload = await applyWikiPagePatch(
         dal,
-        { ...args, tags: mergeTags(args.tags) },
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
       return payload;
@@ -1076,20 +1112,25 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         content: z.string().describe(rewriteContentDescription),
         lang: languageTagSchema.optional,
         expectedRevId: uuidSchema.optional(),
+        policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPageRewriteSectionInput, extra) => {
+    withToolErrorHandling(
+      async (args: WikiPageRewriteSectionInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
       const payload = await rewriteWikiPageSection(
         dal,
-        { ...args, tags: mergeTags(args.tags) },
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
       return payload;
-    })
+      }
+    )
   );
 
   server.registerTool(
@@ -1110,20 +1151,25 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           .min(1),
         lang: languageTagSchema.optional,
         expectedRevId: uuidSchema.optional(),
+        policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPageReplaceExactTextInput, extra) => {
+    withToolErrorHandling(
+      async (args: WikiPageReplaceExactTextInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
       const payload = await replaceWikiPageExactText(
         dal,
-        { ...args, tags: mergeTags(args.tags) },
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
       return payload;
-    })
+      }
+    )
   );
 
   server.registerTool(
@@ -1138,14 +1184,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPageUpdateInput, extra) => {
+    withToolErrorHandling(async (args: WikiPageUpdateInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
-      const payload = await updateWikiPage(dal, { ...args, tags: mergeTags(args.tags) }, userId);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await updateWikiPage(
+        dal,
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
+        userId
+      );
       return payload;
     })
   );
