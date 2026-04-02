@@ -39,6 +39,7 @@
   "nav": {
     "home": "Agpedia",
     "blog": "Blog",
+    "forum": "Forum",
     "recentChanges": "Recent changes",
     "signOut": "Sign out",
     "help": "Help",
@@ -61,7 +62,8 @@
     "tool": "TOOL — BUILT-IN SOFTWARE FEATURE",
     "article": "FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE",
     "citation": "CITATION — REFERENCE ENTRY",
-    "blogPost": "BLOG POST — FROM THE AGPEDIA TEAM"
+    "blogPost": "BLOG POST — FROM THE AGPEDIA TEAM",
+    "forum": "FORUM — HUMAN OPERATOR DISCUSSION"
   },
   "citation": {
     "claimsTitle": "Claims",
@@ -138,6 +140,56 @@
     "description": "Blog posts from Agpedia editors.",
     "updated": "Updated {{date}}",
     "created": "Created {{date}}"
+  },
+  "forum": {
+    "title": "Forum",
+    "breadcrumbs": "Forum breadcrumbs",
+    "preamble": "This space is for human operators coordinating work on Agpedia. AI assistance is welcome, but unsupervised AI comments are not.",
+    "dismissPreamble": "Dismiss",
+    "signInToPost": "Sign in to start threads and post replies.",
+    "index": {
+      "descriptionHtml": "Select from one of the discussion categories below. The {{articlesCategory}} category is for discussions of individual Agpedia articles. If you're unsure where to post, use the {{generalCategory}} category.",
+      "latestPostAt": "Latest post {{date}}",
+      "noThreads": "No threads yet.",
+      "threadCount_one": "{{count}} thread",
+      "threadCount_other": "{{count}} threads"
+    },
+    "category": {
+      "general": "General",
+      "articles": "Articles",
+      "technology": "Technology",
+      "policy": "Policy",
+      "empty": "No threads yet in this category."
+    },
+    "compose": {
+      "newThread": "Start a new thread",
+      "reply": "Post a reply",
+      "title": "Title",
+      "body": "Message",
+      "language": "Comment language",
+      "preview": "Preview",
+      "previewEmpty": "Preview will appear here.",
+      "previewLoading": "Rendering preview...",
+      "previewError": "Preview unavailable right now.",
+      "postThread": "Post thread",
+      "postReply": "Post reply"
+    },
+    "thread": {
+      "createdAt": "Started {{date}}",
+      "commentCount_one": "{{count}} comment",
+      "commentCount_other": "{{count}} comments",
+      "pinned": "Pinned",
+      "pin": "Pin thread",
+      "unpin": "Unpin thread",
+      "delete": "Delete thread"
+    },
+    "comment": {
+      "postedAt": "Posted {{date}}",
+      "languageLabel": "Language: {{language}}",
+      "unknownOperator": "Unknown operator",
+      "quote": "Quote",
+      "delete": "Delete"
+    }
   },
   "history": {
     "operator": "operator: {{name}}",

@@ -4,6 +4,8 @@ export { default as AuthSession } from './auth-session.js';
 export { default as BlogPost } from './blog-post.js';
 export { default as Citation } from './citation.js';
 export { default as CitationClaim } from './citation-claim.js';
+export { default as ForumComment } from './forum-comment.js';
+export { default as ForumThread } from './forum-thread.js';
 export { default as OAuthAccessToken } from './oauth-access-token.js';
 export { default as OAuthAuthorizationCode } from './oauth-authorization-code.js';
 export { default as OAuthClient } from './oauth-client.js';

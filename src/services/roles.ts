@@ -4,12 +4,14 @@ export const SITE_ADMIN_ROLE = 'site_admin';
 export const WIKI_ADMIN_ROLE = 'wiki_admin';
 export const BLOG_AUTHOR_ROLE = 'blog_author';
 export const BLOG_ADMIN_ROLE = 'blog_admin';
+export const FORUM_MODERATOR_ROLE = 'forum_moderator';
 
 export const VALID_ROLES = [
   SITE_ADMIN_ROLE,
   WIKI_ADMIN_ROLE,
   BLOG_AUTHOR_ROLE,
   BLOG_ADMIN_ROLE,
+  FORUM_MODERATOR_ROLE,
 ] as const;
 export type ValidRole = (typeof VALID_ROLES)[number];
 
@@ -18,6 +20,7 @@ export const ROLE_DESCRIPTIONS: Record<ValidRole, string> = {
   [WIKI_ADMIN_ROLE]: 'Administer wiki content and deletions.',
   [BLOG_AUTHOR_ROLE]: 'Create and update blog posts.',
   [BLOG_ADMIN_ROLE]: 'Delete blog posts and manage blog content.',
+  [FORUM_MODERATOR_ROLE]: 'Moderate forum threads and comments.',
 };
 
 export function isValidRole(role: string): role is ValidRole {

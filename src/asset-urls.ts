@@ -12,6 +12,7 @@ const versionedAssetUrl = (relativePath: string) => {
 };
 
 export const layoutAssets = {
+  markdownPreviewJs: versionedAssetUrl('scripts/markdown-preview.js'),
   siteCss: versionedAssetUrl('styles/site.css'),
   searchJs: versionedAssetUrl('scripts/search.js'),
   metaTooltipsJs: versionedAssetUrl('scripts/meta-tooltips.js'),
