@@ -46,13 +46,17 @@ export const registerSearchRoutes = (app: Express) => {
 
   app.get('/api/search', async (req, res) => {
     const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const scope =
+      req.query.scope === 'content_only' || req.query.scope === 'meta_only'
+        ? req.query.scope
+        : 'all';
     if (!query) {
       res.json({ results: [] });
       return;
     }
 
     const dalInstance = await initializePostgreSQL();
-    const results = await searchWikiPages(dalInstance, { query, limit: 10 });
+    const results = await searchWikiPages(dalInstance, { query, limit: 10, scope });
 
     res.json({ results });
   });

@@ -11,6 +11,7 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { setBootstrapResolver } from 'rev-dal/lib/model-handle';
 import languages from '../locales/languages.js';
 import debug from '../util/debug.js';
+import './models/index.js';
 
 type JsonObject = Record<string, unknown>;
 

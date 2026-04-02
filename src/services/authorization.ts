@@ -1,6 +1,11 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { ForbiddenError } from '../lib/errors.js';
-import { BLOG_ADMIN_ROLE, userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import {
+  BLOG_ADMIN_ROLE,
+  FORUM_MODERATOR_ROLE,
+  userHasRole,
+  WIKI_ADMIN_ROLE,
+} from './roles.js';
 
 export const canUseWikiAdminTools = (roles: string[]) => roles.includes(WIKI_ADMIN_ROLE);
 
@@ -30,3 +35,6 @@ export const assertCanDeletePageCheck = async (dal: DataAccessLayer, userId: str
 
 export const assertCanDeleteBlogPost = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, BLOG_ADMIN_ROLE);
+
+export const assertCanModerateForum = async (dal: DataAccessLayer, userId: string) =>
+  assertUserHasRole(dal, userId, FORUM_MODERATOR_ROLE);

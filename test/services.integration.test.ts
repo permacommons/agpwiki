@@ -5,7 +5,11 @@ import test from 'node:test';
 import { initializePostgreSQL } from '../src/db.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
-import { WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import {
+  FORUM_MODERATOR_ROLE,
+  WIKI_ADMIN_ROLE,
+  grantRoleUpsert,
+} from '../src/services/roles.js';
 import {
   createCitation,
   deleteCitation,
@@ -19,6 +23,17 @@ import {
 } from '../src/services/citation-claim-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import {
+  createForumComment,
+  createForumThread,
+  deleteForumComment,
+  deleteForumThread,
+  listForumCategories,
+  listForumThreads,
+  readForumThread,
+  setForumThreadPinned,
+} from '../src/services/forum-service.js';
+import {
+  addWikiPageAlias,
   applyWikiPagePatch,
   createWikiPage,
   deleteWikiPage,
@@ -64,10 +79,18 @@ const cleanupTestArtifacts = async (
     slugPrefix,
     citationPrefix,
     claimPrefix,
+    forumThreadPrefix,
     userId,
-  }: { slugPrefix?: string; citationPrefix?: string; claimPrefix?: string; userId?: string }
+  }: {
+    slugPrefix?: string;
+    citationPrefix?: string;
+    claimPrefix?: string;
+    forumThreadPrefix?: string;
+    userId?: string;
+  }
 ) => {
   if (slugPrefix) {
+    await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [slugPrefix]);
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
   }
   if (citationPrefix) {
@@ -79,6 +102,13 @@ const cleanupTestArtifacts = async (
   }
   if (claimPrefix) {
     await dal.query('DELETE FROM citation_claims WHERE claim_id LIKE $1', [claimPrefix]);
+  }
+  if (forumThreadPrefix) {
+    await dal.query(
+      "DELETE FROM forum_comments WHERE thread_id IN (SELECT id FROM forum_threads WHERE title->>'en' LIKE $1)",
+      [forumThreadPrefix]
+    );
+    await dal.query("DELETE FROM forum_threads WHERE title->>'en' LIKE $1", [forumThreadPrefix]);
   }
   if (userId) {
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
@@ -302,6 +332,322 @@ test('Service rejects malformed unified patch hunks', async () => {
       const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       console.warn(`Cleanup failed: ${message}`);
     }
+  }
+});
+
+test('Forum services create threads/comments and list categories', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-test-${Date.now()}`;
+  const titlePrefix = `${baseTitle}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: `${baseTitle} <b>thread</b>`,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      user.id
+    );
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'Second comment.',
+        language: 'en',
+      },
+      user.id
+    );
+
+    const categoryList = await listForumCategories(dal);
+    const general = categoryList.find(item => item.slug === 'general');
+    const threadList = await listForumThreads(dal, 'general');
+    const detail = await readForumThread(dal, thread.id);
+
+    assert.ok(general);
+    assert.ok((general?.threadCount ?? 0) >= 1);
+    assert.deepEqual(detail.thread.title, { en: `${baseTitle} &lt;b&gt;thread&lt;/b&gt;` });
+    assert.equal(detail.thread.originalLanguage, 'en');
+    assert.equal(detail.comments.length, 2);
+    assert.equal(threadList.some(item => item.id === thread.id), true);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      forumThreadPrefix: titlePrefix,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('Forum moderator can pin and delete thread and comments', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-moderation-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let authorIdForCleanup: string | null = null;
+  let moderatorIdForCleanup: string | null = null;
+
+  try {
+    const author = await createTestUser();
+    const moderator = await createTestUser();
+    authorIdForCleanup = author.id;
+    moderatorIdForCleanup = moderator.id;
+    await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
+
+    const older = await createForumThread(
+      {
+        category: 'technology',
+        title: `${baseTitle}-older`,
+        body: 'Older thread.',
+        language: 'en',
+      },
+      author.id
+    );
+    const newer = await createForumThread(
+      {
+        category: 'technology',
+        title: `${baseTitle}-newer`,
+        body: 'Newer thread.',
+        language: 'en',
+      },
+      author.id
+    );
+    const extraComment = await createForumComment(
+      {
+        threadId: older.id,
+        body: 'Moderation target.',
+        language: 'en',
+      },
+      author.id
+    );
+
+    await setForumThreadPinned(
+      dal,
+      {
+        threadId: older.id,
+        pinned: true,
+        revSummary: { en: 'Pin thread.' },
+      },
+      moderator.id
+    );
+
+    const threadList = await listForumThreads(dal, 'technology');
+    assert.equal(threadList[0]?.id, older.id);
+
+    await deleteForumComment(
+      dal,
+      {
+        commentId: extraComment.id,
+        revSummary: { en: 'Delete comment.' },
+      },
+      moderator.id
+    );
+    const detailAfterCommentDelete = await readForumThread(dal, older.id);
+    assert.equal(detailAfterCommentDelete.comments.length, 1);
+
+    await deleteForumThread(
+      dal,
+      {
+        threadId: newer.id,
+        revSummary: { en: 'Delete thread.' },
+      },
+      moderator.id
+    );
+
+    await assert.rejects(() => readForumThread(dal, newer.id), NotFoundError);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      forumThreadPrefix,
+      userId: authorIdForCleanup ?? undefined,
+    });
+    await cleanupTestArtifacts(dal, {
+      userId: moderatorIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('Forum article threads normalize aliases and reject invalid slugs', async () => {
+  const dal = await getDal();
+  const slug = `forum-article-${Date.now()}`;
+  const aliasSlug = `${slug}-alias`;
+  const slugPrefix = `${slug}%`;
+  const threadBaseTitle = `forum-article-thread-${Date.now()}`;
+  const forumThreadPrefix = `${threadBaseTitle}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Forum Article Test' },
+        body: { en: 'Body.' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+    await addWikiPageAlias(
+      dal,
+      {
+        slug: aliasSlug,
+        pageSlug: slug,
+      },
+      user.id
+    );
+
+    const thread = await createForumThread(
+      {
+        category: 'articles',
+        pageSlug: aliasSlug,
+        title: threadBaseTitle,
+        body: 'Article discussion.',
+        language: 'en',
+      },
+      user.id
+    );
+
+    assert.equal(thread.pageSlug, slug);
+
+    const articleThreads = await listForumThreads(dal, 'articles', {
+      pageSlug: slug,
+    });
+    assert.equal(articleThreads.some(item => item.id === thread.id), true);
+
+    await assert.rejects(
+      () =>
+        createForumThread(
+          {
+            category: 'articles',
+            pageSlug: `${slug}-missing`,
+            title: `forum-article-thread-${Date.now()}-bad`,
+            body: 'Invalid discussion.',
+            language: 'en',
+          },
+          user.id
+        ),
+      ValidationError
+    );
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      slugPrefix,
+      forumThreadPrefix,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('Forum policy threads may optionally link to a wiki page', async () => {
+  const dal = await getDal();
+  const slug = `forum-policy-${Date.now()}`;
+  const aliasSlug = `${slug}-alias`;
+  const slugPrefix = `${slug}%`;
+  const threadBaseTitle = `forum-policy-thread-${Date.now()}`;
+  const forumThreadPrefix = `${threadBaseTitle}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Forum Policy Test' },
+        body: { en: 'Body.' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+    await addWikiPageAlias(
+      dal,
+      {
+        slug: aliasSlug,
+        pageSlug: slug,
+      },
+      user.id
+    );
+
+    const linkedThread = await createForumThread(
+      {
+        category: 'policy',
+        pageSlug: aliasSlug,
+        title: `${threadBaseTitle}-linked`,
+        body: 'Policy page discussion.',
+        language: 'en',
+      },
+      user.id
+    );
+    const genericThread = await createForumThread(
+      {
+        category: 'policy',
+        title: `${threadBaseTitle}-general`,
+        body: 'General policy discussion.',
+        language: 'en',
+      },
+      user.id
+    );
+
+    assert.equal(linkedThread.pageSlug, slug);
+    assert.equal(genericThread.pageSlug, null);
+
+    const linkedThreads = await listForumThreads(dal, 'policy', {
+      pageSlug: slug,
+    });
+    assert.equal(linkedThreads.some(item => item.id === linkedThread.id), true);
+    assert.equal(linkedThreads.some(item => item.id === genericThread.id), false);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      slugPrefix,
+      forumThreadPrefix,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('Forum moderation actions require forum moderator role', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-auth-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const thread = await createForumThread(
+      {
+        category: 'policy',
+        title: `${baseTitle}-thread`,
+        body: 'Policy thread.',
+        language: 'en',
+      },
+      user.id
+    );
+
+    await assert.rejects(
+      () =>
+        setForumThreadPinned(
+          dal,
+          {
+            threadId: thread.id,
+            pinned: true,
+            revSummary: { en: 'Pin thread.' },
+          },
+          user.id
+        ),
+      ForbiddenError
+    );
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      forumThreadPrefix,
+      userId: userIdForCleanup ?? undefined,
+    });
   }
 });
 

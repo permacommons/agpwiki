@@ -12,6 +12,7 @@ import { registerAccountRequestRoutes } from './routes/account-requests.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
+import { registerForumRoutes } from './routes/forum.js';
 import { registerLocaleRoutes } from './routes/locale.js';
 import { registerOAuthRoutes } from './routes/oauth.js';
 import { registerPageRoutes } from './routes/pages.js';
@@ -62,6 +63,7 @@ registerOAuthRoutes(app);
 registerToolRoutes(app);
 registerBlogRoutes(app);
 registerCitationRoutes(app);
+registerForumRoutes(app);
 registerAccountRequestRoutes(app);
 registerPageRoutes(app);
 

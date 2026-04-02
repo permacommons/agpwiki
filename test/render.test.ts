@@ -12,6 +12,7 @@ import {
   renderUnifiedDiff,
   toSafeText,
 } from '../src/render.js';
+import { buildForumQuote } from '../src/services/forum-service.js';
 
 test('escapeHtml escapes basic characters', () => {
   const input = `<div class="x">Tom & Jerry's</div>`;
@@ -144,4 +145,8 @@ test('renderMarkdown keeps 4-column tables in horizontal scroll mode', async () 
   assert.match(html, /<div class="table-scroll"><table>/);
   assert.doesNotMatch(html, /table-stack-mobile/);
   assert.doesNotMatch(html, /data-label=/);
+});
+
+test('buildForumQuote turns markdown into blockquote lines', () => {
+  assert.equal(buildForumQuote('Line one\n\nLine two'), '> Line one\n>\n> Line two\n\n');
 });

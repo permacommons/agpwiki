@@ -5,6 +5,7 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
+import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
   resolveSafeText,
@@ -742,12 +743,25 @@ export const registerPageRoutes = (app: Express) => {
         path: req.path,
         queryParams,
       });
+      const forumPath = isArticle
+        ? forumCategoryPagePath('articles', canonicalSlug)
+        : canonicalSlug.startsWith('meta/')
+          ? forumCategoryPagePath('policy', canonicalSlug)
+          : '';
+      const forumLinkHtml = forumPath
+        ? `<div class="tool-related">
+  <span class="tool-related-label">${escapeHtml(req.t('forum.relatedLabel'))}</span>
+  <span class="tool-related-links"><a href="${forumPath}">${escapeHtml(
+              req.t('forum.discussThisPage')
+            )}</a></span>
+</div>`
+        : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const signedIn = Boolean(await resolveSessionUser(req));
       const html = renderLayout({
         title,
         labelHtml: metaLabel,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${forumLinkHtml}${languageRow}`,
         topHtml,
         sidebarHtml,
         signedIn,
