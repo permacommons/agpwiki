@@ -11,6 +11,7 @@ const forumThreadManifest = {
   schema: {
     id: types.string().uuid(4),
     category: types.string().max(32).required(),
+    pageSlug: types.string().max(200),
     title: mlString.getSafeTextSchema({ maxLength: 200 }),
     originalLanguage: types.string().max(8),
     pinned: types.number().default(() => 0),
@@ -18,6 +19,7 @@ const forumThreadManifest = {
     updatedAt: types.date().default(() => new Date()),
   },
   camelToSnake: {
+    pageSlug: 'page_slug',
     originalLanguage: 'original_language',
     createdAt: 'created_at',
     updatedAt: 'updated_at',

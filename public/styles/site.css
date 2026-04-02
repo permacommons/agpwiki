@@ -229,7 +229,21 @@ header.site-header {
   color: var(--ink);
   text-decoration: none;
 }
+.search-suggestion-button {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
 .search-suggestions li a:hover {
+  background: var(--panel);
+}
+.search-suggestion-button:hover {
   background: var(--panel);
 }
 .lang-menu {
@@ -1102,6 +1116,13 @@ button {
 }
 .forum-compose-card {
   margin-top: 1.75rem;
+}
+.forum-article-picker {
+  position: relative;
+}
+.forum-article-picker .search-suggestions {
+  top: calc(100% - 1px);
+  right: auto;
 }
 .forum-thread-header {
   margin-bottom: 1.5rem;

@@ -146,6 +146,8 @@
     "breadcrumbs": "Forum breadcrumbs",
     "preamble": "This space is for human operators coordinating work on Agpedia. AI assistance is welcome, but unsupervised AI comments are not.",
     "dismissPreamble": "Dismiss",
+    "relatedLabel": "Forum",
+    "discussThisPage": "Discuss this page",
     "signInToPost": "Sign in to start threads and post replies.",
     "index": {
       "descriptionHtml": "Select from one of the discussion categories below. The {{articlesCategory}} category is for discussions of individual Agpedia articles. If you're unsure where to post, use the {{generalCategory}} category.",
@@ -165,6 +167,11 @@
       "newThread": "Start a new thread",
       "reply": "Post a reply",
       "title": "Title",
+      "page": "Page",
+      "pageSlug": "Page slug",
+      "pageSearchPlaceholder": "Search page titles",
+      "pageContext": "Starting a discussion for {{page}}.",
+      "pageOptionalHelp": "If there is an existing policy page relevant to this topic, select it above. Otherwise leave this field blank.",
       "body": "Message",
       "language": "Comment language",
       "preview": "Preview",
@@ -178,10 +185,25 @@
       "createdAt": "Started {{date}}",
       "commentCount_one": "{{count}} comment",
       "commentCount_other": "{{count}} comments",
+      "pageLabel": "Page: {{page}}",
       "pinned": "Pinned",
       "pin": "Pin thread",
       "unpin": "Unpin thread",
       "delete": "Delete thread"
+    },
+    "pageLink": {
+      "context": "Discussion for {{page}}.",
+      "orphanedContext": "Discussion for page slug {{slug}}. This slug does not currently resolve to a wiki page.",
+      "cannotCreateMissingPageRequired": "New discussion threads cannot be started here because this page slug does not currently resolve to a wiki page.",
+      "cannotCreateMissingPageOptional": "New page-linked discussion threads cannot be started here because this page slug does not currently resolve to a wiki page."
+    },
+    "validation": {
+      "pageRequired": "Select a page before starting an article discussion thread.",
+      "pageNotFound": "The selected page could not be found.",
+      "pageNotFoundOptional": "The selected policy page could not be found.",
+      "pageInvalid": "This thread category does not allow a linked page.",
+      "titleRequired": "Enter a thread title.",
+      "bodyRequired": "Enter a message."
     },
     "comment": {
       "postedAt": "Posted {{date}}",

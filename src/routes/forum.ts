@@ -4,7 +4,24 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors.js';
+import {
+  type FieldError,
+  ForbiddenError,
+  NotFoundError,
+  ValidationError,
+} from '../lib/errors.js';
+import {
+  forumCategoryPagePath,
+  forumCategoryPath,
+  forumCommentAnchor,
+  forumCommentDeletePath,
+  forumDismissPreamblePath,
+  forumIndexPath,
+  forumThreadCommentPath,
+  forumThreadDeletePath,
+  forumThreadPath,
+  forumThreadPinPath,
+} from '../lib/forum-paths.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import {
   escapeHtml,
@@ -28,9 +45,11 @@ import {
   readForumComment,
   readForumThread,
   requireSignedInUserId,
+  resolveForumPageTarget,
   setForumThreadPinned,
 } from '../services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
+import { normalizeSlugInput } from '../services/validation.js';
 import { fetchUserMap } from './lib/history.js';
 import {
   renderMarkdownPreviewHtml,
@@ -40,24 +59,6 @@ import {
 const { mlString } = dal;
 
 const FORUM_PREAMBLE_COOKIE = 'agpwiki_forum_preamble_dismissed';
-const FORUM_BASE_PATH = '/tool/forum';
-
-const forumIndexPath = () => FORUM_BASE_PATH;
-const forumDismissPreamblePath = () => `${FORUM_BASE_PATH}/dismiss-preamble`;
-const forumCategoryPath = (category: string) =>
-  `${FORUM_BASE_PATH}/${encodeURIComponent(category)}`;
-const forumThreadPath = (threadId: string) =>
-  `${FORUM_BASE_PATH}/thread/${encodeURIComponent(threadId)}`;
-const forumThreadCommentPath = (threadId: string) =>
-  `${forumThreadPath(threadId)}/comment`;
-const forumThreadPinPath = (threadId: string) =>
-  `${forumThreadPath(threadId)}/pin`;
-const forumThreadDeletePath = (threadId: string) =>
-  `${forumThreadPath(threadId)}/delete`;
-const forumCommentDeletePath = (commentId: string) =>
-  `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/delete`;
-const forumCommentAnchor = (commentId: string) =>
-  `comment-${encodeURIComponent(commentId)}`;
 
 const renderForumPreamble = (req: Request) => {
   if (req.cookies?.[FORUM_PREAMBLE_COOKIE] === '1') {
@@ -181,7 +182,8 @@ const renderForumBreadcrumbs = (
 const renderThreadList = (
   threads: Awaited<ReturnType<typeof listForumThreads>>,
   locale: string,
-  t: Request['t']
+  t: Request['t'],
+  options: { showPageSlug?: boolean; pageCategory?: ForumCategorySlug } = {}
 ) => {
   if (threads.length === 0) {
     return `<p class="forum-empty">${t('forum.category.empty')}</p>`;
@@ -199,6 +201,13 @@ const renderThreadList = (
   <div class="forum-thread-meta">
     <span>${t('forum.thread.commentCount', { count: thread.commentCount ?? 0 })}</span>
     <span>${t('forum.thread.createdAt', { date: escapeHtml(formatDateUTC(thread.createdAt)) })}</span>
+    ${
+      options.showPageSlug && thread.pageSlug && options.pageCategory
+        ? `<span>${t('forum.thread.pageLabel', {
+            page: `<a href="${forumCategoryPagePath(options.pageCategory, thread.pageSlug)}">${escapeHtml(thread.pageSlug)}</a>`,
+          })}</span>`
+        : ''
+    }
   </div>
 </li>`;
       })
@@ -212,6 +221,7 @@ interface ForumComposeBaseValues {
 }
 
 interface ForumThreadFormValues extends ForumComposeBaseValues {
+  pageSlug?: string;
   title: string;
 }
 
@@ -230,6 +240,7 @@ const renderComposeForm = ({
   errorMessage,
   sectionId,
   titleValue,
+  extraFieldsHtml,
 }: {
   t: Request['t'];
   heading: string;
@@ -245,6 +256,7 @@ const renderComposeForm = ({
   errorMessage?: string;
   sectionId?: string;
   titleValue?: string;
+  extraFieldsHtml?: string;
 }) => `<section class="form-card forum-compose-card"${
   sectionId ? ` id="${escapeHtml(sectionId)}"` : ''
 }>
@@ -259,6 +271,7 @@ const renderComposeForm = ({
     </label>`
         : ''
     }
+    ${extraFieldsHtml ?? ''}
     <label class="form-field">
       <span>${t('forum.compose.body')}</span>
       <textarea
@@ -298,14 +311,33 @@ const renderThreadForm = ({
   values,
   previewHtml,
   errorMessage,
+  pageMode,
 }: {
   t: Request['t'];
   languageOptions: Array<{ code: string; label: string }>;
   values: ForumThreadFormValues;
   previewHtml?: string;
   errorMessage?: string;
-}) =>
-  renderComposeForm({
+  pageMode?:
+    | {
+        mode: 'generic';
+        category: 'articles' | 'policy';
+      }
+    | {
+        mode: 'scoped';
+        category: 'articles' | 'policy';
+        pageSlug: string;
+        pageLabel: SafeText | string;
+        pageHref?: string;
+      };
+}) => {
+  const pageSearchScope =
+    pageMode?.mode === 'generic'
+      ? pageMode.category === 'articles'
+        ? 'content_only'
+        : 'meta_only'
+      : '';
+  return renderComposeForm({
     t,
     heading: t('forum.compose.newThread'),
     action: '',
@@ -319,7 +351,45 @@ const renderThreadForm = ({
     previewHtml,
     errorMessage,
     titleValue: values.title,
+    extraFieldsHtml:
+      pageMode?.mode === 'generic'
+        ? `<div class="form-field forum-article-picker" data-page-search-root data-page-search-scope="${pageSearchScope}">
+      <span>${t('forum.compose.page')}</span>
+      <input
+        type="text"
+        class="search-input forum-article-search-input"
+        name="pageSearch"
+        value="${escapeHtml(values.pageSlug ?? '')}"
+        maxlength="200"
+        autocomplete="off"
+        placeholder="${escapeHtml(t('forum.compose.pageSearchPlaceholder'))}"
+        data-page-search-input
+      />
+      <input type="hidden" name="pageSlug" value="${escapeHtml(values.pageSlug ?? '')}" data-page-search-slug />
+      <ul class="search-suggestions" role="listbox" data-page-search-suggestions></ul>
+    </div>
+    ${
+      pageMode.category === 'policy'
+        ? `<p class="form-help">${t('forum.compose.pageOptionalHelp')}</p>`
+        : ''
+    }
+    <noscript>
+      <label class="form-field">
+        <span>${t('forum.compose.pageSlug')}</span>
+        <input type="text" name="pageSlug" value="${escapeHtml(values.pageSlug ?? '')}" maxlength="200" />
+      </label>
+    </noscript>
+    `
+        : pageMode?.mode === 'scoped'
+          ? `<input type="hidden" name="pageSlug" value="${escapeHtml(pageMode.pageSlug)}" />
+    <p class="form-help">${t('forum.compose.pageContext', {
+      page: pageMode.pageHref
+        ? `<a href="${escapeHtml(pageMode.pageHref)}">${renderText(pageMode.pageLabel)}</a>`
+        : renderText(pageMode.pageLabel),
+    })}</p>`
+          : '',
   });
+};
 
 const renderCommentForm = ({
   t,
@@ -398,6 +468,7 @@ const getSelectedLanguage = (req: Request, fallback = 'en') =>
     : fallback;
 
 const getThreadValues = (req: Request): ForumThreadFormValues => ({
+  pageSlug: typeof req.body?.pageSlug === 'string' ? req.body.pageSlug : '',
   title: typeof req.body?.title === 'string' ? req.body.title : '',
   body: typeof req.body?.body === 'string' ? req.body.body : '',
   language: getSelectedLanguage(req, resLocale(req)),
@@ -412,6 +483,54 @@ const resLocale = (req: Request) => (req.language ?? 'en') as string;
 
 const requireForumSession = async (req: Request) =>
   requireSignedInUserId((await resolveSessionUser(req))?.userId);
+
+const getPageLabel = (
+  locale: string,
+  title: Record<string, string> | null | undefined,
+  fallback: string
+) => resolveSafeTextWithFallback(mlString.resolve, locale, title, fallback);
+
+const getPageSlugFromRequest = (req: Request) =>
+  typeof req.body?.pageSlug === 'string' ? req.body.pageSlug : '';
+
+const formatForumFieldError = (t: Request['t'], fieldError: FieldError) => {
+  if (fieldError.field === 'title' && fieldError.code === 'required') {
+    return t('forum.validation.titleRequired');
+  }
+  if (fieldError.field === 'body' && fieldError.code === 'required') {
+    return t('forum.validation.bodyRequired');
+  }
+  return null;
+};
+
+const getForumValidationMessage = (
+  t: Request['t'],
+  error: ValidationError,
+  options: { category?: ForumCategorySlug } = {}
+) => {
+  const firstFieldError = error.fieldErrors?.[0];
+  if (!firstFieldError) {
+    return error.message;
+  }
+
+  if (firstFieldError.field === 'pageSlug') {
+    if (firstFieldError.code === 'required') {
+      return t('forum.validation.pageRequired');
+    }
+    if (firstFieldError.code === 'not_found') {
+      return t(
+        options.category === 'policy'
+          ? 'forum.validation.pageNotFoundOptional'
+          : 'forum.validation.pageNotFound'
+      );
+    }
+    if (firstFieldError.code === 'invalid') {
+      return t('forum.validation.pageInvalid');
+    }
+  }
+
+  return formatForumFieldError(t, firstFieldError) ?? error.message;
+};
 
 const renderCategoryPage = async (
   req: Request,
@@ -432,7 +551,10 @@ const renderCategoryPage = async (
       ],
       req.t
     )}
-    ${renderThreadList(threads, resLocale(req), req.t)}
+    ${renderThreadList(threads, resLocale(req), req.t, {
+      showPageSlug: category === 'articles' || category === 'policy',
+      pageCategory: category === 'articles' || category === 'policy' ? category : undefined,
+    })}
     ${
       res.locals.signedIn
         ? renderThreadForm({
@@ -441,6 +563,10 @@ const renderCategoryPage = async (
             values: getThreadValues(req),
             previewHtml: options.threadPreviewHtml,
             errorMessage: options.threadErrorMessage,
+            pageMode:
+              category === 'articles' || category === 'policy'
+                ? { mode: 'generic', category }
+                : undefined,
           })
         : `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`
     }
@@ -449,6 +575,89 @@ const renderCategoryPage = async (
   withForumPage(
     res,
     req.t(FORUM_CATEGORY_KEYS[category]),
+    bodyHtml,
+    `<div class="page-label">${req.t('label.forum')}</div>`
+  );
+};
+
+const renderPageLinkedCategoryPage = async (
+  req: Request,
+  res: Response,
+  category: 'articles' | 'policy',
+  requestedSlug: string,
+  options: {
+    threadPreviewHtml?: string;
+    threadErrorMessage?: string;
+  } = {}
+) => {
+  const dalInstance = await initializePostgreSQL();
+  const normalizedRequestedSlug = normalizeSlugInput(requestedSlug, 'pageSlug');
+  const target = await resolveForumPageTarget(normalizedRequestedSlug);
+  const storedSlug = target?.canonicalSlug ?? normalizedRequestedSlug;
+  const pageLabel = getPageLabel(
+    resLocale(req),
+    target?.title ?? null,
+    storedSlug
+  );
+  const pageTitle = getThreadTitlePlainText(
+    resLocale(req),
+    target?.title ?? null,
+    storedSlug
+  );
+  const threads = await listForumThreads(dalInstance, category, {
+    pageSlug: storedSlug,
+  });
+  const composeHtml = !res.locals.signedIn
+    ? `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`
+    : target
+      ? renderThreadForm({
+          t: req.t,
+          languageOptions: res.locals.languageOptions,
+          values: {
+            ...getThreadValues(req),
+            pageSlug: storedSlug,
+          },
+          previewHtml: options.threadPreviewHtml,
+          errorMessage: options.threadErrorMessage,
+          pageMode: {
+            mode: 'scoped',
+            category,
+            pageSlug: storedSlug,
+            pageLabel,
+            pageHref: `/${storedSlug}`,
+          },
+        })
+      : category === 'articles'
+        ? `<p class="forum-empty">${req.t('forum.pageLink.cannotCreateMissingPageRequired')}</p>`
+        : `<p class="forum-empty">${req.t('forum.pageLink.cannotCreateMissingPageOptional')}</p>`;
+  const bodyHtml = `<div class="forum-page">
+    ${renderForumBreadcrumbs(
+      [
+        { label: req.t('forum.title'), href: forumIndexPath() },
+        {
+          label: req.t(FORUM_CATEGORY_KEYS[category]),
+          href: forumCategoryPath(category),
+        },
+        { label: pageLabel },
+      ],
+      req.t
+    )}
+    <p class="forum-page-context">${
+      target
+        ? req.t('forum.pageLink.context', {
+            page: `<a href="/${encodeURIComponent(storedSlug)}">${renderText(pageLabel)}</a>`,
+          })
+        : req.t('forum.pageLink.orphanedContext', {
+            slug: escapeHtml(storedSlug),
+          })
+    }</p>
+    ${renderThreadList(threads, resLocale(req), req.t)}
+    ${composeHtml}
+  </div>`;
+
+  withForumPage(
+    res,
+    pageTitle,
     bodyHtml,
     `<div class="page-label">${req.t('label.forum')}</div>`
   );
@@ -494,6 +703,17 @@ const renderThreadPage = async (
     detail.thread.title,
     detail.thread.id
   );
+  const pageTarget = detail.thread.pageSlug
+    ? await resolveForumPageTarget(detail.thread.pageSlug)
+    : null;
+  const pageLabel =
+    detail.thread.pageSlug
+      ? getPageLabel(
+          resLocale(req),
+          pageTarget?.title ?? null,
+          detail.thread.pageSlug
+        )
+      : null;
   const userIds = detail.comments
     .map(comment => comment.revUser)
     .filter((value): value is string => Boolean(value));
@@ -566,13 +786,32 @@ const renderThreadPage = async (
           label: req.t(FORUM_CATEGORY_KEYS[detail.thread.category]),
           href: forumCategoryPath(detail.thread.category),
         },
+        ...((detail.thread.category === 'articles' || detail.thread.category === 'policy') &&
+        detail.thread.pageSlug
+          ? [
+              {
+                label: pageLabel ?? detail.thread.pageSlug,
+                href: forumCategoryPagePath(detail.thread.category, detail.thread.pageSlug),
+              },
+            ]
+          : []),
         { label: threadTitle },
-      ],
+      ].filter(Boolean) as Array<{ label: SafeText | string; href?: string }>,
       req.t
     )}
     <div class="forum-thread-header">
       <div class="forum-thread-meta">
         <span>${req.t(FORUM_CATEGORY_KEYS[detail.thread.category])}</span>
+        ${
+          (detail.thread.category === 'articles' || detail.thread.category === 'policy') &&
+          detail.thread.pageSlug
+            ? `<span>${req.t('forum.thread.pageLabel', {
+                page: `<a href="${forumCategoryPagePath(detail.thread.category, detail.thread.pageSlug)}">${renderText(
+                  pageLabel ?? detail.thread.pageSlug
+                )}</a>`,
+              })}</span>`
+            : ''
+        }
         <span>${req.t('forum.thread.createdAt', {
           date: escapeHtml(formatDateUTC(detail.thread.createdAt)),
         })}</span>
@@ -602,6 +841,71 @@ const renderThreadPage = async (
     bodyHtml,
     `<div class="page-label">${req.t('label.forum')}</div>`
   );
+};
+
+const registerPageLinkedForumRoutes = (
+  app: Express,
+  category: 'articles' | 'policy'
+) => {
+  app.get(`/tool/forum/${category}/page/:slug`, async (req, res) => {
+    try {
+      await renderPageLinkedCategoryPage(req, res, category, req.params.slug);
+    } catch (error) {
+      if (error instanceof NotFoundError || error instanceof ValidationError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      console.error(`Failed to render page-linked ${category} forum category:`, error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  app.post(`/tool/forum/${category}/page/:slug`, async (req, res) => {
+    try {
+      const userId = await requireForumSession(req);
+      const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
+      const title = typeof req.body?.title === 'string' ? req.body.title : '';
+      const body = typeof req.body?.body === 'string' ? req.body.body : '';
+      const language = getSelectedLanguage(req, resLocale(req));
+      const pageSlug = req.params.slug;
+
+      if (intent === 'preview') {
+        const dalInstance = await initializePostgreSQL();
+        const threadPreviewHtml = await renderMarkdownPreviewHtml(
+          dalInstance,
+          body,
+          req.t('citation.backToCitationAria')
+        );
+        await renderPageLinkedCategoryPage(req, res, category, pageSlug, {
+          threadPreviewHtml,
+        });
+        return;
+      }
+
+      const thread = await createForumThread(
+        { category, pageSlug, title, body, language },
+        userId
+      );
+      res.redirect(303, forumThreadPath(thread.id));
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        await renderPageLinkedCategoryPage(req, res, category, req.params.slug, {
+          threadErrorMessage: getForumValidationMessage(req.t, error, { category }),
+        });
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      console.error(`Failed to create page-linked ${category} forum thread:`, error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
 };
 
 export const registerForumRoutes = (app: Express) => {
@@ -659,6 +963,9 @@ export const registerForumRoutes = (app: Express) => {
       res.status(500).type('text').send(req.t('page.serverError'));
     }
   });
+
+  registerPageLinkedForumRoutes(app, 'articles');
+  registerPageLinkedForumRoutes(app, 'policy');
 
   app.post('/tool/forum/thread/:threadId/comment', async (req, res) => {
     try {
@@ -804,6 +1111,7 @@ export const registerForumRoutes = (app: Express) => {
       const userId = await requireForumSession(req);
       const category = ensureForumCategory(req.params.category) as ForumCategorySlug;
       const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
+      const pageSlug = getPageSlugFromRequest(req);
       const title = typeof req.body?.title === 'string' ? req.body.title : '';
       const body = typeof req.body?.body === 'string' ? req.body.body : '';
       const language = getSelectedLanguage(req, resLocale(req));
@@ -819,13 +1127,16 @@ export const registerForumRoutes = (app: Express) => {
         return;
       }
 
-      const thread = await createForumThread({ category, title, body, language }, userId);
+      const thread = await createForumThread(
+        { category, pageSlug, title, body, language },
+        userId
+      );
       res.redirect(303, forumThreadPath(thread.id));
     } catch (error) {
       if (error instanceof ValidationError) {
         const category = ensureForumCategory(req.params.category) as ForumCategorySlug;
         await renderCategoryPage(req, res, category, {
-          threadErrorMessage: error.message,
+          threadErrorMessage: getForumValidationMessage(req.t, error, { category }),
         });
         return;
       }

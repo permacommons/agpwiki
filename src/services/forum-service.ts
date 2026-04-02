@@ -17,9 +17,11 @@ import {
   ensureNonEmptyString,
   ensureOptionalLanguage,
   ensureString,
+  normalizeSlugInput,
   requireRevSummary,
   validateRevSummary,
 } from './validation.js';
+import { findCurrentPageBySlugOrAlias } from './wiki-page-service.js';
 
 export const FORUM_CATEGORY_KEYS = {
   general: 'forum.category.general',
@@ -35,6 +37,7 @@ export const FORUM_CATEGORIES = Object.keys(FORUM_CATEGORY_KEYS) as ForumCategor
 export interface ForumThreadResult {
   id: string;
   category: ForumCategorySlug;
+  pageSlug: string | null | undefined;
   title: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
   pinned: boolean;
@@ -80,6 +83,7 @@ export interface ForumThreadDetailResult {
 
 export interface CreateForumThreadInput {
   category: string;
+  pageSlug?: string;
   title: string;
   body: string;
   language: string;
@@ -128,6 +132,7 @@ export const ensureForumCategory = (
 const toForumThreadResult = (thread: ForumThreadInstance): ForumThreadResult => ({
   id: thread.id,
   category: ensureForumCategory(thread.category) ?? 'general',
+  pageSlug: thread.pageSlug ?? null,
   title: thread.title ?? null,
   originalLanguage: thread.originalLanguage ?? null,
   pinned: Boolean(thread.pinned),
@@ -227,6 +232,26 @@ const normalizeQuotedMarkdown = (value: string) =>
 
 export const buildForumQuote = (value: string) => `${normalizeQuotedMarkdown(value)}\n\n`;
 
+export interface ForumPageTarget {
+  canonicalSlug: string;
+  title: Record<string, string> | null | undefined;
+  originalLanguage: string | null | undefined;
+}
+
+export const resolveForumPageTarget = async (
+  slug: string
+): Promise<ForumPageTarget | null> => {
+  const normalizedSlug = normalizeSlugInput(slug, 'pageSlug');
+  const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
+  if (!page) return null;
+
+  return {
+    canonicalSlug: page.slug,
+    title: page.title ?? null,
+    originalLanguage: page.originalLanguage ?? null,
+  };
+};
+
 export const listForumCategories = async (
   dalInstance: DataAccessLayer
 ): Promise<ForumCategoryListItem[]> => {
@@ -283,9 +308,16 @@ export const listForumCategories = async (
 
 export const listForumThreads = async (
   dalInstance: DataAccessLayer,
-  category: string
+  category: string,
+  options: { pageSlug?: string } = {}
 ): Promise<ForumThreadListItem[]> => {
   const normalizedCategory = ensureForumCategory(category);
+  const params: string[] = [normalizedCategory];
+  let pageFilterSql = '';
+  if (options.pageSlug) {
+    params.push(normalizeSlugInput(options.pageSlug, 'pageSlug'));
+    pageFilterSql = ` AND t.page_slug = $${params.length}`;
+  }
   const result = await dalInstance.query(
     `SELECT
        t.*,
@@ -299,9 +331,10 @@ export const listForumThreads = async (
      WHERE t._old_rev_of IS NULL
        AND t._rev_deleted = false
        AND t.category = $1
+       ${pageFilterSql}
      GROUP BY t.id
      ORDER BY t.pinned DESC, t.created_at DESC, t._rev_date DESC`,
-    [normalizedCategory]
+    params
   );
 
   return result.rows.map(row => ({
@@ -344,16 +377,44 @@ export const readForumComment = async (
 ): Promise<ForumCommentResult> => toForumCommentResult(await requireComment(commentId));
 
 export const createForumThread = async (
-  { category, title, body, language }: CreateForumThreadInput,
+  { category, pageSlug, title, body, language }: CreateForumThreadInput,
   userId: string
 ): Promise<ForumThreadResult> => {
   const errors = new ValidationCollector('Invalid forum thread input.');
   const normalizedCategory = ensureForumCategory(category, 'category', errors);
+  let normalizedPageSlug: string | null = null;
   ensureNonEmptyString(userId, 'userId', errors);
   ensureNonEmptyString(language, 'language', errors);
   ensureOptionalLanguage(language, 'language', errors);
   validateTitle(title, errors);
   await validateMarkdownBody(body, language, 'body', errors);
+  const rawPageSlug =
+    typeof pageSlug === 'string' && pageSlug.trim().length > 0
+      ? normalizeSlugInput(pageSlug, 'pageSlug', errors)
+      : '';
+  if (normalizedCategory === 'articles') {
+    if (!rawPageSlug) {
+      errors.add('pageSlug', 'must not be empty.', 'required');
+    } else {
+      const target = await resolveForumPageTarget(rawPageSlug);
+      if (!target) {
+        errors.add('pageSlug', 'must refer to an existing wiki page.', 'not_found');
+      } else {
+        normalizedPageSlug = target.canonicalSlug;
+      }
+    }
+  } else if (normalizedCategory === 'policy') {
+    if (rawPageSlug) {
+      const target = await resolveForumPageTarget(rawPageSlug);
+      if (!target) {
+        errors.add('pageSlug', 'must refer to an existing wiki page.', 'not_found');
+      } else {
+        normalizedPageSlug = target.canonicalSlug;
+      }
+    }
+  } else if (rawPageSlug) {
+    errors.add('pageSlug', 'is only allowed for page discussion threads.', 'invalid');
+  }
   errors.throwIfAny();
 
   const createdAt = new Date();
@@ -362,6 +423,7 @@ export const createForumThread = async (
     { tags: ['create'], date: createdAt }
   );
   thread.category = normalizedCategory ?? 'general';
+  thread.pageSlug = normalizedPageSlug;
   thread.title = sanitizeLocalizedMapInput({ [language]: escapeHtml(title.trim()) });
   thread.originalLanguage = language;
   thread.pinned = 0;

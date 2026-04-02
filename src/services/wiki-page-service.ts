@@ -212,6 +212,7 @@ export interface WikiPageListResult {
 export interface WikiPageSearchInput {
   query: string;
   limit?: number;
+  scope?: 'all' | 'content_only' | 'meta_only';
 }
 
 export interface WikiPageSearchItem {
@@ -477,7 +478,7 @@ export async function listWikiPageResources(
 
 export async function searchWikiPages(
   dalInstance: DataAccessLayer,
-  { query, limit }: WikiPageSearchInput
+  { query, limit, scope = 'all' }: WikiPageSearchInput
 ): Promise<WikiPageSearchItem[]> {
   ensureNonEmptyString(query, 'query');
   const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
@@ -486,10 +487,15 @@ export async function searchWikiPages(
     `SELECT slug, title->>'en' as title
      FROM ${WikiPage.tableName}
      WHERE _old_rev_of IS NULL AND _rev_deleted = false
+       AND (
+         $2 = 'all'
+         OR ($2 = 'content_only' AND slug NOT LIKE 'meta/%')
+         OR ($2 = 'meta_only' AND slug LIKE 'meta/%')
+       )
        AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
      ORDER BY slug
-     LIMIT $2`,
-    [`%${query}%`, normalizedLimit]
+     LIMIT $3`,
+    [`%${query}%`, scope, normalizedLimit]
   );
 
   return result.rows.map((row: { slug: string; title: string | null }) => ({
