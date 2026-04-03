@@ -1,10 +1,10 @@
-import type { Express } from 'express';
+import type { Express, Request, Response } from 'express';
 
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { NotFoundError } from '../lib/errors.js';
+import { ConflictError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
@@ -12,6 +12,7 @@ import {
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
 import { isBlockedSlug } from '../lib/slug.js';
+import { normalizeLineEndings } from '../lib/text-normalization.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -32,6 +33,7 @@ import {
   listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
+  updateWikiPage,
 } from '../services/wiki-page-service.js';
 import {
   extractQueryParams,
@@ -41,7 +43,13 @@ import {
   resolveContentLanguage,
 } from './lib/content-language.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
+import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
+import {
+  createPreviewHandler,
+  renderMarkdownPreviewHtml,
+  renderMarkdownPreviewPanel,
+} from './lib/markdown-preview.js';
 import {
   formatCheckStatus,
   formatCheckType,
@@ -52,6 +60,7 @@ import {
   renderPageChecksList,
   renderPageChecksSummary,
 } from './lib/page-checks.js';
+import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
 
@@ -61,6 +70,176 @@ const resolveCheckMetrics = (metrics: PageCheckMetrics | null | undefined) => {
     issues_fixed: { high: 0, medium: 0, low: 0 },
   };
   return metrics ?? fallback;
+};
+
+const operatorEditPath = (slug: string, lang: string) =>
+  `/${encodeURIComponent(slug)}/operator-edit?lang=${encodeURIComponent(lang)}`;
+const operatorEditDismissBannerPath = (slug: string, lang: string) =>
+  `/${encodeURIComponent(slug)}/operator-edit/dismiss-banner?lang=${encodeURIComponent(lang)}`;
+const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
+
+const pageViewPath = (slug: string, lang?: string) =>
+  lang ? `/${encodeURIComponent(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeURIComponent(slug)}`;
+
+const renderOperatorEditPreviewHtml = async ({
+  dalInstance,
+  title,
+  body,
+  backToCitationLabel,
+}: {
+  dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>;
+  title: string;
+  body: string;
+  backToCitationLabel: string;
+}) => {
+  const trimmedBody = body.trim();
+  const bodyHtml = trimmedBody
+    ? await renderMarkdownPreviewHtml(dalInstance, body, backToCitationLabel)
+    : '';
+
+  return `<article class="operator-edit-preview-article">
+  ${title.trim() ? `<h1>${escapeHtml(title)}</h1>` : ''}
+  ${bodyHtml}
+</article>`;
+};
+
+const renderOperatorEditForm = ({
+  req,
+  slug,
+  lang,
+  languageLabel,
+  titleValue,
+  bodyValue,
+  summaryValue,
+  previewHtml,
+  errorMessage,
+}: {
+  req: Request;
+  slug: string;
+  lang: string;
+  languageLabel: string;
+  titleValue: string;
+  bodyValue: string;
+  summaryValue: string;
+  previewHtml?: string;
+  errorMessage?: string;
+}) => {
+  const action = operatorEditPath(slug, lang);
+  return `<section class="form-card operator-edit-card">
+  <p class="form-help">${escapeHtml(
+    req.t('operatorEdit.intro', { language: languageLabel })
+  )}</p>
+  ${errorMessage ? `<div class="form-error">${escapeHtml(errorMessage)}</div>` : ''}
+  <form method="post" action="${action}" id="operator-edit-form">
+    <input type="hidden" name="lang" value="${escapeHtml(lang)}" />
+    <label class="form-field">
+      <span>${escapeHtml(req.t('operatorEdit.fields.title'))}</span>
+      <input
+        type="text"
+        name="title"
+        value="${escapeHtml(titleValue)}"
+        maxlength="200"
+        data-markdown-preview-field
+      />
+    </label>
+    <label class="form-field">
+      <span>${escapeHtml(req.t('operatorEdit.fields.body'))}</span>
+      <textarea
+        id="operator-edit-body"
+        name="body"
+        rows="18"
+        data-markdown-preview-field
+      >${escapeHtml(bodyValue)}</textarea>
+    </label>
+    <label class="form-field">
+      <span>${escapeHtml(req.t('operatorEdit.fields.summary'))}</span>
+      <input type="text" name="summary" value="${escapeHtml(summaryValue)}" maxlength="300" />
+    </label>
+    <p class="form-help">${escapeHtml(req.t('operatorEdit.summaryHelp'))}</p>
+    ${renderMarkdownPreviewPanel({
+      formId: 'operator-edit-form',
+      previewId: 'operator-edit-preview',
+      endpoint: '/api/render-page-edit-preview',
+      texts: {
+        title: req.t('common.preview.title'),
+        empty: req.t('common.preview.empty'),
+        error: req.t('common.preview.error'),
+      },
+      previewHtml,
+    })}
+    <div class="form-actions">
+      <button type="submit" name="intent" value="save">${escapeHtml(
+        req.t('operatorEdit.actions.save')
+      )}</button>
+      <a href="${pageViewPath(slug, lang)}">${escapeHtml(req.t('common.actions.cancel'))}</a>
+      <noscript>
+        <button type="submit" name="intent" value="preview">${escapeHtml(
+          req.t('common.actions.preview')
+        )}</button>
+      </noscript>
+    </div>
+  </form>
+</section>`;
+};
+
+const renderOperatorEditPage = async ({
+  req,
+  res,
+  slug,
+  lang,
+  titleValue,
+  bodyValue,
+  summaryValue,
+  errorMessage,
+  previewHtml,
+}: {
+  req: Request;
+  res: Response;
+  slug: string;
+  lang: string;
+  titleValue: string;
+  bodyValue: string;
+  summaryValue: string;
+  errorMessage?: string;
+  previewHtml?: string;
+}) => {
+  const dalInstance = await initializePostgreSQL();
+  const page = await readWikiPage(dalInstance, slug);
+  const pageTitle = resolveSafeText(mlString.resolve, lang, page.title, page.slug);
+  const languageLabel =
+    res.locals.languageOptions.find((option: { code: string; label: string }) => option.code === lang)
+      ?.label ?? lang;
+  const bannerHtml = renderDismissableBanner({
+    req,
+    cookieName: OPERATOR_EDIT_BANNER_COOKIE,
+    unsafeBodyHtml: escapeHtml(req.t('operatorEdit.banner')),
+    dismissPath: operatorEditDismissBannerPath(slug, lang),
+    dismissLabel: req.t('common.dismiss'),
+  });
+
+  const html = renderLayout({
+    title: concatSafeText(pageTitle, ` · ${req.t('operatorEdit.title')}`),
+    labelHtml: `<div class="page-label">${escapeHtml(req.t('operatorEdit.title'))}</div>`,
+    bodyHtml: renderOperatorEditForm({
+      req,
+      slug,
+      lang,
+      languageLabel,
+      titleValue,
+      bodyValue,
+      summaryValue,
+      errorMessage,
+      previewHtml,
+    }),
+    signedIn: true,
+    currentUserName: res.locals.currentUserName,
+    currentPath: res.locals.currentPath,
+    locale: res.locals.locale,
+    languageOptions: res.locals.languageOptions,
+    topHtml: bannerHtml,
+  });
+
+  res.type('html').send(html);
 };
 
 export const registerPageRoutes = (app: Express) => {
@@ -91,6 +270,40 @@ export const registerPageRoutes = (app: Express) => {
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  app.post(
+    '/api/render-page-edit-preview',
+    createPreviewHandler(
+      body => {
+        const payload = body as Record<string, unknown>;
+        return {
+          title: typeof payload.title === 'string' ? payload.title : '',
+          body: typeof payload.body === 'string' ? payload.body : '',
+        };
+      },
+      async ({ title, body }, req) => {
+        const dalInstance = await initializePostgreSQL();
+        return title.trim() || body.trim()
+          ? renderOperatorEditPreviewHtml({
+              dalInstance,
+              title,
+              body,
+              backToCitationLabel: req.t('citation.backToCitationAria'),
+            })
+          : '';
+      }
+    )
+  );
+
+  app.post(/^\/(.+)\/operator-edit\/dismiss-banner$/, (req, res) => {
+    const slug = req.params[0];
+    const lang = normalizeOverrideLang(typeof req.query.lang === 'string' ? req.query.lang : undefined) ?? 'en';
+    dismissBanner({
+      res,
+      cookieName: OPERATOR_EDIT_BANNER_COOKIE,
+      redirectTo: operatorEditPath(slug, lang),
+    });
   });
 
   app.get(/^\/(.+)\/checks$/, async (req, res) => {
@@ -509,6 +722,141 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.get(/^\/(.+)\/operator-edit$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
+      return;
+    }
+
+    try {
+      const dalInstance = await initializePostgreSQL();
+      const page = await readWikiPage(dalInstance, slug);
+      const availableLangs = getAvailableLanguages(page.body, page.title);
+      const contentLang = resolveContentLanguage({
+        uiLocale: res.locals.locale,
+        override: normalizeOverrideLang(typeof req.query.lang === 'string' ? req.query.lang : undefined),
+        availableLangs,
+      });
+
+      await renderOperatorEditPage({
+        req,
+        res,
+        slug,
+        lang: contentLang,
+        titleValue: mlString.resolve(contentLang, page.title)?.str ?? '',
+        bodyValue: mlString.resolve(contentLang, page.body)?.str ?? '',
+        summaryValue: '',
+      });
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      console.error('Failed to render operator edit page:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  app.post(/^\/(.+)\/operator-edit$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
+      return;
+    }
+
+    const lang = normalizeOverrideLang(typeof req.body?.lang === 'string' ? req.body.lang : undefined) ?? 'en';
+    const titleValue = normalizeLineEndings(
+      typeof req.body?.title === 'string' ? req.body.title : ''
+    );
+    const bodyValue = normalizeLineEndings(
+      typeof req.body?.body === 'string' ? req.body.body : ''
+    );
+    const summaryValue = normalizeLineEndings(
+      typeof req.body?.summary === 'string' ? req.body.summary : ''
+    );
+    const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'save';
+
+    try {
+      const dalInstance = await initializePostgreSQL();
+
+      if (intent === 'preview') {
+        const previewHtml = await renderOperatorEditPreviewHtml({
+          dalInstance,
+          title: titleValue,
+          body: bodyValue,
+          backToCitationLabel: req.t('citation.backToCitationAria'),
+        });
+        await renderOperatorEditPage({
+          req,
+          res,
+          slug,
+          lang,
+          titleValue,
+          bodyValue,
+          summaryValue,
+          previewHtml,
+        });
+        return;
+      }
+
+      await updateWikiPage(
+        dalInstance,
+        {
+          slug,
+          title: { [lang]: titleValue },
+          body: { [lang]: bodyValue },
+          revSummary: { [lang]: summaryValue },
+        },
+        session.userId
+      );
+
+      res.redirect(303, pageViewPath(slug, lang));
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ValidationError || error instanceof ConflictError) {
+        const previewHtml =
+          titleValue.trim() || bodyValue.trim()
+            ? await renderOperatorEditPreviewHtml({
+                dalInstance: await initializePostgreSQL(),
+                title: titleValue,
+                body: bodyValue,
+                backToCitationLabel: req.t('citation.backToCitationAria'),
+              })
+            : undefined;
+        await renderOperatorEditPage({
+          req,
+          res,
+          slug,
+          lang,
+          titleValue,
+          bodyValue,
+          summaryValue,
+          errorMessage: resolveOperatorEditValidationMessage(req.t, error),
+          previewHtml,
+        });
+        return;
+      }
+      console.error('Failed to save operator edit:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.get(/^\/(.+)$/, async (req, res) => {
     const slug = req.params[0];
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
@@ -748,20 +1096,29 @@ export const registerPageRoutes = (app: Express) => {
         : canonicalSlug.startsWith('meta/')
           ? forumCategoryPagePath('policy', canonicalSlug)
           : '';
-      const forumLinkHtml = forumPath
+      const signedIn = Boolean(await resolveSessionUser(req));
+      const canShowOperatorEditLink = signedIn && !revIdParam && !diffFrom && !diffTo;
+      const relatedLinks = [
+        forumPath
+          ? `<a href="${forumPath}">${escapeHtml(req.t('forum.discussThisPage'))}</a>`
+          : '',
+        canShowOperatorEditLink
+          ? `<a href="${operatorEditPath(canonicalSlug, contentLang)}">${escapeHtml(
+              req.t('operatorEdit.link')
+            )}</a>`
+          : '',
+      ].filter(Boolean);
+      const forumLinkHtml = relatedLinks.length
         ? `<div class="tool-related">
-  <span class="tool-related-label">${escapeHtml(req.t('forum.relatedLabel'))}</span>
-  <span class="tool-related-links"><a href="${forumPath}">${escapeHtml(
-              req.t('forum.discussThisPage')
-            )}</a></span>
+  <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
+  <span class="tool-related-links">${relatedLinks.join(' · ')}</span>
 </div>`
         : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const signedIn = Boolean(await resolveSessionUser(req));
       const html = renderLayout({
         title,
         labelHtml: metaLabel,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${forumLinkHtml}${languageRow}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}${forumLinkHtml}`,
         topHtml,
         sidebarHtml,
         signedIn,

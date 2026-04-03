@@ -42,6 +42,7 @@ test('formatDateUTC returns a UTC string or empty', () => {
 test('normalizeForDiff ensures a trailing newline', () => {
   assert.equal(normalizeForDiff('line'), 'line\n');
   assert.equal(normalizeForDiff('line\n'), 'line\n');
+  assert.equal(normalizeForDiff('line\r\nnext'), 'line\nnext\n');
 });
 
 test('renderUnifiedDiff highlights word-level changes and escapes HTML', () => {

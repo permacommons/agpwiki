@@ -33,28 +33,46 @@ const updatePreviewRoots = () => {
     root.dataset.previewBound = 'true';
 
     const endpoint = root.dataset.markdownPreviewEndpoint;
-    const inputId = root.dataset.markdownPreviewInput;
+    const formId = root.dataset.markdownPreviewForm;
     const outputId = root.dataset.markdownPreviewOutput;
     const emptyText = root.dataset.markdownPreviewEmpty ?? '';
-    const loadingText = root.dataset.markdownPreviewLoading ?? 'Loading preview...';
     const errorText = root.dataset.markdownPreviewError ?? 'Preview unavailable.';
-    const input = inputId ? document.getElementById(inputId) : null;
+    const form = formId ? document.getElementById(formId) : null;
     const output = outputId ? document.getElementById(outputId) : null;
 
-    if (!(input instanceof HTMLTextAreaElement) || !(output instanceof HTMLElement) || !endpoint) {
+    if (!(form instanceof HTMLFormElement) || !(output instanceof HTMLElement) || !endpoint) {
       return;
     }
 
+    const previewFields = [...form.querySelectorAll('[data-markdown-preview-field]')].filter(
+      field =>
+        field instanceof HTMLInputElement ||
+        field instanceof HTMLTextAreaElement ||
+        field instanceof HTMLSelectElement
+    );
+
+    if (previewFields.length === 0) return;
+
     let requestId = 0;
     const renderPreview = debounce(async () => {
-      const source = input.value;
-      if (source.trim().length === 0) {
+      const payload = {};
+      let hasContent = false;
+
+      previewFields.forEach(field => {
+        const name = field.getAttribute('name');
+        if (!name) return;
+        payload[name] = field.value;
+        if (field.value.trim().length > 0) {
+          hasContent = true;
+        }
+      });
+
+      if (!hasContent) {
         output.innerHTML = `<p class="markdown-preview-empty">${emptyText}</p>`;
         return;
       }
 
       const currentRequestId = ++requestId;
-      output.innerHTML = `<p class="markdown-preview-status">${loadingText}</p>`;
 
       try {
         const response = await fetch(endpoint, {
@@ -62,13 +80,13 @@ const updatePreviewRoots = () => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ source }),
+          body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const payload = await response.json();
+        const responsePayload = await response.json();
         if (currentRequestId !== requestId) return;
-        output.innerHTML = payload.html?.trim()
-          ? payload.html
+        output.innerHTML = responsePayload.html?.trim()
+          ? responsePayload.html
           : `<p class="markdown-preview-empty">${emptyText}</p>`;
       } catch (_error) {
         if (currentRequestId !== requestId) return;
@@ -76,7 +94,10 @@ const updatePreviewRoots = () => {
       }
     }, 250);
 
-    input.addEventListener('input', renderPreview);
+    previewFields.forEach(field => {
+      field.addEventListener('input', renderPreview);
+      field.addEventListener('change', renderPreview);
+    });
   });
 };
 

@@ -1,16 +1,16 @@
+import type { Request, RequestHandler } from 'express';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
-import { renderMarkdown } from '../../render.js';
+import { escapeHtml, renderMarkdown } from '../../render.js';
 
 export interface MarkdownPreviewTexts {
   title: string;
   empty: string;
-  loading: string;
   error: string;
 }
 
 export interface MarkdownPreviewOptions {
-  textareaId: string;
+  formId: string;
   previewId: string;
   endpoint: string;
   texts: MarkdownPreviewTexts;
@@ -18,7 +18,7 @@ export interface MarkdownPreviewOptions {
 }
 
 export const renderMarkdownPreviewPanel = ({
-  textareaId,
+  formId,
   previewId,
   endpoint,
   texts,
@@ -33,16 +33,26 @@ export const renderMarkdownPreviewPanel = ({
   class="markdown-preview"
   data-markdown-preview-root
   data-markdown-preview-endpoint="${endpoint}"
-  data-markdown-preview-input="${textareaId}"
+  data-markdown-preview-form="${escapeHtml(formId)}"
   data-markdown-preview-output="${previewId}"
-  data-markdown-preview-empty="${texts.empty}"
-  data-markdown-preview-loading="${texts.loading}"
-  data-markdown-preview-error="${texts.error}"
+  data-markdown-preview-empty="${escapeHtml(texts.empty)}"
+  data-markdown-preview-error="${escapeHtml(texts.error)}"
 >
-  <div class="markdown-preview-heading">${texts.title}</div>
+  <div class="markdown-preview-heading">${escapeHtml(texts.title)}</div>
   <div class="markdown-preview-body" id="${previewId}" aria-live="polite">${bodyHtml}</div>
 </section>`;
 };
+
+export const createPreviewHandler =
+  <Payload>(
+    parsePayload: (body: unknown) => Payload,
+    renderPreview: (payload: Payload, req: Request) => Promise<string>
+  ): RequestHandler =>
+  async (req, res) => {
+    const payload = parsePayload(req.body);
+    const html = await renderPreview(payload, req);
+    res.json({ html });
+  };
 
 export const renderMarkdownPreviewHtml = async (
   dalInstance: DataAccessLayer,

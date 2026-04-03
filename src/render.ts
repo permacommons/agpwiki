@@ -6,6 +6,7 @@ import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
 
 import { layoutAssets } from './asset-urls.js';
+import { normalizeLineEndings } from './lib/text-normalization.js';
 import citationsPlugin from './markdown/citations.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
@@ -65,7 +66,10 @@ export const formatDateUTC = (value: Date | string | null | undefined) => {
   return date.toLocaleString('en-US', { timeZone: 'UTC', timeZoneName: 'short' });
 };
 
-export const normalizeForDiff = (value: string) => (value.endsWith('\n') ? value : `${value}\n`);
+export const normalizeForDiff = (value: string) => {
+  const normalized = normalizeLineEndings(value);
+  return normalized.endsWith('\n') ? normalized : `${normalized}\n`;
+};
 
 export const renderUnifiedDiff = (diffText: string) => {
   const lines = diffText.split('\n');
