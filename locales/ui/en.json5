@@ -31,6 +31,7 @@
       "citation.field.url",
       "forum.title",
       "forum.relatedLabel",
+      "page.actions",
       "forum.category.articles",
       "forum.compose.body",
       "forum.compose.page"
@@ -208,6 +209,7 @@
     "recentClaims": "Recent Claims",
     "pages": "Pages",
     "blog": "Blog",
+    "actions": "Actions",
     "forbidden": "Forbidden",
     "accessDenied": "Access denied.",
     "notFound": "Not found",
@@ -218,6 +220,18 @@
     "selector": "Language",
     "available": "Available in"
   },
+  "common": {
+    "dismiss": "Dismiss",
+    "actions": {
+      "cancel": "Cancel",
+      "preview": "Preview"
+    },
+    "preview": {
+      "title": "Preview",
+      "empty": "Preview will appear here.",
+      "error": "Preview unavailable right now."
+    }
+  },
   "blog": {
     "description": "Blog posts from Agpedia editors.",
     "updated": "Updated {{date}}",
@@ -227,7 +241,6 @@
     "title": "Forum",
     "breadcrumbs": "Forum breadcrumbs",
     "preamble": "This space is for human operators coordinating work on Agpedia. AI assistance is welcome, but unsupervised AI comments are not.",
-    "dismissPreamble": "Dismiss",
     "relatedLabel": "Forum",
     "discussThisPage": "Discuss this page",
     "signInToPost": "Sign in to start threads and post replies.",
@@ -256,10 +269,6 @@
       "pageOptionalHelp": "If there is an existing policy page relevant to this topic, select it above. Otherwise leave this field blank.",
       "body": "Message",
       "language": "Comment language",
-      "preview": "Preview",
-      "previewEmpty": "Preview will appear here.",
-      "previewLoading": "Rendering preview...",
-      "previewError": "Preview unavailable right now.",
       "postThread": "Post thread",
       "postReply": "Post reply"
     },
@@ -300,6 +309,29 @@
     "view": "View",
     "title": "Version history",
     "compare": "Compare selected revisions"
+  },
+  "operatorEdit": {
+    "title": "Operator edit",
+    "link": "Operator edit",
+    "intro": "Editing the {{language}} version of this page.",
+    "banner": "Generally, edits are performed via AI Agents. Use operator edits for quick fixes or changes that would take longer to explain to an agent than to make directly.",
+    "summaryHelp": "This summary will appear in the revision history.",
+    "validation": {
+      "generic": "Couldn't save your edit. Check the fields and try again.",
+      "titleInvalid": "Enter a valid title.",
+      "bodyInvalid": "Enter valid page content.",
+      "summaryRequired": "Enter an edit summary.",
+      "summaryInvalid": "Enter a valid edit summary.",
+      "conflict": "This page changed while you were editing. Reload and try again."
+    },
+    "fields": {
+      "title": "Title",
+      "body": "Body",
+      "summary": "Edit summary"
+    },
+    "actions": {
+      "save": "Save changes"
+    }
   },
   "checks": {
     "title": "Page checks",

@@ -5,7 +5,6 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import {
-  type FieldError,
   ForbiddenError,
   NotFoundError,
   ValidationError,
@@ -50,27 +49,28 @@ import {
 } from '../services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { normalizeSlugInput } from '../services/validation.js';
+import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import {
+  createPreviewHandler,
   renderMarkdownPreviewHtml,
   renderMarkdownPreviewPanel,
 } from './lib/markdown-preview.js';
+import { resolveForumValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
 
 const FORUM_PREAMBLE_COOKIE = 'agpwiki_forum_preamble_dismissed';
 
 const renderForumPreamble = (req: Request) => {
-  if (req.cookies?.[FORUM_PREAMBLE_COOKIE] === '1') {
-    return '';
-  }
-
-  return `<div class="forum-preamble">
-  <div class="forum-preamble-body">${req.t('forum.preamble')}</div>
-  <form method="post" action="${forumDismissPreamblePath()}" class="forum-inline-form">
-    <button type="submit">${req.t('forum.dismissPreamble')}</button>
-  </form>
-</div>`;
+  return renderDismissableBanner({
+    req,
+    cookieName: FORUM_PREAMBLE_COOKIE,
+    unsafeBodyHtml: req.t('forum.preamble'),
+    dismissPath: forumDismissPreamblePath(),
+    dismissLabel: req.t('common.dismiss'),
+    className: 'dismissable-banner forum-preamble',
+  });
 };
 
 const renderLanguageSelector = (
@@ -278,18 +278,17 @@ const renderComposeForm = ({
         id="${escapeHtml(textareaId)}"
         name="body"
         rows="10"
-        data-markdown-preview-input
+        data-markdown-preview-field
       >${escapeHtml(bodyValue)}</textarea>
     </label>
     ${renderMarkdownPreviewPanel({
-      textareaId,
+      formId,
       previewId,
       endpoint: '/api/render-markdown',
       texts: {
-        title: t('forum.compose.preview'),
-        empty: t('forum.compose.previewEmpty'),
-        loading: t('forum.compose.previewLoading'),
-        error: t('forum.compose.previewError'),
+        title: t('common.preview.title'),
+        empty: t('common.preview.empty'),
+        error: t('common.preview.error'),
       },
       previewHtml,
     })}
@@ -299,7 +298,7 @@ const renderComposeForm = ({
         <button type="submit" name="intent" value="post">${submitLabel}</button>
       </div>
       <noscript>
-        <button type="submit" name="intent" value="preview">${t('forum.compose.preview')}</button>
+        <button type="submit" name="intent" value="preview">${t('common.actions.preview')}</button>
       </noscript>
     </div>
   </form>
@@ -492,45 +491,6 @@ const getPageLabel = (
 
 const getPageSlugFromRequest = (req: Request) =>
   typeof req.body?.pageSlug === 'string' ? req.body.pageSlug : '';
-
-const formatForumFieldError = (t: Request['t'], fieldError: FieldError) => {
-  if (fieldError.field === 'title' && fieldError.code === 'required') {
-    return t('forum.validation.titleRequired');
-  }
-  if (fieldError.field === 'body' && fieldError.code === 'required') {
-    return t('forum.validation.bodyRequired');
-  }
-  return null;
-};
-
-const getForumValidationMessage = (
-  t: Request['t'],
-  error: ValidationError,
-  options: { category?: ForumCategorySlug } = {}
-) => {
-  const firstFieldError = error.fieldErrors?.[0];
-  if (!firstFieldError) {
-    return error.message;
-  }
-
-  if (firstFieldError.field === 'pageSlug') {
-    if (firstFieldError.code === 'required') {
-      return t('forum.validation.pageRequired');
-    }
-    if (firstFieldError.code === 'not_found') {
-      return t(
-        options.category === 'policy'
-          ? 'forum.validation.pageNotFoundOptional'
-          : 'forum.validation.pageNotFound'
-      );
-    }
-    if (firstFieldError.code === 'invalid') {
-      return t('forum.validation.pageInvalid');
-    }
-  }
-
-  return formatForumFieldError(t, firstFieldError) ?? error.message;
-};
 
 const renderCategoryPage = async (
   req: Request,
@@ -890,7 +850,7 @@ const registerPageLinkedForumRoutes = (
     } catch (error) {
       if (error instanceof ValidationError) {
         await renderPageLinkedCategoryPage(req, res, category, req.params.slug, {
-          threadErrorMessage: getForumValidationMessage(req.t, error, { category }),
+          threadErrorMessage: resolveForumValidationMessage(req.t, error, { category }),
         });
         return;
       }
@@ -910,26 +870,39 @@ const registerPageLinkedForumRoutes = (
 
 export const registerForumRoutes = (app: Express) => {
   app.post('/tool/forum/dismiss-preamble', (req, res) => {
-    res.cookie(FORUM_PREAMBLE_COOKIE, '1', {
-      maxAge: 365 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'lax',
+    dismissBanner({
+      res,
+      cookieName: FORUM_PREAMBLE_COOKIE,
+      redirectTo: req.get('Referer') ?? forumIndexPath(),
     });
-    res.redirect(req.get('Referer') ?? forumIndexPath());
   });
 
-  app.post('/api/render-markdown', async (req, res) => {
-    const source = typeof req.body?.source === 'string' ? req.body.source : '';
-    const dalInstance = await initializePostgreSQL();
-    const html = source.trim()
-      ? await renderMarkdownPreviewHtml(
-          dalInstance,
-          source,
-          req.t('citation.backToCitationAria')
-        )
-      : '';
-    res.json({ html });
-  });
+  app.post(
+    '/api/render-markdown',
+    createPreviewHandler(
+      body => {
+        const payload = body as { source?: unknown; body?: unknown } | null | undefined;
+        return {
+          source:
+            typeof payload?.source === 'string'
+              ? payload.source
+              : typeof payload?.body === 'string'
+                ? payload.body
+                : '',
+        };
+      },
+      async ({ source }, req) => {
+        const dalInstance = await initializePostgreSQL();
+        return source.trim()
+          ? renderMarkdownPreviewHtml(
+              dalInstance,
+              source,
+              req.t('citation.backToCitationAria')
+            )
+          : '';
+      }
+    )
+  );
 
   app.get('/tool/forum', async (req, res) => {
     try {
@@ -1136,7 +1109,7 @@ export const registerForumRoutes = (app: Express) => {
       if (error instanceof ValidationError) {
         const category = ensureForumCategory(req.params.category) as ForumCategorySlug;
         await renderCategoryPage(req, res, category, {
-          threadErrorMessage: getForumValidationMessage(req.t, error, { category }),
+          threadErrorMessage: resolveForumValidationMessage(req.t, error, { category }),
         });
         return;
       }

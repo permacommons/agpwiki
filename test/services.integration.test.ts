@@ -221,6 +221,57 @@ test('Service readWikiPage returns a stable content hash that changes on update'
   }
 });
 
+test('Service updateWikiPage preserves other localized entries', async () => {
+  const dal = await getDal();
+  const slug = `test-page-localized-update-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Original English title', fr: 'Titre francais original' },
+        body: { en: 'English body.', fr: 'Corps francais original.' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    await updateWikiPage(
+      dal,
+      {
+        slug,
+        title: { fr: 'Titre francais mis a jour' },
+        body: { fr: 'Corps francais mis a jour.' },
+        revSummary: { fr: 'Mettre a jour la version francaise.' },
+      },
+      userId
+    );
+
+    const page = await readWikiPage(dal, slug);
+    assert.equal(page.title?.en, 'Original English title');
+    assert.equal(page.title?.fr, 'Titre francais mis a jour');
+    assert.equal(page.body?.en, 'English body.');
+    assert.equal(page.body?.fr, 'Corps francais mis a jour.');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
 test('Service apply patch updates wiki page body', async () => {
   const dal = await getDal();
   const slug = `test-mcp-patch-${Date.now()}`;
