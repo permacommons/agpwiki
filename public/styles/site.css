@@ -203,6 +203,7 @@ header.site-header {
 .search-input {
   width: 100%;
   padding: 0.5rem 0.75rem;
+  box-sizing: border-box;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.9rem;
   border: 1px solid var(--rule);
@@ -788,6 +789,8 @@ pre.diff ins {
 .form-field input {
   width: 100%;
   padding: 0.6rem 0.75rem;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--rule);
   background: #fffdf7;
   font-family: 'IBM Plex Sans', sans-serif;
@@ -797,10 +800,15 @@ pre.diff ins {
 .form-field select {
   width: 100%;
   padding: 0.6rem 0.75rem;
+  max-width: 100%;
+  box-sizing: border-box;
   border: 1px solid var(--rule);
   background: #fffdf7;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.95rem;
+}
+.form-field textarea {
+  display: block;
 }
 .form-actions {
   display: flex;
@@ -1206,6 +1214,7 @@ button {
 }
 .forum-comment-body {
   margin-top: 0.8rem;
+  overflow-wrap: anywhere;
 }
 .markdown-preview {
   margin: 1rem 0 1.25rem;
@@ -1285,6 +1294,7 @@ footer.site-footer {
   border-top: 1px solid var(--rule);
   margin-top: 3rem;
   padding: 1.5rem 2rem 2.5rem;
+  background: var(--paper);
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.9rem;
   color: var(--muted);
@@ -1495,6 +1505,69 @@ altcha-widget {
   .page-toc:not([open]) .toc-list { display: none; }
 }
 @media (max-width: 640px) {
+  body {
+    background: var(--paper);
+  }
+  header.site-header {
+    padding: 1rem 1rem 0.75rem;
+  }
+  .page-layout {
+    gap: 0;
+    padding: 0;
+  }
+  .article {
+    padding: 1rem;
+    border: none;
+    box-shadow: none;
+  }
+  .sidebar {
+    padding: 1rem 1rem 0;
+  }
+  .dismissable-banner,
+  .forum-preamble,
+  .diff-top {
+    margin-top: 1rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .form-card {
+    padding: 1rem;
+  }
+  .forum-compose-card,
+  .forum-comment-card {
+    padding: 0.9rem 0;
+    background: transparent;
+    border-left: none;
+    border-right: none;
+    box-shadow: none;
+  }
+  .forum-compose-card {
+    margin-top: 1.25rem;
+  }
+  .forum-thread-header {
+    margin-bottom: 1rem;
+  }
+  .form-actions,
+  .forum-compose-primary-actions,
+  .forum-thread-controls,
+  .forum-comment-actions {
+    align-items: stretch;
+  }
+  .forum-compose-primary-actions {
+    display: flex;
+    width: 100%;
+    justify-content: space-between;
+  }
+  .forum-compose-language-control {
+    flex: 0 0 auto;
+  }
+  .forum-compose-lang-menu .lang-menu-summary {
+    justify-content: space-between;
+  }
+  footer.site-footer {
+    margin-top: 0;
+    padding: 1.25rem 1rem 2rem;
+  }
   .table-stack-mobile {
     overflow-x: visible;
     border: none;
