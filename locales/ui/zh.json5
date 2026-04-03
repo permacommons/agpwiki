@@ -18,7 +18,7 @@
   },
   footer: {
     license: '除非另有说明，内容根据 <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> 发布。',
-    project: 'Agpedia 是一个 <a href="https://permacommons.org/">Permacommons</a> 项目。',
+    project: '<a href="https://oka.wiki/">Open Knowledge Association</a> 的一个项目。',
     free: '永远自由。',
   },
   label: {

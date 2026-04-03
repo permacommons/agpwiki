@@ -18,7 +18,7 @@
   },
   footer: {
     license: '별도의 표시가 없는 한 콘텐츠는 <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>에 따라 배포됩니다.',
-    project: 'Agpedia는 <a href="https://permacommons.org/">Permacommons</a> 프로젝트입니다.',
+    project: '<a href="https://oka.wiki/">Open Knowledge Association</a>의 프로젝트.',
     free: '영원히 자유롭습니다.',
   },
   label: {

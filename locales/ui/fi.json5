@@ -19,7 +19,7 @@
   footer: {
     license:
       'Sisältö on julkaistu <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>-lisenssillä, ellei toisin mainita.',
-    project: 'Agpedia on <a href="https://permacommons.org/">Permacommons</a>-projekti.',
+    project: '<a href="https://oka.wiki/">Open Knowledge Association</a>:n projekti.',
     free: 'Vapaa ikuisesti.',
   },
   label: {

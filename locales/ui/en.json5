@@ -136,7 +136,7 @@
   },
   "footer": {
     "license": "Content is released under <a href=\"https://creativecommons.org/public-domain/cc0/\">CC0</a> where not otherwise indicated.",
-    "project": "Agpedia is a <a href=\"https://permacommons.org/\">Permacommons</a> project.",
+    "project": "An <a href=\"https://oka.wiki/\">Open Knowledge Association</a> project.",
     // "free" here is intended in the meaning of "free speech" or "free software", not merely gratis. Translators should choose the best _single_ word that fits that meaning.
     "free": "Free forever."
   },
