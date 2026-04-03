@@ -31,6 +31,7 @@
       "citation.field.url",
       "forum.title",
       "forum.relatedLabel",
+      "page.actions",
       "forum.category.articles",
       "forum.compose.body",
       "forum.compose.page"
