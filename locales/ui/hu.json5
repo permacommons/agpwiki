@@ -19,7 +19,7 @@
   footer: {
     license:
       'A tartalom <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> alatt jelenik meg, hacsak másként nincs jelezve.',
-    project: 'Az Agpedia egy <a href="https://permacommons.org/">Permacommons</a> projekt.',
+    project: 'Az <a href="https://oka.wiki/">Open Knowledge Association</a> projektje.',
     free: 'Örökre szabad.',
   },
   label: {

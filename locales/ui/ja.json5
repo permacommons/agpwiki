@@ -18,7 +18,7 @@
   },
   footer: {
     license: 'コンテンツは、特に明記されていない限り <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> の下で公開されています。',
-    project: 'Agpedia は <a href="https://permacommons.org/">Permacommons</a> プロジェクトです。',
+    project: '<a href="https://oka.wiki/">Open Knowledge Association</a> のプロジェクト。',
     free: 'いつまでも自由。',
   },
   label: {
