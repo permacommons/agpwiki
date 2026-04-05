@@ -153,7 +153,11 @@ const escapeHtmlAttribute = (value: string) =>
 
 export const sanitizeWikipediaParagraphHtml = (html: string): string => {
   const withoutComments = html.replace(/<!--[\s\S]*?-->/g, '');
-  const withoutRefs = withoutComments.replace(/<sup\b[\s\S]*?<\/sup>/gi, '');
+  const withoutEmbeddedBlocks = withoutComments.replace(
+    /<(style|script)\b[\s\S]*?<\/\1>/gi,
+    ''
+  );
+  const withoutRefs = withoutEmbeddedBlocks.replace(/<sup\b[\s\S]*?<\/sup>/gi, '');
   const openTagCount = new Map<string, number>();
 
   return withoutRefs.replace(/<\/?([a-z0-9:-]+)([^>]*)>/gi, (full, rawTagName, rawAttrs) => {

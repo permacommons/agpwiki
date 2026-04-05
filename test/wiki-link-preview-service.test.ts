@@ -18,6 +18,16 @@ test('sanitizeWikipediaParagraphHtml keeps only safe inline tags and wikipedia l
   );
 });
 
+test('sanitizeWikipediaParagraphHtml removes embedded style blocks entirely', () => {
+  const html =
+    'Height was measured as <style>.mw-parser-output .frac{white-space:nowrap}</style><span class="nowrap">8,848.86 m</span>.';
+
+  assert.equal(
+    sanitizeWikipediaParagraphHtml(html),
+    'Height was measured as 8,848.86 m.'
+  );
+});
+
 test('extractWikipediaPreviewHtml keeps the first non-empty sanitized paragraph', () => {
   const html = `
 <div class="mw-parser-output">

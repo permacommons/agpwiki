@@ -17,6 +17,8 @@
 
   const card = document.createElement('div');
   card.className = 'wiki-link-preview-popover';
+  card.setAttribute('role', 'tooltip');
+  card.setAttribute('aria-hidden', 'true');
   card.hidden = true;
   document.body.appendChild(card);
 
@@ -88,15 +90,20 @@
     const scrollX = window.scrollX || window.pageXOffset;
     const scrollY = window.scrollY || window.pageYOffset;
     const maxWidth = Math.min(420, window.innerWidth - 24);
+    const cardWidth = Math.min(maxWidth, card.offsetWidth || maxWidth);
+    const minLeft = 12;
+    const maxLeft = Math.max(minLeft, window.innerWidth + scrollX - cardWidth - 12);
+    const preferredLeft = rect.left + scrollX;
     card.style.maxWidth = `${maxWidth}px`;
-    card.style.left = `${Math.max(12, rect.left + scrollX)}px`;
-    card.style.top = `${rect.bottom + scrollY + 10}px`;
+    card.style.left = `${Math.min(Math.max(minLeft, preferredLeft), maxLeft)}px`;
+    card.style.top = `${rect.bottom + scrollY + 4}px`;
   };
 
   const showCard = (target) => {
     activeTarget = target;
     pendingTarget = target;
     card.hidden = false;
+    card.setAttribute('aria-hidden', 'false');
     card.classList.add('is-visible');
     positionCard(target);
   };
@@ -105,10 +112,21 @@
     activeTarget = null;
     pendingTarget = null;
     card.classList.remove('is-visible');
+    card.setAttribute('aria-hidden', 'true');
     card.hidden = true;
   };
 
-  const scheduleHide = () => {
+  const scheduleHide = (nextTarget = null) => {
+    if (
+      nextTarget &&
+      (card.contains(nextTarget) ||
+        (activeTarget && activeTarget.contains(nextTarget)) ||
+        (pendingTarget && pendingTarget.contains(nextTarget)))
+    ) {
+      window.clearTimeout(hideTimer);
+      return;
+    }
+
     window.clearTimeout(hideTimer);
     hideTimer = window.setTimeout(() => {
       const targetStillHot =
@@ -191,14 +209,20 @@
       window.clearTimeout(hideTimer);
       void activateTarget(target);
     });
-    target.addEventListener('mouseleave', scheduleHide);
-    target.addEventListener('blur', scheduleHide);
+    target.addEventListener('mouseleave', (event) => {
+      scheduleHide(event.relatedTarget);
+    });
+    target.addEventListener('blur', (event) => {
+      scheduleHide(event.relatedTarget);
+    });
   });
 
   card.addEventListener('mouseenter', () => {
     window.clearTimeout(hideTimer);
   });
-  card.addEventListener('mouseleave', scheduleHide);
+  card.addEventListener('mouseleave', (event) => {
+    scheduleHide(event.relatedTarget);
+  });
 
   window.addEventListener('scroll', () => {
     if (activeTarget && !card.hidden) {

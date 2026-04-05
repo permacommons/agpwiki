@@ -1352,6 +1352,14 @@ footer.site-footer {
   box-shadow: 0 14px 34px rgba(26, 22, 16, 0.14);
   border-radius: 0.5rem;
 }
+.wiki-link-preview-popover::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
 .wiki-link-preview-popover[hidden] {
   display: none;
 }
