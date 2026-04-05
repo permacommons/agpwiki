@@ -25,7 +25,7 @@
       loading: 'Keresés a Wikipédián…',
       wikipediaHeading: 'Wikipédia',
       wikipediaLinkLabel: 'Olvasd el a teljes cikket a Wikipédián',
-      wikipediaAttribution: 'Forrásmegjelölés: a Wikipédia közreműködői. Licenc: {{license}}',
+      wikipediaAttribution: 'Szerzői megjelölés: a Wikipédia közreműködői. Licenc: {{license}}',
     },
   },
   footer: {

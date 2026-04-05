@@ -25,7 +25,7 @@
       loading: '위키백과를 검색하는 중…',
       wikipediaHeading: '위키백과',
       wikipediaLinkLabel: '위키백과에서 전체 문서 읽기',
-      wikipediaAttribution: '출처: 위키백과 기여자. 라이선스: {{license}}',
+      wikipediaAttribution: '저작자 표시: 위키백과 기여자. 라이선스: {{license}}',
     },
   },
   footer: {

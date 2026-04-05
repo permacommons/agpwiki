@@ -25,7 +25,7 @@
       loading: 'Ieškoma Vikipedijoje…',
       wikipediaHeading: 'Vikipedija',
       wikipediaLinkLabel: 'Skaityti visą straipsnį Vikipedijoje',
-      wikipediaAttribution: 'Nuoroda į šaltinį: Vikipedijos bendradarbiai. Licencija: {{license}}',
+      wikipediaAttribution: 'Priskyrimas: Vikipedijos bendradarbiai. Licencija: {{license}}',
     },
   },
   footer: {

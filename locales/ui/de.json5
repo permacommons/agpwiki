@@ -26,7 +26,7 @@
       loading: 'Wikipedia wird durchsucht…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Lies den vollständigen Artikel auf Wikipedia',
-      wikipediaAttribution: 'Quellenangabe: Wikipedia-Autorinnen und -Autoren. Lizenz: {{license}}',
+      wikipediaAttribution: 'Namensnennung: Wikipedia-Autorinnen und -Autoren. Lizenz: {{license}}',
     },
   },
   footer: {
