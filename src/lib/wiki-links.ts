@@ -23,7 +23,14 @@ export const parseWikiLinkSlug = (href: string): string | null => {
   if (url.origin !== INTERNAL_ORIGIN) return null;
   if (!url.pathname.startsWith('/')) return null;
 
-  const slug = normalizeSlug(decodeURIComponent(url.pathname));
+  let pathname: string;
+  try {
+    pathname = decodeURIComponent(url.pathname);
+  } catch {
+    return null;
+  }
+
+  const slug = normalizeSlug(pathname);
   if (!slug || isBlockedSlug(slug)) return null;
   return slug;
 };

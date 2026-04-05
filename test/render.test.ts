@@ -156,6 +156,7 @@ test('renderMarkdown keeps 4-column tables in horizontal scroll mode', async () 
 test('parseWikiLinkSlug accepts internal page paths and rejects reserved routes', () => {
   assert.equal(parseWikiLinkSlug('/barack-obama'), 'barack-obama');
   assert.equal(parseWikiLinkSlug('/meta/welcome?lang=de'), 'meta/welcome');
+  assert.equal(parseWikiLinkSlug('/%E0%A4%A'), null);
   assert.equal(parseWikiLinkSlug('/tool/login'), null);
   assert.equal(parseWikiLinkSlug('https://example.com/barack-obama'), null);
   assert.equal(parseWikiLinkSlug('#local-anchor'), null);
@@ -164,6 +165,7 @@ test('parseWikiLinkSlug accepts internal page paths and rejects reserved routes'
 test('extractCandidateWikiLinkSlugs returns unique valid internal slugs', () => {
   const source = `
 [Missing](/missing-page)
+[Malformed](/%E0%A4%A)
 [Existing Alias](/existing-page)
 [Ignored](https://example.com)
 [Reserved](/tool/login)
