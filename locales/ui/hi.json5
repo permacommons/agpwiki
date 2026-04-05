@@ -16,6 +16,18 @@
     placeholder: 'शीर्षक खोजें...',
     title: 'खोज',
   },
+  redLink: {
+    hover: {
+      signedOut: 'इस विषय पर हमारे पास अभी तक कोई लेख नहीं है। {{link}}',
+      signedOutCta: 'एक बनाने के लिए साइन अप करें।',
+      signedIn: 'इस विषय पर हमारे पास अभी तक कोई लेख नहीं है। {{link}}',
+      signedInCta: 'आप एक क्यों नहीं बनाते?',
+      loading: 'विकिपीडिया में खोजा जा रहा है…',
+      wikipediaHeading: 'विकिपीडिया',
+      wikipediaLinkLabel: 'विकिपीडिया पर पूरा लेख पढ़ें',
+      wikipediaAttribution: 'श्रेय: विकिपीडिया के योगदानकर्ता। लाइसेंस: {{license}}',
+    },
+  },
   footer: {
     license:
       'सामग्री <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> के तहत जारी की गई है, जब तक कि अन्यथा न कहा गया हो।',

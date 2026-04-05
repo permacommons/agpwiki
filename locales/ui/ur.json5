@@ -16,6 +16,18 @@
     placeholder: 'عنوان تلاش کریں...',
     title: 'تلاش',
   },
+  redLink: {
+    hover: {
+      signedOut: 'ہمارے پاس ابھی تک اس موضوع پر کوئی مضمون نہیں ہے۔ {{link}}',
+      signedOutCta: 'ایک بنانے کے لیے سائن اپ کریں۔',
+      signedIn: 'ہمارے پاس ابھی تک اس موضوع پر کوئی مضمون نہیں ہے۔ {{link}}',
+      signedInCta: 'آپ ایک کیوں نہیں بناتے؟',
+      loading: 'ویکیپیڈیا میں تلاش جاری ہے…',
+      wikipediaHeading: 'ویکیپیڈیا',
+      wikipediaLinkLabel: 'ویکیپیڈیا پر مکمل مضمون پڑھیں',
+      wikipediaAttribution: 'انتساب: ویکیپیڈیا کے معاونین۔ لائسنس: {{license}}',
+    },
+  },
   footer: {
     license:
       'مواد <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> کے تحت جاری کیا گیا ہے، جب تک کہ دوسری صورت میں نشاندہی نہ کی گئی ہو۔',

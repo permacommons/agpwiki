@@ -16,6 +16,18 @@
     placeholder: 'Пребарај наслови...',
     title: 'Пребарување',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Сè уште немаме статија на оваа тема. {{link}}',
+      signedOutCta: 'Регистрирај се за да создадеш една.',
+      signedIn: 'Сè уште немаме статија на оваа тема. {{link}}',
+      signedInCta: 'Зошто да не создадеш една?',
+      loading: 'Се пребарува Википедија…',
+      wikipediaHeading: 'Википедија',
+      wikipediaLinkLabel: 'Прочитај ја целата статија на Википедија',
+      wikipediaAttribution: 'Наведување авторство: уредниците на Википедија. Лиценца: {{license}}',
+    },
+  },
   footer: {
     license:
       'Содржината е објавена под <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> освен ако не е поинаку наведено.',

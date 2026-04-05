@@ -16,6 +16,18 @@
     placeholder: 'Serĉi titolojn...',
     title: 'Serĉo',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Ni ankoraŭ ne havas artikolon pri ĉi tiu temo. {{link}}',
+      signedOutCta: 'Registriĝu por krei unu.',
+      signedIn: 'Ni ankoraŭ ne havas artikolon pri ĉi tiu temo. {{link}}',
+      signedInCta: 'Kial ne krei unu?',
+      loading: 'Serĉante en Vikipedio…',
+      wikipediaHeading: 'Vikipedio',
+      wikipediaLinkLabel: 'Legu la plenan artikolon en Vikipedio',
+      wikipediaAttribution: 'Atribuo: kontribuantoj de Vikipedio. Permesilo: {{license}}',
+    },
+  },
   footer: {
     license:
       'Enhavo estas publikigita sub <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> krom se alie indikite.',

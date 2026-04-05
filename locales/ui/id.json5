@@ -16,6 +16,18 @@
     placeholder: 'Cari judul...',
     title: 'Pencarian',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Kami belum memiliki artikel tentang topik ini. {{link}}',
+      signedOutCta: 'Daftar untuk membuatnya.',
+      signedIn: 'Kami belum memiliki artikel tentang topik ini. {{link}}',
+      signedInCta: 'Mengapa tidak membuatnya?',
+      loading: 'Mencari di Wikipedia…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Baca artikel lengkap di Wikipedia',
+      wikipediaAttribution: 'Atribusi: kontributor Wikipedia. Lisensi: {{license}}',
+    },
+  },
   footer: {
     license:
       'Konten dirilis di bawah <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> kecuali dinyatakan lain.',

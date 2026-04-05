@@ -16,6 +16,18 @@
     placeholder: 'タイトルを検索...',
     title: '検索',
   },
+  redLink: {
+    hover: {
+      signedOut: 'このトピックに関する記事はまだありません。{{link}}',
+      signedOutCta: '作成するには登録してください。',
+      signedIn: 'このトピックに関する記事はまだありません。{{link}}',
+      signedInCta: '作ってみませんか？',
+      loading: 'Wikipedia を検索しています…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Wikipedia で記事全文を読む',
+      wikipediaAttribution: '帰属: Wikipedia の寄稿者。ライセンス: {{license}}',
+    },
+  },
   footer: {
     license: 'コンテンツは、特に明記されていない限り <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> の下で公開されています。',
     project: '<a href="https://oka.wiki/">Open Knowledge Association</a> のプロジェクト。',

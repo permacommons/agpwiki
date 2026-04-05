@@ -10,6 +10,7 @@ import {
   WIKI_ADMIN_ROLE,
   grantRoleUpsert,
 } from '../src/services/roles.js';
+import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import {
   createCitation,
   deleteCitation,
@@ -2322,6 +2323,63 @@ test('Service deleteWikiPage soft-deletes a page', async () => {
         return true;
       }
     );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('findExistingWikiLinkSlugs ignores aliases of deleted pages', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-delete-alias-page-${Date.now()}`;
+  const aliasSlug = `${slug}-alias`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Page with Alias' },
+        body: { en: 'Content to delete.' },
+        originalLanguage: 'en',
+      },
+      userId
+    );
+
+    await addWikiPageAlias(
+      dal,
+      {
+        pageSlug: slug,
+        slug: aliasSlug,
+      },
+      userId
+    );
+
+    const existingBeforeDelete = await findExistingWikiLinkSlugs(dal, [aliasSlug]);
+    assert.deepEqual([...existingBeforeDelete], [aliasSlug]);
+
+    await grantRoleUpsert(dal, userId, WIKI_ADMIN_ROLE);
+    await deleteWikiPage(
+      dal,
+      { slug, revSummary: { en: 'Admin deletion.' } },
+      userId
+    );
+
+    const existingAfterDelete = await findExistingWikiLinkSlugs(dal, [aliasSlug]);
+    assert.deepEqual([...existingAfterDelete], []);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {

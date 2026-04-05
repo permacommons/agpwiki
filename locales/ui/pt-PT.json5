@@ -16,6 +16,18 @@
     placeholder: 'Pesquisar títulos...',
     title: 'Pesquisa',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Ainda não temos um artigo sobre este tema. {{link}}',
+      signedOutCta: 'Regista-te para criar um.',
+      signedIn: 'Ainda não temos um artigo sobre este tema. {{link}}',
+      signedInCta: 'Por que não criar um?',
+      loading: 'A pesquisar na Wikipédia…',
+      wikipediaHeading: 'Wikipédia',
+      wikipediaLinkLabel: 'Lê o artigo completo na Wikipédia',
+      wikipediaAttribution: 'Atribuição: colaboradores da Wikipédia. Licença: {{license}}',
+    },
+  },
   footer: {
     license: 'O conteúdo é disponibilizado sob <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>, salvo indicação em contrário.',
     project: 'Um projeto da <a href="https://oka.wiki/">Open Knowledge Association</a>.',

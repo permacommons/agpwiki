@@ -26,5 +26,9 @@
   "altcha": {
     "hmacKey": "change-this-in-production",
     "enabled": true
+  },
+  "wikiLinkPreviews": {
+    "previewTokenSecret": "change-this-in-production",
+    "previewTokenTtlSeconds": 86400
   }
 }

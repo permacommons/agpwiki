@@ -16,6 +16,18 @@
     placeholder: 'শিরোনাম খুঁজুন...',
     title: 'অনুসন্ধান',
   },
+  redLink: {
+    hover: {
+      signedOut: 'এই বিষয়ে আমাদের এখনও কোনো নিবন্ধ নেই। {{link}}',
+      signedOutCta: 'একটি তৈরি করতে সাইন আপ করুন।',
+      signedIn: 'এই বিষয়ে আমাদের এখনও কোনো নিবন্ধ নেই। {{link}}',
+      signedInCta: 'আপনি কেন একটি তৈরি করছেন না?',
+      loading: 'উইকিপিডিয়ায় খোঁজা হচ্ছে…',
+      wikipediaHeading: 'উইকিপিডিয়া',
+      wikipediaLinkLabel: 'উইকিপিডিয়ায় সম্পূর্ণ নিবন্ধটি পড়ুন',
+      wikipediaAttribution: 'অ্যাট্রিবিউশন: উইকিপিডিয়ার অবদানকারীরা। লাইসেন্স: {{license}}',
+    },
+  },
   footer: {
     license:
       'বিষয়বস্তু <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> এর অধীনে প্রকাশিত, যদি না অন্যথা উল্লেখ থাকে।',

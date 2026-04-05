@@ -41,6 +41,10 @@ Example `config/production.json`:
   "altcha": {
     "hmacKey": "REPLACE_ME",
     "enabled": true
+  },
+  "wikiLinkPreviews": {
+    "previewTokenSecret": "REPLACE_ME",
+    "previewTokenTtlSeconds": 86400
   }
 }
 ```
@@ -54,6 +58,22 @@ npm run generate-altcha-key
 ```
 
 Add the output to your production config under `altcha.hmacKey`.
+
+### Wiki Link Preview Tokens
+
+Internal wiki-link hover previews use a signed per-page token for the
+`/api/wiki-link-preview` endpoint. The default secret in
+`config/default.json` is only for local development and must be replaced in
+production.
+
+Generate a secure random secret, for example:
+
+```bash
+openssl rand -hex 32
+```
+
+Add the result to your production config under
+`wikiLinkPreviews.previewTokenSecret`.
 
 ## Database
 
@@ -224,4 +244,18 @@ This writes a redacted content-only archive to `public/downloads/dumps/`.
 
 - `GET /health` returns `{"status":"ok"}`
 - `GET /meta/welcome` renders
+- internal wiki-link hover previews load on article pages
 - MCP tool calls succeed using a valid token
+
+## Wiki Link Preview Runtime Notes
+
+- The hover preview endpoint is `/api/wiki-link-preview`.
+- Local blue-link previews are rendered server-side from existing wiki
+  content.
+- Missing red-link previews may trigger a server-side lookup against
+  Wikipedia and show a sanitized lead-paragraph extract when available.
+- Wikipedia lookups are on-demand only. They are not done during page
+  render.
+- Preview caches are process-local in-memory caches. They do not survive
+  restarts, and multiple app instances do not share cache state.
+- The app sends a project-specific `User-Agent` when calling Wikipedia.

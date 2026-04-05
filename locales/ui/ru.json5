@@ -17,6 +17,18 @@
     placeholder: 'Поиск заголовков...',
     title: 'Поиск',
   },
+  redLink: {
+    hover: {
+      signedOut: 'У нас ещё нет статьи на эту тему. {{link}}',
+      signedOutCta: 'Зарегистрируйся, чтобы создать её.',
+      signedIn: 'У нас ещё нет статьи на эту тему. {{link}}',
+      signedInCta: 'Почему бы не создать её?',
+      loading: 'Ищем в Википедии…',
+      wikipediaHeading: 'Википедия',
+      wikipediaLinkLabel: 'Прочитай полную статью в Википедии',
+      wikipediaAttribution: 'Указание авторства: участники Википедии. Лицензия: {{license}}',
+    },
+  },
   footer: {
     license: 'Контент публикуется под лицензией <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>, если не указано иное.',
     project: 'Проект <a href="https://oka.wiki/">Open Knowledge Association</a>.',

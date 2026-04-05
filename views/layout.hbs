@@ -6,7 +6,17 @@
     <title>{{title}}</title>
     <link rel="stylesheet" href="{{{assets.siteCss}}}" />
   </head>
-  <body>
+  <body
+    {{#if wikiLinkPreviewConfig}}
+    data-wiki-link-preview-endpoint="{{wikiLinkPreviewConfig.endpoint}}"
+    data-wiki-link-preview-intro-html="{{wikiLinkPreviewConfig.introHtml}}"
+    data-wiki-link-preview-missing-loading="{{wikiLinkPreviewConfig.missingLoading}}"
+    data-wiki-link-preview-token="{{wikiLinkPreviewConfig.token}}"
+    data-wiki-link-preview-wikipedia-attribution-html="{{wikiLinkPreviewConfig.wikipediaAttributionHtml}}"
+    data-wiki-link-preview-wikipedia-heading="{{wikiLinkPreviewConfig.wikipediaHeading}}"
+    data-wiki-link-preview-wikipedia-link-label="{{wikiLinkPreviewConfig.wikipediaLinkLabel}}"
+    {{/if}}
+  >
     {{> header}}
     {{{topHtml}}}
     <div class="page-layout{{#unless hasSidebar}} single{{/unless}}">
@@ -25,6 +35,7 @@
     <script src="{{{assets.markdownPreviewJs}}}" defer></script>
     <script src="{{{assets.searchJs}}}" defer></script>
     <script src="{{{assets.metaTooltipsJs}}}" defer></script>
+    <script src="{{{assets.wikiLinkPreviewsJs}}}" defer></script>
     <script src="{{{assets.tableScrollHintsJs}}}" defer></script>
     <script src="{{{assets.tocJs}}}" defer></script>
   </body>

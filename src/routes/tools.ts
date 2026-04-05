@@ -12,6 +12,8 @@ import {
 } from '../lib/recent-changes.js';
 import { getRecentPageChecks } from '../lib/recent-checks.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
+import { WIKI_LINK_PREVIEW_ENDPOINT } from '../lib/wiki-link-preview.js';
+import { createWikiLinkPreviewToken } from '../lib/wiki-link-preview-token.js';
 import WikiPage from '../models/wiki-page.js';
 import {
   concatSafeText,
@@ -430,7 +432,7 @@ export const registerToolRoutes = (app: Express) => {
     const listItems = pages
       .map(
         item =>
-          `<li><a href="/${escapeHtml(item.slug)}">${renderText(item.title)}</a></li>`
+          `<li><a href="/${escapeHtml(item.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(item.slug)}">${renderText(item.title)}</a></li>`
       )
       .join('');
 
@@ -457,6 +459,13 @@ export const registerToolRoutes = (app: Express) => {
       currentPath: res.locals.currentPath,
       locale: res.locals.locale,
       languageOptions: res.locals.languageOptions,
+      wikiLinkPreviewConfig: {
+        endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
+        token: createWikiLinkPreviewToken({
+          pagePath: req.path,
+          locale: res.locals.locale,
+        }),
+      },
     });
     res.type('html').send(html);
   });
