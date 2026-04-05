@@ -26,6 +26,7 @@
       loading: 'Wikipedia wordt doorzocht…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Lees het volledige artikel op Wikipedia',
+      wikipediaAttribution: 'Naamsvermelding: Wikipediabijdragers. Licentie: {{license}}',
     },
   },
   footer: {

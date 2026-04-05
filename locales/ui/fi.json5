@@ -25,6 +25,7 @@
       loading: 'Etsitään Wikipediasta…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Lue koko artikkeli Wikipediassa',
+      wikipediaAttribution: 'Lähde: Wikipedian kirjoittajat. Lisenssi: {{license}}',
     },
   },
   footer: {

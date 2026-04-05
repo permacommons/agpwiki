@@ -25,6 +25,7 @@
       loading: '正在搜索维基百科…',
       wikipediaHeading: '维基百科',
       wikipediaLinkLabel: '在维基百科上阅读完整条目',
+      wikipediaAttribution: '署名：维基百科贡献者。许可：{{license}}',
     },
   },
   footer: {

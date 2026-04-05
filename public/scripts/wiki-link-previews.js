@@ -8,6 +8,7 @@
     wikiLinkPreviewIntroHtml,
     wikiLinkPreviewMissingLoading,
     wikiLinkPreviewToken,
+    wikiLinkPreviewWikipediaAttributionHtml,
     wikiLinkPreviewWikipediaHeading,
     wikiLinkPreviewWikipediaLinkLabel,
   } = document.body.dataset;
@@ -69,6 +70,11 @@
         ${
           wikiLinkPreviewWikipediaLinkLabel
             ? `<p class="wiki-link-preview-popover__more"><a href="${encodeURI(preview.wikipedia.url)}" target="_blank" rel="noreferrer noopener">${escapeHtml(wikiLinkPreviewWikipediaLinkLabel)}</a></p>`
+            : ''
+        }
+        ${
+          wikiLinkPreviewWikipediaAttributionHtml
+            ? `<p class="wiki-link-preview-popover__attribution">${wikiLinkPreviewWikipediaAttributionHtml}</p>`
             : ''
         }
       </section>`

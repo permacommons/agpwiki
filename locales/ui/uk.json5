@@ -25,6 +25,7 @@
       loading: 'Шукаємо у Вікіпедії…',
       wikipediaHeading: 'Вікіпедія',
       wikipediaLinkLabel: 'Прочитай повну статтю у Вікіпедії',
+      wikipediaAttribution: 'Зазначення авторства: дописувачі Вікіпедії. Ліцензія: {{license}}',
     },
   },
   footer: {

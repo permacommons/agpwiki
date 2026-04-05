@@ -25,6 +25,7 @@
       loading: 'Wikipedia を検索しています…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Wikipedia で記事全文を読む',
+      wikipediaAttribution: '帰属: Wikipedia の寄稿者。ライセンス: {{license}}',
     },
   },
   footer: {

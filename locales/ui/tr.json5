@@ -25,6 +25,7 @@
       loading: 'Vikipedi’de aranıyor…',
       wikipediaHeading: 'Vikipedi',
       wikipediaLinkLabel: 'Vikipedi’de tam makaleyi oku',
+      wikipediaAttribution: 'Atıf: Vikipedi katkıda bulunanları. Lisans: {{license}}',
     },
   },
   footer: {

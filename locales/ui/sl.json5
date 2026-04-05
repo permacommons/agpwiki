@@ -25,6 +25,7 @@
       loading: 'Iščemo po Wikipediji…',
       wikipediaHeading: 'Wikipedija',
       wikipediaLinkLabel: 'Preberi celoten članek na Wikipediji',
+      wikipediaAttribution: 'Priznanje avtorstva: sodelavci Wikipedije. Licenca: {{license}}',
     },
   },
   footer: {

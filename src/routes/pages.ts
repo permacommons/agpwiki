@@ -1200,6 +1200,9 @@ export const registerPageRoutes = (app: Express) => {
             pagePath: req.path,
             locale: res.locals.locale,
           }),
+          wikipediaAttributionHtml: req.t('redLink.hover.wikipediaAttribution', {
+            license: '<a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noreferrer noopener">CC-BY-SA 4.0</a>',
+          }),
           wikipediaHeading: req.t('redLink.hover.wikipediaHeading'),
           wikipediaLinkLabel: req.t('redLink.hover.wikipediaLinkLabel'),
         },

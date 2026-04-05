@@ -25,6 +25,7 @@
       loading: 'Söker på Wikipedia…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Läs hela artikeln på Wikipedia',
+      wikipediaAttribution: 'Namngivning: Wikipedias bidragsgivare. Licens: {{license}}',
     },
   },
   footer: {

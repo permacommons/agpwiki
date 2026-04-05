@@ -25,6 +25,7 @@
       loading: 'Се пребарува Википедија…',
       wikipediaHeading: 'Википедија',
       wikipediaLinkLabel: 'Прочитај ја целата статија на Википедија',
+      wikipediaAttribution: 'Наведување авторство: уредниците на Википедија. Лиценца: {{license}}',
     },
   },
   footer: {

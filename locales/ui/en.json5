@@ -150,7 +150,8 @@
       // Translators: "Checking Wikipedia..." here means looking up whether Wikipedia has a relevant article, not verifying whether Wikipedia is correct.
       "loading": "Checking Wikipedia…",
       "wikipediaHeading": "Wikipedia",
-      "wikipediaLinkLabel": "Read the full article on Wikipedia"
+      "wikipediaLinkLabel": "Read the full article on Wikipedia",
+      "wikipediaAttribution": "Attribution: Wikipedia contributors. License: {{license}}"
     }
   },
   "footer": {

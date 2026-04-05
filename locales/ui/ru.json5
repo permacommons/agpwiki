@@ -26,6 +26,7 @@
       loading: 'Ищем в Википедии…',
       wikipediaHeading: 'Википедия',
       wikipediaLinkLabel: 'Прочитай полную статью в Википедии',
+      wikipediaAttribution: 'Указание авторства: участники Википедии. Лицензия: {{license}}',
     },
   },
   footer: {

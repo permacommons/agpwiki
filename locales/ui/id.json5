@@ -25,6 +25,7 @@
       loading: 'Mencari di Wikipedia…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Baca artikel lengkap di Wikipedia',
+      wikipediaAttribution: 'Atribusi: kontributor Wikipedia. Lisensi: {{license}}',
     },
   },
   footer: {

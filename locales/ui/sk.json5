@@ -25,6 +25,7 @@
       loading: 'Vyhľadáva sa na Wikipédii…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Prečítaj si celý článok na Wikipédii',
+      wikipediaAttribution: 'Uvedenie autorstva: prispievatelia Wikipédie. Licencia: {{license}}',
     },
   },
   footer: {

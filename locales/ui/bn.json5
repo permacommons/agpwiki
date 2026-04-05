@@ -25,6 +25,7 @@
       loading: 'উইকিপিডিয়ায় খোঁজা হচ্ছে…',
       wikipediaHeading: 'উইকিপিডিয়া',
       wikipediaLinkLabel: 'উইকিপিডিয়ায় সম্পূর্ণ নিবন্ধটি পড়ুন',
+      wikipediaAttribution: 'অ্যাট্রিবিউশন: উইকিপিডিয়ার অবদানকারীরা। লাইসেন্স: {{license}}',
     },
   },
   footer: {

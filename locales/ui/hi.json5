@@ -25,6 +25,7 @@
       loading: 'विकिपीडिया में खोजा जा रहा है…',
       wikipediaHeading: 'विकिपीडिया',
       wikipediaLinkLabel: 'विकिपीडिया पर पूरा लेख पढ़ें',
+      wikipediaAttribution: 'श्रेय: विकिपीडिया के योगदानकर्ता। लाइसेंस: {{license}}',
     },
   },
   footer: {

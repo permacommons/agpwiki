@@ -25,6 +25,7 @@
       loading: 'Buscando en Wikipedia…',
       wikipediaHeading: 'Wikipedia',
       wikipediaLinkLabel: 'Lee el artículo completo en Wikipedia',
+      wikipediaAttribution: 'Atribución: colaboradores de Wikipedia. Licencia: {{license}}',
     },
   },
   footer: {

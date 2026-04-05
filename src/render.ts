@@ -637,6 +637,7 @@ export const renderLayout = (options: {
     missingLoading?: string;
     token: string;
     introHtml?: string;
+    wikipediaAttributionHtml?: string;
     wikipediaHeading?: string;
     wikipediaLinkLabel?: string;
   };

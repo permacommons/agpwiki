@@ -25,6 +25,7 @@
       loading: 'جارٍ البحث في ويكيبيديا…',
       wikipediaHeading: 'ويكيبيديا',
       wikipediaLinkLabel: 'اقرأ المقال كاملاً على ويكيبيديا',
+      wikipediaAttribution: 'النسبة: مساهمو ويكيبيديا. الترخيص: {{license}}',
     },
   },
   footer: {

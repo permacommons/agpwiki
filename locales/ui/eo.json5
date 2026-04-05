@@ -25,6 +25,7 @@
       loading: 'Serĉante en Vikipedio…',
       wikipediaHeading: 'Vikipedio',
       wikipediaLinkLabel: 'Legu la plenan artikolon en Vikipedio',
+      wikipediaAttribution: 'Atribuo: kontribuantoj de Vikipedio. Permesilo: {{license}}',
     },
   },
   footer: {

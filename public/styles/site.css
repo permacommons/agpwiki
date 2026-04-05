@@ -1358,6 +1358,7 @@ footer.site-footer {
 .wiki-link-preview-popover__intro,
 .wiki-link-preview-popover__loading,
 .wiki-link-preview-popover__extract,
+.wiki-link-preview-popover__attribution,
 .wiki-link-preview-popover__more {
   margin: 0;
 }
@@ -1377,6 +1378,7 @@ footer.site-footer {
 }
 .wiki-link-preview-popover__loading,
 .wiki-link-preview-popover__label,
+.wiki-link-preview-popover__attribution,
 .wiki-link-preview-popover__more {
   font-family: 'IBM Plex Sans', sans-serif;
 }
@@ -1406,6 +1408,15 @@ footer.site-footer {
 }
 .wiki-link-preview-popover__extract a {
   word-break: break-word;
+}
+.wiki-link-preview-popover__attribution {
+  margin-top: 0.55rem;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+.wiki-link-preview-popover__attribution a {
+  color: inherit;
 }
 .wiki-link-preview-popover__more {
   margin-top: 0.55rem;
