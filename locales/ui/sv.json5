@@ -16,6 +16,17 @@
     placeholder: 'Sök titlar...',
     title: 'Sök',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Vi har ännu ingen artikel om det här ämnet. {{link}}',
+      signedOutCta: 'Registrera dig för att skapa en.',
+      signedIn: 'Vi har ännu ingen artikel om det här ämnet. {{link}}',
+      signedInCta: 'Varför inte skapa en?',
+      loading: 'Söker på Wikipedia…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Läs hela artikeln på Wikipedia',
+    },
+  },
   footer: {
     license:
       'Innehållet publiceras under <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> om inget annat anges.',

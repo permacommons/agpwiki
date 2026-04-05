@@ -16,6 +16,17 @@
     placeholder: '搜索标题...',
     title: '搜索',
   },
+  redLink: {
+    hover: {
+      signedOut: '我们还没有关于这个主题的条目。{{link}}',
+      signedOutCta: '注册来创建一个。',
+      signedIn: '我们还没有关于这个主题的条目。{{link}}',
+      signedInCta: '不如你来创建一个？',
+      loading: '正在搜索维基百科…',
+      wikipediaHeading: '维基百科',
+      wikipediaLinkLabel: '在维基百科上阅读完整条目',
+    },
+  },
   footer: {
     license: '除非另有说明，内容根据 <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> 发布。',
     project: '<a href="https://oka.wiki/">Open Knowledge Association</a> 的一个项目。',

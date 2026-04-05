@@ -16,6 +16,17 @@
     placeholder: 'Başlıkları ara...',
     title: 'Ara',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Bu konu hakkında henüz bir maddemiz yok. {{link}}',
+      signedOutCta: 'Bir tane oluşturmak için kaydol.',
+      signedIn: 'Bu konu hakkında henüz bir maddemiz yok. {{link}}',
+      signedInCta: 'Neden bir tane oluşturmayasın?',
+      loading: 'Vikipedi’de aranıyor…',
+      wikipediaHeading: 'Vikipedi',
+      wikipediaLinkLabel: 'Vikipedi’de tam makaleyi oku',
+    },
+  },
   footer: {
     license: 'İçerik, aksi belirtilmedikçe <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> kapsamında yayınlanmaktadır.',
     project: '<a href="https://oka.wiki/">Open Knowledge Association</a> projesidir.',

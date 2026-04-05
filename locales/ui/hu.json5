@@ -16,6 +16,17 @@
     placeholder: 'Címek keresése...',
     title: 'Keresés',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Még nincs cikkünk erről a témáról. {{link}}',
+      signedOutCta: 'Regisztrálj, és készíts egyet.',
+      signedIn: 'Még nincs cikkünk erről a témáról. {{link}}',
+      signedInCta: 'Miért ne készítenél egyet?',
+      loading: 'Keresés a Wikipédián…',
+      wikipediaHeading: 'Wikipédia',
+      wikipediaLinkLabel: 'Olvasd el a teljes cikket a Wikipédián',
+    },
+  },
   footer: {
     license:
       'A tartalom <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> alatt jelenik meg, hacsak másként nincs jelezve.',

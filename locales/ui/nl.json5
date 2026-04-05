@@ -17,6 +17,17 @@
     placeholder: 'Zoek titels...',
     title: 'Zoeken',
   },
+  redLink: {
+    hover: {
+      signedOut: 'We hebben nog geen artikel over dit onderwerp. {{link}}',
+      signedOutCta: 'Meld je aan om er een te maken.',
+      signedIn: 'We hebben nog geen artikel over dit onderwerp. {{link}}',
+      signedInCta: 'Waarom maak je er niet een?',
+      loading: 'Wikipedia wordt doorzocht…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Lees het volledige artikel op Wikipedia',
+    },
+  },
   footer: {
     license: 'Inhoud is vrijgegeven onder <a href="https://creativecommons.org/public-domain/cc0/">CC0</a> tenzij anders aangegeven.',
     project: 'Een project van <a href="https://oka.wiki/">Open Knowledge Association</a>.',

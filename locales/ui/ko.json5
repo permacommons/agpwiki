@@ -16,6 +16,17 @@
     placeholder: '제목 검색...',
     title: '검색',
   },
+  redLink: {
+    hover: {
+      signedOut: '이 주제에 대한 문서가 아직 없습니다. {{link}}',
+      signedOutCta: '하나 만들려면 가입하세요.',
+      signedIn: '이 주제에 대한 문서가 아직 없습니다. {{link}}',
+      signedInCta: '직접 만들어 보는 건 어떨까요?',
+      loading: '위키백과를 검색하는 중…',
+      wikipediaHeading: '위키백과',
+      wikipediaLinkLabel: '위키백과에서 전체 문서 읽기',
+    },
+  },
   footer: {
     license: '별도의 표시가 없는 한 콘텐츠는 <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>에 따라 배포됩니다.',
     project: '<a href="https://oka.wiki/">Open Knowledge Association</a>의 프로젝트.',

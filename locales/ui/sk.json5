@@ -16,6 +16,17 @@
     placeholder: 'Hľadať názvy...',
     title: 'Vyhľadávanie',
   },
+  redLink: {
+    hover: {
+      signedOut: 'O tejto téme ešte nemáme článok. {{link}}',
+      signedOutCta: 'Zaregistruj sa a vytvor ho.',
+      signedIn: 'O tejto téme ešte nemáme článok. {{link}}',
+      signedInCta: 'Prečo ho nevytvoriť?',
+      loading: 'Vyhľadáva sa na Wikipédii…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Prečítaj si celý článok na Wikipédii',
+    },
+  },
   footer: {
     license:
       'Obsah je uverejnený pod <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>, pokiaľ nie je uvedené inak.',

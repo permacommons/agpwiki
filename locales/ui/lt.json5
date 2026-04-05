@@ -16,6 +16,17 @@
     placeholder: 'Ieškoti pavadinimų...',
     title: 'Paieška',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Dar neturime straipsnio šia tema. {{link}}',
+      signedOutCta: 'Prisiregistruokite, kad jį sukurtumėte.',
+      signedIn: 'Dar neturime straipsnio šia tema. {{link}}',
+      signedInCta: 'Kodėl nesukūrus jo?',
+      loading: 'Ieškoma Vikipedijoje…',
+      wikipediaHeading: 'Vikipedija',
+      wikipediaLinkLabel: 'Skaityti visą straipsnį Vikipedijoje',
+    },
+  },
   footer: {
     license:
       'Turinys skelbiamas pagal <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>, jei nenurodyta kitaip.',

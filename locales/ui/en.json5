@@ -12,7 +12,8 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.title",
-      "forum.relatedLabel"
+      "forum.relatedLabel",
+      "redLink.hover.wikipediaHeading"
     ],
      "eo": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
     "es": [
@@ -20,9 +21,10 @@
       "nav.home",
       "citation.field.doi",
       "citation.field.url",
-      "forum.category.general"
+      "forum.category.general",
+      "redLink.hover.wikipediaHeading"
     ],
-     "fi": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
+     "fi": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
     "fr": [
       "site.name",
       "nav.home",
@@ -45,7 +47,8 @@
       "citation.field.url",
       "nav.forum",
       "forum.title",
-      "forum.relatedLabel"
+      "forum.relatedLabel",
+      "redLink.hover.wikipediaHeading"
     ],
     "it": [
       "site.name",
@@ -54,9 +57,10 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.title",
-      "forum.relatedLabel"
+      "forum.relatedLabel",
+      "redLink.hover.wikipediaHeading"
     ],
-     "ja": ["site.name", "nav.home"],
+     "ja": ["site.name", "nav.home", "redLink.hover.wikipediaHeading"],
      "ko": ["site.name", "nav.home"],
      "lt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
      "mk": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
@@ -67,7 +71,8 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.title",
-      "forum.relatedLabel"
+      "forum.relatedLabel",
+      "redLink.hover.wikipediaHeading"
     ],
     "pl": [
       "site.name",
@@ -76,12 +81,13 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.title",
-      "forum.relatedLabel"
+      "forum.relatedLabel",
+      "redLink.hover.wikipediaHeading"
     ],
      "pt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
      "pt-PT": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
      "ru": ["site.name", "nav.home"],
-     "sk": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
+     "sk": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
      "sl": [
       "site.name",
       "nav.home",
@@ -99,7 +105,8 @@
       "citation.field.url",
       "forum.title",
       "forum.relatedLabel",
-      "forum.category.policy"
+      "forum.category.policy",
+      "redLink.hover.wikipediaHeading"
     ],
     "tr": [
       "site.name",
@@ -140,6 +147,7 @@
       "signedOutCta": "Sign up to create one.",
       "signedIn": "We don't have an article on this topic yet. {{link}}",
       "signedInCta": "Why not create one?",
+      // Translators: "Checking Wikipedia..." here means looking up whether Wikipedia has a relevant article, not verifying whether Wikipedia is correct.
       "loading": "Checking Wikipedia…",
       "wikipediaHeading": "Wikipedia",
       "wikipediaLinkLabel": "Read the full article on Wikipedia"

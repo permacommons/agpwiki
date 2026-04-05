@@ -16,6 +16,17 @@
     placeholder: 'Hae otsikoita...',
     title: 'Haku',
   },
+  redLink: {
+    hover: {
+      signedOut: 'Meillä ei ole vielä artikkelia tästä aiheesta. {{link}}',
+      signedOutCta: 'Rekisteröidy luodaksesi sellaisen.',
+      signedIn: 'Meillä ei ole vielä artikkelia tästä aiheesta. {{link}}',
+      signedInCta: 'Mikset loisi sellaista?',
+      loading: 'Etsitään Wikipediasta…',
+      wikipediaHeading: 'Wikipedia',
+      wikipediaLinkLabel: 'Lue koko artikkeli Wikipediassa',
+    },
+  },
   footer: {
     license:
       'Sisältö on julkaistu <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>-lisenssillä, ellei toisin mainita.',

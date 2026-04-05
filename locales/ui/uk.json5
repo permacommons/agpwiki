@@ -16,6 +16,17 @@
     placeholder: 'Шукати назви...',
     title: 'Пошук',
   },
+  redLink: {
+    hover: {
+      signedOut: 'У нас ще немає статті на цю тему. {{link}}',
+      signedOutCta: 'Зареєструйся, щоб створити її.',
+      signedIn: 'У нас ще немає статті на цю тему. {{link}}',
+      signedInCta: 'Чому б не створити її?',
+      loading: 'Шукаємо у Вікіпедії…',
+      wikipediaHeading: 'Вікіпедія',
+      wikipediaLinkLabel: 'Прочитай повну статтю у Вікіпедії',
+    },
+  },
   footer: {
     license:
       'Вміст поширюється на умовах <a href="https://creativecommons.org/public-domain/cc0/">CC0</a>, якщо не вказано інше.',
