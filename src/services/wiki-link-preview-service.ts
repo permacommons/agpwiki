@@ -116,9 +116,12 @@ export const findExistingWikiLinkSlugs = async (
        AND _old_rev_of IS NULL
        AND _rev_deleted = false
      UNION
-     SELECT slug
-     FROM ${PageAlias.tableName}
-     WHERE slug = ANY($1::text[])`,
+     SELECT a.slug
+     FROM ${PageAlias.tableName} a
+     JOIN ${WikiPage.tableName} p ON p.id = a.page_id
+     WHERE a.slug = ANY($1::text[])
+       AND p._old_rev_of IS NULL
+       AND p._rev_deleted = false`,
     [normalized]
   );
 
