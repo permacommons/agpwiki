@@ -179,12 +179,13 @@ test('buildWikipediaTitleVariants prioritizes sentence case then title case', ()
   assert.deepEqual(buildWikipediaTitleVariants('barack-obama'), [
     'Barack obama',
     'Barack Obama',
+    'BARACK OBAMA',
     'barack obama',
   ]);
-  assert.deepEqual(buildWikipediaTitleVariants('new-york-city/history'), [
-    'New york city/history',
-    'New York City/History',
-    'new york city/history',
+  assert.deepEqual(buildWikipediaTitleVariants('nasa'), [
+    'Nasa',
+    'NASA',
+    'nasa',
   ]);
 });
 

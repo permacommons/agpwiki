@@ -73,6 +73,7 @@ export const buildWikipediaTitleVariants = (slug: string): string[] => {
   const variants = [
     toSentenceCase(baseTitle),
     toTitleCase(baseTitle),
+    baseTitle.toUpperCase(),
     baseTitle,
     baseTitle.toLowerCase(),
   ];
