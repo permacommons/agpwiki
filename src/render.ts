@@ -7,6 +7,7 @@ import MarkdownIt from 'markdown-it';
 
 import { layoutAssets } from './asset-urls.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
+import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
@@ -236,6 +237,10 @@ const defaultTableOpen = getRuleOrDefault('table_open');
 const defaultTableClose = getRuleOrDefault('table_close');
 const defaultTrOpen = getRuleOrDefault('tr_open');
 const defaultTdOpen = getRuleOrDefault('td_open');
+const defaultLinkOpen =
+  markdown.renderer.rules.link_open ??
+  ((tokens: MarkdownIt.Token[], idx: number, options: MarkdownIt.Options, _env: unknown, self: MarkdownIt.Renderer) =>
+    self.renderToken(tokens, idx, options));
 
 // Tracks per-table header labels while markdown-it streams tokens so we can:
 // 1) add wrapper classes based on column count and
@@ -273,6 +278,28 @@ markdown.renderer.rules.td_open = (tokens, idx, options, env, self) => {
     current.cellIndex += 1;
   }
   return defaultTdOpen(tokens, idx, options, env, self);
+};
+
+markdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
+  const href = tokens[idx].attrGet('href');
+  const slug = href ? parseWikiLinkSlug(href) : null;
+  const wikiLinks = (env as RenderEnv).wikiLinks;
+
+  if (slug) {
+    const existingClass = tokens[idx].attrGet('class');
+    const className = wikiLinks?.missingSlugs.has(slug)
+      ? existingClass
+        ? `${existingClass} wiki-red-link`
+        : 'wiki-red-link'
+      : existingClass;
+    if (className) {
+      tokens[idx].attrSet('class', className);
+    }
+    tokens[idx].attrSet('data-wiki-link', 'true');
+    tokens[idx].attrSet('data-wiki-link-slug', slug);
+  }
+
+  return defaultLinkOpen(tokens, idx, options, env, self);
 };
 
 const toBacklinkSuffix = (index: number) => {
@@ -506,6 +533,18 @@ export type RenderResult = {
 
 export type RenderMarkdownOptions = {
   backToCitationLabel?: string;
+  wikiLinks?: {
+    missingSlugs: Set<string>;
+  };
+};
+
+type RenderEnv = Record<string, unknown> & {
+  variables: Record<string, string>;
+  toc: TocItem[];
+  tocSlugs: Set<string>;
+  wikiLinks?: RenderMarkdownOptions['wikiLinks'];
+  citeprocFactory?: () => ReturnType<typeof buildCiteproc>;
+  citeprocInstance?: { free?: () => void };
 };
 
 export const renderMarkdown = async (
@@ -514,7 +553,12 @@ export const renderMarkdown = async (
   options: RenderMarkdownOptions = {}
 ): Promise<RenderResult> => {
   const backToCitationLabel = options.backToCitationLabel ?? 'Back to citation';
-  const env: Record<string, unknown> = { variables: {}, toc: [], tocSlugs: new Set() };
+  const env: RenderEnv = {
+    variables: {},
+    toc: [],
+    tocSlugs: new Set(),
+    wikiLinks: options.wikiLinks,
+  };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);
   }
@@ -588,6 +632,14 @@ export const renderLayout = (options: {
   currentPath?: string;
   locale?: string;
   languageOptions?: LanguageOption[];
+  wikiLinkPreviewConfig?: {
+    endpoint: string;
+    missingLoading?: string;
+    token: string;
+    introHtml?: string;
+    wikipediaHeading?: string;
+    wikipediaLinkLabel?: string;
+  };
 }) => {
   const {
     title,
@@ -600,6 +652,7 @@ export const renderLayout = (options: {
     currentPath = '/',
     locale = 'en',
     languageOptions = [],
+    wikiLinkPreviewConfig,
   } = options;
   const titleHtml = renderText(title);
   const safeTitle = new hbs.handlebars.SafeString(titleHtml);
@@ -615,6 +668,7 @@ export const renderLayout = (options: {
     currentPath,
     locale,
     languageOptions,
+    wikiLinkPreviewConfig,
     assets: layoutAssets,
   });
 };

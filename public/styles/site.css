@@ -43,6 +43,14 @@ body {
   line-height: 1.65;
 }
 a { color: var(--accent); }
+a.wiki-red-link {
+  color: #9f2f2f;
+  text-decoration-color: currentColor;
+}
+a.wiki-red-link:hover,
+a.wiki-red-link:focus-visible {
+  color: #7e1e1e;
+}
 header.site-header {
   padding: 1.5rem 2rem 0.75rem;
   border-bottom: 1px solid var(--rule);
@@ -1332,6 +1340,76 @@ footer.site-footer {
 }
 .meta-tooltip.is-pinned {
   border-color: var(--accent);
+}
+.wiki-link-preview-popover {
+  position: absolute;
+  z-index: 40;
+  width: min(26rem, calc(100vw - 1.5rem));
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  color: var(--ink);
+  box-shadow: 0 14px 34px rgba(26, 22, 16, 0.14);
+  border-radius: 0.5rem;
+}
+.wiki-link-preview-popover[hidden] {
+  display: none;
+}
+.wiki-link-preview-popover__intro,
+.wiki-link-preview-popover__loading,
+.wiki-link-preview-popover__extract,
+.wiki-link-preview-popover__more {
+  margin: 0;
+}
+.wiki-link-preview-popover__title {
+  margin: 0 0 0.55rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+.wiki-link-preview-popover__title a {
+  color: var(--ink);
+  text-decoration: none;
+}
+.wiki-link-preview-popover__title a:hover,
+.wiki-link-preview-popover__title a:focus-visible {
+  color: var(--accent);
+}
+.wiki-link-preview-popover__loading,
+.wiki-link-preview-popover__label,
+.wiki-link-preview-popover__more {
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.wiki-link-preview-popover__loading {
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.wiki-link-preview-popover__wikipedia {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--rule);
+}
+.wiki-link-preview-popover__label {
+  margin-bottom: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.wiki-link-preview-popover__extract {
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+.wiki-link-preview-popover__extract p + p {
+  margin-top: 0.7rem;
+}
+.wiki-link-preview-popover__extract a {
+  word-break: break-word;
+}
+.wiki-link-preview-popover__more {
+  margin-top: 0.55rem;
+  font-size: 0.86rem;
 }
 .form-field textarea {
   width: 100%;

@@ -11,8 +11,18 @@ import {
   resolveSafeText,
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
-import { isBlockedSlug } from '../lib/slug.js';
+import { isBlockedSlug, normalizeSlug } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
+import {
+  WIKI_LINK_PREVIEW_ENDPOINT,
+  WIKI_LINK_PREVIEW_PAGE_PATH_HEADER,
+  WIKI_LINK_PREVIEW_TOKEN_HEADER,
+} from '../lib/wiki-link-preview.js';
+import {
+  createWikiLinkPreviewToken,
+  verifyWikiLinkPreviewToken,
+} from '../lib/wiki-link-preview-token.js';
+import { extractCandidateWikiLinkSlugs } from '../lib/wiki-links.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -28,6 +38,11 @@ import {
   listPageChecks,
   readPageCheckRevision,
 } from '../services/page-check-service.js';
+import {
+  buildLocalWikiPreview,
+  fetchWikipediaPreviewForSlug,
+  findExistingWikiLinkSlugs,
+} from '../services/wiki-link-preview-service.js';
 import {
   diffWikiPageRevisions,
   listWikiPageRevisions,
@@ -80,6 +95,15 @@ const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
 
 const pageViewPath = (slug: string, lang?: string) =>
   lang ? `/${encodeURIComponent(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeURIComponent(slug)}`;
+
+const buildRedLinkIntroHtml = (req: Request, signedIn: boolean) =>
+  signedIn
+    ? req.t('redLink.hover.signedIn', {
+        link: `<a href="/meta/help">${escapeHtml(req.t('redLink.hover.signedInCta'))}</a>`,
+      })
+    : req.t('redLink.hover.signedOut', {
+        link: `<a href="/tool/signup">${escapeHtml(req.t('redLink.hover.signedOutCta'))}</a>`,
+      });
 
 const renderOperatorEditPreviewHtml = async ({
   dalInstance,
@@ -295,6 +319,36 @@ export const registerPageRoutes = (app: Express) => {
       }
     )
   );
+
+  app.get(WIKI_LINK_PREVIEW_ENDPOINT, async (req, res) => {
+    const rawSlug = typeof req.query.slug === 'string' ? req.query.slug : '';
+    const slug = normalizeSlug(rawSlug);
+    const token = req.get(WIKI_LINK_PREVIEW_TOKEN_HEADER) ?? '';
+    const pagePath = req.get(WIKI_LINK_PREVIEW_PAGE_PATH_HEADER) ?? '';
+    if (!slug) {
+      res.status(400).json({ error: 'missing_slug' });
+      return;
+    }
+    const tokenPayload = verifyWikiLinkPreviewToken(token);
+    if (!tokenPayload) {
+      res.status(403).json({ error: 'invalid_token' });
+      return;
+    }
+    if (pagePath !== tokenPayload.pagePath) {
+      res.status(403).json({ error: 'invalid_token' });
+      return;
+    }
+
+    const dalInstance = await initializePostgreSQL();
+    const local = await buildLocalWikiPreview(dalInstance, slug, tokenPayload.locale);
+    if (local) {
+      res.json({ kind: 'local', local });
+      return;
+    }
+
+    const wikipedia = await fetchWikipediaPreviewForSlug(slug);
+    res.json({ kind: 'missing', wikipedia });
+  });
 
   app.post(/^\/(.+)\/operator-edit\/dismiss-banner$/, (req, res) => {
     const slug = req.params[0];
@@ -941,12 +995,24 @@ export const registerPageRoutes = (app: Express) => {
         res.type('text/plain').send(bodySource);
         return;
       }
-      const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource]);
+      const candidateLinkSlugs = extractCandidateWikiLinkSlugs(bodySource);
+      const [citationEntries, existingLinkSlugs] = await Promise.all([
+        loadCitationEntriesForSources(dalInstance, [bodySource]),
+        findExistingWikiLinkSlugs(dalInstance, candidateLinkSlugs),
+      ]);
+      const missingLinkSlugs = new Set(
+        candidateLinkSlugs.filter(candidateSlug => !existingLinkSlugs.has(candidateSlug))
+      );
 
       const { html: bodyHtml, toc } = await renderMarkdown(
         bodySource,
         citationEntries,
-        markdownOptions
+        {
+          ...markdownOptions,
+          wikiLinks: {
+            missingSlugs: missingLinkSlugs,
+          },
+        }
       );
 
       let diffHtml = '';
@@ -1126,6 +1192,17 @@ export const registerPageRoutes = (app: Express) => {
         currentPath: res.locals.currentPath,
         locale: res.locals.locale,
         languageOptions: res.locals.languageOptions,
+        wikiLinkPreviewConfig: {
+          endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
+          introHtml: buildRedLinkIntroHtml(req, signedIn),
+          missingLoading: req.t('redLink.hover.loading'),
+          token: createWikiLinkPreviewToken({
+            pagePath: req.path,
+            locale: res.locals.locale,
+          }),
+          wikipediaHeading: req.t('redLink.hover.wikipediaHeading'),
+          wikipediaLinkLabel: req.t('redLink.hover.wikipediaLinkLabel'),
+        },
       });
       res.type('html').send(html);
     } catch (error) {

@@ -134,6 +134,17 @@
     // Translators: "slug" means the URL-safe page identifier (for example, "barack-obama" in "/wiki/barack-obama"), not a garden slug.
     "description": "Search page titles and slugs."
   },
+  "redLink": {
+    "hover": {
+      "signedOut": "We don't have an article on this topic yet. {{link}}",
+      "signedOutCta": "Sign up to create one.",
+      "signedIn": "We don't have an article on this topic yet. {{link}}",
+      "signedInCta": "Why not create one?",
+      "loading": "Checking Wikipedia…",
+      "wikipediaHeading": "Wikipedia",
+      "wikipediaLinkLabel": "Read the full article on Wikipedia"
+    }
+  },
   "footer": {
     "license": "Content is released under <a href=\"https://creativecommons.org/public-domain/cc0/\">CC0</a> where not otherwise indicated.",
     "project": "An <a href=\"https://oka.wiki/\">Open Knowledge Association</a> project.",
