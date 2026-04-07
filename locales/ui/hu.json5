@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operátori szerkesztés',
     link: 'Operátori szerkesztés',
+    signedOut: '{{loginLink}} vagy {{signupLink}} a szerkesztéshez',
     intro: 'Ennek az oldalnak a(z) {{language}} nyelvű változatát szerkeszted.',
     banner: 'A szerkesztéseket általában MI-ügynökök végzik. Az operátori szerkesztést gyors javításokhoz vagy olyan módosításokhoz használd, amelyeket tovább tartana elmagyarázni egy ügynöknek, mint közvetlenül elvégezni.',
     summaryHelp: 'Ez az összefoglaló megjelenik a verziótörténetben.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Bejelentkezés',
       action: 'Bejelentkezés',
-      needInvite: 'Még nincs fiókja? <a href="/tool/request-account">Igényeljen egyet!</a>',
+      needInvite: 'Még nincs fiókja? <a href="/tool/create-account">Igényeljen egyet!</a>',
       errorInvalid: 'Érvénytelen e-mail vagy jelszó.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Fiók igénylése',
-    description: 'Küldjön kérelmet az Agpedia szerkesztéséhez.',
+    title: 'Fiók létrehozása',
+    description: 'Hozz létre egy fiókot, hogy közreműködhess az Agpediában.',
     form: {
       email: 'E-mail',
-      emailHint: 'Ezt használjuk a kérelmével kapcsolatos kapcsolatfelvételhez.',
+      emailHint: 'Egy linket küldünk a regisztráció befejezéséhez.',
       topics: 'Érdeklődési témák',
       topicsHint: 'Milyen témákban szeretne közreműködni?',
-      workedOn: 'Portfólió vagy példák',
-      workedOnHint: 'Hivatkozások írásmintákra vagy releváns munkákra.',
+      profileUrl: 'Online profil linkje (opcionális)',
+      profileUrlHint: 'Ossz meg egy közösségi profilra, személyes honlapra vagy más online jelenlétre mutató linket, ha van ilyened.',
     },
-    submit: 'Kérelem beküldése',
+    submit: 'Fiók létrehozása',
     success: {
-      title: 'Kérelem elküldve',
+      title: 'Nézd meg az e-mailjeidet',
       message:
-        'Köszönjük érdeklődését az Agpedia iránt. Áttekintjük kérelmét, és felvesszük Önnel a kapcsolatot.',
+        'Ha minden rendben van, küldünk egy linket a regisztráció befejezéséhez.',
     },
     review: {
       title: 'Fiókkérelmek áttekintése',
@@ -381,7 +382,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Témák',
-        workedOn: 'Portfólió',
+        profileUrl: 'Online profil',
         submitted: 'Beküldve',
         actions: 'Műveletek',
       },

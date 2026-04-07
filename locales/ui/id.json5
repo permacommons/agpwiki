@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Sunting operator',
     link: 'Sunting operator',
+    signedOut: '{{loginLink}} atau {{signupLink}} untuk menyunting',
     intro: 'Anda sedang menyunting versi {{language}} dari halaman ini.',
     banner: 'Secara umum, suntingan dilakukan melalui agen AI. Gunakan suntingan operator untuk perbaikan cepat atau perubahan yang akan lebih lama dijelaskan kepada agen daripada dikerjakan langsung.',
     summaryHelp: 'Ringkasan ini akan muncul dalam riwayat revisi.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Masuk',
       action: 'Masuk',
-      needInvite: 'Belum punya akun? <a href="/tool/request-account">Minta satu!</a>',
+      needInvite: 'Belum punya akun? <a href="/tool/create-account">Minta satu!</a>',
       errorInvalid: 'Email atau kata sandi tidak valid.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Minta akun',
-    description: 'Kirim permintaan untuk berkontribusi di Agpedia.',
+    title: 'Buat akun',
+    description: 'Buat akun untuk berkontribusi ke Agpedia.',
     form: {
       email: 'Surel',
-      emailHint: 'Kami akan menggunakan ini untuk menghubungi Anda tentang permintaan Anda.',
+      emailHint: 'Kami akan mengirimkan tautan untuk menyelesaikan pendaftaran Anda.',
       topics: 'Topik yang diminati',
       topicsHint: 'Topik apa yang ingin Anda kontribusikan?',
-      workedOn: 'Portofolio atau contoh',
-      workedOnHint: 'Tautan ke contoh tulisan atau proyek relevan Anda.',
+      profileUrl: 'Tautan profil online (opsional)',
+      profileUrlHint: 'Bagikan tautan ke profil sosial, situs pribadi, atau kehadiran online lainnya jika Anda memilikinya.',
     },
-    submit: 'Kirim permintaan',
+    submit: 'Buat akun',
     success: {
-      title: 'Permintaan dikirim',
+      title: 'Periksa email Anda',
       message:
-        'Terima kasih atas minat Anda untuk berkontribusi di Agpedia. Kami akan meninjau permintaan Anda dan menghubungi Anda kembali.',
+        'Jika semuanya sesuai, kami akan mengirimkan tautan untuk menyelesaikan pendaftaran Anda.',
     },
     review: {
       title: 'Tinjau permintaan akun',
@@ -381,7 +382,7 @@
       headers: {
         email: 'Surel',
         topics: 'Topik',
-        workedOn: 'Portofolio',
+        profileUrl: 'Profil online',
         submitted: 'Dikirim',
         actions: 'Tindakan',
       },

@@ -199,6 +199,7 @@
   operatorEdit: {
     title: '操作员编辑',
     link: '操作员编辑',
+    signedOut: '要编辑，请先{{loginLink}}或{{signupLink}}',
     intro: '你正在编辑此页面的 {{language}} 版本。',
     banner: '一般情况下，编辑是通过 AI 代理完成的。对于快速修正，或那些向代理解释所花时间比直接修改还长的更改，请使用操作员编辑。',
     summaryHelp: '此摘要将显示在修订历史中。',
@@ -287,7 +288,7 @@
     login: {
       title: '登录',
       action: '登录',
-      needInvite: '还没有账号吗？<a href="/tool/request-account">申请一个！</a>',
+      needInvite: '还没有账号吗？<a href="/tool/create-account">申请一个！</a>',
       errorInvalid: '邮箱或密码无效。',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: '申请账户',
-    description: '提交申请以参与 Agpedia 的贡献。',
+    title: '创建账户',
+    description: '创建一个账户以参与 Agpedia。',
     form: {
       email: '电子邮件',
-      emailHint: '我们将使用此邮箱联系您关于申请的事宜。',
+      emailHint: '我们会向你发送一个链接以完成注册。',
       topics: '感兴趣的主题',
-      topicsHint: '您希望在哪些主题上做出贡献？',
-      workedOn: '作品集或示例',
-      workedOnHint: '您的写作样本或相关工作的链接。',
+      topicsHint: '你想为哪些主题做出贡献？',
+      profileUrl: '在线个人资料链接（可选）',
+      profileUrlHint: '如果你有的话，可分享社交资料、个人主页或其他在线存在的链接。',
     },
-    submit: '提交申请',
+    submit: '创建账户',
     success: {
-      title: '申请已提交',
-      message: '感谢您有兴趣为 Agpedia 做出贡献。我们将审核您的申请并与您联系。',
+      title: '查看你的电子邮件',
+      message: '如果一切顺利，我们会向你发送一个链接以完成注册。',
     },
     review: {
       title: '审核账户申请',
@@ -378,7 +379,7 @@
       headers: {
         email: '电子邮件',
         topics: '主题',
-        workedOn: '作品集',
+        profileUrl: '在线个人资料',
         submitted: '已提交',
         actions: '操作',
       },

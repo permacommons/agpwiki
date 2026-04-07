@@ -7,6 +7,23 @@ import { createAltchaChallenge, isAltchaEnabled, verifyAltchaSolution } from '..
 import AccountRequest from '../models/account-request.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from '../services/roles.js';
+import { renderAccountRequestProfileField } from './lib/account-request-form.js';
+
+const normalizeProfileUrl = (value: string): string | null => {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+      return null;
+    }
+    return url.toString();
+  } catch {
+    return null;
+  }
+};
 
 const renderToolLayout = (
   t: TFunction,
@@ -32,7 +49,11 @@ export const registerAccountRequestRoutes = (app: Express) => {
     res.json(challenge);
   });
 
-  app.get('/tool/request-account', async (req, res) => {
+  app.get('/tool/request-account', async (_req, res) => {
+    res.redirect(302, '/tool/create-account');
+  });
+
+  app.get('/tool/create-account', async (req, res) => {
     const altchaEnabled = isAltchaEnabled();
     const altchaWidget = altchaEnabled
       ? `<altcha-widget challengeurl="/tool/altcha-challenge"></altcha-widget>
@@ -52,11 +73,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
       <input type="text" name="topics" required />
       <div class="form-hint">${req.t('accountRequest.form.topicsHint')}</div>
     </label>
-    <label class="form-field">
-      <span>${req.t('accountRequest.form.workedOn')}</span>
-      <textarea name="workedOn" rows="4" required></textarea>
-      <div class="form-hint">${req.t('accountRequest.form.workedOnHint')}</div>
-    </label>
+    ${renderAccountRequestProfileField(req.t)}
     ${altchaWidget}
     <div class="form-actions">
       <button type="submit">${req.t('accountRequest.submit')}</button>
@@ -69,10 +86,15 @@ export const registerAccountRequestRoutes = (app: Express) => {
       .send(renderToolLayout(req.t, res, req.t('accountRequest.title'), bodyHtml, false));
   });
 
-  app.post('/tool/request-account', async (req, res) => {
+  app.post('/tool/request-account', async (_req, res) => {
+    res.redirect(307, '/tool/create-account');
+  });
+
+  app.post('/tool/create-account', async (req, res) => {
     const email = String(req.body.email ?? '').trim().toLowerCase();
     const topics = String(req.body.topics ?? '').trim();
-    const workedOn = String(req.body.workedOn ?? '').trim();
+    const profileUrlInput = String(req.body.profileUrl ?? '').trim();
+    const profileUrl = normalizeProfileUrl(profileUrlInput);
     const altchaPayload = String(req.body.altcha ?? '');
 
     const altchaValid = await verifyAltchaSolution(altchaPayload);
@@ -97,11 +119,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
       <input type="text" name="topics" required value="${escapeHtml(topics)}" />
       <div class="form-hint">${req.t('accountRequest.form.topicsHint')}</div>
     </label>
-    <label class="form-field">
-      <span>${req.t('accountRequest.form.workedOn')}</span>
-      <textarea name="workedOn" rows="4" required>${escapeHtml(workedOn)}</textarea>
-      <div class="form-hint">${req.t('accountRequest.form.workedOnHint')}</div>
-    </label>
+    ${renderAccountRequestProfileField(req.t, profileUrlInput)}
     ${altchaWidget}
     <div class="form-actions">
       <button type="submit">${req.t('accountRequest.submit')}</button>
@@ -123,7 +141,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
     await AccountRequest.create({
       email,
       topics,
-      workedOn,
+      profileUrl,
       ipAddress,
       userAgent,
       createdAt: new Date(),
@@ -131,7 +149,6 @@ export const registerAccountRequestRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
-    <h2>${req.t('accountRequest.success.title')}</h2>
     <p>${req.t('accountRequest.success.message')}</p>
   </div>
 </div>`;
@@ -170,12 +187,14 @@ export const registerAccountRequestRoutes = (app: Express) => {
       : requests.map(r => {
           const emailCell = escapeHtml(r.email);
           const topicsCell = r.topics ? escapeHtml(r.topics) : '';
-          const workedOnCell = r.workedOn ? escapeHtml(r.workedOn) : '';
+          const profileUrlCell = r.profileUrl
+            ? `<a href="${escapeHtml(r.profileUrl)}" rel="noreferrer noopener">${escapeHtml(r.profileUrl)}</a>`
+            : '';
           const submittedCell = r.createdAt ? formatDateUTC(r.createdAt) : '';
           return `<tr>
   <td>${emailCell}</td>
   <td>${topicsCell}</td>
-  <td>${workedOnCell}</td>
+  <td>${profileUrlCell}</td>
   <td>${submittedCell}</td>
   <td>
     <form method="post" action="/tool/review-requests/delete">
@@ -194,7 +213,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
         <tr>
           <th>${req.t('accountRequest.review.headers.email')}</th>
           <th>${req.t('accountRequest.review.headers.topics')}</th>
-          <th>${req.t('accountRequest.review.headers.workedOn')}</th>
+          <th>${req.t('accountRequest.review.headers.profileUrl')}</th>
           <th>${req.t('accountRequest.review.headers.submitted')}</th>
           <th>${req.t('accountRequest.review.headers.actions')}</th>
         </tr>

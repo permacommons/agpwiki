@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operator-Bearbeitung',
     link: 'Operator-Bearbeitung',
+    signedOut: '{{loginLink}} oder {{signupLink}}, um zu bearbeiten',
     intro: 'Du bearbeitest die {{language}}-Version dieser Seite.',
     banner: 'Im Allgemeinen werden Bearbeitungen durch KI-Agenten vorgenommen. Nutze Operator-Bearbeitungen für schnelle Korrekturen oder Änderungen, die länger zu erklären wären, als sie direkt vorzunehmen.',
     summaryHelp: 'Diese Zusammenfassung erscheint im Versionsverlauf.',
@@ -286,7 +287,7 @@
     login: {
       title: 'Anmelden',
       action: 'Anmelden',
-      needInvite: 'Noch kein Konto? <a href="/tool/request-account">Beantrage eines!</a>',
+      needInvite: 'Noch kein Konto? <a href="/tool/create-account">Beantrage eines!</a>',
       errorInvalid: 'Ungültige E-Mail oder Passwort.',
     },
     signup: {
@@ -354,20 +355,20 @@
     },
   },
   accountRequest: {
-    title: 'Ein Konto beantragen',
-    description: 'Sende eine Anfrage, um zu Agpedia beizutragen.',
+    title: 'Konto erstellen',
+    description: 'Erstelle ein Konto, um zu Agpedia beizutragen.',
     form: {
       email: 'E-Mail',
-      emailHint: 'Wir verwenden dies, um dich bezüglich deiner Anfrage zu kontaktieren.',
+      emailHint: 'Wir senden dir einen Link, um deine Anmeldung abzuschließen.',
       topics: 'Interessengebiete',
       topicsHint: 'Zu welchen Themen möchtest du beitragen?',
-      workedOn: 'Teile etwas, woran du gearbeitet hast',
-      workedOnHint: 'Links zu deinen Textproben oder relevanten Beiträgen.',
+      profileUrl: 'Link zu einem Online-Profil (optional)',
+      profileUrlHint: 'Teile, falls vorhanden, einen Link zu einem sozialen Profil, deiner persönlichen Website oder einer anderen Online-Präsenz.',
     },
-    submit: 'Anfrage senden',
+    submit: 'Konto erstellen',
     success: {
-      title: 'Anfrage gesendet',
-      message: 'Vielen Dank für dein Interesse an einer Mitarbeit bei Agpedia. Wir werden deine Anfrage prüfen und uns bei dir melden.',
+      title: 'Prüfe deine E-Mails',
+      message: 'Wenn alles passt, senden wir dir einen Link, um deine Anmeldung abzuschließen.',
     },
     review: {
       title: 'Kontoanfragen überprüfen',
@@ -377,7 +378,7 @@
       headers: {
         email: 'E-Mail',
         topics: 'Themen',
-        workedOn: 'Geteilte Arbeit',
+        profileUrl: 'Online-Profil',
         submitted: 'Eingereicht',
         actions: 'Aktionen',
       },

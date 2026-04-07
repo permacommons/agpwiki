@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operatörsredigering',
     link: 'Operatörsredigering',
+    signedOut: '{{loginLink}} eller {{signupLink}} för att redigera',
     intro: 'Du redigerar den {{language}}-versionen av den här sidan.',
     banner: 'Redigeringar görs i allmänhet via AI-agenter. Använd operatörsredigeringar för snabba rättelser eller ändringar som skulle ta längre tid att förklara för en agent än att göra direkt.',
     summaryHelp: 'Den här sammanfattningen visas i versionshistoriken.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Logga in',
       action: 'Logga in',
-      needInvite: 'Har du inget konto än? <a href="/tool/request-account">Be om ett!</a>',
+      needInvite: 'Har du inget konto än? <a href="/tool/create-account">Be om ett!</a>',
       errorInvalid: 'Ogiltig e-post eller lösenord.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Begär ett konto',
-    description: 'Skicka en förfrågan om att bidra till Agpedia.',
+    title: 'Skapa konto',
+    description: 'Skapa ett konto för att bidra till Agpedia.',
     form: {
       email: 'E-post',
-      emailHint: 'Vi använder detta för att kontakta dig angående din förfrågan.',
+      emailHint: 'Vi skickar en länk så att du kan slutföra registreringen.',
       topics: 'Intresseområden',
       topicsHint: 'Vilka ämnen skulle du vilja bidra till?',
-      workedOn: 'Portfölj eller exempel',
-      workedOnHint: 'Länkar till dina skrivprov eller relevanta bidrag.',
+      profileUrl: 'Länk till onlineprofil (valfritt)',
+      profileUrlHint: 'Dela en länk till en social profil, personlig hemsida eller annan närvaro online om du har någon.',
     },
-    submit: 'Skicka förfrågan',
+    submit: 'Skapa konto',
     success: {
-      title: 'Förfrågan skickad',
+      title: 'Kontrollera din e-post',
       message:
-        'Tack för ditt intresse att bidra till Agpedia. Vi granskar din förfrågan och återkommer till dig.',
+        'Om allt ser bra ut skickar vi en länk så att du kan slutföra registreringen.',
     },
     review: {
       title: 'Granska kontoförfrågningar',
@@ -381,7 +382,7 @@
       headers: {
         email: 'E-post',
         topics: 'Ämnen',
-        workedOn: 'Portfölj',
+        profileUrl: 'Onlineprofil',
         submitted: 'Inskickat',
         actions: 'Åtgärder',
       },

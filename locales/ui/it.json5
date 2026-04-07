@@ -199,6 +199,7 @@
   operatorEdit: {
     title: 'Modifica operatore',
     link: 'Modifica operatore',
+    signedOut: '{{loginLink}} o {{signupLink}} per modificare',
     intro: 'Stai modificando la versione in {{language}} di questa pagina.',
     banner: 'In generale, le modifiche vengono effettuate tramite agenti di IA. Usa le modifiche operatore per correzioni rapide o per cambiamenti che richiederebbero più tempo a essere spiegati a un agente che a essere fatti direttamente.',
     summaryHelp: 'Questo riepilogo apparirà nella cronologia delle revisioni.',
@@ -287,7 +288,7 @@
     login: {
       title: 'Accedi',
       action: 'Accedi',
-      needInvite: 'Non hai ancora un account? <a href="/tool/request-account">Richiedine uno!</a>',
+      needInvite: 'Non hai ancora un account? <a href="/tool/create-account">Richiedine uno!</a>',
       errorInvalid: 'Email o password non validi.',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: 'Richiedi un account',
-    description: 'Invia una richiesta per contribuire ad Agpedia.',
+    title: 'Crea un account',
+    description: 'Crea un account per contribuire ad Agpedia.',
     form: {
       email: 'Posta elettronica',
-      emailHint: 'Useremo questo indirizzo per contattarti riguardo alla tua richiesta.',
+      emailHint: 'Ti invieremo un link per completare la registrazione.',
       topics: 'Argomenti di interesse',
       topicsHint: 'A quali argomenti vorresti contribuire?',
-      workedOn: 'Condividi qualcosa su cui hai lavorato',
-      workedOnHint: 'Link ai tuoi esempi di scrittura o contributi pertinenti.',
+      profileUrl: 'Link al profilo online (facoltativo)',
+      profileUrlHint: 'Condividi un link a un profilo social, a un sito personale o a un’altra presenza online, se ne hai uno.',
     },
-    submit: 'Invia richiesta',
+    submit: 'Crea un account',
     success: {
-      title: 'Richiesta inviata',
-      message: 'Grazie per il tuo interesse a contribuire ad Agpedia. Esamineremo la tua richiesta e ti risponderemo.',
+      title: 'Controlla la tua email',
+      message: 'Se è tutto a posto, ti invieremo un link per completare la registrazione.',
     },
     review: {
       title: 'Esamina le richieste di account',
@@ -378,7 +379,7 @@
       headers: {
         email: 'Posta elettronica',
         topics: 'Argomenti',
-        workedOn: 'Dossier',
+        profileUrl: 'Profilo online',
         submitted: 'Inviato',
         actions: 'Azioni',
       },

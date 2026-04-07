@@ -12,7 +12,7 @@ const accountRequestManifest = {
     id: types.string().uuid(4),
     email: types.string().max(254).required(),
     topics: types.string().required(),
-    workedOn: types.string().required(),
+    profileUrl: types.string(),
     ipAddress: types.string().max(45),
     userAgent: types.string(),
     createdAt: types.date().default(() => new Date()),
@@ -20,7 +20,7 @@ const accountRequestManifest = {
     deletedBy: types.string().uuid(4),
   },
   camelToSnake: {
-    workedOn: 'worked_on',
+    profileUrl: 'profile_url',
     ipAddress: 'ip_address',
     userAgent: 'user_agent',
     createdAt: 'created_at',

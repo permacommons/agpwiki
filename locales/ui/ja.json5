@@ -199,6 +199,7 @@
   operatorEdit: {
     title: 'オペレーター編集',
     link: 'オペレーター編集',
+    signedOut: '編集するには{{loginLink}}または{{signupLink}}',
     intro: 'このページの {{language}} 版を編集しています。',
     banner: '通常、編集は AI エージェントを通じて行われます。オペレーター編集は、すばやい修正や、エージェントに説明するより直接行ったほうが早い変更に使ってください。',
     summaryHelp: 'この要約は版履歴に表示されます。',
@@ -287,7 +288,7 @@
     login: {
       title: 'ログイン',
       action: 'ログイン',
-      needInvite: 'まだアカウントをお持ちではありませんか？ <a href="/tool/request-account">申請してください。</a>',
+      needInvite: 'まだアカウントをお持ちではありませんか？ <a href="/tool/create-account">申請してください。</a>',
       errorInvalid: 'メールアドレスまたはパスワードが無効です。',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: 'アカウントをリクエスト',
-    description: 'Agpediaへの貢献をリクエストしてください。',
+    title: 'アカウントを作成',
+    description: 'Agpedia に貢献するためのアカウントを作成します。',
     form: {
       email: 'メールアドレス',
-      emailHint: 'リクエストに関するご連絡に使用します。',
+      emailHint: '登録を完了するためのリンクをお送りします。',
       topics: '興味のあるトピック',
       topicsHint: 'どのようなトピックに貢献したいですか？',
-      workedOn: 'ポートフォリオまたは例',
-      workedOnHint: '執筆サンプルや関連する活動へのリンク。',
+      profileUrl: 'オンラインプロフィールへのリンク（任意）',
+      profileUrlHint: 'ソーシャルプロフィール、個人サイト、その他のオンライン上の情報があれば、そのリンクを共有してください。',
     },
-    submit: 'リクエストを送信',
+    submit: 'アカウントを作成',
     success: {
-      title: 'リクエストを送信しました',
-      message: 'Agpediaへの貢献にご関心をお寄せいただきありがとうございます。リクエストを確認の上、ご連絡いたします。',
+      title: 'メールを確認してください',
+      message: '問題がなければ、登録を完了するためのリンクをお送りします。',
     },
     review: {
       title: 'アカウントリクエストの確認',
@@ -378,7 +379,7 @@
       headers: {
         email: 'メール',
         topics: 'トピック',
-        workedOn: 'ポートフォリオ',
+        profileUrl: 'オンラインプロフィール',
         submitted: '送信済み',
         actions: 'アクション',
       },

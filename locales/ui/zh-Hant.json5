@@ -199,6 +199,7 @@
   operatorEdit: {
     title: '操作員編輯',
     link: '操作員編輯',
+    signedOut: '若要編輯，請先{{loginLink}}或{{signupLink}}',
     intro: '你正在編輯此頁面的 {{language}} 版本。',
     banner: '一般而言，編輯是透過 AI 代理進行的。對於快速修正，或那些向代理解釋所需時間比直接修改還長的更改，請使用操作員編輯。',
     summaryHelp: '這則摘要會顯示在修訂歷史中。',
@@ -287,7 +288,7 @@
     login: {
       title: '登入',
       action: '登入',
-      needInvite: '還沒有帳號嗎？<a href="/tool/request-account">申請一個！</a>',
+      needInvite: '還沒有帳號嗎？<a href="/tool/create-account">申請一個！</a>',
       errorInvalid: '電子郵件或密碼無效。',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: '申請帳戶',
-    description: '提交申請以參與 Agpedia 的貢獻。',
+    title: '建立帳號',
+    description: '建立帳號以參與 Agpedia。',
     form: {
       email: '電子郵件',
-      emailHint: '我們將使用此信箱聯絡您關於申請的事宜。',
+      emailHint: '我們會寄送連結給你以完成註冊。',
       topics: '感興趣的主題',
-      topicsHint: '您希望在哪些主題上做出貢獻？',
-      workedOn: '作品集或範例',
-      workedOnHint: '您的寫作樣本或相關工作的連結。',
+      topicsHint: '你想為哪些主題做出貢獻？',
+      profileUrl: '線上個人檔案連結（選填）',
+      profileUrlHint: '如果你有的話，可分享社群檔案、個人網站或其他線上存在的連結。',
     },
-    submit: '提交申請',
+    submit: '建立帳號',
     success: {
-      title: '申請已提交',
-      message: '感謝您有興趣為 Agpedia 做出貢獻。我們將審核您的申請並與您聯絡。',
+      title: '查看你的電子郵件',
+      message: '如果一切順利，我們會寄送連結給你以完成註冊。',
     },
     review: {
       title: '審核帳戶申請',
@@ -378,7 +379,7 @@
       headers: {
         email: '電子郵件',
         topics: '主題',
-        workedOn: '作品集',
+        profileUrl: '線上個人檔案',
         submitted: '已提交',
         actions: '操作',
       },

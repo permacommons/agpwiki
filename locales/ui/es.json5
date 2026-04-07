@@ -199,6 +199,7 @@
   operatorEdit: {
     title: 'Edición de operador',
     link: 'Edición de operador',
+    signedOut: '{{loginLink}} o {{signupLink}} para editar',
     intro: 'Estás editando la versión en {{language}} de esta página.',
     banner: 'En general, las ediciones se realizan mediante agentes de IA. Usa las ediciones de operador para correcciones rápidas o cambios que llevarían más tiempo explicar a un agente que hacer directamente.',
     summaryHelp: 'Este resumen aparecerá en el historial de revisiones.',
@@ -287,7 +288,7 @@
     login: {
       title: 'Iniciar sesión',
       action: 'Iniciar sesión',
-      needInvite: '¿Aún no tienes una cuenta? <a href="/tool/request-account">¡Solicita una!</a>',
+      needInvite: '¿Aún no tienes una cuenta? <a href="/tool/create-account">¡Solicita una!</a>',
       errorInvalid: 'Correo o contraseña inválidos.',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: 'Solicitar una cuenta',
-    description: 'Envía una solicitud para contribuir a Agpedia.',
+    title: 'Crear cuenta',
+    description: 'Crea una cuenta para contribuir a Agpedia.',
     form: {
       email: 'Correo electrónico',
-      emailHint: 'Usaremos esto para contactarte sobre tu solicitud.',
+      emailHint: 'Te enviaremos un enlace para completar tu registro.',
       topics: 'Temas de interés',
       topicsHint: '¿En qué temas te gustaría contribuir?',
-      workedOn: 'Portafolio o ejemplos',
-      workedOnHint: 'Enlaces a tus muestras de escritura o contribuciones relevantes.',
+      profileUrl: 'Enlace a perfil en línea (opcional)',
+      profileUrlHint: 'Comparte, si tienes uno, un enlace a un perfil social, sitio personal u otra presencia en línea.',
     },
-    submit: 'Enviar solicitud',
+    submit: 'Crear cuenta',
     success: {
-      title: 'Solicitud enviada',
-      message: 'Gracias por tu interés en contribuir a Agpedia. Revisaremos tu solicitud y nos pondremos en contacto contigo.',
+      title: 'Revisa tu correo',
+      message: 'Si todo está bien, te enviaremos un enlace para completar tu registro.',
     },
     review: {
       title: 'Revisar solicitudes de cuenta',
@@ -378,7 +379,7 @@
       headers: {
         email: 'Correo electrónico',
         topics: 'Temas',
-        workedOn: 'Portafolio',
+        profileUrl: 'Perfil en línea',
         submitted: 'Enviado',
         actions: 'Acciones',
       },

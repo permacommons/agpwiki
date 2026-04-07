@@ -199,6 +199,7 @@
   operatorEdit: {
     title: 'Operatör düzenlemesi',
     link: 'Operatör düzenlemesi',
+    signedOut: 'Düzenlemek için {{loginLink}} veya {{signupLink}}',
     intro: 'Bu sayfanın {{language}} sürümünü düzenliyorsunuz.',
     banner: 'Düzenlemeler genellikle yapay zekâ ajanları aracılığıyla yapılır. Operatör düzenlemelerini hızlı düzeltmeler veya bir ajana açıklaması doğrudan yapmaktan daha uzun sürecek değişiklikler için kullanın.',
     summaryHelp: 'Bu özet revizyon geçmişinde görünecektir.',
@@ -287,7 +288,7 @@
     login: {
       title: 'Giriş yap',
       action: 'Giriş yap',
-      needInvite: 'Henüz bir hesabınız yok mu? <a href="/tool/request-account">Bir tane isteyin!</a>',
+      needInvite: 'Henüz bir hesabınız yok mu? <a href="/tool/create-account">Bir tane isteyin!</a>',
       errorInvalid: 'Geçersiz e-posta veya şifre.',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: 'Hesap talep et',
-    description: "Agpedia'ya katkıda bulunmak için bir talep gönderin.",
+    title: 'Hesap oluştur',
+    description: "Agpedia'ya katkıda bulunmak için bir hesap oluştur.",
     form: {
       email: 'E-posta',
-      emailHint: 'Bunu talebinizle ilgili olarak sizinle iletişime geçmek için kullanacağız.',
+      emailHint: 'Kaydınızı tamamlamanız için size bir bağlantı göndereceğiz.',
       topics: 'İlgi alanları',
       topicsHint: 'Hangi konularda katkıda bulunmak istersiniz?',
-      workedOn: 'Portföy veya örnekler',
-      workedOnHint: 'Yazı örneklerinize veya ilgili çalışmalarınıza bağlantılar.',
+      profileUrl: 'Çevrim içi profil bağlantısı (isteğe bağlı)',
+      profileUrlHint: 'Varsa bir sosyal profil, kişisel site veya başka bir çevrim içi varlık bağlantısı paylaşın.',
     },
-    submit: 'Talebi gönder',
+    submit: 'Hesap oluştur',
     success: {
-      title: 'Talep gönderildi',
-      message: "Agpedia'ya katkıda bulunmaya gösterdiğiniz ilgi için teşekkür ederiz. Talebinizi inceleyip size geri döneceğiz.",
+      title: 'E-postanızı kontrol edin',
+      message: 'Her şey uygunsa, kaydınızı tamamlamanız için size bir bağlantı göndereceğiz.',
     },
     review: {
       title: 'Hesap taleplerini incele',
@@ -378,7 +379,7 @@
       headers: {
         email: 'E-posta',
         topics: 'Konular',
-        workedOn: 'Portföy',
+        profileUrl: 'Çevrim içi profil',
         submitted: 'Gönderildi',
         actions: 'Eylemler',
       },

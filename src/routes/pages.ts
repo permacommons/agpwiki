@@ -65,6 +65,7 @@ import {
   renderMarkdownPreviewHtml,
   renderMarkdownPreviewPanel,
 } from './lib/markdown-preview.js';
+import { renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
 import {
   formatCheckStatus,
   formatCheckType,
@@ -1163,16 +1164,22 @@ export const registerPageRoutes = (app: Express) => {
           ? forumCategoryPagePath('policy', canonicalSlug)
           : '';
       const signedIn = Boolean(await resolveSessionUser(req));
-      const canShowOperatorEditLink = signedIn && !revIdParam && !diffFrom && !diffTo;
+      const canShowOperatorEditLink = !revIdParam && !diffFrom && !diffTo;
+      const operatorEditLinkHtml = renderOperatorEditRelatedLink({
+        signedIn,
+        visible: canShowOperatorEditLink,
+        operatorEditHref: operatorEditPath(canonicalSlug, contentLang),
+        loginHref: `/tool/login?redirect=${encodeURIComponent(
+          operatorEditPath(canonicalSlug, contentLang)
+        )}`,
+        signupHref: '/tool/create-account',
+        t: req.t,
+      });
       const relatedLinks = [
         forumPath
           ? `<a href="${forumPath}">${escapeHtml(req.t('forum.discussThisPage'))}</a>`
           : '',
-        canShowOperatorEditLink
-          ? `<a href="${operatorEditPath(canonicalSlug, contentLang)}">${escapeHtml(
-              req.t('operatorEdit.link')
-            )}</a>`
-          : '',
+        operatorEditLinkHtml,
       ].filter(Boolean);
       const forumLinkHtml = relatedLinks.length
         ? `<div class="tool-related">

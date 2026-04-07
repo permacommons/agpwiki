@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Modification opérateur',
     link: 'Modification opérateur',
+    signedOut: '{{loginLink}} ou {{signupLink}} pour modifier',
     intro: 'Tu modifies la version {{language}} de cette page.',
     banner: 'En général, les modifications sont effectuées via des agents IA. Utilise les modifications opérateur pour les corrections rapides ou les changements qui prendraient plus de temps à expliquer à un agent qu’à faire directement.',
     summaryHelp: 'Ce résumé apparaîtra dans l’historique des révisions.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Connexion',
       action: 'Se connecter',
-      needInvite: "Tu n’as pas encore de compte ? <a href=\"/tool/request-account\">Demande-en un !</a>",
+      needInvite: "Tu n’as pas encore de compte ? <a href=\"/tool/create-account\">Demande-en un !</a>",
       errorInvalid: 'Email ou mot de passe invalide.',
     },
     signup: {
@@ -356,20 +357,20 @@
     },
   },
   accountRequest: {
-    title: 'Demander un compte',
-    description: 'Soumets une demande pour contribuer à Agpedia.',
+    title: 'Créer un compte',
+    description: 'Crée un compte pour contribuer à Agpedia.',
     form: {
       email: 'Courriel',
-      emailHint: 'Nous utiliserons ceci pour te contacter à propos de ta demande.',
+      emailHint: 'Nous t’enverrons un lien pour terminer ton inscription.',
       topics: "Sujets d'intérêt",
       topicsHint: 'À quels sujets veux-tu contribuer ?',
-      workedOn: 'Partage quelque chose sur lequel tu as travaillé',
-      workedOnHint: "Liens vers tes échantillons d'écriture ou contributions pertinentes.",
+      profileUrl: 'Lien vers un profil en ligne (facultatif)',
+      profileUrlHint: 'Partage, si tu en as un, un lien vers un profil social, un site personnel ou une autre présence en ligne.',
     },
-    submit: 'Envoyer la demande',
+    submit: 'Créer un compte',
     success: {
-      title: 'Demande envoyée',
-      message: 'Merci pour ton intérêt à contribuer à Agpedia. Nous examinerons ta demande et reviendrons vers toi.',
+      title: 'Vérifie ta messagerie',
+      message: 'Si tout est en ordre, nous t’enverrons un lien pour terminer ton inscription.',
     },
     review: {
       title: 'Examiner les demandes de compte',
@@ -379,7 +380,7 @@
       headers: {
         email: 'Courriel',
         topics: 'Sujets',
-        workedOn: 'Dossier',
+        profileUrl: 'Profil en ligne',
         submitted: 'Soumis',
         actions: 'Opérations',
       },

@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operaattorimuokkaus',
     link: 'Operaattorimuokkaus',
+    signedOut: '{{loginLink}} tai {{signupLink}} muokataksesi',
     intro: 'Muokkaat tämän sivun {{language}}-versiota.',
     banner: 'Muokkaukset tehdään yleensä tekoälyagenttien kautta. Käytä operaattorimuokkauksia pikakorjauksiin tai muutoksiin, joiden selittäminen agentille veisi kauemmin kuin tekeminen suoraan.',
     summaryHelp: 'Tämä yhteenveto näkyy versiohistoriassa.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Kirjaudu sisään',
       action: 'Kirjaudu sisään',
-      needInvite: 'Eikö sinulla vielä ole tiliä? <a href="/tool/request-account">Pyydä sellaista!</a>',
+      needInvite: 'Eikö sinulla vielä ole tiliä? <a href="/tool/create-account">Pyydä sellaista!</a>',
       errorInvalid: 'Virheellinen sähköposti tai salasana.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Pyydä tiliä',
-    description: 'Lähetä pyyntö osallistuaksesi Agpediaan.',
+    title: 'Luo tili',
+    description: 'Luo tili osallistuaksesi Agpediaan.',
     form: {
       email: 'Sähköposti',
-      emailHint: 'Käytämme tätä ottaaksemme sinuun yhteyttä pyyntöösi liittyen.',
+      emailHint: 'Lähetämme sinulle linkin rekisteröitymisen viimeistelemiseksi.',
       topics: 'Kiinnostuksen kohteet',
       topicsHint: 'Mihin aiheisiin haluaisit osallistua?',
-      workedOn: 'Jaa jotain, mitä olet tehnyt',
-      workedOnHint: 'Linkkejä kirjoitusnäytteisiisi tai asiaankuuluviin projekteihin.',
+      profileUrl: 'Linkki verkkoprofiiliin (valinnainen)',
+      profileUrlHint: 'Jaa linkki someprofiiliin, henkilökohtaiseen sivuun tai muuhun verkkoläsnäoloon, jos sinulla on sellainen.',
     },
-    submit: 'Lähetä pyyntö',
+    submit: 'Luo tili',
     success: {
-      title: 'Pyyntö lähetetty',
+      title: 'Tarkista sähköpostisi',
       message:
-        'Kiitos mielenkiinnostasi osallistua Agpediaan. Tarkistamme pyyntösi ja palaamme asiaan.',
+        'Jos kaikki näyttää hyvältä, lähetämme sinulle linkin rekisteröitymisen viimeistelemiseksi.',
     },
     review: {
       title: 'Tarkista tilipyynnöt',
@@ -381,7 +382,7 @@
       headers: {
         email: 'Sähköposti',
         topics: 'Aiheet',
-        workedOn: 'Työnäytekansio',
+        profileUrl: 'Verkkoprofiili',
         submitted: 'Lähetetty',
         actions: 'Toiminnot',
       },

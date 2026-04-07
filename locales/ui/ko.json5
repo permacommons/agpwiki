@@ -199,6 +199,7 @@
   operatorEdit: {
     title: '운영자 편집',
     link: '운영자 편집',
+    signedOut: '편집하려면 {{loginLink}} 또는 {{signupLink}}',
     intro: '이 페이지의 {{language}} 버전을 편집하고 있습니다.',
     banner: '일반적으로 편집은 AI 에이전트를 통해 수행됩니다. 빠른 수정이나 에이전트에게 설명하는 것보다 직접 고치는 편이 더 빠른 변경에는 운영자 편집을 사용하세요.',
     summaryHelp: '이 요약은 수정 기록에 표시됩니다.',
@@ -287,7 +288,7 @@
     login: {
       title: '로그인',
       action: '로그인',
-      needInvite: '아직 계정이 없으신가요? <a href="/tool/request-account">요청해 보세요!</a>',
+      needInvite: '아직 계정이 없으신가요? <a href="/tool/create-account">요청해 보세요!</a>',
       errorInvalid: '이메일 또는 비밀번호가 잘못되었습니다.',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: '계정 요청',
-    description: 'Agpedia에 기여하기 위한 요청을 제출하세요.',
+    title: '계정 만들기',
+    description: 'Agpedia에 기여하려면 계정을 만드세요.',
     form: {
       email: '이메일',
-      emailHint: '요청과 관련하여 연락드리는 데 사용됩니다.',
+      emailHint: '가입을 완료할 수 있는 링크를 보내드릴게요.',
       topics: '관심 주제',
       topicsHint: '어떤 주제에 기여하고 싶으신가요?',
-      workedOn: '포트폴리오 또는 예시',
-      workedOnHint: '작문 샘플 또는 관련 작업에 대한 링크입니다.',
+      profileUrl: '온라인 프로필 링크(선택 사항)',
+      profileUrlHint: '소셜 프로필, 개인 홈페이지, 기타 온라인 활동 링크가 있다면 공유해 주세요.',
     },
-    submit: '요청 제출',
+    submit: '계정 만들기',
     success: {
-      title: '요청 제출됨',
-      message: 'Agpedia 기여에 관심을 가져주셔서 감사합니다. 요청을 검토한 후 연락드리겠습니다.',
+      title: '이메일을 확인하세요',
+      message: '문제가 없으면 가입을 완료할 수 있는 링크를 보내드릴게요.',
     },
     review: {
       title: '계정 요청 검토',
@@ -378,7 +379,7 @@
       headers: {
         email: '이메일',
         topics: '주제',
-        workedOn: '포트폴리오',
+        profileUrl: '온라인 프로필',
         submitted: '제출됨',
         actions: '작업',
       },
