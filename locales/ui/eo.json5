@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operaciista redakto',
     link: 'Operaciista redakto',
+    signedOut: '{{loginLink}} aŭ {{signupLink}} por redakti',
     intro: 'Vi redaktas la version {{language}} de ĉi tiu paĝo.',
     banner: 'Ĝenerale, redaktoj estas farataj per AI-agentoj. Uzu operaciantajn redaktojn por rapidaj korektoj aŭ ŝanĝoj, kies klarigo al agento daŭrus pli longe ol fari ilin rekte.',
     summaryHelp: 'Ĉi tiu resumo aperos en la revizia historio.',
@@ -286,7 +287,7 @@
     login: {
       title: 'Ensaluti',
       action: 'Ensaluti',
-      needInvite: 'Ĉu vi ankoraŭ ne havas konton? <a href="/tool/request-account">Petu unu!</a>',
+      needInvite: 'Ĉu vi ankoraŭ ne havas konton? <a href="/tool/create-account">Petu unu!</a>',
       errorInvalid: 'Nevalida retpoŝto aŭ pasvorto.',
     },
     signup: {
@@ -355,21 +356,21 @@
     },
   },
   accountRequest: {
-    title: 'Peti konton',
-    description: 'Sendu peton por kontribui al Agpedia.',
+    title: 'Krei konton',
+    description: 'Kreu konton por kontribui al Agpedia.',
     form: {
       email: 'Retpoŝto',
-      emailHint: 'Ni uzos ĉi tion por kontakti vin pri via peto.',
+      emailHint: 'Ni sendos al vi ligilon por kompletigi vian registriĝon.',
       topics: 'Interesaj temoj',
       topicsHint: 'Pri kiuj temoj vi ŝatus kontribui?',
-      workedOn: 'Dosierujo aŭ ekzemploj',
-      workedOnHint: 'Ligoj al viaj skribaj specimenoj aŭ rilataj kontribuoj.',
+      profileUrl: 'Ligilo al reta profilo (nedeviga)',
+      profileUrlHint: 'Kunhavigu ligilon al socia profilo, persona retejo aŭ alia reta ĉeesto se vi havas tian.',
     },
-    submit: 'Sendi peton',
+    submit: 'Krei konton',
     success: {
-      title: 'Peto sendita',
+      title: 'Kontrolu vian retpoŝton',
       message:
-        'Dankon pro via intereso kontribui al Agpedia. Ni revizios vian peton kaj kontaktos vin.',
+        'Se ĉio aspektos ĝusta, ni sendos al vi ligilon por kompletigi vian registriĝon.',
     },
     review: {
       title: 'Revizii kontopetojn',
@@ -379,7 +380,7 @@
       headers: {
         email: 'Retpoŝto',
         topics: 'Temoj',
-        workedOn: 'Dosierujo',
+        profileUrl: 'Reta profilo',
         submitted: 'Sendita',
         actions: 'Agoj',
       },

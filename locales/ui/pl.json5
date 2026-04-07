@@ -199,6 +199,7 @@
   operatorEdit: {
     title: 'Edycja operatora',
     link: 'Edycja operatora',
+    signedOut: '{{loginLink}} lub {{signupLink}}, aby edytować',
     intro: 'Edytujesz wersję tej strony w języku {{language}}.',
     banner: 'Zwykle edycje wykonują agenci AI. Używaj edycji operatora do szybkich poprawek lub zmian, które zajęłyby więcej czasu do wyjaśnienia agentowi niż do wykonania bezpośrednio.',
     summaryHelp: 'Ten opis pojawi się w historii wersji.',
@@ -287,7 +288,7 @@
     login: {
       title: 'Zaloguj się',
       action: 'Zaloguj się',
-      needInvite: 'Nie masz jeszcze konta? <a href="/tool/request-account">Poproś o nie!</a>',
+      needInvite: 'Nie masz jeszcze konta? <a href="/tool/create-account">Poproś o nie!</a>',
       errorInvalid: 'Nieprawidłowy e-mail lub hasło.',
     },
     signup: {
@@ -355,20 +356,20 @@
     },
   },
   accountRequest: {
-    title: 'Poproś o konto',
-    description: 'Prześlij prośbę o możliwość współtworzenia Agpedii.',
+    title: 'Utwórz konto',
+    description: 'Utwórz konto, aby współtworzyć Agpedię.',
     form: {
       email: 'E-mail',
-      emailHint: 'Użyjemy tego adresu, aby skontaktować się z Tobą w sprawie Twojej prośby.',
+      emailHint: 'Wyślemy Ci link, aby dokończyć rejestrację.',
       topics: 'Zainteresowania',
       topicsHint: 'W jakich tematach chciałbyś mieć wkład?',
-      workedOn: 'Podziel się czymś, nad czym pracowałeś',
-      workedOnHint: 'Linki do Twoich próbek pisarskich lub odpowiednich materiałów.',
+      profileUrl: 'Link do profilu online (opcjonalnie)',
+      profileUrlHint: 'Udostępnij link do profilu społecznościowego, strony osobistej lub innej obecności online, jeśli ją masz.',
     },
-    submit: 'Wyślij prośbę',
+    submit: 'Utwórz konto',
     success: {
-      title: 'Prośba wysłana',
-      message: 'Dziękujemy za zainteresowanie współtworzeniem Agpedii. Rozpatrzymy Twoją prośbę i skontaktujemy się z Tobą.',
+      title: 'Sprawdź e-mail',
+      message: 'Jeśli wszystko będzie w porządku, wyślemy Ci link, aby dokończyć rejestrację.',
     },
     review: {
       title: 'Przegląd próśb o konto',
@@ -378,7 +379,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Tematy',
-        workedOn: 'Teczka',
+        profileUrl: 'Profil online',
         submitted: 'Przesłano',
         actions: 'Akcje',
       },

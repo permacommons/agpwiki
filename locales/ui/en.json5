@@ -333,6 +333,7 @@
   "operatorEdit": {
     "title": "Operator edit",
     "link": "Operator edit",
+    "signedOut": "{{loginLink}} or {{signupLink}} to edit",
     "intro": "Editing the {{language}} version of this page.",
     "banner": "Generally, edits are performed via AI Agents. Use operator edits for quick fixes or changes that would take longer to explain to an agent than to make directly.",
     "summaryHelp": "This summary will appear in the revision history.",
@@ -423,7 +424,7 @@
     "login": {
       "title": "Log in",
       "action": "Log in",
-      "needInvite": "Don’t have an account yet? <a href=\"/tool/request-account\">Request one!</a>",
+      "needInvite": "Don’t have an account yet? <a href=\"/tool/create-account\">Create one.</a>",
       "errorInvalid": "Invalid email or password."
     },
     "signup": {
@@ -491,31 +492,30 @@
     }
   },
   "accountRequest": {
-    "title": "Request an account",
-    "description": "Submit a request to contribute to Agpedia.",
+    "title": "Create account",
+    "description": "Create an account to contribute to Agpedia.",
     "form": {
       "email": "Email",
-      "emailHint": "We'll use this to contact you about your request.",
+      "emailHint": "We'll send you a link to complete your sign-up.",
       "topics": "Topics of interest",
       "topicsHint": "What topics would you like to contribute to?",
-      "workedOn": "Share something you've worked on",
-      // Translators: This is a volunteer project, not a job application. Please use neutral terms like "contributions", "projects", or "materials" rather than "work/job" if your language makes that distinction.
-      "workedOnHint": "Share links to your writing samples or relevant projects."
+      "profileUrl": "Online profile link (optional)",
+      "profileUrlHint": "Share a link to a social profile, personal homepage, or other online presence if you have one."
     },
-    "submit": "Submit request",
+    "submit": "Create account",
     "success": {
-      "title": "Request submitted",
-      "message": "Thank you for your interest in contributing to Agpedia. We'll review your request and get back to you."
+      "title": "Check your email",
+      "message": "If everything looks good, we'll send you a link to complete your sign-up."
     },
     "review": {
-      "title": "Review account requests",
-      "description": "Pending account requests from potential contributors.",
+      "title": "Review account signups",
+      "description": "Pending account signups from potential contributors.",
       "empty": "No pending requests.",
       "delete": "Delete",
       "headers": {
         "email": "Email",
         "topics": "Topics",
-        "workedOn": "Shared work",
+        "profileUrl": "Online profile",
         "submitted": "Submitted",
         "actions": "Actions"
       }

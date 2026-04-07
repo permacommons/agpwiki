@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operatoriaus redagavimas',
     link: 'Operatoriaus redagavimas',
+    signedOut: '{{loginLink}} arba {{signupLink}}, kad galėtum redaguoti',
     intro: 'Redaguoji šio puslapio {{language}} versiją.',
     banner: 'Paprastai redagavimai atliekami per DI agentus. Operatoriaus redagavimą naudok greitiems pataisymams arba pakeitimams, kuriuos agentui paaiškinti užtruktų ilgiau negu atlikti tiesiogiai.',
     summaryHelp: 'Ši santrauka bus rodoma versijų istorijoje.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Prisijungti',
       action: 'Prisijungti',
-      needInvite: 'Dar neturite paskyros? <a href="/tool/request-account">Pateikite užklausą!</a>',
+      needInvite: 'Dar neturite paskyros? <a href="/tool/create-account">Pateikite užklausą!</a>',
       errorInvalid: 'Neteisingas el. paštas arba slaptažodis.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Prašyti paskyros',
-    description: 'Pateikite prašymą prisidėti prie Agpedia.',
+    title: 'Sukurti paskyrą',
+    description: 'Sukurk paskyrą, kad galėtum prisidėti prie Agpedia.',
     form: {
       email: 'El. paštas',
-      emailHint: 'Naudosime tai susisiekti su jumis dėl jūsų prašymo.',
+      emailHint: 'Atsiųsime tau nuorodą, kad užbaigtum registraciją.',
       topics: 'Dominančios temos',
       topicsHint: 'Kokiomis temomis norėtumėte prisidėti?',
-      workedOn: 'Portfelis arba pavyzdžiai',
-      workedOnHint: 'Nuorodos į jūsų rašymo pavyzdžius ar susijusius darbus.',
+      profileUrl: 'Internetinio profilio nuoroda (nebūtina)',
+      profileUrlHint: 'Jei turi, pasidalyk nuoroda į socialinį profilį, asmeninį puslapį ar kitą savo internetinį profilį.',
     },
-    submit: 'Pateikti prašymą',
+    submit: 'Sukurti paskyrą',
     success: {
-      title: 'Prašymas pateiktas',
+      title: 'Patikrink el. paštą',
       message:
-        'Dėkojame, kad domitės galimybe prisidėti prie Agpedia. Peržiūrėsime jūsų prašymą ir susisieksime su jumis.',
+        'Jei viskas tiks, atsiųsime tau nuorodą, kad užbaigtum registraciją.',
     },
     review: {
       title: 'Peržiūrėti paskyros prašymus',
@@ -381,7 +382,7 @@
       headers: {
         email: 'El. paštas',
         topics: 'Temos',
-        workedOn: 'Portfelis',
+        profileUrl: 'Internetinis profilis',
         submitted: 'Pateikta',
         actions: 'Veiksmai',
       },

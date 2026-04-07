@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operatorbewerking',
     link: 'Operatorbewerking',
+    signedOut: '{{loginLink}} of {{signupLink}} om te bewerken',
     intro: 'Je bewerkt de {{language}}-versie van deze pagina.',
     banner: 'Gewoonlijk worden bewerkingen uitgevoerd via AI-agenten. Gebruik operatorbewerkingen voor snelle correcties of wijzigingen die langer zouden duren om aan een agent uit te leggen dan om ze direct zelf te doen.',
     summaryHelp: 'Deze samenvatting verschijnt in de revisiegeschiedenis.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Inloggen',
       action: 'Inloggen',
-      needInvite: 'Nog geen account? <a href="/tool/request-account">Vraag er een aan!</a>',
+      needInvite: 'Nog geen account? <a href="/tool/create-account">Vraag er een aan!</a>',
       errorInvalid: 'Ongeldig e-mailadres of wachtwoord.',
     },
     signup: {
@@ -356,20 +357,20 @@
     },
   },
   accountRequest: {
-    title: 'Account aanvragen',
-    description: 'Dien een verzoek in om bij te dragen aan Agpedia.',
+    title: 'Account aanmaken',
+    description: 'Maak een account aan om bij te dragen aan Agpedia.',
     form: {
       email: 'E-mail',
-      emailHint: 'We gebruiken dit om contact met je op te nemen over je verzoek.',
+      emailHint: 'We sturen je een link om je aanmelding af te ronden.',
       topics: 'Interessegebieden',
       topicsHint: 'Aan welke onderwerpen zou je willen bijdragen?',
-      workedOn: 'Deel iets waar je aan hebt gewerkt',
-      workedOnHint: 'Links naar je schrijfvoorbeelden of relevante bijdragen.',
+      profileUrl: 'Link naar online profiel (optioneel)',
+      profileUrlHint: 'Deel een link naar een sociaal profiel, persoonlijke website of andere online aanwezigheid als je die hebt.',
     },
-    submit: 'Verzoek indienen',
+    submit: 'Account aanmaken',
     success: {
-      title: 'Verzoek ingediend',
-      message: 'Bedankt voor je interesse om bij te dragen aan Agpedia. We zullen je verzoek beoordelen en contact met je opnemen.',
+      title: 'Controleer je e-mail',
+      message: 'Als alles in orde is, sturen we je een link om je aanmelding af te ronden.',
     },
     review: {
       title: 'Accountverzoeken beoordelen',
@@ -379,7 +380,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Onderwerpen',
-        workedOn: 'Dossier',
+        profileUrl: 'Online profiel',
         submitted: 'Ingediend',
         actions: 'Acties',
       },

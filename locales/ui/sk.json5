@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operátorská úprava',
     link: 'Operátorská úprava',
+    signedOut: '{{loginLink}} alebo {{signupLink}} na úpravy',
     intro: 'Upravuješ verziu tejto stránky v jazyku {{language}}.',
     banner: 'Úpravy sa vo všeobecnosti vykonávajú cez AI agentov. Operátorské úpravy používaj na rýchle opravy alebo zmeny, ktoré by trvalo dlhšie vysvetliť agentovi, než ich spraviť priamo.',
     summaryHelp: 'Toto zhrnutie sa zobrazí v histórii revízií.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Prihlásiť sa',
       action: 'Prihlásiť sa',
-      needInvite: 'Ešte nemáte účet? <a href="/tool/request-account">Požiadajte oň!</a>',
+      needInvite: 'Ešte nemáte účet? <a href="/tool/create-account">Požiadajte oň!</a>',
       errorInvalid: 'Neplatný e-mail alebo heslo.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Požiadať o účet',
-    description: 'Odošlite žiadosť o príspevok do Agpedia.',
+    title: 'Vytvoriť účet',
+    description: 'Vytvorte si účet, aby ste mohli prispievať do Agpedie.',
     form: {
       email: 'E-mail',
-      emailHint: 'Použijeme to na kontaktovanie vás ohľadom vašej žiadosti.',
+      emailHint: 'Pošleme vám odkaz na dokončenie registrácie.',
       topics: 'Témy záujmu',
       topicsHint: 'Ktorým témam by ste chceli prispieť?',
-      workedOn: 'Portfólio alebo príklady',
-      workedOnHint: 'Odkazy na vaše ukážky písania alebo relevantnú prácu.',
+      profileUrl: 'Odkaz na online profil (voliteľné)',
+      profileUrlHint: 'Ak nejaký máte, zdieľajte odkaz na sociálny profil, osobnú stránku alebo inú online prezentáciu.',
     },
-    submit: 'Odoslať žiadosť',
+    submit: 'Vytvoriť účet',
     success: {
-      title: 'Žiadosť odoslaná',
+      title: 'Skontrolujte si e-mail',
       message:
-        'Ďakujeme za váš záujem prispieť do Agpedia. Vašu žiadosť posúdime a ozveme sa vám.',
+        'Ak bude všetko v poriadku, pošleme vám odkaz na dokončenie registrácie.',
     },
     review: {
       title: 'Skontrolovať žiadosti o účet',
@@ -381,7 +382,7 @@
       headers: {
         email: 'E-mail',
         topics: 'Témy',
-        workedOn: 'Portfólio',
+        profileUrl: 'Online profil',
         submitted: 'Odoslané',
         actions: 'Akcie',
       },

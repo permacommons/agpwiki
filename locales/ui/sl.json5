@@ -200,6 +200,7 @@
   operatorEdit: {
     title: 'Operatersko urejanje',
     link: 'Operatersko urejanje',
+    signedOut: '{{loginLink}} ali {{signupLink}} za urejanje',
     intro: 'Urejaš različico te strani v jeziku {{language}}.',
     banner: 'Urejanja se praviloma izvajajo prek agentov UI. Operatersko urejanje uporabi za hitre popravke ali spremembe, ki bi jih bilo agentu počasneje razložiti, kot jih narediti neposredno.',
     summaryHelp: 'Ta povzetek bo prikazan v zgodovini revizij.',
@@ -288,7 +289,7 @@
     login: {
       title: 'Prijava',
       action: 'Prijavi se',
-      needInvite: 'Še nimate računa? <a href="/tool/request-account">Zaprosite zanj!</a>',
+      needInvite: 'Še nimate računa? <a href="/tool/create-account">Zaprosite zanj!</a>',
       errorInvalid: 'Neveljaven e-naslov ali geslo.',
     },
     signup: {
@@ -357,21 +358,21 @@
     },
   },
   accountRequest: {
-    title: 'Zahtevaj račun',
-    description: 'Pošljite zahtevo za prispevanje k Agpedii.',
+    title: 'Ustvari račun',
+    description: 'Ustvari račun za prispevanje v Agpedio.',
     form: {
       email: 'E-pošta',
-      emailHint: 'To bomo uporabili za stik z vami glede vaše zahteve.',
+      emailHint: 'Poslali ti bomo povezavo za dokončanje prijave.',
       topics: 'Teme zanimanja',
       topicsHint: 'K katerim temam bi želeli prispevati?',
-      workedOn: 'Portfelj ali primeri',
-      workedOnHint: 'Povezave do vaših primerov pisanja ali ustreznega dela.',
+      profileUrl: 'Povezava do spletnega profila (izbirno)',
+      profileUrlHint: 'Deli povezavo do družbenega profila, osebne strani ali druge spletne prisotnosti, če jo imaš.',
     },
-    submit: 'Pošlji zahtevo',
+    submit: 'Ustvari račun',
     success: {
-      title: 'Zahteva poslana',
+      title: 'Preveri svoj e-poštni naslov',
       message:
-        'Hvala za vaše zanimanje za prispevanje k Agpedii. Vašo zahtevo bomo pregledali in vas kontaktirali.',
+        'Če bo vse v redu, ti bomo poslali povezavo za dokončanje prijave.',
     },
     review: {
       title: 'Pregled zahtev za račun',
@@ -381,7 +382,7 @@
       headers: {
         email: 'E-pošta',
         topics: 'Teme',
-        workedOn: 'Portfelj',
+        profileUrl: 'Spletni profil',
         submitted: 'Oddano',
         actions: 'Dejanja',
       },
