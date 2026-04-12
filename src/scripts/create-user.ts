@@ -2,6 +2,7 @@ import { randomBytes, scryptSync } from 'node:crypto';
 import readline from 'node:readline/promises';
 
 import { initializePostgreSQL } from '../db.js';
+import { normalizeUsername, trimDisplayName } from '../lib/username.js';
 import User from '../models/user.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
@@ -22,11 +23,12 @@ const main = async () => {
   });
 
   try {
-    const displayName = await prompt('Display name: ', rl);
+    const displayName = trimDisplayName(await prompt('Display name: ', rl));
     const email = await prompt('Email: ', rl);
     const password = await prompt('Password (will be echoed): ', rl);
+    const username = normalizeUsername(displayName);
 
-    if (!displayName || !email || !password) {
+    if (!displayName || !email || !password || !username) {
       throw new Error('Display name, email, and password are required.');
     }
 
@@ -36,9 +38,14 @@ const main = async () => {
     if (existing) {
       throw new Error(`User already exists for email: ${email}`);
     }
+    const existingUsername = await User.filterWhere({ username }).first();
+    if (existingUsername) {
+      throw new Error(`User already exists for username: ${username}`);
+    }
 
     const passwordHash = hashPassword(password);
     const user = await User.create({
+      username,
       displayName,
       email,
       passwordHash,

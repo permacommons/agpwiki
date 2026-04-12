@@ -22,6 +22,8 @@ import OAuthAuthorizationCode from '../models/oauth-authorization-code.js';
 import OAuthClient from '../models/oauth-client.js';
 import OAuthRefreshToken from '../models/oauth-refresh-token.js';
 import { escapeHtml, renderLayout } from '../render.js';
+import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 
 const renderOAuthLayout = (
   t: TFunction,
@@ -34,6 +36,7 @@ const renderOAuthLayout = (
     title,
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
+    topHtml: prependAccountBanner(res),
     signedIn,
     currentUserName: res.locals.currentUserName,
     currentPath: res.locals.currentPath,
@@ -227,6 +230,11 @@ export const registerOAuthRoutes = (app: Express) => {
       res.redirect(302, loginUrl);
       return;
     }
+    const accountState = await getAccountLifecycleState(session.userId);
+    if (!accountState || !userCanUseAgentFeatures(accountState)) {
+      renderOAuthError(req.t, res, req.t('oauth.errorAgentAccessRequired'), true);
+      return;
+    }
 
     const requestedScopes = resolveScopes(parseScopeParam(scopeParam));
     const scopeList = requestedScopes.length
@@ -309,6 +317,11 @@ export const registerOAuthRoutes = (app: Express) => {
     if (!session) {
       const loginUrl = `/tool/login?redirect=${encodeURIComponent(req.originalUrl)}`;
       res.redirect(302, loginUrl);
+      return;
+    }
+    const accountState = await getAccountLifecycleState(session.userId);
+    if (!accountState || !userCanUseAgentFeatures(accountState)) {
+      renderOAuthError(req.t, res, req.t('oauth.errorAgentAccessRequired'), true);
       return;
     }
 

@@ -1,9 +1,11 @@
 export { default as AccountRequest } from './account-request.js';
+export { default as AgentAccessRequest } from './agent-access-request.js';
 export { default as ApiToken } from './api-token.js';
 export { default as AuthSession } from './auth-session.js';
 export { default as BlogPost } from './blog-post.js';
 export { default as Citation } from './citation.js';
 export { default as CitationClaim } from './citation-claim.js';
+export { default as EmailVerificationToken } from './email-verification-token.js';
 export { default as ForumComment } from './forum-comment.js';
 export { default as ForumThread } from './forum-thread.js';
 export { default as OAuthAccessToken } from './oauth-access-token.js';
@@ -14,4 +16,5 @@ export { default as PageAlias } from './page-alias.js';
 export { default as PageCheck } from './page-check.js';
 export { default as SignupInvite } from './signup-invite.js';
 export { default as User } from './user.js';
+export { default as UserNoticeDismissal } from './user-notice-dismissal.js';
 export { default as WikiPage } from './wiki-page.js';

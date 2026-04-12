@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import type { Request, Response } from 'express';
 
 import AuthSession from '../models/auth-session.js';
+import User from '../models/user.js';
 
 const SESSION_COOKIE = 'agpwiki_session';
 const SESSION_DAYS = 30;
@@ -73,6 +74,12 @@ export const resolveSessionUser = async (req: Request) => {
     const tokenHash = hashToken(raw);
     const session = await AuthSession.findActiveByHash(tokenHash);
     if (!session) return null;
+    const user = await User.filterWhere({ id: session.userId }).first();
+    if (!user || user.blockedAt) {
+      session.revokedAt = new Date();
+      await session.save();
+      return null;
+    }
     session.lastUsedAt = new Date();
     await session.save();
     return { userId: session.userId, sessionId: session.id };

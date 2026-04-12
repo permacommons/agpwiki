@@ -2,6 +2,7 @@ import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { hashToken } from '../auth/tokens.js';
 import ApiToken from '../models/api-token.js';
 import OAuthAccessToken from '../models/oauth-access-token.js';
+import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 
 export class AuthError extends Error {
   constructor(message: string) {
@@ -29,6 +30,10 @@ export const verifyAuthToken = async (token: string) => {
   if (!record) {
     throw new AuthError('Invalid or expired MCP token.');
   }
+  const accountState = await getAccountLifecycleState(record.userId);
+  if (!accountState || !userCanUseAgentFeatures(accountState)) {
+    throw new AuthError('Invalid or expired MCP token.');
+  }
   record.lastUsedAt = new Date();
   await record.save();
   return record;
@@ -38,6 +43,10 @@ export const resolveAuthInfoFromToken = async (token: string): Promise<AuthInfo>
   const tokenHash = hashToken(token);
   const oauthRecord = await OAuthAccessToken.findActiveByHash(tokenHash);
   if (oauthRecord) {
+    const accountState = await getAccountLifecycleState(oauthRecord.userId);
+    if (!accountState || !userCanUseAgentFeatures(accountState)) {
+      throw new AuthError('Invalid or expired MCP token.');
+    }
     oauthRecord.lastUsedAt = new Date();
     await oauthRecord.save();
     return {

@@ -18,7 +18,6 @@
     "create-user": "node --import tsx src/scripts/create-user.ts",
     "reset-password": "node --import tsx src/scripts/reset-password.ts",
     "create-token": "node --import tsx src/scripts/create-token.ts",
-    "create-invite": "node --import tsx src/scripts/create-invite.ts",
     "grant-role": "node --import tsx src/scripts/grant-role.ts",
     "revoke-role": "node --import tsx src/scripts/revoke-role.ts",
     "list-roles": "node --import tsx src/scripts/list-roles.ts",

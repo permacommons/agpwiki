@@ -49,6 +49,7 @@ import {
 } from '../services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { normalizeSlugInput } from '../services/validation.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import {
@@ -451,7 +452,7 @@ const withForumPage = (
     renderLayout({
       title,
       labelHtml,
-      topHtml: renderForumPreamble(res.req),
+      topHtml: prependAccountBanner(res, renderForumPreamble(res.req)),
       bodyHtml,
       signedIn: res.locals.signedIn,
       currentUserName: res.locals.currentUserName,
@@ -480,8 +481,28 @@ const getCommentValues = (req: Request, initialBody = ''): ForumComposeBaseValue
 
 const resLocale = (req: Request) => (req.language ?? 'en') as string;
 
-const requireForumSession = async (req: Request) =>
-  requireSignedInUserId((await resolveSessionUser(req))?.userId);
+const canContributeToForum = (res: Response) =>
+  Boolean(
+    (res.locals.accountState as { isEmailVerified?: boolean } | null | undefined)?.isEmailVerified
+  );
+
+const renderForumComposeGate = (req: Request, res: Response) => {
+  if (!res.locals.signedIn) {
+    return `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`;
+  }
+  if (!canContributeToForum(res)) {
+    return `<p class="forum-empty">${req.t('forum.verifyEmailToPost')}</p>`;
+  }
+  return '';
+};
+
+const requireForumSession = async (req: Request, res: Response) => {
+  const userId = requireSignedInUserId((await resolveSessionUser(req))?.userId);
+  if (!canContributeToForum(res)) {
+    throw new ForbiddenError(req.t('forum.verifyEmailToPost'));
+  }
+  return userId;
+};
 
 const getPageLabel = (
   locale: string,
@@ -516,7 +537,7 @@ const renderCategoryPage = async (
       pageCategory: category === 'articles' || category === 'policy' ? category : undefined,
     })}
     ${
-      res.locals.signedIn
+      res.locals.signedIn && canContributeToForum(res)
         ? renderThreadForm({
             t: req.t,
             languageOptions: res.locals.languageOptions,
@@ -528,7 +549,7 @@ const renderCategoryPage = async (
                 ? { mode: 'generic', category }
                 : undefined,
           })
-        : `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`
+        : renderForumComposeGate(req, res)
     }
   </div>`;
 
@@ -567,8 +588,8 @@ const renderPageLinkedCategoryPage = async (
   const threads = await listForumThreads(dalInstance, category, {
     pageSlug: storedSlug,
   });
-  const composeHtml = !res.locals.signedIn
-    ? `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`
+  const composeHtml = !res.locals.signedIn || !canContributeToForum(res)
+    ? renderForumComposeGate(req, res)
     : target
       ? renderThreadForm({
           t: req.t,
@@ -782,7 +803,7 @@ const renderThreadPage = async (
     </div>
     <section class="forum-comments">${commentsHtml}</section>
     ${
-      res.locals.signedIn
+      res.locals.signedIn && canContributeToForum(res)
         ? renderCommentForm({
             t: req.t,
             threadId,
@@ -791,7 +812,7 @@ const renderThreadPage = async (
             previewHtml,
             errorMessage: options.commentErrorMessage,
           })
-        : `<p class="forum-empty">${req.t('forum.signInToPost')}</p>`
+        : renderForumComposeGate(req, res)
     }
   </div>`;
 
@@ -822,7 +843,7 @@ const registerPageLinkedForumRoutes = (
 
   app.post(`/tool/forum/${category}/page/:slug`, async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
       const title = typeof req.body?.title === 'string' ? req.body.title : '';
       const body = typeof req.body?.body === 'string' ? req.body.body : '';
@@ -855,6 +876,12 @@ const registerPageLinkedForumRoutes = (
         return;
       }
       if (error instanceof ForbiddenError) {
+        if (res.locals.signedIn) {
+          await renderPageLinkedCategoryPage(req, res, category, req.params.slug, {
+            threadErrorMessage: error.message,
+          });
+          return;
+        }
         res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
         return;
       }
@@ -942,7 +969,7 @@ export const registerForumRoutes = (app: Express) => {
 
   app.post('/tool/forum/thread/:threadId/comment', async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
       const threadId = req.params.threadId;
       const language = getSelectedLanguage(req, resLocale(req));
@@ -969,6 +996,12 @@ export const registerForumRoutes = (app: Express) => {
         return;
       }
       if (error instanceof ForbiddenError) {
+        if (res.locals.signedIn) {
+          await renderThreadPage(req, res, req.params.threadId, {
+            commentErrorMessage: error.message,
+          });
+          return;
+        }
         res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
         return;
       }
@@ -983,7 +1016,7 @@ export const registerForumRoutes = (app: Express) => {
 
   app.post('/tool/forum/thread/:threadId/pin', async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       const pinned = req.body?.pinned === 'true';
       await setForumThreadPinned(
         await initializePostgreSQL(),
@@ -1013,7 +1046,7 @@ export const registerForumRoutes = (app: Express) => {
 
   app.post('/tool/forum/thread/:threadId/delete', async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       await deleteForumThread(
         await initializePostgreSQL(),
         {
@@ -1039,7 +1072,7 @@ export const registerForumRoutes = (app: Express) => {
 
   app.post('/tool/forum/comment/:commentId/delete', async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       const dalInstance = await initializePostgreSQL();
       const comment = await readForumComment(req.params.commentId);
       await deleteForumComment(
@@ -1081,7 +1114,7 @@ export const registerForumRoutes = (app: Express) => {
 
   app.post('/tool/forum/:category', async (req, res) => {
     try {
-      const userId = await requireForumSession(req);
+      const userId = await requireForumSession(req, res);
       const category = ensureForumCategory(req.params.category) as ForumCategorySlug;
       const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
       const pageSlug = getPageSlugFromRequest(req);
@@ -1114,6 +1147,13 @@ export const registerForumRoutes = (app: Express) => {
         return;
       }
       if (error instanceof ForbiddenError) {
+        if (res.locals.signedIn) {
+          const category = ensureForumCategory(req.params.category) as ForumCategorySlug;
+          await renderCategoryPage(req, res, category, {
+            threadErrorMessage: error.message,
+          });
+          return;
+        }
         res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
         return;
       }

@@ -25,6 +25,7 @@ import {
   listCitationRevisions,
   readCitationRevision,
 } from '../services/citation-service.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -313,7 +314,7 @@ export const registerCitationRoutes = (app: Express) => {
         title: `${claimId} · ${key}`,
         labelHtml,
         bodyHtml,
-        topHtml,
+        topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,
@@ -616,7 +617,7 @@ export const registerCitationRoutes = (app: Express) => {
         title: pageTitle,
         labelHtml,
         bodyHtml,
-        topHtml,
+        topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,

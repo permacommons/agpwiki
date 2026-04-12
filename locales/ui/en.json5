@@ -264,6 +264,7 @@
     "relatedLabel": "Forum",
     "discussThisPage": "Discuss this page",
     "signInToPost": "Sign in to start threads and post replies.",
+    "verifyEmailToPost": "Confirm your email address before starting threads or posting replies.",
     "index": {
       "descriptionHtml": "Select from one of the discussion categories below. The {{articlesCategory}} category is for discussions of individual Agpedia articles. If you're unsure where to post, use the {{generalCategory}} category.",
       "latestPostAt": "Latest post {{date}}",
@@ -424,24 +425,15 @@
     "login": {
       "title": "Log in",
       "action": "Log in",
-      "needInvite": "Don’t have an account yet? <a href=\"/tool/create-account\">Create one.</a>",
-      "errorInvalid": "Invalid email or password."
-    },
-    "signup": {
-      "title": "Sign up",
-      "createAccount": "Create account",
-      "action": "Create account",
-      "continue": "Continue",
-      "errorRequired": "Invite code is required.",
-      "errorInvalidCode": "Invite code is invalid or expired.",
-      "errorInvalidEmail": "Email is invalid.",
-      "errorEmailMismatch": "Invite code is locked to a different email."
+      "createAccount": "Don’t have an account yet? <a href=\"/tool/create-account\">Create one.</a>",
+      "errorInvalid": "Invalid email, username, or password.",
+      "errorBlocked": "This account has been blocked."
     },
     "form": {
+      "identifier": "Email or username",
       "email": "Email",
       "password": "Password",
-      "inviteCode": "Invite code",
-      "displayName": "Display name"
+      "displayName": "Username"
     },
     "tokens": {
       "title": "API tokens",
@@ -471,11 +463,13 @@
       "copyHelp": "Copy this token now. You will not be able to see it again.",
       "errorNotFound": "Token not found for reset.",
       "regenerateTitle": "Regenerate token",
-      "errorLabelConflict": "Another active token already uses this label."
+      "errorLabelConflict": "Another active token already uses this label.",
+      "errorUnavailable": "Your account is not yet enabled for AI agent access."
     }
   },
   "oauth": {
     "error": "OAuth error",
+    "errorAgentAccessRequired": "Your account is not yet enabled for AI agent access.",
     "authorize": {
       "title": "Authorize access",
       "pageTitle": "Authorize",
@@ -491,33 +485,75 @@
       "stateLabel": "State: <code>{{state}}</code>"
     }
   },
-  "accountRequest": {
-    "title": "Create account",
-    "description": "Create an account to contribute to Agpedia.",
+  "account": {
     "form": {
+      "username": "Username",
       "email": "Email",
-      "emailHint": "We'll send you a link to complete your sign-up.",
-      "topics": "Topics of interest",
-      "topicsHint": "What topics would you like to contribute to?",
-      "profileUrl": "Online profile link (optional)",
-      "profileUrlHint": "Share a link to a social profile, personal homepage, or other online presence if you have one."
+      "password": "Password"
     },
-    "submit": "Create account",
-    "success": {
-      "title": "Check your email",
-      "message": "If everything looks good, we'll send you a link to complete your sign-up."
+    "create": {
+      "title": "Create account",
+      "description": "Create an account with a username, email address, and password.",
+      "submit": "Create account",
+      "errorRequired": "Username, email, and password are required.",
+      "errorCaptcha": "Please complete the verification challenge.",
+      "errorEmailTaken": "That email address is already in use.",
+      "errorUsernameTaken": "That username is already in use.",
+      "emailWarning": "We're sorry, but email service is currently unavailable, preventing account confirmation. Please try again at a later time."
+    },
+    "profile": {
+      "title": "Complete your profile",
+      "description": "Creating an account is enough to participate in the discussion forum. If you'd like to set up an AI agent to create or update articles, tell us a little more about yourself.",
+      "interests": "Interests",
+      "interestsHint": "What topics would you like to work on with an AI agent?",
+      "profileUrl": "Profile link",
+      "profileUrlHint": "Share a social profile, homepage, or other online presence we can review.",
+      "submit": "Submit profile",
+      "skip": "Skip for now",
+      "errorRequired": "Both interests and a profile link are required to submit.",
+      "pending": "Your profile has already been submitted and is awaiting review."
+    },
+    "confirm": {
+      "title": "Confirm email",
+      "success": "Your email address has been confirmed.",
+      "error": "This confirmation link is invalid or has expired.",
+      "continue": "Continue"
+    },
+    "banner": {
+      "verifyEmail": "Please confirm your email address before contributing to Agpedia.",
+      "resendEmail": "Resend confirmation email",
+      "completeProfile": "Welcome to Agpedia! You can now participate in our discussion forum. If you'd like to set up an AI agent to create or update articles, please <a href=\"{{completeProfileHref}}\">complete your profile</a>.",
+      "pendingApproval": "Welcome to Agpedia. We'll let you know when your account is fully activated. In the meantime, you can already participate in our discussion forum.",
+      "approved": "You can now configure an AI agent to create or update articles. Please see our <a href=\"{{helpHref}}\">help page</a> to get started.",
+      "rejected": "Your request for agent access has been denied, with the reason below. You can still participate in our forums."
     },
     "review": {
-      "title": "Review account signups",
-      "description": "Pending account signups from potential contributors.",
-      "empty": "No pending requests.",
-      "delete": "Delete",
+      "title": "Review accounts",
+      "description": "New accounts in reverse chronological order. Site admins can review agent-access requests and block spam accounts.",
+      "empty": "No accounts found.",
+      "approve": "Grant agent access",
+      "reject": "Reject",
+      "rejectReason": "Rejection reason",
+      "block": "Block account",
+      "blockReason": "Block reason",
+      "blocked": "Blocked",
+      "verified": "Verified",
+      "unverified": "Unverified",
+      "noAction": "No review action",
       "headers": {
+        "username": "Username",
         "email": "Email",
-        "topics": "Topics",
-        "profileUrl": "Online profile",
-        "submitted": "Submitted",
-        "actions": "Actions"
+        "created": "Created",
+        "emailStatus": "Email status",
+        "agentAccess": "Agent access",
+        "review": "Review",
+        "block": "Block"
+      },
+      "status": {
+        "none": "No profile submitted",
+        "pending": "Pending review",
+        "approved": "Approved",
+        "rejected": "Rejected"
       }
     }
   }

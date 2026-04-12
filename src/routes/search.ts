@@ -4,6 +4,7 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { escapeHtml, renderLayout } from '../render.js';
 import { searchWikiPages } from '../services/wiki-page-service.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 
 export const registerSearchRoutes = (app: Express) => {
   app.get('/search', async (req, res) => {
@@ -35,6 +36,7 @@ export const registerSearchRoutes = (app: Express) => {
     const html = renderLayout({
       title: req.t('search.title'),
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,
