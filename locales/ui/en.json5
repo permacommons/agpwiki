@@ -427,7 +427,8 @@
       "action": "Log in",
       "createAccount": "Don’t have an account yet? <a href=\"/tool/create-account\">Create one.</a>",
       "errorInvalid": "Invalid email, username, or password.",
-      "errorBlocked": "This account has been blocked."
+      "errorBlocked": "This account has been blocked.",
+      "errorRateLimited": "Too many login attempts from this network. Please try again later."
     },
     "form": {
       "identifier": "Email or username",
@@ -499,6 +500,7 @@
       "errorCaptcha": "Please complete the verification challenge.",
       "errorEmailTaken": "That email address is already in use.",
       "errorUsernameTaken": "That username is already in use.",
+      "errorRateLimited": "Too many account creation attempts from this network. Please try again later.",
       "emailWarning": "We're sorry, but email service is currently unavailable, preventing account confirmation. Please try again at a later time."
     },
     "profile": {
@@ -522,6 +524,7 @@
     "banner": {
       "verifyEmail": "Please confirm your email address before contributing to Agpedia.",
       "resendEmail": "Resend confirmation email",
+      "resendRateLimited": "Too many confirmation email requests from this network. Please try again later.",
       "completeProfile": "Welcome to Agpedia! You can now participate in our discussion forum. If you'd like to set up an AI agent to create or update articles, please <a href=\"{{completeProfileHref}}\">complete your profile</a>.",
       "pendingApproval": "Welcome to Agpedia. We'll let you know when your account is fully activated. In the meantime, you can already participate in our discussion forum.",
       "approved": "You can now configure an AI agent to create or update articles. Please see our <a href=\"{{helpHref}}\">help page</a> to get started.",

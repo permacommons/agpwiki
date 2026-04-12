@@ -28,8 +28,9 @@ export const renderAccountBanner = (req: Request, res: Response) => {
   const currentPath =
     typeof res.locals.currentPath === 'string' ? res.locals.currentPath : req.originalUrl || '';
   const currentUrl = new URL(`http://local${currentPath || '/'}`);
-  const emailUnavailable =
-    currentUrl.searchParams.get('email') === 'unavailable';
+  const emailStatus = currentUrl.searchParams.get('email');
+  const emailUnavailable = emailStatus === 'unavailable';
+  const emailRateLimited = emailStatus === 'rate-limited';
   if (currentPath.startsWith('/tool/complete-profile')) {
     return '';
   }
@@ -50,7 +51,9 @@ export const renderAccountBanner = (req: Request, res: Response) => {
     const redirectTo = escapeHtml(currentPath || '/');
     const warningHtml = emailUnavailable
       ? `<div class="form-error">${escapeHtml(req.t('account.create.emailWarning'))}</div>`
-      : '';
+      : emailRateLimited
+        ? `<div class="form-error">${escapeHtml(req.t('account.banner.resendRateLimited'))}</div>`
+        : '';
     return `<div class="dismissable-banner account-banner account-banner-warning">
   <div class="dismissable-banner-body">
     <div class="account-banner-stack">

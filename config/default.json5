@@ -55,4 +55,24 @@
       baseUrl: 'https://api.resend.com',
     },
   },
+  rateLimits: {
+    // Simple in-memory per-IP limits for high-risk form actions.
+    // These counters reset on process restart and are shared by all users
+    // reaching the same app instance.
+    signup: {
+      maxAttempts: 5,
+      // 15 minutes
+      windowMs: 900000,
+    },
+    login: {
+      maxAttempts: 10,
+      // 15 minutes
+      windowMs: 900000,
+    },
+    resendConfirmationEmail: {
+      maxAttempts: 5,
+      // 15 minutes
+      windowMs: 900000,
+    },
+  },
 }

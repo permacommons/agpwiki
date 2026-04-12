@@ -23,4 +23,18 @@
     enabled: false,
     provider: null,
   },
+  rateLimits: {
+    signup: {
+      maxAttempts: 5,
+      windowMs: 900000,
+    },
+    login: {
+      maxAttempts: 10,
+      windowMs: 900000,
+    },
+    resendConfirmationEmail: {
+      maxAttempts: 5,
+      windowMs: 900000,
+    },
+  },
 }

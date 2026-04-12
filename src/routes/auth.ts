@@ -17,6 +17,7 @@ import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 import { verifyEmailConfirmationToken } from '../services/email-verification.js';
+import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
 const renderAuthLayout = (
@@ -128,6 +129,41 @@ export const registerAuthRoutes = (app: Express) => {
     const identifier = String(req.body.identifier ?? '').trim();
     const password = String(req.body.password ?? '');
     const redirectTo = getSafeRedirect(String(req.body.redirect ?? '').trim()) ?? null;
+    const loginRateLimit = consumeRateLimit('login', getRateLimitKey(req, 'login'));
+
+    if (!loginRateLimit.allowed) {
+      const redirectField = redirectTo
+        ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
+        : '';
+      const bodyHtml = `<div class="tool-page">
+  <form method="post" class="form-card">
+    ${renderError(req.t('auth.login.errorRateLimited'))}
+    ${redirectField}
+    <label class="form-field">
+      <span>${req.t('auth.form.identifier')}</span>
+      <input type="text" name="identifier" autocomplete="username" required value="${escapeHtml(
+        identifier
+      )}" />
+    </label>
+    <label class="form-field">
+      <span>${req.t('auth.form.password')}</span>
+      <input type="password" name="password" autocomplete="current-password" required />
+    </label>
+    <div class="form-actions">
+      <button type="submit">${req.t('auth.login.action')}</button>
+    </div>
+  </form>
+</div>`;
+      res
+        .status(429)
+        .set('Retry-After', String(loginRateLimit.retryAfterSeconds))
+        .type('html')
+        .send(
+          renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
+        );
+      return;
+    }
+
     const user = identifier.includes('@')
       ? await User.filterWhere({ email: identifier.toLowerCase() }).first()
       : await (async () => {

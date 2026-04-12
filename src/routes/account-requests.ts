@@ -23,6 +23,7 @@ import {
   createEmailVerificationToken,
   sendEmailVerificationEmail,
 } from '../services/email-verification.js';
+import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
 import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from '../services/roles.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
@@ -30,6 +31,7 @@ const ACCOUNT_REVIEW_PATH = '/tool/review-accounts';
 const DEFAULT_POST_SIGNUP_REDIRECT = '/meta/welcome';
 const EMAIL_STATUS_QUERY_KEY = 'email';
 const EMAIL_STATUS_UNAVAILABLE = 'unavailable';
+const EMAIL_STATUS_RATE_LIMITED = 'rate-limited';
 
 const renderToolLayout = (
   t: TFunction,
@@ -330,6 +332,28 @@ export const registerAccountRequestRoutes = (app: Express) => {
     const password = String(req.body.password ?? '');
     const username = normalizeUsername(displayName);
     const altchaPayload = String(req.body.altcha ?? '');
+    const signupRateLimit = consumeRateLimit('signup', getRateLimitKey(req, 'signup'));
+
+    if (!signupRateLimit.allowed) {
+      res
+        .status(429)
+        .set('Retry-After', String(signupRateLimit.retryAfterSeconds))
+        .type('html')
+        .send(
+          renderToolLayout(
+            req.t,
+            res,
+            req.t('account.create.title'),
+            renderCreateAccountForm(
+              req,
+              { displayName, email },
+              req.t('account.create.errorRateLimited')
+            ),
+            false
+          )
+        );
+      return;
+    }
 
     const altchaValid = await verifyAltchaSolution(altchaPayload);
     if (!altchaValid) {
@@ -509,6 +533,22 @@ export const registerAccountRequestRoutes = (app: Express) => {
   app.post('/tool/resend-confirmation-email', async (req, res) => {
     const user = await requireSignedInUser(req, res);
     if (!user) return;
+
+    const resendRateLimit = consumeRateLimit(
+      'resendConfirmationEmail',
+      getRateLimitKey(req, 'resend-confirmation-email')
+    );
+    if (!resendRateLimit.allowed) {
+      const redirectTo =
+        typeof req.body.redirectTo === 'string' && req.body.redirectTo.startsWith('/')
+          ? req.body.redirectTo
+          : DEFAULT_POST_SIGNUP_REDIRECT;
+      res
+        .status(429)
+        .set('Retry-After', String(resendRateLimit.retryAfterSeconds))
+        .redirect(302, withEmailStatus(redirectTo, EMAIL_STATUS_RATE_LIMITED));
+      return;
+    }
 
     if (!user.emailVerifiedAt) {
       try {
