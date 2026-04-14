@@ -426,6 +426,7 @@
       "title": "Log in",
       "action": "Log in",
       "createAccount": "Don’t have an account yet? <a href=\"/tool/create-account\">Create one.</a>",
+      "emailConfirmed": "Your email address has been confirmed. Please log in to continue.",
       "errorInvalid": "Invalid email, username, or password.",
       "errorBlocked": "This account has been blocked.",
       "errorRateLimited": "Too many login attempts from this network. Please try again later."
@@ -498,7 +499,7 @@
       "submit": "Create account",
       "errorRequired": "Username, email, and password are required.",
       "errorCaptcha": "Please complete the verification challenge.",
-      "errorEmailTaken": "That email address is already in use.",
+      "errorEmailUnavailable": "We couldn't create an account with that email address.",
       "errorUsernameTaken": "That username is already in use.",
       "errorRateLimited": "Too many account creation attempts from this network. Please try again later.",
       "emailWarning": "We're sorry, but email service is currently unavailable, preventing account confirmation. Please try again at a later time."

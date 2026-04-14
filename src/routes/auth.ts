@@ -18,7 +18,7 @@ import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 import { verifyEmailConfirmationToken } from '../services/email-verification.js';
 import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
-import { prependAccountBanner } from './lib/account-banner.js';
+import { prependAccountBanner, renderAccountBanner } from './lib/account-banner.js';
 
 const renderAuthLayout = (
   t: TFunction,
@@ -47,6 +47,7 @@ const TOOL_SIGNUP_PATH = '/tool/signup';
 const TOOL_LOGOUT_PATH = '/tool/logout';
 const TOOL_TOKENS_PATH = '/tool/tokens';
 const DEFAULT_LOGIN_REDIRECT_PATH = '/meta/welcome';
+const EMAIL_CONFIRMED_QUERY_KEY = 'emailConfirmed';
 
 const getSafeRedirect = (value: string | null) => {
   if (!value) return null;
@@ -90,6 +91,7 @@ export const registerAuthRoutes = (app: Express) => {
     const redirectTo = getSafeRedirect(
       typeof req.query.redirect === 'string' ? req.query.redirect : null
     );
+    const emailConfirmed = req.query.emailConfirmed === '1';
     const session = await resolveSessionUser(req);
     if (session) {
       res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
@@ -102,6 +104,7 @@ export const registerAuthRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
+    ${emailConfirmed ? `<div class="form-help">${escapeHtml(req.t('auth.login.emailConfirmed'))}</div>` : ''}
     ${redirectField}
     <label class="form-field">
       <span>${req.t('auth.form.identifier')}</span>
@@ -233,6 +236,18 @@ export const registerAuthRoutes = (app: Express) => {
   app.get('/tool/confirm-email', async (req, res) => {
     const token = typeof req.query.token === 'string' ? req.query.token.trim() : '';
     const user = token ? await verifyEmailConfirmationToken(token) : null;
+    if (user) {
+      const session = await resolveSessionUser(req);
+      if (!session) {
+        res.redirect(302, `${TOOL_LOGIN_PATH}?${EMAIL_CONFIRMED_QUERY_KEY}=1`);
+        return;
+      }
+
+      if (session.userId === user.id) {
+        res.locals.accountState = await getAccountLifecycleState(user.id);
+        res.locals.accountBannerHtml = renderAccountBanner(req, res);
+      }
+    }
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
     <p>${user ? req.t('account.confirm.success') : req.t('account.confirm.error')}</p>

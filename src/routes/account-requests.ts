@@ -393,7 +393,11 @@ export const registerAccountRequestRoutes = (app: Express) => {
           req.t,
           res,
           req.t('account.create.title'),
-          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorEmailTaken')),
+          renderCreateAccountForm(
+            req,
+            { displayName, email },
+            req.t('account.create.errorEmailUnavailable')
+          ),
           false
         )
       );
