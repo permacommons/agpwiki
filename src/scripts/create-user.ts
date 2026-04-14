@@ -2,7 +2,7 @@ import { randomBytes, scryptSync } from 'node:crypto';
 import readline from 'node:readline/promises';
 
 import { initializePostgreSQL } from '../db.js';
-import { normalizeUsername, trimDisplayName } from '../lib/username.js';
+import { isValidUsername, normalizeUsername, trimDisplayName } from '../lib/username.js';
 import User from '../models/user.js';
 
 const prompt = async (label: string, rl: readline.Interface) => {
@@ -30,6 +30,9 @@ const main = async () => {
 
     if (!displayName || !email || !password || !username) {
       throw new Error('Display name, email, and password are required.');
+    }
+    if (!isValidUsername(displayName)) {
+      throw new Error('Usernames may not contain @.');
     }
 
     const dal = await initializePostgreSQL();

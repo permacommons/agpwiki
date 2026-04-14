@@ -5,7 +5,7 @@ import { hashPassword } from '../auth/password.js';
 import { createSession, resolveSessionUser, setSessionCookie } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { createAltchaChallenge, isAltchaEnabled, verifyAltchaSolution } from '../lib/altcha.js';
-import { normalizeUsername, trimDisplayName } from '../lib/username.js';
+import { isValidUsername, normalizeUsername, trimDisplayName } from '../lib/username.js';
 import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import {
@@ -376,6 +376,19 @@ export const registerAccountRequestRoutes = (app: Express) => {
           res,
           req.t('account.create.title'),
           renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorRequired')),
+          false
+        )
+      );
+      return;
+    }
+
+    if (!isValidUsername(displayName)) {
+      res.type('html').send(
+        renderToolLayout(
+          req.t,
+          res,
+          req.t('account.create.title'),
+          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameInvalid')),
           false
         )
       );

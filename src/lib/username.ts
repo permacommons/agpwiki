@@ -6,3 +6,5 @@ export const normalizeUsername = (value: string) =>
     .normalize('NFKC')
     .toLowerCase()
     .replace(/[\s_-]+/g, '');
+
+export const isValidUsername = (value: string) => !normalizeUsername(value).includes('@');
