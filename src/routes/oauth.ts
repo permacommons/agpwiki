@@ -232,7 +232,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
     const accountState = await getAccountLifecycleState(session.userId);
     if (!accountState || !userCanUseAgentFeatures(accountState)) {
-      renderOAuthError(req.t, res, req.t('oauth.errorAgentAccessRequired'), true);
+      renderOAuthError(req.t, res, req.t('common.agentAccessRequired'), true);
       return;
     }
 
@@ -321,7 +321,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
     const accountState = await getAccountLifecycleState(session.userId);
     if (!accountState || !userCanUseAgentFeatures(accountState)) {
-      renderOAuthError(req.t, res, req.t('oauth.errorAgentAccessRequired'), true);
+      renderOAuthError(req.t, res, req.t('common.agentAccessRequired'), true);
       return;
     }
 

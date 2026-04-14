@@ -76,7 +76,7 @@ const requireAgentEnabledUser = async (req: Request, res: Response) => {
         req.t,
         res,
         req.t('auth.tokens.title'),
-        `<div class="tool-page"><div class="form-card"><p>${req.t('auth.tokens.errorUnavailable')}</p></div></div>`,
+        `<div class="tool-page"><div class="form-card"><p>${req.t('common.agentAccessRequired')}</p></div></div>`,
         true
       )
     );

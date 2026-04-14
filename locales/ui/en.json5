@@ -242,6 +242,7 @@
   },
   "common": {
     "dismiss": "Dismiss",
+    "agentAccessRequired": "Your account is not yet enabled for AI agent access.",
     "actions": {
       "cancel": "Cancel",
       "preview": "Preview"
@@ -465,13 +466,11 @@
       "copyHelp": "Copy this token now. You will not be able to see it again.",
       "errorNotFound": "Token not found for reset.",
       "regenerateTitle": "Regenerate token",
-      "errorLabelConflict": "Another active token already uses this label.",
-      "errorUnavailable": "Your account is not yet enabled for AI agent access."
+      "errorLabelConflict": "Another active token already uses that label."
     }
   },
   "oauth": {
     "error": "OAuth error",
-    "errorAgentAccessRequired": "Your account is not yet enabled for AI agent access.",
     "authorize": {
       "title": "Authorize access",
       "pageTitle": "Authorize",
