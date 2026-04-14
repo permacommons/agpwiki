@@ -23,6 +23,7 @@ import { getAccountLifecycleState } from './services/account-lifecycle.js';
 import { getStaticCacheControl } from './static-cache.js';
 
 const app = express();
+app.set('trust proxy', config.get<boolean | string | number | string[]>('server.trustProxy'));
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));

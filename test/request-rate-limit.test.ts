@@ -35,12 +35,12 @@ test('consumeRateLimit resets after the configured window elapses', () => {
   assert.equal(consumeRateLimit('signup', key, start + 15 * 60 * 1000).allowed, true);
 });
 
-test('getRateLimitKey prefers the first forwarded IP address', () => {
+test('getRateLimitKey uses req.ip when available', () => {
   const req = {
     headers: { 'x-forwarded-for': '198.51.100.10, 203.0.113.77' },
-    ip: '127.0.0.1',
+    ip: '203.0.113.77',
     socket: { remoteAddress: '127.0.0.1' },
   };
 
-  assert.equal(getRateLimitKey(req as never, 'signup'), 'signup:198.51.100.10');
+  assert.equal(getRateLimitKey(req as never, 'signup'), 'signup:203.0.113.77');
 });

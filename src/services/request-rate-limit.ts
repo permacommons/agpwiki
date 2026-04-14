@@ -57,16 +57,6 @@ export const getRateLimitConfig = (): RateLimitConfig => {
 };
 
 const getClientIp = (req: Request) => {
-  const forwardedFor = req.headers['x-forwarded-for'];
-  if (typeof forwardedFor === 'string') {
-    const firstIp = forwardedFor.split(',')[0]?.trim();
-    if (firstIp) return firstIp;
-  }
-
-  if (Array.isArray(forwardedFor) && forwardedFor[0]) {
-    return forwardedFor[0];
-  }
-
   return req.ip || req.socket.remoteAddress || 'unknown';
 };
 

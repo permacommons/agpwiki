@@ -1,6 +1,10 @@
 {
   server: {
     port: 3000,
+    // Leave false when the app is reached directly in development.
+    // Set this to a trusted proxy setting, such as 'loopback' or a proxy
+    // subnet, when running behind nginx so Express can derive req.ip safely.
+    trustProxy: false,
   },
   site: {
     baseUrl: 'http://127.0.0.1:3000',
