@@ -13,14 +13,17 @@ import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
 import { registerForumRoutes } from './routes/forum.js';
+import { renderAccountBanner } from './routes/lib/account-banner.js';
 import { registerLocaleRoutes } from './routes/locale.js';
 import { registerOAuthRoutes } from './routes/oauth.js';
 import { registerPageRoutes } from './routes/pages.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerToolRoutes } from './routes/tools.js';
+import { getAccountLifecycleState } from './services/account-lifecycle.js';
 import { getStaticCacheControl } from './static-cache.js';
 
 const app = express();
+app.set('trust proxy', config.get<boolean | string | number | string[]>('server.trustProxy'));
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -45,13 +48,20 @@ app.use((req, res, next) => {
 app.use(async (req, res, next) => {
   const session = await resolveSessionUser(req);
   res.locals.signedIn = Boolean(session);
+  res.locals.currentUserId = null;
   res.locals.currentUserName = null;
   res.locals.currentPath = req.originalUrl || '/';
+  res.locals.accountState = null;
+  res.locals.accountBannerHtml = '';
 
   if (session) {
     const user = await User.filterWhere({ id: session.userId }).first();
+    res.locals.currentUserId = session.userId;
     res.locals.currentUserName = user?.displayName ?? null;
+    res.locals.accountState = await getAccountLifecycleState(session.userId);
   }
+
+  res.locals.accountBannerHtml = renderAccountBanner(req, res);
 
   next();
 });

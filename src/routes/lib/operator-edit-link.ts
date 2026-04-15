@@ -29,6 +29,6 @@ export const renderOperatorEditRelatedLink = ({
 
   return t('operatorEdit.signedOut', {
     loginLink: `<a href="${escapeHtml(loginHref)}">${escapeHtml(t('auth.login.action'))}</a>`,
-    signupLink: `<a href="${escapeHtml(signupHref)}">${escapeHtml(t('accountRequest.title'))}</a>`,
+    signupLink: `<a href="${escapeHtml(signupHref)}">${escapeHtml(t('account.create.title'))}</a>`,
   });
 };

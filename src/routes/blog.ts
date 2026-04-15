@@ -20,6 +20,7 @@ import {
   readBlogPost,
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -104,6 +105,7 @@ export const registerBlogRoutes = (app: Express) => {
         title: req.t('page.blog'),
         labelHtml,
         bodyHtml,
+        topHtml: prependAccountBanner(res),
         signedIn,
         currentUserName: res.locals.currentUserName,
         currentPath: res.locals.currentPath,
@@ -300,7 +302,7 @@ export const registerBlogRoutes = (app: Express) => {
         title,
         labelHtml,
         bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
-        topHtml,
+        topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,

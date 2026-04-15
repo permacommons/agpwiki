@@ -26,6 +26,7 @@ test.after(async () => {
 const createTestUser = async () => {
   const email = `mcp-test-${Date.now()}@example.com`;
   return User.create({
+    username: `mcptest${Date.now()}`,
     displayName: 'MCP Test',
     email,
     passwordHash: randomBytes(32).toString('hex'),

@@ -8,6 +8,7 @@ import express from 'express';
 import { generateOAuthAccessToken, generateOAuthRefreshToken, getTokenMetadata } from '../src/auth/oauth.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthInfoFromToken } from '../src/mcp/auth.js';
+import AgentAccessRequest from '../src/models/agent-access-request.js';
 import OAuthAccessToken from '../src/models/oauth-access-token.js';
 import OAuthClient from '../src/models/oauth-client.js';
 import OAuthRefreshToken from '../src/models/oauth-refresh-token.js';
@@ -76,12 +77,25 @@ test('OAuth access token resolves to MCP auth info', async () => {
 
   try {
     const user = await User.create({
+      username: `oauthtest${Date.now()}`,
       displayName: 'OAuth Test',
       email: `oauth-test-${Date.now()}@example.com`,
       passwordHash: randomBytes(32).toString('hex'),
       createdAt: new Date(),
+      emailVerifiedAt: new Date(),
     });
     userId = user.id;
+
+    await AgentAccessRequest.create({
+      userId: user.id,
+      interests: 'OAuth testing',
+      profileUrl: 'https://example.com/profile',
+      status: 'approved',
+      createdAt: new Date(),
+      submittedAt: new Date(),
+      reviewedAt: new Date(),
+      approvedAt: new Date(),
+    });
 
     await OAuthClient.create({
       clientId,
@@ -125,6 +139,7 @@ test('refresh token rotation: new tokens issued before old token is consumed', a
 
   try {
     const user = await User.create({
+      username: `refreshtest${Date.now()}`,
       displayName: 'Refresh Test',
       email: `refresh-test-${Date.now()}@example.com`,
       passwordHash: randomBytes(32).toString('hex'),

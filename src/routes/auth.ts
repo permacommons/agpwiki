@@ -1,7 +1,7 @@
 import type { Express, Request, Response } from 'express';
 import type { TFunction } from 'i18next';
 
-import { hashPassword, verifyPassword } from '../auth/password.js';
+import { verifyPassword } from '../auth/password.js';
 import {
   clearSessionCookie,
   createSession,
@@ -11,12 +11,14 @@ import {
   setSessionCookie,
 } from '../auth/session.js';
 import { generateApiToken, hashToken } from '../auth/tokens.js';
-import { initializePostgreSQL } from '../db.js';
+import { normalizeUsername } from '../lib/username.js';
 import ApiToken from '../models/api-token.js';
-import SignupInvite from '../models/signup-invite.js';
 import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
-import { grantRoleUpsert, isValidRole } from '../services/roles.js';
+import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
+import { verifyEmailConfirmationToken } from '../services/email-verification.js';
+import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
+import { prependAccountBanner, renderAccountBanner } from './lib/account-banner.js';
 
 const renderAuthLayout = (
   t: TFunction,
@@ -29,6 +31,7 @@ const renderAuthLayout = (
     title,
     labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
     bodyHtml,
+    topHtml: prependAccountBanner(res),
     signedIn,
     currentUserName: res.locals.currentUserName,
     currentPath: res.locals.currentPath,
@@ -44,6 +47,7 @@ const TOOL_SIGNUP_PATH = '/tool/signup';
 const TOOL_LOGOUT_PATH = '/tool/logout';
 const TOOL_TOKENS_PATH = '/tool/tokens';
 const DEFAULT_LOGIN_REDIRECT_PATH = '/meta/welcome';
+const EMAIL_CONFIRMED_QUERY_KEY = 'emailConfirmed';
 
 const getSafeRedirect = (value: string | null) => {
   if (!value) return null;
@@ -61,13 +65,33 @@ const requireAuthUser = async (req: Request, res: Response) => {
   return session.userId;
 };
 
-const isValidEmail = (value: string) => Boolean(value?.includes('@') && value.includes('.'));
+const requireAgentEnabledUser = async (req: Request, res: Response) => {
+  const userId = await requireAuthUser(req, res);
+  if (!userId) return null;
+
+  const accountState = await getAccountLifecycleState(userId);
+  if (!accountState || !userCanUseAgentFeatures(accountState)) {
+    res.status(403).type('html').send(
+      renderAuthLayout(
+        req.t,
+        res,
+        req.t('auth.tokens.title'),
+        `<div class="tool-page"><div class="form-card"><p>${req.t('common.agentAccessRequired')}</p></div></div>`,
+        true
+      )
+    );
+    return null;
+  }
+
+  return userId;
+};
 
 export const registerAuthRoutes = (app: Express) => {
   app.get(TOOL_LOGIN_PATH, async (req, res) => {
     const redirectTo = getSafeRedirect(
       typeof req.query.redirect === 'string' ? req.query.redirect : null
     );
+    const emailConfirmed = req.query.emailConfirmed === '1';
     const session = await resolveSessionUser(req);
     if (session) {
       res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
@@ -80,10 +104,11 @@ export const registerAuthRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
+    ${emailConfirmed ? `<div class="form-help">${escapeHtml(req.t('auth.login.emailConfirmed'))}</div>` : ''}
     ${redirectField}
     <label class="form-field">
-      <span>${req.t('auth.form.email')}</span>
-      <input type="email" name="email" autocomplete="email" required />
+      <span>${req.t('auth.form.identifier')}</span>
+      <input type="text" name="identifier" autocomplete="username" required />
     </label>
     <label class="form-field">
       <span>${req.t('auth.form.password')}</span>
@@ -92,7 +117,7 @@ export const registerAuthRoutes = (app: Express) => {
     <div class="form-actions">
       <button type="submit">${req.t('auth.login.action')}</button>
     </div>
-    <p class="form-help">${req.t('auth.login.needInvite')}</p>
+    <p class="form-help">${req.t('auth.login.createAccount')}</p>
   </form>
 </div>`;
 
@@ -104,25 +129,65 @@ export const registerAuthRoutes = (app: Express) => {
   });
 
   const handleLogin = async (req: Request, res: Response) => {
-    const email = String(req.body.email ?? '').trim().toLowerCase();
+    const identifier = String(req.body.identifier ?? '').trim();
     const password = String(req.body.password ?? '');
     const redirectTo = getSafeRedirect(String(req.body.redirect ?? '').trim()) ?? null;
+    const loginRateLimit = consumeRateLimit('login', getRateLimitKey(req, 'login'));
 
-    const user = email ? await User.filterWhere({ email }).first() : null;
-    const valid = user ? await verifyPassword(password, user.passwordHash) : false;
-
-    if (!user || !valid) {
+    if (!loginRateLimit.allowed) {
       const redirectField = redirectTo
         ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
         : '';
       const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
-    ${renderError(req.t('auth.login.errorInvalid'))}
+    ${renderError(req.t('auth.login.errorRateLimited'))}
     ${redirectField}
     <label class="form-field">
-      <span>${req.t('auth.form.email')}</span>
-      <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
-        email
+      <span>${req.t('auth.form.identifier')}</span>
+      <input type="text" name="identifier" autocomplete="username" required value="${escapeHtml(
+        identifier
+      )}" />
+    </label>
+    <label class="form-field">
+      <span>${req.t('auth.form.password')}</span>
+      <input type="password" name="password" autocomplete="current-password" required />
+    </label>
+    <div class="form-actions">
+      <button type="submit">${req.t('auth.login.action')}</button>
+    </div>
+  </form>
+</div>`;
+      res
+        .status(429)
+        .set('Retry-After', String(loginRateLimit.retryAfterSeconds))
+        .type('html')
+        .send(
+          renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
+        );
+      return;
+    }
+
+    const user = identifier.includes('@')
+      ? await User.filterWhere({ email: identifier.toLowerCase() }).first()
+      : await (async () => {
+          const username = normalizeUsername(identifier);
+          return username ? User.filterWhere({ username }).first() : null;
+        })();
+    const valid = user ? await verifyPassword(password, user.passwordHash) : false;
+
+    if (!user || !valid || user.blockedAt) {
+      const redirectField = redirectTo
+        ? `<input type="hidden" name="redirect" value="${escapeHtml(redirectTo)}" />`
+        : '';
+      const errorKey = user?.blockedAt ? 'auth.login.errorBlocked' : 'auth.login.errorInvalid';
+      const bodyHtml = `<div class="tool-page">
+  <form method="post" class="form-card">
+    ${renderError(req.t(errorKey))}
+    ${redirectField}
+    <label class="form-field">
+      <span>${req.t('auth.form.identifier')}</span>
+      <input type="text" name="identifier" autocomplete="username" required value="${escapeHtml(
+        identifier
       )}" />
     </label>
     <label class="form-field">
@@ -160,292 +225,42 @@ export const registerAuthRoutes = (app: Express) => {
 
   app.post(TOOL_LOGOUT_PATH, handleLogout);
 
-  app.get(TOOL_SIGNUP_PATH, async (req, res) => {
-    const codeParam = typeof req.query.code === 'string' ? req.query.code.trim() : '';
-    if (codeParam) {
-      await initializePostgreSQL();
-      const inviteHash = hashToken(codeParam);
-      const invite = await SignupInvite.findActiveByHash(inviteHash);
-      if (!invite) {
-        const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    ${renderError(req.t('auth.signup.errorInvalidCode'))}
-    <label class="form-field">
-      <span>${req.t('auth.form.inviteCode')}</span>
-      <input type="text" name="code" autocomplete="one-time-code" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.continue')}</button>
-    </div>
-  </form>
-</div>`;
-        res
-          .type('html')
-          .send(
-            renderAuthLayout(
-              req.t,
-              res,
-              req.t('auth.signup.title'),
-              bodyHtml,
-              false
-            )
-          );
+  app.get(TOOL_SIGNUP_PATH, async (_req, res) => {
+    res.redirect(302, '/tool/create-account');
+  });
+
+  app.post(TOOL_SIGNUP_PATH, async (_req, res) => {
+    res.redirect(307, '/tool/create-account');
+  });
+
+  app.get('/tool/confirm-email', async (req, res) => {
+    const token = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+    const user = token ? await verifyEmailConfirmationToken(token) : null;
+    if (user) {
+      const session = await resolveSessionUser(req);
+      if (!session) {
+        res.redirect(302, `${TOOL_LOGIN_PATH}?${EMAIL_CONFIRMED_QUERY_KEY}=1`);
         return;
       }
 
-      const lockEmail = Boolean(invite.email);
-      const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    <input type="hidden" name="code" value="${escapeHtml(codeParam)}" />
-    <label class="form-field">
-      <span>${req.t('auth.form.displayName')}</span>
-      <input type="text" name="displayName" required />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.email')}</span>
-      <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
-        invite.email ?? ''
-      )}" ${lockEmail ? 'readonly' : ''} />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.password')}</span>
-      <input type="password" name="password" autocomplete="new-password" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.action')}</button>
-    </div>
-  </form>
-</div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.signup.createAccount'),
-            bodyHtml,
-            false
-          )
-        );
-      return;
+      if (session.userId === user.id) {
+        res.locals.accountState = await getAccountLifecycleState(user.id);
+        res.locals.accountBannerHtml = renderAccountBanner(req, res);
+      }
     }
-
     const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    <label class="form-field">
-      <span>${req.t('auth.form.inviteCode')}</span>
-      <input type="text" name="code" autocomplete="one-time-code" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.continue')}</button>
-    </div>
-  </form>
+  <div class="form-card">
+    <p>${user ? req.t('account.confirm.success') : req.t('account.confirm.error')}</p>
+    <p><a href="${escapeHtml(DEFAULT_LOGIN_REDIRECT_PATH)}">${req.t('account.confirm.continue')}</a></p>
+  </div>
 </div>`;
-
     res
       .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.signup.title'),
-          bodyHtml,
-          false
-        )
-      );
+      .send(renderAuthLayout(req.t, res, req.t('account.confirm.title'), bodyHtml, Boolean(user)));
   });
 
-  const handleSignup = async (req: Request, res: Response) => {
-    const code = String(req.body.code ?? '').trim();
-    const displayName = String(req.body.displayName ?? '').trim();
-    const email = String(req.body.email ?? '').trim().toLowerCase();
-    const password = String(req.body.password ?? '');
-
-    if (!code) {
-      const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    ${renderError(req.t('auth.signup.errorRequired'))}
-    <label class="form-field">
-      <span>${req.t('auth.form.inviteCode')}</span>
-      <input type="text" name="code" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.continue')}</button>
-    </div>
-  </form>
-</div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.signup.title'),
-            bodyHtml,
-            false
-          )
-        );
-      return;
-    }
-
-    const dalInstance = await initializePostgreSQL();
-    const inviteHash = hashToken(code);
-    const invite = await SignupInvite.findActiveByHash(inviteHash);
-    if (!invite) {
-      const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    ${renderError(req.t('auth.signup.errorInvalidCode'))}
-    <label class="form-field">
-      <span>${req.t('auth.form.inviteCode')}</span>
-      <input type="text" name="code" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.continue')}</button>
-    </div>
-  </form>
-</div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.signup.title'),
-            bodyHtml,
-            false
-          )
-        );
-      return;
-    }
-
-    if (!displayName || !email || !password) {
-      const lockEmail = Boolean(invite.email);
-      const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    <input type="hidden" name="code" value="${escapeHtml(code)}" />
-    <label class="form-field">
-      <span>${req.t('auth.form.displayName')}</span>
-      <input type="text" name="displayName" required />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.email')}</span>
-      <input type="email" name="email" autocomplete="email" required value="${escapeHtml(
-        invite.email ?? ''
-      )}" ${lockEmail ? 'readonly' : ''} />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.password')}</span>
-      <input type="password" name="password" autocomplete="new-password" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.action')}</button>
-    </div>
-  </form>
-</div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.signup.createAccount'),
-            bodyHtml,
-            false
-          )
-        );
-      return;
-    }
-
-    if (!isValidEmail(email)) {
-      res.type('html').send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.signup.createAccount'),
-          renderError(req.t('auth.signup.errorInvalidEmail')),
-          false
-        )
-      );
-      return;
-    }
-
-    if (invite.email && invite.email.toLowerCase() !== email.toLowerCase()) {
-      res.type('html').send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.signup.createAccount'),
-          renderError(req.t('auth.signup.errorEmailMismatch')),
-          false
-        )
-      );
-      return;
-    }
-
-    try {
-      const passwordHash = await hashPassword(password);
-      const user = await User.create({
-        displayName,
-        email,
-        passwordHash,
-        createdAt: new Date(),
-      });
-
-      invite.usedAt = new Date();
-      invite.usedBy = user.id;
-      await invite.save();
-
-      if (invite.role) {
-        if (!isValidRole(invite.role)) {
-          throw new Error(`Invite contains unsupported role: ${invite.role}`);
-        }
-        await grantRoleUpsert(dalInstance, user.id, invite.role);
-      }
-
-      const session = await createSession(user.id);
-      setSessionCookie(res, session.token, session.expiresAt);
-      res.redirect(302, TOOL_TOKENS_PATH);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      const bodyHtml = `<div class="tool-page">
-  <form method="post" class="form-card">
-    ${renderError(message)}
-    <input type="hidden" name="code" value="${escapeHtml(code)}" />
-    <label class="form-field">
-      <span>${req.t('auth.form.displayName')}</span>
-      <input type="text" name="displayName" required value="${escapeHtml(displayName)}" />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.email')}</span>
-      <input type="email" name="email" required value="${escapeHtml(email)}" />
-    </label>
-    <label class="form-field">
-      <span>${req.t('auth.form.password')}</span>
-      <input type="password" name="password" autocomplete="new-password" required />
-    </label>
-    <div class="form-actions">
-      <button type="submit">${req.t('auth.signup.action')}</button>
-    </div>
-  </form>
-</div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.signup.createAccount'),
-            bodyHtml,
-            false
-          )
-        );
-    }
-  };
-
-  app.post(TOOL_SIGNUP_PATH, handleSignup);
-
   app.get(TOOL_TOKENS_PATH, async (req, res) => {
-    const userId = await requireAuthUser(req, res);
+    const userId = await requireAgentEnabledUser(req, res);
     if (!userId) return;
 
     const showRevoked = typeof req.query.show === 'string' && req.query.show === 'revoked';
@@ -534,7 +349,7 @@ export const registerAuthRoutes = (app: Express) => {
   });
 
   const handleCreateToken = async (req: Request, res: Response) => {
-    const userId = await requireAuthUser(req, res);
+    const userId = await requireAgentEnabledUser(req, res);
     if (!userId) return;
 
     const labelInput = String(req.body.label ?? '').trim();
@@ -604,7 +419,7 @@ export const registerAuthRoutes = (app: Express) => {
   app.post(`${TOOL_TOKENS_PATH}/create`, handleCreateToken);
 
   const handleRevokeToken = async (req: Request, res: Response) => {
-    const userId = await requireAuthUser(req, res);
+    const userId = await requireAgentEnabledUser(req, res);
     if (!userId) return;
     const tokenId = String(req.body.tokenId ?? '').trim();
     if (!tokenId) {
@@ -624,7 +439,7 @@ export const registerAuthRoutes = (app: Express) => {
   app.post(`${TOOL_TOKENS_PATH}/revoke`, handleRevokeToken);
 
   const handleResetToken = async (req: Request, res: Response) => {
-    const userId = await requireAuthUser(req, res);
+    const userId = await requireAgentEnabledUser(req, res);
     if (!userId) return;
     const tokenId = String(req.body.tokenId ?? '').trim();
     if (!tokenId) {

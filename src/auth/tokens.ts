@@ -6,3 +6,6 @@ export const hashToken = (token: string) =>
 export const generateApiToken = () => `agp_${crypto.randomBytes(24).toString('hex')}`;
 
 export const generateInviteCode = () => `agp_inv_${crypto.randomBytes(18).toString('hex')}`;
+
+export const generateEmailVerificationToken = () =>
+  `agp_evt_${crypto.randomBytes(24).toString('hex')}`;

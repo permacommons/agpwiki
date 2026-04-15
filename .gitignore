@@ -8,3 +8,4 @@ CLAUDE.md
 .gemini/
 .browser-data/
 public/downloads/dumps/
+config/development.json5

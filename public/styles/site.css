@@ -1044,6 +1044,24 @@ button {
 .forum-preamble-body {
   flex: 1;
 }
+.account-banner-copy {
+  display: grid;
+  gap: 0.75rem;
+}
+.account-banner-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+.account-banner-copy .form-error,
+.account-banner-copy .form-hint {
+  margin: 0;
+}
+.account-banner-stack .dismissable-banner-form {
+  margin: 0;
+}
+.account-banner-stack .dismissable-banner-form button {
+  align-self: start;
+}
 .dismissable-banner-form button {
   padding: 0.55rem 1.2rem;
   border: 1px solid var(--accent);

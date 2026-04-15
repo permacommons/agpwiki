@@ -65,6 +65,7 @@ test.after(async () => {
 const createTestUser = async () => {
   const email = `service-test-${Date.now()}@example.com`;
   const user = await User.create({
+    username: `servicetest${Date.now()}`,
     displayName: 'Service Test',
     email,
     passwordHash: randomBytes(32).toString('hex'),

@@ -23,6 +23,7 @@ import {
   renderText,
   type SafeText,
 } from '../render.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 
@@ -190,6 +191,7 @@ export const registerToolRoutes = (app: Express) => {
       title: req.t('page.recentChanges'),
       labelHtml,
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,
@@ -250,6 +252,7 @@ export const registerToolRoutes = (app: Express) => {
       title: req.t('page.recentCitations'),
       labelHtml,
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,
@@ -319,6 +322,7 @@ export const registerToolRoutes = (app: Express) => {
       title: req.t('page.recentClaims'),
       labelHtml,
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,
@@ -389,6 +393,7 @@ export const registerToolRoutes = (app: Express) => {
       title: req.t('page.recentChecks'),
       labelHtml,
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,
@@ -454,6 +459,7 @@ export const registerToolRoutes = (app: Express) => {
       title: req.t('page.pages'),
       labelHtml,
       bodyHtml,
+      topHtml: prependAccountBanner(res),
       signedIn,
       currentUserName: res.locals.currentUserName,
       currentPath: res.locals.currentPath,

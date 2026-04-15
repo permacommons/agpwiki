@@ -8,7 +8,7 @@ const t = (key: string, options?: Record<string, unknown>) => {
     'operatorEdit.link': 'Operator edit',
     'operatorEdit.signedOut': '{{loginLink}} or {{signupLink}} to edit',
     'auth.login.action': 'Log in',
-    'accountRequest.title': 'Create account',
+    'account.create.title': 'Create account',
   };
 
   let value = translations[key] ?? key;

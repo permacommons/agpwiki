@@ -1,0 +1,82 @@
+{
+  server: {
+    port: 3000,
+    // Leave false when the app is reached directly in development.
+    // Set this to a trusted proxy setting, such as 'loopback' or a proxy
+    // subnet, when running behind nginx so Express can derive req.ip safely.
+    trustProxy: false,
+  },
+  site: {
+    baseUrl: 'http://127.0.0.1:3000',
+  },
+  postgres: {
+    host: 'localhost',
+    port: 5432,
+    database: 'agpwiki',
+    user: 'agpwiki_user',
+    password: 'agpwiki_password',
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+  },
+  mcp: {
+    host: '127.0.0.1',
+    port: 3333,
+  },
+  oauth: {
+    authorizationCodeTtlSeconds: 600,
+    accessTokenTtlSeconds: 28800,
+    refreshTokenTtlSeconds: 1209600,
+    allowDynamicClientRegistration: true,
+    defaultScopes: ['mcp.read', 'mcp.write'],
+  },
+  altcha: {
+    hmacKey: 'change-this-in-production',
+    enabled: true,
+  },
+  wikiLinkPreviews: {
+    previewTokenSecret: 'change-this-in-production',
+    previewTokenTtlSeconds: 86400,
+  },
+  email: {
+    // Set to true only after configuring a provider and sender address.
+    enabled: false,
+
+    // Supported values:
+    // - 'resend'
+    // Leave null while email is disabled.
+    provider: null,
+
+    // Displayed in the From header as: "fromName <fromEmail>".
+    fromEmail: '',
+    fromName: 'Agpedia',
+
+    resend: {
+      // Resend API key, usually starting with "re_".
+      apiKey: '',
+
+      // Override only if you need a non-default Resend API base URL.
+      baseUrl: 'https://api.resend.com',
+    },
+  },
+  rateLimits: {
+    // Simple in-memory per-IP limits for high-risk form actions.
+    // These counters reset on process restart and are shared by all users
+    // reaching the same app instance.
+    signup: {
+      maxAttempts: 5,
+      // 15 minutes
+      windowMs: 900000,
+    },
+    login: {
+      maxAttempts: 10,
+      // 15 minutes
+      windowMs: 900000,
+    },
+    resendConfirmationEmail: {
+      maxAttempts: 5,
+      // 15 minutes
+      windowMs: 900000,
+    },
+  },
+}

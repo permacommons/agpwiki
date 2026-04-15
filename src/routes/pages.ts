@@ -50,6 +50,7 @@ import {
   readWikiPageRevision,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
+import { prependAccountBanner } from './lib/account-banner.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -261,7 +262,7 @@ const renderOperatorEditPage = async ({
     currentPath: res.locals.currentPath,
     locale: res.locals.locale,
     languageOptions: res.locals.languageOptions,
-    topHtml: bannerHtml,
+    topHtml: prependAccountBanner(res, bannerHtml),
   });
 
   res.type('html').send(html);
@@ -472,6 +473,7 @@ export const registerPageRoutes = (app: Express) => {
         title,
         labelHtml,
         bodyHtml: `${bodyHtml}${languageRow}`,
+        topHtml: prependAccountBanner(res),
         sidebarHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,
@@ -761,7 +763,8 @@ export const registerPageRoutes = (app: Express) => {
       const html = renderLayout({
         title,
         labelHtml,
-        bodyHtml: `${topHtml}${bodyHtml}${languageRow}`,
+        bodyHtml: `${bodyHtml}${languageRow}`,
+        topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,
@@ -1192,7 +1195,7 @@ export const registerPageRoutes = (app: Express) => {
         title,
         labelHtml: metaLabel,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}${forumLinkHtml}`,
-        topHtml,
+        topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         signedIn,
         currentUserName: res.locals.currentUserName,
