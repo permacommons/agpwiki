@@ -25,13 +25,7 @@ Once I've signed off on your proposed citations:
 - Use CSL JSON format for the citation data
 - Use meaningful citation keys (e.g., "smith2020quantum" not "ref1")
 
-## Step 5: Final review checkpoint
-After creating the citations, check in with me to confirm we're ready to create the article.
-
-## Step 6: Create the article
-Once approved:
+## Step 5: Create the article
 - Use the wiki_createPage tool to create the article
 - Use `[@citation-key]` syntax for inline citations, optionally with `:claim-id`
 - The bibliography will be auto-generated from your citations
-
-Please begin with Step 1.
