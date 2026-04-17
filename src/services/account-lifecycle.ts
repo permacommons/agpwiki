@@ -63,8 +63,10 @@ export const revokeAllUserAccess = async (dal: DataAccessLayer, userId: string) 
       'UPDATE oauth_refresh_tokens SET revoked_at = $2 WHERE user_id = $1 AND revoked_at IS NULL',
       [userId, revokedAt]
     ),
+    // Authorization codes are short-lived single-use tokens; mark them consumed
+    // here to revoke outstanding codes without adding a separate revocation path.
     dal.query(
-      'UPDATE oauth_authorization_codes SET revoked_at = $2 WHERE user_id = $1 AND revoked_at IS NULL',
+      'UPDATE oauth_authorization_codes SET consumed_at = $2 WHERE user_id = $1 AND consumed_at IS NULL',
       [userId, revokedAt]
     ),
   ]);
