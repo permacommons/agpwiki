@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express';
-import type { TFunction } from 'i18next';
 
 import { hashPassword } from '../auth/password.js';
 import { createSession, resolveSessionUser, setSessionCookie } from '../auth/session.js';
@@ -7,7 +6,7 @@ import { initializePostgreSQL } from '../db.js';
 import { createAltchaChallenge, isAltchaEnabled, verifyAltchaSolution } from '../lib/altcha.js';
 import { isValidUsername, normalizeUsername, trimDisplayName } from '../lib/username.js';
 import User from '../models/user.js';
-import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import { escapeHtml, formatDateUTC, prepareTitle } from '../render.js';
 import {
   AGENT_ACCESS_GRANTED_NOTICE,
   AGENT_ACCESS_REJECTED_NOTICE,
@@ -34,24 +33,14 @@ const EMAIL_STATUS_QUERY_KEY = 'email';
 const EMAIL_STATUS_UNAVAILABLE = 'unavailable';
 const EMAIL_STATUS_RATE_LIMITED = 'rate-limited';
 
-const renderToolLayout = (
-  t: TFunction,
-  res: Response,
-  title: string,
-  bodyHtml: string,
-  signedIn = false
-) =>
-  renderLayout({
-    title,
-    labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
+const renderToolLayout = (res: Response, title: string, bodyHtml: string) => {
+  res.render('layout', {
+    title: prepareTitle(title),
+    labelHtml: `<div class="page-label">${res.req.t('label.tool')}</div>`,
     bodyHtml,
     topHtml: prependAccountBanner(res),
-    signedIn,
-    currentUserName: res.locals.currentUserName,
-    currentPath: res.locals.currentPath,
-    locale: res.locals.locale,
-    languageOptions: res.locals.languageOptions,
   });
+};
 
 const renderError = (message: string) =>
   `<div class="form-error">${escapeHtml(message)}</div>`;
@@ -169,14 +158,11 @@ const requireSiteAdmin = async (req: Request, res: Response) => {
   const dalInstance = await initializePostgreSQL();
   const roles = await getUserRoles(dalInstance, session.userId);
   if (!hasRole(roles, SITE_ADMIN_ROLE)) {
-    res.status(403).type('html').send(
-      renderToolLayout(
-        req.t,
-        res,
-        req.t('page.forbidden'),
-        `<div class="tool-page"><p>${req.t('page.accessDenied')}</p></div>`,
-        true
-      )
+    res.status(403);
+    renderToolLayout(
+      res,
+      req.t('page.forbidden'),
+      `<div class="tool-page"><p>${req.t('page.accessDenied')}</p></div>`
     );
     return null;
   }
@@ -297,9 +283,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
   </div>
 </div>`;
 
-  res
-    .type('html')
-    .send(renderToolLayout(req.t, res, req.t('account.review.title'), bodyHtml, true));
+  renderToolLayout(res, req.t('account.review.title'), bodyHtml);
 };
 
 export const registerAccountRequestRoutes = (app: Express) => {
@@ -319,17 +303,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
       return;
     }
 
-    res
-      .type('html')
-      .send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(req),
-          false
-        )
-      );
+    renderToolLayout(res, req.t('account.create.title'), renderCreateAccountForm(req));
   });
 
   app.post('/tool/request-account', async (_req, res) => {
@@ -345,62 +319,39 @@ export const registerAccountRequestRoutes = (app: Express) => {
     const signupRateLimit = consumeRateLimit('signup', getRateLimitKey(req, 'signup'));
 
     if (!signupRateLimit.allowed) {
-      res
-        .status(429)
-        .set('Retry-After', String(signupRateLimit.retryAfterSeconds))
-        .type('html')
-        .send(
-          renderToolLayout(
-            req.t,
-            res,
-            req.t('account.create.title'),
-            renderCreateAccountForm(
-              req,
-              { displayName, email },
-              req.t('account.create.errorRateLimited')
-            ),
-            false
-          )
-        );
+      res.status(429).set('Retry-After', String(signupRateLimit.retryAfterSeconds));
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorRateLimited'))
+      );
       return;
     }
 
     const altchaValid = await verifyAltchaSolution(altchaPayload);
     if (!altchaValid) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorCaptcha')),
-          false
-        )
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorCaptcha'))
       );
       return;
     }
 
     if (!displayName || !email || !password || !username) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorRequired')),
-          false
-        )
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorRequired'))
       );
       return;
     }
 
     if (!isValidUsername(displayName)) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameInvalid')),
-          false
-        )
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameInvalid'))
       );
       return;
     }
@@ -411,31 +362,19 @@ export const registerAccountRequestRoutes = (app: Express) => {
     ]);
 
     if (existingEmail) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(
-            req,
-            { displayName, email },
-            req.t('account.create.errorEmailUnavailable')
-          ),
-          false
-        )
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorEmailUnavailable'))
       );
       return;
     }
 
     if (existingUsername) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.create.title'),
-          renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameTaken')),
-          false
-        )
+      renderToolLayout(
+        res,
+        req.t('account.create.title'),
+        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameTaken'))
       );
       return;
     }
@@ -481,17 +420,11 @@ export const registerAccountRequestRoutes = (app: Express) => {
     }
 
     if (state.agentAccessStatus === 'pending') {
-      res
-        .type('html')
-        .send(
-          renderToolLayout(
-            req.t,
-            res,
-            req.t('account.profile.title'),
-            `<div class="tool-page"><div class="form-card"><p>${req.t('account.profile.pending')}</p></div></div>`,
-            true
-          )
-        );
+      renderToolLayout(
+        res,
+        req.t('account.profile.title'),
+        `<div class="tool-page"><div class="form-card"><p>${req.t('account.profile.pending')}</p></div></div>`
+      );
       return;
     }
 
@@ -504,17 +437,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
       typeof req.query.email === 'string' && req.query.email === EMAIL_STATUS_UNAVAILABLE
         ? EMAIL_STATUS_UNAVAILABLE
         : null;
-    res
-      .type('html')
-      .send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.profile.title'),
-          renderCompleteProfileForm(req, { emailStatus }),
-          true
-        )
-      );
+    renderToolLayout(res, req.t('account.profile.title'), renderCompleteProfileForm(req, { emailStatus }));
   });
 
   app.post('/tool/complete-profile', async (req, res) => {
@@ -536,19 +459,15 @@ export const registerAccountRequestRoutes = (app: Express) => {
     const profileUrl = normalizeProfileUrl(profileUrlInput);
 
     if (!interests || !profileUrl) {
-      res.type('html').send(
-        renderToolLayout(
-          req.t,
-          res,
-          req.t('account.profile.title'),
-          renderCompleteProfileForm(req, {
-            errorMessage: req.t('account.profile.errorRequired'),
-            emailStatus,
-            interests,
-            profileUrl: profileUrlInput,
-          }),
-          true
-        )
+      renderToolLayout(
+        res,
+        req.t('account.profile.title'),
+        renderCompleteProfileForm(req, {
+          errorMessage: req.t('account.profile.errorRequired'),
+          emailStatus,
+          interests,
+          profileUrl: profileUrlInput,
+        })
       );
       return;
     }

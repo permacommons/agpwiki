@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express';
-import type { TFunction } from 'i18next';
 
 import { verifyPassword } from '../auth/password.js';
 import {
@@ -15,7 +14,7 @@ import { initializePostgreSQL } from '../db.js';
 import { normalizeUsername } from '../lib/username.js';
 import ApiToken from '../models/api-token.js';
 import User from '../models/user.js';
-import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
+import { escapeHtml, formatDateUTC, prepareTitle } from '../render.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 import { verifyEmailConfirmationToken } from '../services/email-verification.js';
 import {
@@ -26,24 +25,14 @@ import {
 import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
 import { prependAccountBanner, renderAccountBanner } from './lib/account-banner.js';
 
-const renderAuthLayout = (
-  t: TFunction,
-  res: Response,
-  title: string,
-  bodyHtml: string,
-  signedIn = false
-) =>
-  renderLayout({
-    title,
-    labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
+const renderAuthLayout = (res: Response, title: string, bodyHtml: string) => {
+  res.render('layout', {
+    title: prepareTitle(title),
+    labelHtml: `<div class="page-label">${res.req.t('label.tool')}</div>`,
     bodyHtml,
     topHtml: prependAccountBanner(res),
-    signedIn,
-    currentUserName: res.locals.currentUserName,
-    currentPath: res.locals.currentPath,
-    locale: res.locals.locale,
-    languageOptions: res.locals.languageOptions,
   });
+};
 
 const renderError = (message: string) =>
   `<div class="form-error">${escapeHtml(message)}</div>`;
@@ -117,14 +106,11 @@ const requireAgentEnabledUser = async (req: Request, res: Response) => {
 
   const accountState = await getAccountLifecycleState(userId);
   if (!accountState || !userCanUseAgentFeatures(accountState)) {
-    res.status(403).type('html').send(
-      renderAuthLayout(
-        req.t,
-        res,
-        req.t('auth.tokens.title'),
-        `<div class="tool-page"><div class="form-card"><p>${req.t('common.agentAccessRequired')}</p></div></div>`,
-        true
-      )
+    res.status(403);
+    renderAuthLayout(
+      res,
+      req.t('auth.tokens.title'),
+      `<div class="tool-page"><div class="form-card"><p>${req.t('common.agentAccessRequired')}</p></div></div>`
     );
     return null;
   }
@@ -170,11 +156,7 @@ export const registerAuthRoutes = (app: Express) => {
   </form>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
-      );
+    renderAuthLayout(res, req.t('auth.login.title'), bodyHtml);
   });
 
   const handleLogin = async (req: Request, res: Response) => {
@@ -206,13 +188,8 @@ export const registerAuthRoutes = (app: Express) => {
     </div>
   </form>
 </div>`;
-      res
-        .status(429)
-        .set('Retry-After', String(loginRateLimit.retryAfterSeconds))
-        .type('html')
-        .send(
-          renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
-        );
+      res.status(429).set('Retry-After', String(loginRateLimit.retryAfterSeconds));
+      renderAuthLayout(res, req.t('auth.login.title'), bodyHtml);
       return;
     }
 
@@ -248,11 +225,7 @@ export const registerAuthRoutes = (app: Express) => {
     </div>
   </form>
 </div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(req.t, res, req.t('auth.login.title'), bodyHtml, false)
-        );
+      renderAuthLayout(res, req.t('auth.login.title'), bodyHtml);
       return;
     }
 
@@ -264,17 +237,7 @@ export const registerAuthRoutes = (app: Express) => {
   app.post(TOOL_LOGIN_PATH, handleLogin);
 
   app.get(TOOL_PASSWORD_RESET_PATH, async (req, res) => {
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.passwordReset.title'),
-          renderPasswordResetRequestForm(req),
-          false
-        )
-      );
+    renderAuthLayout(res, req.t('auth.passwordReset.title'), renderPasswordResetRequestForm(req));
   });
 
   app.post(TOOL_PASSWORD_RESET_PATH, async (req, res) => {
@@ -285,22 +248,15 @@ export const registerAuthRoutes = (app: Express) => {
     );
 
     if (!resetRateLimit.allowed) {
-      res
-        .status(429)
-        .set('Retry-After', String(resetRateLimit.retryAfterSeconds))
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.passwordReset.title'),
-            renderPasswordResetRequestForm(req, {
-              identifier,
-              errorMessage: req.t('auth.passwordReset.errorRateLimited'),
-            }),
-            false
-          )
-        );
+      res.status(429).set('Retry-After', String(resetRateLimit.retryAfterSeconds));
+      renderAuthLayout(
+        res,
+        req.t('auth.passwordReset.title'),
+        renderPasswordResetRequestForm(req, {
+          identifier,
+          errorMessage: req.t('auth.passwordReset.errorRateLimited'),
+        })
+      );
       return;
     }
 
@@ -318,9 +274,7 @@ export const registerAuthRoutes = (app: Express) => {
     <p><a href="${TOOL_LOGIN_PATH}">${req.t('auth.login.action')}</a></p>
   </div>
 </div>`;
-    res
-      .type('html')
-      .send(renderAuthLayout(req.t, res, req.t('auth.passwordReset.title'), bodyHtml, false));
+    renderAuthLayout(res, req.t('auth.passwordReset.title'), bodyHtml);
   });
 
   app.get(TOOL_PASSWORD_RESET_CONFIRM_PATH, async (req, res) => {
@@ -333,65 +287,41 @@ export const registerAuthRoutes = (app: Express) => {
     <p><a href="${TOOL_PASSWORD_RESET_PATH}">${req.t('auth.passwordReset.submit')}</a></p>
   </div>
 </div>`;
-      res
-        .type('html')
-        .send(renderAuthLayout(req.t, res, req.t('auth.passwordReset.title'), bodyHtml, false));
+      renderAuthLayout(res, req.t('auth.passwordReset.title'), bodyHtml);
       return;
     }
 
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.passwordReset.title'),
-          renderPasswordResetConfirmForm(req, token),
-          false
-        )
-      );
+    renderAuthLayout(res, req.t('auth.passwordReset.title'), renderPasswordResetConfirmForm(req, token));
   });
 
   app.post(TOOL_PASSWORD_RESET_CONFIRM_PATH, async (req, res) => {
     const token = String(req.body.token ?? '').trim();
     const password = String(req.body.password ?? '');
     if (!token || !password) {
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.passwordReset.title'),
-            renderPasswordResetConfirmForm(
-              req,
-              token,
-              req.t('auth.passwordReset.errorInvalidOrExpired')
-            ),
-            false
-          )
-        );
+      renderAuthLayout(
+        res,
+        req.t('auth.passwordReset.title'),
+        renderPasswordResetConfirmForm(
+          req,
+          token,
+          req.t('auth.passwordReset.errorInvalidOrExpired')
+        )
+      );
       return;
     }
 
     const dal = await initializePostgreSQL();
     const user = await resetPasswordWithToken(dal, token, password);
     if (!user) {
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.passwordReset.title'),
-            renderPasswordResetConfirmForm(
-              req,
-              token,
-              req.t('auth.passwordReset.errorInvalidOrExpired')
-            ),
-            false
-          )
-        );
+      renderAuthLayout(
+        res,
+        req.t('auth.passwordReset.title'),
+        renderPasswordResetConfirmForm(
+          req,
+          token,
+          req.t('auth.passwordReset.errorInvalidOrExpired')
+        )
+      );
       return;
     }
 
@@ -438,9 +368,7 @@ export const registerAuthRoutes = (app: Express) => {
     <p><a href="${escapeHtml(DEFAULT_LOGIN_REDIRECT_PATH)}">${req.t('account.confirm.continue')}</a></p>
   </div>
 </div>`;
-    res
-      .type('html')
-      .send(renderAuthLayout(req.t, res, req.t('account.confirm.title'), bodyHtml, Boolean(user)));
+    renderAuthLayout(res, req.t('account.confirm.title'), bodyHtml);
   });
 
   app.get(TOOL_TOKENS_PATH, async (req, res) => {
@@ -519,17 +447,7 @@ export const registerAuthRoutes = (app: Express) => {
   </form>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.tokens.title'),
-          bodyHtml,
-          true
-        )
-      );
+    renderAuthLayout(res, req.t('auth.tokens.title'), bodyHtml);
   });
 
   const handleCreateToken = async (req: Request, res: Response) => {
@@ -549,17 +467,7 @@ export const registerAuthRoutes = (app: Express) => {
     </div>
   </div>
 </div>`;
-        res
-          .type('html')
-          .send(
-            renderAuthLayout(
-              req.t,
-              res,
-              req.t('auth.tokens.newToken'),
-              bodyHtml,
-              true
-            )
-          );
+        renderAuthLayout(res, req.t('auth.tokens.newToken'), bodyHtml);
         return;
       }
     }
@@ -587,17 +495,7 @@ export const registerAuthRoutes = (app: Express) => {
   </div>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.tokens.newToken'),
-          bodyHtml,
-          true
-        )
-      );
+    renderAuthLayout(res, req.t('auth.tokens.newToken'), bodyHtml);
   };
 
   app.post(`${TOOL_TOKENS_PATH}/create`, handleCreateToken);
@@ -641,17 +539,7 @@ export const registerAuthRoutes = (app: Express) => {
     </div>
   </div>
 </div>`;
-      res
-        .type('html')
-        .send(
-          renderAuthLayout(
-            req.t,
-            res,
-            req.t('auth.tokens.regenerateTitle'),
-            bodyHtml,
-            true
-          )
-        );
+      renderAuthLayout(res, req.t('auth.tokens.regenerateTitle'), bodyHtml);
       return;
     }
 
@@ -671,17 +559,7 @@ export const registerAuthRoutes = (app: Express) => {
     </div>
   </div>
 </div>`;
-        res
-          .type('html')
-          .send(
-            renderAuthLayout(
-              req.t,
-              res,
-              req.t('auth.tokens.regenerateTitle'),
-              bodyHtml,
-              true
-            )
-          );
+        renderAuthLayout(res, req.t('auth.tokens.regenerateTitle'), bodyHtml);
         return;
       }
     }
@@ -714,17 +592,7 @@ export const registerAuthRoutes = (app: Express) => {
   </div>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderAuthLayout(
-          req.t,
-          res,
-          req.t('auth.tokens.regenerateTitle'),
-          bodyHtml,
-          true
-        )
-      );
+    renderAuthLayout(res, req.t('auth.tokens.regenerateTitle'), bodyHtml);
   };
 
   app.post(`${TOOL_TOKENS_PATH}/reset`, handleResetToken);

@@ -2,7 +2,6 @@ import type { Express } from 'express';
 import type { TFunction } from 'i18next';
 
 import dal from 'rev-dal';
-import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import {
@@ -19,7 +18,7 @@ import {
   concatSafeText,
   escapeHtml,
   formatDateUTC,
-  renderLayout,
+  prepareTitle,
   renderText,
   type SafeText,
 } from '../render.js';
@@ -186,19 +185,12 @@ export const registerToolRoutes = (app: Express) => {
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('page.recentChanges'),
+    res.render('layout', {
+      title: prepareTitle(req.t('page.recentChanges')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
     });
-    res.type('html').send(html);
   });
 
   app.get('/tool/recent-citations', async (req, res) => {
@@ -247,19 +239,12 @@ export const registerToolRoutes = (app: Express) => {
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('page.recentCitations'),
+    res.render('layout', {
+      title: prepareTitle(req.t('page.recentCitations')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
     });
-    res.type('html').send(html);
   });
 
   app.get('/tool/recent-claims', async (req, res) => {
@@ -317,19 +302,12 @@ export const registerToolRoutes = (app: Express) => {
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('page.recentClaims'),
+    res.render('layout', {
+      title: prepareTitle(req.t('page.recentClaims')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
     });
-    res.type('html').send(html);
   });
 
   app.get('/tool/recent-checks', async (req, res) => {
@@ -388,19 +366,12 @@ export const registerToolRoutes = (app: Express) => {
   <ul class="change-list">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('page.recentChecks'),
+    res.render('layout', {
+      title: prepareTitle(req.t('page.recentChecks')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
     });
-    res.type('html').send(html);
   });
 
   app.get('/tool/pages', async (req, res) => {
@@ -454,17 +425,11 @@ export const registerToolRoutes = (app: Express) => {
   ${pagination}
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('page.pages'),
+    res.render('layout', {
+      title: prepareTitle(req.t('page.pages')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
       wikiLinkPreviewConfig: {
         endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
         token: createWikiLinkPreviewToken({
@@ -473,7 +438,6 @@ export const registerToolRoutes = (app: Express) => {
         }),
       },
     });
-    res.type('html').send(html);
   });
 
   app.get('/api/recent-changes', async (req, res) => {

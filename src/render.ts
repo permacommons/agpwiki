@@ -5,7 +5,6 @@ import { diffWordsWithSpace } from 'diff';
 import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
 
-import { layoutAssets } from './asset-urls.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
@@ -578,8 +577,6 @@ export const renderMarkdown = async (
 };
 
 const { handlebars: Handlebars } = hbs;
-const layoutPath = path.resolve(process.cwd(), 'views/layout.hbs');
-const layoutTemplate = Handlebars.compile(fs.readFileSync(layoutPath, 'utf8'));
 
 Handlebars.registerPartial(
   'header',
@@ -616,60 +613,10 @@ Handlebars.registerHelper(
   }
 );
 
+export const prepareTitle = (value: SafeText | string): hbs.handlebars.SafeString =>
+  new hbs.handlebars.SafeString(renderText(value));
+
 export interface LanguageOption {
   code: string;
   label: string;
 }
-
-export const renderLayout = (options: {
-  title: SafeText | string;
-  bodyHtml: string;
-  labelHtml?: string;
-  sidebarHtml?: string;
-  topHtml?: string;
-  signedIn?: boolean;
-  currentUserName?: string | null;
-  currentPath?: string;
-  locale?: string;
-  languageOptions?: LanguageOption[];
-  wikiLinkPreviewConfig?: {
-    endpoint: string;
-    missingLoading?: string;
-    token: string;
-    introHtml?: string;
-    wikipediaAttributionHtml?: string;
-    wikipediaHeading?: string;
-    wikipediaLinkLabel?: string;
-  };
-}) => {
-  const {
-    title,
-    bodyHtml,
-    labelHtml = '',
-    sidebarHtml = '',
-    topHtml = '',
-    signedIn,
-    currentUserName = null,
-    currentPath = '/',
-    locale = 'en',
-    languageOptions = [],
-    wikiLinkPreviewConfig,
-  } = options;
-  const titleHtml = renderText(title);
-  const safeTitle = new hbs.handlebars.SafeString(titleHtml);
-  return layoutTemplate({
-    title: safeTitle,
-    bodyHtml,
-    labelHtml,
-    sidebarHtml,
-    topHtml,
-    hasSidebar: Boolean(sidebarHtml),
-    signedIn: Boolean(signedIn),
-    currentUserName,
-    currentPath,
-    locale,
-    languageOptions,
-    wikiLinkPreviewConfig,
-    assets: layoutAssets,
-  });
-};

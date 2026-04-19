@@ -1,7 +1,6 @@
 import type { Express } from 'express';
 
 import dal from 'rev-dal';
-import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import {
   formatCitationAuthors,
@@ -12,7 +11,7 @@ import {
 } from '../lib/citation.js';
 import { NotFoundError } from '../lib/errors.js';
 import { resolveSafeText } from '../lib/safe-text.js';
-import { escapeHtml, formatDateUTC, renderLayout, renderText } from '../render.js';
+import { escapeHtml, formatDateUTC, prepareTitle, renderText } from '../render.js';
 import {
   diffCitationClaimRevisions,
   listCitationClaimRevisions,
@@ -296,7 +295,6 @@ export const registerCitationRoutes = (app: Express) => {
       });
 
       const labelHtml = `<div class="page-label">${req.t('label.citation')}</div>`;
-      const signedIn = Boolean(await resolveSessionUser(req));
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const languageRow = renderContentLanguageRow({
         label: req.t('language.available'),
@@ -310,19 +308,13 @@ export const registerCitationRoutes = (app: Express) => {
   <div class="citation-meta">${escapeHtml(revisionMeta)}</div>
   <dl class="detail-fields">${fieldsHtml}</dl>
 </div>${languageRow}`;
-      const html = renderLayout({
-        title: `${claimId} · ${key}`,
+      res.render('layout', {
+        title: prepareTitle(`${claimId} · ${key}`),
         labelHtml,
         bodyHtml,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));
@@ -611,21 +603,14 @@ export const registerCitationRoutes = (app: Express) => {
       });
 
       const labelHtml = `<div class="page-label">${req.t('label.citation')}</div>`;
-      const signedIn = Boolean(await resolveSessionUser(req));
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const html = renderLayout({
-        title: pageTitle,
+      res.render('layout', {
+        title: prepareTitle(pageTitle),
         labelHtml,
         bodyHtml,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));

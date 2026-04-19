@@ -1,7 +1,6 @@
 import type { Express } from 'express';
 
 import dal from 'rev-dal';
-import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
@@ -9,7 +8,7 @@ import { resolveSafeText } from '../lib/safe-text.js';
 import {
   escapeHtml,
   formatDateUTC,
-  renderLayout,
+  prepareTitle,
   renderMarkdown,
   renderText,
 } from '../render.js';
@@ -37,7 +36,6 @@ export const registerBlogRoutes = (app: Express) => {
   app.get('/blog', async (req, res) => {
     try {
       const dalInstance = await initializePostgreSQL();
-      const signedIn = Boolean(await resolveSessionUser(req));
       const markdownOptions = {
         backToCitationLabel: req.t('citation.backToCitationAria', {
           defaultValue: 'Back to citation',
@@ -101,18 +99,12 @@ export const registerBlogRoutes = (app: Express) => {
 </div>`;
 
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
-      const html = renderLayout({
-        title: req.t('page.blog'),
+      res.render('layout', {
+        title: prepareTitle(req.t('page.blog')),
         labelHtml,
         bodyHtml,
         topHtml: prependAccountBanner(res),
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));
@@ -297,20 +289,13 @@ export const registerBlogRoutes = (app: Express) => {
         queryParams,
       });
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
-      const signedIn = Boolean(await resolveSessionUser(req));
-      const html = renderLayout({
-        title,
+      res.render('layout', {
+        title: prepareTitle(title),
         labelHtml,
         bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));

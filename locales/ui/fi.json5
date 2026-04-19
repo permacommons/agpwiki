@@ -7,6 +7,7 @@
     blog: 'Blogi',
     forum: 'Foorumi',
     recentChanges: 'Tuoreet muutokset',
+    reviewAccounts: 'Tarkasta tilit',
     signOut: 'Kirjaudu ulos',
     help: 'Apua',
     menu: 'Valikko',

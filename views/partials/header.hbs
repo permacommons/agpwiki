@@ -21,6 +21,9 @@
           </span>
         </summary>
         <div class="user-menu-panel">
+          {{#if isSiteAdmin}}
+          <a class="user-menu-link" href="/tool/review-accounts">{{__ "nav.reviewAccounts"}}</a>
+          {{/if}}
           <a class="user-menu-link" href="/tool/tokens">{{__ "auth.tokens.title"}}</a>
           <form class="user-menu-form" method="post" action="/tool/logout">
             <button class="user-menu-action" type="submit">{{__ "nav.signOut"}}</button>

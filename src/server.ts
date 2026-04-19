@@ -2,8 +2,8 @@ import path from 'node:path';
 import config from 'config';
 import cookieParser from 'cookie-parser';
 import express from 'express';
-
 import debug from '../util/debug.js';
+import { layoutAssets } from './asset-urls.js';
 import { resolveSessionUser } from './auth/session.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
@@ -20,10 +20,13 @@ import { registerPageRoutes } from './routes/pages.js';
 import { registerSearchRoutes } from './routes/search.js';
 import { registerToolRoutes } from './routes/tools.js';
 import { getAccountLifecycleState } from './services/account-lifecycle.js';
+import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from './services/roles.js';
 import { getStaticCacheControl } from './static-cache.js';
 
 const app = express();
 app.set('trust proxy', config.get<boolean | string | number | string[]>('server.trustProxy'));
+app.set('view engine', 'hbs');
+app.set('views', path.resolve(process.cwd(), 'views'));
 
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
@@ -53,12 +56,19 @@ app.use(async (req, res, next) => {
   res.locals.currentPath = req.originalUrl || '/';
   res.locals.accountState = null;
   res.locals.accountBannerHtml = '';
+  res.locals.assets = layoutAssets;
+  res.locals.isSiteAdmin = false;
 
   if (session) {
-    const user = await User.filterWhere({ id: session.userId }).first();
+    const dal = await initializePostgreSQL();
+    const [user, roles] = await Promise.all([
+      User.filterWhere({ id: session.userId }).first(),
+      getUserRoles(dal, session.userId),
+    ]);
     res.locals.currentUserId = session.userId;
     res.locals.currentUserName = user?.displayName ?? null;
     res.locals.accountState = await getAccountLifecycleState(session.userId);
+    res.locals.isSiteAdmin = hasRole(roles, SITE_ADMIN_ROLE);
   }
 
   res.locals.accountBannerHtml = renderAccountBanner(req, res);

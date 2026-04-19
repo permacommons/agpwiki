@@ -7,6 +7,7 @@
     blog: 'Блог',
     forum: 'Форум',
     recentChanges: 'Останні зміни',
+    reviewAccounts: 'Переглянути акаунти',
     signOut: 'Вийти',
     help: 'Допомога',
     menu: 'Меню',

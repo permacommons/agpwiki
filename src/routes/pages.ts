@@ -28,7 +28,7 @@ import {
   escapeHtml,
   formatDateUTC,
   iconWarningTriangle,
-  renderLayout,
+  prepareTitle,
   renderMarkdown,
   renderToc,
 } from '../render.js';
@@ -243,8 +243,8 @@ const renderOperatorEditPage = async ({
     dismissLabel: req.t('common.dismiss'),
   });
 
-  const html = renderLayout({
-    title: concatSafeText(pageTitle, ` · ${req.t('operatorEdit.title')}`),
+  res.render('layout', {
+    title: prepareTitle(concatSafeText(pageTitle, ` · ${req.t('operatorEdit.title')}`)),
     labelHtml: `<div class="page-label">${escapeHtml(req.t('operatorEdit.title'))}</div>`,
     bodyHtml: renderOperatorEditForm({
       req,
@@ -257,15 +257,8 @@ const renderOperatorEditPage = async ({
       errorMessage,
       previewHtml,
     }),
-    signedIn: true,
-    currentUserName: res.locals.currentUserName,
-    currentPath: res.locals.currentPath,
-    locale: res.locals.locale,
-    languageOptions: res.locals.languageOptions,
     topHtml: prependAccountBanner(res, bannerHtml),
   });
-
-  res.type('html').send(html);
 };
 
 export const registerPageRoutes = (app: Express) => {
@@ -458,8 +451,6 @@ export const registerPageRoutes = (app: Express) => {
         langOverride,
         t: req.t,
       })}</section>`;
-      const sidebarHtml = '';
-      const signedIn = Boolean(await resolveSessionUser(req));
       const labelHtml = `<div class="page-label">${req.t('checks.title')}</div>`;
       const languageRow = renderContentLanguageRow({
         label: req.t('language.available'),
@@ -469,19 +460,12 @@ export const registerPageRoutes = (app: Express) => {
         path: req.path,
         queryParams: extractQueryParams(req.query),
       });
-      const html = renderLayout({
-        title,
+      res.render('layout', {
+        title: prepareTitle(title),
         labelHtml,
         bodyHtml: `${bodyHtml}${languageRow}`,
         topHtml: prependAccountBanner(res),
-        sidebarHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));
@@ -699,7 +683,6 @@ export const registerPageRoutes = (app: Express) => {
       const pageTitle = resolveSafeText(mlString.resolve, contentLang, page.title, page.slug);
       const title = concatSafeText(pageTitle, ` · ${req.t('checks.title')}`);
       const labelHtml = `<div class="page-label">${req.t('checks.title')}</div>`;
-      const signedIn = Boolean(await resolveSessionUser(req));
       let diffHtml = '';
       if (diffFrom && diffTo) {
         try {
@@ -759,20 +742,13 @@ export const registerPageRoutes = (app: Express) => {
         queryParams: extractQueryParams(req.query),
       });
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const sidebarHtml = historyHtml;
-      const html = renderLayout({
-        title,
+      res.render('layout', {
+        title: prepareTitle(title),
         labelHtml,
         bodyHtml: `${bodyHtml}${languageRow}`,
         topHtml: prependAccountBanner(res, topHtml),
-        sidebarHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
+        sidebarHtml: historyHtml,
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));
@@ -1191,17 +1167,12 @@ export const registerPageRoutes = (app: Express) => {
 </div>`
         : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const html = renderLayout({
-        title,
+      res.render('layout', {
+        title: prepareTitle(title),
         labelHtml: metaLabel,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
-        signedIn,
-        currentUserName: res.locals.currentUserName,
-        currentPath: res.locals.currentPath,
-        locale: res.locals.locale,
-        languageOptions: res.locals.languageOptions,
         wikiLinkPreviewConfig: {
           endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
           introHtml: buildRedLinkIntroHtml(req, signedIn),
@@ -1217,7 +1188,6 @@ export const registerPageRoutes = (app: Express) => {
           wikipediaLinkLabel: req.t('redLink.hover.wikipediaLinkLabel'),
         },
       });
-      res.type('html').send(html);
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       res.status(500).type('text').send(req.t('page.serverError'));

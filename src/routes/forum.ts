@@ -25,7 +25,7 @@ import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import {
   escapeHtml,
   formatDateUTC,
-  renderLayout,
+  prepareTitle,
   renderMarkdown,
   renderText,
   type SafeText,
@@ -448,19 +448,12 @@ const withForumPage = (
   bodyHtml: string,
   labelHtml: string
 ) =>
-  res.type('html').send(
-    renderLayout({
-      title,
-      labelHtml,
-      topHtml: prependAccountBanner(res, renderForumPreamble(res.req)),
-      bodyHtml,
-      signedIn: res.locals.signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
-    })
-  );
+  res.render('layout', {
+    title: prepareTitle(title),
+    labelHtml,
+    topHtml: prependAccountBanner(res, renderForumPreamble(res.req)),
+    bodyHtml,
+  });
 
 const getSelectedLanguage = (req: Request, fallback = 'en') =>
   typeof req.body?.language === 'string' && req.body.language.trim().length > 0
