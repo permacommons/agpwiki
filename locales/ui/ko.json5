@@ -404,6 +404,7 @@
       rejectReason: '거부 사유',
       block: '계정 차단',
       blockReason: '차단 사유',
+      confirm: '확인',
       blocked: '차단됨',
       verified: '확인됨',
       unverified: '미확인',
@@ -414,8 +415,7 @@
         created: '생성일',
         emailStatus: '이메일 상태',
         agentAccess: 'AI 에이전트 접근',
-        review: '검토',
-        block: '차단',
+        actions: '작업',
       },
       status: {
         none: '제출된 프로필 없음',

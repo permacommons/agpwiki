@@ -406,6 +406,7 @@
       rejectReason: 'Elutasítás oka',
       block: 'Fiók blokkolása',
       blockReason: 'Blokkolás oka',
+      confirm: 'Rendben',
       blocked: 'Blokkolva',
       verified: 'Megerősítve',
       unverified: 'Nem megerősített',
@@ -416,8 +417,7 @@
         created: 'Létrehozva',
         emailStatus: 'E-mail állapota',
         agentAccess: 'MI-ügynök-hozzáférés',
-        review: 'Ellenőrzés',
-        block: 'Blokkolás',
+        actions: 'Műveletek',
       },
       status: {
         none: 'Nincs beküldött profil',

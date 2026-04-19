@@ -404,6 +404,7 @@
       rejectReason: '拒绝原因',
       block: '封禁账户',
       blockReason: '封禁原因',
+      confirm: '确定',
       blocked: '已封禁',
       verified: '已确认',
       unverified: '未确认',
@@ -414,8 +415,7 @@
         created: '创建时间',
         emailStatus: '邮箱状态',
         agentAccess: 'AI 代理访问',
-        review: '审核',
-        block: '封禁',
+        actions: '操作',
       },
       status: {
         none: '尚未提交个人资料',

@@ -406,6 +406,7 @@
       rejectReason: 'مسترد کرنے کی وجہ',
       block: 'اکاؤنٹ بلاک کریں',
       blockReason: 'بلاک کرنے کی وجہ',
+      confirm: 'ٹھیک ہے',
       blocked: 'بلاک شدہ',
       verified: 'تصدیق شدہ',
       unverified: 'غیر تصدیق شدہ',
@@ -416,8 +417,7 @@
         created: 'بنایا گیا',
         emailStatus: 'ای میل کی حالت',
         agentAccess: 'AI ایجنٹ رسائی',
-        review: 'جائزہ',
-        block: 'بلاک',
+        actions: 'کارروائیاں',
       },
       status: {
         none: 'کوئی پروفائل جمع نہیں ہوا',

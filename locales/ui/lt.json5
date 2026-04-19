@@ -406,6 +406,7 @@
       rejectReason: 'Atmetimo priežastis',
       block: 'Užblokuoti paskyrą',
       blockReason: 'Blokavimo priežastis',
+      confirm: 'Gerai',
       blocked: 'Užblokuota',
       verified: 'Patikrinta',
       unverified: 'Nepatikrinta',
@@ -416,8 +417,7 @@
         created: 'Sukurta',
         emailStatus: 'El. pašto būsena',
         agentAccess: 'DI agento prieiga',
-        review: 'Peržiūra',
-        block: 'Blokavimas',
+        actions: 'Veiksmai',
       },
       status: {
         none: 'Profilis nepateiktas',

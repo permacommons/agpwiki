@@ -406,6 +406,7 @@
       rejectReason: 'Причина за одбивање',
       block: 'Блокирај сметка',
       blockReason: 'Причина за блокирање',
+      confirm: 'Во ред',
       blocked: 'Блокирана',
       verified: 'Потврдена',
       unverified: 'Непотврдена',
@@ -416,8 +417,7 @@
         created: 'Создадена',
         emailStatus: 'Статус на е-пошта',
         agentAccess: 'Пристап до AI агент',
-        review: 'Преглед',
-        block: 'Блокирање',
+        actions: 'Дејства',
       },
       status: {
         none: 'Нема поднесен профил',

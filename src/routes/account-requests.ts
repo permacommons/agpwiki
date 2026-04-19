@@ -209,7 +209,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
   );
 
   const rows = result.rows.length === 0
-    ? `<tr><td colspan="7">${req.t('account.review.empty')}</td></tr>`
+    ? `<tr><td colspan="6">${req.t('account.review.empty')}</td></tr>`
     : result.rows.map(row => {
         const userId = String(row.id);
         const agentStatus = typeof row.agent_status === 'string' ? row.agent_status : 'none';
@@ -226,27 +226,34 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
         const reviewActions = agentStatus === 'pending'
           ? `<form method="post" action="${ACCOUNT_REVIEW_PATH}/approve">
   <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
-  <button type="submit">${req.t('account.review.approve')}</button>
+  <button class="account-review-action-button" type="submit">${req.t('account.review.approve')}</button>
 </form>
-<form method="post" action="${ACCOUNT_REVIEW_PATH}/reject">
-  <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
-  <label class="form-field">
-    <span>${req.t('account.review.rejectReason')}</span>
-    <input type="text" name="rejectionReason" required />
-  </label>
-  <button type="submit">${req.t('account.review.reject')}</button>
-</form>`
+<details class="account-review-action">
+  <summary>${req.t('account.review.reject')}</summary>
+  <form method="post" action="${ACCOUNT_REVIEW_PATH}/reject">
+    <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
+    <label class="form-field">
+      <span>${req.t('account.review.rejectReason')}</span>
+      <input type="text" name="rejectionReason" required />
+    </label>
+    <button class="account-review-action-button" type="submit">${req.t('account.review.confirm')}</button>
+  </form>
+</details>`
           : '';
         const blockAction = row.blocked_at
           ? `<span>${req.t('account.review.blocked')}</span>`
-          : `<form method="post" action="${ACCOUNT_REVIEW_PATH}/block">
-  <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
-  <label class="form-field">
-    <span>${req.t('account.review.blockReason')}</span>
-    <input type="text" name="blockReason" />
-  </label>
-  <button type="submit">${req.t('account.review.block')}</button>
-</form>`;
+          : `<details class="account-review-action">
+  <summary>${req.t('account.review.block')}</summary>
+  <form method="post" action="${ACCOUNT_REVIEW_PATH}/block">
+    <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
+    <label class="form-field">
+      <span>${req.t('account.review.blockReason')}</span>
+      <input type="text" name="blockReason" />
+    </label>
+    <button class="account-review-action-button" type="submit">${req.t('account.review.confirm')}</button>
+  </form>
+</details>`;
+        const actions = `${reviewActions || `<span>${req.t('account.review.noAction')}</span>`}${blockAction}`;
 
         return `<tr>
   <td>
@@ -262,8 +269,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
     ${profileHtml}
     ${rejectionReason}
   </td>
-  <td>${reviewActions || `<span>${req.t('account.review.noAction')}</span>`}</td>
-  <td>${blockAction}</td>
+  <td><div class="account-review-actions">${actions}</div></td>
 </tr>`;
       }).join('');
 
@@ -278,8 +284,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
           <th>${req.t('account.review.headers.created')}</th>
           <th>${req.t('account.review.headers.emailStatus')}</th>
           <th>${req.t('account.review.headers.agentAccess')}</th>
-          <th>${req.t('account.review.headers.review')}</th>
-          <th>${req.t('account.review.headers.block')}</th>
+          <th>${req.t('account.review.headers.actions')}</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

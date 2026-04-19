@@ -406,6 +406,7 @@
       rejectReason: 'Hylkäyksen syy',
       block: 'Estä tili',
       blockReason: 'Eston syy',
+      confirm: 'Vahvista',
       blocked: 'Estetty',
       verified: 'Vahvistettu',
       unverified: 'Vahvistamaton',
@@ -416,8 +417,7 @@
         created: 'Luotu',
         emailStatus: 'Sähköpostin tila',
         agentAccess: 'Tekoälyagentin käyttöoikeus',
-        review: 'Tarkistus',
-        block: 'Esto',
+        actions: 'Toiminnot',
       },
       status: {
         none: 'Profiilia ei ole lähetetty',

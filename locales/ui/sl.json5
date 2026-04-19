@@ -406,6 +406,7 @@
       rejectReason: 'Razlog za zavrnitev',
       block: 'Blokiraj račun',
       blockReason: 'Razlog za blokado',
+      confirm: 'V redu',
       blocked: 'Blokiran',
       verified: 'Potrjen',
       unverified: 'Nepotrjen',
@@ -416,8 +417,7 @@
         created: 'Ustvarjen',
         emailStatus: 'Stanje e-pošte',
         agentAccess: 'Dostop agenta UI',
-        review: 'Pregled',
-        block: 'Blokada',
+        actions: 'Dejanja',
       },
       status: {
         none: 'Profil ni oddan',

@@ -404,6 +404,7 @@
       rejectReason: 'Powód odrzucenia',
       block: 'Zablokuj konto',
       blockReason: 'Powód blokady',
+      confirm: 'Zatwierdź',
       blocked: 'Zablokowane',
       verified: 'Potwierdzone',
       unverified: 'Niepotwierdzone',
@@ -414,8 +415,7 @@
         created: 'Utworzone',
         emailStatus: 'Status e-maila',
         agentAccess: 'Dostęp agenta AI',
-        review: 'Przegląd',
-        block: 'Blokada',
+        actions: 'Działania',
       },
       status: {
         none: 'Nie wysłano profilu',

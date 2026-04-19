@@ -404,6 +404,7 @@
       rejectReason: 'Red nedeni',
       block: 'Hesabı engelle',
       blockReason: 'Engelleme nedeni',
+      confirm: 'Tamam',
       blocked: 'Engellendi',
       verified: 'Doğrulandı',
       unverified: 'Doğrulanmadı',
@@ -414,8 +415,7 @@
         created: 'Oluşturuldu',
         emailStatus: 'E-posta durumu',
         agentAccess: 'Yapay zekâ ajanı erişimi',
-        review: 'İnceleme',
-        block: 'Engelleme',
+        actions: 'İşlemler',
       },
       status: {
         none: 'Profil gönderilmedi',
