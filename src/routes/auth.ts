@@ -11,12 +11,18 @@ import {
   setSessionCookie,
 } from '../auth/session.js';
 import { generateApiToken, hashToken } from '../auth/tokens.js';
+import { initializePostgreSQL } from '../db.js';
 import { normalizeUsername } from '../lib/username.js';
 import ApiToken from '../models/api-token.js';
 import User from '../models/user.js';
 import { escapeHtml, formatDateUTC, renderLayout } from '../render.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 import { verifyEmailConfirmationToken } from '../services/email-verification.js';
+import {
+  requestPasswordReset,
+  resetPasswordWithToken,
+  verifyPasswordResetToken,
+} from '../services/password-reset.js';
 import { consumeRateLimit, getRateLimitKey } from '../services/request-rate-limit.js';
 import { prependAccountBanner, renderAccountBanner } from './lib/account-banner.js';
 
@@ -42,12 +48,52 @@ const renderAuthLayout = (
 const renderError = (message: string) =>
   `<div class="form-error">${escapeHtml(message)}</div>`;
 
+const renderPasswordResetRequestForm = (
+  req: Request,
+  options: { identifier?: string; errorMessage?: string } = {}
+) => `<div class="tool-page">
+  <form method="post" class="form-card">
+    ${options.errorMessage ? renderError(options.errorMessage) : ''}
+    <p class="form-help">${req.t('auth.passwordReset.description')}</p>
+    <label class="form-field">
+      <span>${req.t('auth.form.identifier')}</span>
+      <input type="text" name="identifier" autocomplete="username" required value="${escapeHtml(
+        options.identifier ?? ''
+      )}" />
+    </label>
+    <div class="form-actions">
+      <button type="submit">${req.t('auth.passwordReset.submit')}</button>
+    </div>
+  </form>
+</div>`;
+
+const renderPasswordResetConfirmForm = (
+  req: Request,
+  token: string,
+  errorMessage?: string
+) => `<div class="tool-page">
+  <form method="post" class="form-card">
+    ${errorMessage ? renderError(errorMessage) : ''}
+    <input type="hidden" name="token" value="${escapeHtml(token)}" />
+    <label class="form-field">
+      <span>${req.t('auth.passwordReset.newPassword')}</span>
+      <input type="password" name="password" autocomplete="new-password" required />
+    </label>
+    <div class="form-actions">
+      <button type="submit">${req.t('auth.passwordReset.reset')}</button>
+    </div>
+  </form>
+</div>`;
+
 const TOOL_LOGIN_PATH = '/tool/login';
+const TOOL_PASSWORD_RESET_PATH = '/tool/reset-password';
+const TOOL_PASSWORD_RESET_CONFIRM_PATH = '/tool/reset-password/confirm';
 const TOOL_SIGNUP_PATH = '/tool/signup';
 const TOOL_LOGOUT_PATH = '/tool/logout';
 const TOOL_TOKENS_PATH = '/tool/tokens';
 const DEFAULT_LOGIN_REDIRECT_PATH = '/meta/welcome';
 const EMAIL_CONFIRMED_QUERY_KEY = 'emailConfirmed';
+const PASSWORD_RESET_QUERY_KEY = 'passwordReset';
 
 const getSafeRedirect = (value: string | null) => {
   if (!value) return null;
@@ -92,6 +138,7 @@ export const registerAuthRoutes = (app: Express) => {
       typeof req.query.redirect === 'string' ? req.query.redirect : null
     );
     const emailConfirmed = req.query.emailConfirmed === '1';
+    const passwordReset = req.query[PASSWORD_RESET_QUERY_KEY] === '1';
     const session = await resolveSessionUser(req);
     if (session) {
       res.redirect(302, redirectTo ?? DEFAULT_LOGIN_REDIRECT_PATH);
@@ -105,6 +152,7 @@ export const registerAuthRoutes = (app: Express) => {
     const bodyHtml = `<div class="tool-page">
   <form method="post" class="form-card">
     ${emailConfirmed ? `<div class="form-help">${escapeHtml(req.t('auth.login.emailConfirmed'))}</div>` : ''}
+    ${passwordReset ? `<div class="form-help">${escapeHtml(req.t('auth.passwordReset.success'))}</div>` : ''}
     ${redirectField}
     <label class="form-field">
       <span>${req.t('auth.form.identifier')}</span>
@@ -117,6 +165,7 @@ export const registerAuthRoutes = (app: Express) => {
     <div class="form-actions">
       <button type="submit">${req.t('auth.login.action')}</button>
     </div>
+    <p class="form-help"><a href="${TOOL_PASSWORD_RESET_PATH}">${req.t('auth.login.forgotPassword')}</a></p>
     <p class="form-help">${req.t('auth.login.createAccount')}</p>
   </form>
 </div>`;
@@ -213,6 +262,141 @@ export const registerAuthRoutes = (app: Express) => {
   };
 
   app.post(TOOL_LOGIN_PATH, handleLogin);
+
+  app.get(TOOL_PASSWORD_RESET_PATH, async (req, res) => {
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.passwordReset.title'),
+          renderPasswordResetRequestForm(req),
+          false
+        )
+      );
+  });
+
+  app.post(TOOL_PASSWORD_RESET_PATH, async (req, res) => {
+    const identifier = String(req.body.identifier ?? '').trim();
+    const resetRateLimit = consumeRateLimit(
+      'passwordResetRequest',
+      getRateLimitKey(req, 'password-reset')
+    );
+
+    if (!resetRateLimit.allowed) {
+      res
+        .status(429)
+        .set('Retry-After', String(resetRateLimit.retryAfterSeconds))
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.passwordReset.title'),
+            renderPasswordResetRequestForm(req, {
+              identifier,
+              errorMessage: req.t('auth.passwordReset.errorRateLimited'),
+            }),
+            false
+          )
+        );
+      return;
+    }
+
+    if (identifier) {
+      try {
+        await requestPasswordReset(identifier);
+      } catch (error) {
+        console.error('Failed to request password reset:', error);
+      }
+    }
+
+    const bodyHtml = `<div class="tool-page">
+  <div class="form-card">
+    <p>${req.t('auth.passwordReset.sent')}</p>
+    <p><a href="${TOOL_LOGIN_PATH}">${req.t('auth.login.action')}</a></p>
+  </div>
+</div>`;
+    res
+      .type('html')
+      .send(renderAuthLayout(req.t, res, req.t('auth.passwordReset.title'), bodyHtml, false));
+  });
+
+  app.get(TOOL_PASSWORD_RESET_CONFIRM_PATH, async (req, res) => {
+    const token = typeof req.query.token === 'string' ? req.query.token.trim() : '';
+    const record = token ? await verifyPasswordResetToken(token) : null;
+    if (!record) {
+      const bodyHtml = `<div class="tool-page">
+  <div class="form-card">
+    ${renderError(req.t('auth.passwordReset.errorInvalidOrExpired'))}
+    <p><a href="${TOOL_PASSWORD_RESET_PATH}">${req.t('auth.passwordReset.submit')}</a></p>
+  </div>
+</div>`;
+      res
+        .type('html')
+        .send(renderAuthLayout(req.t, res, req.t('auth.passwordReset.title'), bodyHtml, false));
+      return;
+    }
+
+    res
+      .type('html')
+      .send(
+        renderAuthLayout(
+          req.t,
+          res,
+          req.t('auth.passwordReset.title'),
+          renderPasswordResetConfirmForm(req, token),
+          false
+        )
+      );
+  });
+
+  app.post(TOOL_PASSWORD_RESET_CONFIRM_PATH, async (req, res) => {
+    const token = String(req.body.token ?? '').trim();
+    const password = String(req.body.password ?? '');
+    if (!token || !password) {
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.passwordReset.title'),
+            renderPasswordResetConfirmForm(
+              req,
+              token,
+              req.t('auth.passwordReset.errorInvalidOrExpired')
+            ),
+            false
+          )
+        );
+      return;
+    }
+
+    const dal = await initializePostgreSQL();
+    const user = await resetPasswordWithToken(dal, token, password);
+    if (!user) {
+      res
+        .type('html')
+        .send(
+          renderAuthLayout(
+            req.t,
+            res,
+            req.t('auth.passwordReset.title'),
+            renderPasswordResetConfirmForm(
+              req,
+              token,
+              req.t('auth.passwordReset.errorInvalidOrExpired')
+            ),
+            false
+          )
+        );
+      return;
+    }
+
+    res.redirect(302, `${TOOL_LOGIN_PATH}?${PASSWORD_RESET_QUERY_KEY}=1`);
+  });
 
   const handleLogout = async (req: Request, res: Response) => {
     const token = getSessionToken(req);

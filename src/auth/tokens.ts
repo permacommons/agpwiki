@@ -9,3 +9,6 @@ export const generateInviteCode = () => `agp_inv_${crypto.randomBytes(18).toStri
 
 export const generateEmailVerificationToken = () =>
   `agp_evt_${crypto.randomBytes(24).toString('hex')}`;
+
+export const generatePasswordResetToken = () =>
+  `agp_prt_${crypto.randomBytes(24).toString('hex')}`;
