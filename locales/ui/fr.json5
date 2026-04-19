@@ -8,6 +8,7 @@
     blog: 'Carnet',
     forum: 'Forum',
     recentChanges: 'Modifications récentes',
+    reviewAccounts: 'Examiner les comptes',
     signOut: 'Déconnexion',
     help: 'Aide',
     menu: 'Navigation',

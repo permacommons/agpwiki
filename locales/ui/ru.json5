@@ -8,6 +8,7 @@
     blog: 'Блог',
     forum: 'Форум',
     recentChanges: 'Свежие правки',
+    reviewAccounts: 'Проверить аккаунты',
     signOut: 'Выйти',
     help: 'Помощь',
     menu: 'Меню',

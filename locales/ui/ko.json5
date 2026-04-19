@@ -7,6 +7,7 @@
     blog: '블로그',
     forum: '포럼',
     recentChanges: '최근 바뀜',
+    reviewAccounts: '계정 검토',
     signOut: '로그아웃',
     help: '도움말',
     menu: '메뉴',
