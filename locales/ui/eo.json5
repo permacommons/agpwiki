@@ -404,6 +404,7 @@
       rejectReason: 'Kialo de rifuzo',
       block: 'Bloki konton',
       blockReason: 'Kialo de blokado',
+      confirm: 'Bone',
       blocked: 'Blokita',
       verified: 'Konfirmita',
       unverified: 'Nekonfirmita',
@@ -414,8 +415,7 @@
         created: 'Kreita',
         emailStatus: 'Retpoŝta stato',
         agentAccess: 'Aliro de AI-agento',
-        review: 'Revizio',
-        block: 'Blokado',
+        actions: 'Agoj',
       },
       status: {
         none: 'Neniu profilo sendita',

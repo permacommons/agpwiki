@@ -406,6 +406,7 @@
       rejectReason: 'Alasan penolakan',
       block: 'Blokir akun',
       blockReason: 'Alasan pemblokiran',
+      confirm: 'Oke',
       blocked: 'Diblokir',
       verified: 'Terverifikasi',
       unverified: 'Belum terverifikasi',
@@ -416,8 +417,7 @@
         created: 'Dibuat',
         emailStatus: 'Status surel',
         agentAccess: 'Akses agen AI',
-        review: 'Peninjauan',
-        block: 'Pemblokiran',
+        actions: 'Tindakan',
       },
       status: {
         none: 'Belum ada profil yang dikirim',

@@ -406,6 +406,7 @@
       rejectReason: 'Skäl för avslag',
       block: 'Blockera konto',
       blockReason: 'Skäl för blockering',
+      confirm: 'Bekräfta',
       blocked: 'Blockerat',
       verified: 'Bekräftad',
       unverified: 'Obekräftad',
@@ -416,8 +417,7 @@
         created: 'Skapat',
         emailStatus: 'E-poststatus',
         agentAccess: 'AI-agentåtkomst',
-        review: 'Granskning',
-        block: 'Blockering',
+        actions: 'Åtgärder',
       },
       status: {
         none: 'Ingen profil inskickad',

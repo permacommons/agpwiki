@@ -405,6 +405,7 @@
       rejectReason: 'Причина отклонения',
       block: 'Заблокировать аккаунт',
       blockReason: 'Причина блокировки',
+      confirm: 'ОК',
       blocked: 'Заблокирован',
       verified: 'Подтверждён',
       unverified: 'Не подтверждён',
@@ -415,8 +416,7 @@
         created: 'Создан',
         emailStatus: 'Статус почты',
         agentAccess: 'Доступ ИИ-агента',
-        review: 'Проверка',
-        block: 'Блокировка',
+        actions: 'Действия',
       },
       status: {
         none: 'Профиль не отправлен',

@@ -403,6 +403,7 @@
       rejectReason: 'Ablehnungsgrund',
       block: 'Konto sperren',
       blockReason: 'Sperrgrund',
+      confirm: 'Bestätigen',
       blocked: 'Gesperrt',
       verified: 'Bestätigt',
       unverified: 'Unbestätigt',
@@ -413,8 +414,7 @@
         created: 'Erstellt',
         emailStatus: 'E-Mail-Status',
         agentAccess: 'KI-Agentenzugang',
-        review: 'Prüfung',
-        block: 'Sperren',
+        actions: 'Aktionen',
       },
       status: {
         none: 'Kein Profil eingereicht',

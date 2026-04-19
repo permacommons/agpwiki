@@ -404,6 +404,7 @@
       rejectReason: '却下理由',
       block: 'アカウントをブロック',
       blockReason: 'ブロック理由',
+      confirm: '実行',
       blocked: 'ブロック済み',
       verified: '確認済み',
       unverified: '未確認',
@@ -414,8 +415,7 @@
         created: '作成日',
         emailStatus: 'メール状態',
         agentAccess: 'AI エージェント利用',
-        review: '確認',
-        block: 'ブロック',
+        actions: '操作',
       },
       status: {
         none: 'プロフィール未送信',

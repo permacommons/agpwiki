@@ -406,6 +406,7 @@
       rejectReason: 'अस्वीकृति का कारण',
       block: 'खाता अवरुद्ध करें',
       blockReason: 'अवरुद्ध करने का कारण',
+      confirm: 'ठीक है',
       blocked: 'अवरुद्ध',
       verified: 'सत्यापित',
       unverified: 'असत्यापित',
@@ -416,8 +417,7 @@
         created: 'बनाया गया',
         emailStatus: 'ईमेल स्थिति',
         agentAccess: 'AI एजेंट पहुँच',
-        review: 'समीक्षा',
-        block: 'अवरोध',
+        actions: 'कार्रवाइयाँ',
       },
       status: {
         none: 'कोई प्रोफ़ाइल जमा नहीं की गई',

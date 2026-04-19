@@ -404,6 +404,7 @@
       rejectReason: 'Motivo da recusa',
       block: 'Bloquear conta',
       blockReason: 'Motivo do bloqueio',
+      confirm: 'Confirmar',
       blocked: 'Bloqueada',
       verified: 'Verificada',
       unverified: 'Não verificada',
@@ -414,8 +415,7 @@
         created: 'Criada',
         emailStatus: 'Status do e-mail',
         agentAccess: 'Acesso para agente de IA',
-        review: 'Revisão',
-        block: 'Bloqueio',
+        actions: 'Ações',
       },
       status: {
         none: 'Nenhum perfil enviado',

@@ -405,6 +405,7 @@
       rejectReason: 'Reden van afwijzing',
       block: 'Account blokkeren',
       blockReason: 'Reden van blokkering',
+      confirm: 'Bevestigen',
       blocked: 'Geblokkeerd',
       verified: 'Bevestigd',
       unverified: 'Niet bevestigd',
@@ -415,8 +416,7 @@
         created: 'Aangemaakt',
         emailStatus: 'E-mailstatus',
         agentAccess: 'Toegang voor AI-agenten',
-        review: 'Beoordeling',
-        block: 'Blokkering',
+        actions: 'Acties',
       },
       status: {
         none: 'Geen profiel ingediend',

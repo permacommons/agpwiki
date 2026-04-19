@@ -405,6 +405,7 @@
       rejectReason: 'Raison du refus',
       block: 'Bloquer le compte',
       blockReason: 'Raison du blocage',
+      confirm: 'Valider',
       blocked: 'Bloqué',
       verified: 'Confirmé',
       unverified: 'Non confirmé',
@@ -415,8 +416,7 @@
         created: 'Créé',
         emailStatus: "Statut de l'e-mail",
         agentAccess: "Accès par agent IA",
-        review: 'Révision',
-        block: 'Blocage',
+        actions: 'Opérations',
       },
       status: {
         none: 'Aucun profil envoyé',

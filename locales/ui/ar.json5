@@ -402,6 +402,7 @@
       rejectReason: 'سبب الرفض',
       block: 'حظر الحساب',
       blockReason: 'سبب الحظر',
+      confirm: 'موافق',
       blocked: 'محظور',
       verified: 'مؤكد',
       unverified: 'غير مؤكد',
@@ -412,8 +413,7 @@
         created: 'تاريخ الإنشاء',
         emailStatus: 'حالة البريد الإلكتروني',
         agentAccess: 'وصول وكيل الذكاء الاصطناعي',
-        review: 'المراجعة',
-        block: 'الحظر',
+        actions: 'الإجراءات',
       },
       status: {
         none: 'لم يتم إرسال ملف شخصي',

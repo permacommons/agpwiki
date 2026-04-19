@@ -406,6 +406,7 @@
       rejectReason: 'Dôvod zamietnutia',
       block: 'Zablokovať účet',
       blockReason: 'Dôvod blokovania',
+      confirm: 'Potvrdiť',
       blocked: 'Zablokovaný',
       verified: 'Potvrdený',
       unverified: 'Nepotvrdený',
@@ -416,8 +417,7 @@
         created: 'Vytvorený',
         emailStatus: 'Stav e-mailu',
         agentAccess: 'Prístup AI agenta',
-        review: 'Kontrola',
-        block: 'Blokovanie',
+        actions: 'Akcie',
       },
       status: {
         none: 'Žiadny profil nebol odoslaný',

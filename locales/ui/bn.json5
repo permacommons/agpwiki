@@ -404,6 +404,7 @@
       rejectReason: 'প্রত্যাখ্যানের কারণ',
       block: 'অ্যাকাউন্ট ব্লক করুন',
       blockReason: 'ব্লক করার কারণ',
+      confirm: 'ঠিক আছে',
       blocked: 'ব্লক করা হয়েছে',
       verified: 'নিশ্চিত',
       unverified: 'অনিশ্চিত',
@@ -414,8 +415,7 @@
         created: 'তৈরি হয়েছে',
         emailStatus: 'ইমেইলের অবস্থা',
         agentAccess: 'AI এজেন্ট অ্যাক্সেস',
-        review: 'পর্যালোচনা',
-        block: 'ব্লক',
+        actions: 'পদক্ষেপ',
       },
       status: {
         none: 'কোনো প্রোফাইল জমা পড়েনি',
