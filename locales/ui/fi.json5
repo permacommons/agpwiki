@@ -405,6 +405,7 @@
       reject: 'Hylkää',
       rejectReason: 'Hylkäyksen syy',
       block: 'Estä tili',
+      unblock: 'Poista tilin esto',
       blockReason: 'Eston syy',
       confirm: 'Vahvista',
       blocked: 'Estetty',

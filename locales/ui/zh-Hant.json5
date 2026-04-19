@@ -403,6 +403,7 @@
       reject: '拒絕',
       rejectReason: '拒絕原因',
       block: '封鎖帳戶',
+      unblock: '解除封鎖帳戶',
       blockReason: '封鎖原因',
       confirm: '確定',
       blocked: '已封鎖',

@@ -405,6 +405,7 @@
       reject: 'مسترد کریں',
       rejectReason: 'مسترد کرنے کی وجہ',
       block: 'اکاؤنٹ بلاک کریں',
+      unblock: 'اکاؤنٹ ان بلاک کریں',
       blockReason: 'بلاک کرنے کی وجہ',
       confirm: 'ٹھیک ہے',
       blocked: 'بلاک شدہ',

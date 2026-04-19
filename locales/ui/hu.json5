@@ -405,6 +405,7 @@
       reject: 'Elutasítás',
       rejectReason: 'Elutasítás oka',
       block: 'Fiók blokkolása',
+      unblock: 'Fiók blokkolásának feloldása',
       blockReason: 'Blokkolás oka',
       confirm: 'Rendben',
       blocked: 'Blokkolva',

@@ -401,6 +401,7 @@
       reject: 'رفض',
       rejectReason: 'سبب الرفض',
       block: 'حظر الحساب',
+      unblock: 'إلغاء حظر الحساب',
       blockReason: 'سبب الحظر',
       confirm: 'موافق',
       blocked: 'محظور',

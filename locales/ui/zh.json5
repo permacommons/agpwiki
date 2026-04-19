@@ -403,6 +403,7 @@
       reject: '拒绝',
       rejectReason: '拒绝原因',
       block: '封禁账户',
+      unblock: '解除封禁账户',
       blockReason: '封禁原因',
       confirm: '确定',
       blocked: '已封禁',

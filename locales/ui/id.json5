@@ -405,6 +405,7 @@
       reject: 'Tolak',
       rejectReason: 'Alasan penolakan',
       block: 'Blokir akun',
+      unblock: 'Buka blokir akun',
       blockReason: 'Alasan pemblokiran',
       confirm: 'Oke',
       blocked: 'Diblokir',

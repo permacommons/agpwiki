@@ -403,6 +403,7 @@
       reject: 'Reddet',
       rejectReason: 'Red nedeni',
       block: 'Hesabı engelle',
+      unblock: 'Hesabın engelini kaldır',
       blockReason: 'Engelleme nedeni',
       confirm: 'Tamam',
       blocked: 'Engellendi',

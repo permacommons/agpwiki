@@ -403,6 +403,7 @@
       reject: 'Odrzuć',
       rejectReason: 'Powód odrzucenia',
       block: 'Zablokuj konto',
+      unblock: 'Odblokuj konto',
       blockReason: 'Powód blokady',
       confirm: 'Zatwierdź',
       blocked: 'Zablokowane',

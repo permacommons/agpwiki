@@ -17,6 +17,7 @@ import {
   getAccountLifecycleState,
   normalizeProfileUrl,
   rejectAgentAccessRequest,
+  unblockUserAccount,
   upsertAgentAccessRequest,
 } from '../services/account-lifecycle.js';
 import {
@@ -241,7 +242,11 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
 </details>`
           : '';
         const blockAction = row.blocked_at
-          ? `<span>${req.t('account.review.blocked')}</span>`
+          ? `<span>${req.t('account.review.blocked')}</span>
+<form method="post" action="${ACCOUNT_REVIEW_PATH}/unblock">
+  <input type="hidden" name="userId" value="${escapeHtml(userId)}" />
+  <button class="account-review-action-button" type="submit">${req.t('account.review.unblock')}</button>
+</form>`
           : `<details class="account-review-action">
   <summary>${req.t('account.review.block')}</summary>
   <form method="post" action="${ACCOUNT_REVIEW_PATH}/block">
@@ -662,6 +667,17 @@ export const registerAccountRequestRoutes = (app: Express) => {
         adminContext.session.userId,
         blockReason || null
       );
+    }
+    res.redirect(302, ACCOUNT_REVIEW_PATH);
+  });
+
+  app.post(`${ACCOUNT_REVIEW_PATH}/unblock`, async (req, res) => {
+    const adminContext = await requireSiteAdmin(req, res);
+    if (!adminContext) return;
+
+    const userId = String(req.body.userId ?? '').trim();
+    if (userId) {
+      await unblockUserAccount(userId);
     }
     res.redirect(302, ACCOUNT_REVIEW_PATH);
   });

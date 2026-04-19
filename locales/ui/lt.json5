@@ -405,6 +405,7 @@
       reject: 'Atmesti',
       rejectReason: 'Atmetimo priežastis',
       block: 'Užblokuoti paskyrą',
+      unblock: 'Atblokuoti paskyrą',
       blockReason: 'Blokavimo priežastis',
       confirm: 'Gerai',
       blocked: 'Užblokuota',

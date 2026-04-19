@@ -405,6 +405,7 @@
       reject: 'Zamietnuť',
       rejectReason: 'Dôvod zamietnutia',
       block: 'Zablokovať účet',
+      unblock: 'Odblokovať účet',
       blockReason: 'Dôvod blokovania',
       confirm: 'Potvrdiť',
       blocked: 'Zablokovaný',

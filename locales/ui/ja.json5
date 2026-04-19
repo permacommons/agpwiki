@@ -403,6 +403,7 @@
       reject: '却下',
       rejectReason: '却下理由',
       block: 'アカウントをブロック',
+      unblock: 'アカウントのブロックを解除',
       blockReason: 'ブロック理由',
       confirm: '実行',
       blocked: 'ブロック済み',

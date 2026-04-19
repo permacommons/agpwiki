@@ -90,6 +90,18 @@ export const blockUserAccount = async (
   await revokeAllUserAccess(dal, userId);
 };
 
+export const unblockUserAccount = async (userId: string) => {
+  const user = await User.filterWhere({ id: userId }).first();
+  if (!user) {
+    throw new Error(`User not found: ${userId}`);
+  }
+
+  user.blockedAt = null;
+  user.blockedBy = null;
+  user.blockReason = null;
+  await user.save();
+};
+
 export const markUserEmailVerified = async (userId: string) => {
   const user = await User.filterWhere({ id: userId }).first();
   if (!user) {

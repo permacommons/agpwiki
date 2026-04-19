@@ -403,6 +403,7 @@
       reject: 'Rifuzi',
       rejectReason: 'Kialo de rifuzo',
       block: 'Bloki konton',
+      unblock: 'Malbloki konton',
       blockReason: 'Kialo de blokado',
       confirm: 'Bone',
       blocked: 'Blokita',

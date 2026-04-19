@@ -403,6 +403,7 @@
       reject: '거부',
       rejectReason: '거부 사유',
       block: '계정 차단',
+      unblock: '계정 차단 해제',
       blockReason: '차단 사유',
       confirm: '확인',
       blocked: '차단됨',

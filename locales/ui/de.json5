@@ -402,6 +402,7 @@
       reject: 'Ablehnen',
       rejectReason: 'Ablehnungsgrund',
       block: 'Konto sperren',
+      unblock: 'Konto entsperren',
       blockReason: 'Sperrgrund',
       confirm: 'Bestätigen',
       blocked: 'Gesperrt',

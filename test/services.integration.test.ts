@@ -22,6 +22,11 @@ import {
   readCitationClaim,
   updateCitationClaim,
 } from '../src/services/citation-claim-service.js';
+import {
+  blockUserAccount,
+  getAccountLifecycleState,
+  unblockUserAccount,
+} from '../src/services/account-lifecycle.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import {
   createForumComment,
@@ -59,6 +64,37 @@ test.after(async () => {
   if (sharedDal) {
     await sharedDal.disconnect();
     sharedDal = null;
+  }
+});
+
+test('Service unblockUserAccount clears blocked account state', async () => {
+  const dal = await getDal();
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await blockUserAccount(dal, user.id, user.id, 'Test block');
+    const blockedState = await getAccountLifecycleState(user.id);
+    assert.equal(blockedState?.isBlocked, true);
+
+    await unblockUserAccount(user.id);
+    const unblockedState = await getAccountLifecycleState(user.id);
+
+    assert.equal(unblockedState?.isBlocked, false);
+    assert.equal(unblockedState?.user.blockedAt, null);
+    assert.equal(unblockedState?.user.blockedBy, null);
+    assert.equal(unblockedState?.user.blockReason, null);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
   }
 });
 

@@ -405,6 +405,7 @@
       reject: 'Zavrni',
       rejectReason: 'Razlog za zavrnitev',
       block: 'Blokiraj račun',
+      unblock: 'Odblokiraj račun',
       blockReason: 'Razlog za blokado',
       confirm: 'V redu',
       blocked: 'Blokiran',

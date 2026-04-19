@@ -404,6 +404,7 @@
       reject: 'Refuser',
       rejectReason: 'Raison du refus',
       block: 'Bloquer le compte',
+      unblock: 'Débloquer le compte',
       blockReason: 'Raison du blocage',
       confirm: 'Valider',
       blocked: 'Bloqué',

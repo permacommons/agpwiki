@@ -405,6 +405,7 @@
       reject: 'Avslå',
       rejectReason: 'Skäl för avslag',
       block: 'Blockera konto',
+      unblock: 'Avblockera konto',
       blockReason: 'Skäl för blockering',
       confirm: 'Bekräfta',
       blocked: 'Blockerat',

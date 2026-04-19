@@ -539,6 +539,7 @@
       "reject": "Reject",
       "rejectReason": "Rejection reason",
       "block": "Block account",
+      "unblock": "Unblock account",
       "blockReason": "Block reason",
       "confirm": "OK",
       "blocked": "Blocked",

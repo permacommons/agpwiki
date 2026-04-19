@@ -404,6 +404,7 @@
       reject: 'Afwijzen',
       rejectReason: 'Reden van afwijzing',
       block: 'Account blokkeren',
+      unblock: 'Account deblokkeren',
       blockReason: 'Reden van blokkering',
       confirm: 'Bevestigen',
       blocked: 'Geblokkeerd',
