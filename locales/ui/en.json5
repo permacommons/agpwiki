@@ -540,6 +540,7 @@
       "rejectReason": "Rejection reason",
       "block": "Block account",
       "blockReason": "Block reason",
+      "confirm": "OK",
       "blocked": "Blocked",
       "verified": "Verified",
       "unverified": "Unverified",
@@ -550,8 +551,7 @@
         "created": "Created",
         "emailStatus": "Email status",
         "agentAccess": "Agent access",
-        "review": "Review",
-        "block": "Block"
+        "actions": "Actions"
       },
       "status": {
         "none": "No profile submitted",
