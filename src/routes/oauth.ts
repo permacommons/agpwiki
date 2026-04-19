@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express';
-import type { TFunction } from 'i18next';
 
 import {
   formatScope,
@@ -21,39 +20,27 @@ import OAuthAccessToken from '../models/oauth-access-token.js';
 import OAuthAuthorizationCode from '../models/oauth-authorization-code.js';
 import OAuthClient from '../models/oauth-client.js';
 import OAuthRefreshToken from '../models/oauth-refresh-token.js';
-import { escapeHtml, renderLayout } from '../render.js';
+import { escapeHtml, prepareTitle } from '../render.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from '../services/account-lifecycle.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
-const renderOAuthLayout = (
-  t: TFunction,
-  res: Response,
-  title: string,
-  bodyHtml: string,
-  signedIn = false
-) =>
-  renderLayout({
-    title,
-    labelHtml: `<div class="page-label">${t('label.tool')}</div>`,
+const renderOAuthLayout = (res: Response, title: string, bodyHtml: string) => {
+  res.render('layout', {
+    title: prepareTitle(title),
+    labelHtml: `<div class="page-label">${res.req.t('label.tool')}</div>`,
     bodyHtml,
     topHtml: prependAccountBanner(res),
-    signedIn,
-    currentUserName: res.locals.currentUserName,
-    currentPath: res.locals.currentPath,
-    locale: res.locals.locale,
-    languageOptions: res.locals.languageOptions,
   });
+};
 
-const renderOAuthError = (t: TFunction, res: Response, message: string, signedIn = false) => {
+const renderOAuthError = (req: Request, res: Response, message: string) => {
   const bodyHtml = `<div class="tool-page">
   <div class="form-card">
     <p class="form-error">${escapeHtml(message)}</p>
   </div>
 </div>`;
-  res
-    .status(400)
-    .type('html')
-    .send(renderOAuthLayout(t, res, t('oauth.error'), bodyHtml, signedIn));
+  res.status(400);
+  renderOAuthLayout(res, req.t('oauth.error'), bodyHtml);
 };
 
 const pickString = (value: unknown) => {
@@ -83,7 +70,7 @@ const sendTokenError = (res: Response, status: number, error: string, descriptio
 };
 
 const redirectWithParams = (
-  t: TFunction,
+  req: Request,
   res: Response,
   redirectUri: string,
   params: Record<string, string | undefined>
@@ -98,7 +85,7 @@ const redirectWithParams = (
     res.redirect(302, url.toString());
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    renderOAuthError(t, res, `Invalid redirect URI: ${message}`);
+    renderOAuthError(req, res, `Invalid redirect URI: ${message}`);
   }
 };
 
@@ -194,29 +181,29 @@ export const registerOAuthRoutes = (app: Express) => {
     const codeChallengeMethod = pickString(req.query.code_challenge_method) ?? 'S256';
 
     if (responseType !== 'code') {
-      renderOAuthError(req.t, res, 'Invalid response type.');
+      renderOAuthError(req, res, 'Invalid response type.');
       return;
     }
 
     if (!clientId || !redirectUri || !codeChallenge) {
-      renderOAuthError(req.t, res, 'Missing required OAuth parameters.');
+      renderOAuthError(req, res, 'Missing required OAuth parameters.');
       return;
     }
 
     await initializePostgreSQL();
     const client = await requireOAuthClient(clientId);
     if (!client) {
-      renderOAuthError(req.t, res, 'Unknown OAuth client.');
+      renderOAuthError(req, res, 'Unknown OAuth client.');
       return;
     }
 
     if (!isValidRedirectUri(client, redirectUri)) {
-      renderOAuthError(req.t, res, 'Redirect URI is not registered for this client.');
+      renderOAuthError(req, res, 'Redirect URI is not registered for this client.');
       return;
     }
 
     if (!['S256', 'plain'].includes(codeChallengeMethod)) {
-      redirectWithParams(req.t, res, redirectUri, {
+      redirectWithParams(req, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
         state,
@@ -232,7 +219,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
     const accountState = await getAccountLifecycleState(session.userId);
     if (!accountState || !userCanUseAgentFeatures(accountState)) {
-      renderOAuthError(req.t, res, req.t('common.agentAccessRequired'), true);
+      renderOAuthError(req, res, req.t('common.agentAccessRequired'));
       return;
     }
 
@@ -268,17 +255,7 @@ export const registerOAuthRoutes = (app: Express) => {
   </form>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderOAuthLayout(
-          req.t,
-          res,
-          req.t('oauth.authorize.pageTitle'),
-          bodyHtml,
-          true
-        )
-      );
+    renderOAuthLayout(res, req.t('oauth.authorize.pageTitle'), bodyHtml);
   });
 
   app.post('/tool/oauth/authorize', async (req, res) => {
@@ -292,24 +269,19 @@ export const registerOAuthRoutes = (app: Express) => {
     const decision = getRequestBodyValue(req, 'decision');
 
     if (responseType !== 'code' || !clientId || !redirectUri || !codeChallenge) {
-      renderOAuthError(req.t, res, 'Missing required OAuth parameters.', true);
+      renderOAuthError(req, res, 'Missing required OAuth parameters.');
       return;
     }
 
     await initializePostgreSQL();
     const client = await requireOAuthClient(clientId);
     if (!client) {
-      renderOAuthError(req.t, res, 'Unknown OAuth client.', true);
+      renderOAuthError(req, res, 'Unknown OAuth client.');
       return;
     }
 
     if (!isValidRedirectUri(client, redirectUri)) {
-      renderOAuthError(
-        req.t,
-        res,
-        'Redirect URI is not registered for this client.',
-        true
-      );
+      renderOAuthError(req, res, 'Redirect URI is not registered for this client.');
       return;
     }
 
@@ -321,12 +293,12 @@ export const registerOAuthRoutes = (app: Express) => {
     }
     const accountState = await getAccountLifecycleState(session.userId);
     if (!accountState || !userCanUseAgentFeatures(accountState)) {
-      renderOAuthError(req.t, res, req.t('common.agentAccessRequired'), true);
+      renderOAuthError(req, res, req.t('common.agentAccessRequired'));
       return;
     }
 
     if (decision !== 'approve') {
-      redirectWithParams(req.t, res, redirectUri, {
+      redirectWithParams(req, res, redirectUri, {
         error: 'access_denied',
         state,
       });
@@ -334,7 +306,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
 
     if (!['S256', 'plain'].includes(codeChallengeMethod)) {
-      redirectWithParams(req.t, res, redirectUri, {
+      redirectWithParams(req, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
         state,
@@ -362,7 +334,7 @@ export const registerOAuthRoutes = (app: Express) => {
       createdAt: new Date(),
     });
 
-    redirectWithParams(req.t, res, redirectUri, { code, state });
+    redirectWithParams(req, res, redirectUri, { code, state });
   });
 
   app.post('/tool/oauth/token', async (req, res) => {
@@ -640,15 +612,6 @@ export const registerOAuthRoutes = (app: Express) => {
   </div>
 </div>`;
 
-    res
-      .type('html')
-      .send(
-        renderOAuthLayout(
-          req.t,
-          res,
-          req.t('oauth.callback.title'),
-          bodyHtml
-        )
-      );
+    renderOAuthLayout(res, req.t('oauth.callback.title'), bodyHtml);
   });
 };

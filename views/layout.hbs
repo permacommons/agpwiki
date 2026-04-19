@@ -19,13 +19,13 @@
   >
     {{> header}}
     {{{topHtml}}}
-    <div class="page-layout{{#unless hasSidebar}} single{{/unless}}">
+    <div class="page-layout{{#unless sidebarHtml}} single{{/unless}}">
       <main class="article">
         {{{labelHtml}}}
         <h1>{{title}}</h1>
         {{{bodyHtml}}}
       </main>
-      {{#if hasSidebar}}
+      {{#if sidebarHtml}}
       <aside class="sidebar">
         {{{sidebarHtml}}}
       </aside>

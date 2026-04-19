@@ -1,8 +1,7 @@
 import type { Express } from 'express';
 
-import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
-import { escapeHtml, renderLayout } from '../render.js';
+import { escapeHtml, prepareTitle } from '../render.js';
 import { searchWikiPages } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
@@ -32,18 +31,11 @@ export const registerSearchRoutes = (app: Express) => {
   <ul class="change-list">${resultsHtml}</ul>
 </div>`;
 
-    const signedIn = Boolean(await resolveSessionUser(req));
-    const html = renderLayout({
-      title: req.t('search.title'),
+    res.render('layout', {
+      title: prepareTitle(req.t('search.title')),
       bodyHtml,
       topHtml: prependAccountBanner(res),
-      signedIn,
-      currentUserName: res.locals.currentUserName,
-      currentPath: res.locals.currentPath,
-      locale: res.locals.locale,
-      languageOptions: res.locals.languageOptions,
     });
-    res.type('html').send(html);
   });
 
   app.get('/api/search', async (req, res) => {
