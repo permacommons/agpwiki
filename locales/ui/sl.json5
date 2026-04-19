@@ -296,6 +296,18 @@
       errorInvalid: 'Neveljaven e-poštni naslov, uporabniško ime ali geslo.',
       errorBlocked: 'Ta račun je bil blokiran.',
       errorRateLimited: 'Preveč poskusov prijave iz tega omrežja. Poskusi znova pozneje.',
+      forgotPassword: 'Si pozabil geslo?',
+    },
+    passwordReset: {
+      title: 'Ponastavi geslo',
+      description: 'Vnesi e-poštni naslov ali uporabniško ime. Če račun obstaja, bomo poslali navodila za ponastavitev gesla.',
+      submit: 'Pošlji navodila',
+      sent: 'Če račun obstaja, so bila navodila za ponastavitev gesla poslana.',
+      newPassword: 'Novo geslo',
+      reset: 'Ponastavi geslo',
+      success: 'Geslo je bilo ponastavljeno. Prijavi se za nadaljevanje.',
+      errorInvalidOrExpired: 'Ta povezava za ponastavitev gesla je neveljavna ali je potekla.',
+      errorRateLimited: 'Preveč zahtev za ponastavitev gesla iz tega omrežja. Poskusi znova pozneje.',
     },
     form: {
       identifier: 'E-pošta ali uporabniško ime',

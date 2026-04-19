@@ -295,6 +295,18 @@
       errorInvalid: 'E-mail, nome de usuário ou senha inválidos.',
       errorBlocked: 'Esta conta foi bloqueada.',
       errorRateLimited: 'Muitas tentativas de login a partir desta rede. Tente novamente mais tarde.',
+      forgotPassword: 'Esqueceu sua senha?',
+    },
+    passwordReset: {
+      title: 'Redefinir senha',
+      description: 'Digite seu e-mail ou nome de usuário e enviaremos instruções para redefinir a senha se a conta existir.',
+      submit: 'Enviar instruções',
+      sent: 'Se existir uma conta, as instruções para redefinir a senha foram enviadas.',
+      newPassword: 'Nova senha',
+      reset: 'Redefinir senha',
+      success: 'Sua senha foi redefinida. Entre para continuar.',
+      errorInvalidOrExpired: 'Este link de redefinição de senha é inválido ou expirou.',
+      errorRateLimited: 'Muitas solicitações de redefinição de senha a partir desta rede. Tente novamente mais tarde.',
     },
     form: {
       identifier: 'E-mail ou nome de usuário',

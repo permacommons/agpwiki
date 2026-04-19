@@ -296,6 +296,18 @@
       errorInvalid: 'Neteisingas el. paštas, naudotojo vardas arba slaptažodis.',
       errorBlocked: 'Ši paskyra užblokuota.',
       errorRateLimited: 'Per daug prisijungimo bandymų iš šio tinklo. Bandyk dar kartą vėliau.',
+      forgotPassword: 'Pamiršai slaptažodį?',
+    },
+    passwordReset: {
+      title: 'Atkurti slaptažodį',
+      description: 'Įvesk el. pašto adresą arba naudotojo vardą ir, jei paskyra yra, atsiųsime slaptažodžio atkūrimo instrukcijas.',
+      submit: 'Siųsti instrukcijas',
+      sent: 'Jei paskyra yra, slaptažodžio atkūrimo instrukcijos išsiųstos.',
+      newPassword: 'Naujas slaptažodis',
+      reset: 'Atkurti slaptažodį',
+      success: 'Slaptažodis atkurtas. Prisijunk, kad tęstum.',
+      errorInvalidOrExpired: 'Ši slaptažodžio atkūrimo nuoroda netinkama arba nebegalioja.',
+      errorRateLimited: 'Per daug slaptažodžio atkūrimo užklausų iš šio tinklo. Bandyk dar kartą vėliau.',
     },
     form: {
       identifier: 'El. paštas arba naudotojo vardas',

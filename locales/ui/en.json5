@@ -430,7 +430,19 @@
       "emailConfirmed": "Your email address has been confirmed. Please log in to continue.",
       "errorInvalid": "Invalid email, username, or password.",
       "errorBlocked": "This account has been blocked.",
-      "errorRateLimited": "Too many login attempts from this network. Please try again later."
+      "errorRateLimited": "Too many login attempts from this network. Please try again later.",
+      "forgotPassword": "Forgot your password?"
+    },
+    "passwordReset": {
+      "title": "Reset password",
+      "description": "Enter your email address or username and we'll send password reset instructions if the account exists.",
+      "submit": "Send reset instructions",
+      "sent": "If an account exists, password reset instructions have been sent.",
+      "newPassword": "New password",
+      "reset": "Reset password",
+      "success": "Your password has been reset. Please log in to continue.",
+      "errorInvalidOrExpired": "This password reset link is invalid or has expired.",
+      "errorRateLimited": "Too many password reset requests from this network. Please try again later."
     },
     "form": {
       "identifier": "Email or username",

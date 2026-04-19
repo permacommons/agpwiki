@@ -3,6 +3,9 @@ import { randomBytes } from 'node:crypto';
 import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
+import { createSession } from '../src/auth/session.js';
+import { hashToken } from '../src/auth/tokens.js';
+import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
 import {
@@ -27,6 +30,11 @@ import {
   getAccountLifecycleState,
   unblockUserAccount,
 } from '../src/services/account-lifecycle.js';
+import {
+  createPasswordResetToken,
+  requestPasswordReset,
+  resetPasswordWithToken,
+} from '../src/services/password-reset.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import {
   createForumComment,
@@ -49,6 +57,8 @@ import {
   rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import AuthSession from '../src/models/auth-session.js';
+import PasswordResetToken from '../src/models/password-reset-token.js';
 import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
 
@@ -86,6 +96,82 @@ test('Service unblockUserAccount clears blocked account state', async () => {
     assert.equal(unblockedState?.user.blockedAt, null);
     assert.equal(unblockedState?.user.blockedBy, null);
     assert.equal(unblockedState?.user.blockReason, null);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service resetPasswordWithToken updates password and revokes sessions', async () => {
+  const dal = await getDal();
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    user.passwordHash = await hashPassword('old-password');
+    await user.save();
+
+    const session = await createSession(user.id);
+    const { token } = await createPasswordResetToken(user);
+    const { token: otherToken } = await createPasswordResetToken(user);
+    const records = await PasswordResetToken.filterWhere({ userId: user.id }).run();
+
+    assert.equal(records.length, 2);
+    assert.notEqual(records[0]?.tokenHash, token);
+    assert.equal(records.every(record => record.usedAt === null), true);
+
+    const resetUser = await resetPasswordWithToken(dal, token, 'new-password');
+    assert.equal(resetUser?.id, user.id);
+
+    const reloadedUser = await User.filterWhere({ id: user.id }).first();
+    assert.ok(reloadedUser);
+    assert.equal(await verifyPassword('new-password', reloadedUser.passwordHash), true);
+    assert.equal(await verifyPassword('old-password', reloadedUser.passwordHash), false);
+
+    const usedRecords = await PasswordResetToken.filterWhere({ userId: user.id }).run();
+    assert.equal(usedRecords.every(record => Boolean(record.usedAt)), true);
+
+    const activeSession = await AuthSession.findActiveByHash(hashToken(session.token));
+    assert.equal(activeSession, null);
+
+    const secondUse = await resetPasswordWithToken(dal, token, 'another-password');
+    assert.equal(secondUse, null);
+
+    const otherUse = await resetPasswordWithToken(dal, otherToken, 'another-password');
+    assert.equal(otherUse, null);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service requestPasswordReset skips blocked accounts', async () => {
+  const dal = await getDal();
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    await blockUserAccount(dal, user.id, user.id, 'Test block');
+
+    const result = await requestPasswordReset(user.email);
+    const records = await PasswordResetToken.filterWhere({ userId: user.id }).run();
+
+    assert.equal(result.requested, false);
+    assert.equal(records.length, 0);
   } finally {
     try {
       await cleanupTestArtifacts(dal, {
@@ -149,6 +235,15 @@ const cleanupTestArtifacts = async (
     await dal.query("DELETE FROM forum_threads WHERE title->>'en' LIKE $1", [forumThreadPrefix]);
   }
   if (userId) {
+    await dal.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM oauth_access_tokens WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM oauth_refresh_tokens WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM oauth_authorization_codes WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM email_verification_tokens WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM agent_access_requests WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM user_notice_dismissals WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM users WHERE id = $1', [userId]);
   }

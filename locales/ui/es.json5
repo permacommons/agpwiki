@@ -295,6 +295,18 @@
       errorInvalid: 'Correo electrónico, nombre de usuario o contraseña no válidos.',
       errorBlocked: 'Esta cuenta ha sido bloqueada.',
       errorRateLimited: 'Demasiados intentos de inicio de sesión desde esta red. Inténtalo de nuevo más tarde.',
+      forgotPassword: '¿Olvidaste tu contraseña?',
+    },
+    passwordReset: {
+      title: 'Restablecer contraseña',
+      description: 'Ingresa tu correo electrónico o nombre de usuario y enviaremos instrucciones para restablecer la contraseña si la cuenta existe.',
+      submit: 'Enviar instrucciones',
+      sent: 'Si existe una cuenta, se han enviado instrucciones para restablecer la contraseña.',
+      newPassword: 'Nueva contraseña',
+      reset: 'Restablecer contraseña',
+      success: 'Tu contraseña se ha restablecido. Inicia sesión para continuar.',
+      errorInvalidOrExpired: 'Este enlace para restablecer la contraseña no es válido o ha caducado.',
+      errorRateLimited: 'Demasiadas solicitudes de restablecimiento desde esta red. Inténtalo de nuevo más tarde.',
     },
     form: {
       identifier: 'Correo electrónico o nombre de usuario',

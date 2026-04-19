@@ -295,6 +295,18 @@
       errorInvalid: 'Geçersiz e-posta adresi, kullanıcı adı veya şifre.',
       errorBlocked: 'Bu hesap engellendi.',
       errorRateLimited: 'Bu ağdan çok fazla giriş denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',
+      forgotPassword: 'Şifrenizi mi unuttunuz?',
+    },
+    passwordReset: {
+      title: 'Şifreyi sıfırla',
+      description: 'E-posta adresinizi veya kullanıcı adınızı girin; hesap varsa şifre sıfırlama talimatlarını göndereceğiz.',
+      submit: 'Talimatları gönder',
+      sent: 'Hesap varsa şifre sıfırlama talimatları gönderildi.',
+      newPassword: 'Yeni şifre',
+      reset: 'Şifreyi sıfırla',
+      success: 'Şifreniz sıfırlandı. Devam etmek için giriş yapın.',
+      errorInvalidOrExpired: 'Bu şifre sıfırlama bağlantısı geçersiz veya süresi dolmuş.',
+      errorRateLimited: 'Bu ağdan çok fazla şifre sıfırlama isteği yapıldı. Lütfen daha sonra tekrar deneyin.',
     },
     form: {
       identifier: 'E-posta veya kullanıcı adı',

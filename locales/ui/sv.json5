@@ -296,6 +296,18 @@
       errorInvalid: 'Ogiltig e-postadress, användarnamn eller lösenord.',
       errorBlocked: 'Det här kontot har blockerats.',
       errorRateLimited: 'För många inloggningsförsök från det här nätverket. Försök igen senare.',
+      forgotPassword: 'Har du glömt lösenordet?',
+    },
+    passwordReset: {
+      title: 'Återställ lösenord',
+      description: 'Ange din e-postadress eller ditt användarnamn så skickar vi instruktioner för lösenordsåterställning om kontot finns.',
+      submit: 'Skicka instruktioner',
+      sent: 'Om ett konto finns har instruktioner för lösenordsåterställning skickats.',
+      newPassword: 'Nytt lösenord',
+      reset: 'Återställ lösenord',
+      success: 'Ditt lösenord har återställts. Logga in för att fortsätta.',
+      errorInvalidOrExpired: 'Den här länken för lösenordsåterställning är ogiltig eller har gått ut.',
+      errorRateLimited: 'För många begäranden om lösenordsåterställning från det här nätverket. Försök igen senare.',
     },
     form: {
       identifier: 'E-postadress eller användarnamn',

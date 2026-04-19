@@ -8,6 +8,7 @@ type RateLimitRuleConfig = {
 
 type RateLimitConfig = {
   login: RateLimitRuleConfig;
+  passwordResetRequest: RateLimitRuleConfig;
   resendConfirmationEmail: RateLimitRuleConfig;
   signup: RateLimitRuleConfig;
 };
@@ -20,6 +21,10 @@ type RateLimitBucket = {
 const defaultRateLimitConfig: RateLimitConfig = {
   login: {
     maxAttempts: 10,
+    windowMs: 15 * 60 * 1000,
+  },
+  passwordResetRequest: {
+    maxAttempts: 5,
     windowMs: 15 * 60 * 1000,
   },
   resendConfirmationEmail: {
@@ -41,6 +46,10 @@ export const getRateLimitConfig = (): RateLimitConfig => {
       login: {
         ...defaultRateLimitConfig.login,
         ...configured.login,
+      },
+      passwordResetRequest: {
+        ...defaultRateLimitConfig.passwordResetRequest,
+        ...configured.passwordResetRequest,
       },
       resendConfirmationEmail: {
         ...defaultRateLimitConfig.resendConfirmationEmail,

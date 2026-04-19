@@ -296,6 +296,18 @@
       errorInvalid: 'Adresse e-mail, nom d’utilisateur ou mot de passe invalide.',
       errorBlocked: 'Ce compte a été bloqué.',
       errorRateLimited: 'Trop de tentatives de connexion depuis ce réseau. Réessaie plus tard.',
+      forgotPassword: 'Mot de passe oublié ?',
+    },
+    passwordReset: {
+      title: 'Réinitialiser le mot de passe',
+      description: 'Saisis ton adresse e-mail ou ton nom d’utilisateur. Si le compte existe, nous enverrons les instructions de réinitialisation.',
+      submit: 'Envoyer les instructions',
+      sent: 'Si un compte existe, les instructions de réinitialisation du mot de passe ont été envoyées.',
+      newPassword: 'Nouveau mot de passe',
+      reset: 'Réinitialiser le mot de passe',
+      success: 'Ton mot de passe a été réinitialisé. Connecte-toi pour continuer.',
+      errorInvalidOrExpired: 'Ce lien de réinitialisation du mot de passe est invalide ou a expiré.',
+      errorRateLimited: 'Trop de demandes de réinitialisation depuis ce réseau. Réessaie plus tard.',
     },
     form: {
       identifier: 'E-mail ou nom d’utilisateur',

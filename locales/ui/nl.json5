@@ -296,6 +296,18 @@
       errorInvalid: 'Ongeldig e-mailadres, ongeldige gebruikersnaam of ongeldig wachtwoord.',
       errorBlocked: 'Dit account is geblokkeerd.',
       errorRateLimited: 'Te veel inlogpogingen vanaf dit netwerk. Probeer het later opnieuw.',
+      forgotPassword: 'Wachtwoord vergeten?',
+    },
+    passwordReset: {
+      title: 'Wachtwoord resetten',
+      description: 'Voer je e-mailadres of gebruikersnaam in. Als het account bestaat, sturen we instructies om het wachtwoord te resetten.',
+      submit: 'Instructies versturen',
+      sent: 'Als er een account bestaat, zijn de instructies om het wachtwoord te resetten verstuurd.',
+      newPassword: 'Nieuw wachtwoord',
+      reset: 'Wachtwoord resetten',
+      success: 'Je wachtwoord is gereset. Meld je aan om verder te gaan.',
+      errorInvalidOrExpired: 'Deze link om het wachtwoord te resetten is ongeldig of verlopen.',
+      errorRateLimited: 'Te veel verzoeken om wachtwoorden te resetten vanaf dit netwerk. Probeer het later opnieuw.',
     },
     form: {
       identifier: 'E-mailadres of gebruikersnaam',

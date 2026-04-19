@@ -295,6 +295,18 @@
       errorInvalid: 'Indirizzo e-mail, nome utente o password non validi.',
       errorBlocked: 'Questo account è stato bloccato.',
       errorRateLimited: 'Troppi tentativi di accesso da questa rete. Riprova più tardi.',
+      forgotPassword: 'Password dimenticata?',
+    },
+    passwordReset: {
+      title: 'Reimposta password',
+      description: 'Inserisci il tuo indirizzo e-mail o nome utente e invieremo le istruzioni per reimpostare la password se l’account esiste.',
+      submit: 'Invia istruzioni',
+      sent: 'Se esiste un account, sono state inviate le istruzioni per reimpostare la password.',
+      newPassword: 'Nuova password',
+      reset: 'Reimposta password',
+      success: 'La password è stata reimpostata. Accedi per continuare.',
+      errorInvalidOrExpired: 'Questo link per reimpostare la password non è valido o è scaduto.',
+      errorRateLimited: 'Troppe richieste di reimpostazione password da questa rete. Riprova più tardi.',
     },
     form: {
       identifier: 'E-mail o nome utente',

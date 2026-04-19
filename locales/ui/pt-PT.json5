@@ -295,6 +295,18 @@
       errorInvalid: 'E-mail, nome de utilizador ou palavra-passe inválidos.',
       errorBlocked: 'Esta conta foi bloqueada.',
       errorRateLimited: 'Demasiadas tentativas de início de sessão a partir desta rede. Tenta novamente mais tarde.',
+      forgotPassword: 'Esqueceste-te da palavra-passe?',
+    },
+    passwordReset: {
+      title: 'Repor palavra-passe',
+      description: 'Introduz o teu e-mail ou nome de utilizador e enviaremos instruções para repor a palavra-passe se a conta existir.',
+      submit: 'Enviar instruções',
+      sent: 'Se existir uma conta, foram enviadas instruções para repor a palavra-passe.',
+      newPassword: 'Nova palavra-passe',
+      reset: 'Repor palavra-passe',
+      success: 'A tua palavra-passe foi reposta. Inicia sessão para continuar.',
+      errorInvalidOrExpired: 'Esta ligação para repor a palavra-passe é inválida ou expirou.',
+      errorRateLimited: 'Demasiados pedidos de reposição de palavra-passe a partir desta rede. Tenta novamente mais tarde.',
     },
     form: {
       identifier: 'E-mail ou nome de utilizador',
