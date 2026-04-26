@@ -171,6 +171,9 @@
       pin: 'Pripnúť vlákno',
       unpin: 'Odopnúť vlákno',
       delete: 'Odstrániť vlákno',
+      subscribe: 'Prihlásiť sa na odber',
+      unsubscribe: 'Zrušiť odber',
+      notificationsDisabled: 'E-mailové upozornenia fóra sú momentálne vypnuté vo vašich <a href="{{settingsHref}}">nastaveniach</a>.',
     },
     pageLink: {
       context: 'Diskusia o {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Zamietnutý',
       },
     },
+  },
+  settings: {
+    title: 'Nastavenia',
+    description: 'Keď je táto možnosť zapnutá, Agpedia vám pošle e-mail, keď niekto iný odpovie vo vlákne, ktoré odoberáte. V každom vlákne sa môžete prihlásiť alebo odhlásiť z odberu.',
+    emailNotifications: 'Posielať mi e-maily o aktivite na fóre',
+    save: 'Uložiť nastavenia',
+    saved: 'Vaše nastavenia boli aktualizované.',
   },
 }

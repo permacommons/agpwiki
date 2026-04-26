@@ -35,6 +35,19 @@ import {
   requestPasswordReset,
   resetPasswordWithToken,
 } from '../src/services/password-reset.js';
+import {
+  processForumReplyCreatedNotification,
+  FORUM_REPLY_CREATED_NOTIFICATION,
+} from '../src/services/forum-notification-service.js';
+import {
+  claimPendingNotificationJobs,
+  resetProcessingNotificationJobs,
+  markNotificationJobProcessed,
+} from '../src/services/notification-queue.js';
+import {
+  isUserSubscribedToForumThread,
+  subscribeUserToForumThread,
+} from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import {
   createForumComment,
@@ -58,6 +71,8 @@ import {
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
 import AuthSession from '../src/models/auth-session.js';
+import NotificationDelivery from '../src/models/notification-delivery.js';
+import NotificationJob from '../src/models/notification-job.js';
 import PasswordResetToken from '../src/models/password-reset-token.js';
 import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
@@ -184,10 +199,571 @@ test('Service requestPasswordReset skips blocked accounts', async () => {
   }
 });
 
+test('Forum replies auto-subscribe participants and enqueue a notification job', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-notify-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let creatorIdForCleanup: string | null = null;
+  let replierIdForCleanup: string | null = null;
+
+  try {
+    const creator = await createTestUser();
+    const replier = await createTestUser();
+    creatorIdForCleanup = creator.id;
+    replierIdForCleanup = replier.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      creator.id
+    );
+
+    assert.equal(await isUserSubscribedToForumThread(thread.id, creator.id), true);
+
+    const reply = await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'First reply.',
+        language: 'en',
+      },
+      replier.id
+    );
+
+    assert.equal(await isUserSubscribedToForumThread(thread.id, replier.id), true);
+
+    const matchingJob = await findQueuedForumReplyJobByThreadId(thread.id);
+    assert.ok(matchingJob);
+    assert.equal(matchingJob.payload?.actorUserId, replier.id);
+    assert.equal(matchingJob.payload?.commentId, reply.id);
+    assert.deepEqual(matchingJob.payload?.recipientUserIds, [creator.id]);
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        creatorIdForCleanup,
+        replierIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification processing emails subscribed verified users with notifications enabled', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-delivery-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let recipientIdForCleanup: string | null = null;
+  let mutedIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const recipient = await createVerifiedTestUser();
+    const muted = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    recipientIdForCleanup = recipient.id;
+    mutedIdForCleanup = muted.id;
+
+    muted.emailNotificationsEnabled = false;
+    await muted.save();
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, recipient.id);
+    await subscribeUserToForumThread(thread.id, muted.id);
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'A **useful** reply with [a link](https://example.com).',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+
+    const sent: Array<{ to: string; subject: string; text: string }> = [];
+    await processForumReplyCreatedNotification(dal, job, async message => {
+      sent.push({
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+      });
+      return { delivered: true as const, skipped: false as const };
+    });
+    await markNotificationJobProcessed(job.id);
+
+    assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.to, recipient.email);
+
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    assert.equal(deliveries.length, 1);
+    assert.equal(deliveries[0]?.userId, recipient.id);
+    assert.equal(deliveries[0]?.status, 'sent');
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        recipientIdForCleanup,
+        mutedIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification processing includes reply excerpt and comment link', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-delivery-content-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let recipientIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const recipient = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    recipientIdForCleanup = recipient.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, recipient.id);
+
+    const reply = await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'A **useful** reply with [a link](https://example.com).',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+
+    const sent: Array<{ subject: string; text: string }> = [];
+    await processForumReplyCreatedNotification(dal, job, async message => {
+      sent.push({
+        subject: message.subject,
+        text: message.text,
+      });
+      return { delivered: true as const, skipped: false as const };
+    });
+
+    assert.equal(sent.length, 1);
+    assert.match(sent[0]?.subject ?? '', new RegExp(baseTitle));
+    assert.match(sent[0]?.text ?? '', /useful reply with a link/i);
+    assert.match(sent[0]?.text ?? '', new RegExp(reply.id));
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        recipientIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification processing records disabled email delivery as skipped', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-skipped-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let recipientIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const recipient = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    recipientIdForCleanup = recipient.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, recipient.id);
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'Reply while email delivery is disabled.',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+
+    const result = await processForumReplyCreatedNotification(dal, job, async () => ({
+      delivered: false as const,
+      skipped: true as const,
+    }));
+    assert.equal(result.sentCount, 0);
+
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    assert.equal(deliveries.length, 1);
+    assert.equal(deliveries[0]?.userId, recipient.id);
+    assert.equal(deliveries[0]?.status, 'skipped');
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        recipientIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification excerpt decodes escaped markdown HTML entities', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-entities-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let recipientIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const recipient = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    recipientIdForCleanup = recipient.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, recipient.id);
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: '<b>boo</b> boo',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+
+    const sent: Array<{ text: string; html?: string }> = [];
+    await processForumReplyCreatedNotification(dal, job, async message => {
+      sent.push({
+        text: message.text,
+        html: message.html,
+      });
+      return { delivered: true as const, skipped: false as const };
+    });
+
+    assert.equal(sent.length, 1);
+    assert.match(sent[0]?.text ?? '', /\n\n<b>boo<\/b> boo\n\n/);
+    assert.match(sent[0]?.html ?? '', /&lt;b&gt;boo&lt;\/b&gt; boo/);
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        recipientIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification retry skips recipients already marked sent', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-retry-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let firstRecipientIdForCleanup: string | null = null;
+  let secondRecipientIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const firstRecipient = await createVerifiedTestUser();
+    const secondRecipient = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    firstRecipientIdForCleanup = firstRecipient.id;
+    secondRecipientIdForCleanup = secondRecipient.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, firstRecipient.id);
+    await subscribeUserToForumThread(thread.id, secondRecipient.id);
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'Reply that will partially fail.',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+
+    const firstPassSent: string[] = [];
+    let firstFailure = false;
+    await assert.rejects(async () => {
+      await processForumReplyCreatedNotification(dal, job, async message => {
+        firstPassSent.push(message.to);
+        if (message.to === secondRecipient.email && !firstFailure) {
+          firstFailure = true;
+          throw new Error('Simulated provider failure');
+        }
+        return { delivered: true as const, skipped: false as const };
+      });
+    });
+
+    assert.deepEqual(firstPassSent, [firstRecipient.email, secondRecipient.email]);
+
+    const secondPassSent: string[] = [];
+    await processForumReplyCreatedNotification(dal, job, async message => {
+      secondPassSent.push(message.to);
+      return { delivered: true as const, skipped: false as const };
+    });
+
+    assert.deepEqual(secondPassSent, [secondRecipient.email]);
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        firstRecipientIdForCleanup,
+        secondRecipientIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum reply notifications use recipients captured at enqueue time', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-snapshot-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let earlyRecipientIdForCleanup: string | null = null;
+  let lateRecipientIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const earlyRecipient = await createVerifiedTestUser();
+    const lateRecipient = await createVerifiedTestUser();
+    actorIdForCleanup = actor.id;
+    earlyRecipientIdForCleanup = earlyRecipient.id;
+    lateRecipientIdForCleanup = lateRecipient.id;
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, earlyRecipient.id);
+
+    await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'Reply before late recipient subscribes.',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    await subscribeUserToForumThread(thread.id, lateRecipient.id);
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+    assert.deepEqual(job.payload.recipientUserIds, [earlyRecipient.id]);
+
+    const sent: string[] = [];
+    await processForumReplyCreatedNotification(dal, job, async message => {
+      sent.push(message.to);
+      return { delivered: true as const, skipped: false as const };
+    });
+
+    assert.deepEqual(sent, [earlyRecipient.email]);
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        earlyRecipientIdForCleanup,
+        lateRecipientIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Forum notification processing skips deleted comments without retrying', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-deleted-notification-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  let actorIdForCleanup: string | null = null;
+  let recipientIdForCleanup: string | null = null;
+  let moderatorIdForCleanup: string | null = null;
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const recipient = await createVerifiedTestUser();
+    const moderator = await createTestUser();
+    actorIdForCleanup = actor.id;
+    recipientIdForCleanup = recipient.id;
+    moderatorIdForCleanup = moderator.id;
+    await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
+
+    const thread = await createForumThread(
+      {
+        category: 'general',
+        title: baseTitle,
+        body: 'Opening post.',
+        language: 'en',
+      },
+      actor.id
+    );
+    await subscribeUserToForumThread(thread.id, recipient.id);
+
+    const reply = await createForumComment(
+      {
+        threadId: thread.id,
+        body: 'Reply that will be deleted before notification processing.',
+        language: 'en',
+      },
+      actor.id
+    );
+
+    await deleteForumComment(
+      dal,
+      {
+        commentId: reply.id,
+        revSummary: { en: 'Delete queued reply before notification delivery.' },
+      },
+      moderator.id
+    );
+
+    const job = await claimQueuedForumReplyJobByCommentId(dal, reply.id);
+    assert.ok(job);
+
+    let sendAttempts = 0;
+    const result = await processForumReplyCreatedNotification(dal, job, async () => {
+      sendAttempts += 1;
+      return { delivered: true as const, skipped: false as const };
+    });
+
+    assert.equal(sendAttempts, 0);
+    assert.equal(result.sentCount, 0);
+    assert.equal(result.skipped, 'comment_not_found');
+
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    assert.equal(deliveries.length, 0);
+  } finally {
+    try {
+      await cleanupNotificationScenario(dal, forumThreadPrefix, [
+        actorIdForCleanup,
+        recipientIdForCleanup,
+        moderatorIdForCleanup,
+      ]);
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Notification worker startup reset returns processing jobs to pending', async () => {
+  const dal = await getDal();
+
+  try {
+    await NotificationJob.create({
+      type: FORUM_REPLY_CREATED_NOTIFICATION,
+      payload: {
+        threadId: '00000000-0000-4000-8000-000000000001',
+        commentId: '00000000-0000-4000-8000-000000000002',
+        actorUserId: '00000000-0000-4000-8000-000000000003',
+      },
+      status: 'processing',
+      availableAt: new Date(),
+      lockedAt: new Date(),
+      lockToken: '00000000-0000-4000-8000-000000000004',
+      attemptCount: 0,
+      createdAt: new Date(),
+    });
+
+    const resetCount = await resetProcessingNotificationJobs(dal);
+    assert.equal(resetCount, 1);
+
+    const jobs = await NotificationJob.filterWhere({
+      type: FORUM_REPLY_CREATED_NOTIFICATION,
+    }).run();
+    assert.equal(jobs.length, 1);
+    assert.equal(jobs[0]?.status, 'pending');
+    assert.equal(jobs[0]?.lockedAt ?? null, null);
+    assert.equal(jobs[0]?.lockToken ?? null, null);
+  } finally {
+    await dal.query('DELETE FROM notification_deliveries');
+    await dal.query('DELETE FROM notification_jobs');
+  }
+});
+
 const createTestUser = async () => {
-  const email = `service-test-${Date.now()}@example.com`;
+  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
+  const email = `service-test-${suffix}@example.com`;
   const user = await User.create({
-    username: `servicetest${Date.now()}`,
+    username: `servicetest${suffix}`,
     displayName: 'Service Test',
     email,
     passwordHash: randomBytes(32).toString('hex'),
@@ -195,6 +771,54 @@ const createTestUser = async () => {
   });
 
   return user;
+};
+
+const createVerifiedTestUser = async () => {
+  const user = await createTestUser();
+  user.emailVerifiedAt = new Date();
+  await user.save();
+  return user;
+};
+
+const findQueuedForumReplyJobByThreadId = async (threadId: string) => {
+  const jobs = await NotificationJob.filterWhere({
+    type: FORUM_REPLY_CREATED_NOTIFICATION,
+    status: 'pending',
+  }).run();
+  return jobs.find(job => job.payload?.threadId === threadId);
+};
+
+const claimQueuedForumReplyJobByThreadId = async (
+  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
+  threadId: string
+) => {
+  const claimed = await claimPendingNotificationJobs(dal, 10);
+  return claimed.jobs.find(entry => entry.payload.threadId === threadId);
+};
+
+const claimQueuedForumReplyJobByCommentId = async (
+  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
+  commentId: string
+) => {
+  const claimed = await claimPendingNotificationJobs(dal, 10);
+  return claimed.jobs.find(entry => entry.payload.commentId === commentId);
+};
+
+const cleanupNotificationScenario = async (
+  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
+  forumThreadPrefix: string,
+  userIds: Array<string | null>
+) => {
+  await dal.query('DELETE FROM notification_deliveries');
+  await dal.query('DELETE FROM notification_jobs');
+  let shouldDeleteThreads = true;
+  for (const userId of userIds) {
+    await cleanupTestArtifacts(dal, {
+      forumThreadPrefix: shouldDeleteThreads ? forumThreadPrefix : undefined,
+      userId: userId ?? undefined,
+    });
+    shouldDeleteThreads = false;
+  }
 };
 
 const cleanupTestArtifacts = async (
@@ -229,12 +853,18 @@ const cleanupTestArtifacts = async (
   }
   if (forumThreadPrefix) {
     await dal.query(
+      "DELETE FROM forum_thread_subscriptions WHERE thread_id IN (SELECT id FROM forum_threads WHERE title->>'en' LIKE $1)",
+      [forumThreadPrefix]
+    );
+    await dal.query(
       "DELETE FROM forum_comments WHERE thread_id IN (SELECT id FROM forum_threads WHERE title->>'en' LIKE $1)",
       [forumThreadPrefix]
     );
     await dal.query("DELETE FROM forum_threads WHERE title->>'en' LIKE $1", [forumThreadPrefix]);
   }
   if (userId) {
+    await dal.query('DELETE FROM notification_deliveries WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM forum_thread_subscriptions WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM api_tokens WHERE user_id = $1', [userId]);

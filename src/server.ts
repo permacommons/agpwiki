@@ -18,6 +18,7 @@ import { registerLocaleRoutes } from './routes/locale.js';
 import { registerOAuthRoutes } from './routes/oauth.js';
 import { registerPageRoutes } from './routes/pages.js';
 import { registerSearchRoutes } from './routes/search.js';
+import { registerSettingsRoutes } from './routes/settings.js';
 import { registerToolRoutes } from './routes/tools.js';
 import { getAccountLifecycleState } from './services/account-lifecycle.js';
 import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from './services/roles.js';
@@ -78,6 +79,7 @@ app.use(async (req, res, next) => {
 
 registerLocaleRoutes(app);
 registerSearchRoutes(app);
+registerSettingsRoutes(app);
 registerAuthRoutes(app);
 registerOAuthRoutes(app);
 registerToolRoutes(app);

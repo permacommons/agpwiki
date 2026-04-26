@@ -171,6 +171,9 @@
       pin: 'Fäst tråd',
       unpin: 'Ta bort fästning',
       delete: 'Ta bort tråd',
+      subscribe: 'Prenumerera',
+      unsubscribe: 'Avsluta prenumeration',
+      notificationsDisabled: 'Forumets e-postaviseringar är för närvarande inaktiverade i dina <a href="{{settingsHref}}">inställningar</a>.',
     },
     pageLink: {
       context: 'Diskussion om {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Avslagen',
       },
     },
+  },
+  settings: {
+    title: 'Inställningar',
+    description: 'När detta är aktiverat skickar Agpedia ett e-postmeddelande till dig när någon annan svarar i en tråd som du prenumererar på. Du kan prenumerera eller avsluta prenumerationen i varje tråd.',
+    emailNotifications: 'Skicka e-post till mig om forumaktivitet',
+    save: 'Spara inställningar',
+    saved: 'Dina inställningar har uppdaterats.',
   },
 }

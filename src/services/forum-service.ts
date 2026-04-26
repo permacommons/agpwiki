@@ -1,4 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import debug from '../../util/debug.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import {
   ForbiddenError,
@@ -12,6 +13,11 @@ import type { ForumCommentInstance } from '../models/manifests/forum-comment.js'
 import type { ForumThreadInstance } from '../models/manifests/forum-thread.js';
 import { escapeHtml } from '../render.js';
 import { assertCanModerateForum } from './authorization.js';
+import {
+  enqueueForumReplyNotification,
+  subscribeActorToForumThread,
+} from './forum-notification-service.js';
+import { enqueueNotificationJob } from './notification-queue.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNonEmptyString,
@@ -442,6 +448,13 @@ export const createForumThread = async (
   comment.updatedAt = createdAt;
   await comment.save();
 
+  try {
+    await subscribeActorToForumThread(thread.id, userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to auto-subscribe thread creator for thread ${thread.id}: ${message}`);
+  }
+
   return {
     ...toForumThreadResult(thread),
     commentCount: 1,
@@ -479,6 +492,24 @@ export const createForumComment = async (
   );
   threadRevision.updatedAt = createdAt;
   await threadRevision.save();
+
+  try {
+    await subscribeActorToForumThread(thread.id, userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to auto-subscribe replier for thread ${thread.id}: ${message}`);
+  }
+  try {
+    await enqueueForumReplyNotification(
+      thread.id,
+      comment.id,
+      userId,
+      enqueueNotificationJob
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to enqueue forum reply notification for comment ${comment.id}: ${message}`);
+  }
 
   return toForumCommentResult(comment);
 };

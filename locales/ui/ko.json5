@@ -170,6 +170,9 @@
       pin: '스레드 고정',
       unpin: '스레드 고정 해제',
       delete: '스레드 삭제',
+      subscribe: '구독',
+      unsubscribe: '구독 취소',
+      notificationsDisabled: '포럼 이메일 알림이 현재 <a href="{{settingsHref}}">설정</a>에서 비활성화되어 있습니다.',
     },
     pageLink: {
       context: '{{page}}에 대한 토론.',
@@ -438,5 +441,12 @@
         rejected: '거부됨',
       },
     },
+  },
+  settings: {
+    title: '설정',
+    description: '활성화하면 내가 구독한 스레드에 다른 사람이 답글을 달 때 Agpedia가 이메일을 보냅니다. 각 스레드에서 구독하거나 구독을 취소할 수 있습니다.',
+    emailNotifications: '포럼 활동에 대한 이메일 받기',
+    save: '설정 저장',
+    saved: '설정이 업데이트되었습니다.',
   },
 }

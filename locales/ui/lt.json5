@@ -171,6 +171,9 @@
       pin: 'Prisegti giją',
       unpin: 'Atsegti giją',
       delete: 'Ištrinti giją',
+      subscribe: 'Prenumeruoti',
+      unsubscribe: 'Atsisakyti prenumeratos',
+      notificationsDisabled: 'Forumo el. pašto pranešimai šiuo metu išjungti jūsų <a href="{{settingsHref}}">nustatymuose</a>.',
     },
     pageLink: {
       context: 'Diskusija apie {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Atmesta',
       },
     },
+  },
+  settings: {
+    title: 'Nustatymai',
+    description: 'Kai ši parinktis įjungta, Agpedia siunčia jums el. laišką, kai kas nors kitas atsako į temą, kurią prenumeruojate. Kiekvienoje temoje galite prenumeruoti arba atsisakyti prenumeratos.',
+    emailNotifications: 'Siųsti man el. laiškus apie forumo veiklą',
+    save: 'Išsaugoti nustatymus',
+    saved: 'Jūsų nustatymai atnaujinti.',
   },
 }

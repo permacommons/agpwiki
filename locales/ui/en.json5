@@ -303,7 +303,10 @@
       "pinned": "Pinned",
       "pin": "Pin thread",
       "unpin": "Unpin thread",
-      "delete": "Delete thread"
+      "delete": "Delete thread",
+      "subscribe": "Subscribe",
+      "unsubscribe": "Unsubscribe",
+      "notificationsDisabled": "Forum email notifications are currently disabled in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
       "context": "Discussion for {{page}}.",
@@ -574,5 +577,12 @@
         "rejected": "Rejected"
       }
     }
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "When enabled, Agpedia emails you when someone else replies to a thread you are subscribed to. You can subscribe or unsubscribe on each thread.",
+    "emailNotifications": "Email me about forum activity",
+    "save": "Save settings",
+    "saved": "Your settings have been updated."
   }
 }

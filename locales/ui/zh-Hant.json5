@@ -170,6 +170,9 @@
       pin: '置頂主題',
       unpin: '取消置頂',
       delete: '刪除主題',
+      subscribe: '訂閱',
+      unsubscribe: '取消訂閱',
+      notificationsDisabled: '論壇電子郵件通知目前已在你的<a href="{{settingsHref}}">設定</a>中停用。',
     },
     pageLink: {
       context: '關於 {{page}} 的討論。',
@@ -438,5 +441,12 @@
         rejected: '已拒絕',
       },
     },
+  },
+  settings: {
+    title: '設定',
+    description: '啟用後，當其他人在你已訂閱的主題中回覆時，Agpedia 會寄送電子郵件給你。你可以在每個主題中訂閱或取消訂閱。',
+    emailNotifications: '寄送關於論壇活動的電子郵件給我',
+    save: '儲存設定',
+    saved: '你的設定已更新。',
   },
 }

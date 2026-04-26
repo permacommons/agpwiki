@@ -171,6 +171,9 @@
       pin: 'Téma rögzítése',
       unpin: 'Téma rögzítésének feloldása',
       delete: 'Téma törlése',
+      subscribe: 'Feliratkozás',
+      unsubscribe: 'Leiratkozás',
+      notificationsDisabled: 'A fórum e-mail-értesítései jelenleg ki vannak kapcsolva a <a href="{{settingsHref}}">beállításaidban</a>.',
     },
     pageLink: {
       context: 'Beszélgetés erről: {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Elutasítva',
       },
     },
+  },
+  settings: {
+    title: 'Beállítások',
+    description: 'Ha engedélyezve van, az Agpedia e-mailt küld, amikor valaki más válaszol egy olyan témára, amelyre feliratkoztál. Minden témánál fel- vagy leiratkozhatsz.',
+    emailNotifications: 'Kérek e-mailt a fórumos aktivitásról',
+    save: 'Beállítások mentése',
+    saved: 'A beállításaid frissültek.',
   },
 }

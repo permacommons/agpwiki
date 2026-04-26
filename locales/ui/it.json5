@@ -170,6 +170,9 @@
       pin: 'Metti in evidenza il thread',
       unpin: 'Rimuovi evidenza dal thread',
       delete: 'Elimina thread',
+      subscribe: 'Iscriviti',
+      unsubscribe: 'Annulla iscrizione',
+      notificationsDisabled: 'Le notifiche e-mail del forum sono attualmente disattivate nelle tue <a href="{{settingsHref}}">impostazioni</a>.',
     },
     pageLink: {
       context: 'Discussione su {{page}}.',
@@ -438,5 +441,12 @@
         rejected: 'Respinto',
       },
     },
+  },
+  settings: {
+    title: 'Impostazioni',
+    description: 'Quando è attivo, Agpedia ti invia un’e-mail quando qualcun altro risponde a una discussione a cui sei iscritto. Puoi iscriverti o annullare l’iscrizione per ogni discussione.',
+    emailNotifications: 'Inviami e-mail sull’attività del forum',
+    save: 'Salva impostazioni',
+    saved: 'Le tue impostazioni sono state aggiornate.',
   },
 }

@@ -170,6 +170,9 @@
       pin: 'Başlığı sabitle',
       unpin: 'Sabitliği kaldır',
       delete: 'Başlığı sil',
+      subscribe: 'Abone ol',
+      unsubscribe: 'Abonelikten çık',
+      notificationsDisabled: 'Forum e-posta bildirimleri şu anda <a href="{{settingsHref}}">ayarlarınızda</a> devre dışı.',
     },
     pageLink: {
       context: '{{page}} hakkında tartışma.',
@@ -438,5 +441,12 @@
         rejected: 'Reddedildi',
       },
     },
+  },
+  settings: {
+    title: 'Ayarlar',
+    description: 'Etkinleştirildiğinde Agpedia, abone olduğunuz bir başlığa başka biri yanıt verdiğinde size e-posta gönderir. Her başlıkta abone olabilir veya abonelikten çıkabilirsiniz.',
+    emailNotifications: 'Forum etkinliği hakkında bana e-posta gönder',
+    save: 'Ayarları kaydet',
+    saved: 'Ayarlarınız güncellendi.',
   },
 }
