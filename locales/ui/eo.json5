@@ -171,6 +171,9 @@
       pin: 'Alpingli fadenon',
       unpin: 'Malfiksi fadenon',
       delete: 'Forigi fadenon',
+      subscribe: 'Aboni',
+      unsubscribe: 'Malaboni',
+      notificationsDisabled: 'Retpoŝtaj sciigoj pri la forumo estas nun malŝaltitaj en viaj <a href="{{settingsHref}}">agordoj</a>.',
     },
     pageLink: {
       context: 'Diskuto pri {{page}}.',
@@ -438,5 +441,12 @@
         rejected: 'Rifuzita',
       },
     },
+  },
+  settings: {
+    title: 'Agordoj',
+    description: 'Kiam ĉi tio estas ŝaltita, Agpedia retpoŝtos al vi kiam iu alia respondas en fadeno, kiun vi abonis. Vi povas aboni aŭ malaboni ĉe ĉiu fadeno.',
+    emailNotifications: 'Retpoŝtu al mi pri forumaj aktivaĵoj',
+    save: 'Konservi agordojn',
+    saved: 'Viaj agordoj estis ĝisdatigitaj.',
   },
 }

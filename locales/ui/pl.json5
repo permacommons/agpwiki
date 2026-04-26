@@ -170,6 +170,9 @@
       pin: 'Przypnij wątek',
       unpin: 'Odepnij wątek',
       delete: 'Usuń wątek',
+      subscribe: 'Subskrybuj',
+      unsubscribe: 'Anuluj subskrypcję',
+      notificationsDisabled: 'Powiadomienia e-mail z forum są obecnie wyłączone w <a href="{{settingsHref}}">ustawieniach</a>.',
     },
     pageLink: {
       context: 'Dyskusja o {{page}}.',
@@ -438,5 +441,12 @@
         rejected: 'Odrzucone',
       },
     },
+  },
+  settings: {
+    title: 'Ustawienia',
+    description: 'Po włączeniu Agpedia wysyła Ci e-mail, gdy ktoś inny odpowie w wątku, który subskrybujesz. Możesz subskrybować lub anulować subskrypcję w każdym wątku.',
+    emailNotifications: 'Wysyłaj mi e-maile o aktywności forum',
+    save: 'Zapisz ustawienia',
+    saved: 'Twoje ustawienia zostały zaktualizowane.',
   },
 }

@@ -171,6 +171,9 @@
       pin: 'Pripni nit',
       unpin: 'Odpni nit',
       delete: 'Izbriši nit',
+      subscribe: 'Naroči se',
+      unsubscribe: 'Odjavi naročnino',
+      notificationsDisabled: 'E-poštna obvestila foruma so trenutno onemogočena v vaših <a href="{{settingsHref}}">nastavitvah</a>.',
     },
     pageLink: {
       context: 'Razprava o {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Zavrnjen',
       },
     },
+  },
+  settings: {
+    title: 'Nastavitve',
+    description: 'Ko je omogočeno, vam Agpedia pošlje e-pošto, ko nekdo drug odgovori v temi, na katero ste naročeni. Pri vsaki temi se lahko naročite ali odjavite.',
+    emailNotifications: 'Pošiljaj mi e-pošto o dejavnosti foruma',
+    save: 'Shrani nastavitve',
+    saved: 'Vaše nastavitve so bile posodobljene.',
   },
 }

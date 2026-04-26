@@ -171,6 +171,9 @@
       pin: 'Épingler le fil',
       unpin: 'Désépingler le fil',
       delete: 'Supprimer le fil',
+      subscribe: 'S’abonner',
+      unsubscribe: 'Se désabonner',
+      notificationsDisabled: 'Les notifications du forum par e-mail sont actuellement désactivées dans vos <a href="{{settingsHref}}">paramètres</a>.',
     },
     pageLink: {
       context: 'Discussion sur {{page}}.',
@@ -439,5 +442,12 @@
         rejected: 'Refusé',
       },
     },
+  },
+  settings: {
+    title: 'Paramètres',
+    description: 'Lorsque cette option est activée, Agpedia vous envoie un e-mail quand une autre personne répond à un fil auquel vous êtes abonné. Vous pouvez vous abonner ou vous désabonner sur chaque fil.',
+    emailNotifications: 'M’envoyer des e-mails sur l’activité du forum',
+    save: 'Enregistrer les paramètres',
+    saved: 'Vos paramètres ont été mis à jour.',
   },
 }

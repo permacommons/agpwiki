@@ -170,6 +170,9 @@
       pin: 'Fixar tópico',
       unpin: 'Desafixar tópico',
       delete: 'Eliminar tópico',
+      subscribe: 'Subscrever',
+      unsubscribe: 'Cancelar subscrição',
+      notificationsDisabled: 'As notificações por e-mail do fórum estão atualmente desativadas nas suas <a href="{{settingsHref}}">definições</a>.',
     },
     pageLink: {
       context: 'Discussão sobre {{page}}.',
@@ -438,5 +441,12 @@
         rejected: 'Recusada',
       },
     },
+  },
+  settings: {
+    title: 'Definições',
+    description: 'Quando ativado, o Agpedia envia-lhe um e-mail quando outra pessoa responde a um tópico que subscreveu. Pode subscrever ou cancelar a subscrição em cada tópico.',
+    emailNotifications: 'Receber e-mails sobre a atividade do fórum',
+    save: 'Guardar definições',
+    saved: 'As suas definições foram atualizadas.',
   },
 }

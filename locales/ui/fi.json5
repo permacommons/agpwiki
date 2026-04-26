@@ -171,6 +171,9 @@
       pin: 'Kiinnitä ketju',
       unpin: 'Poista ketjun kiinnitys',
       delete: 'Poista ketju',
+      subscribe: 'Tilaa',
+      unsubscribe: 'Peru tilaus',
+      notificationsDisabled: 'Foorumin sähköposti-ilmoitukset on tällä hetkellä poistettu käytöstä <a href="{{settingsHref}}">asetuksissasi</a>.',
     },
     pageLink: {
       context: 'Keskustelu sivusta {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Hylätty',
       },
     },
+  },
+  settings: {
+    title: 'Asetukset',
+    description: 'Kun tämä on käytössä, Agpedia lähettää sinulle sähköpostia, kun joku muu vastaa ketjuun, jota seuraat. Voit tilata tai perua tilauksen jokaisessa ketjussa.',
+    emailNotifications: 'Lähetä minulle sähköpostia foorumin toiminnasta',
+    save: 'Tallenna asetukset',
+    saved: 'Asetuksesi on päivitetty.',
   },
 }

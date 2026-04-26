@@ -170,6 +170,9 @@
       pin: 'Fijar tema',
       unpin: 'Desfijar tema',
       delete: 'Eliminar tema',
+      subscribe: 'Suscribirse',
+      unsubscribe: 'Cancelar suscripción',
+      notificationsDisabled: 'Las notificaciones por correo del foro están desactivadas actualmente en tu <a href="{{settingsHref}}">configuración</a>.',
     },
     pageLink: {
       context: 'Discusión sobre {{page}}.',
@@ -438,5 +441,12 @@
         rejected: 'Rechazada',
       },
     },
+  },
+  settings: {
+    title: 'Configuración',
+    description: 'Cuando está activado, Agpedia te envía un correo cuando otra persona responde en un hilo al que estás suscrito. Puedes suscribirte o cancelar la suscripción en cada hilo.',
+    emailNotifications: 'Enviarme correos sobre la actividad del foro',
+    save: 'Guardar configuración',
+    saved: 'Tu configuración se ha actualizado.',
   },
 }

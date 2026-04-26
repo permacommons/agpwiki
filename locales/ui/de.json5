@@ -171,6 +171,9 @@
       pin: 'Thema anpinnen',
       unpin: 'Thema lösen',
       delete: 'Thema löschen',
+      subscribe: 'Abonnieren',
+      unsubscribe: 'Abo beenden',
+      notificationsDisabled: 'Forum-E-Mail-Benachrichtigungen sind derzeit in deinen <a href="{{settingsHref}}">Einstellungen</a> deaktiviert.',
     },
     pageLink: {
       context: 'Diskussion zu {{page}}.',
@@ -437,5 +440,12 @@
         rejected: 'Abgelehnt',
       },
     },
+  },
+  settings: {
+    title: 'Einstellungen',
+    description: 'Wenn dies aktiviert ist, sendet dir Agpedia eine E-Mail, wenn jemand anders auf ein Thema antwortet, das du abonniert hast. Du kannst jedes Thema abonnieren oder das Abo beenden.',
+    emailNotifications: 'Mir E-Mails zu Forenaktivitäten senden',
+    save: 'Einstellungen speichern',
+    saved: 'Deine Einstellungen wurden aktualisiert.',
   },
 }

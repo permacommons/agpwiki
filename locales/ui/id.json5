@@ -171,6 +171,9 @@
       pin: 'Sematkan topik',
       unpin: 'Lepas sematan topik',
       delete: 'Hapus topik',
+      subscribe: 'Berlangganan',
+      unsubscribe: 'Berhenti berlangganan',
+      notificationsDisabled: 'Notifikasi email forum saat ini dinonaktifkan di <a href="{{settingsHref}}">pengaturan</a> Anda.',
     },
     pageLink: {
       context: 'Diskusi tentang {{page}}.',
@@ -440,5 +443,12 @@
         rejected: 'Ditolak',
       },
     },
+  },
+  settings: {
+    title: 'Pengaturan',
+    description: 'Saat diaktifkan, Agpedia akan mengirim email kepada Anda ketika orang lain membalas utas yang Anda ikuti. Anda dapat berlangganan atau berhenti berlangganan pada setiap utas.',
+    emailNotifications: 'Kirim email kepada saya tentang aktivitas forum',
+    save: 'Simpan pengaturan',
+    saved: 'Pengaturan Anda telah diperbarui.',
   },
 }

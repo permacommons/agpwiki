@@ -170,6 +170,9 @@
       pin: 'スレッドを固定',
       unpin: 'スレッドの固定を解除',
       delete: 'スレッドを削除',
+      subscribe: '購読する',
+      unsubscribe: '購読をやめる',
+      notificationsDisabled: 'フォーラムのメール通知は現在、あなたの<a href="{{settingsHref}}">設定</a>で無効になっています。',
     },
     pageLink: {
       context: '{{page}} についての議論。',
@@ -438,5 +441,12 @@
         rejected: '却下',
       },
     },
+  },
+  settings: {
+    title: '設定',
+    description: '有効にすると、あなたが購読しているスレッドに他の人が返信したとき、Agpedia がメールを送信します。各スレッドで購読または購読解除できます。',
+    emailNotifications: 'フォーラムの活動についてメールを受け取る',
+    save: '設定を保存',
+    saved: '設定が更新されました。',
   },
 }

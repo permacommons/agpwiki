@@ -171,6 +171,9 @@
       pin: 'Thread vastzetten',
       unpin: 'Thread losmaken',
       delete: 'Thread verwijderen',
+      subscribe: 'Abonneren',
+      unsubscribe: 'Abonnement opzeggen',
+      notificationsDisabled: 'E-mailmeldingen voor het forum zijn momenteel uitgeschakeld in je <a href="{{settingsHref}}">instellingen</a>.',
     },
     pageLink: {
       context: 'Discussie over {{page}}.',
@@ -439,5 +442,12 @@
         rejected: 'Afgewezen',
       },
     },
+  },
+  settings: {
+    title: 'Instellingen',
+    description: 'Wanneer dit is ingeschakeld, stuurt Agpedia je een e-mail wanneer iemand anders reageert op een thread waarop je bent geabonneerd. Je kunt je per thread abonneren of afmelden.',
+    emailNotifications: 'Stuur mij e-mails over forumactiviteit',
+    save: 'Instellingen opslaan',
+    saved: 'Je instellingen zijn bijgewerkt.',
   },
 }
