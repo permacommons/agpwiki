@@ -9,6 +9,7 @@ The build outputs to `dist/` with a `src/` prefix. The entrypoint is:
 - `dist/src/index.js` (web app)
 - `dist/src/mcp/stdio.js` (MCP server, stdio transport)
 - `dist/src/mcp/http.js` (MCP server, Streamable HTTP transport)
+- `dist/src/scripts/process-notifications.js` (notification worker)
 
 ## Configuration
 
@@ -192,6 +193,44 @@ Start it:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable --now agpwiki-mcp.service
+```
+
+## Notification worker
+
+Run forum notification delivery as a separate long-lived worker process.
+This deployment assumes exactly one notification worker instance. On startup,
+the worker resets any previously in-flight `processing` jobs back to
+`pending`, so do not run multiple notification workers concurrently.
+
+### systemd (notifications)
+
+Example unit at `/etc/systemd/system/agpwiki-notifications.service`:
+
+```
+[Unit]
+Description=AGP Wiki notification worker
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/agpwiki
+Environment=NODE_ENV=production
+Environment=NODE_CONFIG_DIR=/opt/agpwiki/config
+ExecStart=/usr/bin/node /opt/agpwiki/dist/src/scripts/process-notifications.js
+Restart=always
+RestartSec=5
+User=agpwiki
+Group=agpwiki
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Start it:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now agpwiki-notifications.service
 ```
 
 ### nginx proxy for MCP
