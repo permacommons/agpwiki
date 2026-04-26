@@ -760,9 +760,10 @@ test('Notification worker startup reset returns processing jobs to pending', asy
 });
 
 const createTestUser = async () => {
-  const email = `service-test-${Date.now()}@example.com`;
+  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
+  const email = `service-test-${suffix}@example.com`;
   const user = await User.create({
-    username: `servicetest${Date.now()}`,
+    username: `servicetest${suffix}`,
     displayName: 'Service Test',
     email,
     passwordHash: randomBytes(32).toString('hex'),
