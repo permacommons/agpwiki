@@ -5,6 +5,11 @@ import { layoutAssets } from '../src/asset-urls.js';
 
 test('layoutAssets include deterministic version query strings', () => {
   assert.match(layoutAssets.siteCss, /^\/static\/styles\/site\.css\?v=[\da-f]{8}$/);
+  assert.match(layoutAssets.forumJs, /^\/static\/scripts\/forum\.js\?v=[\da-f]{8}$/);
+  assert.match(
+    layoutAssets.markdownPreviewJs,
+    /^\/static\/scripts\/markdown-preview\.js\?v=[\da-f]{8}$/
+  );
   assert.match(layoutAssets.searchJs, /^\/static\/scripts\/search\.js\?v=[\da-f]{8}$/);
   assert.match(layoutAssets.metaTooltipsJs, /^\/static\/scripts\/meta-tooltips\.js\?v=[\da-f]{8}$/);
   assert.match(

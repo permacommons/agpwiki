@@ -914,6 +914,156 @@ pre.diff ins {
   display: inline-block;
   margin-right: 0.5rem;
 }
+.account-review-toolbar {
+  display: flex;
+  gap: 0.6rem 1rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 1rem;
+  margin: 1rem 0;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+}
+.account-review-notice {
+  padding: 0.65rem 0.8rem;
+  margin: 1rem 0;
+  background: #eef7ed;
+  border: 1px solid #b8d8b2;
+  color: #254a25;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.account-review-selection-actions,
+.account-review-bulk-actions,
+.account-review-meta,
+.account-review-pagination {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.account-review-selection-actions {
+  flex: 0 0 auto;
+}
+.account-review-selection-group {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 0.25rem;
+}
+.account-review-bulk-group {
+  display: grid;
+  flex: 1 1 32rem;
+  min-width: min(32rem, 100%);
+  gap: 0.25rem;
+}
+.account-review-bulk-label {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.account-review-bulk-actions {
+  align-items: flex-end;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+}
+.account-review-selection-actions button,
+.account-review-bulk-actions button,
+.account-review-pagination a,
+.account-review-pagination span {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.account-review-selected-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.2rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+.account-review-bulk-actions button {
+  background: var(--accent);
+  color: #fff;
+}
+.account-review-pagination span {
+  border-color: var(--rule);
+  color: var(--muted);
+  cursor: default;
+}
+.account-review-bulk-actions input {
+  flex: 1 1 12rem;
+  min-width: 8rem;
+  padding: 0.5rem 0.65rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.account-review-meta {
+  justify-content: space-between;
+  margin: 0.75rem 0;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+}
+.account-review-meta-bottom {
+  margin-bottom: 0;
+}
+.account-review-table th:first-child,
+.account-review-table td:first-child {
+  width: 1%;
+}
+.account-review-row.is-blocked {
+  background: #f5eee8;
+}
+.account-review-select-cell {
+  vertical-align: top;
+}
+.account-review-checkbox {
+  display: inline-grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.45rem;
+  align-items: center;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.account-review-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+.account-review-checkbox span {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.account-review-checkbox-heading span,
+.account-review-select-cell .account-review-checkbox span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .account-review-actions {
   display: flex;
   flex-direction: column;
@@ -1331,13 +1481,8 @@ button {
   background: var(--panel);
   outline: none;
 }
-.forum-quote-button {
-  display: none;
-}
-.js .forum-quote-button {
-  display: inline;
-}
-.js .forum-quote-link--fallback {
+/* Hide fallback controls when JavaScript has activated enhanced controls. */
+.js-enabled .no-js-only {
   display: none;
 }
 .forum-comments {
@@ -1848,5 +1993,62 @@ altcha-widget {
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
+  }
+  .account-review-toolbar {
+    padding: 0.85rem;
+  }
+  .account-review-selection-actions,
+  .account-review-bulk-actions,
+  .account-review-pagination {
+    align-items: stretch;
+  }
+  .account-review-selection-actions,
+  .account-review-bulk-group {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+  .account-review-selection-group {
+    flex: 1 1 100%;
+  }
+  .account-review-bulk-actions {
+    flex-wrap: wrap;
+  }
+  .account-review-selection-actions button,
+  .account-review-bulk-actions button {
+    flex: 1 1 auto;
+  }
+  .account-review-bulk-actions input {
+    flex: 1 1 100%;
+  }
+  .account-review-meta {
+    align-items: stretch;
+  }
+  .account-review-table td.account-review-select-cell {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+  .account-review-select-cell::before {
+    display: none;
+  }
+  .account-review-select-cell .account-review-checkbox span {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    border: 0;
+  }
+  .account-review-actions,
+  .account-review-actions form,
+  .account-review-action {
+    width: 100%;
+  }
+  .account-review-actions .account-review-action-button,
+  .account-review-action summary {
+    width: 100%;
+    justify-content: center;
   }
 }

@@ -562,7 +562,38 @@
       "verified": "Verified",
       "unverified": "Unverified",
       "noAction": "No review action",
+      "selectAccount": "Select {{username}}",
+      "selection": {
+        "label": "Selection shortcuts",
+        "heading": "Select from this page",
+        "selectPage": "Select all",
+        "selectUnverified": "Select unverified",
+        "clear": "Clear",
+        "selectedCount_one": "{{count}} selected",
+        "selectedCount_other": "{{count}} selected"
+      },
+      "bulk": {
+        "block": "Block selected",
+        "unblock": "Unblock selected"
+      },
+      "pagination": {
+        "label": "Account review pages",
+        "summary": "Showing {{start}}-{{end}} of {{total}} accounts",
+        "previous": "Previous",
+        "next": "Next",
+        "page": "Page {{page}} of {{pages}}"
+      },
+      "notice": {
+        "block_one": "Blocked {{count}} selected account.",
+        "block_other": "Blocked {{count}} selected accounts.",
+        "unblock_one": "Unblocked {{count}} selected account.",
+        "unblock_other": "Unblocked {{count}} selected accounts.",
+        "noneSelected": "No accounts were selected.",
+        "skippedSelf_one": "Skipped {{count}} account because admins cannot block themselves.",
+        "skippedSelf_other": "Skipped {{count}} accounts because admins cannot block themselves."
+      },
       "headers": {
+        "select": "Select",
         "username": "Username",
         "email": "Email",
         "created": "Created",

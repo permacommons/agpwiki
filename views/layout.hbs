@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{title}}</title>
     <link rel="stylesheet" href="{{{assets.siteCss}}}" />
+    {{!-- Progressive enhancement hooks: .js-enabled hides no-js-only fallbacks, noscript hides requires-js controls. --}}
+    <script>document.documentElement.classList.add('js-enabled');</script>
+    <noscript><style>.requires-js { display: none !important; }</style></noscript>
   </head>
   <body
     {{#if wikiLinkPreviewConfig}}
@@ -32,6 +35,7 @@
       {{/if}}
     </div>
     {{> footer}}
+    <script src="{{{assets.forumJs}}}" defer></script>
     <script src="{{{assets.markdownPreviewJs}}}" defer></script>
     <script src="{{{assets.searchJs}}}" defer></script>
     <script src="{{{assets.metaTooltipsJs}}}" defer></script>
