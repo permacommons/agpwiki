@@ -28,6 +28,8 @@ import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from '../services/roles.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
 const ACCOUNT_REVIEW_PATH = '/tool/review-accounts';
+const ACCOUNT_REVIEW_PAGE_SIZE = 100;
+const ACCOUNT_REVIEW_BULK_FORM_ID = 'account-review-bulk-form';
 const DEFAULT_POST_SIGNUP_REDIRECT = '/meta/welcome';
 const EMAIL_STATUS_QUERY_KEY = 'email';
 const EMAIL_STATUS_UNAVAILABLE = 'unavailable';
@@ -134,6 +136,58 @@ const withEmailStatus = (path: string, status: string) => {
 const appendOptionalEmailStatus = (path: string, emailStatus: string | null) =>
   emailStatus ? withEmailStatus(path, emailStatus) : path;
 
+const getReviewPage = (value: unknown) => {
+  if (typeof value !== 'string') return 1;
+  const page = Number.parseInt(value, 10);
+  return Number.isFinite(page) && page > 0 ? page : 1;
+};
+
+const getAccountReviewPath = (page: number) => {
+  if (page <= 1) return ACCOUNT_REVIEW_PATH;
+  return `${ACCOUNT_REVIEW_PATH}?page=${page}`;
+};
+
+const appendAccountReviewStatus = (
+  redirectTo: string,
+  status: { action: string; changed: number; skipped: number }
+) => {
+  const url = new URL(redirectTo, 'http://local');
+  url.searchParams.set('bulkAction', status.action);
+  url.searchParams.set('changed', String(status.changed));
+  if (status.skipped > 0) {
+    url.searchParams.set('skipped', String(status.skipped));
+  }
+  return `${url.pathname}${url.search}`;
+};
+
+const getReviewStatusCount = (value: unknown) => {
+  if (typeof value !== 'string') return 0;
+  const count = Number.parseInt(value, 10);
+  return Number.isFinite(count) && count > 0 ? count : 0;
+};
+
+const renderAccountReviewStatus = (req: Request) => {
+  const bulkAction = typeof req.query.bulkAction === 'string' ? req.query.bulkAction : '';
+  const changed = getReviewStatusCount(req.query.changed);
+  const skipped = getReviewStatusCount(req.query.skipped);
+  if (bulkAction !== 'block' && bulkAction !== 'unblock') return '';
+
+  const message =
+    changed > 0 && bulkAction === 'block'
+      ? req.t('account.review.notice.block', { count: changed })
+      : changed > 0 && bulkAction === 'unblock'
+        ? req.t('account.review.notice.unblock', { count: changed })
+        : req.t('account.review.notice.noneSelected');
+  const skippedHtml =
+    skipped > 0
+      ? `<div>${escapeHtml(req.t('account.review.notice.skippedSelf', { count: skipped }))}</div>`
+      : '';
+  return `<div class="account-review-notice" role="status">
+    <div>${escapeHtml(message)}</div>
+    ${skippedHtml}
+  </div>`;
+};
+
 const requireSignedInUser = async (req: Request, res: Response) => {
   const session = await resolveSessionUser(req);
   if (!session) {
@@ -175,6 +229,12 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
   if (!adminContext) return;
 
   const { dalInstance } = adminContext;
+  const requestedPage = getReviewPage(req.query.page);
+  const countResult = await dalInstance.query('SELECT COUNT(*)::int AS total FROM users');
+  const totalAccounts = Number(countResult.rows[0]?.total ?? 0);
+  const totalPages = Math.max(1, Math.ceil(totalAccounts / ACCOUNT_REVIEW_PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const offset = (page - 1) * ACCOUNT_REVIEW_PAGE_SIZE;
   const result = await dalInstance.query(
     `SELECT
        u.id,
@@ -192,14 +252,17 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
        aar.rejection_reason
      FROM users u
      LEFT JOIN agent_access_requests aar ON aar.user_id = u.id
-     ORDER BY u.created_at DESC`
+     ORDER BY u.created_at DESC
+     LIMIT $1 OFFSET $2`,
+    [ACCOUNT_REVIEW_PAGE_SIZE, offset]
   );
 
   const rows = result.rows.length === 0
-    ? `<tr><td colspan="6">${req.t('account.review.empty')}</td></tr>`
+    ? `<tr><td colspan="7">${req.t('account.review.empty')}</td></tr>`
     : result.rows.map(row => {
         const userId = String(row.id);
         const agentStatus = typeof row.agent_status === 'string' ? row.agent_status : 'none';
+        const isEmailVerified = Boolean(row.email_verified_at);
         const profileHtml =
           row.profile_url && typeof row.profile_url === 'string'
             ? `<a href="${escapeHtml(row.profile_url)}" rel="noreferrer noopener">${escapeHtml(
@@ -246,42 +309,151 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
 </details>`;
         const actions = `${reviewActions || `<span>${req.t('account.review.noAction')}</span>`}${blockAction}`;
 
-        return `<tr>
-  <td>
+        return `<tr class="account-review-row${row.blocked_at ? ' is-blocked' : ''}">
+  <td class="account-review-select-cell" data-label="${escapeHtml(req.t('account.review.headers.select'))}">
+    <label class="account-review-checkbox">
+      <input
+        type="checkbox"
+        name="userIds"
+        value="${escapeHtml(userId)}"
+        form="${ACCOUNT_REVIEW_BULK_FORM_ID}"
+        data-account-review-checkbox
+        data-email-verified="${isEmailVerified ? 'true' : 'false'}"
+      />
+      <span>${escapeHtml(req.t('account.review.selectAccount', { username: String(row.username ?? '') }))}</span>
+    </label>
+  </td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.username'))}">
     <div>${escapeHtml(String(row.username ?? ''))}</div>
     <div class="form-hint">${escapeHtml(String(row.display_name ?? ''))}</div>
   </td>
-  <td>${escapeHtml(String(row.email ?? ''))}</td>
-  <td>${escapeHtml(formatDateUTC(row.created_at as Date | string | null))}</td>
-  <td>${row.email_verified_at ? req.t('account.review.verified') : req.t('account.review.unverified')}</td>
-  <td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.email'))}">${escapeHtml(String(row.email ?? ''))}</td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.created'))}">${escapeHtml(formatDateUTC(row.created_at as Date | string | null))}</td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.emailStatus'))}">${isEmailVerified ? req.t('account.review.verified') : req.t('account.review.unverified')}</td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.agentAccess'))}">
     <div>${escapeHtml(req.t(`account.review.status.${agentStatus}`))}</div>
     <div>${escapeHtml(String(row.interests ?? ''))}</div>
     ${profileHtml}
     ${rejectionReason}
   </td>
-  <td><div class="account-review-actions">${actions}</div></td>
+  <td data-label="${escapeHtml(req.t('account.review.headers.actions'))}"><div class="account-review-actions">${actions}</div></td>
 </tr>`;
       }).join('');
 
+  const firstItem = totalAccounts === 0 ? 0 : offset + 1;
+  const lastItem = Math.min(offset + result.rows.length, totalAccounts);
+  const paginationSummary = req.t('account.review.pagination.summary', {
+    start: String(firstItem),
+    end: String(lastItem),
+    total: String(totalAccounts),
+  });
+  const paginationControls = `<nav class="account-review-pagination" aria-label="${escapeHtml(req.t('account.review.pagination.label'))}">
+    ${page > 1 ? `<a href="${getAccountReviewPath(page - 1)}">${req.t('account.review.pagination.previous')}</a>` : `<span>${req.t('account.review.pagination.previous')}</span>`}
+    <span>${escapeHtml(req.t('account.review.pagination.page', { page: String(page), pages: String(totalPages) }))}</span>
+    ${page < totalPages ? `<a href="${getAccountReviewPath(page + 1)}">${req.t('account.review.pagination.next')}</a>` : `<span>${req.t('account.review.pagination.next')}</span>`}
+  </nav>`;
   const bodyHtml = `<div class="tool-page">
-  <div class="form-card">
+  <div class="form-card" data-account-review-root>
     <p class="form-help">${req.t('account.review.description')}</p>
-    <table class="token-table">
-      <thead>
-        <tr>
-          <th>${req.t('account.review.headers.username')}</th>
-          <th>${req.t('account.review.headers.email')}</th>
-          <th>${req.t('account.review.headers.created')}</th>
-          <th>${req.t('account.review.headers.emailStatus')}</th>
-          <th>${req.t('account.review.headers.agentAccess')}</th>
-          <th>${req.t('account.review.headers.actions')}</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
+    ${renderAccountReviewStatus(req)}
+    <form id="${ACCOUNT_REVIEW_BULK_FORM_ID}" method="post" action="${ACCOUNT_REVIEW_PATH}/bulk" data-account-review-form>
+      <input type="hidden" name="redirectTo" value="${escapeHtml(getAccountReviewPath(page))}" />
+    </form>
+    <div class="account-review-toolbar">
+      <div class="account-review-selection-group">
+        <div class="account-review-bulk-label requires-js">${req.t('account.review.selection.heading')}</div>
+        <div class="account-review-selection-actions" aria-label="${escapeHtml(req.t('account.review.selection.label'))}">
+          <button class="requires-js" type="button" data-account-review-select-all>${req.t('account.review.selection.selectPage')}</button>
+          <button class="requires-js" type="button" data-account-review-select-unverified>${req.t('account.review.selection.selectUnverified')}</button>
+          <button class="requires-js" type="button" data-account-review-clear>${req.t('account.review.selection.clear')}</button>
+          <span
+            class="account-review-selected-count requires-js"
+            data-account-review-selected-count
+            data-selected-count-one="${escapeHtml(req.t('account.review.selection.selectedCount_one'))}"
+            data-selected-count-other="${escapeHtml(req.t('account.review.selection.selectedCount_other'))}"
+            aria-live="polite"
+          >${escapeHtml(req.t('account.review.selection.selectedCount', { count: 0 }))}</span>
+        </div>
+      </div>
+      <div class="account-review-bulk-group">
+        <label class="account-review-bulk-label" for="account-review-block-reason">${req.t('account.review.blockReason')}</label>
+        <div class="account-review-bulk-actions">
+          <input id="account-review-block-reason" type="text" name="blockReason" form="${ACCOUNT_REVIEW_BULK_FORM_ID}" />
+          <button type="submit" name="bulkAction" value="block" form="${ACCOUNT_REVIEW_BULK_FORM_ID}">${req.t('account.review.bulk.block')}</button>
+          <button type="submit" name="bulkAction" value="unblock" form="${ACCOUNT_REVIEW_BULK_FORM_ID}">${req.t('account.review.bulk.unblock')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="account-review-meta">
+      <span>${escapeHtml(paginationSummary)}</span>
+      ${paginationControls}
+    </div>
+    <div class="table-stack-mobile">
+      <table class="token-table account-review-table">
+        <thead>
+          <tr>
+            <th>
+              <label class="account-review-checkbox account-review-checkbox-heading requires-js">
+                <input type="checkbox" data-account-review-toggle-page />
+                <span>${req.t('account.review.headers.select')}</span>
+              </label>
+            </th>
+            <th>${req.t('account.review.headers.username')}</th>
+            <th>${req.t('account.review.headers.email')}</th>
+            <th>${req.t('account.review.headers.created')}</th>
+            <th>${req.t('account.review.headers.emailStatus')}</th>
+            <th>${req.t('account.review.headers.agentAccess')}</th>
+            <th>${req.t('account.review.headers.actions')}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <div class="account-review-meta account-review-meta-bottom">
+      <span>${escapeHtml(paginationSummary)}</span>
+      ${paginationControls}
+    </div>
   </div>
-</div>`;
+</div>
+<script>
+(() => {
+  const root = document.querySelector('[data-account-review-root]');
+  if (!root) return;
+  const checkboxes = [...root.querySelectorAll('[data-account-review-checkbox]')];
+  const pageToggle = root.querySelector('[data-account-review-toggle-page]');
+  const selectedCount = root.querySelector('[data-account-review-selected-count]');
+  const pluralRules = new Intl.PluralRules(document.documentElement.lang || undefined);
+  const updateSelectedCount = () => {
+    if (!selectedCount) return;
+    const count = checkboxes.filter(checkbox => checkbox.checked).length;
+    const template =
+      pluralRules.select(count) === 'one'
+        ? selectedCount.dataset.selectedCountOne
+        : selectedCount.dataset.selectedCountOther;
+    selectedCount.textContent = (template ?? '').replace('{{count}}', String(count));
+  };
+  const setChecked = predicate => {
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = predicate(checkbox);
+    });
+    if (pageToggle) {
+      pageToggle.checked = checkboxes.length > 0 && checkboxes.every(checkbox => checkbox.checked);
+    }
+    updateSelectedCount();
+  };
+  root.querySelector('[data-account-review-select-all]')?.addEventListener('click', () => setChecked(() => true));
+  root.querySelector('[data-account-review-select-unverified]')?.addEventListener('click', () => setChecked(checkbox => checkbox.dataset.emailVerified !== 'true'));
+  root.querySelector('[data-account-review-clear]')?.addEventListener('click', () => setChecked(() => false));
+  pageToggle?.addEventListener('change', () => setChecked(() => pageToggle.checked));
+  checkboxes.forEach(checkbox => checkbox.addEventListener('change', () => {
+    if (pageToggle) {
+      pageToggle.checked = checkboxes.length > 0 && checkboxes.every(entry => entry.checked);
+    }
+    updateSelectedCount();
+  }));
+  updateSelectedCount();
+})();
+</script>`;
 
   renderToolLayout(res, req.t('account.review.title'), bodyHtml);
 };
@@ -599,5 +771,46 @@ export const registerAccountRequestRoutes = (app: Express) => {
       await unblockUserAccount(userId);
     }
     res.redirect(302, ACCOUNT_REVIEW_PATH);
+  });
+
+  app.post(`${ACCOUNT_REVIEW_PATH}/bulk`, async (req, res) => {
+    const adminContext = await requireSiteAdmin(req, res);
+    if (!adminContext) return;
+
+    const rawUserIds: string[] = Array.isArray(req.body.userIds)
+      ? req.body.userIds.map(userId => String(userId))
+      : req.body.userIds
+        ? [String(req.body.userIds)]
+        : [];
+    const userIds = [...new Set(rawUserIds.map(userId => String(userId).trim()).filter(Boolean))];
+    const bulkAction = String(req.body.bulkAction ?? '');
+    const blockReason = String(req.body.blockReason ?? '').trim();
+    let changed = 0;
+    let skipped = 0;
+
+    if (bulkAction === 'block') {
+      const targetUserIds = userIds.filter(userId => userId !== adminContext.session.userId);
+      skipped = userIds.length - targetUserIds.length;
+      await Promise.all(
+        targetUserIds.map(userId =>
+          blockUserAccount(
+            adminContext.dalInstance,
+            userId,
+            adminContext.session.userId,
+            blockReason || null
+          )
+        )
+      );
+      changed = targetUserIds.length;
+    } else if (bulkAction === 'unblock') {
+      await Promise.all(userIds.map(userId => unblockUserAccount(userId)));
+      changed = userIds.length;
+    }
+
+    const redirectTo =
+      typeof req.body.redirectTo === 'string' && req.body.redirectTo.startsWith(ACCOUNT_REVIEW_PATH)
+        ? req.body.redirectTo
+        : ACCOUNT_REVIEW_PATH;
+    res.redirect(302, appendAccountReviewStatus(redirectTo, { action: bulkAction, changed, skipped }));
   });
 };

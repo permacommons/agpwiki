@@ -733,10 +733,10 @@ const renderThreadPage = async (
   </div>
   <div class="forum-comment-body">${bodyHtml}</div>
   <div class="forum-comment-actions">
-    <a href="${quoteUrl}" class="forum-quote-link--fallback">${req.t('forum.comment.quote')}</a>
+    <a href="${quoteUrl}" class="forum-quote-link--fallback no-js-only">${req.t('forum.comment.quote')}</a>
     <button
       type="button"
-      class="forum-quote-button"
+      class="forum-quote-button requires-js"
       data-forum-quote-button
       data-forum-quote-target="forum-comment-body"
       data-forum-quote-markdown="${escapeHtml(buildForumQuote(bodySource))}"
