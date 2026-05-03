@@ -12,7 +12,13 @@ import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
-import { CITATION_CLAIM_LOCATOR_TYPES } from '../lib/citation-claims.js';
+import {
+  CITATION_CLAIM_ASSERTION_MAX_LENGTH,
+  CITATION_CLAIM_LOCATOR_LABEL_MAX_LENGTH,
+  CITATION_CLAIM_LOCATOR_TYPES,
+  CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH,
+  CITATION_CLAIM_QUOTE_MAX_LENGTH,
+} from '../lib/citation-claims.js';
 import {
   InvalidRequestError,
   PreconditionFailedError,
@@ -113,7 +119,18 @@ export interface CreateMcpServerOptions {
 
 const POLICY_PAGE_SLUG = 'meta/policy';
 const POLICY_HASH_ERROR_MESSAGE =
-  'Read /meta/policy and linked pages with wiki_readPage. Submit the contentHash of /meta/policy as policyHash.';
+  'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.';
+const SLUG_MAX_LENGTH = 200;
+const TITLE_MAX_LENGTH = 200;
+const BODY_MAX_LENGTH = 20000;
+const BLOG_SUMMARY_MAX_LENGTH = 500;
+const REV_SUMMARY_MAX_LENGTH = 300;
+const CITATION_KEY_MAX_LENGTH = 200;
+const CITATION_CLAIM_ID_MAX_LENGTH = 200;
+const LANGUAGE_TAG_MAX_LENGTH = 8;
+const CITATION_CLAIM_LOCATOR_TYPE_MAX_LENGTH = 32;
+const PAGE_CHECK_TYPE_MAX_LENGTH = 64;
+const PAGE_CHECK_STATUS_MAX_LENGTH = 32;
 
 const ensureMcpErrorMap = () => {
   const existing = z.getErrorMap();
@@ -175,6 +192,20 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   ensureMcpErrorMap();
   const { userRoles = [] } = options;
   const uuidSchema = z.string().uuid({ message: 'Must be a valid UUID.' });
+  const slugSchema = z.string().describe(`Wiki/blog slug. Max ${SLUG_MAX_LENGTH} characters.`);
+  const citationKeySchema = z
+    .string()
+    .describe(`Citation key. Max ${CITATION_KEY_MAX_LENGTH} characters.`);
+  const citationClaimIdSchema = z
+    .string()
+    .describe(`Citation claim ID. Max ${CITATION_CLAIM_ID_MAX_LENGTH} characters.`);
+  const optionalSlugSchema = slugSchema.optional().describe(slugSchema.description ?? '');
+  const optionalCitationKeySchema = citationKeySchema
+    .optional()
+    .describe(citationKeySchema.description ?? '');
+  const optionalCitationClaimIdSchema = citationClaimIdSchema
+    .optional()
+    .describe(citationClaimIdSchema.description ?? '');
   const pageCheckTypeSchema = z
     .string()
     .refine(
@@ -182,14 +213,22 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       {
         message: `Must be one of: ${PAGE_CHECK_TYPES.join(', ')}.`,
       }
+    )
+    .describe(
+      `Page check type. Must be one of: ${PAGE_CHECK_TYPES.join(', ')}. Max ${PAGE_CHECK_TYPE_MAX_LENGTH} characters.`
     );
-  const pageCheckStatusSchema = z.enum(
-    [...PAGE_CHECK_STATUSES] as [string, ...string[]]
-  );
+  const pageCheckStatusSchema = z
+    .enum([...PAGE_CHECK_STATUSES] as [string, ...string[]])
+    .describe(
+      `Page check status. Must be one of: ${PAGE_CHECK_STATUSES.join(', ')}. Max ${PAGE_CHECK_STATUS_MAX_LENGTH} characters.`
+    );
   const claimLocatorTypeSchema = z
     .enum([...CITATION_CLAIM_LOCATOR_TYPES] as [string, ...string[]])
     .optional()
-    .nullable();
+    .nullable()
+    .describe(
+      `Citation locator type. Must be one of: ${CITATION_CLAIM_LOCATOR_TYPES.join(', ')}. Max ${CITATION_CLAIM_LOCATOR_TYPE_MAX_LENGTH} characters.`
+    );
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -288,7 +327,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     localizedNotesSchema,
     localizedRevisionSummarySchema,
     languageTagSchema,
-  } = createLocalizedSchemas();
+  } = createLocalizedSchemas({
+    languageTagMaxLength: LANGUAGE_TAG_MAX_LENGTH,
+    localized: {
+      title: { maxLength: TITLE_MAX_LENGTH },
+      body: { maxLength: BODY_MAX_LENGTH },
+      summary: { maxLength: BLOG_SUMMARY_MAX_LENGTH },
+      assertion: { maxLength: CITATION_CLAIM_ASSERTION_MAX_LENGTH },
+      quote: { maxLength: CITATION_CLAIM_QUOTE_MAX_LENGTH },
+      locatorValue: { maxLength: CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH },
+      locatorLabel: { maxLength: CITATION_CLAIM_LOCATOR_LABEL_MAX_LENGTH },
+      checkResults: { maxLength: PAGE_CHECK_RESULTS_MAX_LENGTH },
+      notes: { maxLength: PAGE_CHECK_NOTES_MAX_LENGTH },
+      revSummary: { maxLength: REV_SUMMARY_MAX_LENGTH },
+    },
+  });
 
   const pageCheckMetricsSchema = z
     .object({
@@ -320,14 +373,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       });
     });
 
-  const checkResultsDescription = `Localized check results Markdown map keyed by supported locale codes (see agpwiki://locales). Max ${PAGE_CHECK_RESULTS_MAX_LENGTH} characters per language.`;
-  const notesDescription = `Localized notes Markdown map keyed by supported locale codes (see agpwiki://locales). Optional; leave empty if not needed. Max ${PAGE_CHECK_NOTES_MAX_LENGTH} characters per language.`;
+  const notesDescription = 'Optional; leave empty if not needed.';
   const rewriteContentDescription =
     'Section content to write. For target "heading", provide body text only; the heading line is preserved automatically. For target "lead", this replaces/prepends/appends the lead text before the first heading.';
   const policyHashSchema = z
     .string()
     .describe(
-      'Submit the contentHash returned by wiki_readPage for /meta/policy after reviewing that page and its linked guidance pages.'
+      'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
     );
 
   server.registerResource(
@@ -427,7 +479,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
@@ -457,7 +509,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new citation entry with CSL JSON data. data.id is ignored; the citation key is authoritative for identity. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Create citation"}.',
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
         data: z.record(z.string(), z.unknown()),
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
@@ -513,7 +565,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new blog post with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
@@ -537,8 +589,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}.',
       inputSchema: {
-        slug: z.string(),
-        newSlug: z.string().optional(),
+        slug: slugSchema,
+        newSlug: optionalSlugSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
@@ -562,7 +614,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'List revisions for a blog post by slug.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
       },
     },
     withToolErrorHandling(async (args: { slug: string }) => {
@@ -579,7 +631,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Generate a unified diff between two blog post revisions.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
         lang: languageTagSchema.optional,
@@ -599,7 +651,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a single blog post by slug.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
       },
     },
     withToolErrorHandling(async (args: { slug: string }) => {
@@ -616,7 +668,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a specific blog post revision by revision ID.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         revId: uuidSchema,
       },
     },
@@ -634,7 +686,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Soft-delete a blog post and all its revisions. Requires blog_admin role. revSummary is required, e.g., {"en":"Remove duplicate draft of biographical post"}.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
@@ -653,7 +705,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'List revisions for a citation by key.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -670,7 +722,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Generate a unified diff between two citation revisions.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
       },
@@ -689,7 +741,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a citation by key.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -706,7 +758,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a specific citation revision by revision ID.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
         revId: uuidSchema,
       },
     },
@@ -724,8 +776,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new revision for an existing citation. data.id is ignored; the citation key is authoritative for identity. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
       inputSchema: {
-        key: z.string(),
-        newKey: z.string().optional(),
+        key: citationKeySchema,
+        newKey: optionalCitationKeySchema,
         data: z.record(z.string(), z.unknown()).optional(),
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
@@ -753,8 +805,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new claim linked to a citation. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
         assertion: localizedAssertionSchema.required,
         quote: localizedQuoteSchema.optional,
         quoteLanguage: languageTagSchema.optionalNullable,
@@ -787,9 +839,9 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new revision for an existing claim. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary is required.',
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
-        newClaimId: z.string().optional(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
+        newClaimId: optionalCitationClaimIdSchema,
         assertion: localizedAssertionSchema.optional,
         quote: localizedQuoteSchema.optional,
         quoteLanguage: languageTagSchema.optionalNullable,
@@ -822,8 +874,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'List revisions for a citation claim by key and claimId.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -840,8 +892,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Generate a unified diff between two citation claim revisions.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
         lang: languageTagSchema.optional,
@@ -861,8 +913,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a citation claim by key and claimId.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -879,8 +931,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a specific citation claim revision by revision ID.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
         revId: uuidSchema,
       },
     },
@@ -898,7 +950,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'List revisions for a wiki page by slug.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -915,7 +967,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Generate a unified diff between two revisions.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
         lang: languageTagSchema.optional,
@@ -935,7 +987,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a single wiki page by slug.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -952,7 +1004,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'Read a specific wiki page revision by revision ID.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         revId: uuidSchema,
       },
     },
@@ -970,11 +1022,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new page check for a wiki page revision. checkResults and notes use language-keyed maps keyed by supported locale codes (see agpwiki://locales). metrics is required and reports issue counts.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         type: pageCheckTypeSchema,
         status: pageCheckStatusSchema,
-        checkResults: localizedCheckResultsSchema.required.describe(checkResultsDescription),
-        notes: localizedNotesSchema.optional.describe(notesDescription),
+        checkResults: localizedCheckResultsSchema.required,
+        notes: localizedNotesSchema.optional.describe(
+          `${localizedNotesSchema.optional.description} ${notesDescription}`
+        ),
         metrics: pageCheckMetricsSchema,
         targetRevId: uuidSchema,
         completedAt: z.string().datetime().optional().nullable(),
@@ -1007,8 +1061,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         checkId: uuidSchema,
         type: pageCheckTypeSchema.optional(),
         status: pageCheckStatusSchema.optional(),
-        checkResults: localizedCheckResultsSchema.optional.describe(checkResultsDescription),
-        notes: localizedNotesSchema.optional.describe(notesDescription),
+        checkResults: localizedCheckResultsSchema.optional,
+        notes: localizedNotesSchema.optional.describe(
+          `${localizedNotesSchema.optional.description} ${notesDescription}`
+        ),
         metrics: pageCheckMetricsSchema.optional(),
         targetRevId: uuidSchema.optional(),
         completedAt: z.string().datetime().optional().nullable(),
@@ -1038,7 +1094,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: 'List the current page checks for a wiki page by slug.',
       annotations: { readOnlyHint: true },
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
       },
     },
     withToolErrorHandling(async args => {
@@ -1110,7 +1166,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         patch: z.string(),
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
@@ -1141,7 +1197,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         target: z.enum(['heading', 'lead']).optional(),
         heading: z
           .string()
@@ -1181,7 +1237,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         replacements: z
           .array(
             z.object({
@@ -1220,8 +1276,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy.',
       inputSchema: {
-        slug: z.string(),
-        newSlug: z.string().optional(),
+        slug: slugSchema,
+        newSlug: optionalSlugSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
@@ -1250,8 +1306,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Add Wiki Page Alias',
       description: 'Create a new alias slug for an existing wiki page.',
       inputSchema: {
-        slug: z.string(),
-        pageSlug: z.string(),
+        slug: slugSchema,
+        pageSlug: slugSchema,
         lang: languageTagSchema.optional,
         policyHash: policyHashSchema,
       },
@@ -1272,7 +1328,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Remove Wiki Page Alias',
       description: 'Remove an alias slug from a wiki page.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         policyHash: policyHashSchema,
       },
     },
@@ -1292,7 +1348,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Soft-delete a wiki page and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove hoax article; fails reliability policy"}.',
       inputSchema: {
-        slug: z.string(),
+        slug: slugSchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
@@ -1314,7 +1370,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Soft-delete a citation and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Delete broken URL; replaced by archived source"}.',
       inputSchema: {
-        key: z.string(),
+        key: citationKeySchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
@@ -1336,8 +1392,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description:
         'Soft-delete a citation claim and all its revisions. Requires wiki_admin role. revSummary is required.',
       inputSchema: {
-        key: z.string(),
-        claimId: z.string(),
+        key: citationKeySchema,
+        claimId: citationClaimIdSchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
