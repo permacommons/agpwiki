@@ -166,6 +166,7 @@
     "tool": "TOOL — BUILT-IN SOFTWARE FEATURE",
     "article": "FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE",
     "citation": "CITATION — REFERENCE ENTRY",
+    "media": "MEDIA — WIKIMEDIA COMMONS FILE",
     "blogPost": "BLOG POST — FROM THE AGPEDIA TEAM",
     "forum": "FORUM — HUMAN OPERATOR DISCUSSION"
   },
@@ -215,6 +216,42 @@
       "locator": "Locator: {{value}}"
     }
   },
+  "media": {
+    "rawJson": "Raw metadata JSON",
+    "revisionMeta": "Revision {{revId}} · {{date}}",
+    "revisionMetaNoDate": "Revision {{revId}}",
+    "field": {
+      // URL identifier for this media entity (lowercase letters, digits,
+      // hyphens, optional `/` segments). Distinct from the Commons file title.
+      "slug": "Slug",
+      // The exact Wikimedia Commons file title, e.g. "File:Example.jpg".
+      "commonsTitle": "Commons title",
+      // Currently always "image"; future releases may support audio/video.
+      "mediaType": "Media type",
+      // MIME type reported by Commons (e.g. image/jpeg).
+      "mime": "MIME type",
+      // Pixel dimensions; "{width} × {height}".
+      "dimensions": "Dimensions",
+      // Short license code from Commons (e.g. CC-BY-SA-4.0).
+      "license": "License",
+      // Plain-text author credit extracted from Commons metadata.
+      "author": "Author",
+      // ISO timestamp when metadata was last fetched from Commons.
+      "fetchedAt": "Metadata fetched",
+      // Default localized caption used when an embed omits its own.
+      "caption": "Default caption",
+      // Default localized alternative text for accessibility.
+      "altText": "Default alt text"
+    },
+    "diff": {
+      "slug": "Slug: {{value}}",
+      "commonsTitle": "Commons title: {{value}}",
+      "mediaType": "Media type: {{value}}",
+      "data": "Metadata: {{value}}",
+      "caption": "Default caption: {{value}}",
+      "altText": "Default alt text: {{value}}"
+    }
+  },
   "diff": {
     "revision": "Revision diff",
     "from": "From",
@@ -228,6 +265,7 @@
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
     "recentClaims": "Recent Claims",
+    "recentMedia": "Recent Media",
     "pages": "Pages",
     "blog": "Blog",
     "actions": "Actions",

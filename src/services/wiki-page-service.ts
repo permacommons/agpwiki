@@ -17,6 +17,7 @@ import {
   ValidationCollector,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
@@ -530,7 +531,11 @@ export async function createWikiPage(
   validateTitle(title, errors);
   validateBody(body, errors);
   validateRevSummary(revSummary, errors);
-  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(body, 'body', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
@@ -589,7 +594,11 @@ export async function updateWikiPage(
   validateTitle(title, errors);
   validateBody(body, errors);
   requireRevSummary(revSummary, errors);
-  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(body, 'body', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
@@ -666,7 +675,11 @@ export async function applyWikiPagePatch(
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
   const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: normalizedSlug });
   ensureNoControlCharacters({ [lang]: patched }, 'body');
-  await validateMarkdownContent(patched, `body.${lang}`, errors, [validateCitationClaimRefs]);
+  await validateMarkdownContent(patched, `body.${lang}`, errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
@@ -814,7 +827,11 @@ export async function rewriteWikiPageSection(
     });
   }
   ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [validateCitationClaimRefs]);
+  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
@@ -888,7 +905,11 @@ export async function replaceWikiPageExactText(
     });
   }
   ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [validateCitationClaimRefs]);
+  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });

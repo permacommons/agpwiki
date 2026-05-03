@@ -12,6 +12,7 @@ import {
   ValidationError,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
@@ -239,8 +240,16 @@ export async function createBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   validateRevSummary(revSummary, errors);
-  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
-  await validateLocalizedMarkdownContent(summary, 'summary', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(body, 'body', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
+  await validateLocalizedMarkdownContent(summary, 'summary', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
@@ -287,8 +296,16 @@ export async function updateBlogPost(
   validateBody(body, errors);
   validateSummary(summary, errors);
   requireRevSummary(revSummary, errors);
-  await validateLocalizedMarkdownContent(body, 'body', errors, [validateCitationClaimRefs]);
-  await validateLocalizedMarkdownContent(summary, 'summary', errors, [validateCitationClaimRefs]);
+  await validateLocalizedMarkdownContent(body, 'body', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
+  await validateLocalizedMarkdownContent(summary, 'summary', errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 

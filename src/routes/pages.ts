@@ -6,6 +6,7 @@ import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
   resolveSafeText,
@@ -412,7 +413,15 @@ export const registerPageRoutes = (app: Express) => {
         const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
         return [checkResultsSource, notesSource];
       });
-      const citationEntries = await loadCitationEntriesForSources(dalInstance, checkSources);
+      const [citationEntries, mediaRegistry] = await Promise.all([
+        loadCitationEntriesForSources(dalInstance, checkSources),
+        loadMediaEntriesForSources(dalInstance, checkSources),
+      ]);
+      const checksMarkdownOptions = {
+        ...markdownOptions,
+        mediaRegistry,
+        locale: res.locals.locale as string | undefined,
+      };
 
       const items: PageCheckDetailItem[] = await Promise.all(
         checks.map(async check => {
@@ -420,10 +429,10 @@ export const registerPageRoutes = (app: Express) => {
           const checkResultsSource = mlString.resolve(contentLang, check.checkResults)?.str ?? '';
           const notesSource = mlString.resolve(contentLang, check.notes)?.str ?? '';
           const checkResultsHtml = (
-            await renderMarkdown(checkResultsSource, citationEntries, markdownOptions)
+            await renderMarkdown(checkResultsSource, citationEntries, checksMarkdownOptions)
           ).html;
           const notesHtml = notesSource
-            ? (await renderMarkdown(notesSource, citationEntries, markdownOptions)).html
+            ? (await renderMarkdown(notesSource, citationEntries, checksMarkdownOptions)).html
             : '';
           return {
             id: check.id,
@@ -555,10 +564,15 @@ export const registerPageRoutes = (app: Express) => {
           defaultValue: 'Back to citation',
         }),
       };
-      const citationEntries = await loadCitationEntriesForSources(dalInstance, [
-        checkResultsSource,
-        notesSource,
+      const [citationEntries, mediaRegistry] = await Promise.all([
+        loadCitationEntriesForSources(dalInstance, [checkResultsSource, notesSource]),
+        loadMediaEntriesForSources(dalInstance, [checkResultsSource, notesSource]),
       ]);
+      const checkRenderOptions = {
+        ...markdownOptions,
+        mediaRegistry,
+        locale: res.locals.locale as string | undefined,
+      };
       const targetRevId = selectedRevision.targetRevId;
 
       const meta = getCheckMetaParts(
@@ -629,13 +643,13 @@ export const registerPageRoutes = (app: Express) => {
   </tbody>
 </table>`;
       const checkResultsHtml = (
-        await renderMarkdown(checkResultsSource, citationEntries, markdownOptions)
+        await renderMarkdown(checkResultsSource, citationEntries, checkRenderOptions)
       ).html;
       const notesHtml = notesSource
         ? `<div class="check-notes">${(await renderMarkdown(
             notesSource,
             citationEntries,
-            markdownOptions
+            checkRenderOptions
           )).html}</div>`
         : '';
       const bodyHtml = `<div class="check-card">
@@ -976,8 +990,9 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
       const candidateLinkSlugs = extractCandidateWikiLinkSlugs(bodySource);
-      const [citationEntries, existingLinkSlugs] = await Promise.all([
+      const [citationEntries, mediaRegistry, existingLinkSlugs] = await Promise.all([
         loadCitationEntriesForSources(dalInstance, [bodySource]),
+        loadMediaEntriesForSources(dalInstance, [bodySource]),
         findExistingWikiLinkSlugs(dalInstance, candidateLinkSlugs),
       ]);
       const missingLinkSlugs = new Set(
@@ -992,6 +1007,8 @@ export const registerPageRoutes = (app: Express) => {
           wikiLinks: {
             missingSlugs: missingLinkSlugs,
           },
+          mediaRegistry,
+          locale: res.locals.locale as string | undefined,
         }
       );
 

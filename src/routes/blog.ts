@@ -4,6 +4,7 @@ import dal from 'rev-dal';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
+import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import {
   escapeHtml,
@@ -52,7 +53,15 @@ export const registerBlogRoutes = (app: Express) => {
         });
         return mlString.resolve(contentLang, post.summary)?.str ?? '';
       });
-      const citationEntries = await loadCitationEntriesForSources(dalInstance, summaries);
+      const [citationEntries, mediaRegistry] = await Promise.all([
+        loadCitationEntriesForSources(dalInstance, summaries),
+        loadMediaEntriesForSources(dalInstance, summaries),
+      ]);
+      const listMarkdownOptions = {
+        ...markdownOptions,
+        mediaRegistry,
+        locale: res.locals.locale as string | undefined,
+      };
       const items = (
         await Promise.all(
           posts.map(async post => {
@@ -76,7 +85,7 @@ export const registerBlogRoutes = (app: Express) => {
               ? `<div class="post-summary">${(await renderMarkdown(
                   summary,
                   citationEntries,
-                  markdownOptions
+                  listMarkdownOptions
                 )).html}</div>`
               : '';
             return `<li>
@@ -195,9 +204,21 @@ export const registerBlogRoutes = (app: Express) => {
             })}</span>`
           : '';
       const bodySource = resolvedBody?.str ?? '';
-      const citationEntries = await loadCitationEntriesForSources(dalInstance, [bodySource, summary]);
+      const [citationEntries, mediaRegistry] = await Promise.all([
+        loadCitationEntriesForSources(dalInstance, [bodySource, summary]),
+        loadMediaEntriesForSources(dalInstance, [bodySource, summary]),
+      ]);
+      const postMarkdownOptions = {
+        ...markdownOptions,
+        mediaRegistry,
+        locale: res.locals.locale as string | undefined,
+      };
 
-      const { html: bodyHtml } = await renderMarkdown(bodySource, citationEntries, markdownOptions);
+      const { html: bodyHtml } = await renderMarkdown(
+        bodySource,
+        citationEntries,
+        postMarkdownOptions
+      );
 
       let diffHtml = '';
       if (diffFrom && diffTo) {
@@ -271,7 +292,7 @@ export const registerBlogRoutes = (app: Express) => {
         ? `<div class="post-summary">${(await renderMarkdown(
             summary,
             citationEntries,
-            markdownOptions
+            postMarkdownOptions
           )).html}</div>`
         : '';
       const metaHtml = `<div class="post-meta post-meta--primary post-meta--bottom">

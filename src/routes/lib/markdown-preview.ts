@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
+import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { escapeHtml, renderMarkdown } from '../../render.js';
 
 export interface MarkdownPreviewTexts {
@@ -57,12 +58,18 @@ export const createPreviewHandler =
 export const renderMarkdownPreviewHtml = async (
   dalInstance: DataAccessLayer,
   source: string,
-  backToCitationLabel: string
+  backToCitationLabel: string,
+  locale?: string
 ) => {
-  const citationEntries = await loadCitationEntriesForSources(dalInstance, [source]);
+  const [citationEntries, mediaRegistry] = await Promise.all([
+    loadCitationEntriesForSources(dalInstance, [source]),
+    loadMediaEntriesForSources(dalInstance, [source]),
+  ]);
   return (
     await renderMarkdown(source, citationEntries, {
       backToCitationLabel,
+      mediaRegistry,
+      locale,
     })
   ).html;
 };

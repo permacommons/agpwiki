@@ -9,6 +9,7 @@ export { default as EmailVerificationToken } from './email-verification-token.js
 export { default as ForumComment } from './forum-comment.js';
 export { default as ForumThread } from './forum-thread.js';
 export { default as ForumThreadSubscription } from './forum-thread-subscription.js';
+export { default as Media } from './media.js';
 export { default as NotificationDelivery } from './notification-delivery.js';
 export { default as NotificationJob } from './notification-job.js';
 export { default as OAuthAccessToken } from './oauth-access-token.js';

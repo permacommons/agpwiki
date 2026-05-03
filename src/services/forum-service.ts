@@ -226,6 +226,11 @@ const validateMarkdownBody = async (
     errors.add(field, 'must not be empty.', 'required');
     return;
   }
+  // Forum comments intentionally skip the article-content validators
+  // (citation refs, media refs, standard-image rejection) that
+  // wiki-page-service and blog-post-service apply. Forum is operator
+  // discussion, not encyclopedia content; informal `[@key]` mentions
+  // and screenshot-style image links are allowed here.
   await validateLocalizedMarkdownContent({ [language]: body }, field, errors, []);
 };
 

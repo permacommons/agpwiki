@@ -2052,3 +2052,194 @@ altcha-widget {
     justify-content: center;
   }
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+   Media (![@key]) — Wikimedia Commons embeds.
+   - figure.media.media-image-flow: small figure floated right (default
+     for ≤ MEDIA_HERO_THRESHOLD_PX); text wraps Wikipedia-style.
+   - figure.media.media-image-hero: column-wide centered block (for
+     larger sizes, e.g., 800).
+   - img.media-inline: figureless thumbnail for mid-paragraph embeds.
+   - <figcaption>: caption text on top, attribution as a smaller line below.
+   ────────────────────────────────────────────────────────────────────── */
+.article figure.media,
+.markdown-preview-body figure.media {
+  /* Hero default (overridden by .media-image-flow below). */
+  margin: 1.5rem auto;
+  padding: 0.5rem 0.5rem 0;
+  background: #fffaf0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  max-width: 100%;
+  /* width is intrinsic to the contained <img>/<video> */
+  width: fit-content;
+  text-align: center;
+}
+.article figure.media.media-image-flow,
+.markdown-preview-body figure.media.media-image-flow {
+  float: right;
+  /* Each new flow figure clears any previous right float so they
+     stack vertically instead of overlapping when a section has
+     two flow figures in close succession. Following text and
+     headings deliberately do NOT clear — letting floats spill
+     across section boundaries is what produces the Wikipedia-style
+     wrap. */
+  clear: right;
+  margin: 0.25rem 0 1rem 1.5rem;
+  /* Cap the figure width so long captions wrap inside instead of
+     stretching the figure to fill the column via fit-content's
+     max-content branch. ~17rem comfortably fits the 250 standard
+     small image plus 0.5rem padding. */
+  max-width: 17rem;
+}
+.article figure.media-audio,
+.markdown-preview-body figure.media-audio {
+  /* Audio has no natural width; let the controls span the column. */
+  width: auto;
+  max-width: 36rem;
+}
+.article figure.media img,
+.article figure.media video,
+.markdown-preview-body figure.media img,
+.markdown-preview-body figure.media video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 2px;
+}
+.article figure.media audio,
+.markdown-preview-body figure.media audio {
+  display: block;
+  width: 100%;
+}
+.article figure.media figcaption,
+.markdown-preview-body figure.media figcaption {
+  padding: 0.6rem 0.5rem 0.7rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  color: #4a4138;
+  text-align: left;
+}
+.article figure.media .media-caption-text,
+.markdown-preview-body figure.media .media-caption-text {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--ink, #1f1d1a);
+}
+.article figure.media .media-attribution,
+.markdown-preview-body figure.media .media-attribution {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted, #6f655a);
+}
+.article figure.media .media-attribution a,
+.markdown-preview-body figure.media .media-attribution a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(111, 101, 90, 0.5);
+}
+.article figure.media .media-attribution a:hover,
+.markdown-preview-body figure.media .media-attribution a:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Inline thumbnail rendered for ![@key] mid-paragraph. Floats so text wraps. */
+.article img.media-inline,
+.markdown-preview-body img.media-inline {
+  float: right;
+  max-width: 14rem;
+  height: auto;
+  margin: 0.25rem 0 0.5rem 1rem;
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+}
+.article p:has(img.media-inline)::after,
+.markdown-preview-body p:has(img.media-inline)::after {
+  /* Clear the float so the next paragraph doesn't run alongside. */
+  content: '';
+  display: block;
+  clear: both;
+}
+
+/* Missing-media placeholder rendered when an article references an
+   unknown ![@key]. Visible warning, not silent. */
+.article .media-missing,
+.markdown-preview-body .media-missing {
+  display: inline-block;
+  padding: 0.1rem 0.4rem;
+  background: #fff0e0;
+  border: 1px dashed #b88c54;
+  border-radius: 3px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  color: #6b3a00;
+}
+
+/* On the dedicated /media/:key detail page, the figure already has a
+   wrapper of its own — let it grow to the article column. */
+.media-card .media-figure-wrapper {
+  margin: 0 0 1.25rem;
+}
+.media-card figure.media {
+  margin: 0 auto 1rem;
+}
+.media-card .detail-fields {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 1rem 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.92rem;
+}
+.media-card .detail-fields .detail-field {
+  display: contents;
+}
+.media-card .detail-fields dt {
+  color: var(--muted, #6f655a);
+  font-weight: 600;
+}
+.media-card .detail-fields dd {
+  margin: 0;
+  word-break: break-word;
+}
+.media-card .media-default-caption,
+.media-card .media-default-alt,
+.media-card .media-description {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.92rem;
+  margin: 0.5rem 0;
+  color: var(--ink, #1f1d1a);
+}
+.media-card .media-raw {
+  margin-top: 1rem;
+}
+.media-card .media-raw pre {
+  font-size: 0.78rem;
+  max-height: 24rem;
+  overflow: auto;
+}
+
+@media (max-width: 720px) {
+  .article img.media-inline,
+  .markdown-preview-body img.media-inline {
+    /* Drop the float on narrow screens — let the figure span the column. */
+    float: none;
+    display: block;
+    max-width: 100%;
+    margin: 0.5rem auto;
+  }
+  .article figure.media,
+  .markdown-preview-body figure.media {
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .article figure.media.media-image-flow,
+  .markdown-preview-body figure.media.media-image-flow {
+    /* Drop the float — at narrow widths a 250-wide figure plus
+       wrapped text becomes cramped. Stack instead. */
+    float: none;
+    margin: 1rem auto;
+  }
+}
