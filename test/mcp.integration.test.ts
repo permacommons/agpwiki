@@ -247,7 +247,7 @@ test('MCP wiki write tools require the latest policy hash', async () => {
     assert.equal(rejectedPayload.error.code, 'precondition_failed');
     assert.equal(
       rejectedPayload.error.message,
-      'Read /meta/policy and linked pages with wiki_readPage. Submit the contentHash of /meta/policy as policyHash.'
+      'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
     );
     assert.deepEqual(rejectedPayload.error.details, {
       requiredPageSlug: 'meta/policy',
@@ -328,7 +328,7 @@ test('MCP citation_create rejects a stale or wrong policy hash', async () => {
     assert.equal(rejectedPayload.error.code, 'precondition_failed');
     assert.equal(
       rejectedPayload.error.message,
-      'Read /meta/policy and linked pages with wiki_readPage. Submit the contentHash of /meta/policy as policyHash.'
+      'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
     );
 
     const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });

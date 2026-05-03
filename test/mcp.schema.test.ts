@@ -93,6 +93,42 @@ test('MCP tool schemas describe localized fields', () => {
   assert.ok(pageCheckDelete.policyHash);
 });
 
+test('MCP tool schema hints describe character caps', () => {
+  const { server } = createMcpServer();
+  const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
+    ._registeredTools;
+
+  const wikiCreate = getSchemaShape(tools.wiki_createPage.inputSchema);
+  assert.ok(wikiCreate.slug?.description?.includes('Max 200 characters'));
+  assert.ok(wikiCreate.title?.description?.includes('Max 200 characters per language'));
+  assert.ok(wikiCreate.body?.description?.includes('Max 20000 characters per language'));
+  assert.ok(wikiCreate.originalLanguage?.description?.includes('Max 8 characters'));
+  assert.ok(wikiCreate.revSummary?.description?.includes('Max 300 characters per language'));
+
+  const blogCreate = getSchemaShape(tools.blog_createPost.inputSchema);
+  assert.ok(blogCreate.summary?.description?.includes('Max 500 characters per language'));
+
+  const citationUpdate = getSchemaShape(tools.citation_update.inputSchema);
+  assert.ok(citationUpdate.key?.description?.includes('Max 200 characters'));
+  assert.ok(citationUpdate.newKey?.description?.includes('Max 200 characters'));
+
+  const claimCreate = getSchemaShape(tools.claim_create.inputSchema);
+  assert.ok(claimCreate.claimId?.description?.includes('Max 200 characters'));
+  assert.ok(claimCreate.assertion?.description?.includes('Max 2000 characters per language'));
+  assert.ok(claimCreate.quote?.description?.includes('Max 4000 characters per language'));
+  assert.ok(claimCreate.locatorType?.description?.includes('Max 32 characters'));
+  assert.ok(claimCreate.locatorValue?.description?.includes('Max 200 characters per language'));
+  assert.ok(claimCreate.locatorLabel?.description?.includes('Max 200 characters per language'));
+
+  const pageCheckCreate = getSchemaShape(tools.page_check_create.inputSchema);
+  assert.ok(pageCheckCreate.type?.description?.includes('Max 64 characters'));
+  assert.ok(pageCheckCreate.status?.description?.includes('Max 32 characters'));
+  assert.ok(
+    pageCheckCreate.checkResults?.description?.includes('Max 2000 characters per language')
+  );
+  assert.ok(pageCheckCreate.notes?.description?.includes('Max 10000 characters per language'));
+});
+
 test('MCP localized field validation errors mention language maps', () => {
   const { server } = createMcpServer();
   const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })

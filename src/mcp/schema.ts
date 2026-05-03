@@ -17,11 +17,33 @@ type LanguageTagSchemaGroup = {
   optionalNullable: z.ZodType<OptionalNullableLanguageTag>;
 };
 
-export const createLocalizedSchemas = () => {
+type LocalizedSchemaOptions = {
+  maxLength?: number;
+};
+
+type CreateLocalizedSchemasOptions = {
+  languageTagMaxLength?: number;
+  localized?: {
+    title?: LocalizedSchemaOptions;
+    body?: LocalizedSchemaOptions;
+    summary?: LocalizedSchemaOptions;
+    assertion?: LocalizedSchemaOptions;
+    quote?: LocalizedSchemaOptions;
+    locatorValue?: LocalizedSchemaOptions;
+    locatorLabel?: LocalizedSchemaOptions;
+    checkResults?: LocalizedSchemaOptions;
+    notes?: LocalizedSchemaOptions;
+    revSummary?: LocalizedSchemaOptions;
+  };
+};
+
+export const createLocalizedSchemas = (options: CreateLocalizedSchemasOptions = {}) => {
+  const maxLengthHint = (maxLength?: number) =>
+    maxLength === undefined ? '' : ` Max ${maxLength} characters per language.`;
   const languageTagDescription =
-    'Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".';
-  const localizedMapDescription = (label: string) =>
-    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}. Set a language key to null to remove it.`;
+    `Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".${options.languageTagMaxLength === undefined ? '' : ` Max ${options.languageTagMaxLength} characters.`}`;
+  const localizedMapDescription = (label: string, schemaOptions?: LocalizedSchemaOptions) =>
+    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}. Set a language key to null to remove it.${maxLengthHint(schemaOptions?.maxLength)}`;
   const localizedMapError = (label: string) =>
     `Expected ${label} to be a language-keyed map (e.g., {"en":"..."}). See agpwiki://locales.`;
 
@@ -51,8 +73,11 @@ export const createLocalizedSchemas = () => {
     };
   };
 
-  const makeLocalizedMapSchemas = (label: string): LocalizedMapSchemaGroup => {
-    const description = localizedMapDescription(label);
+  const makeLocalizedMapSchemas = (
+    label: string,
+    schemaOptions?: LocalizedSchemaOptions
+  ): LocalizedMapSchemaGroup => {
+    const description = localizedMapDescription(label, schemaOptions);
     const base = z.preprocess(
       value => {
         if (value === null || value === undefined) return value;
@@ -75,16 +100,37 @@ export const createLocalizedSchemas = () => {
   };
 
   return {
-    localizedTitleSchema: makeLocalizedMapSchemas('title'),
-    localizedBodySchema: makeLocalizedMapSchemas('body'),
-    localizedSummarySchema: makeLocalizedMapSchemas('summary Markdown'),
-    localizedAssertionSchema: makeLocalizedMapSchemas('plain-text assertion (not Markdown)'),
-    localizedQuoteSchema: makeLocalizedMapSchemas('plain-text quote (not Markdown)'),
-    localizedLocatorValueSchema: makeLocalizedMapSchemas('locator value'),
-    localizedLocatorLabelSchema: makeLocalizedMapSchemas('locator label'),
-    localizedCheckResultsSchema: makeLocalizedMapSchemas('check results Markdown'),
-    localizedNotesSchema: makeLocalizedMapSchemas('notes Markdown'),
-    localizedRevisionSummarySchema: makeLocalizedMapSchemas('revision summary'),
+    localizedTitleSchema: makeLocalizedMapSchemas('title', options.localized?.title),
+    localizedBodySchema: makeLocalizedMapSchemas('body', options.localized?.body),
+    localizedSummarySchema: makeLocalizedMapSchemas(
+      'summary Markdown',
+      options.localized?.summary
+    ),
+    localizedAssertionSchema: makeLocalizedMapSchemas(
+      'plain-text assertion (not Markdown)',
+      options.localized?.assertion
+    ),
+    localizedQuoteSchema: makeLocalizedMapSchemas(
+      'plain-text quote (not Markdown)',
+      options.localized?.quote
+    ),
+    localizedLocatorValueSchema: makeLocalizedMapSchemas(
+      'locator value',
+      options.localized?.locatorValue
+    ),
+    localizedLocatorLabelSchema: makeLocalizedMapSchemas(
+      'locator label',
+      options.localized?.locatorLabel
+    ),
+    localizedCheckResultsSchema: makeLocalizedMapSchemas(
+      'check results Markdown',
+      options.localized?.checkResults
+    ),
+    localizedNotesSchema: makeLocalizedMapSchemas('notes Markdown', options.localized?.notes),
+    localizedRevisionSummarySchema: makeLocalizedMapSchemas(
+      'revision summary',
+      options.localized?.revSummary
+    ),
     languageTagSchema: makeLanguageTagSchema(),
   };
 };
