@@ -1,0 +1,404 @@
+#!/usr/bin/env bash
+# agentic-testing entrypoint.
+#
+# Usage:
+#   ./agentic-testing/run setup
+#       Idempotent preflight: verifies dev + MCP up, seeds /meta/*
+#       (fetching from production once if seed/meta/ is empty),
+#       provisions the test user, issues an MCP token, registers
+#       the local MCP, runs an isolation probe, wipes prior
+#       artifacts. Prints TOKEN, TASK_DIR, MCP_URL, RUN_DIR (last
+#       blank — set by `launch`).
+#
+#   ./agentic-testing/run launch <agent> --task <path-to-task-md>
+#       Runs setup, then invokes the launcher in
+#       lib/launchers/<agent>.sh. Captures the transcript and
+#       analysis to runs/<ts>/.
+#
+#   ./agentic-testing/run analyze <transcript>
+#       Re-runs the analyzer against an existing transcript.
+#
+#   ./agentic-testing/run clean
+#       Wipe DB + media-storage artifacts only. No setup.
+#
+#   ./agentic-testing/run bootstrap
+#       Start `npm run dev` and `npm run mcp-http` if not already
+#       running. Optional convenience for fully-automated use.
+#
+#   ./agentic-testing/run refresh-seed
+#       Re-fetch /meta/* page bodies from agpedia.org into
+#       seed/meta/. Run when production conventions have moved.
+#
+# Read agentic-testing/README.md for the full contract and how to
+# add a launcher for an agent other than Claude Code.
+
+set -euo pipefail
+
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$HERE/.." && pwd)"
+LIB="$HERE/lib"
+SEED_META="$HERE/seed/meta"
+RUNS_DIR="$HERE/runs"
+MCP_URL="${AGENTIC_MCP_URL:-http://127.0.0.1:3333/mcp}"
+DEV_URL="${AGENTIC_DEV_URL:-http://127.0.0.1:3000/health}"
+
+usage() {
+  sed -n '3,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  exit "${1:-0}"
+}
+
+log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
+fail() { printf '[%s] error: %s\n' "$(date +%H:%M:%S)" "$*" >&2; exit 1; }
+
+check_dev_up() {
+  local code
+  code=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null || echo 000)
+  if [[ "$code" != "200" ]]; then
+    fail "dev web server not responding at $DEV_URL (got $code). Start it with 'npm run dev' or use './agentic-testing/run bootstrap'."
+  fi
+  log "dev server: ok ($DEV_URL)"
+}
+
+check_mcp_up() {
+  local code
+  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
+  if [[ "$code" != "401" ]]; then
+    fail "MCP HTTP server not responding at $MCP_URL (got $code; expected 401). Start it with 'npm run mcp-http' or use './agentic-testing/run bootstrap'."
+  fi
+  log "mcp server:  ok ($MCP_URL)"
+}
+
+# Unconditionally restart `npm run mcp-http`. The MCP process loads
+# its source via tsx at startup with no watch mode, so anything in
+# memory may diverge from what's on disk after a branch switch,
+# rebase, or local edit — and an mtime probe can't see that, because
+# checking out a different commit doesn't always change file mtimes.
+# Restarting on every setup is the only reliable way to guarantee
+# the process matches the current working tree. Cost is a few seconds.
+restart_mcp() {
+  log "restarting mcp-http (guarantees process matches current working tree)"
+  pkill -f 'tsx src/mcp/http.ts' 2>/dev/null || true
+  # Give the port a moment to release before re-binding.
+  for _ in $(seq 1 10); do
+    local code
+    code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
+    if [[ "$code" == "000" ]]; then break; fi
+    sleep 0.3
+  done
+  mkdir -p "$RUNS_DIR"
+  (cd "$REPO_ROOT" && nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &)
+  for _ in $(seq 1 30); do
+    local code
+    code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
+    if [[ "$code" == "401" ]]; then
+      log "mcp server:  ok ($MCP_URL) (fresh process)"
+      return 0
+    fi
+    sleep 1
+  done
+  fail "mcp-http did not come back up within 30 s after restart — see $RUNS_DIR/.mcp.log"
+}
+
+ensure_seed() {
+  if [[ ! -d "$SEED_META" ]] || [[ -z "$(ls -A "$SEED_META" 2>/dev/null)" ]]; then
+    log "seed/meta/ empty — fetching from production"
+    bash "$LIB/refresh-seed.sh"
+  else
+    local count
+    count=$(find "$SEED_META" -maxdepth 1 -name '*.md' | wc -l | tr -d ' ')
+    log "seed/meta/:  ok ($count file(s))"
+  fi
+}
+
+provision_user() {
+  log "provisioning test user"
+  (cd "$REPO_ROOT" && node --import tsx "$LIB/provision-user.ts" >/dev/null)
+  log "test user:   ok"
+}
+
+seed_pages() {
+  log "seeding /meta/* pages (idempotent)"
+  (cd "$REPO_ROOT" && node --import tsx "$LIB/seed-meta.ts" | sed 's/^/  /')
+}
+
+issue_token() {
+  local out
+  out=$(cd "$REPO_ROOT" && node --import tsx "$LIB/issue-token.ts" 2>&1)
+  TOKEN=$(echo "$out" | grep -E '^TOKEN=' | head -1 | cut -d= -f2-)
+  if [[ -z "$TOKEN" ]]; then
+    echo "$out" >&2
+    fail "issue-token.ts produced no TOKEN= line"
+  fi
+  log "token:       issued (${TOKEN:0:8}...${TOKEN: -4})"
+}
+
+register_mcp() {
+  if ! command -v claude >/dev/null 2>&1; then
+    log "claude CLI not on PATH — skipping mcp register (non-Claude-Code launchers can use TOKEN directly)"
+    return 0
+  fi
+  claude mcp remove agpwiki-local >/dev/null 2>&1 || true
+  claude mcp add --transport http agpwiki-local "$MCP_URL" \
+    --header "Authorization: Bearer $TOKEN" --scope user >/dev/null
+  log "mcp register: ok (user scope)"
+}
+
+isolation_probe() {
+  if ! command -v claude >/dev/null 2>&1; then
+    log "claude CLI not on PATH — skipping isolation probe (non-Claude-Code launchers must do their own)"
+    return 0
+  fi
+  log "isolation probe (~30 s)"
+  if ! bash "$LIB/isolation-probe.sh" >/dev/null 2>&1; then
+    bash "$LIB/isolation-probe.sh" >&2 || true
+    fail "isolation probe failed — STOP and fix --disallowedTools before launching."
+  fi
+  log "isolation:   ok"
+}
+
+clean_artifacts() {
+  # $@ forwarded to clean-artifacts.sh: e.g. --slug <slug>, --full,
+  # or empty for the script's own default (--full for back-compat).
+  log "cleaning prior test artifacts"
+  bash "$LIB/clean-artifacts.sh" "$@" | sed 's/^/  /'
+}
+
+# Derive an agpwiki-style slug from a free-form string. Approximation
+# only — the server's canonical slugifier is the source of truth, but
+# this matches it for the common cases (latin alphanumeric topics).
+slugify() {
+  printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
+    | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
+}
+
+# Pull the first "Topic: ..." line out of a task file. Tolerates
+# leading blockquote glyphs and surrounding markdown bolding (the
+# canonical task templates use `> Topic: **Foo**`). Empty if no match.
+extract_topic() {
+  local file="$1"
+  grep -E '^[ >]*\**Topic:' "$file" 2>/dev/null \
+    | head -1 \
+    | sed -E 's/^[ >]*\**Topic:\**[[:space:]]*//; s/\*\*//g; s/\*//g; s/[[:space:]]+$//'
+}
+
+cmd_setup() {
+  # --target-slug / --full-clean / --no-clean control the cleanup
+  # step. When unset, defaults to legacy --full for back-compat.
+  local clean_mode=full target_slug=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --target-slug) clean_mode=slug; target_slug="$2"; shift 2 ;;
+      --target-slug=*) clean_mode=slug; target_slug="${1#--target-slug=}"; shift ;;
+      --full-clean) clean_mode=full; shift ;;
+      --no-clean) clean_mode=none; shift ;;
+      *) fail "setup: unknown flag: $1" ;;
+    esac
+  done
+  if [[ "$clean_mode" == "slug" ]] && [[ -z "$target_slug" ]]; then
+    fail "setup: --target-slug requires a non-empty value"
+  fi
+
+  check_dev_up
+  restart_mcp
+  ensure_seed
+  provision_user
+  seed_pages
+  issue_token
+  register_mcp
+  isolation_probe
+  case "$clean_mode" in
+    none) log "skipping artifact cleanup (--no-clean)" ;;
+    slug) clean_artifacts --slug "$target_slug" ;;
+    full) clean_artifacts --full ;;
+  esac
+  cat <<EOF
+
+# Setup complete. Machine-readable values:
+TOKEN=$TOKEN
+MCP_URL=$MCP_URL
+TASKS_DIR=$HERE/tasks
+RUNS_DIR=$RUNS_DIR
+EOF
+}
+
+cmd_clean() {
+  clean_artifacts
+}
+
+cmd_refresh_seed() {
+  bash "$LIB/refresh-seed.sh"
+}
+
+cmd_bootstrap() {
+  if curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null | grep -q '^200$'; then
+    log "dev server already up"
+  else
+    log "starting 'npm run dev' in background (logs: $RUNS_DIR/.dev.log)"
+    mkdir -p "$RUNS_DIR"
+    (cd "$REPO_ROOT" && nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &)
+  fi
+  if curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null | grep -q '^401$'; then
+    log "mcp server already up"
+  else
+    log "starting 'npm run mcp-http' in background (logs: $RUNS_DIR/.mcp.log)"
+    mkdir -p "$RUNS_DIR"
+    (cd "$REPO_ROOT" && nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &)
+  fi
+  log "waiting up to 30 s for dev + mcp"
+  for _ in $(seq 1 30); do
+    local dev_code mcp_code
+    dev_code=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null || echo 000)
+    mcp_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
+    if [[ "$dev_code" == "200" ]] && [[ "$mcp_code" == "401" ]]; then
+      log "bootstrap: dev + mcp both up"
+      return 0
+    fi
+    sleep 1
+  done
+  fail "bootstrap: dev + mcp did not come up within 30 s"
+}
+
+cmd_analyze() {
+  local transcript="${1:-}"
+  local agent="${2:-}"
+  if [[ -z "$transcript" ]]; then
+    fail "analyze requires a transcript path"
+  fi
+  local analyzer
+  analyzer=$(pick_analyzer "$agent" "$transcript")
+  bash "$analyzer" "$transcript"
+}
+
+# Resolve which analyzer to use. Explicit second arg wins; otherwise
+# infer from the run-dir name `<ts>-<agent>` if present, falling back
+# to the legacy `<ts>` (claude-only) layout.
+pick_analyzer() {
+  local agent="${1:-}" transcript="${2:-}"
+  if [[ -z "$agent" && -n "$transcript" ]]; then
+    local parent
+    parent="$(basename "$(dirname "$transcript")")"
+    if [[ "$parent" == *-* ]]; then
+      agent="${parent##*-}"
+    fi
+  fi
+  [[ -z "$agent" ]] && agent=claude
+  local candidate="$LIB/analyze-$agent.sh"
+  if [[ -x "$candidate" ]]; then
+    echo "$candidate"
+  else
+    echo "$LIB/analyze-claude.sh"
+  fi
+}
+
+cmd_launch() {
+  local agent="${1:-}"
+  shift || true
+  if [[ -z "$agent" ]]; then
+    fail "launch requires an agent name (e.g., 'claude'). Available launchers: $(ls "$LIB/launchers" 2>/dev/null | sed 's/\.sh$//' | tr '\n' ' ')"
+  fi
+  local launcher="$LIB/launchers/$agent.sh"
+  if [[ ! -x "$launcher" ]]; then
+    fail "no launcher at $launcher (or not executable). Add one following lib/launchers/claude.sh as a template."
+  fi
+
+  local task="" clean_override="" target_slug_override=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --task) task="$2"; shift 2 ;;
+      --task=*) task="${1#--task=}"; shift ;;
+      --full-clean) clean_override=full; shift ;;
+      --no-clean) clean_override=none; shift ;;
+      --target-slug) target_slug_override="$2"; shift 2 ;;
+      --target-slug=*) target_slug_override="${1#--target-slug=}"; shift ;;
+      *) fail "unknown launch flag: $1" ;;
+    esac
+  done
+  if [[ -z "$task" ]]; then
+    fail "launch requires --task <path>"
+  fi
+  if [[ ! -f "$task" ]]; then
+    # Try resolving relative to agentic-testing/ (handles `tasks/foo.md`)
+    # then relative to agentic-testing/tasks/ (handles bare `foo.md`).
+    if [[ -f "$HERE/$task" ]]; then
+      task="$HERE/$task"
+    elif [[ -f "$HERE/tasks/$task" ]]; then
+      task="$HERE/tasks/$task"
+    else
+      fail "task file not found: $task (tried $HERE/$task and $HERE/tasks/$task)"
+    fi
+  fi
+  task="$(cd "$(dirname "$task")" && pwd)/$(basename "$task")"
+
+  # Default: scoped cleanup of just the target article, derived from
+  # the task file's `Topic:` line. Falls back to full clean if the
+  # task file has no Topic line (e.g. smoke). Operator overrides:
+  # --full-clean forces nuclear, --no-clean skips entirely,
+  # --target-slug=... overrides the derived slug.
+  local setup_args=()
+  if [[ -n "$clean_override" ]]; then
+    case "$clean_override" in
+      full) setup_args=(--full-clean) ;;
+      none) setup_args=(--no-clean) ;;
+    esac
+    log "clean mode:  $clean_override (operator override)"
+  elif [[ -n "$target_slug_override" ]]; then
+    setup_args=(--target-slug "$target_slug_override")
+    log "target slug: $target_slug_override (operator override)"
+  else
+    local topic slug
+    topic=$(extract_topic "$task")
+    if [[ -n "$topic" ]]; then
+      slug=$(slugify "$topic")
+      setup_args=(--target-slug "$slug")
+      log "target slug: $slug (derived from Topic: $topic)"
+    else
+      setup_args=(--full-clean)
+      log "clean mode:  full (no Topic line in task — falling back)"
+    fi
+  fi
+
+  cmd_setup "${setup_args[@]}" >/dev/null
+  # TOKEN is now set as a shell variable by issue_token (called
+  # inside cmd_setup); pass it through to the launcher via env.
+
+  local ts run_dir
+  ts="$(date -u '+%Y%m%d-%H%M%S')"
+  # Tag run dirs with the agent so multi-agent comparisons read clearly
+  # and `cmd_analyze` can recover the agent from a transcript path.
+  run_dir="$RUNS_DIR/$ts-$agent"
+  mkdir -p "$run_dir"
+  log "run dir:     $run_dir"
+  log "task:        $task"
+  log "launcher:    $launcher"
+
+  AGENTIC_TASK_FILE="$task" \
+  AGENTIC_RUN_DIR="$run_dir" \
+  AGENTIC_MCP_URL="$MCP_URL" \
+  AGENTIC_TOKEN="$TOKEN" \
+    bash "$launcher" || fail "launcher exited non-zero — see $run_dir/transcript.jsonl"
+
+  log "launcher done — analyzing transcript"
+  local analyzer
+  analyzer=$(pick_analyzer "$agent")
+  bash "$analyzer" "$run_dir/transcript.jsonl" > "$run_dir/analysis.md"
+  log "analyzer:    $analyzer"
+  log "analysis:    $run_dir/analysis.md"
+  log "transcript:  $run_dir/transcript.jsonl"
+}
+
+main() {
+  local cmd="${1:-}"
+  shift || true
+  case "$cmd" in
+    setup) cmd_setup "$@" ;;
+    launch) cmd_launch "$@" ;;
+    analyze) cmd_analyze "$@" ;;
+    clean) cmd_clean "$@" ;;
+    bootstrap) cmd_bootstrap "$@" ;;
+    refresh-seed) cmd_refresh_seed "$@" ;;
+    -h|--help|help|'') usage 0 ;;
+    *) printf 'unknown subcommand: %s\n\n' "$cmd"; usage 2 ;;
+  esac
+}
+
+main "$@"
