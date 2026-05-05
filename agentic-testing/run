@@ -226,9 +226,12 @@ slugify() {
 # canonical task templates use `> Topic: **Foo**`). Empty if no match.
 extract_topic() {
   local file="$1"
+  # `|| true` because pipefail makes grep's "no match" exit 1
+  # propagate through the pipeline and trip `set -e` in the caller.
   grep -E '^[ >]*\**Topic:' "$file" 2>/dev/null \
     | head -1 \
-    | sed -E 's/^[ >]*\**Topic:\**[[:space:]]*//; s/\*\*//g; s/\*//g; s/[[:space:]]+$//'
+    | sed -E 's/^[ >]*\**Topic:\**[[:space:]]*//; s/\*\*//g; s/\*//g; s/[[:space:]]+$//' \
+    || true
 }
 
 cmd_setup() {
