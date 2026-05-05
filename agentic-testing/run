@@ -5,10 +5,10 @@
 #   ./agentic-testing/run setup
 #       Idempotent preflight: verifies dev + MCP up, seeds /meta/*
 #       (fetching from production once if seed/meta/ is empty),
-#       provisions the test user, issues an MCP token, registers
-#       the local MCP, runs an isolation probe, wipes prior
-#       artifacts. Prints TOKEN, TASK_DIR, MCP_URL, RUN_DIR (last
-#       blank — set by `launch`).
+#       provisions the test user, issues an MCP token, writes the
+#       per-run MCP config file the claude launcher consumes via
+#       --strict-mcp-config, optionally cleans prior artifacts.
+#       Prints TOKEN, MCP_URL, MCP_CONFIG_FILE, TASKS_DIR, RUNS_DIR.
 #
 #   ./agentic-testing/run launch <agent> --task <path-to-task-md>
 #       Runs setup, then invokes the launcher in
@@ -45,6 +45,7 @@ SEED_META="$HERE/seed/meta"
 RUNS_DIR="$HERE/runs"
 MCP_URL="${AGENTIC_MCP_URL:-http://127.0.0.1:3333/mcp}"
 DEV_URL="${AGENTIC_DEV_URL:-http://127.0.0.1:3000/health}"
+MCP_CONFIG_FILE="${AGENTIC_MCP_CONFIG_FILE:-$RUNS_DIR/.mcp-config.json}"
 
 usage() {
   sed -n '3,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
@@ -181,28 +182,43 @@ issue_token() {
   log "token:       issued (${TOKEN:0:8}...${TOKEN: -4})"
 }
 
-register_mcp() {
-  if ! command -v claude >/dev/null 2>&1; then
-    log "claude CLI not on PATH — skipping mcp register (non-Claude-Code launchers can use TOKEN directly)"
-    return 0
-  fi
-  claude mcp remove agpwiki-local >/dev/null 2>&1 || true
-  claude mcp add --transport http agpwiki-local "$MCP_URL" \
-    --header "Authorization: Bearer $TOKEN" --scope user >/dev/null
-  log "mcp register: ok (user scope)"
+# Write the per-run MCP config file the claude launcher consumes via
+# `--strict-mcp-config --mcp-config <file>`. Contains the bearer token,
+# so chmod 600. The file lives under runs/ (gitignored) and is
+# rewritten every setup so a new token never trails a stale config.
+write_mcp_config() {
+  mkdir -p "$RUNS_DIR"
+  cat > "$MCP_CONFIG_FILE" <<EOF
+{
+  "mcpServers": {
+    "agpwiki-local": {
+      "type": "http",
+      "url": "$MCP_URL",
+      "headers": {
+        "Authorization": "Bearer $TOKEN"
+      }
+    }
+  }
+}
+EOF
+  chmod 600 "$MCP_CONFIG_FILE"
+  log "mcp config:  $MCP_CONFIG_FILE (chmod 600, only agpwiki-local)"
 }
 
+# Verify the MCP config we just wrote contains exactly one server,
+# agpwiki-local. The actual isolation guarantee comes from
+# `--strict-mcp-config` in the launcher (Claude Code feature: ignore
+# every MCP source except this file). This check just makes sure the
+# file we hand it isn't carrying anything else.
 isolation_probe() {
-  if ! command -v claude >/dev/null 2>&1; then
-    log "claude CLI not on PATH — skipping isolation probe (non-Claude-Code launchers must do their own)"
-    return 0
+  local servers
+  if ! servers=$(jq -r '.mcpServers | keys | sort | join(",")' "$MCP_CONFIG_FILE" 2>/dev/null); then
+    fail "isolation probe: $MCP_CONFIG_FILE is not valid JSON"
   fi
-  log "isolation probe (~30 s)"
-  if ! bash "$LIB/isolation-probe.sh" >/dev/null 2>&1; then
-    bash "$LIB/isolation-probe.sh" >&2 || true
-    fail "isolation probe failed — STOP and fix --disallowedTools before launching."
+  if [[ "$servers" != "agpwiki-local" ]]; then
+    fail "isolation probe: $MCP_CONFIG_FILE has unexpected servers: [$servers] (expected only agpwiki-local)"
   fi
-  log "isolation:   ok"
+  log "isolation:   ok (mcp config has only agpwiki-local; --strict-mcp-config will enforce)"
 }
 
 clean_artifacts() {
@@ -258,7 +274,7 @@ cmd_setup() {
   provision_user
   seed_pages
   issue_token
-  register_mcp
+  write_mcp_config
   isolation_probe
   case "$clean_mode" in
     none) log "skipping artifact cleanup (--no-clean)" ;;
@@ -270,6 +286,7 @@ cmd_setup() {
 # Setup complete. Machine-readable values:
 TOKEN=$TOKEN
 MCP_URL=$MCP_URL
+MCP_CONFIG_FILE=$MCP_CONFIG_FILE
 TASKS_DIR=$HERE/tasks
 RUNS_DIR=$RUNS_DIR
 EOF
@@ -435,6 +452,7 @@ cmd_launch() {
   AGENTIC_RUN_DIR="$run_dir" \
   AGENTIC_MCP_URL="$MCP_URL" \
   AGENTIC_TOKEN="$TOKEN" \
+  AGENTIC_MCP_CONFIG_FILE="$MCP_CONFIG_FILE" \
     bash "$launcher" || fail "launcher exited non-zero — see $run_dir/transcript.jsonl"
 
   log "launcher done — analyzing transcript"

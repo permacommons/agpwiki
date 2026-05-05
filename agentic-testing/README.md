@@ -43,26 +43,34 @@ That's the full happy path. After it finishes, look in
 4. Seeds `/meta/*` pages into the local DB so the inner agent has
    a realistic orientation surface.
 5. Issues a fresh MCP API token for the test user.
-6. (Claude Code only) Registers the local MCP at user scope so
-   the inner agent picks it up automatically.
-7. (Claude Code only) Runs an isolation probe that confirms the
-   inner agent sees ONLY `mcp__agpwiki-local__` and not any
-   user-scope production MCPs.
-8. Wipes any prior test artifacts (pages, citations, claims,
-   media, cached thumbnails) so the next run starts clean.
+6. Writes `runs/.mcp-config.json` (chmod 600, gitignored) — a
+   Claude-Code-format MCP config that defines exactly one server
+   (agpwiki-local) with the bearer token wired in. The claude
+   launcher passes this to `claude --strict-mcp-config`, which
+   makes the inner agent ignore every other MCP source. Other
+   launchers (codex, goose) use their own equivalents and only
+   need `TOKEN` + `MCP_URL`.
+7. Verifies the config file carries only agpwiki-local before
+   any launch happens.
+8. Wipes prior test artifacts when asked (see the cleanup
+   section). Default is `--no-clean`; pass `--full-clean` or
+   `--target-slug <slug>` to clean.
 
 When `setup` succeeds it prints machine-readable values:
 
 ```
 TOKEN=<bearer token>
 MCP_URL=http://127.0.0.1:3333/mcp
+MCP_CONFIG_FILE=/abs/path/to/agentic-testing/runs/.mcp-config.json
 TASKS_DIR=/abs/path/to/agentic-testing/tasks
 RUNS_DIR=/abs/path/to/agentic-testing/runs
 ```
 
 That's the **contract** any launcher consumes. A non-Claude agent
 can call `setup` standalone, capture those values, and configure
-its own MCP client accordingly.
+its own MCP client accordingly. Setup does **not** modify the
+operator's claude config — the per-run config file is the only
+artifact.
 
 ## Subcommands
 
@@ -111,14 +119,23 @@ The contract for `lib/launchers/<agent>.sh` is:
 **Provided env:**
 - `AGENTIC_TOKEN` — the MCP bearer token to use against `:3333`.
 - `AGENTIC_MCP_URL` — `http://127.0.0.1:3333/mcp`.
+- `AGENTIC_MCP_CONFIG_FILE` — path to a Claude-Code-format MCP
+  config JSON containing exactly `agpwiki-local`. The claude
+  launcher passes this to `--strict-mcp-config`. Other launchers
+  can ignore it and use `AGENTIC_TOKEN` + `AGENTIC_MCP_URL` to
+  build their own equivalent.
 
 **Required behavior:**
 - Run the agent end-to-end without operator intervention.
 - Run from a private CWD (use `$AGENTIC_RUN_DIR/cwd/`) so the
   inner agent can't read the host repo through filesystem tools.
-- Hide any production MCP surfaces the agent might inherit from
-  user-scope config. Consult `lib/launchers/claude.sh` for the
-  reference pattern; the lessons section below is load-bearing.
+- Make the inner agent load **only** agpwiki-local — every other
+  MCP the operator has registered must be invisible. The
+  mechanism is launcher-specific (claude: `--strict-mcp-config`;
+  codex: `--ignore-user-config`; goose: per-run `XDG_CONFIG_HOME`),
+  but the contract is the same. Permission-list flags
+  (`--allowedTools` / `--disallowedTools` and analogues) are not a
+  substitute — they're bypassed by danger flags.
 - Exit zero on success, non-zero on failure.
 
 **Analyzers are agent-specific** because each agent's transcript
@@ -149,16 +166,23 @@ the whole `runs/` dir whenever you want; it's gitignored.
 These are the failure modes the preflight exists to prevent. Read
 once, internalize.
 
-1. **Production write.** A comma-separated `--disallowedTools`
-   value (`--disallowedTools='a,b,c'`) silently fails for some
-   patterns in Claude Code. The first time this harness ran
-   without the per-pattern fix, the inner agent saw production
-   agpedia.org's MCP alongside the local one, picked the
-   production surface, and wrote a complete article to the live
-   wiki. **Always pass each pattern as its own
-   `--disallowedTools=<pattern>` flag.** The isolation probe in
-   step 7 of `setup` exercises the same flag pattern the launcher
-   uses, so a misconfigured launcher fails before the real run.
+1. **Production write — isolate by which MCPs load, not by
+   permissions.** If the operator has a production agpedia (or any
+   write-capable) MCP registered at user scope and the inner agent
+   sees it, the agent can — and on at least one occasion did —
+   pick it over the local one and write to the live wiki.
+   `--disallowedTools` and `--allowedTools` look like a fix but
+   are *permission* gates, and `--dangerously-skip-permissions`
+   skips permission entirely, silently neutralizing them. The
+   isolation here is structural instead: the claude launcher uses
+   `--strict-mcp-config --mcp-config <our file>`, which makes the
+   inner agent's MCP catalog be exactly that file — every other
+   MCP source is ignored. Codex uses `--ignore-user-config`;
+   goose uses a per-run `XDG_CONFIG_HOME`. None of these depend
+   on permission gating. **If you add a new launcher, the contract
+   is "the inner agent must load only agpwiki-local" — verify by
+   inspecting whatever init/handshake event the agent emits, not
+   by asking the model what it can see.**
 
 2. **Stale MCP server.** `npm run mcp-http` runs `tsx
    src/mcp/http.ts` — no watch mode. Source changes to anything

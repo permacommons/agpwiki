@@ -1,52 +1,43 @@
 #!/usr/bin/env bash
-# Verify that an outside Claude Code session sees ONLY the local
-# agpwiki MCP, not any user-scope production MCPs that might be
-# configured in ~/.claude.json. Run before launching the real test.
+# Verify the MCP config file the claude launcher will hand to
+# `claude --strict-mcp-config --mcp-config <file>` carries exactly
+# the agpwiki-local server and nothing else. With `--strict-mcp-config`
+# the inner agent loads only what's in this file — every other MCP
+# source (user-scope, project-scope, settings.json) is ignored — so
+# the file is the entire isolation surface. If it's clean, isolation
+# is clean.
 #
-# This catches the "comma-separated --disallowedTools silently
-# fails" failure mode (see README) by exercising the same flag
-# pattern the real launcher will use.
+# This is a JSON sanity check, not a model probe. We do not ask the
+# agent what it can see, because a model can't reliably distinguish
+# between "I have this tool" and "I know this tool name from
+# training/context."
+#
+# Argv[1]: path to the MCP config JSON (defaults to
+# $AGENTIC_MCP_CONFIG_FILE; or runs/.mcp-config.json if unset).
 
 set -euo pipefail
 
-# Mirror the defaults in lib/launchers/claude.sh: deny every MCP
-# tool, then allow only the local one. Operator can override either
-# list via AGENTIC_DISALLOWED_MCP_PATTERNS / AGENTIC_ALLOWED_MCP_PATTERNS.
-DISALLOWED_DEFAULT='mcp__*'
-ALLOWED_DEFAULT='mcp__agpwiki-local__*'
-DISALLOWED="${AGENTIC_DISALLOWED_MCP_PATTERNS:-$DISALLOWED_DEFAULT}"
-ALLOWED="${AGENTIC_ALLOWED_MCP_PATTERNS:-$ALLOWED_DEFAULT}"
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-disallow_args=()
-for pattern in $DISALLOWED; do
-  disallow_args+=("--disallowedTools=$pattern")
-done
-allow_args=()
-for pattern in $ALLOWED; do
-  allow_args+=("--allowedTools=$pattern")
-done
+CONFIG="${1:-${AGENTIC_MCP_CONFIG_FILE:-$HERE/../runs/.mcp-config.json}}"
 
-# Run from /tmp so the probe can't see this repo via Read/Bash.
-cd /tmp
-output=$(claude --print --dangerously-skip-permissions --max-budget-usd 1 \
-  "${disallow_args[@]}" \
-  "${allow_args[@]}" \
-  "List ONLY the MCP tool prefixes you can call (the literal mcp__...__ prefixes from your tool list). Output one per line, prefixed 'visible:'. Do not include human-readable server names." < /dev/null 2>&1)
-
-echo "$output"
-echo
-
-visible=$(echo "$output" | grep '^visible:' | sort -u || true)
-unexpected=$(echo "$visible" | grep -v 'visible: mcp__agpwiki-local__' || true)
-
-if [[ -z "$visible" ]]; then
-  echo "isolation-probe: agent did not list any MCP prefixes; check the --print invocation" >&2
+if [[ ! -f "$CONFIG" ]]; then
+  echo "isolation-probe: config file not found: $CONFIG" >&2
+  echo "  (run \`./agentic-testing/run setup\` first to generate it)" >&2
   exit 1
 fi
-if [[ -n "$unexpected" ]]; then
-  echo "isolation-probe: unexpected MCP surface visible to the inner agent:" >&2
-  echo "$unexpected" >&2
-  echo "STOP — fix --disallowedTools / --allowedTools before launching the real test." >&2
+
+if ! servers=$(jq -r '.mcpServers | keys | sort | join(",")' "$CONFIG" 2>/dev/null); then
+  echo "isolation-probe: $CONFIG is not valid JSON" >&2
   exit 1
 fi
-echo "isolation-probe: OK (only mcp__agpwiki-local__ visible)"
+
+if [[ "$servers" != "agpwiki-local" ]]; then
+  echo "isolation-probe: $CONFIG carries unexpected servers: [$servers]" >&2
+  echo "  expected exactly: agpwiki-local" >&2
+  echo "  the launcher uses --strict-mcp-config, so anything in this file" >&2
+  echo "  reaches the inner agent. STOP and fix before launching." >&2
+  exit 1
+fi
+
+echo "isolation-probe: ok ($CONFIG carries only agpwiki-local; --strict-mcp-config will enforce)"
