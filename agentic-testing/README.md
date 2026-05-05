@@ -71,7 +71,7 @@ its own MCP client accordingly.
 | `setup` | Idempotent preflight. Prints the contract above. |
 | `launch <agent> --task <path>` | Runs `setup`, invokes `lib/launchers/<agent>.sh`, captures transcript + analysis to `runs/<ts>/`. |
 | `analyze <transcript>` | Re-run analysis against an existing transcript. |
-| `clean` | Wipe DB + media-storage artifacts only. |
+| `clean --full` / `clean --slug <slug>` | Wipe DB + media-storage artifacts. Mode flag required. |
 | `bootstrap` | Start `npm run dev` + `npm run mcp-http` if not running. |
 | `refresh-seed` | Re-fetch `/meta/*` page bodies from agpedia.org into `seed/meta/`. |
 
@@ -210,10 +210,13 @@ once, internalize.
    visible at `:3000` for inspection. Citations, citation_claims,
    and media are preserved across scoped cleans because they
    aren't FK-linked to a specific page in the data model.
-   Operator overrides on `launch`: `--full-clean` (legacy nuclear
-   clean), `--no-clean` (skip cleanup), `--target-slug <slug>`
-   (override the derived slug). Standalone `setup` still defaults
-   to `--full-clean` for back-compat.
+   Operator overrides on `launch`: `--full-clean` (nuclear clean
+   of the dev DB's article namespace), `--no-clean` (skip cleanup),
+   `--target-slug <slug>` (override the derived slug). When the
+   task has no `Topic:` line and no override is given, `launch`
+   falls back to `--no-clean` rather than wiping the dev DB
+   implicitly. Standalone `setup` also defaults to `--no-clean`;
+   pass `--full-clean` or `--target-slug <slug>` to clean.
 
 ## Goose: working configurations and known limitations
 

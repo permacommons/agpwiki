@@ -18,8 +18,12 @@
 #   ./agentic-testing/run analyze <transcript>
 #       Re-runs the analyzer against an existing transcript.
 #
-#   ./agentic-testing/run clean
-#       Wipe DB + media-storage artifacts only. No setup.
+#   ./agentic-testing/run clean --full
+#   ./agentic-testing/run clean --slug <slug>
+#       Wipe DB + media-storage artifacts only. No setup. A mode
+#       flag is required: --full nukes all non-meta pages plus
+#       this user's citations/claims/media; --slug deletes a
+#       single page and its per-page dependents.
 #
 #   ./agentic-testing/run bootstrap
 #       Start `npm run dev` and `npm run mcp-http` if not already
@@ -43,7 +47,7 @@ MCP_URL="${AGENTIC_MCP_URL:-http://127.0.0.1:3333/mcp}"
 DEV_URL="${AGENTIC_DEV_URL:-http://127.0.0.1:3000/health}"
 
 usage() {
-  sed -n '3,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,34p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -68,35 +72,80 @@ check_mcp_up() {
   log "mcp server:  ok ($MCP_URL)"
 }
 
-# Unconditionally restart `npm run mcp-http`. The MCP process loads
-# its source via tsx at startup with no watch mode, so anything in
-# memory may diverge from what's on disk after a branch switch,
-# rebase, or local edit — and an mtime probe can't see that, because
-# checking out a different commit doesn't always change file mtimes.
-# Restarting on every setup is the only reliable way to guarantee
-# the process matches the current working tree. Cost is a few seconds.
-restart_mcp() {
-  log "restarting mcp-http (guarantees process matches current working tree)"
-  pkill -f 'tsx src/mcp/http.ts' 2>/dev/null || true
-  # Give the port a moment to release before re-binding.
+MCP_PID_FILE_DEFAULT="$RUNS_DIR/.mcp.pid"
+MCP_PID_FILE="${AGENTIC_MCP_PID_FILE:-$MCP_PID_FILE_DEFAULT}"
+
+# Stop the mcp-http process recorded in $MCP_PID_FILE, if any. Only
+# kills processes we previously started — never anything else on the
+# port. A stale PID file (process gone or PID reused by something
+# unrelated) is detected via the cmdline check and ignored.
+stop_owned_mcp() {
+  [[ -f "$MCP_PID_FILE" ]] || return 0
+  local pid cmdline
+  pid=$(cat "$MCP_PID_FILE" 2>/dev/null || true)
+  rm -f "$MCP_PID_FILE"
+  [[ -n "$pid" ]] || return 0
+  kill -0 "$pid" 2>/dev/null || return 0
+  cmdline=$(ps -p "$pid" -o args= 2>/dev/null || true)
+  if [[ "$cmdline" != *mcp-http* ]] && [[ "$cmdline" != *npm* ]] && [[ "$cmdline" != *node* ]]; then
+    log "warn: pid $pid in $MCP_PID_FILE no longer looks like our mcp-http (cmdline: $cmdline) — leaving alone"
+    return 0
+  fi
+  log "stopping previously-started mcp-http (pid $pid)"
+  pkill -P "$pid" 2>/dev/null || true
+  kill "$pid" 2>/dev/null || true
   for _ in $(seq 1 10); do
-    local code
-    code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
-    if [[ "$code" == "000" ]]; then break; fi
+    if ! kill -0 "$pid" 2>/dev/null; then break; fi
     sleep 0.3
   done
+}
+
+# Start a fresh mcp-http and record its PID. Caller is responsible
+# for ensuring the port is free first. Structure note: the `&`
+# backgrounds nohup directly so `$!` is npm's PID (nohup execs into
+# npm without forking) rather than a wrapping bash subshell.
+start_owned_mcp() {
   mkdir -p "$RUNS_DIR"
-  (cd "$REPO_ROOT" && nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &)
+  (
+    cd "$REPO_ROOT"
+    nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &
+    echo $! > "$MCP_PID_FILE"
+  )
   for _ in $(seq 1 30); do
     local code
     code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
     if [[ "$code" == "401" ]]; then
-      log "mcp server:  ok ($MCP_URL) (fresh process)"
+      log "mcp server:  ok ($MCP_URL) (fresh process, pid $(cat "$MCP_PID_FILE"))"
       return 0
     fi
     sleep 1
   done
-  fail "mcp-http did not come back up within 30 s after restart — see $RUNS_DIR/.mcp.log"
+  fail "mcp-http did not come up within 30 s — see $RUNS_DIR/.mcp.log"
+}
+
+# Refresh `npm run mcp-http` so it matches the current working tree.
+# The MCP process loads its source via tsx at startup with no watch
+# mode, so anything in memory may diverge from what's on disk after a
+# branch switch, rebase, or local edit — and an mtime probe can't see
+# that, because checking out a different commit doesn't always change
+# file mtimes. We track our own process via a PID file so we never
+# kill a process the operator started themselves.
+restart_mcp() {
+  mkdir -p "$RUNS_DIR"
+  stop_owned_mcp
+
+  # If something else is holding the port, leave it alone.
+  local existing_code
+  existing_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
+  if [[ "$existing_code" == "401" ]]; then
+    log "mcp server:  ok ($MCP_URL) (existing process, not started by this harness)"
+    log "             cannot guarantee its source matches the current working tree."
+    log "             if behavior looks stale, restart it yourself before retrying."
+    return 0
+  fi
+
+  log "starting mcp-http (guarantees process matches current working tree)"
+  start_owned_mcp
 }
 
 ensure_seed() {
@@ -157,8 +206,9 @@ isolation_probe() {
 }
 
 clean_artifacts() {
-  # $@ forwarded to clean-artifacts.sh: e.g. --slug <slug>, --full,
-  # or empty for the script's own default (--full for back-compat).
+  # $@ forwarded to clean-artifacts.sh: --slug <slug> for scoped
+  # cleanup, --full for nuclear cleanup. The mode flag is required;
+  # there is no implicit default.
   log "cleaning prior test artifacts"
   bash "$LIB/clean-artifacts.sh" "$@" | sed 's/^/  /'
 }
@@ -183,8 +233,9 @@ extract_topic() {
 
 cmd_setup() {
   # --target-slug / --full-clean / --no-clean control the cleanup
-  # step. When unset, defaults to legacy --full for back-compat.
-  local clean_mode=full target_slug=""
+  # step. Default is --no-clean: full cleanup wipes article-namespace
+  # content from the dev DB and is too destructive to be implicit.
+  local clean_mode=none target_slug=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --target-slug) clean_mode=slug; target_slug="$2"; shift 2 ;;
@@ -222,7 +273,10 @@ EOF
 }
 
 cmd_clean() {
-  clean_artifacts
+  if [[ $# -eq 0 ]]; then
+    fail "clean requires an explicit mode: --full (nuclear: wipes all non-meta pages + this user's citations/claims/media) or --slug <slug> (scoped: deletes only the named page and its dependents)"
+  fi
+  clean_artifacts "$@"
 }
 
 cmd_refresh_seed() {
@@ -242,7 +296,11 @@ cmd_bootstrap() {
   else
     log "starting 'npm run mcp-http' in background (logs: $RUNS_DIR/.mcp.log)"
     mkdir -p "$RUNS_DIR"
-    (cd "$REPO_ROOT" && nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &)
+    (
+      cd "$REPO_ROOT"
+      nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &
+      echo $! > "$MCP_PID_FILE"
+    )
   fi
   log "waiting up to 30 s for dev + mcp"
   for _ in $(seq 1 30); do
@@ -270,8 +328,7 @@ cmd_analyze() {
 }
 
 # Resolve which analyzer to use. Explicit second arg wins; otherwise
-# infer from the run-dir name `<ts>-<agent>` if present, falling back
-# to the legacy `<ts>` (claude-only) layout.
+# infer from the run-dir name `<ts>-<agent>` if present.
 pick_analyzer() {
   local agent="${1:-}" transcript="${2:-}"
   if [[ -z "$agent" && -n "$transcript" ]]; then
@@ -330,7 +387,7 @@ cmd_launch() {
   task="$(cd "$(dirname "$task")" && pwd)/$(basename "$task")"
 
   # Default: scoped cleanup of just the target article, derived from
-  # the task file's `Topic:` line. Falls back to full clean if the
+  # the task file's `Topic:` line. Falls back to no cleanup if the
   # task file has no Topic line (e.g. smoke). Operator overrides:
   # --full-clean forces nuclear, --no-clean skips entirely,
   # --target-slug=... overrides the derived slug.
@@ -352,8 +409,8 @@ cmd_launch() {
       setup_args=(--target-slug "$slug")
       log "target slug: $slug (derived from Topic: $topic)"
     else
-      setup_args=(--full-clean)
-      log "clean mode:  full (no Topic line in task — falling back)"
+      setup_args=(--no-clean)
+      log "clean mode:  none (no Topic line in task — pass --full-clean or --target-slug to clean)"
     fi
   fi
 

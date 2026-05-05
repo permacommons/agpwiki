@@ -3,21 +3,20 @@
 # (in --full mode) the media-storage cache. Idempotent. Leaves /meta/*
 # seed pages alone.
 #
-# Modes:
+# Modes (one is required — there is no default, because --full is
+# destructive enough to need explicit operator opt-in):
 #   --slug <slug>   Scoped: delete only the named page and its
 #                   per-page dependents (page_aliases, page_checks).
 #                   Citations, citation_claims, and media are
 #                   preserved — they're not FK-linked to a single
 #                   page in the data model and can be reused across
-#                   runs. This is the default for `launch` invocations.
+#                   runs. This is what `launch` uses when it can
+#                   derive a slug from the task's Topic line.
 #   --full          Nuclear: delete every non-/meta page plus this
 #                   test user's citations, citation_claims, and media,
-#                   and clear the media-storage cache directory. Used
-#                   for standalone `setup` invocations or when the
-#                   operator passes `launch --full-clean`.
-#
-# When invoked without a mode flag, defaults to --full for backward
-# compatibility with existing operator workflows.
+#                   and clear the media-storage cache directory. Use
+#                   only when you actually want to wipe the dev DB's
+#                   article namespace.
 #
 # Connection: PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE env vars.
 # Defaults match the local docker-compose dev DB.
@@ -36,7 +35,7 @@ TEST_USER_EMAIL="${AGENTIC_TEST_USER_EMAIL:-agentic-test@example.com}"
 
 export PGPASSWORD
 
-mode=full
+mode=""
 slug=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -46,6 +45,11 @@ while [[ $# -gt 0 ]]; do
     *) echo "clean-artifacts.sh: unknown arg: $1" >&2; exit 2 ;;
   esac
 done
+
+if [[ -z "$mode" ]]; then
+  echo "clean-artifacts.sh: a mode flag is required (--slug <slug> or --full)" >&2
+  exit 2
+fi
 
 if [[ "$mode" == "slug" ]] && [[ -z "$slug" ]]; then
   echo "clean-artifacts.sh: --slug requires a non-empty value" >&2
@@ -67,7 +71,7 @@ SQL
   exit 0
 fi
 
-# --full: legacy nuclear clean.
+# --full: nuclear clean.
 echo "scope: full (all non-meta pages + this user's citations/claims/media)"
 psql -U "$PGUSER" -h "$PGHOST" -p "$PGPORT" -d "$PGDATABASE" \
   -v test_email="$TEST_USER_EMAIL" <<'SQL'

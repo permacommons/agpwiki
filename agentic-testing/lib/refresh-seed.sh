@@ -11,7 +11,7 @@
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SEED_DIR="$(cd "$HERE/../seed" && pwd)/meta"
+SEED_DIR="$(cd "$HERE/.." && pwd)/seed/meta"
 SOURCE_BASE="${AGENTIC_TESTING_SEED_SOURCE:-https://agpedia.org}"
 
 mkdir -p "$SEED_DIR"

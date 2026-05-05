@@ -41,9 +41,8 @@ fi
 
 # Deny-everything-then-allow-ours. Whatever user-scope MCPs the
 # operator has registered, only agpwiki-local will reach the inner
-# agent. Earlier versions hardcoded the operator's specific user MCPs
-# in the deny list — that's not safe for a shared repo because every
-# operator has different MCPs.
+# agent. The wildcard deny is required because every operator has a
+# different set of user-scope MCPs and we can't enumerate them.
 DISALLOWED_DEFAULT='mcp__*'
 ALLOWED_DEFAULT='mcp__agpwiki-local__*'
 DISALLOWED="${AGENTIC_DISALLOWED_MCP_PATTERNS:-$DISALLOWED_DEFAULT}"
