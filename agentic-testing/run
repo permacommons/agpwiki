@@ -57,6 +57,11 @@ usage() {
 }
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
+# warn() writes to stderr so callers that redirect informational
+# stdout (notably `cmd_launch` invoking `cmd_setup >/dev/null`) can't
+# accidentally hide warnings the operator needs to see — most
+# importantly the stale-server warning from `restart_mcp`.
+warn() { printf '[%s] WARN: %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
 fail() { printf '[%s] error: %s\n' "$(date +%H:%M:%S)" "$*" >&2; exit 1; }
 
 check_dev_up() {
@@ -80,6 +85,29 @@ check_mcp_up() {
 MCP_PID_FILE_DEFAULT="$RUNS_DIR/.mcp.pid"
 MCP_PID_FILE="${AGENTIC_MCP_PID_FILE:-$MCP_PID_FILE_DEFAULT}"
 
+# BFS-walk a process and all its descendants, then signal each
+# (deepest first). `pkill -P` is one level only — a chain like
+# `npm -> tsx -> node` leaves the listening grandchild orphaned to
+# init when the parent is killed, which is exactly what we hit
+# until we started doing this. SIGTERM by default; caller can pass
+# KILL for a hard escalation.
+kill_process_tree() {
+  local root="$1" sig="${2:-TERM}"
+  [[ -n "$root" ]] || return 0
+  kill -0 "$root" 2>/dev/null || return 0
+  local pids=("$root") i=0 child
+  while [[ $i -lt ${#pids[@]} ]]; do
+    while read -r child; do
+      [[ -n "$child" ]] && pids+=("$child")
+    done < <(pgrep -P "${pids[$i]}" 2>/dev/null || true)
+    i=$((i+1))
+  done
+  local k
+  for ((k=${#pids[@]}-1; k>=0; k--)); do
+    kill -"$sig" "${pids[$k]}" 2>/dev/null || true
+  done
+}
+
 # Stop the mcp-http process recorded in $MCP_PID_FILE, if any. Only
 # kills processes we previously started — never anything else on the
 # port. A stale PID file (process gone or PID reused by something
@@ -96,13 +124,30 @@ stop_owned_mcp() {
     log "warn: pid $pid in $MCP_PID_FILE no longer looks like our mcp-http (cmdline: $cmdline) — leaving alone"
     return 0
   fi
-  log "stopping previously-started mcp-http (pid $pid)"
-  pkill -P "$pid" 2>/dev/null || true
-  kill "$pid" 2>/dev/null || true
+  log "stopping previously-started mcp-http (pid $pid, including any descendants)"
+  kill_process_tree "$pid" TERM
   for _ in $(seq 1 10); do
     if ! kill -0 "$pid" 2>/dev/null; then break; fi
     sleep 0.3
   done
+  kill -0 "$pid" 2>/dev/null && kill_process_tree "$pid" KILL
+}
+
+# Identify any process listening on $MCP_URL's port that's running
+# *our* mcp-http from *this* repo — i.e., an adopted orphan from a
+# previous harness run whose parent shell already exited. Returns the
+# PID on stdout if found, empty otherwise. The cmdline + cwd checks
+# are deliberately conservative so we never accidentally claim an
+# external process the operator started intentionally.
+find_adopted_orphan_mcp() {
+  local listener cmd cwd
+  listener=$(lsof -tiTCP:3333 -sTCP:LISTEN 2>/dev/null | head -1 || true)
+  [[ -n "$listener" ]] || return 0
+  cmd=$(ps -p "$listener" -o args= 2>/dev/null || true)
+  cwd=$(readlink -f "/proc/$listener/cwd" 2>/dev/null || true)
+  if [[ "$cmd" == *src/mcp/http.ts* ]] && [[ "$cwd" == "$REPO_ROOT" ]]; then
+    echo "$listener"
+  fi
 }
 
 # Start a fresh mcp-http and record its PID. Caller is responsible
@@ -139,14 +184,28 @@ restart_mcp() {
   mkdir -p "$RUNS_DIR"
   stop_owned_mcp
 
-  # If something else is holding the port, leave it alone.
+  # If something is still holding the port, decide whether it's ours
+  # (an adopted orphan we should clean up automatically) or genuinely
+  # external (operator-managed; warn and proceed).
   local existing_code
   existing_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
   if [[ "$existing_code" == "401" ]]; then
-    log "mcp server:  ok ($MCP_URL) (existing process, not started by this harness)"
-    log "             cannot guarantee its source matches the current working tree."
-    log "             if behavior looks stale, restart it yourself before retrying."
-    return 0
+    local orphan
+    orphan=$(find_adopted_orphan_mcp)
+    if [[ -n "$orphan" ]]; then
+      log "found adopted-orphan mcp-http (pid $orphan, our src/mcp/http.ts in $REPO_ROOT) — killing"
+      kill_process_tree "$orphan" TERM
+      for _ in $(seq 1 10); do
+        kill -0 "$orphan" 2>/dev/null || break
+        sleep 0.3
+      done
+      kill -0 "$orphan" 2>/dev/null && kill_process_tree "$orphan" KILL
+      sleep 0.5
+    else
+      warn "mcp server at $MCP_URL is bound by an external process — cannot guarantee its source matches the current working tree."
+      warn "if behavior looks stale (e.g., new instructions/tool descriptions/resources do not appear in the run), restart that process manually before re-running."
+      return 0
+    fi
   fi
 
   log "starting mcp-http (guarantees process matches current working tree)"
