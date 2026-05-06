@@ -331,7 +331,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     languageTagMaxLength: LANGUAGE_TAG_MAX_LENGTH,
     localized: {
       title: { maxLength: TITLE_MAX_LENGTH },
-      body: { maxLength: BODY_MAX_LENGTH },
+      body: { descriptionSuffix: 'Each value is Markdown.', maxLength: BODY_MAX_LENGTH },
       summary: { maxLength: BLOG_SUMMARY_MAX_LENGTH },
       assertion: { maxLength: CITATION_CLAIM_ASSERTION_MAX_LENGTH },
       quote: { maxLength: CITATION_CLAIM_QUOTE_MAX_LENGTH },
