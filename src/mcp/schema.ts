@@ -18,6 +18,7 @@ type LanguageTagSchemaGroup = {
 };
 
 type LocalizedSchemaOptions = {
+  descriptionSuffix?: string;
   maxLength?: number;
 };
 
@@ -40,10 +41,11 @@ type CreateLocalizedSchemasOptions = {
 export const createLocalizedSchemas = (options: CreateLocalizedSchemasOptions = {}) => {
   const maxLengthHint = (maxLength?: number) =>
     maxLength === undefined ? '' : ` Max ${maxLength} characters per language.`;
+  const descriptionSuffixHint = (suffix?: string) => (suffix ? ` ${suffix}` : '');
   const languageTagDescription =
     `Supported locale code (see agpwiki://locales). Qualifiers only for "pt-PT" and "zh-Hant".${options.languageTagMaxLength === undefined ? '' : ` Max ${options.languageTagMaxLength} characters.`}`;
   const localizedMapDescription = (label: string, schemaOptions?: LocalizedSchemaOptions) =>
-    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}. Set a language key to null to remove it.${maxLengthHint(schemaOptions?.maxLength)}`;
+    `Localized ${label} map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"..."}. Set a language key to null to remove it.${descriptionSuffixHint(schemaOptions?.descriptionSuffix)}${maxLengthHint(schemaOptions?.maxLength)}`;
   const localizedMapError = (label: string) =>
     `Expected ${label} to be a language-keyed map (e.g., {"en":"..."}). See agpwiki://locales.`;
 

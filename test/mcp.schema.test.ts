@@ -26,11 +26,16 @@ test('MCP tool schemas describe localized fields', () => {
   const wikiCreate = getSchemaShape(tools.wiki_createPage.inputSchema);
   assert.ok(wikiCreate.title?.description?.includes('agpwiki://locales'));
   assert.ok(wikiCreate.body?.description?.includes('agpwiki://locales'));
+  assert.ok(wikiCreate.body?.description?.includes('Each value is Markdown.'));
   assert.ok(wikiCreate.revSummary?.description?.includes('agpwiki://locales'));
 
   const blogCreate = getSchemaShape(tools.blog_createPost.inputSchema);
+  assert.ok(blogCreate.body?.description?.includes('Each value is Markdown.'));
   assert.ok(blogCreate.summary?.description?.includes('agpwiki://locales'));
   assert.ok(blogCreate.originalLanguage?.description?.includes('agpwiki://locales'));
+
+  const blogUpdate = getSchemaShape(tools.blog_updatePost.inputSchema);
+  assert.ok(blogUpdate.body?.description?.includes('Each value is Markdown.'));
 
   const wikiApply = getSchemaShape(tools.wiki_applyPatch.inputSchema);
   assert.ok(wikiApply.lang?.description?.includes('agpwiki://locales'));
@@ -48,6 +53,7 @@ test('MCP tool schemas describe localized fields', () => {
 
   const wikiUpdate = getSchemaShape(tools.wiki_updatePage.inputSchema);
   assert.ok(wikiUpdate.policyHash);
+  assert.ok(wikiUpdate.body?.description?.includes('Each value is Markdown.'));
 
   const wikiAddAlias = getSchemaShape(tools.wiki_addAlias.inputSchema);
   assert.ok(wikiAddAlias.policyHash);
