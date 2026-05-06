@@ -11,9 +11,13 @@
 #       Prints TOKEN, MCP_URL, MCP_CONFIG_FILE, TASKS_DIR, RUNS_DIR.
 #
 #   ./agentic-testing/run launch <agent> --task <path-to-task-md>
+#                                        [--topic <topic>]
 #       Runs setup, then invokes the launcher in
 #       lib/launchers/<agent>.sh. Captures the transcript and
-#       analysis to runs/<ts>/.
+#       analysis to runs/<ts>/. With --topic, rewrites the task
+#       file's `Topic:` line into a per-run copy and points the
+#       launcher at that copy, so the same task template can be
+#       reused across topics without editing it.
 #
 #   ./agentic-testing/run analyze <transcript>
 #       Re-runs the analyzer against an existing transcript.
@@ -378,11 +382,13 @@ cmd_launch() {
     fail "no launcher at $launcher (or not executable). Add one following lib/launchers/claude.sh as a template."
   fi
 
-  local task="" clean_override="" target_slug_override=""
+  local task="" clean_override="" target_slug_override="" topic_override=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --task) task="$2"; shift 2 ;;
       --task=*) task="${1#--task=}"; shift ;;
+      --topic) topic_override="$2"; shift 2 ;;
+      --topic=*) topic_override="${1#--topic=}"; shift ;;
       --full-clean) clean_override=full; shift ;;
       --no-clean) clean_override=none; shift ;;
       --target-slug) target_slug_override="$2"; shift 2 ;;
@@ -406,11 +412,43 @@ cmd_launch() {
   fi
   task="$(cd "$(dirname "$task")" && pwd)/$(basename "$task")"
 
+  # Create the per-run directory up front so we can stash a rewritten
+  # task file into it when --topic is in play, then reference that
+  # path from the launcher env.
+  local ts run_dir
+  ts="$(date -u '+%Y%m%d-%H%M%S')"
+  # Tag run dirs with the agent so multi-agent comparisons read clearly
+  # and `cmd_analyze` can recover the agent from a transcript path.
+  run_dir="$RUNS_DIR/$ts-$agent"
+  mkdir -p "$run_dir"
+
+  # If --topic was passed, rewrite the task file's first `Topic:` line
+  # into a per-run copy and point the launcher at that copy. Lets the
+  # same task template drive multiple topics without operator edits.
+  local effective_task="$task"
+  if [[ -n "$topic_override" ]]; then
+    if ! grep -qE '^[ >]*\**Topic:' "$task"; then
+      fail "--topic given but $task has no 'Topic:' line to override"
+    fi
+    effective_task="$run_dir/task.md"
+    awk -v new_topic="$topic_override" '
+      BEGIN { replaced = 0 }
+      !replaced && /^[ >]*\**Topic:/ {
+        print "> Topic: **" new_topic "**"
+        replaced = 1
+        next
+      }
+      { print }
+    ' "$task" > "$effective_task"
+    log "topic:       $topic_override (rewrote Topic line into $effective_task)"
+  fi
+
   # Default: scoped cleanup of just the target article, derived from
   # the task file's `Topic:` line. Falls back to no cleanup if the
   # task file has no Topic line (e.g. smoke). Operator overrides:
   # --full-clean forces nuclear, --no-clean skips entirely,
-  # --target-slug=... overrides the derived slug.
+  # --target-slug=... overrides the derived slug, --topic=... derives
+  # the slug from the override topic instead of the file.
   local setup_args=()
   if [[ -n "$clean_override" ]]; then
     case "$clean_override" in
@@ -421,6 +459,11 @@ cmd_launch() {
   elif [[ -n "$target_slug_override" ]]; then
     setup_args=(--target-slug "$target_slug_override")
     log "target slug: $target_slug_override (operator override)"
+  elif [[ -n "$topic_override" ]]; then
+    local slug
+    slug=$(slugify "$topic_override")
+    setup_args=(--target-slug "$slug")
+    log "target slug: $slug (derived from --topic)"
   else
     local topic slug
     topic=$(extract_topic "$task")
@@ -438,17 +481,11 @@ cmd_launch() {
   # TOKEN is now set as a shell variable by issue_token (called
   # inside cmd_setup); pass it through to the launcher via env.
 
-  local ts run_dir
-  ts="$(date -u '+%Y%m%d-%H%M%S')"
-  # Tag run dirs with the agent so multi-agent comparisons read clearly
-  # and `cmd_analyze` can recover the agent from a transcript path.
-  run_dir="$RUNS_DIR/$ts-$agent"
-  mkdir -p "$run_dir"
   log "run dir:     $run_dir"
-  log "task:        $task"
+  log "task:        $effective_task"
   log "launcher:    $launcher"
 
-  AGENTIC_TASK_FILE="$task" \
+  AGENTIC_TASK_FILE="$effective_task" \
   AGENTIC_RUN_DIR="$run_dir" \
   AGENTIC_MCP_URL="$MCP_URL" \
   AGENTIC_TOKEN="$TOKEN" \

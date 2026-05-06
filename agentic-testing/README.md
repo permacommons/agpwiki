@@ -23,6 +23,10 @@ npm run mcp-http     # MCP HTTP transport on :3333
 
 # End-to-end with Claude Code:
 ./agentic-testing/run launch claude --task tasks/create-article.md
+
+# Same template, different topic — no need to edit the file:
+./agentic-testing/run launch codex \
+  --task tasks/create-article.md --topic 'Leucocoprinus birnbaumii'
 ```
 
 That's the full happy path. After it finishes, look in

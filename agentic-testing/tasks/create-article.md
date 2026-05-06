@@ -7,9 +7,11 @@ guidance the server provides, and ends with a structured
 retrospective the operator mines for tool-ergonomics issues.
 
 The launcher reads everything below the `## Prompt` heading and
-sends it as the user message. To swap topics, edit the **Topic**
-line below — pick something with reasonably clear factual content
-and at least a few authoritative published sources.
+sends it as the user message. To swap topics either edit the
+**Topic** line below, or pass `--topic '<topic>'` to `run launch`
+(rewrites the Topic line in a per-run copy of this file). Pick
+something with reasonably clear factual content and at least a
+few authoritative published sources.
 
 See `agentic-testing/README.md` for the full harness.
 
