@@ -3536,7 +3536,7 @@ test('Service rejects unknown media slugs in wiki page body', async () => {
           {
             slug,
             title: { en: 'Page with bad media ref' },
-            body: { en: 'See ![@nonexistent-media-slug|size=500].' },
+            body: { en: 'See ![A view](/media/nonexistent-media-slug){size=500}.' },
             originalLanguage: 'en',
           },
           user.id
@@ -3581,7 +3581,7 @@ test('Service rejects standard markdown image syntax in wiki page body', async (
 
     // Mimic the agentic-test pattern: agent guesses the embed syntax and
     // produces a body with `![alt](custom-uri-scheme:slug)`. Should be
-    // rejected with a hint pointing at the correct `![@slug|...]` form.
+    // rejected with a hint pointing at the correct `/media/<slug>` form.
     await assert.rejects(
       () =>
         createWikiPage(
@@ -3603,10 +3603,10 @@ test('Service rejects standard markdown image syntax in wiki page body', async (
           fieldErrors.some(
             entry =>
               entry.field.includes('body') &&
-              entry.message.includes('Standard markdown image syntax') &&
+              entry.message.includes('External image URLs are not supported') &&
               entry.message.includes('media_create')
           ),
-          `Expected standard-image-rejection error, got: ${JSON.stringify(fieldErrors)}`
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
         );
         return true;
       }
@@ -3631,9 +3631,9 @@ test('Service rejects standard markdown image syntax in wiki page body', async (
         const fieldErrors = (error as ValidationError).fieldErrors ?? [];
         assert.ok(
           fieldErrors.some(entry =>
-            entry.message.includes('Standard markdown image syntax')
+            entry.message.includes('External image URLs are not supported')
           ),
-          `Expected standard-image-rejection error, got: ${JSON.stringify(fieldErrors)}`
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
         );
         return true;
       }
@@ -3668,7 +3668,7 @@ test('Service rejects unknown media slugs in blog post body', async () => {
           {
             slug,
             title: { en: 'Blog post with bad media ref' },
-            body: { en: 'See ![@nonexistent-blog-media-slug|size=250].' },
+            body: { en: 'See ![A view](/media/nonexistent-blog-media-slug){size=250}.' },
             summary: { en: 'Summary is fine.' },
             revSummary: { en: 'Add unknown media reference.' },
           },
@@ -3737,10 +3737,10 @@ test('Service rejects standard markdown image syntax in blog post summary', asyn
           fieldErrors.some(
             entry =>
               entry.field.includes('summary') &&
-              entry.message.includes('Standard markdown image syntax') &&
+              entry.message.includes('External image URLs are not supported') &&
               entry.message.includes('media_create')
           ),
-          `Expected standard-image-rejection error, got: ${JSON.stringify(fieldErrors)}`
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
         );
         return true;
       }

@@ -85,6 +85,24 @@ export const validateMediaRefs: ContentValidator = async ({ analysis, fieldLabel
   const requestedSlugs = new Set<string>();
 
   for (const ref of analysis.mediaRefs) {
+    if (ref.invalidSlug !== undefined) {
+      const display = ref.invalidSlug.length > 0 ? ref.invalidSlug : '(empty)';
+      errors.add(
+        fieldLabel,
+        `invalid media slug \`${display}\`: must be lowercase letters, digits, and hyphens, with optional \`/\` between segments.`,
+        'invalid'
+      );
+      continue;
+    }
+    if (ref.unknownTokens?.length) {
+      errors.add(
+        fieldLabel,
+        `unknown attribute(s) on media ${ref.slug}: ${ref.unknownTokens.join(' ')}. Recognized keys inside \`{...}\`: \`size=N\`, \`caption="..."\`. Alt text goes in the standard image position: \`![Alt](/media/${ref.slug}){...}\`.`,
+        'invalid'
+      );
+      continue;
+    }
+
     const slug = ref.slug.trim();
     if (!slug) continue;
     requestedSlugs.add(slug);
@@ -123,9 +141,10 @@ const collectStandardImageTokens = (
   result: StandardImageRef[] = []
 ): StandardImageRef[] => {
   for (const token of tokens) {
-    // markdown-it emits `image` tokens for `![alt](url)` standard syntax;
-    // our media plugin emits `media` tokens for `![@slug|...]`. Collect
-    // only the former — those are the agent-guess cases we want to reject.
+    // markdown-it emits `image` tokens for `![alt](url)` standard syntax.
+    // Our media plugin converts `![Alt](/media/<slug>)` images into
+    // `media` tokens before this validator runs, so any `image` token
+    // we still see here is an external URL we want to reject.
     if (token.type === 'image') {
       result.push({
         src: token.attrGet?.('src') ?? '',
@@ -139,11 +158,11 @@ const collectStandardImageTokens = (
   return result;
 };
 
-// Standard markdown image syntax `![alt](url)` is reserved — every
-// illustration must go through the media surface (media_create then
-// `![@slug|size=N|...]` in the body) so that bytes, license metadata,
-// and revision tracking all flow through the system. Reject any
-// standard image at write time with a hint at the correct embed form.
+// External image URLs are reserved — every illustration must go
+// through the media surface (media_create then `![Alt](/media/<slug>)`
+// in the body) so that bytes, license metadata, and revision tracking
+// all flow through the system. Reject any non-`/media/` image at write
+// time with a hint at the correct embed form.
 export const validateNoStandardMarkdownImages: ContentValidator = ({
   analysis,
   fieldLabel,
@@ -154,7 +173,7 @@ export const validateNoStandardMarkdownImages: ContentValidator = ({
     const detail = ref.src ? ` (found: \`![${ref.alt}](${ref.src})\`)` : '';
     errors.add(
       fieldLabel,
-      `Standard markdown image syntax \`![alt](url)\` is not supported. To embed a Commons file, register it via media_create, then use \`![@<slug>|size=<width>|caption=...|alt=...]\` in the body.${detail}`,
+      `External image URLs are not supported in body content. To embed an image, register it via media_create, then use \`![Alt text](/media/<slug>){size=<width> caption="..."}\` in the body.${detail}`,
       'invalid'
     );
   }

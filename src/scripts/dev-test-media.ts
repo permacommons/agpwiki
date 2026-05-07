@@ -70,11 +70,11 @@ const main = async () => {
     const sample = [
       '# Demo',
       '',
-      `![@${created.slug}|Caption override from markdown|size=500]`,
+      `![A view](/media/${created.slug}){size=500 caption="Caption override from markdown"}`,
       '',
-      `Inline reference: ![@${created.slug}|size=250] in flowing text.`,
+      `Inline reference: ![inline view](/media/${created.slug}){size=250} in flowing text.`,
       '',
-      `Sized: ![@${created.slug}|Larger render|size=800]`,
+      `![Larger render](/media/${created.slug}){size=800}`,
       '',
     ].join('\n');
     const registry = await loadMediaEntriesForSources(dal, [sample]);

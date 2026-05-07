@@ -1,10 +1,12 @@
-import type MarkdownIt from 'markdown-it';
+import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 
 import {
   formatMediaFigureHtml,
   formatMediaInlineHtml,
+  formatMediaInvalidAttrsHtml,
   formatMediaInvalidSizeHtml,
+  formatMediaInvalidSlugHtml,
   formatMediaMissingHtml,
   MEDIA_RECOMMENDED_DISPLAY_WIDTHS,
   type MediaFigureOptions,
@@ -12,13 +14,7 @@ import {
 import type { MediaRegistryEntry } from '../lib/media-render.js';
 import { isValidDisplayWidth, MEDIA_SLUG_REGEX } from '../lib/media-validation.js';
 
-const parseSize = (raw: string): number | undefined => {
-  const trimmed = raw.trim();
-  if (!trimmed) return undefined;
-  const numeric = Number.parseInt(trimmed.replace(/[^\d]/g, ''), 10);
-  if (!Number.isFinite(numeric) || numeric <= 0) return undefined;
-  return numeric;
-};
+const MEDIA_URL_PREFIX = '/media/';
 
 export interface ParsedMediaRef {
   slug: string;
@@ -29,51 +25,159 @@ export interface ParsedMediaRef {
   size: number | null;
   caption?: string;
   alt?: string;
-  // Set when the bracket parsed structurally but `size=` was missing
-  // entirely. Renderer surfaces an operator-readable message.
+  // Set when the attribute block was missing or omitted `size=`.
   missingSize?: boolean;
   // Set when `size=` was present but the value isn't allowed.
   invalidSize?: number | string;
+  // Set when the URL was `/media/<slug>` but the slug part is malformed
+  // (e.g. uppercase, underscore, contains `?` or `#`). Renderer surfaces
+  // an operator-readable message; validator rejects the write.
+  invalidSlug?: string;
+  // Tokens in the `{...}` attribute block we don't recognize (other
+  // keys, `#id`, `.class`, etc.). Reported verbatim so agents see the
+  // exact text they wrote.
+  unknownTokens?: string[];
 }
 
-export const parseMediaBracketContent = (raw: string): ParsedMediaRef | null => {
-  if (!raw.startsWith('@')) return null;
-  const segments = raw.slice(1).split('|').map(s => s.trim());
-  const slugSegment = segments.shift();
-  if (!slugSegment || !MEDIA_SLUG_REGEX.test(slugSegment)) return null;
+const parseSize = (raw: string): number | undefined => {
+  const trimmed = raw.trim();
+  if (!trimmed) return undefined;
+  const numeric = Number.parseInt(trimmed.replace(/[^\d]/g, ''), 10);
+  if (!Number.isFinite(numeric) || numeric <= 0) return undefined;
+  return numeric;
+};
 
-  const ref: ParsedMediaRef = { slug: slugSegment, size: null };
-  let sawSize = false;
-
-  for (const seg of segments) {
-    if (!seg) continue;
-    const eq = seg.indexOf('=');
-    if (eq > 0) {
-      const name = seg.slice(0, eq).trim().toLowerCase();
-      const value = seg.slice(eq + 1).trim();
-      if (name === 'alt') {
-        ref.alt = value;
-      } else if (name === 'size') {
-        sawSize = true;
-        const parsed = parseSize(value);
-        if (parsed !== undefined) {
-          ref.size = parsed;
-        } else {
-          ref.invalidSize = value;
+// Locate the index of the closing `}` for a `{...}` attribute block
+// starting at index 0 of `text`. Quoted strings (`"..."` / `'...'`)
+// are skipped opaquely so a caption containing `}` doesn't terminate
+// the block early. Backslash escapes one character inside a quoted
+// run. Returns -1 if no matching `}` is found.
+const findAttributeBlockEnd = (text: string): number => {
+  if (text.charCodeAt(0) !== 0x7b /* { */) return -1;
+  let i = 1;
+  while (i < text.length) {
+    const ch = text.charCodeAt(i);
+    if (ch === 0x7d /* } */) return i;
+    if (ch === 0x22 /* " */ || ch === 0x27 /* ' */) {
+      const quote = ch;
+      i++;
+      while (i < text.length) {
+        if (text.charCodeAt(i) === 0x5c /* \ */ && i + 1 < text.length) {
+          i += 2;
+          continue;
         }
+        if (text.charCodeAt(i) === quote) {
+          i++;
+          break;
+        }
+        i++;
       }
       continue;
     }
-    if (ref.caption === undefined) {
-      ref.caption = seg;
+    i++;
+  }
+  return -1;
+};
+
+// Tokenize the inside of a `{...}` attribute block. Tokens are
+// whitespace-separated; quoted runs (`"..."` / `'...'`) survive
+// whitespace and `=` boundaries. Quotes are kept in the token text so
+// the value side of `key=value` can detect and unquote them.
+const tokenizeAttributeBlock = (raw: string): string[] => {
+  const tokens: string[] = [];
+  let i = 0;
+  while (i < raw.length) {
+    while (i < raw.length && /\s/.test(raw[i])) i++;
+    if (i >= raw.length) break;
+    let buf = '';
+    while (i < raw.length && !/\s/.test(raw[i])) {
+      const ch = raw[i];
+      if (ch === '"' || ch === "'") {
+        const quote = ch;
+        buf += ch;
+        i++;
+        while (i < raw.length) {
+          if (raw[i] === '\\' && i + 1 < raw.length) {
+            buf += raw[i] + raw[i + 1];
+            i += 2;
+            continue;
+          }
+          buf += raw[i];
+          if (raw[i] === quote) {
+            i++;
+            break;
+          }
+          i++;
+        }
+        continue;
+      }
+      buf += ch;
+      i++;
+    }
+    if (buf.length) tokens.push(buf);
+  }
+  return tokens;
+};
+
+// Strip surrounding quotes from a value and unescape `\<x>` to `<x>`.
+// Pandoc convention: `"text"` and `'text'` are equivalent quoted forms.
+const unquote = (value: string): string => {
+  if (value.length >= 2) {
+    const first = value[0];
+    const last = value[value.length - 1];
+    if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+      return value.slice(1, -1).replace(/\\(.)/g, (_, c) => c);
+    }
+  }
+  return value;
+};
+
+interface ParsedAttributeBlock {
+  size?: number;
+  invalidSize?: string;
+  sawSize: boolean;
+  caption?: string;
+  unknownTokens: string[];
+}
+
+// Parse the inside of a `{...}` attribute block. Recognized keys:
+// `size` (positive integer) and `caption` (string, optionally quoted).
+// Anything else — `#id`, `.class`, unknown `key=value`, bare words —
+// goes into `unknownTokens` for downstream reporting. We deliberately
+// do NOT silently accept unknown tokens: agents get clear feedback so
+// typos surface immediately.
+const parseAttributeBlock = (raw: string): ParsedAttributeBlock => {
+  const tokens = tokenizeAttributeBlock(raw);
+  let size: number | undefined;
+  let invalidSize: string | undefined;
+  let sawSize = false;
+  let caption: string | undefined;
+  const unknownTokens: string[] = [];
+
+  for (const tok of tokens) {
+    const eq = tok.indexOf('=');
+    if (eq <= 0) {
+      unknownTokens.push(tok);
+      continue;
+    }
+    const name = tok.slice(0, eq).toLowerCase();
+    const value = unquote(tok.slice(eq + 1));
+    if (name === 'size') {
+      sawSize = true;
+      const parsed = parseSize(value);
+      if (parsed !== undefined) {
+        size = parsed;
+      } else {
+        invalidSize = value;
+      }
+    } else if (name === 'caption') {
+      caption = value;
+    } else {
+      unknownTokens.push(tok);
     }
   }
 
-  if (!sawSize) {
-    ref.missingSize = true;
-  }
-
-  return ref;
+  return { size, invalidSize, sawSize, caption, unknownTokens };
 };
 
 const resolveLocalized = (
@@ -123,41 +227,140 @@ const liftBlockMediaParagraphs = (tokens: Token[]) => {
   }
 };
 
+// Dedicated markdown-it for caption rendering. We deliberately do
+// NOT load the citations or media plugins here — captions are leaf
+// content; nesting `[@key]` or `![](/media/foo)` inside a caption
+// would be a layering violation and surprise the agent. `html: false`
+// keeps raw `<script>` etc. escaped.
+const captionRenderer = new MarkdownIt({ html: false, linkify: false });
+
+// Render a caption string to inline HTML, so `*Foo*` becomes
+// `<em>Foo</em>` while `<` and `>` remain escaped. Returns undefined
+// for empty / whitespace-only captions so the formatter can fall
+// through to attribution-only.
+const renderCaptionInline = (caption: string | undefined): string | undefined => {
+  const trimmed = caption?.trim();
+  if (!trimmed) return undefined;
+  return captionRenderer.renderInline(trimmed);
+};
+
 const buildFigureOptions = (
   ref: ParsedMediaRef,
   entry: MediaRegistryEntry,
   locale: string | undefined,
   size: number
 ): MediaFigureOptions => {
-  const caption = ref.caption ?? resolveLocalized(entry.caption, locale);
+  const captionRaw = ref.caption ?? resolveLocalized(entry.caption, locale);
+  const captionHtml = renderCaptionInline(captionRaw);
   const alt =
     ref.alt ?? resolveLocalized(entry.altText, locale) ?? resolveLocalized(entry.data.description, locale);
   return {
-    caption,
+    captionHtml,
     alt,
     size,
     revId: entry.revId,
   };
 };
 
+const isAsciiWhitespace = (ch: number): boolean =>
+  ch === 0x20 || ch === 0x09 || ch === 0x0a || ch === 0x0d;
+
+const skipWhitespace = (src: string, pos: number, max: number): number => {
+  while (pos < max && isAsciiWhitespace(src.charCodeAt(pos))) pos++;
+  return pos;
+};
+
 export const mediaPlugin = () => (md: MarkdownIt) => {
-  md.inline.ruler.after('image', 'media', (state, silent) => {
-    if (state.src.charCodeAt(state.pos) !== 0x21 /* ! */) return false;
-    if (state.src.charCodeAt(state.pos + 1) !== 0x5b /* [ */) return false;
-    const labelEnd = state.md.helpers.parseLinkLabel(state, state.pos + 1);
-    if (labelEnd <= 0) return false;
-    if (state.src.charCodeAt(labelEnd + 1) === 0x28 /* ( */) return false;
+  // Inline ruler that handles `![Alt](/media/<slug>){size=N caption="..."}`
+  // end-to-end, reading from `state.src` directly. Crucially this
+  // means markdown-it's emphasis / escape rules never touch the
+  // attribute block — captions can contain literal `*` and `_` and
+  // `\"` without the parser misinterpreting them. Non-`/media/` URLs
+  // fall through to the standard `image` rule (which the standard-
+  // image validator then rejects at write time).
+  md.inline.ruler.before('image', 'media_image', (state, silent) => {
+    const start = state.pos;
+    if (state.src.charCodeAt(start) !== 0x21 /* ! */) return false;
+    if (state.src.charCodeAt(start + 1) !== 0x5b /* [ */) return false;
 
-    const inner = state.src.slice(state.pos + 2, labelEnd).trim();
-    const ref = parseMediaBracketContent(inner);
-    if (!ref) return false;
+    const labelEnd = state.md.helpers.parseLinkLabel(state, start + 1, false);
+    if (labelEnd < 0) return false;
+    const labelStart = start + 2;
 
-    if (!silent) {
-      const token = state.push('media', '', 0) as Token;
-      token.meta = ref;
-      token.markup = state.src.slice(state.pos, labelEnd + 1);
+    let pos = labelEnd + 1;
+    if (pos >= state.posMax || state.src.charCodeAt(pos) !== 0x28 /* ( */) return false;
+    pos++;
+    pos = skipWhitespace(state.src, pos, state.posMax);
+
+    const dest = state.md.helpers.parseLinkDestination(state.src, pos, state.posMax);
+    if (!dest.ok) return false;
+    const url = dest.str;
+    pos = dest.pos;
+
+    // Only claim `/media/` URLs. Anything else is left for the
+    // standard image rule (and ultimately rejected by
+    // validateNoStandardMarkdownImages at write time).
+    if (!url.startsWith(MEDIA_URL_PREFIX)) return false;
+
+    pos = skipWhitespace(state.src, pos, state.posMax);
+
+    // Optional link title — parse and discard, mirroring standard image.
+    if (pos < state.posMax) {
+      const ch = state.src.charCodeAt(pos);
+      if (ch === 0x22 /* " */ || ch === 0x27 /* ' */ || ch === 0x28 /* ( */) {
+        const title = state.md.helpers.parseLinkTitle(state.src, pos, state.posMax);
+        if (title.ok) {
+          pos = title.pos;
+          pos = skipWhitespace(state.src, pos, state.posMax);
+        }
+      }
     }
-    state.pos = labelEnd + 1;
+
+    if (pos >= state.posMax || state.src.charCodeAt(pos) !== 0x29 /* ) */) return false;
+    pos++;
+
+    // Optional `{...}` attribute block, immediately adjacent (no
+    // whitespace between `)` and `{`). Read directly from state.src so
+    // emphasis/escape rules can't mangle the contents.
+    let attrInner: string | null = null;
+    if (pos < state.posMax && state.src.charCodeAt(pos) === 0x7b /* { */) {
+      const blockSrc = state.src.slice(pos, state.posMax);
+      const blockEnd = findAttributeBlockEnd(blockSrc);
+      if (blockEnd >= 0) {
+        attrInner = blockSrc.slice(1, blockEnd);
+        pos = pos + blockEnd + 1;
+      }
+      // If no matching `}`, leave the `{` in place — the size will be
+      // flagged as missing and the `{...` text will render literally.
+    }
+
+    if (silent) return true;
+
+    const slug = url.slice(MEDIA_URL_PREFIX.length);
+    const altRaw = state.src.slice(labelStart, labelEnd).trim();
+
+    const ref: ParsedMediaRef = { slug, size: null };
+    if (!slug || !MEDIA_SLUG_REGEX.test(slug)) {
+      ref.invalidSlug = slug;
+    }
+    if (altRaw) ref.alt = altRaw;
+
+    if (attrInner !== null) {
+      const parsed = parseAttributeBlock(attrInner);
+      if (parsed.size !== undefined) ref.size = parsed.size;
+      if (parsed.invalidSize !== undefined) ref.invalidSize = parsed.invalidSize;
+      if (parsed.caption !== undefined) ref.caption = parsed.caption;
+      if (parsed.unknownTokens.length) ref.unknownTokens = parsed.unknownTokens;
+      if (!parsed.sawSize) ref.missingSize = true;
+    } else {
+      ref.missingSize = true;
+    }
+
+    const token = state.push('media', '', 0);
+    token.meta = ref;
+    token.markup = state.src.slice(start, pos);
+
+    state.pos = pos;
     return true;
   });
 
@@ -176,6 +379,12 @@ export const mediaPlugin = () => (md: MarkdownIt) => {
       (env?.recommendedDisplayWidths as readonly number[] | undefined) ??
       MEDIA_RECOMMENDED_DISPLAY_WIDTHS;
 
+    if (ref.invalidSlug !== undefined) {
+      return formatMediaInvalidSlugHtml(ref.invalidSlug);
+    }
+    if (ref.unknownTokens?.length) {
+      return formatMediaInvalidAttrsHtml(ref.slug, ref.unknownTokens);
+    }
     if (ref.missingSize) {
       return formatMediaInvalidSizeHtml(ref.slug, '(missing)', standardWidths);
     }

@@ -2054,7 +2054,7 @@ altcha-widget {
 }
 
 /* ──────────────────────────────────────────────────────────────────────
-   Media (![@key]) — Wikimedia Commons embeds.
+   Media (![Alt](/media/<slug>){size=N caption="..."}) — Wikimedia Commons embeds.
    - figure.media.media-image-flow: small figure floated right (default
      for ≤ MEDIA_HERO_THRESHOLD_PX); text wraps Wikipedia-style.
    - figure.media.media-image-hero: column-wide centered block (for
@@ -2145,7 +2145,7 @@ altcha-widget {
   text-decoration-color: currentColor;
 }
 
-/* Inline thumbnail rendered for ![@key] mid-paragraph. Floats so text wraps. */
+/* Inline thumbnail rendered for media embeds inside flowing text. Floats so text wraps. */
 .article img.media-inline,
 .markdown-preview-body img.media-inline {
   float: right;
@@ -2164,7 +2164,7 @@ altcha-widget {
 }
 
 /* Missing-media placeholder rendered when an article references an
-   unknown ![@key]. Visible warning, not silent. */
+   unknown slug. Visible warning, not silent. */
 .article .media-missing,
 .markdown-preview-body .media-missing {
   display: inline-block;

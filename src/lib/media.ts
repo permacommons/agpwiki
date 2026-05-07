@@ -22,7 +22,7 @@ export type MediaType = (typeof MEDIA_TYPES)[number];
 // inside the canonical list and in sync with config/default.json5.
 export const MEDIA_WIKIMEDIA_THUMBNAIL_STEPS = [250, 500, 960, 1280, 1920] as const;
 
-// Standard CSS display widths recommended for `![@slug|size=N]`.
+// Standard CSS display widths recommended for `{size=N}` embeds.
 // These are *suggestions*, not an allowlist — agents and operators
 // may choose other integer widths in [1, MEDIA_MAX_DISPLAY_WIDTH] if
 // there's a reason to depart from the standard set. The validator
@@ -122,7 +122,16 @@ const escapeHtml = (value: string) =>
 const escapeAttr = escapeHtml;
 
 export interface MediaFigureOptions {
+  // Plain-text caption. Used when the caller has not pre-rendered
+  // markdown (for example when the formatter is invoked outside the
+  // markdown-it plugin path). Escaped for HTML when emitted.
   caption?: string;
+  // Pre-rendered inline HTML for the caption — takes precedence over
+  // `caption` when set. The plugin renderer fills this in by sending
+  // the raw caption through a clean inline markdown-it pass, so
+  // `*Foo*` → `<em>Foo</em>` while `<script>` stays escaped (the
+  // pass is configured with `html: false`).
+  captionHtml?: string;
   alt?: string;
   size: number;
   revId?: string | null;
@@ -156,14 +165,14 @@ const formatAttributionHtml = (data: MediaData): string => {
 };
 
 const formatFigcaptionContents = (
-  caption: string | undefined,
+  captionInner: string | undefined,
   attributionHtml: string
 ): string => {
-  const safeCaption = caption ? escapeHtml(caption) : '';
-  if (safeCaption && attributionHtml) {
-    return `<span class="media-caption-text">${safeCaption}</span> ${attributionHtml}`;
+  const inner = captionInner ?? '';
+  if (inner && attributionHtml) {
+    return `<span class="media-caption-text">${inner}</span> ${attributionHtml}`;
   }
-  if (safeCaption) return `<span class="media-caption-text">${safeCaption}</span>`;
+  if (inner) return `<span class="media-caption-text">${inner}</span>`;
   return attributionHtml;
 };
 
@@ -186,11 +195,16 @@ export const formatMediaFigureHtml = (
   options: MediaFigureOptions
 ): string => {
   const { slug, data } = source;
-  const caption = options.caption?.trim() || undefined;
+  // captionHtml (already-rendered inline HTML) wins over the
+  // plain-text caption fallback. Plain-text path is preserved for
+  // direct-call sites that don't run captions through markdown.
+  const captionInner = options.captionHtml?.trim()
+    || (options.caption ? escapeHtml(options.caption.trim()) : '')
+    || undefined;
   const alt = options.alt?.trim() ?? '';
   const size = options.size;
   const attributionHtml = formatAttributionHtml(data);
-  const figcaption = formatFigcaptionContents(caption, attributionHtml);
+  const figcaption = formatFigcaptionContents(captionInner, attributionHtml);
   const figcaptionTag = figcaption ? `<figcaption>${figcaption}</figcaption>` : '';
 
   const srcUrl = buildLocalMediaUrl(slug, size, options.revId);
@@ -237,4 +251,17 @@ export const formatMediaInvalidSizeHtml = (
 ): string => {
   const standardList = standardWidths.slice().sort((a, b) => a - b).join(', ');
   return `<span class="media-invalid-size" data-slug="${escapeAttr(slug)}">[invalid media size: ${escapeHtml(String(size))} for ${escapeHtml(slug)}. Use an integer 1–${maxWidth}; standard sizes: ${escapeHtml(standardList)}. Article column is ~${columnCssPx} CSS px so larger sizes render no bigger.]</span>`;
+};
+
+export const formatMediaInvalidSlugHtml = (rawSlug: string): string => {
+  const display = rawSlug.length > 0 ? rawSlug : '(empty)';
+  return `<span class="media-invalid-slug" data-slug="${escapeAttr(display)}">[invalid media slug: ${escapeHtml(display)}. Slugs must be lowercase letters, digits, and hyphens, with optional \`/\` between segments — e.g. \`/media/golden-rice\` or \`/media/biology/erik-portrait\`.]</span>`;
+};
+
+export const formatMediaInvalidAttrsHtml = (
+  slug: string,
+  unknownTokens: readonly string[]
+): string => {
+  const list = unknownTokens.map(t => escapeHtml(t)).join(' ');
+  return `<span class="media-invalid-attrs" data-slug="${escapeAttr(slug)}">[unknown attribute(s) on media ${escapeHtml(slug)}: ${list}. Recognized keys inside \`{...}\`: \`size=N\`, \`caption="..."\`. Alt text goes in the standard image position: \`![Alt](/media/${escapeHtml(slug)}){...}\`.]</span>`;
 };
