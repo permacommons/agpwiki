@@ -62,6 +62,49 @@ export const buildThumbnailUrlForWidth = (
   return template.replace(/\/\d+px-/, `/${width}px-`);
 };
 
+// Synthesize a substitutable Wikimedia thumbnail-template URL from a
+// Commons original URL. Used when the API returned an unscaled
+// original (which Commons does when the source image is narrower than
+// the requested `iiurlwidth` — those URLs have no `/<W>px-` segment
+// and break `buildThumbnailUrlForWidth`'s substitution).
+//
+// Original:  https://upload.wikimedia.org/wikipedia/commons/X/XY/<file>
+// Synth thumb: https://upload.wikimedia.org/wikipedia/commons/thumb/X/XY/<file>/<W>px-<thumb-file>
+//
+// `<thumb-file>` differs from `<file>` only for sources whose
+// rasterized thumb has a different extension: `.svg` → `.svg.png`,
+// `.pdf` / `.djvu` / `.tiff` / `.tif` → `.<orig>.jpg`. Other
+// raster formats keep their extension.
+export const synthesizeWikimediaThumbnailTemplate = (
+  originalUrl: string | null | undefined,
+  sampleWidth: number
+): string | null => {
+  if (!originalUrl) return null;
+  if (!Number.isFinite(sampleWidth) || sampleWidth <= 0) return null;
+  const match = originalUrl.match(
+    /^(https?:\/\/upload\.wikimedia\.org\/wikipedia\/commons)\/([0-9a-f])\/([0-9a-f]{2})\/([^?#]+)(?:[?#].*)?$/
+  );
+  if (!match) return null;
+  const [, base, hashA, hashAB, encodedFilename] = match;
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(encodedFilename);
+    } catch {
+      return encodedFilename;
+    }
+  })();
+  const lower = decoded.toLowerCase();
+  const renderedSuffix = lower.endsWith('.svg')
+    ? '.png'
+    : lower.endsWith('.pdf') || lower.endsWith('.djvu') || lower.endsWith('.tiff') || lower.endsWith('.tif')
+    ? '.jpg'
+    : '';
+  const thumbFilename = renderedSuffix
+    ? `${encodedFilename}${renderedSuffix}`
+    : encodedFilename;
+  return `${base}/thumb/${hashA}/${hashAB}/${encodedFilename}/${sampleWidth}px-${thumbFilename}`;
+};
+
 const ALLOWED_INLINE_TAGS = new Set(['b', 'strong', 'i', 'em', 'p']);
 
 const escapeHtmlAttribute = (value: string) =>
@@ -279,8 +322,19 @@ export const fetchCommonsMetadata = async (
     titleForUrl.replace(/\s+/g, '_')
   )}`;
 
+  // Prefer the API's `thumburl` when it's an actual thumbnail
+  // (`/<W>px-` segment present). Commons returns the unscaled
+  // original when the source image is narrower than `iiurlwidth`
+  // (e.g. a 600 px wide JPEG against our 960 sample) — those URLs
+  // have no `/<W>px-` for buildThumbnailUrlForWidth to substitute,
+  // so synthesize a real thumb URL from `info.url`. Falls through
+  // to null if the original URL isn't recognizably Wikimedia.
   const thumbnailUrlTemplate =
-    mediaType === 'image' && info.thumburl ? info.thumburl : null;
+    mediaType === 'image' && info.thumburl
+      ? /\/\d+px-/.test(info.thumburl)
+        ? info.thumburl
+        : synthesizeWikimediaThumbnailTemplate(info.url ?? null, sampleWidth)
+      : null;
 
   const data: MediaData = {
     commonsPageUrl,

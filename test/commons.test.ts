@@ -6,6 +6,7 @@ import {
   fetchCommonsMetadata,
   normalizeCommonsTitle,
   sanitizeCommonsHtml,
+  synthesizeWikimediaThumbnailTemplate,
 } from '../src/lib/commons.js';
 import { McpToolError, NotFoundError } from '../src/lib/errors.js';
 
@@ -94,6 +95,108 @@ test('buildThumbnailUrlForWidth returns null for unparseable templates', () => {
   assert.equal(buildThumbnailUrlForWidth(null, 500), null);
   assert.equal(buildThumbnailUrlForWidth('', 500), null);
   assert.equal(buildThumbnailUrlForWidth('https://example/250px-foo.jpg', 0), null);
+});
+
+test('synthesizeWikimediaThumbnailTemplate builds raster thumb URL from original', () => {
+  // Most common case — JPEG/PNG/GIF original. Both path-hash segments
+  // and percent-encoding in the filename should round-trip cleanly.
+  assert.equal(
+    synthesizeWikimediaThumbnailTemplate(
+      'https://upload.wikimedia.org/wikipedia/commons/3/3e/Citroenkruid.jpg',
+      960
+    ),
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Citroenkruid.jpg/960px-Citroenkruid.jpg'
+  );
+  assert.equal(
+    synthesizeWikimediaThumbnailTemplate(
+      'https://upload.wikimedia.org/wikipedia/commons/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG',
+      960
+    ),
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG/960px-Erik_Moeller%2C_cross_processed_portrait.JPG'
+  );
+});
+
+test('synthesizeWikimediaThumbnailTemplate appends rasterized extension for SVG/PDF', () => {
+  // Commons rasterizes SVGs to PNG and PDFs/DJVUs/TIFFs to JPG for
+  // thumbnails — the thumb filename gets the extra extension while the
+  // path segment keeps the original.
+  assert.equal(
+    synthesizeWikimediaThumbnailTemplate(
+      'https://upload.wikimedia.org/wikipedia/commons/0/0f/Logo.svg',
+      500
+    ),
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Logo.svg/500px-Logo.svg.png'
+  );
+  assert.equal(
+    synthesizeWikimediaThumbnailTemplate(
+      'https://upload.wikimedia.org/wikipedia/commons/a/ab/Manuscript.pdf',
+      500
+    ),
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Manuscript.pdf/500px-Manuscript.pdf.jpg'
+  );
+});
+
+test('synthesizeWikimediaThumbnailTemplate returns null for non-Wikimedia URLs', () => {
+  assert.equal(synthesizeWikimediaThumbnailTemplate('https://example.com/foo.jpg', 500), null);
+  assert.equal(
+    synthesizeWikimediaThumbnailTemplate(
+      'https://en.wikipedia.org/wiki/File:Foo.jpg',
+      500
+    ),
+    null
+  );
+  assert.equal(synthesizeWikimediaThumbnailTemplate(null, 500), null);
+  assert.equal(synthesizeWikimediaThumbnailTemplate('', 500), null);
+});
+
+test('fetchCommonsMetadata synthesizes template when API returns unscaled original', async () => {
+  // Commons returns the unscaled original (no /thumb/, no /<W>px-)
+  // when the source image is narrower than `iiurlwidth`. We must
+  // synthesize a real thumbnail-template URL so per-display-width
+  // substitution works downstream.
+  const unscaledResponse = {
+    query: {
+      pages: [
+        {
+          pageid: 7777,
+          ns: 6,
+          title: 'File:Citroenkruid.jpg',
+          imageinfo: [
+            {
+              url: 'https://upload.wikimedia.org/wikipedia/commons/3/3e/Citroenkruid.jpg',
+              thumburl:
+                'https://upload.wikimedia.org/wikipedia/commons/3/3e/Citroenkruid.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail_unscaled',
+              thumbwidth: 600,
+              thumbheight: 450,
+              width: 600,
+              height: 450,
+              mime: 'image/jpeg',
+              mediatype: 'BITMAP',
+              extmetadata: {
+                LicenseShortName: { value: 'CC-BY-SA-4.0' },
+              },
+            },
+          ],
+        },
+      ],
+    },
+  };
+  const result = await fetchCommonsMetadata('Citroenkruid.jpg', {
+    fetchImpl: stubFetch(unscaledResponse),
+    apiBaseUrl: 'https://commons.example/w/api.php',
+    userAgent: 'TestAgent/1.0',
+    timeoutMs: 5000,
+  });
+  // Synthesised template — has the substitutable `/<W>px-` segment.
+  assert.equal(
+    result.data.thumbnailUrlTemplate,
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Citroenkruid.jpg/960px-Citroenkruid.jpg'
+  );
+  // And it round-trips through buildThumbnailUrlForWidth.
+  assert.equal(
+    buildThumbnailUrlForWidth(result.data.thumbnailUrlTemplate, 250),
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Citroenkruid.jpg/250px-Citroenkruid.jpg'
+  );
 });
 
 test('fetchCommonsMetadata parses image response with thumbnail template', async () => {
