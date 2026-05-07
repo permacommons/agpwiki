@@ -31,6 +31,9 @@ npm run mcp-http     # MCP HTTP transport on :3333
 
 That's the full happy path. After it finishes, look in
 `agentic-testing/runs/<timestamp>/` for the transcript and analysis.
+`launch` also prints `article: http://127.0.0.1:3000/<slug>` at the
+end so the operator can inspect the result directly — keep in mind
+that re-launching the same topic wipes that URL (see lesson 8).
 
 ## What `setup` does
 

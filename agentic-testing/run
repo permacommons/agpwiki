@@ -49,6 +49,8 @@ SEED_META="$HERE/seed/meta"
 RUNS_DIR="$HERE/runs"
 MCP_URL="${AGENTIC_MCP_URL:-http://127.0.0.1:3333/mcp}"
 DEV_URL="${AGENTIC_DEV_URL:-http://127.0.0.1:3000/health}"
+# Base URL (no /health) used to surface article links at end of run.
+DEV_BASE_URL="${DEV_URL%/health}"
 MCP_CONFIG_FILE="${AGENTIC_MCP_CONFIG_FILE:-$RUNS_DIR/.mcp-config.json}"
 
 usage() {
@@ -130,7 +132,10 @@ stop_owned_mcp() {
     if ! kill -0 "$pid" 2>/dev/null; then break; fi
     sleep 0.3
   done
-  kill -0 "$pid" 2>/dev/null && kill_process_tree "$pid" KILL
+  # Use `if`, not `&&`: with `set -e`, a failing left side of `&&`
+  # makes the whole expression non-zero and aborts the script.
+  # Process-already-gone is the happy path and must not abort.
+  if kill -0 "$pid" 2>/dev/null; then kill_process_tree "$pid" KILL; fi
 }
 
 # Identify any process listening on $MCP_URL's port that's running
@@ -199,7 +204,8 @@ restart_mcp() {
         kill -0 "$orphan" 2>/dev/null || break
         sleep 0.3
       done
-      kill -0 "$orphan" 2>/dev/null && kill_process_tree "$orphan" KILL
+      # Use `if`, not `&&` (set -e would abort on the already-gone path).
+      if kill -0 "$orphan" 2>/dev/null; then kill_process_tree "$orphan" KILL; fi
       sleep 0.5
     else
       warn "mcp server at $MCP_URL is bound by an external process — cannot guarantee its source matches the current working tree."
@@ -442,6 +448,10 @@ cmd_launch() {
   fi
 
   local task="" clean_override="" target_slug_override="" topic_override=""
+  # Captures the slug of the article the agent is being asked to
+  # produce, so we can surface its URL after the run finishes — the
+  # operator's first question is almost always "where can I see it".
+  local article_slug=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --task) task="$2"; shift 2 ;;
@@ -517,11 +527,13 @@ cmd_launch() {
     log "clean mode:  $clean_override (operator override)"
   elif [[ -n "$target_slug_override" ]]; then
     setup_args=(--target-slug "$target_slug_override")
+    article_slug="$target_slug_override"
     log "target slug: $target_slug_override (operator override)"
   elif [[ -n "$topic_override" ]]; then
     local slug
     slug=$(slugify "$topic_override")
     setup_args=(--target-slug "$slug")
+    article_slug="$slug"
     log "target slug: $slug (derived from --topic)"
   else
     local topic slug
@@ -529,6 +541,7 @@ cmd_launch() {
     if [[ -n "$topic" ]]; then
       slug=$(slugify "$topic")
       setup_args=(--target-slug "$slug")
+      article_slug="$slug"
       log "target slug: $slug (derived from Topic: $topic)"
     else
       setup_args=(--no-clean)
@@ -558,6 +571,12 @@ cmd_launch() {
   log "analyzer:    $analyzer"
   log "analysis:    $run_dir/analysis.md"
   log "transcript:  $run_dir/transcript.jsonl"
+  if [[ -n "$article_slug" ]]; then
+    # Surfaced last so the URL is the final line the operator sees —
+    # easy to act on without scrolling. The next launch on this slug
+    # will wipe the page, so inspect now.
+    log "article:     $DEV_BASE_URL/$article_slug"
+  fi
 }
 
 main() {
