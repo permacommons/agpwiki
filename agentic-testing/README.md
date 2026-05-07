@@ -39,8 +39,13 @@ that re-launching the same topic wipes that URL (see lesson 8).
 
 `./agentic-testing/run setup` is the agent-agnostic preflight. It:
 
-1. Verifies the dev web server (`:3000`) and MCP HTTP server
-   (`:3333`) are responding. Fails with a clear hint if not.
+1. Restarts the dev web server (`:3000`) and MCP HTTP server
+   (`:3333`) so the in-memory code matches the working tree.
+   Tracks each via its own PID file under `runs/`, so we never
+   touch a process the operator started themselves outside the
+   harness. If the operator is managing one of those servers
+   externally, prints a `WARN:` and proceeds (next-run rendering
+   may be stale until they restart it).
 2. Populates `seed/meta/` from production agpedia.org if empty.
    (Snapshots are gitignored — production page bodies are mutable
    content, not source-controlled artifacts.)
@@ -191,20 +196,22 @@ once, internalize.
    inspecting whatever init/handshake event the agent emits, not
    by asking the model what it can see.**
 
-2. **Stale MCP server.** `npm run mcp-http` runs `tsx
-   src/mcp/http.ts` — no watch mode. Source changes to anything
-   the MCP loads (tool descriptions, validators, server
-   `instructions`) DO NOT auto-reload. A run made against a stale
-   server tests an old surface and produces misleading signal.
-   The most insidious form is a **branch switch** — checking out
-   a different commit doesn't necessarily touch file mtimes, so
-   freshness probes based on `mtime > process_start` give false
-   confidence while the in-memory code is from a different branch
-   entirely (a feature-branch's tools can persist in memory after
-   switching to a branch that doesn't have them, and the agent
-   follows tool descriptions for tools that don't exist on the
-   current renderer). **`setup` now unconditionally restarts
-   `mcp-http`** as the only reliable closure of this gap.
+2. **Stale running server.** `npm run mcp-http` runs `tsx
+   src/mcp/http.ts` — no watch. `npm run dev` runs `tsx watch
+   src/index.ts` — has a watcher, but it misses real cases:
+   branch switches that don't touch file mtimes, and changes to
+   non-imported assets the watch graph hasn't picked up. A run
+   made against a stale server tests an old surface — for the
+   MCP that's misleading tool descriptions / validators; for the
+   dev server it's stale render output (markdown plugins, route
+   handlers, templates) that doesn't reflect what writes
+   actually do. The most insidious form is a **branch switch**
+   — checking out a different commit doesn't necessarily touch
+   file mtimes, so freshness probes based on `mtime >
+   process_start` give false confidence while in-memory code is
+   from a different branch entirely. **`setup` unconditionally
+   restarts both `mcp-http` and `npm run dev`** as the only
+   reliable closure of this gap.
 
 3. **Test user lifecycle gates.** A freshly-created user can't
    use agent features until `email_verified_at` is set, not

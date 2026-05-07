@@ -66,15 +66,6 @@ log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*"; }
 warn() { printf '[%s] WARN: %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
 fail() { printf '[%s] error: %s\n' "$(date +%H:%M:%S)" "$*" >&2; exit 1; }
 
-check_dev_up() {
-  local code
-  code=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null || echo 000)
-  if [[ "$code" != "200" ]]; then
-    fail "dev web server not responding at $DEV_URL (got $code). Start it with 'npm run dev' or use './agentic-testing/run bootstrap'."
-  fi
-  log "dev server: ok ($DEV_URL)"
-}
-
 check_mcp_up() {
   local code
   code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null || echo 000)
@@ -86,6 +77,8 @@ check_mcp_up() {
 
 MCP_PID_FILE_DEFAULT="$RUNS_DIR/.mcp.pid"
 MCP_PID_FILE="${AGENTIC_MCP_PID_FILE:-$MCP_PID_FILE_DEFAULT}"
+DEV_PID_FILE_DEFAULT="$RUNS_DIR/.dev.pid"
+DEV_PID_FILE="${AGENTIC_DEV_PID_FILE:-$DEV_PID_FILE_DEFAULT}"
 
 # BFS-walk a process and all its descendants, then signal each
 # (deepest first). `pkill -P` is one level only — a chain like
@@ -218,6 +211,96 @@ restart_mcp() {
   start_owned_mcp
 }
 
+# Dev-server lifecycle. Mirrors the mcp-http pair (stop / find-orphan
+# / start / restart) because `tsx watch` is *almost* good enough but
+# misses two real cases: branch switches that don't touch file mtimes,
+# and changes to non-imported assets the watch graph hasn't picked up.
+# A test run is the contract boundary where we want the running web
+# code to match the working tree exactly — so restart unconditionally
+# rather than trust the watcher.
+stop_owned_dev() {
+  [[ -f "$DEV_PID_FILE" ]] || return 0
+  local pid cmdline
+  pid=$(cat "$DEV_PID_FILE" 2>/dev/null || true)
+  rm -f "$DEV_PID_FILE"
+  [[ -n "$pid" ]] || return 0
+  kill -0 "$pid" 2>/dev/null || return 0
+  cmdline=$(ps -p "$pid" -o args= 2>/dev/null || true)
+  if [[ "$cmdline" != *npm* ]] && [[ "$cmdline" != *node* ]] && [[ "$cmdline" != *tsx* ]]; then
+    log "warn: pid $pid in $DEV_PID_FILE no longer looks like our dev server (cmdline: $cmdline) — leaving alone"
+    return 0
+  fi
+  log "stopping previously-started dev server (pid $pid, including any descendants)"
+  kill_process_tree "$pid" TERM
+  for _ in $(seq 1 15); do
+    if ! kill -0 "$pid" 2>/dev/null; then break; fi
+    sleep 0.3
+  done
+  if kill -0 "$pid" 2>/dev/null; then kill_process_tree "$pid" KILL; fi
+}
+
+find_adopted_orphan_dev() {
+  local listener cmd cwd
+  listener=$(lsof -tiTCP:3000 -sTCP:LISTEN 2>/dev/null | head -1 || true)
+  [[ -n "$listener" ]] || return 0
+  cmd=$(ps -p "$listener" -o args= 2>/dev/null || true)
+  cwd=$(readlink -f "/proc/$listener/cwd" 2>/dev/null || true)
+  # `tsx watch src/index.ts` is the dev entry point; cwd must be this
+  # repo. Conservative — never claim something the operator started
+  # in another repo and forgot about.
+  if [[ "$cmd" == *src/index.ts* ]] && [[ "$cwd" == "$REPO_ROOT" ]]; then
+    echo "$listener"
+  fi
+}
+
+start_owned_dev() {
+  mkdir -p "$RUNS_DIR"
+  (
+    cd "$REPO_ROOT"
+    nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &
+    echo $! > "$DEV_PID_FILE"
+  )
+  for _ in $(seq 1 60); do
+    local code
+    code=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null || echo 000)
+    if [[ "$code" == "200" ]]; then
+      log "dev server: ok ($DEV_URL) (fresh process, pid $(cat "$DEV_PID_FILE"))"
+      return 0
+    fi
+    sleep 1
+  done
+  fail "dev server did not come up within 60 s — see $RUNS_DIR/.dev.log"
+}
+
+restart_dev() {
+  mkdir -p "$RUNS_DIR"
+  stop_owned_dev
+
+  local existing_code
+  existing_code=$(curl -s -o /dev/null -w "%{http_code}" "$DEV_URL" 2>/dev/null || echo 000)
+  if [[ "$existing_code" == "200" ]]; then
+    local orphan
+    orphan=$(find_adopted_orphan_dev)
+    if [[ -n "$orphan" ]]; then
+      log "found adopted-orphan dev server (pid $orphan, our src/index.ts in $REPO_ROOT) — killing"
+      kill_process_tree "$orphan" TERM
+      for _ in $(seq 1 15); do
+        kill -0 "$orphan" 2>/dev/null || break
+        sleep 0.3
+      done
+      if kill -0 "$orphan" 2>/dev/null; then kill_process_tree "$orphan" KILL; fi
+      sleep 0.5
+    else
+      warn "dev server at $DEV_URL is bound by an external process — cannot guarantee its source matches the current working tree."
+      warn "if behavior looks stale (markdown rendering, route handlers, templates), restart that process manually before re-running."
+      return 0
+    fi
+  fi
+
+  log "starting dev server (guarantees process matches current working tree)"
+  start_owned_dev
+}
+
 ensure_seed() {
   if [[ ! -d "$SEED_META" ]] || [[ -z "$(ls -A "$SEED_META" 2>/dev/null)" ]]; then
     log "seed/meta/ empty — fetching from production"
@@ -337,7 +420,7 @@ cmd_setup() {
     fail "setup: --target-slug requires a non-empty value"
   fi
 
-  check_dev_up
+  restart_dev
   restart_mcp
   ensure_seed
   provision_user
@@ -378,7 +461,11 @@ cmd_bootstrap() {
   else
     log "starting 'npm run dev' in background (logs: $RUNS_DIR/.dev.log)"
     mkdir -p "$RUNS_DIR"
-    (cd "$REPO_ROOT" && nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &)
+    (
+      cd "$REPO_ROOT"
+      nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &
+      echo $! > "$DEV_PID_FILE"
+    )
   fi
   if curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null | grep -q '^401$'; then
     log "mcp server already up"
