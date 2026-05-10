@@ -6,9 +6,9 @@ import test from 'node:test';
 
 import { McpToolError } from '../src/lib/errors.js';
 import {
+  detectImageExtension,
   FilesystemMediaStorage,
   type ImageExtension,
-  sniffImageMagic,
 } from '../src/lib/media-storage.js';
 
 const ALLOWED: ReadonlyArray<ImageExtension> = ['jpg', 'png', 'gif', 'webp'];
@@ -44,10 +44,14 @@ const stubFetchError = (message: string): typeof fetch =>
     throw new Error(message);
   }) as unknown as typeof fetch;
 
-// Magic-byte prefixes for synthetic test bytes.
+// Complete tiny image fixtures; file-type may reject truncated headers
+// for some formats.
 const JPEG_HEAD = Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
-const PNG_HEAD = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
-const GIF_HEAD = Uint8Array.from([0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00]);
+const PNG_BYTES = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=',
+  'base64'
+);
+const GIF_BYTES = Buffer.from('R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==', 'base64');
 const WEBP_HEAD = Uint8Array.from([
   0x52,
   0x49,
@@ -70,20 +74,23 @@ const padBytes = (head: Uint8Array, totalLen: number): Uint8Array => {
   return out;
 };
 
-test('sniffImageMagic recognizes the four allowlisted formats', () => {
-  assert.equal(sniffImageMagic(Buffer.from(JPEG_HEAD)), 'jpg');
-  assert.equal(sniffImageMagic(Buffer.from(PNG_HEAD)), 'png');
-  assert.equal(sniffImageMagic(Buffer.from(GIF_HEAD)), 'gif');
-  assert.equal(sniffImageMagic(Buffer.from(WEBP_HEAD)), 'webp');
+test('detectImageExtension recognizes the four allowlisted formats', async () => {
+  assert.equal(await detectImageExtension(Buffer.from(JPEG_HEAD)), 'jpg');
+  assert.equal(await detectImageExtension(PNG_BYTES), 'png');
+  assert.equal(await detectImageExtension(GIF_BYTES), 'gif');
+  assert.equal(await detectImageExtension(Buffer.from(WEBP_HEAD)), 'webp');
 });
 
-test('sniffImageMagic returns null for non-image bytes', () => {
-  assert.equal(sniffImageMagic(Buffer.from('plain text yo!!!')), null);
-  assert.equal(sniffImageMagic(Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])), null);
+test('detectImageExtension returns null for non-image bytes', async () => {
+  assert.equal(await detectImageExtension(Buffer.from('plain text yo!!!')), null);
+  assert.equal(
+    await detectImageExtension(Buffer.from([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])),
+    null
+  );
 });
 
-test('sniffImageMagic returns null on too-short buffer', () => {
-  assert.equal(sniffImageMagic(Buffer.from([0xff, 0xd8])), null);
+test('detectImageExtension returns null on too-short buffer', async () => {
+  assert.equal(await detectImageExtension(Buffer.from([0xff, 0xd8])), null);
 });
 
 test('storeThumbnail happy path: writes to final dir, returns extension', async () => {
@@ -125,7 +132,7 @@ test('storeThumbnail handles multi-segment slug by nesting directories', async (
       allowedExtensions: ALLOWED,
       fetchTimeoutMs: 5000,
       userAgent: 'test',
-      fetchImpl: stubBytesFetch(PNG_HEAD),
+      fetchImpl: stubBytesFetch(PNG_BYTES),
     });
 
     const stored = await storage.storeThumbnail(
@@ -339,7 +346,7 @@ test('renameSlug moves cached thumbnails to a new directory', async () => {
       allowedExtensions: ALLOWED,
       fetchTimeoutMs: 5000,
       userAgent: 'test',
-      fetchImpl: stubBytesFetch(PNG_HEAD),
+      fetchImpl: stubBytesFetch(PNG_BYTES),
     });
     await storage.storeThumbnail('erik', 250, 'https://example/foo.png');
     await storage.renameSlug('erik', 'erik-portrait');
@@ -363,7 +370,7 @@ test('renameSlug into a multi-segment target creates parent dirs', async () => {
       allowedExtensions: ALLOWED,
       fetchTimeoutMs: 5000,
       userAgent: 'test',
-      fetchImpl: stubBytesFetch(PNG_HEAD),
+      fetchImpl: stubBytesFetch(PNG_BYTES),
     });
     await storage.storeThumbnail('erik', 250, 'https://example/foo.png');
     await storage.renameSlug('erik', 'biology/erik-portrait');

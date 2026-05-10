@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { createWriteStream, promises as fs } from 'node:fs';
 import path from 'node:path';
+import { fileTypeFromBuffer } from 'file-type';
 
 import { McpToolError } from './errors.js';
 
@@ -9,7 +10,7 @@ export type ImageExtension = 'jpg' | 'png' | 'gif' | 'webp';
 export interface StoredThumbnail {
   // Absolute path on disk. Route handler streams from here.
   path: string;
-  // Extension matches sniffed MIME, allowlist-validated.
+  // Extension matches detected file signature, allowlist-validated.
   extension: ImageExtension;
 }
 
@@ -50,47 +51,18 @@ export interface FilesystemMediaStorageOptions {
 const ENOENT = (err: unknown): boolean =>
   (err as NodeJS.ErrnoException | null)?.code === 'ENOENT';
 
-export const sniffImageMagic = (buf: Buffer): ImageExtension | null => {
-  if (buf.length < 12) return null;
-  // JPEG: FF D8 FF
-  if (buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff) return 'jpg';
-  // PNG: 89 50 4E 47 0D 0A 1A 0A
-  if (
-    buf[0] === 0x89 &&
-    buf[1] === 0x50 &&
-    buf[2] === 0x4e &&
-    buf[3] === 0x47 &&
-    buf[4] === 0x0d &&
-    buf[5] === 0x0a &&
-    buf[6] === 0x1a &&
-    buf[7] === 0x0a
-  ) {
-    return 'png';
+export const detectImageExtension = async (buf: Buffer): Promise<ImageExtension | null> => {
+  let detected: Awaited<ReturnType<typeof fileTypeFromBuffer>>;
+  try {
+    detected = await fileTypeFromBuffer(buf);
+  } catch {
+    return null;
   }
-  // GIF: 47 49 46 38 (37|39) 61
-  if (
-    buf[0] === 0x47 &&
-    buf[1] === 0x49 &&
-    buf[2] === 0x46 &&
-    buf[3] === 0x38 &&
-    (buf[4] === 0x37 || buf[4] === 0x39) &&
-    buf[5] === 0x61
-  ) {
-    return 'gif';
+  if (!detected) return null;
+  if (detected.ext === 'jpg' || detected.ext === 'png' || detected.ext === 'gif') {
+    return detected.ext;
   }
-  // WebP: "RIFF" .... "WEBP"
-  if (
-    buf[0] === 0x52 &&
-    buf[1] === 0x49 &&
-    buf[2] === 0x46 &&
-    buf[3] === 0x46 &&
-    buf[8] === 0x57 &&
-    buf[9] === 0x45 &&
-    buf[10] === 0x42 &&
-    buf[11] === 0x50
-  ) {
-    return 'webp';
-  }
+  if (detected.ext === 'webp') return 'webp';
   return null;
 };
 
@@ -140,7 +112,7 @@ export class FilesystemMediaStorage implements MediaStorage {
             'User-Agent': this.opts.userAgent,
             // Avoid surprises from Wikimedia's content negotiation
             // (it can serve WebP via Accept). We accept the common
-            // image types we allowlist; bytes are still sniffed.
+            // image types we allowlist; bytes are still signature-checked.
             Accept: 'image/jpeg, image/png, image/gif, image/webp',
           },
         });
@@ -204,38 +176,40 @@ export class FilesystemMediaStorage implements MediaStorage {
         });
       }
 
-      // 2. Sniff magic bytes.
-      const head = Buffer.alloc(12);
+      // 2. Detect type from file signatures.
+      const head = Buffer.alloc(4100);
       const fd = await fs.open(stagingFile, 'r');
+      let bytesRead = 0;
       try {
-        await fd.read(head, 0, 12, 0);
+        const result = await fd.read(head, 0, head.length, 0);
+        bytesRead = result.bytesRead;
       } finally {
         await fd.close();
       }
-      const sniffed = sniffImageMagic(head);
-      if (!sniffed) {
+      const detected = await detectImageExtension(head.subarray(0, bytesRead));
+      if (!detected) {
         throw new McpToolError(
           'validation_error',
           'Thumbnail bytes did not match any supported image format (jpg/png/gif/webp).',
           { details: { kind: 'mime' } }
         );
       }
-      if (!this.opts.allowedExtensions.includes(sniffed)) {
+      if (!this.opts.allowedExtensions.includes(detected)) {
         throw new McpToolError(
           'validation_error',
-          `Thumbnail format ${sniffed} is not in the allowlist.`,
-          { details: { kind: 'mime', sniffed, allowed: this.opts.allowedExtensions } }
+          `Thumbnail format ${detected} is not in the allowlist.`,
+          { details: { kind: 'mime', detected, allowed: this.opts.allowedExtensions } }
         );
       }
 
       // 3. Atomic rename into the slug directory.
       const slugDir = this.slugFinalDir(slug);
       await fs.mkdir(slugDir, { recursive: true });
-      const finalFile = path.join(slugDir, `${wikimediaStep}.${sniffed}`);
+      const finalFile = path.join(slugDir, `${wikimediaStep}.${detected}`);
       await fs.rename(stagingFile, finalFile);
 
       succeeded = true;
-      return { path: finalFile, extension: sniffed };
+      return { path: finalFile, extension: detected };
     } catch (err) {
       if (err instanceof McpToolError) throw err;
       const message = err instanceof Error ? err.message : String(err);

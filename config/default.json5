@@ -53,7 +53,7 @@
       },
       // 25 MB per-file cap.
       maxFileBytes: 26214400,
-      // Allowed image extensions; sniffed magic bytes must agree
+      // Allowed image extensions; detected file signatures must agree
       // with the extension we write to disk to pass validation.
       allowedExtensions: ['jpg', 'png', 'gif', 'webp'],
     },
