@@ -135,6 +135,10 @@ export interface MediaFigureOptions {
   alt?: string;
   size: number;
   revId?: string | null;
+  // Localized strings for parts of the figure that need translation
+  // (currently just the Commons backlink label). When omitted the
+  // Commons link is suppressed — see `MediaAttributionStrings`.
+  attribution?: MediaAttributionStrings;
 }
 
 export interface MediaFigureSource {
@@ -142,7 +146,19 @@ export interface MediaFigureSource {
   data: MediaData;
 }
 
-const formatAttributionHtml = (data: MediaData): string => {
+// Caller-supplied localized strings used when assembling the
+// attribution line. Routes/renderers translate via i18next and pass
+// these in; lib stays a pure HTML builder with no English baked in.
+// If `commonsLinkLabel` is not supplied the Commons backlink is
+// omitted — callers that want it must provide a translated label.
+export interface MediaAttributionStrings {
+  commonsLinkLabel?: string;
+}
+
+const formatAttributionHtml = (
+  data: MediaData,
+  strings: MediaAttributionStrings = {}
+): string => {
   const parts: string[] = [];
   if (data.attributionHtml) {
     parts.push(data.attributionHtml);
@@ -155,9 +171,9 @@ const formatAttributionHtml = (data: MediaData): string => {
       : escapeHtml(data.license);
     parts.push(licenseHtml);
   }
-  if (data.commonsPageUrl) {
+  if (data.commonsPageUrl && strings.commonsLinkLabel) {
     parts.push(
-      `<a href="${escapeAttr(data.commonsPageUrl)}" target="_blank" rel="noreferrer noopener">Wikimedia Commons</a>`
+      `<a href="${escapeAttr(data.commonsPageUrl)}" target="_blank" rel="noreferrer noopener">${escapeHtml(strings.commonsLinkLabel)}</a>`
     );
   }
   if (parts.length === 0) return '';
@@ -203,7 +219,7 @@ export const formatMediaFigureHtml = (
     || undefined;
   const alt = options.alt?.trim() ?? '';
   const size = options.size;
-  const attributionHtml = formatAttributionHtml(data);
+  const attributionHtml = formatAttributionHtml(data, options.attribution);
   const figcaption = formatFigcaptionContents(captionInner, attributionHtml);
   const figcaptionTag = figcaption ? `<figcaption>${figcaption}</figcaption>` : '';
 
@@ -237,31 +253,26 @@ export const formatMediaInlineHtml = (
   return `<img class="media-inline" src="${escapeAttr(srcUrl)}" alt="${escapeAttr(alt)}"${widthAttr}${heightAttr} loading="lazy">`;
 };
 
-export const formatMediaMissingHtml = (slug: string, reason?: string): string => {
-  const detail = reason ? `: ${reason}` : '';
-  return `<span class="media-missing" data-slug="${escapeAttr(slug)}">Missing media: ${escapeHtml(slug)}${escapeHtml(detail)}</span>`;
-};
+// Render-time error placeholders. Each takes a pre-built (localized)
+// message; the lib stays a pure HTML wrapper. The renderer (and any
+// test that exercises a non-`en` locale) is responsible for assembling
+// the message via i18next.
+//
+// `slug` is also accepted so the DOM gets a stable `data-slug` hook
+// for CSS / scripting / debugging, even when the message text already
+// embeds the slug.
 
-export const formatMediaInvalidSizeHtml = (
-  slug: string,
-  size: unknown,
-  standardWidths: readonly number[],
-  maxWidth: number = MEDIA_MAX_DISPLAY_WIDTH,
-  columnCssPx: number = MEDIA_ARTICLE_COLUMN_CSS_PX
-): string => {
-  const standardList = standardWidths.slice().sort((a, b) => a - b).join(', ');
-  return `<span class="media-invalid-size" data-slug="${escapeAttr(slug)}">[invalid media size: ${escapeHtml(String(size))} for ${escapeHtml(slug)}. Use an integer 1–${maxWidth}; standard sizes: ${escapeHtml(standardList)}. Article column is ~${columnCssPx} CSS px so larger sizes render no bigger.]</span>`;
-};
+const formatMediaErrorSpan = (className: string, slug: string, message: string): string =>
+  `<span class="${className}" data-slug="${escapeAttr(slug)}">${escapeHtml(message)}</span>`;
 
-export const formatMediaInvalidSlugHtml = (rawSlug: string): string => {
-  const display = rawSlug.length > 0 ? rawSlug : '(empty)';
-  return `<span class="media-invalid-slug" data-slug="${escapeAttr(display)}">[invalid media slug: ${escapeHtml(display)}. Slugs must be lowercase letters, digits, and hyphens, with optional \`/\` between segments — e.g. \`/media/golden-rice\` or \`/media/biology/erik-portrait\`.]</span>`;
-};
+export const formatMediaMissingHtml = (slug: string, message: string): string =>
+  formatMediaErrorSpan('media-missing', slug, message);
 
-export const formatMediaInvalidAttrsHtml = (
-  slug: string,
-  unknownTokens: readonly string[]
-): string => {
-  const list = unknownTokens.map(t => escapeHtml(t)).join(' ');
-  return `<span class="media-invalid-attrs" data-slug="${escapeAttr(slug)}">[unknown attribute(s) on media ${escapeHtml(slug)}: ${list}. Recognized keys inside \`{...}\`: \`size=N\`, \`caption="..."\`. Alt text goes in the standard image position: \`![Alt](/media/${escapeHtml(slug)}){...}\`.]</span>`;
-};
+export const formatMediaInvalidSizeHtml = (slug: string, message: string): string =>
+  formatMediaErrorSpan('media-invalid-size', slug, message);
+
+export const formatMediaInvalidSlugHtml = (slug: string, message: string): string =>
+  formatMediaErrorSpan('media-invalid-slug', slug, message);
+
+export const formatMediaInvalidAttrsHtml = (slug: string, message: string): string =>
+  formatMediaErrorSpan('media-invalid-attrs', slug, message);

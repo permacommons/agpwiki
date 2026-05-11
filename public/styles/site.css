@@ -580,6 +580,9 @@ pre.diff ins {
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
 .tool-related {
+  /* Always start below any floated figures at the end of the body so
+     this row doesn't wrap alongside a trailing flow image. */
+  clear: both;
   margin: 1.25rem 0 1rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid var(--rule);
@@ -1532,6 +1535,8 @@ button {
   }
 }
 .content-language-row {
+  /* Always start below any floated figures at the end of the body. */
+  clear: both;
   margin-top: 1.75rem;
   padding-top: 1rem;
   border-top: 1px solid var(--rule);
@@ -2064,7 +2069,9 @@ altcha-widget {
    ────────────────────────────────────────────────────────────────────── */
 .article figure.media,
 .markdown-preview-body figure.media {
-  /* Hero default (overridden by .media-image-flow below). */
+  /* Hero default (overridden by .media-image-flow below). Heroes
+     always start below any preceding flow figure so their borders
+     don't nest against a still-floating thumbnail. */
   margin: 1.5rem auto;
   padding: 0.5rem 0.5rem 0;
   background: #fffaf0;
@@ -2074,6 +2081,7 @@ altcha-widget {
   /* width is intrinsic to the contained <img>/<video> */
   width: fit-content;
   text-align: center;
+  clear: both;
 }
 .article figure.media.media-image-flow,
 .markdown-preview-body figure.media.media-image-flow {

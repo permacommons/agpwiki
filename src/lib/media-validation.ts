@@ -82,6 +82,7 @@ export const validateMediaRefs: ContentValidator = async ({ analysis, fieldLabel
   if (analysis.mediaRefs.length === 0) return;
 
   const standardWidths = readStandardDisplayWidths();
+  const standardList = formatStandardDisplayWidthsList(standardWidths);
   const requestedSlugs = new Set<string>();
 
   for (const ref of analysis.mediaRefs) {
@@ -107,10 +108,26 @@ export const validateMediaRefs: ContentValidator = async ({ analysis, fieldLabel
     if (!slug) continue;
     requestedSlugs.add(slug);
 
+    if (ref.missingSize) {
+      errors.add(
+        fieldLabel,
+        `media ${slug} is missing \`size=N\`. Use \`![Alt](/media/${slug}){size=N caption="..."}\`. Standard sizes: ${standardList}; any integer 1–${MEDIA_MAX_DISPLAY_WIDTH} is allowed.`,
+        'invalid'
+      );
+      continue;
+    }
+    if (ref.invalidSize !== undefined) {
+      errors.add(
+        fieldLabel,
+        `media ${slug} has invalid \`size=${ref.invalidSize}\`: must be a positive integer 1–${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${standardList}.`,
+        'invalid'
+      );
+      continue;
+    }
     if (!isValidDisplayWidth(ref.size)) {
       errors.add(
         fieldLabel,
-        `media size for ${slug} must be an integer from 1 to ${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${formatStandardDisplayWidthsList(standardWidths)}.`,
+        `media ${slug} size ${ref.size} is out of range: must be a positive integer 1–${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${standardList}.`,
         'invalid'
       );
     }

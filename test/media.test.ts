@@ -1,3 +1,4 @@
+import './_setup-i18n.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
@@ -57,6 +58,7 @@ test('formatMediaFigureHtml renders an image figure with local URL and attributi
       alt: 'Portrait alt text',
       size: 500,
       revId: 'rev-abc-123',
+      attribution: { commonsLinkLabel: 'Wikimedia Commons' },
     }
   );
   assert.match(html, /<figure class="media media-image media-image-hero"/);
@@ -69,6 +71,20 @@ test('formatMediaFigureHtml renders an image figure with local URL and attributi
   assert.match(html, /<figcaption><span class="media-caption-text">A portrait<\/span>/);
   assert.match(html, /CC-BY-SA-4\.0/);
   assert.match(html, /Wikimedia Commons<\/a>/);
+});
+
+test('formatMediaFigureHtml omits Commons backlink when no label is supplied', () => {
+  // Lib stays a pure HTML builder — no English baked in. Callers that
+  // want the Commons link must pass a translated label.
+  const html = formatMediaFigureHtml(
+    { slug: 'erik-portrait', data: buildImageData() },
+    { caption: 'A portrait', size: 500 }
+  );
+  assert.doesNotMatch(html, /Wikimedia Commons/);
+  // The link to the file's Commons page is what's suppressed; other
+  // commons.wikimedia.org URLs (attribution user pages, the figure's
+  // data-commons-page hook) still appear.
+  assert.doesNotMatch(html, /<a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
 });
 
 test('formatMediaFigureHtml omits cache-buster when revId is missing', () => {
@@ -129,20 +145,18 @@ test('formatMediaInlineHtml renders an inline image with width/height', () => {
   assert.match(html, / height="188"/);
 });
 
-test('formatMediaMissingHtml renders a placeholder with slug', () => {
-  const html = formatMediaMissingHtml('missing-slug');
+test('formatMediaMissingHtml wraps a message in a media-missing span', () => {
+  const html = formatMediaMissingHtml('missing-slug', 'Missing media: missing-slug');
   assert.match(html, /class="media-missing"/);
   assert.match(html, /data-slug="missing-slug"/);
   assert.match(html, /Missing media: missing-slug/);
 });
 
-test('formatMediaMissingHtml accepts an optional reason', () => {
-  const html = formatMediaMissingHtml('foo', 'bad bytes');
-  assert.match(html, /Missing media: foo: bad bytes/);
-});
-
-test('formatMediaInvalidSizeHtml is operator-readable', () => {
-  const html = formatMediaInvalidSizeHtml('erik-portrait', 0, [250, 800]);
+test('formatMediaInvalidSizeHtml wraps a message in a media-invalid-size span', () => {
+  const html = formatMediaInvalidSizeHtml(
+    'erik-portrait',
+    '[invalid media size: 0 for erik-portrait. Use an integer 1–1920; standard sizes: 250, 800. Article column is ~768 CSS px so larger sizes render no bigger.]'
+  );
   assert.match(html, /class="media-invalid-size"/);
   assert.match(html, /data-slug="erik-portrait"/);
   assert.match(html, /\[invalid media size: 0 for erik-portrait\./);
@@ -151,8 +165,8 @@ test('formatMediaInvalidSizeHtml is operator-readable', () => {
   assert.match(html, /Article column is ~768 CSS px/);
 });
 
-test('formatMediaInvalidSizeHtml escapes embedded HTML in slug or size', () => {
-  const html = formatMediaInvalidSizeHtml('<x>', '<bad>', [250]);
+test('formatMediaInvalidSizeHtml escapes embedded HTML in slug and message', () => {
+  const html = formatMediaInvalidSizeHtml('<x>', 'size <bad> for <x>');
   assert.match(html, /&lt;x&gt;/);
   assert.match(html, /&lt;bad&gt;/);
   assert.doesNotMatch(html, /<x>/);

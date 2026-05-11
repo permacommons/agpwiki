@@ -1,3 +1,4 @@
+import i18next from 'i18next';
 import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 
@@ -8,6 +9,8 @@ import {
   formatMediaInvalidSizeHtml,
   formatMediaInvalidSlugHtml,
   formatMediaMissingHtml,
+  MEDIA_ARTICLE_COLUMN_CSS_PX,
+  MEDIA_MAX_DISPLAY_WIDTH,
   MEDIA_RECOMMENDED_DISPLAY_WIDTHS,
   type MediaFigureOptions,
 } from '../lib/media.js';
@@ -244,6 +247,19 @@ const renderCaptionInline = (caption: string | undefined): string | undefined =>
   return captionRenderer.renderInline(trimmed);
 };
 
+// Thin wrapper around i18next.t. Source-of-truth for every English
+// string is `locales/ui/en.json5` — when i18next isn't initialized,
+// `i18next.t` returns the key, which surfaces a missing-init bug
+// loudly rather than papering over it with a duplicate English copy.
+const t = (
+  key: string,
+  locale: string | undefined,
+  vars?: Record<string, unknown>
+): string => i18next.t(key, { lng: locale, ...(vars ?? {}) }) as string;
+
+const formatStandardSizesList = (widths: readonly number[]): string =>
+  widths.slice().sort((a, b) => a - b).join(', ');
+
 const buildFigureOptions = (
   ref: ParsedMediaRef,
   entry: MediaRegistryEntry,
@@ -259,6 +275,9 @@ const buildFigureOptions = (
     alt,
     size,
     revId: entry.revId,
+    attribution: {
+      commonsLinkLabel: t('media.render.commonsLink', locale),
+    },
   };
 };
 
@@ -375,36 +394,60 @@ export const mediaPlugin = () => (md: MarkdownIt) => {
     const ref = token.meta as ParsedMediaRef | undefined;
     if (!ref) return '';
 
+    const locale = (env?.locale as string | undefined) ?? undefined;
     const standardWidths =
       (env?.recommendedDisplayWidths as readonly number[] | undefined) ??
       MEDIA_RECOMMENDED_DISPLAY_WIDTHS;
+    const standardList = formatStandardSizesList(standardWidths);
 
     if (ref.invalidSlug !== undefined) {
-      return formatMediaInvalidSlugHtml(ref.invalidSlug);
+      const display = ref.invalidSlug.length > 0 ? ref.invalidSlug : '(empty)';
+      return formatMediaInvalidSlugHtml(
+        display,
+        t('media.render.invalidSlug', locale, { slug: display })
+      );
     }
     if (ref.unknownTokens?.length) {
-      return formatMediaInvalidAttrsHtml(ref.slug, ref.unknownTokens);
+      return formatMediaInvalidAttrsHtml(
+        ref.slug,
+        t('media.render.invalidAttrs', locale, {
+          slug: ref.slug,
+          tokens: ref.unknownTokens.join(' '),
+        })
+      );
     }
+
+    const invalidSizeMessage = (sizeDisplay: string): string =>
+      t('media.render.invalidSize', locale, {
+        slug: ref.slug,
+        size: sizeDisplay,
+        max: MEDIA_MAX_DISPLAY_WIDTH,
+        standard: standardList,
+        column: MEDIA_ARTICLE_COLUMN_CSS_PX,
+      });
+
     if (ref.missingSize) {
-      return formatMediaInvalidSizeHtml(ref.slug, '(missing)', standardWidths);
+      return formatMediaInvalidSizeHtml(ref.slug, invalidSizeMessage('(missing)'));
     }
     if (ref.invalidSize !== undefined) {
-      return formatMediaInvalidSizeHtml(ref.slug, ref.invalidSize, standardWidths);
+      return formatMediaInvalidSizeHtml(ref.slug, invalidSizeMessage(String(ref.invalidSize)));
     }
     if (ref.size === null) {
       // Defensive: parser sets one of missingSize / invalidSize when
       // size is null, but cover the path explicitly.
-      return formatMediaInvalidSizeHtml(ref.slug, '(missing)', standardWidths);
+      return formatMediaInvalidSizeHtml(ref.slug, invalidSizeMessage('(missing)'));
     }
     if (!isValidDisplayWidth(ref.size)) {
-      return formatMediaInvalidSizeHtml(ref.slug, ref.size, standardWidths);
+      return formatMediaInvalidSizeHtml(ref.slug, invalidSizeMessage(String(ref.size)));
     }
 
     const registry = (env?.mediaRegistry ?? null) as Map<string, MediaRegistryEntry> | null;
-    const locale = (env?.locale as string | undefined) ?? undefined;
     const entry = registry?.get(ref.slug);
     if (!entry) {
-      return formatMediaMissingHtml(ref.slug);
+      return formatMediaMissingHtml(
+        ref.slug,
+        t('media.render.missing', locale, { slug: ref.slug })
+      );
     }
     const figureOptions = buildFigureOptions(ref, entry, locale, ref.size);
     if (token.block) {

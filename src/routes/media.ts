@@ -61,7 +61,7 @@ export const registerMediaRoutes = (app: Express) => {
       slug = '';
     }
     if (!slug || !MEDIA_SLUG_REGEX.test(slug)) {
-      res.status(404).type('text').send('Media not found.');
+      res.status(404).type('text').send(req.t('page.notFound'));
       return;
     }
 
@@ -75,7 +75,10 @@ export const registerMediaRoutes = (app: Express) => {
         .status(400)
         .type('text')
         .send(
-          `Width must be an integer 1-${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${standardList}.`
+          req.t('media.errors.invalidWidth', {
+            max: MEDIA_MAX_DISPLAY_WIDTH,
+            standard: standardList,
+          })
         );
       return;
     }
@@ -85,7 +88,7 @@ export const registerMediaRoutes = (app: Express) => {
       // Defensive: isValidDisplayWidth caps at the largest canonical
       // step, so this branch is unreachable. Kept for safety in case
       // the canonical-steps list ever drifts.
-      res.status(400).type('text').send('Invalid width.');
+      res.status(400).type('text').send(req.t('media.errors.invalidWidthShort'));
       return;
     }
 
@@ -96,7 +99,7 @@ export const registerMediaRoutes = (app: Express) => {
       res.sendFile(stored.path);
     } catch (err) {
       if (err instanceof NotFoundError) {
-        res.status(404).type('text').send('Media not found.');
+        res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
       if (err instanceof McpToolError) {
@@ -204,6 +207,9 @@ export const registerMediaRoutes = (app: Express) => {
                 alt: altStr || undefined,
                 size: METADATA_PAGE_SIZE,
                 revId: selectedRevision.revId,
+                attribution: {
+                  commonsLinkLabel: req.t('media.render.commonsLink'),
+                },
               }
             )
           : '';

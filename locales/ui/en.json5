@@ -220,6 +220,28 @@
     "rawJson": "Raw metadata JSON",
     "revisionMeta": "Revision {{revId}} · {{date}}",
     "revisionMetaNoDate": "Revision {{revId}}",
+    "errors": {
+      // Plain-text HTTP responses from /media-files/<slug>/<width>
+      // when the requested width is outside the allowed range.
+      "invalidWidth": "Width must be an integer 1-{{max}}. Standard sizes: {{standard}}.",
+      "invalidWidthShort": "Invalid width."
+    },
+    "render": {
+      // Link label for the Wikimedia Commons page in figcaption attribution.
+      "commonsLink": "Wikimedia Commons",
+      // Inline error rendered when a body references a slug that has
+      // no matching media row. Reachable only with valid syntax — the
+      // media was deleted (or renamed) after the embed was saved.
+      "missing": "Missing media: {{slug}}",
+      // The remaining render.* keys cover states that should be
+      // caught by write-time validation; they're still shown in the
+      // markdown preview (where unsaved drafts get rendered before
+      // save) so an author sees the same hint inline rather than only
+      // on save attempt.
+      "invalidSlug": "[invalid media slug: {{slug}}. Slugs must be lowercase letters, digits, and hyphens, with optional `/` between segments — e.g. `/media/golden-rice` or `/media/biology/erik-portrait`.]",
+      "invalidAttrs": "[unknown attribute(s) on media {{slug}}: {{tokens}}. Recognized keys inside `{...}`: `size=N`, `caption=\"...\"`. Alt text goes in the standard image position: `![Alt](/media/{{slug}}){...}`.]",
+      "invalidSize": "[invalid media size: {{size}} for {{slug}}. Use an integer 1–{{max}}; standard sizes: {{standard}}. Article column is ~{{column}} CSS px so larger sizes render no bigger.]"
+    },
     "field": {
       // URL identifier for this media entity (lowercase letters, digits,
       // hyphens, optional `/` segments). Distinct from the Commons file title.

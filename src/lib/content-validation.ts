@@ -40,7 +40,10 @@ const collectMediaRefsFromTokens = (tokens: Token[], result: ParsedMediaRef[]) =
   for (const token of tokens) {
     if (token.type === 'media') {
       const ref = token.meta as ParsedMediaRef | undefined;
-      if (ref?.slug) {
+      // Keep refs even when the slug is empty or invalid so the
+      // validator can reject the write — a falsy-slug check would
+      // let `![Alt](/media/)` slip past.
+      if (ref) {
         result.push(ref);
       }
     }

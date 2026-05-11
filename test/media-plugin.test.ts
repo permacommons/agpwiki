@@ -1,3 +1,4 @@
+import './_setup-i18n.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
