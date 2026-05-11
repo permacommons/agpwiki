@@ -55,6 +55,18 @@ Exempt from i18n (kept English by convention):
 - Server logs (`console.error`, `debug(...)`).
 - HTTP header names, route paths, and other protocol-level strings.
 
+## Code comments
+
+Default to none — well-named identifiers do the work. When you do
+write a comment, explain *why* and only why:
+
+- Don't reference the current task, PR, or review ("added for PR #60",
+  "agentic testing flagged this"). That belongs in the commit message.
+- Don't describe history ("used to X", "before the fix"). The diff
+  and `git log` are authoritative.
+- Do capture non-obvious rationale: a hidden constraint, an invariant,
+  a workaround for a specific bug.
+
 ## Using MCP locally
 
 - Stdio transport (for local clients/tools): `npm run mcp`.
