@@ -125,9 +125,12 @@ export const validateMediaRefs: ContentValidator = async ({ analysis, fieldLabel
       continue;
     }
     if (!isValidDisplayWidth(ref.size)) {
+      // Same wording as the unparseable-value branch above so agents
+      // see a consistent error family for "size is wrong" regardless
+      // of how it's wrong.
       errors.add(
         fieldLabel,
-        `media ${slug} size ${ref.size} is out of range: must be a positive integer 1–${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${standardList}.`,
+        `media ${slug} has invalid \`size=${ref.size}\`: must be a positive integer 1–${MEDIA_MAX_DISPLAY_WIDTH}. Standard sizes: ${standardList}.`,
         'invalid'
       );
     }
@@ -144,7 +147,11 @@ export const validateMediaRefs: ContentValidator = async ({ analysis, fieldLabel
   const missing = Array.from(requestedSlugs).filter(slug => !foundSlugs.has(slug));
 
   for (const slug of missing) {
-    errors.add(fieldLabel, `media not found: ${slug}`, 'invalid');
+    errors.add(
+      fieldLabel,
+      `media not found: ${slug}. Use \`media_query\` with a \`slugPrefix\` to find existing media, or \`media_create\` to register a new Wikimedia Commons file under this slug.`,
+      'invalid'
+    );
   }
 };
 
