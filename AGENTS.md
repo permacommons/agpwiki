@@ -36,6 +36,25 @@
 - MediaWiki syntax is not supported.
 - Bibliography is auto-appended as a references section when citations are present.
 
+## Internationalization (i18n)
+
+User-facing strings live in `locales/ui/{lng}.json5`. `en.json5` is the
+canonical source of truth — every key originates there, other locales
+fall back to it via i18next.
+
+- **In routes/views**: use `req.t('key', { vars })` (Express middleware
+  injects `req.t`); in Handlebars use the `__` helper.
+- **No duplicate English fallbacks.** Do not put the same string in
+  both a `defaultValue` and `en.json5`; if `i18next.t` returns a key
+  unchanged, that's a missing-init bug we want to surface, not paper
+  over.
+
+Exempt from i18n (kept English by convention):
+- MCP tool error messages (`McpToolError`, `ValidationCollector`) —
+  returned to bots/dev tooling, not browsing users.
+- Server logs (`console.error`, `debug(...)`).
+- HTTP header names, route paths, and other protocol-level strings.
+
 ## Using MCP locally
 
 - Stdio transport (for local clients/tools): `npm run mcp`.
