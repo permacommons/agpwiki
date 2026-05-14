@@ -73,6 +73,23 @@ import {
   updateCitation,
 } from '../services/citation-service.js';
 import {
+  createMedia,
+  deleteMedia,
+  diffMediaRevisions,
+  listMediaRevisions,
+  type MediaDeleteInput,
+  type MediaQueryInput,
+  type MediaRefreshInput,
+  type MediaUpdateInput,
+  type MediaWriteInput,
+  queryMedia,
+  readMedia,
+  readMediaRevision,
+  refreshMedia,
+  updateMedia,
+} from '../services/media-service.js';
+import { getMediaStorage } from '../services/media-storage-backend.js';
+import {
   createPageCheck,
   deletePageCheck,
   diffPageCheckRevisions,
@@ -235,7 +252,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       version: '0.1.0',
     },
     {
-      instructions: 'Use tools to create/update wiki pages and citations, and resources to read them.',
+      instructions: 'Use tools to create/update wiki pages, citations, and media (Wikimedia Commons), and resources to read them.',
     }
   );
 
@@ -325,6 +342,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     localizedLocatorLabelSchema,
     localizedCheckResultsSchema,
     localizedNotesSchema,
+    localizedCaptionSchema,
+    localizedAltTextSchema,
     localizedRevisionSummarySchema,
     languageTagSchema,
   } = createLocalizedSchemas({
@@ -1016,6 +1035,192 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   );
 
   server.registerTool(
+    'media_create',
+    {
+      title: 'Create Media',
+      description:
+        'Register a Wikimedia Commons image as a media entity. The server fetches Commons metadata such as license, attribution, dimensions, and thumbnail template. Use the returned slug in article markdown as `![Alt text](/media/<slug>){size=250 caption="..."}`. Only images are supported.',
+      inputSchema: {
+        slug: z.string(),
+        commonsTitle: z.string(),
+        title: localizedTitleSchema.optional,
+        caption: localizedCaptionSchema.optional,
+        altText: localizedAltTextSchema.optional,
+        policyHash: policyHashSchema,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args: MediaWriteInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await createMedia(
+        dal,
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
+        userId
+      );
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_update',
+    {
+      title: 'Update Media',
+      description:
+        'Create a new revision for an existing media entity. Updates curated fields only: slug, title, caption, and altText. Use media_refresh to re-fetch Commons metadata.',
+      inputSchema: {
+        slug: z.string(),
+        newSlug: z.string().optional(),
+        title: localizedTitleSchema.optional,
+        caption: localizedCaptionSchema.optional,
+        altText: localizedAltTextSchema.optional,
+        policyHash: policyHashSchema,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: MediaUpdateInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await updateMedia(
+        dal,
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
+        userId,
+        { storage: getMediaStorage() }
+      );
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_refresh',
+    {
+      title: 'Refresh Media Metadata',
+      description:
+        'Re-fetch Commons metadata for an existing media entity and store it as a new revision. Cached thumbnails are invalidated and rebuilt on demand.',
+      inputSchema: {
+        slug: z.string(),
+        policyHash: policyHashSchema,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: MediaRefreshInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await refreshMedia(
+        dal,
+        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
+        userId,
+        { storage: getMediaStorage() }
+      );
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_query',
+    {
+      title: 'Query Media',
+      description:
+        'Search media entities by slug prefix, Commons title substring, license, or author. Only images are supported in this release.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slugPrefix: z.string().optional(),
+        commonsTitle: z.string().optional(),
+        mediaType: z.literal('image').optional(),
+        license: z.string().optional(),
+        author: z.string().optional(),
+        limit: z.number().int().optional(),
+        offset: z.number().int().optional(),
+      },
+    },
+    withToolErrorHandling(async (args: unknown) => {
+      const dal = await initializePostgreSQL();
+      const payload = await queryMedia(dal, args as MediaQueryInput);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_read',
+    {
+      title: 'Read Media',
+      description: 'Read a media entity by slug.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    withToolErrorHandling(async (args: { slug: string }) => {
+      const dal = await initializePostgreSQL();
+      const payload = await readMedia(dal, args.slug);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_readRevision',
+    {
+      title: 'Read Media Revision',
+      description: 'Read a specific media revision by revision ID.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slug: z.string(),
+        revId: uuidSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const payload = await readMediaRevision(dal, args.slug, args.revId);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_listRevisions',
+    {
+      title: 'List Media Revisions',
+      description: 'List revisions for a media entity by slug.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slug: z.string(),
+      },
+    },
+    withToolErrorHandling(async (args: { slug: string }) => {
+      const dal = await initializePostgreSQL();
+      const payload = await listMediaRevisions(dal, args.slug);
+      return payload;
+    })
+  );
+
+  server.registerTool(
+    'media_diffRevisions',
+    {
+      title: 'Diff Media Revisions',
+      description: 'Generate a structured diff between two media revisions.',
+      annotations: { readOnlyHint: true },
+      inputSchema: {
+        slug: z.string(),
+        fromRevId: uuidSchema,
+        toRevId: uuidSchema.optional(),
+      },
+    },
+    withToolErrorHandling(async (args: { slug: string; fromRevId: string; toRevId?: string }) => {
+      const dal = await initializePostgreSQL();
+      const payload = await diffMediaRevisions(dal, args);
+      return payload;
+    })
+  );
+
+  server.registerTool(
     'page_check_create',
     {
       title: 'Create Page Check',
@@ -1408,6 +1613,33 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
+  const mediaDeleteTool = server.registerTool(
+    'media_delete',
+    {
+      title: 'Delete Media',
+      description:
+        'Soft-delete a media entity and all its revisions. Requires wiki_admin role. Cached thumbnails are also reclaimed from disk. revSummary is required, e.g., {"en":"Delete duplicate media entry"}.',
+      inputSchema: {
+        slug: z.string(),
+        policyHash: policyHashSchema,
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: MediaDeleteInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const payload = await deleteMedia(
+        dal,
+        { ...writeArgs },
+        userId,
+        { storage: getMediaStorage() }
+      );
+      return payload;
+    })
+  );
+
   const pageCheckDeleteTool = server.registerTool(
     'page_check_delete',
     {
@@ -1434,6 +1666,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     wikiDeletePageTool,
     citationDeleteTool,
     claimDeleteTool,
+    mediaDeleteTool,
     pageCheckDeleteTool,
     blogDeleteTool,
   };
@@ -1442,6 +1675,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     wikiDeletePageTool.disable();
     citationDeleteTool.disable();
     claimDeleteTool.disable();
+    mediaDeleteTool.disable();
     pageCheckDeleteTool.disable();
   }
   if (!canUseBlogAdminTools(userRoles)) {

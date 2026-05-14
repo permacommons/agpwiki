@@ -30,6 +30,9 @@ export const assertCanDeleteCitation = async (dal: DataAccessLayer, userId: stri
 export const assertCanDeleteCitationClaim = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
 
+export const assertCanDeleteMedia = async (dal: DataAccessLayer, userId: string) =>
+  assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
+
 export const assertCanDeletePageCheck = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
 

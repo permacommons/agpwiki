@@ -4,10 +4,11 @@ import { Driver } from '@citeproc-rs/wasm';
 import { diffWordsWithSpace } from 'diff';
 import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
-
+import type { MediaRegistryEntry } from './lib/media-render.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
+import { mediaPlugin } from './markdown/media.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
 import { getArticleCount } from './metrics.js';
@@ -524,6 +525,7 @@ markdown.use(citationsPlugin, {
     };
   },
 });
+markdown.use(mediaPlugin());
 
 export type RenderResult = {
   html: string;
@@ -535,6 +537,8 @@ export type RenderMarkdownOptions = {
   wikiLinks?: {
     missingSlugs: Set<string>;
   };
+  mediaRegistry?: Map<string, MediaRegistryEntry>;
+  locale?: string;
 };
 
 type RenderEnv = Record<string, unknown> & {
@@ -544,6 +548,8 @@ type RenderEnv = Record<string, unknown> & {
   wikiLinks?: RenderMarkdownOptions['wikiLinks'];
   citeprocFactory?: () => ReturnType<typeof buildCiteproc>;
   citeprocInstance?: { free?: () => void };
+  mediaRegistry?: Map<string, MediaRegistryEntry>;
+  locale?: string;
 };
 
 export const renderMarkdown = async (
@@ -557,6 +563,8 @@ export const renderMarkdown = async (
     toc: [],
     tocSlugs: new Set(),
     wikiLinks: options.wikiLinks,
+    mediaRegistry: options.mediaRegistry,
+    locale: options.locale,
   };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);

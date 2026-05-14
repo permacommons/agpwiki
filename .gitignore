@@ -1,11 +1,15 @@
 node_modules/
 dist/
+var/
 .env
 .DS_Store
 npm-debug.log*
 research/
 CLAUDE.md
+.claude/
 .gemini/
 .browser-data/
 public/downloads/dumps/
 config/development.json5
+config/local.json5
+config/local-*.json5

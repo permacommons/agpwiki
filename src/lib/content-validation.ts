@@ -1,11 +1,13 @@
 import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 import citationsPlugin, { type Citation } from '../markdown/citations.js';
+import { mediaPlugin, type ParsedMediaRef } from '../markdown/media.js';
 import type { ValidationCollector } from './errors.js';
 
 export type MarkdownAnalysis = {
   tokens: Token[];
   citations: Citation[];
+  mediaRefs: ParsedMediaRef[];
 };
 
 export type ContentValidationContext = {
@@ -16,7 +18,9 @@ export type ContentValidationContext = {
 
 export type ContentValidator = (context: ContentValidationContext) => Promise<void> | void;
 
-const parser = new MarkdownIt({ html: false, linkify: true }).use(citationsPlugin);
+const parser = new MarkdownIt({ html: false, linkify: true })
+  .use(citationsPlugin)
+  .use(mediaPlugin());
 
 const collectCitationsFromTokens = (tokens: Token[], result: Citation[]) => {
   for (const token of tokens) {
@@ -32,14 +36,33 @@ const collectCitationsFromTokens = (tokens: Token[], result: Citation[]) => {
   }
 };
 
+const collectMediaRefsFromTokens = (tokens: Token[], result: ParsedMediaRef[]) => {
+  for (const token of tokens) {
+    if (token.type === 'media') {
+      const ref = token.meta as ParsedMediaRef | undefined;
+      // Keep refs even when the slug is empty or invalid so the
+      // validator can reject the write — a falsy-slug check would
+      // let `![Alt](/media/)` slip past.
+      if (ref) {
+        result.push(ref);
+      }
+    }
+    if (token.children?.length) {
+      collectMediaRefsFromTokens(token.children, result);
+    }
+  }
+};
+
 export const analyzeMarkdown = (text: string): MarkdownAnalysis => {
   if (!text) {
-    return { tokens: [], citations: [] };
+    return { tokens: [], citations: [], mediaRefs: [] };
   }
   const tokens = parser.parse(text, {});
   const citations: Citation[] = [];
+  const mediaRefs: ParsedMediaRef[] = [];
   collectCitationsFromTokens(tokens, citations);
-  return { tokens, citations };
+  collectMediaRefsFromTokens(tokens, mediaRefs);
+  return { tokens, citations, mediaRefs };
 };
 
 export const validateMarkdownContent = async (

@@ -61,12 +61,14 @@ test('MCP admin tools are disabled without admin roles', () => {
   assert.ok(mcpWithoutRoles.adminTools.wikiDeletePageTool);
   assert.ok(mcpWithoutRoles.adminTools.citationDeleteTool);
   assert.ok(mcpWithoutRoles.adminTools.claimDeleteTool);
+  assert.ok(mcpWithoutRoles.adminTools.mediaDeleteTool);
   assert.ok(mcpWithoutRoles.adminTools.pageCheckDeleteTool);
   assert.ok(mcpWithoutRoles.adminTools.blogDeleteTool);
 
   assert.equal(mcpWithoutRoles.adminTools.wikiDeletePageTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.citationDeleteTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.claimDeleteTool.enabled, false);
+  assert.equal(mcpWithoutRoles.adminTools.mediaDeleteTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.pageCheckDeleteTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.blogDeleteTool.enabled, false);
 });
@@ -77,6 +79,7 @@ test('MCP wiki admin tools are enabled with wiki_admin role', () => {
   assert.equal(mcpWithWikiAdmin.adminTools.wikiDeletePageTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.citationDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.claimDeleteTool.enabled, true);
+  assert.equal(mcpWithWikiAdmin.adminTools.mediaDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.pageCheckDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.blogDeleteTool.enabled, false);
 });
@@ -88,6 +91,7 @@ test('MCP blog admin tool is enabled with blog_admin role', () => {
   assert.equal(mcpWithBlogAdmin.adminTools.wikiDeletePageTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.citationDeleteTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.claimDeleteTool.enabled, false);
+  assert.equal(mcpWithBlogAdmin.adminTools.mediaDeleteTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.pageCheckDeleteTool.enabled, false);
 });
 

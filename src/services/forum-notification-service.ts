@@ -3,6 +3,7 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { forumThreadPath } from '../lib/forum-paths.js';
+import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import User from '../models/user.js';
@@ -30,9 +31,13 @@ export type ForumReplyCreatedPayload = {
 const collapseWhitespace = (value: string) => value.replace(/\s+/g, ' ').trim();
 
 const markdownToPlainText = async (dal: DataAccessLayer, markdown: string) => {
-  const citationEntries = await loadCitationEntriesForSources(dal, [markdown]);
+  const [citationEntries, mediaRegistry] = await Promise.all([
+    loadCitationEntriesForSources(dal, [markdown]),
+    loadMediaEntriesForSources(dal, [markdown]),
+  ]);
   const rendered = await renderMarkdown(markdown, citationEntries, {
     backToCitationLabel: 'Back to citation',
+    mediaRegistry,
   });
   return collapseWhitespace(decodeHTML(striptags(rendered.html)));
 };

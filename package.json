@@ -40,6 +40,7 @@
     "diff": "^7.0.0",
     "entities": "^7.0.0",
     "express": "^5.2.1",
+    "file-type": "^21.0.0",
     "handlebars-i18n": "^1.10.2",
     "hbs": "^4.2.0",
     "i18next": "^25.7.4",

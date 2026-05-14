@@ -34,6 +34,8 @@ type CreateLocalizedSchemasOptions = {
     locatorLabel?: LocalizedSchemaOptions;
     checkResults?: LocalizedSchemaOptions;
     notes?: LocalizedSchemaOptions;
+    caption?: LocalizedSchemaOptions;
+    altText?: LocalizedSchemaOptions;
     revSummary?: LocalizedSchemaOptions;
   };
 };
@@ -129,6 +131,14 @@ export const createLocalizedSchemas = (options: CreateLocalizedSchemasOptions = 
       options.localized?.checkResults
     ),
     localizedNotesSchema: makeLocalizedMapSchemas('notes Markdown', options.localized?.notes),
+    localizedCaptionSchema: makeLocalizedMapSchemas(
+      'media caption (plain text)',
+      options.localized?.caption
+    ),
+    localizedAltTextSchema: makeLocalizedMapSchemas(
+      'media alternative text (plain text)',
+      options.localized?.altText
+    ),
     localizedRevisionSummarySchema: makeLocalizedMapSchemas(
       'revision summary',
       options.localized?.revSummary

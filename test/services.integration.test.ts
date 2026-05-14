@@ -7,7 +7,12 @@ import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
 import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
-import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
+import {
+  ForbiddenError,
+  InvalidRequestError,
+  NotFoundError,
+  ValidationError,
+} from '../src/lib/errors.js';
 import {
   FORUM_MODERATOR_ROLE,
   WIKI_ADMIN_ROLE,
@@ -827,12 +832,14 @@ const cleanupTestArtifacts = async (
     slugPrefix,
     citationPrefix,
     claimPrefix,
+    mediaSlugPrefix,
     forumThreadPrefix,
     userId,
   }: {
     slugPrefix?: string;
     citationPrefix?: string;
     claimPrefix?: string;
+    mediaSlugPrefix?: string;
     forumThreadPrefix?: string;
     userId?: string;
   }
@@ -840,6 +847,9 @@ const cleanupTestArtifacts = async (
   if (slugPrefix) {
     await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [slugPrefix]);
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
+  }
+  if (mediaSlugPrefix) {
+    await dal.query('DELETE FROM media WHERE slug LIKE $1', [mediaSlugPrefix]);
   }
   if (citationPrefix) {
     await dal.query(
@@ -2578,6 +2588,75 @@ test('Service rejects invalid language codes', async () => {
   }
 });
 
+test('Service rejects wiki pages using reserved media routes', async () => {
+  const dal = await getDal();
+  const slug = `test-reserved-media-route-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug: 'media/example',
+            title: { en: 'Reserved media page' },
+            body: { en: 'Body' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof InvalidRequestError);
+        assert.match(error.message, /reserved/);
+        return true;
+      }
+    );
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Reserved rename source' },
+        body: { en: 'Body' },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        updateWikiPage(
+          dal,
+          {
+            slug,
+            newSlug: 'media-files/example/250',
+            revSummary: { en: 'Try reserved route rename.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof InvalidRequestError);
+        assert.match(error.message, /reserved/);
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
 test('Service rejects control characters in wiki content', async () => {
   const dal = await getDal();
   const slug = `test-control-${Date.now()}`;
@@ -3248,6 +3327,495 @@ test('Service deleteWikiPage requires wiki_admin role', async () => {
       () => deleteWikiPage(dal, { slug, revSummary: { en: 'Admin deletion.' } }, userId),
       error => {
         assert.ok(error instanceof ForbiddenError);
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+const buildStubCommonsResponse = (
+  overrides: Partial<{
+    license: string;
+    licenseUrl: string;
+    author: string;
+    fetchedAt: string;
+    width: number;
+  }> = {}
+) => ({
+  mediaType: 'image' as const,
+  data: {
+    commonsPageUrl: 'https://commons.wikimedia.org/wiki/File:Test_Media.jpg',
+    mime: 'image/jpeg',
+    width: overrides.width ?? 4096,
+    height: 3072,
+    thumbnailUrlTemplate:
+      'https://example/wikipedia/commons/thumb/0/03/Test_Media.jpg/960px-Test_Media.jpg',
+    originalUrl: 'https://example/full.jpg',
+    license: overrides.license ?? 'CC-BY-SA-4.0',
+    licenseUrl: overrides.licenseUrl ?? 'https://creativecommons.org/licenses/by-sa/4.0/',
+    author: overrides.author ?? 'Jane Doe',
+    fetchedAt: overrides.fetchedAt ?? '2026-05-02T00:00:00Z',
+  },
+});
+
+test('Service createMedia persists fetched Commons metadata as a first revision', async () => {
+  const { createMedia, readMedia } = await import('../src/services/media-service.js');
+  const dal = await getDal();
+  const slug = `test-media-${Date.now()}`;
+  const mediaPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    const stubFetcher = async () => buildStubCommonsResponse();
+
+    const created = await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: 'File:Test Media.jpg',
+        title: { en: 'Test Media' },
+        caption: { en: 'Sample caption' },
+        revSummary: { en: 'Initial registration.' },
+      },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+
+    assert.equal(created.slug, slug);
+    assert.equal(created.commonsTitle, 'File:Test Media.jpg');
+    assert.equal(created.mediaType, 'image');
+    assert.equal(created.title?.en, 'Test Media');
+    assert.equal(created.caption?.en, 'Sample caption');
+
+    const reread = await readMedia(dal, slug);
+    assert.equal(reread.id, created.id);
+    assert.equal(reread.commonsTitle, 'File:Test Media.jpg');
+    assert.equal((reread.data as { license?: string }).license, 'CC-BY-SA-4.0');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        mediaSlugPrefix: mediaPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service refreshMedia creates a new revision with updated metadata', async () => {
+  const { createMedia, refreshMedia, listMediaRevisions } = await import(
+    '../src/services/media-service.js'
+  );
+  const dal = await getDal();
+  const slug = `test-media-refresh-${Date.now()}`;
+  const mediaPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    let callCount = 0;
+    const stubFetcher = async () => {
+      callCount += 1;
+      return buildStubCommonsResponse(
+        callCount === 1
+          ? { license: 'CC-BY-2.0' }
+          : { license: 'CC-BY-SA-4.0', fetchedAt: '2026-05-03T00:00:00Z' }
+      );
+    };
+
+    await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: `File:RefreshTest_${Date.now()}.jpg`,
+        revSummary: { en: 'Initial registration.' },
+      },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+
+    const refreshed = await refreshMedia(
+      dal,
+      { slug, revSummary: { en: 'License updated upstream.' } },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+    assert.equal((refreshed.data as { license?: string }).license, 'CC-BY-SA-4.0');
+
+    const revisions = await listMediaRevisions(dal, slug);
+    assert.equal(revisions.revisions.length, 2);
+    assert.ok(revisions.revisions[0].revTags?.includes('refresh'));
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        mediaSlugPrefix: mediaPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service updateMedia merges localized caption without re-fetching Commons', async () => {
+  const { createMedia, updateMedia, readMedia } = await import(
+    '../src/services/media-service.js'
+  );
+  const dal = await getDal();
+  const slug = `test-media-update-${Date.now()}`;
+  const mediaPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    let fetchCount = 0;
+    const stubFetcher = async () => {
+      fetchCount += 1;
+      return buildStubCommonsResponse();
+    };
+
+    await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: `File:UpdateTest_${Date.now()}.jpg`,
+        caption: { en: 'English caption' },
+        revSummary: { en: 'Initial.' },
+      },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+
+    await updateMedia(
+      dal,
+      {
+        slug,
+        caption: { de: 'Deutsche Bildunterschrift' },
+        revSummary: { en: 'Add German caption.' },
+      },
+      user.id
+    );
+
+    const reread = await readMedia(dal, slug);
+    assert.equal(reread.caption?.en, 'English caption');
+    assert.equal(reread.caption?.de, 'Deutsche Bildunterschrift');
+    // updateMedia must not call the Commons fetcher.
+    assert.equal(fetchCount, 1);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        mediaSlugPrefix: mediaPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service deleteMedia requires wiki_admin role', async () => {
+  const { createMedia, deleteMedia } = await import('../src/services/media-service.js');
+  const dal = await getDal();
+  const slug = `test-media-del-${Date.now()}`;
+  const mediaPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: `File:DeleteTest_${Date.now()}.jpg`,
+        revSummary: { en: 'Initial.' },
+      },
+      user.id,
+      { commonsFetcher: async () => buildStubCommonsResponse() }
+    );
+
+    await assert.rejects(
+      () =>
+        deleteMedia(
+          dal,
+          { slug, revSummary: { en: 'Admin deletion.' } },
+          user.id
+        ),
+      error => {
+        assert.ok(error instanceof ForbiddenError);
+        return true;
+      }
+    );
+
+    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+
+    const result = await deleteMedia(
+      dal,
+      { slug, revSummary: { en: 'Admin deletion.' } },
+      user.id
+    );
+    assert.equal(result.deleted, true);
+
+    const { readMedia } = await import('../src/services/media-service.js');
+    await assert.rejects(() => readMedia(dal, slug), NotFoundError);
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        mediaSlugPrefix: mediaPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service rejects unknown media slugs in wiki page body', async () => {
+  const dal = await getDal();
+  const slug = `test-media-validation-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug,
+            title: { en: 'Page with bad media ref' },
+            body: { en: 'See ![A view](/media/nonexistent-media-slug){size=500}.' },
+            originalLanguage: 'en',
+          },
+          user.id
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof ValidationError);
+        const fieldErrors = (error as ValidationError).fieldErrors ?? [];
+        assert.ok(
+          fieldErrors.some(
+            entry =>
+              entry.field.includes('body') &&
+              entry.message.includes('media not found') &&
+              entry.message.includes('nonexistent-media-slug')
+          ),
+          `Expected media-not-found error, got: ${JSON.stringify(fieldErrors)}`
+        );
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service rejects standard markdown image syntax in wiki page body', async () => {
+  const dal = await getDal();
+  const slug = `test-image-validation-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    // Mimic the agentic-test pattern: agent guesses the embed syntax and
+    // produces a body with `![alt](custom-uri-scheme:slug)`. Should be
+    // rejected with a hint pointing at the correct `/media/<slug>` form.
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug,
+            title: { en: 'Page with the wrong image syntax' },
+            body: {
+              en: '![A photo of an orchid](agpedia-media:my-orchid?size=500)',
+            },
+            originalLanguage: 'en',
+          },
+          user.id
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof ValidationError);
+        const fieldErrors = (error as ValidationError).fieldErrors ?? [];
+        assert.ok(
+          fieldErrors.some(
+            entry =>
+              entry.field.includes('body') &&
+              entry.message.includes('External image URLs are not supported') &&
+              entry.message.includes('media_create')
+          ),
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
+        );
+        return true;
+      }
+    );
+
+    // External http(s) image URLs are also rejected: every illustration
+    // must flow through media_create so license + bytes are tracked.
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug: `${slug}-http`,
+            title: { en: 'Page with an external image URL' },
+            body: { en: '![banner](https://example.com/banner.png)' },
+            originalLanguage: 'en',
+          },
+          user.id
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof ValidationError);
+        const fieldErrors = (error as ValidationError).fieldErrors ?? [];
+        assert.ok(
+          fieldErrors.some(entry =>
+            entry.message.includes('External image URLs are not supported')
+          ),
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
+        );
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service rejects unknown media slugs in blog post body', async () => {
+  const dal = await getDal();
+  const slug = `test-blog-media-ref-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    await assert.rejects(
+      () =>
+        createBlogPost(
+          dal,
+          {
+            slug,
+            title: { en: 'Blog post with bad media ref' },
+            body: { en: 'See ![A view](/media/nonexistent-blog-media-slug){size=250}.' },
+            summary: { en: 'Summary is fine.' },
+            revSummary: { en: 'Add unknown media reference.' },
+          },
+          user.id
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof ValidationError);
+        const fieldErrors = (error as ValidationError).fieldErrors ?? [];
+        assert.ok(
+          fieldErrors.some(
+            entry =>
+              entry.field.includes('body') &&
+              entry.message.includes('media not found') &&
+              entry.message.includes('nonexistent-blog-media-slug')
+          ),
+          `Expected media-not-found error, got: ${JSON.stringify(fieldErrors)}`
+        );
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service rejects standard markdown image syntax in blog post summary', async () => {
+  const dal = await getDal();
+  const slug = `test-blog-image-syntax-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    // Wiki has only a body field; blog has both body and summary —
+    // so summary coverage is the blog-specific risk surface for the
+    // standard-image validator.
+    await assert.rejects(
+      () =>
+        createBlogPost(
+          dal,
+          {
+            slug,
+            title: { en: 'Blog post with the wrong image syntax' },
+            body: { en: 'Body is fine.' },
+            summary: {
+              en: '![banner](https://example.com/blog-banner.png)',
+            },
+            revSummary: { en: 'Add external image URL to summary.' },
+          },
+          user.id
+        ),
+      (error: unknown) => {
+        assert.ok(error instanceof ValidationError);
+        const fieldErrors = (error as ValidationError).fieldErrors ?? [];
+        assert.ok(
+          fieldErrors.some(
+            entry =>
+              entry.field.includes('summary') &&
+              entry.message.includes('External image URLs are not supported') &&
+              entry.message.includes('media_create')
+          ),
+          `Expected external-url-rejection error, got: ${JSON.stringify(fieldErrors)}`
+        );
         return true;
       }
     );

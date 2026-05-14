@@ -38,6 +38,47 @@
     previewTokenSecret: 'change-this-in-production',
     previewTokenTtlSeconds: 86400,
   },
+  media: {
+    commonsApiBaseUrl: 'https://commons.wikimedia.org/w/api.php',
+    fetchTimeoutMs: 8000,
+    userAgent: 'AgpWiki/1.0 (media metadata; https://github.com/permacommons/agpwiki/issues)',
+
+    storage: {
+      backend: 'filesystem',
+      filesystem: {
+        // App-controlled, sibling dirs on the same volume so the
+        // staging->final rename is atomic. Never under /tmp.
+        stagingPath: 'var/media-storage/staging',
+        finalPath: 'var/media-storage/files',
+      },
+      // 25 MB per-file cap.
+      maxFileBytes: 26214400,
+      // Allowed image extensions; detected file signatures must agree
+      // with the extension we write to disk to pass validation.
+      allowedExtensions: ['jpg', 'png', 'gif', 'webp'],
+    },
+
+    // Wikimedia's CDN only renders thumbnails at this canonical
+    // list of "thumbnail steps". Off-list widths get a 400. See
+    // https://www.mediawiki.org/wiki/Common_thumbnail_sizes
+    wikimediaThumbnailSteps: [250, 500, 960, 1280, 1920],
+
+    // Standard CSS display widths recommended for
+    // `![Alt text](/media/<slug>){size=N}`.
+    // These are *suggestions* — agents and operators may pick any
+    // integer 1–1920 if they have a reason to depart. The validator
+    // only enforces the integer range; this list shapes the path of
+    // least resistance via tool descriptions and inline error hints.
+    //
+    // Two slots: 250 for a small floated thumbnail (Wikipedia-style
+    // text wrapping) and 800 for a column-wide hero figure. The
+    // middle slot was removed because it was too wide to flow text
+    // alongside but too narrow to fill the column. 800 is the
+    // practical sweet spot for the hero slot at the current layout
+    // (article column is ~768 CSS px wide); larger widths get
+    // downscaled by the browser.
+    recommendedDisplayWidths: [250, 800],
+  },
   email: {
     // Set to true only after configuring a provider and sender address.
     enabled: false,
