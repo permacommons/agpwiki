@@ -16,29 +16,29 @@ const buildImageResponse = () => ({
       {
         pageid: 12345,
         ns: 6,
-        title: 'File:Erik Moeller, cross processed portrait.JPG',
+        title: 'File:Green Sea Turtle grazing seagrass.jpg',
         imageinfo: [
           {
-            url: 'https://upload.wikimedia.org/wikipedia/commons/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG',
+            url: 'https://upload.wikimedia.org/wikipedia/commons/d/d7/Green_Sea_Turtle_grazing_seagrass.jpg',
             thumburl:
-              'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG/960px-Erik_Moeller%2C_cross_processed_portrait.JPG',
+              'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Green_Sea_Turtle_grazing_seagrass.jpg/960px-Green_Sea_Turtle_grazing_seagrass.jpg',
             thumbwidth: 960,
-            thumbheight: 1280,
-            width: 2400,
-            height: 3200,
+            thumbheight: 720,
+            width: 3367,
+            height: 2525,
             mime: 'image/jpeg',
             mediatype: 'BITMAP',
             extmetadata: {
               LicenseShortName: { value: 'CC-BY-SA-3.0' },
               LicenseUrl: { value: 'https://creativecommons.org/licenses/by-sa/3.0/' },
-              Artist: { value: '<a href="https://commons.wikimedia.org/wiki/User:Eloquence">Erik Möller</a>' },
+              Artist: { value: 'P.Lindgren' },
               Credit: { value: 'Own work' },
               Attribution: {
-                value: '<a href="https://commons.wikimedia.org/wiki/User:Eloquence">Erik Möller</a>, CC BY-SA 3.0',
+                value: 'P.Lindgren, CC BY-SA 3.0',
               },
               ImageDescription: {
                 value:
-                  '<div class="description en">Cross-processed portrait of Erik Möller.</div>',
+                  '<div class="description en">Green Sea Turtle grazing seagrass at Akumal bay.</div>',
               },
             },
           },
@@ -109,10 +109,10 @@ test('synthesizeWikimediaThumbnailTemplate builds raster thumb URL from original
   );
   assert.equal(
     synthesizeWikimediaThumbnailTemplate(
-      'https://upload.wikimedia.org/wikipedia/commons/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG',
+      'https://upload.wikimedia.org/wikipedia/commons/d/d7/Green_Sea_Turtle_grazing_seagrass.jpg',
       960
     ),
-    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d2/Erik_Moeller%2C_cross_processed_portrait.JPG/960px-Erik_Moeller%2C_cross_processed_portrait.JPG'
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Green_Sea_Turtle_grazing_seagrass.jpg/960px-Green_Sea_Turtle_grazing_seagrass.jpg'
   );
 });
 
@@ -200,7 +200,7 @@ test('fetchCommonsMetadata synthesizes template when API returns unscaled origin
 });
 
 test('fetchCommonsMetadata parses image response with thumbnail template', async () => {
-  const result = await fetchCommonsMetadata('Erik Moeller, cross processed portrait.JPG', {
+  const result = await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', {
     fetchImpl: stubFetch(buildImageResponse()),
     apiBaseUrl: 'https://commons.example/w/api.php',
     userAgent: 'TestAgent/1.0',
@@ -209,16 +209,16 @@ test('fetchCommonsMetadata parses image response with thumbnail template', async
 
   assert.equal(result.mediaType, 'image');
   assert.equal(result.data.mime, 'image/jpeg');
-  assert.equal(result.data.width, 2400);
-  assert.equal(result.data.height, 3200);
+  assert.equal(result.data.width, 3367);
+  assert.equal(result.data.height, 2525);
   assert.equal(result.data.license, 'CC-BY-SA-3.0');
-  assert.equal(result.data.author, 'Erik Möller');
-  assert.match(result.data.commonsPageUrl, /\/wiki\/File:Erik_Moeller/);
+  assert.equal(result.data.author, 'P.Lindgren');
+  assert.match(result.data.commonsPageUrl, /\/wiki\/File:Green_Sea_Turtle/);
   // The template URL is what Commons returned at the sample width;
   // storage layer substitutes other widths into it on demand.
   assert.match(result.data.thumbnailUrlTemplate ?? '', /\/960px-/);
   assert.deepEqual(result.data.description, {
-    en: 'Cross-processed portrait of Erik Möller.',
+    en: 'Green Sea Turtle grazing seagrass at Akumal bay.',
   });
 });
 

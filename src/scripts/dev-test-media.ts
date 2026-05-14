@@ -17,7 +17,7 @@ const args = process.argv.slice(2);
 const keep = args.includes('--keep');
 const positional = args.filter(arg => !arg.startsWith('--'));
 const commonsTitle =
-  positional[0] ?? 'File:Erik Moeller, cross processed portrait.JPG';
+  positional[0] ?? 'File:Green Sea Turtle grazing seagrass.jpg';
 
 const main = async () => {
   const dal = await initializePostgreSQL();
@@ -44,8 +44,8 @@ const main = async () => {
       {
         slug,
         commonsTitle,
-        title: { en: 'Erik Möller (dev test)' },
-        caption: { en: 'Caption from the dev test script' },
+        title: { en: 'Green sea turtle grazing seagrass' },
+        caption: { en: 'Green sea turtle grazing seagrass at Akumal Bay.' },
         revSummary: { en: 'Initial registration via dev-test-media script.' },
       },
       user.id
