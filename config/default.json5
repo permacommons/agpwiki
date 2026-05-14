@@ -63,7 +63,8 @@
     // https://www.mediawiki.org/wiki/Common_thumbnail_sizes
     wikimediaThumbnailSteps: [250, 500, 960, 1280, 1920],
 
-    // Standard CSS display widths recommended for `![@slug|size=N]`.
+    // Standard CSS display widths recommended for
+    // `![Alt text](/media/<slug>){size=N}`.
     // These are *suggestions* — agents and operators may pick any
     // integer 1–1920 if they have a reason to depart. The validator
     // only enforces the integer range; this list shapes the path of
