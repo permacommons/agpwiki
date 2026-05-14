@@ -1039,7 +1039,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Media',
       description:
-        'Register a Wikimedia Commons file as a media entity. The server fetches metadata (license, attribution, dimensions) from Commons. Only images are supported in this release. commonsTitle is the file title (e.g. "File:Foo.jpg"). slug is the URL identifier (lowercase letters, digits, hyphens, optional `/` segments) — distinct from the Commons filename. title is an optional localized display name. caption and altText are optional default localized maps used when an embed omits per-use overrides.\n\nEmbed in article markdown as `![Alt text](/media/<slug>){size=<width> caption="..."}` — Pandoc-style standard markdown image syntax with an attribute block. Example: `![Portrait of a bearded man, cross-processed coloration.](/media/erik-portrait){size=250 caption="Cross-processed portrait."}`. Alt text goes in the standard image alt position (`![...]`); only `size` and `caption` are recognized inside the `{...}` block. Captions support inline markdown — `*italic*` (use this for binomial names and other italicized terms), `**bold**`, and `` `code` ``. Use double quotes for the caption value; for a caption containing a literal double quote, escape it (`\\"`) or use single quotes around the value (`caption=\'She said "hi"\'`). Put each embed on its own line (no other content in the paragraph) so the figure renders with caption and attribution; embeds inside flowing text render as a bare image with no caption. External image URLs (anything not starting with `/media/`) are rejected at write time. Embeds that reference a slug not yet registered via `media_create` are also rejected at write time — register the media first.\n\nDisplay size is per-embedding via the `size=N` attribute (any integer 1–1920; standard sizes are 250 and 800). Use 250 for most images — it renders as a small thumbnail floated right with text wrapping around it (Wikipedia-style). Use 800 when an image should fill the article column as a centered block — typical for lead images or any image where detail matters at full size. The article column is ~768 CSS pixels wide, so widths much above 800 are downscaled by the browser without rendering meaningfully larger. Thumbnails are cached lazily by the server on first request.',
+        'Register a Wikimedia Commons image as a media entity. The server fetches Commons metadata such as license, attribution, dimensions, and thumbnail template. Use the returned slug in article markdown as `![Alt text](/media/<slug>){size=250 caption="..."}`. Only images are supported.',
       inputSchema: {
         slug: z.string(),
         commonsTitle: z.string(),
@@ -1070,7 +1070,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Media',
       description:
-        'Create a new revision for an existing media entity. Updates curated fields (slug, title, caption, altText) only; does not re-fetch Commons metadata (use media_refresh for that). When newSlug is provided, cached thumbnails are renamed alongside. revSummary is required.',
+        'Create a new revision for an existing media entity. Updates curated fields only: slug, title, caption, and altText. Use media_refresh to re-fetch Commons metadata.',
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
@@ -1102,7 +1102,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Refresh Media Metadata',
       description:
-        'Re-fetch Commons metadata for an existing media entity and store it as a new revision. Use after upstream Commons updates (license corrections, attribution edits, file renames). Cached thumbnails are wiped — they will be re-fetched on the next render. revSummary is required, e.g., {"en":"Refresh metadata: license updated upstream"}.',
+        'Re-fetch Commons metadata for an existing media entity and store it as a new revision. Cached thumbnails are invalidated and rebuilt on demand.',
       inputSchema: {
         slug: z.string(),
         policyHash: policyHashSchema,
