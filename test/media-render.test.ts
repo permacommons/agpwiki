@@ -18,6 +18,13 @@ test('extractMediaSlugsFromSources finds multi-segment slugs', () => {
   assert.deepEqual([...slugs], ['biology/erik-portrait']);
 });
 
+test('extractMediaSlugsFromSources finds refs with whitespace and titles', () => {
+  const slugs = extractMediaSlugsFromSources([
+    'See ![Grand Canyon](  /media/grand-canyon  "Sunrise view"  ){size=500}.',
+  ]);
+  assert.deepEqual([...slugs], ['grand-canyon']);
+});
+
 test('extractMediaSlugsFromSources ignores citations and external images', () => {
   const slugs = extractMediaSlugsFromSources([
     'See [@citation-key] and ![alt](https://example.com/path.png) and [link](url).',

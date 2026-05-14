@@ -1,30 +1,32 @@
+import MarkdownIt from 'markdown-it';
+import type Token from 'markdown-it/lib/token';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { mediaPlugin, type ParsedMediaRef } from '../markdown/media.js';
 import type { MediaInstance } from '../models/manifests/media.js';
 import Media from '../models/media.js';
 import type { MediaData, MediaType } from './media.js';
 
-// Match `](/media/<slug>)` where slug is lowercase alnum + hyphens
-// with optional `/` segments. Mirrors the strict slug regex in
-// media-validation.ts. We anchor on `]` and the closing `)` so we
-// match the complete URL portion of `![Alt](/media/foo)` without
-// false-positiving on substrings like `/media/foo-bar` inside text.
-// Captures the slug only. False positives on regular Markdown links
-// to `/media/<slug>` are harmless — they just preload media that
-// won't actually render.
-const mediaSlugScanRegex =
-  /\]\(\/media\/([a-z0-9](?:[a-z0-9-]*[a-z0-9])?(?:\/[a-z0-9](?:[a-z0-9-]*[a-z0-9])?)*)\)/g;
+const mediaSlugParser = new MarkdownIt({ html: false, linkify: true }).use(mediaPlugin());
 
-const collectMediaSlugs = (value: string, slugs: Set<string>) => {
-  if (!value) return;
-  for (const match of value.matchAll(mediaSlugScanRegex)) {
-    slugs.add(match[1]);
+const collectMediaSlugsFromTokens = (tokens: Token[], slugs: Set<string>) => {
+  for (const token of tokens) {
+    if (token.type === 'media') {
+      const ref = token.meta as ParsedMediaRef | undefined;
+      if (ref && ref.invalidSlug === undefined) {
+        slugs.add(ref.slug);
+      }
+    }
+    if (token.children) {
+      collectMediaSlugsFromTokens(token.children, slugs);
+    }
   }
 };
 
 export const extractMediaSlugsFromSources = (sources: Iterable<string>) => {
   const slugs = new Set<string>();
   for (const source of sources) {
-    collectMediaSlugs(source, slugs);
+    if (!source) continue;
+    collectMediaSlugsFromTokens(mediaSlugParser.parse(source, {}), slugs);
   }
   return slugs;
 };
