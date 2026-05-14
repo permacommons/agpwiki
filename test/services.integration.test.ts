@@ -7,7 +7,12 @@ import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
 import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
-import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
+import {
+  ForbiddenError,
+  InvalidRequestError,
+  NotFoundError,
+  ValidationError,
+} from '../src/lib/errors.js';
 import {
   FORUM_MODERATOR_ROLE,
   WIKI_ADMIN_ROLE,
@@ -2574,6 +2579,75 @@ test('Service rejects invalid language codes', async () => {
   } finally {
     try {
       await cleanupTestArtifacts(dal, {
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
+test('Service rejects wiki pages using reserved media routes', async () => {
+  const dal = await getDal();
+  const slug = `test-reserved-media-route-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const userId = user.id;
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          {
+            slug: 'media/example',
+            title: { en: 'Reserved media page' },
+            body: { en: 'Body' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof InvalidRequestError);
+        assert.match(error.message, /reserved/);
+        return true;
+      }
+    );
+
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Reserved rename source' },
+        body: { en: 'Body' },
+      },
+      userId
+    );
+
+    await assert.rejects(
+      () =>
+        updateWikiPage(
+          dal,
+          {
+            slug,
+            newSlug: 'media-files/example/250',
+            revSummary: { en: 'Try reserved route rename.' },
+          },
+          userId
+        ),
+      error => {
+        assert.ok(error instanceof InvalidRequestError);
+        assert.match(error.message, /reserved/);
+        return true;
+      }
+    );
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix,
         userId: userIdForCleanup ?? undefined,
       });
     } catch (cleanupError) {

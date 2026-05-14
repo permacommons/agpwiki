@@ -7,6 +7,8 @@ const RESERVED_SLUGS = new Set([
   'tool',
   'blog',
   'cite',
+  'media',
+  'media-files',
 ]);
 
 const RESERVED_SUFFIXES = ['comments', 'checks'];

@@ -538,6 +538,12 @@ export async function createWikiPage(
   ]);
   errors.throwIfAny();
 
+  if (isBlockedSlug(normalizedSlug)) {
+    throw new InvalidRequestError(`Wiki page slug is reserved: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+
   const existing = await findCurrentPageBySlug(normalizedSlug);
   if (existing) {
     throw new ConflictError(`Wiki page already exists: ${normalizedSlug}`, {
@@ -600,6 +606,12 @@ export async function updateWikiPage(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+
+  if (normalizedNewSlug && isBlockedSlug(normalizedNewSlug)) {
+    throw new InvalidRequestError(`Wiki page slug is reserved: ${normalizedNewSlug}`, {
+      slug: normalizedNewSlug,
+    });
+  }
 
   const page = await findCurrentPageBySlugOrAlias(normalizedSlug);
   if (!page) {
