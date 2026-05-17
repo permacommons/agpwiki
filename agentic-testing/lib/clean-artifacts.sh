@@ -19,15 +19,25 @@
 #                   article namespace.
 #
 # Connection: PGHOST/PGPORT/PGUSER/PGPASSWORD/PGDATABASE env vars.
-# Defaults match the local docker-compose dev DB.
+# Defaults are read from the app's config/postgres settings.
 
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"
 
+while IFS='=' read -r key value; do
+  case "$key" in
+    PGHOST) [[ -v PGHOST ]] || PGHOST="$value" ;;
+    PGPORT) [[ -v PGPORT ]] || PGPORT="$value" ;;
+    PGUSER) [[ -v PGUSER ]] || PGUSER="$value" ;;
+    PGPASSWORD) [[ -v PGPASSWORD ]] || PGPASSWORD="$value" ;;
+    PGDATABASE) [[ -v PGDATABASE ]] || PGDATABASE="$value" ;;
+  esac
+done < <(cd "$REPO_ROOT" && node --import tsx "$HERE/postgres-env.ts")
+
 PGHOST="${PGHOST:-localhost}"
-PGPORT="${PGPORT:-5435}"
+PGPORT="${PGPORT:-5432}"
 PGUSER="${PGUSER:-agpwiki_user}"
 PGPASSWORD="${PGPASSWORD:-agpwiki_password}"
 PGDATABASE="${PGDATABASE:-agpwiki}"
