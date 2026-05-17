@@ -103,22 +103,42 @@ kill_process_tree() {
   done
 }
 
+process_start_ticks() {
+  local pid="$1" stat
+  stat=$(cat "/proc/$pid/stat" 2>/dev/null || true)
+  [[ -n "$stat" ]] || return 0
+  printf '%s\n' "$stat" | awk '{print $22}'
+}
+
+write_pid_file() {
+  local file="$1" pid="$2" ticks
+  ticks=$(process_start_ticks "$pid")
+  [[ -n "$ticks" ]] || fail "could not read start time for pid $pid"
+  printf '%s %s\n' "$pid" "$ticks" > "$file"
+}
+
+read_owned_pid() {
+  local file="$1" pid expected_ticks actual_ticks
+  [[ -f "$file" ]] || return 1
+  read -r pid expected_ticks < "$file" || true
+  rm -f "$file"
+  [[ -n "$pid" && -n "$expected_ticks" ]] || return 1
+  kill -0 "$pid" 2>/dev/null || return 1
+  actual_ticks=$(process_start_ticks "$pid")
+  [[ -n "$actual_ticks" ]] || return 1
+  [[ "$actual_ticks" == "$expected_ticks" ]] || return 1
+  printf '%s\n' "$pid"
+}
+
 # Stop the mcp-http process recorded in $MCP_PID_FILE, if any. Only
 # kills processes we previously started — never anything else on the
-# port. A stale PID file (process gone or PID reused by something
-# unrelated) is detected via the cmdline check and ignored.
+# port. The PID file records the process start time, so a stale file
+# is ignored if the OS has reused that PID for another process.
 stop_owned_mcp() {
   [[ -f "$MCP_PID_FILE" ]] || return 0
-  local pid cmdline
-  pid=$(cat "$MCP_PID_FILE" 2>/dev/null || true)
-  rm -f "$MCP_PID_FILE"
+  local pid
+  pid=$(read_owned_pid "$MCP_PID_FILE" || true)
   [[ -n "$pid" ]] || return 0
-  kill -0 "$pid" 2>/dev/null || return 0
-  cmdline=$(ps -p "$pid" -o args= 2>/dev/null || true)
-  if [[ "$cmdline" != *mcp-http* ]] && [[ "$cmdline" != *npm* ]] && [[ "$cmdline" != *node* ]]; then
-    log "warn: pid $pid in $MCP_PID_FILE no longer looks like our mcp-http (cmdline: $cmdline) — leaving alone"
-    return 0
-  fi
   log "stopping previously-started mcp-http (pid $pid, including any descendants)"
   kill_process_tree "$pid" TERM
   for _ in $(seq 1 10); do
@@ -157,7 +177,7 @@ start_owned_mcp() {
   (
     cd "$REPO_ROOT"
     nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &
-    echo $! > "$MCP_PID_FILE"
+    write_pid_file "$MCP_PID_FILE" "$!"
   )
   for _ in $(seq 1 30); do
     local code
@@ -220,16 +240,9 @@ restart_mcp() {
 # rather than trust the watcher.
 stop_owned_dev() {
   [[ -f "$DEV_PID_FILE" ]] || return 0
-  local pid cmdline
-  pid=$(cat "$DEV_PID_FILE" 2>/dev/null || true)
-  rm -f "$DEV_PID_FILE"
+  local pid
+  pid=$(read_owned_pid "$DEV_PID_FILE" || true)
   [[ -n "$pid" ]] || return 0
-  kill -0 "$pid" 2>/dev/null || return 0
-  cmdline=$(ps -p "$pid" -o args= 2>/dev/null || true)
-  if [[ "$cmdline" != *npm* ]] && [[ "$cmdline" != *node* ]] && [[ "$cmdline" != *tsx* ]]; then
-    log "warn: pid $pid in $DEV_PID_FILE no longer looks like our dev server (cmdline: $cmdline) — leaving alone"
-    return 0
-  fi
   log "stopping previously-started dev server (pid $pid, including any descendants)"
   kill_process_tree "$pid" TERM
   for _ in $(seq 1 15); do
@@ -258,7 +271,7 @@ start_owned_dev() {
   (
     cd "$REPO_ROOT"
     nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &
-    echo $! > "$DEV_PID_FILE"
+    write_pid_file "$DEV_PID_FILE" "$!"
   )
   for _ in $(seq 1 60); do
     local code
@@ -464,7 +477,7 @@ cmd_bootstrap() {
     (
       cd "$REPO_ROOT"
       nohup npm run dev > "$RUNS_DIR/.dev.log" 2>&1 &
-      echo $! > "$DEV_PID_FILE"
+      write_pid_file "$DEV_PID_FILE" "$!"
     )
   fi
   if curl -s -o /dev/null -w "%{http_code}" -X POST "$MCP_URL" 2>/dev/null | grep -q '^401$'; then
@@ -475,7 +488,7 @@ cmd_bootstrap() {
     (
       cd "$REPO_ROOT"
       nohup npm run mcp-http > "$RUNS_DIR/.mcp.log" 2>&1 &
-      echo $! > "$MCP_PID_FILE"
+      write_pid_file "$MCP_PID_FILE" "$!"
     )
   fi
   log "waiting up to 30 s for dev + mcp"
