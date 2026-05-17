@@ -15,9 +15,12 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { initializePostgreSQL } from '../../src/db.js';
-import { createWikiPage } from '../../src/services/wiki-page-service.js';
+import { NotFoundError } from '../../src/lib/errors.js';
+import {
+  createWikiPage,
+  readWikiPage,
+} from '../../src/services/wiki-page-service.js';
 import User from '../../src/models/user.js';
-import WikiPage from '../../src/models/wiki-page.js';
 
 const SEED_USER_EMAIL = 'agentic-test@example.com';
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -54,15 +57,15 @@ const main = async () => {
   let missing = 0;
 
   for (const [slug, title] of SEEDS) {
-    const existing = await WikiPage.filterWhere({
-      slug,
-      _oldRevOf: null,
-      _revDeleted: false,
-    } as Record<string, unknown>).first();
-    if (existing) {
+    try {
+      await readWikiPage(dal, slug);
       console.log(`  skip ${slug} (exists)`);
       skipped += 1;
       continue;
+    } catch (err) {
+      if (!(err instanceof NotFoundError)) {
+        throw err;
+      }
     }
 
     const filename = slugToFilename(slug);
