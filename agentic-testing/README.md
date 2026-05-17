@@ -30,22 +30,24 @@ npm run mcp-http     # MCP HTTP transport on :3333
 ```
 
 That's the full happy path. After it finishes, look in
-`agentic-testing/runs/<timestamp>/` for the transcript and analysis.
+`agentic-testing/runs/<timestamp>-<agent>/` for the transcript and
+analysis.
 `launch` also prints `article: http://127.0.0.1:3000/<slug>` at the
-end so the operator can inspect the result directly — keep in mind
-that re-launching the same topic wipes that URL (see lesson 8).
+end when it can derive a target slug — keep in mind that the agent
+may choose a different final slug, and re-launching the same target
+wipes that URL (see lesson 8).
 
 ## What `setup` does
 
 `./agentic-testing/run setup` is the agent-agnostic preflight. It:
 
 1. Restarts the dev web server (`:3000`) and MCP HTTP server
-   (`:3333`) so the in-memory code matches the working tree.
-   Tracks each via its own PID file under `runs/`, so we never
-   touch a process the operator started themselves outside the
-   harness. If the operator is managing one of those servers
-   externally, prints a `WARN:` and proceeds (next-run rendering
-   may be stale until they restart it).
+   (`:3333`) when they are harness-owned, so the in-memory code
+   matches the working tree. Tracks each via its own PID file under
+   `runs/`, so we never touch a process the operator started
+   themselves outside the harness. If the operator is managing one
+   of those servers externally, prints a `WARN:` and proceeds
+   (next-run rendering may be stale until they restart it).
 2. Populates `seed/meta/` from production agpedia.org if empty.
    (Snapshots are gitignored — production page bodies are mutable
    content, not source-controlled artifacts.)
@@ -164,9 +166,12 @@ final-message text — so cross-agent comparison reads consistently.
 ## Output structure
 
 ```
-runs/<utc-timestamp>/
+runs/<utc-timestamp>-<agent>/
+├── task.md                per-run task copy when --topic rewrites it
 ├── transcript.jsonl       agent-specific format (Claude: stream-json)
 ├── analysis.md            tool counts + retrospective + isolation check
+├── stderr.log             goose only; extension/init diagnostics
+├── goose-home/            goose only; isolated XDG_CONFIG_HOME
 └── cwd/                   inner agent's working dir (so it can't see this repo)
 ```
 
@@ -210,9 +215,10 @@ once, internalize.
    — checking out a different commit doesn't necessarily touch
    file mtimes, so freshness probes based on `mtime >
    process_start` give false confidence while in-memory code is
-   from a different branch entirely. **`setup` unconditionally
-   restarts both `mcp-http` and `npm run dev`** as the only
-   reliable closure of this gap.
+   from a different branch entirely. **`setup` restarts harness-owned
+   `mcp-http` and `npm run dev` processes** as the only reliable
+   closure of this gap. If the operator owns the process, setup warns
+   and leaves it alone.
 
 3. **Test user lifecycle gates.** A freshly-created user can't
    use agent features until `email_verified_at` is set, not
@@ -279,13 +285,14 @@ MCP tool calls:
   (`http://127.0.0.1:8081/v1`). Goose's bearer-token interpolation
   via `${VAR}` syntax in the YAML carries `AGENTIC_TOKEN` to the
   MCP.
-- **Reduced tool surface:** the `agpwiki-local` extension's
-  `available_tools` whitelist set to the ~6 tools needed for
-  article creation (e.g. `wiki_readPage`, `wiki_createPage`,
-  `citation_create`, `claim_create`, `citation_query`,
-  `page_check_create`). Less-capable models can't keep the full
-  ~36-tool spec in working memory; whitelisting a focused subset
-  lets them orient and finish the task.
+- **Reduced tool surface:** that run used a custom-tailored
+  `available_tools` whitelist on the `agpwiki-local` extension,
+  set to the ~6 tools needed for article creation (e.g.
+  `wiki_readPage`, `wiki_createPage`, `citation_create`,
+  `claim_create`, `citation_query`, `page_check_create`).
+  Less-capable models can't keep the full ~36-tool spec in
+  working memory; whitelisting a focused subset lets them orient
+  and finish the task.
 - **Model:** a 30B-class instruct-tuned model that natively
   supports OpenAI-compatible function calling. The agent followed
   policy-page orientation (read `meta/policy` → style → citations
@@ -345,8 +352,9 @@ and is not currently tracked.
 
 - This harness writes to your local agpwiki dev DB and your
   local filesystem. It is **not** safe to run against any
-  production database. The MCP URL is hard-coded to
-  `127.0.0.1:3333` for that reason.
+  production database. The MCP URL defaults to
+  `http://127.0.0.1:3333/mcp`; override it only when you know the
+  target is a safe local/test instance.
 - The seed in `seed/meta/` is a snapshot of mutable production
   content. Don't commit it; refresh it deliberately when
   conventions move.

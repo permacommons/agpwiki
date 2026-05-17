@@ -69,9 +69,9 @@
 #
 # Isolation strategy: per-run XDG_CONFIG_HOME pointing at a freshly
 # written config.yaml. That config defines only the agpwiki-local
-# extension — goose's bundled platform tools (developer, analyze,
-# todo, summon, …) only activate when explicitly listed in YAML, so
-# leaving them out keeps the test surface focused on the wiki MCP.
+# extension and explicitly disables goose's bundled platform tools
+# (developer, analyze, apps, todo, summon, …), so the test surface
+# stays focused on the wiki MCP.
 # The bearer token is interpolated into the Authorization header via
 # goose's `${VAR}` syntax, so AGENTIC_TOKEN must be present in the
 # child env (and is — the run script exports it).
