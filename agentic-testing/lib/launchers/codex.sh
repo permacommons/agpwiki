@@ -22,9 +22,10 @@
 # Isolation strategy: `--ignore-user-config` makes codex skip
 # `~/.codex/config.toml` (so any user-scope MCPs registered by the
 # operator stay invisible to the inner agent), while still consuming
-# `~/.codex/auth.json` for login. We then register only the local
-# agpwiki MCP via inline `-c` overrides — nothing is written to the
-# user's codex config.
+# `~/.codex/auth.json` for login. `--disable apps` hides hosted
+# Codex app connectors such as production Agpedia. We then register
+# only the local agpwiki MCP via inline `-c` overrides — nothing is
+# written to the user's codex config.
 #
 # Runs from a private CWD inside the run dir so the inner agent can't
 # see the host repo via shell tools.
@@ -71,6 +72,7 @@ codex_args=(
   --skip-git-repo-check
   --dangerously-bypass-approvals-and-sandbox
   --ignore-user-config
+  --disable apps
   -C "$CWD"
   -c "mcp_servers.agpwiki-local.url=\"$AGENTIC_MCP_URL\""
   -c "mcp_servers.agpwiki-local.bearer_token_env_var=\"AGENTIC_TOKEN\""

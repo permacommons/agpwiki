@@ -144,8 +144,8 @@ The contract for `lib/launchers/<agent>.sh` is:
 - Make the inner agent load **only** agpwiki-local — every other
   MCP the operator has registered must be invisible. The
   mechanism is launcher-specific (claude: `--strict-mcp-config`;
-  codex: `--ignore-user-config`; goose: per-run `XDG_CONFIG_HOME`),
-  but the contract is the same. Permission-list flags
+  codex: `--ignore-user-config --disable apps`; goose: per-run
+  `XDG_CONFIG_HOME`), but the contract is the same. Permission-list flags
   (`--allowedTools` / `--disallowedTools` and analogues) are not a
   substitute — they're bypassed by danger flags.
 - Exit zero on success, non-zero on failure.
@@ -189,8 +189,9 @@ once, internalize.
    isolation here is structural instead: the claude launcher uses
    `--strict-mcp-config --mcp-config <our file>`, which makes the
    inner agent's MCP catalog be exactly that file — every other
-   MCP source is ignored. Codex uses `--ignore-user-config`;
-   goose uses a per-run `XDG_CONFIG_HOME`. None of these depend
+   MCP source is ignored. Codex uses `--ignore-user-config` for
+   user MCP config plus `--disable apps` for hosted Codex app
+   connectors; goose uses a per-run `XDG_CONFIG_HOME`. None of these depend
    on permission gating. **If you add a new launcher, the contract
    is "the inner agent must load only agpwiki-local" — verify by
    inspecting whatever init/handshake event the agent emits, not
