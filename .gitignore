@@ -13,3 +13,5 @@ public/downloads/dumps/
 config/development.json5
 config/local.json5
 config/local-*.json5
+agentic-testing/seed/
+agentic-testing/runs/
