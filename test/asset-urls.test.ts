@@ -17,4 +17,8 @@ test('layoutAssets include deterministic version query strings', () => {
     /^\/static\/scripts\/table-scroll-hints\.js\?v=[\da-f]{8}$/
   );
   assert.match(layoutAssets.tocJs, /^\/static\/scripts\/toc\.js\?v=[\da-f]{8}$/);
+  assert.match(
+    layoutAssets.recentMediaGridJs,
+    /^\/static\/scripts\/recent-media-grid\.js\?v=[\da-f]{8}$/
+  );
 });

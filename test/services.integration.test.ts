@@ -3534,6 +3534,106 @@ test('Service updateMedia merges localized caption without re-fetching Commons',
   }
 });
 
+test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()', async () => {
+  const { getRecentMediaChanges } = await import('../src/lib/recent-changes.js');
+  const { createMedia, updateMedia } = await import('../src/services/media-service.js');
+  const dal = await getDal();
+  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
+  const slugA = `test-recent-media-${suffix}-a`;
+  const slugB = `test-recent-media-${suffix}-b`;
+  const mediaPrefix = `test-recent-media-${suffix}-%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    const stubFetcher = async () => buildStubCommonsResponse();
+
+    await createMedia(
+      dal,
+      {
+        slug: slugA,
+        commonsTitle: `File:RecentA_${suffix}.jpg`,
+        revSummary: { en: 'Initial A.' },
+      },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+    // Sub-millisecond ties on _rev_date would make ORDER BY fall back to
+    // _rev_id (UUID) and lose chronological meaning. A small pause keeps
+    // the ordering deterministic.
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    await updateMedia(
+      dal,
+      {
+        slug: slugA,
+        caption: { en: 'Updated caption' },
+        revSummary: { en: 'Update A.' },
+      },
+      user.id
+    );
+    await new Promise(resolve => setTimeout(resolve, 5));
+
+    await createMedia(
+      dal,
+      {
+        slug: slugB,
+        commonsTitle: `File:RecentB_${suffix}.jpg`,
+        revSummary: { en: 'Initial B.' },
+      },
+      user.id,
+      { commonsFetcher: stubFetcher }
+    );
+
+    // Fetch a generous window; the suite has concurrent media tests so
+    // narrow our assertions to our own slugs.
+    const allChanges = await getRecentMediaChanges(dal, 100);
+    const ours = allChanges.filter(
+      change => change.slug === slugA || change.slug === slugB
+    );
+    assert.equal(ours.length, 3, 'expected 3 revisions: B-create, A-update, A-create');
+
+    const [newest, middle, oldest] = ours;
+
+    // Ordering: B-create is newest, then A-update, then A-create.
+    assert.equal(newest.slug, slugB);
+    assert.equal(middle.slug, slugA);
+    assert.equal(oldest.slug, slugA);
+    assert.notEqual(middle.revId, oldest.revId);
+
+    // prevRevId chain: B has no prior rev in its own partition; A-update
+    // points at A-create; A-create is the oldest in its partition.
+    assert.equal(newest.prevRevId, null, 'B-create has no prior revision');
+    assert.equal(
+      middle.prevRevId,
+      oldest.revId,
+      'A-update prevRevId should point at A-create'
+    );
+    assert.equal(oldest.prevRevId, null, 'A-create has no prior revision');
+
+    // Field mapping spot-checks on the newest row. commonsTitle is
+    // stored normalized (underscores → spaces by normalizeCommonsTitle).
+    assert.equal(newest.commonsTitle, `File:RecentB ${suffix}.jpg`);
+    assert.equal(newest.mediaType, 'image');
+    assert.equal(newest.revUser, user.id);
+    assert.ok(Array.isArray(newest.revTags));
+    assert.ok(newest.data && typeof newest.data === 'object');
+    assert.equal((newest.data as { mime?: string }).mime, 'image/jpeg');
+  } finally {
+    try {
+      await cleanupTestArtifacts(dal, {
+        mediaSlugPrefix: mediaPrefix,
+        userId: userIdForCleanup ?? undefined,
+      });
+    } catch (cleanupError) {
+      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
+      console.warn(`Cleanup failed: ${message}`);
+    }
+  }
+});
+
 test('Service deleteMedia requires wiki_admin role', async () => {
   const { createMedia, deleteMedia } = await import('../src/services/media-service.js');
   const dal = await getDal();

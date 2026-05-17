@@ -20,4 +20,5 @@ export const layoutAssets = {
   wikiLinkPreviewsJs: versionedAssetUrl('scripts/wiki-link-previews.js'),
   tableScrollHintsJs: versionedAssetUrl('scripts/table-scroll-hints.js'),
   tocJs: versionedAssetUrl('scripts/toc.js'),
+  recentMediaGridJs: versionedAssetUrl('scripts/recent-media-grid.js'),
 };

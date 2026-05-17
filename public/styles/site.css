@@ -608,6 +608,153 @@ pre.diff ins {
 .tool-related-links a:hover {
   text-decoration: underline;
 }
+.view-toggle {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 1rem 0 1.25rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.15rem;
+  background: #fffdf7;
+}
+.view-toggle-link {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.view-toggle-link:hover {
+  background: #f3efe6;
+}
+.view-toggle-link--active {
+  background: var(--ink, #1f1d1a);
+  color: #fffdf7;
+  cursor: default;
+}
+.view-toggle-link--active:hover {
+  background: var(--ink, #1f1d1a);
+}
+.media-grid {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.media-grid--justified {
+  /* Each row is laid out by recent-media-grid.js once aspect ratios are
+     known. Until then we fall back to a uniform grid so no-JS readers and
+     pre-layout flashes still see thumbnails. */
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+}
+.media-grid--justified.is-justified {
+  /* JS has measured aspect ratios and set per-tile widths via inline
+     `width`/`height`; tiles flow inline-flex so they wrap onto rows of
+     equal height. */
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.media-tile {
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+}
+.media-grid--justified.is-justified .media-tile {
+  flex: 0 0 auto;
+}
+.media-tile-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  width: 100%;
+  height: 100%;
+}
+.media-tile-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #f3efe6;
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.media-grid--justified:not(.is-justified) .media-tile-thumb {
+  /* Fallback grid: enforce uniform tile shape before JS runs. */
+  aspect-ratio: 4 / 3;
+}
+.media-grid--justified.is-justified .media-tile-thumb {
+  border: none;
+}
+.media-tile-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.media-grid--justified:not(.is-justified) .media-tile-image {
+  object-fit: contain;
+}
+.media-tile-placeholder {
+  color: var(--muted, #6f655a);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.media-tile-caption {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.6rem;
+  background: linear-gradient(to top, rgba(31, 29, 26, 0.85), rgba(31, 29, 26, 0));
+  color: #fffdf7;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+  pointer-events: none;
+}
+.media-grid--justified:not(.is-justified) .media-tile-caption {
+  /* Fallback layout: keep captions below the thumbnail until JS lays out. */
+  position: static;
+  inset: auto;
+  background: none;
+  color: inherit;
+  opacity: 1;
+  padding: 0.35rem 0 0;
+}
+.media-tile:hover .media-tile-caption,
+.media-tile-link:focus-visible .media-tile-caption {
+  opacity: 1;
+}
+.media-tile-slug {
+  display: block;
+  font-weight: 600;
+  word-break: break-word;
+}
+.media-tile-date {
+  display: block;
+  opacity: 0.85;
+  font-size: 0.78rem;
+}
+.media-grid--justified:not(.is-justified) .media-tile-slug {
+  color: var(--ink);
+}
+.media-grid--justified:not(.is-justified) .media-tile-date {
+  color: var(--muted, #6f655a);
+}
+.recent-media-empty {
+  color: var(--muted, #6f655a);
+  font-style: italic;
+}
 .article blockquote,
 .markdown-preview-body blockquote {
   margin: 1.25rem 0;
