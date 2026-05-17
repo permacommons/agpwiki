@@ -18,6 +18,110 @@ const getSchemaShape = (schema: unknown): Record<string, { description?: string 
   return (rawShape ?? {}) as Record<string, { description?: string }>;
 };
 
+test('MCP tools expose review annotations', () => {
+  const { server } = createMcpServer();
+  const tools = (server as {
+    _registeredTools: Record<
+      string,
+      { title?: string; annotations?: Record<string, boolean | string> }
+    >;
+  })._registeredTools;
+
+  const readOnlyTools = new Set([
+    'citation_query',
+    'blog_listRevisions',
+    'blog_diffRevisions',
+    'blog_readPost',
+    'blog_readRevision',
+    'citation_listRevisions',
+    'citation_diffRevisions',
+    'citation_read',
+    'citation_readRevision',
+    'claim_listRevisions',
+    'claim_diffRevisions',
+    'claim_read',
+    'claim_readRevision',
+    'wiki_listRevisions',
+    'wiki_diffRevisions',
+    'wiki_readPage',
+    'wiki_readRevision',
+    'media_query',
+    'media_read',
+    'media_readRevision',
+    'media_listRevisions',
+    'media_diffRevisions',
+    'page_check_list',
+    'page_check_listRevisions',
+    'page_check_readRevision',
+    'page_check_diffRevisions',
+  ]);
+  const additiveWriteTools = new Set([
+    'wiki_createPage',
+    'citation_create',
+    'blog_createPost',
+    'claim_create',
+    'media_create',
+    'page_check_create',
+    'wiki_addAlias',
+  ]);
+  const destructiveWriteTools = new Set([
+    'blog_updatePost',
+    'blog_deletePost',
+    'citation_update',
+    'claim_update',
+    'wiki_updatePage',
+    'wiki_applyPatch',
+    'wiki_rewriteSection',
+    'wiki_replaceExactText',
+    'media_update',
+    'media_refresh',
+    'page_check_update',
+    'wiki_removeAlias',
+    'wiki_deletePage',
+    'citation_delete',
+    'claim_delete',
+    'media_delete',
+    'page_check_delete',
+  ]);
+
+  assert.deepEqual(
+    new Set(Object.keys(tools)),
+    new Set([...readOnlyTools, ...additiveWriteTools, ...destructiveWriteTools])
+  );
+
+  for (const [name, tool] of Object.entries(tools)) {
+    assert.equal(typeof tool.title, 'string', `${name} must have a title`);
+    assert.notEqual(tool.title?.trim(), '', `${name} must have a non-empty title`);
+    assert.ok(tool.annotations, `${name} must have annotations`);
+    assert.equal(
+      tool.annotations?.idempotentHint,
+      undefined,
+      `${name} must not set idempotentHint`
+    );
+
+    if (readOnlyTools.has(name)) {
+      assert.equal(tool.annotations?.readOnlyHint, true, `${name} must be read-only`);
+      assert.equal(
+        tool.annotations?.destructiveHint,
+        undefined,
+        `${name} must not set destructiveHint`
+      );
+    } else if (additiveWriteTools.has(name)) {
+      assert.equal(tool.annotations?.readOnlyHint, false, `${name} must be a write tool`);
+      assert.equal(tool.annotations?.destructiveHint, false, `${name} must be additive`);
+    } else {
+      assert.equal(tool.annotations?.readOnlyHint, false, `${name} must be a write tool`);
+      assert.equal(tool.annotations?.destructiveHint, true, `${name} must be destructive`);
+    }
+
+    if (name === 'media_create' || name === 'media_refresh') {
+      assert.equal(tool.annotations?.openWorldHint, true, `${name} imports from Commons`);
+    } else {
+      assert.equal(tool.annotations?.openWorldHint, false, `${name} must be closed-world`);
+    }
+  }
+});
+
 test('MCP tool schemas describe localized fields', () => {
   const { server } = createMcpServer();
   const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
