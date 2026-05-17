@@ -651,27 +651,38 @@ pre.diff ins {
   gap: 0.5rem;
 }
 .media-grid--justified.is-justified {
-  /* JS has measured aspect ratios and set per-tile widths via inline
-     `width`/`height`; tiles flow inline-flex so they wrap onto rows of
-     equal height. */
+  /* JS has measured aspect ratios and set per-tile width/height so
+     tiles wrap onto rows of uniform height. */
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
 }
 .media-tile {
   margin: 0;
-  position: relative;
-  overflow: hidden;
 }
 .media-grid--justified.is-justified .media-tile {
   flex: 0 0 auto;
+  /* position+z-index let :hover lift the source tile above siblings so
+     the meta-tooltip balloon (which floats above-left and can overlap
+     unrelated tiles) is unambiguously tied to its source. */
+  position: relative;
+  transition: box-shadow 100ms ease-out;
+}
+.media-grid--justified.is-justified .media-tile:hover,
+.media-grid--justified.is-justified .media-tile:focus-within {
+  z-index: 5;
+  outline: 3px solid var(--accent);
+  outline-offset: 0;
+  /* Symmetrical glow rather than a directional shadow — pulls the eye
+     to the source from any direction the meta-tooltip lands. */
+  box-shadow: 0 0 20px rgba(45, 95, 115, 0.55);
 }
 .media-tile-link {
   display: block;
-  color: inherit;
-  text-decoration: none;
   width: 100%;
   height: 100%;
+  color: inherit;
+  text-decoration: none;
 }
 .media-tile-thumb {
   display: flex;
@@ -705,51 +716,6 @@ pre.diff ins {
   font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-.media-tile-caption {
-  position: absolute;
-  inset: auto 0 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-  padding: 0.5rem 0.6rem;
-  background: linear-gradient(to top, rgba(31, 29, 26, 0.85), rgba(31, 29, 26, 0));
-  color: #fffdf7;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.82rem;
-  line-height: 1.25;
-  opacity: 0;
-  transition: opacity 120ms ease-out;
-  pointer-events: none;
-}
-.media-grid--justified:not(.is-justified) .media-tile-caption {
-  /* Fallback layout: keep captions below the thumbnail until JS lays out. */
-  position: static;
-  inset: auto;
-  background: none;
-  color: inherit;
-  opacity: 1;
-  padding: 0.35rem 0 0;
-}
-.media-tile:hover .media-tile-caption,
-.media-tile-link:focus-visible .media-tile-caption {
-  opacity: 1;
-}
-.media-tile-slug {
-  display: block;
-  font-weight: 600;
-  word-break: break-word;
-}
-.media-tile-date {
-  display: block;
-  opacity: 0.85;
-  font-size: 0.78rem;
-}
-.media-grid--justified:not(.is-justified) .media-tile-slug {
-  color: var(--ink);
-}
-.media-grid--justified:not(.is-justified) .media-tile-date {
-  color: var(--muted, #6f655a);
 }
 .recent-media-empty {
   color: var(--muted, #6f655a);
@@ -1769,6 +1735,44 @@ footer.site-footer {
 }
 .meta-tooltip.is-pinned {
   border-color: var(--accent);
+}
+/* Downward-pointing caret anchoring the balloon to its source.
+   meta-tooltips.js aligns the balloon's left edge with the source's
+   left edge, so a caret at the balloon's bottom-left lands just inside
+   the source's top-left and reads as "this balloon belongs to that".
+   Sized to visually bridge the 6px is-visible gap between balloon and
+   source. */
+.meta-tooltip::before,
+.meta-tooltip::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  pointer-events: none;
+}
+.meta-tooltip::before,
+.meta-tooltip::after {
+  /* --meta-tooltip-arrow-x is the horizontal position of the arrow
+     apex inside the balloon, in px. meta-tooltips.js sets it per
+     hover so the arrow keeps pointing at the source even when the
+     balloon is clamped to the viewport. The CSS-triangle box is at
+     this `left`; border-left and border-right widths extend the base
+     symmetrically around it. */
+  left: var(--meta-tooltip-arrow-x, 16px);
+}
+.meta-tooltip::before {
+  /* Outer triangle matches the balloon's own 1px border color so the
+     arrow reads as the balloon's tail, not a separate widget. */
+  bottom: -12px;
+  border-width: 12px 10px 0 10px;
+  border-color: var(--rule) transparent transparent transparent;
+}
+.meta-tooltip::after {
+  /* Fill triangle matches the balloon background — continuous cream. */
+  bottom: -9px;
+  border-width: 11px 9px 0 9px;
+  border-color: #fffdf6 transparent transparent transparent;
 }
 .wiki-link-preview-popover {
   position: absolute;

@@ -179,22 +179,19 @@ const renderRecentMediaGrid = (
       const displayName = change.revUser ? userMap.get(change.revUser) ?? change.revUser : '';
       const agentTag = change.revTags.find(tag => tag.startsWith('agent:')) ?? '';
       const agentVersion = change.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
-      const metaLabelParts = [
+      const dateLabel = formatDateUTC(change.revDate);
+      const titleParts = [
+        change.slug,
+        dateLabel || null,
         displayName ? t('history.operator', { name: displayName }) : null,
         agentTag || null,
         agentVersion || null,
-      ].filter(Boolean);
-      const metaLabel = metaLabelParts.join(' · ');
-      const titleAttr = metaLabel ? ` title="${escapeHtml(metaLabel)}"` : '';
-      const dateLabel = formatDateUTC(change.revDate);
+      ].filter((part): part is string => Boolean(part));
+      const titleText = titleParts.join(' · ');
 
       return `<li class="media-tile" data-aspect-ratio="${aspectRatio.toFixed(4)}">
-  <a class="media-tile-link" href="/media/${encodedSlug}"${titleAttr}>
+  <a class="media-tile-link" href="/media/${encodedSlug}" data-meta="true" data-user="${escapeHtml(displayName)}" data-agent="${escapeHtml(agentTag)}" data-agent-version="${escapeHtml(agentVersion)}" title="${escapeHtml(titleText)}">
     <span class="media-tile-thumb">${thumbHtml}</span>
-    <span class="media-tile-caption">
-      <span class="media-tile-slug">${escapeHtml(change.slug)}</span>
-      <span class="media-tile-date">${escapeHtml(dateLabel)}</span>
-    </span>
   </a>
 </li>`;
     })
