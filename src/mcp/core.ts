@@ -401,6 +401,37 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
     );
 
+  // MCP tool annotation policy:
+  // - readOnlyHint: true only for tools that do not mutate AGPWiki state.
+  // - destructiveHint: false for additive writes such as creates and alias additions.
+  // - destructiveHint: true for writes that change current visible state, remove access, or refresh stored metadata.
+  // - openWorldHint: true only for tools that call external services during the tool call.
+  // - idempotentHint: omitted because AGPWiki write retries are not a supported contract.
+  const readOnlyToolAnnotations = {
+    readOnlyHint: true,
+    openWorldHint: false,
+  } as const;
+  const additiveWriteToolAnnotations = {
+    readOnlyHint: false,
+    destructiveHint: false,
+    openWorldHint: false,
+  } as const;
+  const destructiveWriteToolAnnotations = {
+    readOnlyHint: false,
+    destructiveHint: true,
+    openWorldHint: false,
+  } as const;
+  const externalAdditiveWriteToolAnnotations = {
+    readOnlyHint: false,
+    destructiveHint: false,
+    openWorldHint: true,
+  } as const;
+  const externalDestructiveWriteToolAnnotations = {
+    readOnlyHint: false,
+    destructiveHint: true,
+    openWorldHint: true,
+  } as const;
+
   server.registerResource(
     'Wiki Pages Index',
     'agpwiki://pages',
@@ -497,6 +528,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Wiki Page',
       description:
         'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy.',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         title: localizedTitleSchema.optional,
@@ -527,6 +559,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Citation',
       description:
         'Create a new citation entry with CSL JSON data. data.id is ignored; the citation key is authoritative for identity. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Create citation"}.',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         data: z.record(z.string(), z.unknown()),
@@ -554,7 +587,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Query Citations',
       description: 'Search citations by key prefix, title, author, year, DOI, or URL.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         keyPrefix: z.string().optional(),
         title: z.string().optional(),
@@ -583,6 +616,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Blog Post',
       description:
         'Create a new blog post with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         title: localizedTitleSchema.optional,
@@ -607,6 +641,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Blog Post',
       description:
         'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
@@ -631,7 +666,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Blog Post Revisions',
       description: 'List revisions for a blog post by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
       },
@@ -648,7 +683,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Blog Post Revisions',
       description: 'Generate a unified diff between two blog post revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         fromRevId: uuidSchema,
@@ -668,7 +703,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Blog Post',
       description: 'Read a single blog post by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
       },
@@ -685,7 +720,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Blog Post Revision',
       description: 'Read a specific blog post revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         revId: uuidSchema,
@@ -704,6 +739,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Blog Post',
       description:
         'Soft-delete a blog post and all its revisions. Requires blog_admin role. revSummary is required, e.g., {"en":"Remove duplicate draft of biographical post"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         revSummary: localizedRevisionSummarySchema.required,
@@ -722,7 +758,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Citation Revisions',
       description: 'List revisions for a citation by key.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
       },
@@ -739,7 +775,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Citation Revisions',
       description: 'Generate a unified diff between two citation revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         fromRevId: uuidSchema,
@@ -758,7 +794,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Citation',
       description: 'Read a citation by key.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
       },
@@ -775,7 +811,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Citation Revision',
       description: 'Read a specific citation revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         revId: uuidSchema,
@@ -794,6 +830,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Citation',
       description:
         'Create a new revision for an existing citation. data.id is ignored; the citation key is authoritative for identity. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         newKey: optionalCitationKeySchema,
@@ -823,6 +860,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Citation Claim',
       description:
         'Create a new claim linked to a citation. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -857,6 +895,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Citation Claim',
       description:
         'Create a new revision for an existing claim. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary is required.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -891,7 +930,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Citation Claim Revisions',
       description: 'List revisions for a citation claim by key and claimId.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -909,7 +948,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Citation Claim Revisions',
       description: 'Generate a unified diff between two citation claim revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -930,7 +969,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Citation Claim',
       description: 'Read a citation claim by key and claimId.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -948,7 +987,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Citation Claim Revision',
       description: 'Read a specific citation claim revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -967,7 +1006,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Wiki Page Revisions',
       description: 'List revisions for a wiki page by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
       },
@@ -984,7 +1023,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Wiki Page Revisions',
       description: 'Generate a unified diff between two revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         fromRevId: uuidSchema,
@@ -1004,7 +1043,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Wiki Page',
       description: 'Read a single wiki page by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
       },
@@ -1021,7 +1060,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Wiki Page Revision',
       description: 'Read a specific wiki page revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         revId: uuidSchema,
@@ -1040,6 +1079,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Media',
       description:
         'Register a Wikimedia Commons image as a media entity. The server fetches Commons metadata such as license, attribution, dimensions, and thumbnail template. Use the returned slug in article markdown as `![Alt text](/media/<slug>){size=250 caption="..."}`. Only images are supported.',
+      annotations: externalAdditiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
         commonsTitle: z.string(),
@@ -1071,6 +1111,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Media',
       description:
         'Create a new revision for an existing media entity. Updates curated fields only: slug, title, caption, and altText. Use media_refresh to re-fetch Commons metadata.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
         newSlug: z.string().optional(),
@@ -1103,6 +1144,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Refresh Media Metadata',
       description:
         'Re-fetch Commons metadata for an existing media entity and store it as a new revision. Cached thumbnails are invalidated and rebuilt on demand.',
+      annotations: externalDestructiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
         policyHash: policyHashSchema,
@@ -1131,7 +1173,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Query Media',
       description:
         'Search media entities by slug prefix, Commons title substring, license, or author. Only images are supported in this release.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slugPrefix: z.string().optional(),
         commonsTitle: z.string().optional(),
@@ -1154,7 +1196,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Media',
       description: 'Read a media entity by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: z.string(),
       },
@@ -1171,7 +1213,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Media Revision',
       description: 'Read a specific media revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: z.string(),
         revId: uuidSchema,
@@ -1189,7 +1231,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Media Revisions',
       description: 'List revisions for a media entity by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: z.string(),
       },
@@ -1206,7 +1248,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Media Revisions',
       description: 'Generate a structured diff between two media revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: z.string(),
         fromRevId: uuidSchema,
@@ -1226,6 +1268,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Create Page Check',
       description:
         'Create a new page check for a wiki page revision. checkResults and notes use language-keyed maps keyed by supported locale codes (see agpwiki://locales). metrics is required and reports issue counts.',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         type: pageCheckTypeSchema,
@@ -1262,6 +1305,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Page Check',
       description:
         'Create a new revision for a page check. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
         type: pageCheckTypeSchema.optional(),
@@ -1297,7 +1341,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Page Checks',
       description: 'List the current page checks for a wiki page by slug.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
       },
@@ -1314,7 +1358,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Page Check Revisions',
       description: 'List revisions for a page check by check ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
       },
@@ -1331,7 +1375,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Read Page Check Revision',
       description: 'Read a specific page check revision by revision ID.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
         revId: uuidSchema,
@@ -1349,7 +1393,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Diff Page Check Revisions',
       description: 'Generate a unified diff between two page check revisions.',
-      annotations: { readOnlyHint: true },
+      annotations: readOnlyToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
         fromRevId: uuidSchema,
@@ -1370,6 +1414,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Apply Wiki Patch',
       description:
         'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         patch: z.string(),
@@ -1401,6 +1446,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Rewrite Wiki Section',
       description:
         'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}. Before making edits, review policies linked from /meta/policy.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         target: z.enum(['heading', 'lead']).optional(),
@@ -1441,6 +1487,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Replace Exact Text',
       description:
         'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         replacements: z
@@ -1480,6 +1527,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Update Wiki Page',
       description:
         'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
@@ -1510,6 +1558,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Add Wiki Page Alias',
       description: 'Create a new alias slug for an existing wiki page.',
+      annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         pageSlug: slugSchema,
@@ -1532,6 +1581,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Remove Wiki Page Alias',
       description: 'Remove an alias slug from a wiki page.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         policyHash: policyHashSchema,
@@ -1552,6 +1602,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Wiki Page',
       description:
         'Soft-delete a wiki page and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove hoax article; fails reliability policy"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         policyHash: policyHashSchema,
@@ -1574,6 +1625,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Citation',
       description:
         'Soft-delete a citation and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Delete broken URL; replaced by archived source"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         policyHash: policyHashSchema,
@@ -1596,6 +1648,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Citation Claim',
       description:
         'Soft-delete a citation claim and all its revisions. Requires wiki_admin role. revSummary is required.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
@@ -1619,6 +1672,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Media',
       description:
         'Soft-delete a media entity and all its revisions. Requires wiki_admin role. Cached thumbnails are also reclaimed from disk. revSummary is required, e.g., {"en":"Delete duplicate media entry"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
         policyHash: policyHashSchema,
@@ -1646,6 +1700,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       title: 'Delete Page Check',
       description:
         'Soft-delete a page check and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove duplicate check"}.',
+      annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
         policyHash: policyHashSchema,
