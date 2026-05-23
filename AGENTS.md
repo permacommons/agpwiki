@@ -28,6 +28,17 @@
 - Tests expanded where appropriate to cover new functionality
 - `npm run lint` and `npm run typecheck` passing
 
+## Test execution and sandboxing
+
+Most tests run in a normal restricted environment. If the full test suite fails
+with file-level `testCodeFailure` errors and little or no assertion detail,
+check whether the current agent sandbox restricts local connections or loopback
+listeners.
+
+Tests that use local PostgreSQL or bind ephemeral HTTP servers may need to run
+outside that sandbox. `npm run lint` and `npm run typecheck` should not need
+that exception.
+
 ## Wiki content formatting
 
 - Markdown is rendered with markdown-it (`html: false`, `linkify: true`). Raw HTML in markdown is not allowed.
