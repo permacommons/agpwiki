@@ -359,6 +359,11 @@ header.site-header {
   border: 1px solid var(--rule);
   box-shadow: 0 6px 16px rgba(31, 29, 26, 0.08);
   min-width: 0;
+  /* Force-break long unbreakable strings (URLs, hashes, inline code) as a
+     last resort so narrow viewports don't horizontally overflow the column.
+     Browsers only invoke this when no valid word break fits, so normal
+     prose still wraps at whitespace. */
+  overflow-wrap: anywhere;
 }
 .sidebar {
   font-family: 'IBM Plex Sans', sans-serif;
@@ -410,6 +415,11 @@ pre.diff ins {
   margin: 0;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.95rem;
+  /* Tables live inside .table-scroll, which provides its own horizontal
+     scroll, so cells should keep natural word breaking — overriding the
+     anywhere-break inherited from .article. Otherwise headers like
+     "SUBSPECIES" get broken character-by-character on narrow viewports. */
+  overflow-wrap: normal;
 }
 .table-scroll {
   position: relative;
