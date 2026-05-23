@@ -220,22 +220,26 @@ export async function getRecentMediaChanges(
   limit: number
 ): Promise<MediaChange[]> {
   const result = await dal.query(
-    `SELECT slug,
-            commons_title,
-            media_type,
-            data,
-            _rev_id,
-            _rev_date,
-            _rev_user,
-            _rev_summary,
-            _rev_tags,
-            LEAD(_rev_id) OVER (
-              PARTITION BY COALESCE(_old_rev_of, id)
-              ORDER BY _rev_date DESC, _rev_id DESC
+    `SELECT current_media.slug,
+            media_rev.commons_title,
+            media_rev.media_type,
+            media_rev.data,
+            media_rev._rev_id,
+            media_rev._rev_date,
+            media_rev._rev_user,
+            media_rev._rev_summary,
+            media_rev._rev_tags,
+            LEAD(media_rev._rev_id) OVER (
+              PARTITION BY COALESCE(media_rev._old_rev_of, media_rev.id)
+              ORDER BY media_rev._rev_date DESC, media_rev._rev_id DESC
             ) AS prev_rev_id
-     FROM ${Media.tableName}
-     WHERE _rev_deleted = false
-     ORDER BY _rev_date DESC, _rev_id DESC
+     FROM ${Media.tableName} media_rev
+     JOIN ${Media.tableName} current_media
+       ON current_media.id = COALESCE(media_rev._old_rev_of, media_rev.id)
+      AND current_media._old_rev_of IS NULL
+      AND current_media._rev_deleted = false
+     WHERE media_rev._rev_deleted = false
+     ORDER BY media_rev._rev_date DESC, media_rev._rev_id DESC
      LIMIT $1`,
     [limit]
   );

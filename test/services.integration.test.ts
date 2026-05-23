@@ -3540,6 +3540,7 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
   const dal = await getDal();
   const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
   const slugA = `test-recent-media-${suffix}-a`;
+  const renamedSlugA = `test-recent-media-${suffix}-a-renamed`;
   const slugB = `test-recent-media-${suffix}-b`;
   const mediaPrefix = `test-recent-media-${suffix}-%`;
   let userIdForCleanup: string | null = null;
@@ -3569,6 +3570,7 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
       dal,
       {
         slug: slugA,
+        newSlug: renamedSlugA,
         caption: { en: 'Updated caption' },
         revSummary: { en: 'Update A.' },
       },
@@ -3591,7 +3593,7 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
     // narrow our assertions to our own slugs.
     const allChanges = await getRecentMediaChanges(dal, 100);
     const ours = allChanges.filter(
-      change => change.slug === slugA || change.slug === slugB
+      change => change.slug === renamedSlugA || change.slug === slugB
     );
     assert.equal(ours.length, 3, 'expected 3 revisions: B-create, A-update, A-create');
 
@@ -3599,8 +3601,8 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
 
     // Ordering: B-create is newest, then A-update, then A-create.
     assert.equal(newest.slug, slugB);
-    assert.equal(middle.slug, slugA);
-    assert.equal(oldest.slug, slugA);
+    assert.equal(middle.slug, renamedSlugA);
+    assert.equal(oldest.slug, renamedSlugA);
     assert.notEqual(middle.revId, oldest.revId);
 
     // prevRevId chain: B has no prior rev in its own partition; A-update
