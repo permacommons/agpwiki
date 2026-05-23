@@ -4,10 +4,13 @@ import type { TFunction } from 'i18next';
 import dal from 'rev-dal';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
+import { formatMediaLabel } from '../lib/media.js';
 import {
   getRecentCitationChanges,
   getRecentCitationClaimChanges,
+  getRecentMediaChanges,
   getRecentWikiChanges,
+  type MediaChange,
 } from '../lib/recent-changes.js';
 import { getRecentPageChecks } from '../lib/recent-checks.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
@@ -122,13 +125,88 @@ const renderRelatedTools = (
 </div>`;
 };
 
-type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks';
+type RecentMediaView = 'grid' | 'list';
+
+const RECENT_MEDIA_THUMB_WIDTH = 500;
+const RECENT_MEDIA_DEFAULT_ASPECT_RATIO = 4 / 3;
+
+const renderRecentMediaViewToggle = (current: RecentMediaView, t: TFunction) => {
+  const buttonFor = (view: RecentMediaView, label: string) => {
+    if (view === current) {
+      return `<span class="view-toggle-link view-toggle-link--active" aria-current="page">${escapeHtml(label)}</span>`;
+    }
+    const href = view === 'grid' ? '/tool/recent-media' : '/tool/recent-media?view=list';
+    return `<a class="view-toggle-link" href="${href}">${escapeHtml(label)}</a>`;
+  };
+  return `<div class="view-toggle" role="group" aria-label="${escapeHtml(t('tool.viewToggleLabel'))}">
+  ${buttonFor('grid', t('tool.viewGrid'))}
+  ${buttonFor('list', t('tool.viewList'))}
+</div>`;
+};
+
+type RecentMediaChangeForGrid = Omit<MediaChange, 'revSummary'> & {
+  revSummary: SafeText | string;
+};
+
+const renderRecentMediaGrid = (
+  changes: RecentMediaChangeForGrid[],
+  userMap: Map<string, string>,
+  t: TFunction
+) => {
+  if (!changes.length) {
+    return `<p class="recent-media-empty">${escapeHtml(t('tool.recentMediaEmpty'))}</p>`;
+  }
+  const tiles = changes
+    .map(change => {
+      const encodedSlug = encodeURIComponent(change.slug);
+      const data = change.data ?? {};
+      const origWidth = typeof data.width === 'number' ? data.width : null;
+      const origHeight = typeof data.height === 'number' ? data.height : null;
+      const aspectRatio =
+        origWidth && origHeight && origHeight > 0
+          ? origWidth / origHeight
+          : RECENT_MEDIA_DEFAULT_ASPECT_RATIO;
+      const isImage = change.mediaType === 'image';
+      const thumbHtml = isImage
+        ? `<img
+            class="media-tile-image"
+            src="/media-files/${encodedSlug}/${RECENT_MEDIA_THUMB_WIDTH}"
+            alt=""
+            loading="lazy"
+          />`
+        : `<span class="media-tile-placeholder" aria-hidden="true">${escapeHtml(change.mediaType)}</span>`;
+
+      const displayName = change.revUser ? userMap.get(change.revUser) ?? change.revUser : '';
+      const agentTag = change.revTags.find(tag => tag.startsWith('agent:')) ?? '';
+      const agentVersion = change.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
+      const dateLabel = formatDateUTC(change.revDate);
+      const titleParts = [
+        change.slug,
+        dateLabel || null,
+        displayName ? t('history.operator', { name: displayName }) : null,
+        agentTag || null,
+        agentVersion || null,
+      ].filter((part): part is string => Boolean(part));
+      const titleText = titleParts.join(' · ');
+
+      return `<li class="media-tile" data-aspect-ratio="${aspectRatio.toFixed(4)}">
+  <a class="media-tile-link" href="/media/${encodedSlug}" data-meta="true" data-user="${escapeHtml(displayName)}" data-agent="${escapeHtml(agentTag)}" data-agent-version="${escapeHtml(agentVersion)}" title="${escapeHtml(titleText)}">
+    <span class="media-tile-thumb">${thumbHtml}</span>
+  </a>
+</li>`;
+    })
+    .join('');
+  return `<ul class="media-grid media-grid--justified" data-justified-gallery="true">${tiles}</ul>`;
+};
+
+type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks' | 'media';
 
 const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
   const links = [
     { key: 'changes', href: '/tool/recent-changes', label: t('page.recentChanges') },
     { key: 'citations', href: '/tool/recent-citations', label: t('page.recentCitations') },
     { key: 'claims', href: '/tool/recent-claims', label: t('page.recentClaims') },
+    { key: 'media', href: '/tool/recent-media', label: t('page.recentMedia') },
     { key: 'checks', href: '/tool/recent-checks', label: t('page.recentChecks') },
   ];
 
@@ -304,6 +382,68 @@ export const registerToolRoutes = (app: Express) => {
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
       title: prepareTitle(req.t('page.recentClaims')),
+      labelHtml,
+      bodyHtml,
+      topHtml: prependAccountBanner(res),
+    });
+  });
+
+  app.get('/tool/recent-media', async (req, res) => {
+    const limit = parseRecentLimit(req.query.limit);
+    const view = req.query.view === 'list' ? 'list' : 'grid';
+    const preferredLang = res.locals.locale;
+
+    const dalInstance = await initializePostgreSQL();
+    const rawChanges = await getRecentMediaChanges(dalInstance, limit);
+    const changes = rawChanges.map(change => ({
+      ...change,
+      revSummary: resolvePreferredText(change.revSummary, preferredLang),
+    }));
+    const userIds = changes
+      .map(change => change.revUser)
+      .filter((id): id is string => Boolean(id));
+    const userMap = await fetchUserMap(dalInstance, userIds);
+
+    const viewToggleHtml = renderRecentMediaViewToggle(view, req.t);
+
+    let listingHtml: string;
+    if (view === 'grid') {
+      listingHtml = renderRecentMediaGrid(changes, userMap, req.t);
+    } else {
+      const items: RecentListItem[] = changes.map(change => {
+        const encodedSlug = encodeURIComponent(change.slug);
+        const actions: RecentListAction[] = [
+          { label: req.t('tool.view'), href: `/media/${encodedSlug}?rev=${change.revId}` },
+        ];
+        if (change.prevRevId) {
+          actions.push({
+            label: req.t('tool.diff'),
+            href: `/media/${encodedSlug}?diffFrom=${change.prevRevId}&diffTo=${change.revId}`,
+          });
+        }
+        return {
+          primaryLabel: formatMediaLabel(change.slug, change.commonsTitle),
+          primaryHref: `/media/${encodedSlug}`,
+          dateLabel: formatDateUTC(change.revDate),
+          summary: change.revSummary,
+          revUser: change.revUser,
+          revTags: change.revTags,
+          actions,
+        };
+      });
+      listingHtml = `<ul class="change-list">${renderRecentList(items, userMap, req.t)}</ul>`;
+    }
+
+    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('media', req.t), req.t);
+    const bodyHtml = `<div class="tool-page">
+  <p>${req.t('tool.recentMediaDescription')}</p>
+  ${relatedHtml}
+  ${viewToggleHtml}
+  ${listingHtml}
+</div>`;
+    const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
+    res.render('layout', {
+      title: prepareTitle(req.t('page.recentMedia')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
