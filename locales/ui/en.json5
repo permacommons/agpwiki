@@ -22,6 +22,7 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.category.general",
+      "userRights.notice.no",
       "redLink.hover.wikipediaHeading"
     ],
      "fi": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
@@ -48,6 +49,7 @@
       "nav.forum",
       "forum.title",
       "forum.relatedLabel",
+      "userRights.headers.email",
       "redLink.hover.wikipediaHeading"
     ],
     "it": [
@@ -58,6 +60,8 @@
       "citation.field.url",
       "forum.title",
       "forum.relatedLabel",
+      "userRights.headers.email",
+      "userRights.notice.no",
       "redLink.hover.wikipediaHeading"
     ],
      "ja": ["site.name", "nav.home", "redLink.hover.wikipediaHeading"],
@@ -84,8 +88,8 @@
       "forum.relatedLabel",
       "redLink.hover.wikipediaHeading"
     ],
-     "pt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
-     "pt-PT": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
+     "pt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "userRights.headers.email"],
+     "pt-PT": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "userRights.headers.email"],
      "ru": ["site.name", "nav.home"],
      "sk": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
      "sl": [

@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Son değişiklikler',
     reviewAccounts: 'Hesapları gözden geçir',
+    userRights: 'Kullanıcı hakları',
     signOut: 'Çıkış Yap',
     help: 'Yardım',
     menu: 'Menü',
@@ -332,6 +333,60 @@
     previous: 'Önceki',
     next: 'Sonraki',
     pagination: 'Sayfa {{page}} / {{totalPages}}',
+  },
+  userRights: {
+    title: 'Kullanıcı Hakları',
+    description: 'Doğrulanmış kullanıcıları ad veya e-posta adresine göre arayın ve site yöneticisinin altındaki hakları yönetin.',
+    none: 'Yok',
+    empty: 'Doğrulanmış kullanıcı bulunamadı.',
+    save: 'Hakları kaydet',
+    siteAdminLocked: 'Site yöneticisi yalnızca CLI üzerinden değiştirilebilir.',
+    search: {
+      label: 'Kullanıcı ara',
+      placeholder: 'Ad veya e-posta adresi',
+      submit: 'Ara',
+      clear: 'Temizle',
+    },
+    headers: {
+      user: 'Kullanıcı',
+      email: 'E-posta',
+      currentRights: 'Mevcut haklar',
+      edit: 'Hakları düzenle',
+    },
+    notice: {
+      updated: '{{user}} için kullanıcı hakları değiştirildi.',
+      unchanged: '{{user}} için hiçbir hak değiştirilmedi.',
+      error: 'Haklar güncellenemedi.',
+      yes: 'Evet',
+      no: 'Hayır',
+      headers: {
+        right: 'Hak',
+        before: 'Önce',
+        after: 'Sonra',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Site yöneticisi',
+        description: 'Site genelindeki ayarları ve hesap isteklerini yönetin.',
+      },
+      wiki_admin: {
+        label: 'Viki yöneticisi',
+        description: 'Viki içeriğini ve silmeleri yönetin.',
+      },
+      blog_author: {
+        label: 'Blog yazarı',
+        description: 'Blog yazıları oluşturun ve güncelleyin.',
+      },
+      blog_admin: {
+        label: 'Blog yöneticisi',
+        description: 'Blog yazılarını silin ve blog içeriğini yönetin.',
+      },
+      forum_moderator: {
+        label: 'Forum moderatörü',
+        description: 'Forum başlıklarını ve yorumlarını yönetin.',
+      },
+    },
   },
   auth: {
     login: {

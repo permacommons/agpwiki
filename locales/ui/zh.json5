@@ -8,6 +8,7 @@
     forum: '论坛',
     recentChanges: '最近更改',
     reviewAccounts: '审查账号',
+    userRights: '用户权限',
     signOut: '退出',
     help: '帮助',
     menu: '菜单',
@@ -332,6 +333,60 @@
     previous: '上一页',
     next: '下一页',
     pagination: '第 {{page}} 页，共 {{totalPages}} 页',
+  },
+  userRights: {
+    title: '用户权限',
+    description: '按姓名或电子邮件地址搜索已验证用户，并管理低于网站管理员的权限。',
+    none: '无',
+    empty: '未找到已验证用户。',
+    save: '保存权限',
+    siteAdminLocked: '网站管理员只能通过 CLI 更改。',
+    search: {
+      label: '搜索用户',
+      placeholder: '姓名或电子邮件地址',
+      submit: '搜索',
+      clear: '清除',
+    },
+    headers: {
+      user: '用户',
+      email: '电子邮件',
+      currentRights: '当前权限',
+      edit: '编辑权限',
+    },
+    notice: {
+      updated: '已更改 {{user}} 的用户权限。',
+      unchanged: '{{user}} 的权限未更改。',
+      error: '无法更新权限。',
+      yes: '是',
+      no: '否',
+      headers: {
+        right: '权限',
+        before: '之前',
+        after: '之后',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: '网站管理员',
+        description: '管理全站设置和账户请求。',
+      },
+      wiki_admin: {
+        label: '维基管理员',
+        description: '管理维基内容和删除操作。',
+      },
+      blog_author: {
+        label: '博客作者',
+        description: '创建和更新博客文章。',
+      },
+      blog_admin: {
+        label: '博客管理员',
+        description: '删除博客文章并管理博客内容。',
+      },
+      forum_moderator: {
+        label: '论坛版主',
+        description: '管理论坛主题和评论。',
+      },
+    },
   },
   auth: {
     login: {

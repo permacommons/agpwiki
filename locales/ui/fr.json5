@@ -9,6 +9,7 @@
     forum: 'Forum',
     recentChanges: 'Modifications récentes',
     reviewAccounts: 'Examiner les comptes',
+    userRights: 'Droits utilisateur',
     signOut: 'Déconnexion',
     help: 'Aide',
     menu: 'Navigation',
@@ -333,6 +334,60 @@
     previous: 'Précédent',
     next: 'Suivant',
     pagination: 'Page {{page}} sur {{totalPages}}',
+  },
+  userRights: {
+    title: 'Droits utilisateur',
+    description: 'Rechercher des utilisateurs vérifiés par nom ou adresse e-mail et gérer les droits inférieurs à administrateur du site.',
+    none: 'Aucun',
+    empty: 'Aucun utilisateur vérifié trouvé.',
+    save: 'Enregistrer les droits',
+    siteAdminLocked: 'Le rôle administrateur du site ne peut être modifié que depuis la CLI.',
+    search: {
+      label: 'Rechercher des utilisateurs',
+      placeholder: 'Nom ou adresse e-mail',
+      submit: 'Rechercher',
+      clear: 'Effacer',
+    },
+    headers: {
+      user: 'Utilisateur',
+      email: 'E-mail',
+      currentRights: 'Droits actuels',
+      edit: 'Modifier les droits',
+    },
+    notice: {
+      updated: 'Droits utilisateur modifiés pour {{user}}.',
+      unchanged: 'Aucun droit modifié pour {{user}}.',
+      error: 'Les droits n’ont pas pu être mis à jour.',
+      yes: 'Oui',
+      no: 'Non',
+      headers: {
+        right: 'Droit',
+        before: 'Avant',
+        after: 'Après',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Administrateur du site',
+        description: 'Gérer les paramètres du site et les demandes de compte.',
+      },
+      wiki_admin: {
+        label: 'Administrateur du wiki',
+        description: 'Administrer le contenu du wiki et les suppressions.',
+      },
+      blog_author: {
+        label: 'Auteur du blog',
+        description: 'Créer et mettre à jour des billets de blog.',
+      },
+      blog_admin: {
+        label: 'Administrateur du blog',
+        description: 'Supprimer des billets et gérer le contenu du blog.',
+      },
+      forum_moderator: {
+        label: 'Modérateur du forum',
+        description: 'Modérer les fils et les commentaires du forum.',
+      },
+    },
   },
   auth: {
     login: {

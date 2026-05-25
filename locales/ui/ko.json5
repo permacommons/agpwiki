@@ -8,6 +8,7 @@
     forum: '포럼',
     recentChanges: '최근 바뀜',
     reviewAccounts: '계정 검토',
+    userRights: '사용자 권한',
     signOut: '로그아웃',
     help: '도움말',
     menu: '메뉴',
@@ -332,6 +333,60 @@
     previous: '이전',
     next: '다음',
     pagination: '페이지 {{page}} / {{totalPages}}',
+  },
+  userRights: {
+    title: '사용자 권한',
+    description: '이름 또는 이메일 주소로 인증된 사용자를 검색하고 사이트 관리자보다 낮은 권한을 관리합니다.',
+    none: '없음',
+    empty: '인증된 사용자를 찾을 수 없습니다.',
+    save: '권한 저장',
+    siteAdminLocked: '사이트 관리자는 CLI에서만 변경할 수 있습니다.',
+    search: {
+      label: '사용자 검색',
+      placeholder: '이름 또는 이메일 주소',
+      submit: '검색',
+      clear: '지우기',
+    },
+    headers: {
+      user: '사용자',
+      email: '이메일',
+      currentRights: '현재 권한',
+      edit: '권한 편집',
+    },
+    notice: {
+      updated: '{{user}}의 사용자 권한이 변경되었습니다.',
+      unchanged: '{{user}}의 권한은 변경되지 않았습니다.',
+      error: '권한을 업데이트할 수 없습니다.',
+      yes: '예',
+      no: '아니요',
+      headers: {
+        right: '권한',
+        before: '이전',
+        after: '이후',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: '사이트 관리자',
+        description: '사이트 전체 설정과 계정 요청을 관리합니다.',
+      },
+      wiki_admin: {
+        label: '위키 관리자',
+        description: '위키 콘텐츠와 삭제를 관리합니다.',
+      },
+      blog_author: {
+        label: '블로그 작성자',
+        description: '블로그 게시물을 만들고 업데이트합니다.',
+      },
+      blog_admin: {
+        label: '블로그 관리자',
+        description: '블로그 게시물을 삭제하고 블로그 콘텐츠를 관리합니다.',
+      },
+      forum_moderator: {
+        label: '포럼 중재자',
+        description: '포럼 스레드와 댓글을 중재합니다.',
+      },
+    },
   },
   auth: {
     login: {

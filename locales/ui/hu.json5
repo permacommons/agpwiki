@@ -8,6 +8,7 @@
     forum: 'Fórum',
     recentChanges: 'Friss változtatások',
     reviewAccounts: 'Fiókok áttekintése',
+    userRights: 'Felhasználói jogok',
     signOut: 'Kijelentkezés',
     help: 'Súgó',
     menu: 'Menü',
@@ -333,6 +334,60 @@
     previous: 'Előző',
     next: 'Következő',
     pagination: '{{page}} / {{totalPages}} oldal',
+  },
+  userRights: {
+    title: 'Felhasználói jogok',
+    description: 'Keress ellenőrzött felhasználókat név vagy e-mail-cím alapján, és kezeld a webhely-adminisztrátor alatti jogokat.',
+    none: 'Nincs',
+    empty: 'Nem található ellenőrzött felhasználó.',
+    save: 'Jogok mentése',
+    siteAdminLocked: 'A webhely-adminisztrátor csak a CLI-ből módosítható.',
+    search: {
+      label: 'Felhasználók keresése',
+      placeholder: 'Név vagy e-mail-cím',
+      submit: 'Keresés',
+      clear: 'Törlés',
+    },
+    headers: {
+      user: 'Felhasználó',
+      email: 'E-mail',
+      currentRights: 'Jelenlegi jogok',
+      edit: 'Jogok szerkesztése',
+    },
+    notice: {
+      updated: '{{user}} felhasználói jogai módosultak.',
+      unchanged: '{{user}} jogai nem módosultak.',
+      error: 'A jogokat nem sikerült frissíteni.',
+      yes: 'Igen',
+      no: 'Nem',
+      headers: {
+        right: 'Jog',
+        before: 'Előtte',
+        after: 'Utána',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Webhely-adminisztrátor',
+        description: 'Webhelyszintű beállítások és fiókkérések kezelése.',
+      },
+      wiki_admin: {
+        label: 'Wiki-adminisztrátor',
+        description: 'Wiki-tartalom és törlések kezelése.',
+      },
+      blog_author: {
+        label: 'Blogszerző',
+        description: 'Blogbejegyzések létrehozása és frissítése.',
+      },
+      blog_admin: {
+        label: 'Blogadminisztrátor',
+        description: 'Blogbejegyzések törlése és blogtartalom kezelése.',
+      },
+      forum_moderator: {
+        label: 'Fórummoderátor',
+        description: 'Fórumtémák és hozzászólások moderálása.',
+      },
+    },
   },
   auth: {
     login: {

@@ -9,6 +9,7 @@
     forum: 'Forum',
     recentChanges: 'Letzte Änderungen',
     reviewAccounts: 'Konten prüfen',
+    userRights: 'Benutzerrechte',
     signOut: 'Abmelden',
     help: 'Hilfe',
     menu: 'Menü',
@@ -331,6 +332,60 @@
     previous: 'Vorherige',
     next: 'Nächste',
     pagination: 'Seite {{page}} von {{totalPages}}',
+  },
+  userRights: {
+    title: 'Benutzerrechte',
+    description: 'Suche verifizierte Benutzerinnen und Benutzer nach Name oder E-Mail-Adresse und verwalte Rechte unterhalb der Site-Administration.',
+    none: 'Keine',
+    empty: 'Keine verifizierten Benutzer gefunden.',
+    save: 'Rechte speichern',
+    siteAdminLocked: 'Site-Administration kann nur über die CLI geändert werden.',
+    search: {
+      label: 'Benutzer suchen',
+      placeholder: 'Name oder E-Mail-Adresse',
+      submit: 'Suchen',
+      clear: 'Zurücksetzen',
+    },
+    headers: {
+      user: 'Benutzer',
+      email: 'E-Mail',
+      currentRights: 'Aktuelle Rechte',
+      edit: 'Rechte bearbeiten',
+    },
+    notice: {
+      updated: 'Benutzerrechte für {{user}} geändert.',
+      unchanged: 'Keine Rechte für {{user}} geändert.',
+      error: 'Rechte konnten nicht aktualisiert werden.',
+      yes: 'Ja',
+      no: 'Nein',
+      headers: {
+        right: 'Recht',
+        before: 'Vorher',
+        after: 'Nachher',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Site-Administration',
+        description: 'Site-weite Einstellungen und Kontoanfragen verwalten.',
+      },
+      wiki_admin: {
+        label: 'Wiki-Administration',
+        description: 'Wiki-Inhalte und Löschungen verwalten.',
+      },
+      blog_author: {
+        label: 'Blog-Autor',
+        description: 'Blog-Beiträge erstellen und aktualisieren.',
+      },
+      blog_admin: {
+        label: 'Blog-Administration',
+        description: 'Blog-Beiträge löschen und Blog-Inhalte verwalten.',
+      },
+      forum_moderator: {
+        label: 'Forum-Moderation',
+        description: 'Forum-Themen und Kommentare moderieren.',
+      },
+    },
   },
   auth: {
     login: {

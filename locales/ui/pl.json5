@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Ostatnie zmiany',
     reviewAccounts: 'Przeglądaj konta',
+    userRights: 'Uprawnienia użytkowników',
     signOut: 'Wyloguj',
     help: 'Pomoc',
     menu: 'Menu nawigacji',
@@ -332,6 +333,60 @@
     previous: 'Poprzednia',
     next: 'Następna',
     pagination: 'Strona {{page}} z {{totalPages}}',
+  },
+  userRights: {
+    title: 'Uprawnienia użytkowników',
+    description: 'Wyszukuj zweryfikowanych użytkowników według nazwy lub adresu e-mail i zarządzaj uprawnieniami poniżej administratora witryny.',
+    none: 'Brak',
+    empty: 'Nie znaleziono zweryfikowanych użytkowników.',
+    save: 'Zapisz uprawnienia',
+    siteAdminLocked: 'Administratora witryny można zmienić tylko z CLI.',
+    search: {
+      label: 'Szukaj użytkowników',
+      placeholder: 'Nazwa lub adres e-mail',
+      submit: 'Szukaj',
+      clear: 'Wyczyść',
+    },
+    headers: {
+      user: 'Użytkownik',
+      email: 'E-mail',
+      currentRights: 'Obecne uprawnienia',
+      edit: 'Edytuj uprawnienia',
+    },
+    notice: {
+      updated: 'Uprawnienia użytkownika zmienione dla {{user}}.',
+      unchanged: 'Nie zmieniono uprawnień dla {{user}}.',
+      error: 'Nie można zaktualizować uprawnień.',
+      yes: 'Tak',
+      no: 'Nie',
+      headers: {
+        right: 'Uprawnienie',
+        before: 'Przed',
+        after: 'Po',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Administrator witryny',
+        description: 'Zarządzanie ustawieniami całej witryny i prośbami o konta.',
+      },
+      wiki_admin: {
+        label: 'Administrator wiki',
+        description: 'Administrowanie treścią wiki i usunięciami.',
+      },
+      blog_author: {
+        label: 'Autor bloga',
+        description: 'Tworzenie i aktualizowanie wpisów bloga.',
+      },
+      blog_admin: {
+        label: 'Administrator bloga',
+        description: 'Usuwanie wpisów i zarządzanie treścią bloga.',
+      },
+      forum_moderator: {
+        label: 'Moderator forum',
+        description: 'Moderowanie wątków i komentarzy na forum.',
+      },
+    },
   },
   auth: {
     login: {

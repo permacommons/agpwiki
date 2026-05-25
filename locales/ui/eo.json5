@@ -8,6 +8,7 @@
     forum: 'Forumo',
     recentChanges: 'Lastaj ŝanĝoj',
     reviewAccounts: 'Reviziu kontojn',
+    userRights: 'Uzantorajtoj',
     signOut: 'Elsaluti',
     help: 'Helpo',
     menu: 'Menuo',
@@ -331,6 +332,60 @@
     previous: 'Antaŭa',
     next: 'Sekva',
     pagination: 'Paĝo {{page}} el {{totalPages}}',
+  },
+  userRights: {
+    title: 'Uzantorajtoj',
+    description: 'Serĉu konfirmitajn uzantojn laŭ nomo aŭ retpoŝtadreso kaj administru rajtojn sub reteja administranto.',
+    none: 'Neniu',
+    empty: 'Neniuj konfirmitaj uzantoj trovitaj.',
+    save: 'Konservi rajtojn',
+    siteAdminLocked: 'Reteja administranto povas esti ŝanĝita nur per la CLI.',
+    search: {
+      label: 'Serĉi uzantojn',
+      placeholder: 'Nomo aŭ retpoŝtadreso',
+      submit: 'Serĉi',
+      clear: 'Forigi',
+    },
+    headers: {
+      user: 'Uzanto',
+      email: 'Retpoŝto',
+      currentRights: 'Nunaj rajtoj',
+      edit: 'Redakti rajtojn',
+    },
+    notice: {
+      updated: 'Uzantorajtoj ŝanĝitaj por {{user}}.',
+      unchanged: 'Neniuj rajtoj ŝanĝitaj por {{user}}.',
+      error: 'Rajtoj ne povis esti ĝisdatigitaj.',
+      yes: 'Jes',
+      no: 'Ne',
+      headers: {
+        right: 'Rajto',
+        before: 'Antaŭe',
+        after: 'Poste',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Reteja administranto',
+        description: 'Administri tutretejajn agordojn kaj kontopetojn.',
+      },
+      wiki_admin: {
+        label: 'Vikia administranto',
+        description: 'Administri vikian enhavon kaj forigojn.',
+      },
+      blog_author: {
+        label: 'Bloga aŭtoro',
+        description: 'Krei kaj ĝisdatigi blogaĵojn.',
+      },
+      blog_admin: {
+        label: 'Bloga administranto',
+        description: 'Forigi blogaĵojn kaj administri blogan enhavon.',
+      },
+      forum_moderator: {
+        label: 'Foruma moderiganto',
+        description: 'Moderigi forumajn fadenojn kaj komentojn.',
+      },
+    },
   },
   auth: {
     login: {

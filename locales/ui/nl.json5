@@ -9,6 +9,7 @@
     forum: 'Forum',
     recentChanges: 'Recente wijzigingen',
     reviewAccounts: 'Accounts beoordelen',
+    userRights: 'Gebruikersrechten',
     signOut: 'Afmelden',
     help: 'Hulp',
     menu: 'Navigatiemenu',
@@ -333,6 +334,60 @@
     previous: 'Vorige',
     next: 'Volgende',
     pagination: 'Pagina {{page}} van {{totalPages}}',
+  },
+  userRights: {
+    title: 'Gebruikersrechten',
+    description: 'Zoek geverifieerde gebruikers op naam of e-mailadres en beheer rechten onder sitebeheerder.',
+    none: 'Geen',
+    empty: 'Geen geverifieerde gebruikers gevonden.',
+    save: 'Rechten opslaan',
+    siteAdminLocked: 'Sitebeheerder kan alleen via de CLI worden gewijzigd.',
+    search: {
+      label: 'Gebruikers zoeken',
+      placeholder: 'Naam of e-mailadres',
+      submit: 'Zoeken',
+      clear: 'Wissen',
+    },
+    headers: {
+      user: 'Gebruiker',
+      email: 'E-mail',
+      currentRights: 'Huidige rechten',
+      edit: 'Rechten bewerken',
+    },
+    notice: {
+      updated: 'Gebruikersrechten gewijzigd voor {{user}}.',
+      unchanged: 'Geen rechten gewijzigd voor {{user}}.',
+      error: 'Rechten konden niet worden bijgewerkt.',
+      yes: 'Ja',
+      no: 'Nee',
+      headers: {
+        right: 'Recht',
+        before: 'Voor',
+        after: 'Na',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Sitebeheerder',
+        description: 'Sitebrede instellingen en accountaanvragen beheren.',
+      },
+      wiki_admin: {
+        label: 'Wikibeheerder',
+        description: 'Wiki-inhoud en verwijderingen beheren.',
+      },
+      blog_author: {
+        label: 'Blogauteur',
+        description: 'Blogberichten maken en bijwerken.',
+      },
+      blog_admin: {
+        label: 'Blogbeheerder',
+        description: 'Blogberichten verwijderen en bloginhoud beheren.',
+      },
+      forum_moderator: {
+        label: 'Forummoderator',
+        description: 'Forumthreads en reacties modereren.',
+      },
+    },
   },
   auth: {
     login: {
