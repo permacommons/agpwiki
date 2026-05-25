@@ -25,7 +25,18 @@ import {
   renderText,
   type SafeText,
 } from '../render.js';
-import { getUserRoles, hasRole, SITE_ADMIN_ROLE, type ValidRole } from '../services/roles.js';
+import {
+  ADMIN_EVENT_TARGET_WIKI_PAGE,
+  type AdminEventResult,
+  listRecentAdminEvents,
+} from '../services/admin-event-service.js';
+import {
+  getUserRoles,
+  hasRole,
+  SITE_ADMIN_ROLE,
+  type ValidRole,
+  WIKI_ADMIN_ROLE,
+} from '../services/roles.js';
 import {
   EDITABLE_USER_RIGHTS,
   type EditableUserRight,
@@ -209,9 +220,13 @@ const renderRecentMediaGrid = (
   return `<ul class="media-grid media-grid--justified" data-justified-gallery="true">${tiles}</ul>`;
 };
 
-type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks' | 'media';
+type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks' | 'media' | 'admin';
 
-const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
+const getRecentRelatedLinks = (
+  current: RecentToolKey,
+  t: TFunction,
+  options: { includeAdminActions?: boolean } = {}
+) => {
   const links = [
     { key: 'changes', href: '/tool/recent-changes', label: t('page.recentChanges') },
     { key: 'citations', href: '/tool/recent-citations', label: t('page.recentCitations') },
@@ -219,9 +234,35 @@ const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
     { key: 'media', href: '/tool/recent-media', label: t('page.recentMedia') },
     { key: 'checks', href: '/tool/recent-checks', label: t('page.recentChecks') },
   ];
+  if (options.includeAdminActions) {
+    links.push({
+      key: 'admin',
+      href: '/tool/recent-admin-actions',
+      label: t('page.recentAdminActions'),
+    });
+  }
 
   return links.filter(link => link.key !== current);
 };
+
+const canShowAdminActionsLink = async (req: Request, dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>) => {
+  const session = await resolveSessionUser(req);
+  if (!session) return false;
+  const roles = await getUserRoles(dalInstance, session.userId);
+  return hasRole(roles, WIKI_ADMIN_ROLE);
+};
+
+const renderRecentRelatedTools = async (
+  current: RecentToolKey,
+  req: Request,
+  dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>
+) =>
+  renderRelatedTools(
+    getRecentRelatedLinks(current, req.t, {
+      includeAdminActions: await canShowAdminActionsLink(req, dalInstance),
+    }),
+    req.t
+  );
 
 const renderToolLayout = (res: Response, title: string, bodyHtml: string) => {
   res.render('layout', {
@@ -252,6 +293,112 @@ const requireSiteAdmin = async (req: Request, res: Response) => {
   }
 
   return { session, dalInstance };
+};
+
+const requireWikiAdmin = async (req: Request, res: Response) => {
+  const session = await resolveSessionUser(req);
+  if (!session) {
+    res.redirect(
+      302,
+      `/tool/login?redirect=${encodeURIComponent(req.originalUrl || '/tool/recent-admin-actions')}`
+    );
+    return null;
+  }
+
+  const dalInstance = await initializePostgreSQL();
+  const roles = await getUserRoles(dalInstance, session.userId);
+  if (!hasRole(roles, WIKI_ADMIN_ROLE)) {
+    res.status(403);
+    renderToolLayout(
+      res,
+      req.t('page.forbidden'),
+      `<div class="tool-page"><p>${escapeHtml(req.t('page.accessDenied'))}</p></div>`
+    );
+    return null;
+  }
+
+  return { session, dalInstance };
+};
+
+type AdminEventPageTarget = {
+  slug: string;
+  title: Record<string, string> | null;
+};
+
+const loadAdminEventPageTargets = async (
+  dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>,
+  events: AdminEventResult[]
+) => {
+  const revIds = events
+    .filter(event => event.targetType === ADMIN_EVENT_TARGET_WIKI_PAGE && event.targetRevId)
+    .map(event => event.targetRevId as string);
+  if (!revIds.length) return new Map<string, AdminEventPageTarget>();
+
+  const result = await dalInstance.query(
+    `SELECT _rev_id, slug, title
+     FROM ${WikiPage.tableName}
+     WHERE _rev_id = ANY($1::uuid[])`,
+    [revIds]
+  );
+
+  return new Map(
+    result.rows.map(
+      (row: { _rev_id: string; slug: string; title: Record<string, string> | null }) => [
+        row._rev_id,
+        { slug: row.slug, title: row.title ?? null },
+      ]
+    )
+  );
+};
+
+const formatAdminEventLabel = (eventType: string, t: TFunction) => {
+  const key = `adminActions.events.${eventType}`;
+  const translated = t(key);
+  return translated === key ? eventType : translated;
+};
+
+const renderAdminEventList = (
+  events: AdminEventResult[],
+  pageTargets: Map<string, AdminEventPageTarget>,
+  userMap: Map<string, string>,
+  preferredLang: string,
+  t: TFunction
+) => {
+  if (!events.length) {
+    return `<p>${escapeHtml(t('adminActions.empty'))}</p>`;
+  }
+
+  const items: RecentListItem[] = events.map(event => {
+    const target = event.targetRevId ? pageTargets.get(event.targetRevId) : undefined;
+    const targetTitle = target
+      ? resolveSafeTextWithFallback(mlString.resolve, preferredLang, target.title, target.slug)
+      : t('adminActions.unknownTarget');
+    const primaryLabel = concatSafeText(formatAdminEventLabel(event.eventType, t), ' · ', targetTitle);
+    const actions =
+      target && event.targetRevId
+        ? [
+            {
+              label: t('tool.view'),
+              href: `/${encodeURIComponent(target.slug)}?rev=${encodeURIComponent(event.targetRevId)}`,
+            },
+          ]
+        : [];
+
+    return {
+      primaryLabel,
+      primaryHref: target ? `/${encodeURIComponent(target.slug)}` : undefined,
+      dateLabel: formatDateUTC(event.createdAt ?? new Date()),
+      summary:
+        event.details && typeof event.details.reason === 'string' && event.details.reason
+          ? event.details.reason
+          : undefined,
+      revUser: event.actorUserId ?? null,
+      revTags: [],
+      actions,
+    };
+  });
+
+  return `<ul class="change-list">${renderRecentList(items, userMap, t)}</ul>`;
 };
 
 const roleLabelKey = (role: ValidRole) => `userRights.roles.${role}.label`;
@@ -491,6 +638,28 @@ export const registerToolRoutes = (app: Express) => {
     }
   });
 
+  app.get('/tool/recent-admin-actions', async (req, res) => {
+    const adminContext = await requireWikiAdmin(req, res);
+    if (!adminContext) return;
+
+    const limit = parseRecentLimit(req.query.limit);
+    const preferredLang = res.locals.locale;
+    const events = await listRecentAdminEvents(adminContext.dalInstance, limit);
+    const pageTargets = await loadAdminEventPageTargets(adminContext.dalInstance, events);
+    const userIds = events
+      .map(event => event.actorUserId)
+      .filter((id): id is string => Boolean(id));
+    const userMap = await fetchUserMap(adminContext.dalInstance, userIds);
+    const eventsHtml = renderAdminEventList(events, pageTargets, userMap, preferredLang, req.t);
+    const relatedHtml = await renderRecentRelatedTools('admin', req, adminContext.dalInstance);
+    const bodyHtml = `<div class="tool-page">
+  <p>${escapeHtml(req.t('adminActions.description'))}</p>
+  ${relatedHtml}
+  ${eventsHtml}
+</div>`;
+    renderToolLayout(res, req.t('adminActions.title'), bodyHtml);
+  });
+
   app.get('/tool/recent-changes', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
     const preferredLang = res.locals.locale;
@@ -533,7 +702,7 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('changes', req.t), req.t);
+    const relatedHtml = await renderRecentRelatedTools('changes', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChangesDescription')}</p>
   ${relatedHtml}
@@ -587,7 +756,7 @@ export const registerToolRoutes = (app: Express) => {
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('citations', req.t), req.t);
+    const relatedHtml = await renderRecentRelatedTools('citations', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentCitationsDescription')}</p>
   ${relatedHtml}
@@ -650,7 +819,7 @@ export const registerToolRoutes = (app: Express) => {
     });
 
     const itemsHtml = renderRecentList(items, userMap, req.t);
-    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('claims', req.t), req.t);
+    const relatedHtml = await renderRecentRelatedTools('claims', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentClaimsDescription')}</p>
   ${relatedHtml}
@@ -711,7 +880,7 @@ export const registerToolRoutes = (app: Express) => {
       listingHtml = `<ul class="change-list">${renderRecentList(items, userMap, req.t)}</ul>`;
     }
 
-    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('media', req.t), req.t);
+    const relatedHtml = await renderRecentRelatedTools('media', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentMediaDescription')}</p>
   ${relatedHtml}
@@ -776,7 +945,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
-    const relatedHtml = renderRelatedTools(getRecentRelatedLinks('checks', req.t), req.t);
+    const relatedHtml = await renderRecentRelatedTools('checks', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChecksDescription')}</p>
   ${relatedHtml}

@@ -78,6 +78,8 @@ test('MCP tools expose review annotations', () => {
     'page_check_update',
     'wiki_removeAlias',
     'wiki_deletePage',
+    'wiki_protectPage',
+    'wiki_unprotectPage',
     'citation_delete',
     'claim_delete',
     'media_delete',

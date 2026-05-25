@@ -87,6 +87,23 @@ npm run dev
 
 The application automatically applies pending migrations on startup. You can stop it (Ctrl+C) after it finishes booting if you only need to initialize the database.
 
+## MCP policy bootstrap
+
+MCP write tools require callers to read `/meta/policy` and submit its current
+`contentHash` as `policyHash`. Fresh deployments may need to create that page
+before the normal policy check can succeed.
+
+For that bootstrap window only, a sysadmin can explicitly set:
+
+```json5
+mcp: {
+  skipPolicyCheck: true,
+}
+```
+
+Use the setting only long enough to create or repair `/meta/policy`, then remove
+it or set it back to `false` and restart the MCP server.
+
 ### Troubleshooting
 
 - **Connection failures:** Verify PostgreSQL is running on `localhost:5432`

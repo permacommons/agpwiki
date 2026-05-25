@@ -24,6 +24,9 @@ const assertUserHasRole = async (
 export const assertCanDeleteWikiPage = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
 
+export const assertCanProtectWikiPage = async (dal: DataAccessLayer, userId: string) =>
+  assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
+
 export const assertCanDeleteCitation = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
 

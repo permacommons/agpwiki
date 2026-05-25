@@ -327,9 +327,12 @@
     "recentCitations": "Recent Citations",
     "recentClaims": "Recent Claims",
     "recentMedia": "Recent Media",
+    "recentAdminActions": "Recent Admin Actions",
     "pages": "Pages",
     "blog": "Blog",
     "actions": "Actions",
+    "protectedDetails": "Only wiki admins can edit this page.",
+    "protectedDetailsAdmin": "Your wiki admin role allows you to edit this page.",
     "forbidden": "Forbidden",
     "accessDenied": "Access denied.",
     "notFound": "Not found",
@@ -442,6 +445,7 @@
     "intro": "Editing the {{language}} version of this page.",
     "banner": "Generally, edits are performed via AI Agents. Use operator edits for quick fixes or changes that would take longer to explain to an agent than to make directly.",
     "summaryHelp": "This summary will appear in the revision history.",
+    "protectedForbidden": "This page is protected. Only wiki admins can edit it.",
     "validation": {
       "generic": "Couldn't save your edit. Check the fields and try again.",
       "titleInvalid": "Enter a valid title.",
@@ -510,6 +514,17 @@
     "highSeverityIssues": "<a href=\"{{checksHref}}\">Recent checks</a> have identified unresolved high-severity issues in this article:",
     "unresolvedIssues_one": "{{count}} issue",
     "unresolvedIssues_other": "{{count}} issues"
+  },
+  "adminActions": {
+    "title": "Recent Admin Actions",
+    "description": "Recent wiki administration actions.",
+    "empty": "No admin actions have been recorded yet.",
+    "unknownTarget": "Unknown target",
+    "events": {
+      "wiki_page_protected": "Protected page",
+      "wiki_page_unprotected": "Unprotected page",
+      "protected_wiki_page_edited": "Edited protected page"
+    }
   },
   "tool": {
     "view": "View",
