@@ -345,6 +345,7 @@
     search: {
       label: 'Hľadať používateľov',
       placeholder: 'Meno alebo e-mailová adresa',
+      includeBlocked: 'Zahrnúť zablokovaných používateľov',
       submit: 'Hľadať',
       clear: 'Vymazať',
     },

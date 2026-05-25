@@ -344,6 +344,7 @@
     search: {
       label: 'ユーザーを検索',
       placeholder: '名前またはメールアドレス',
+      includeBlocked: 'ブロック済みユーザーを含める',
       submit: '検索',
       clear: 'クリア',
     },

@@ -345,6 +345,7 @@
     search: {
       label: 'Felhasználók keresése',
       placeholder: 'Név vagy e-mail-cím',
+      includeBlocked: 'Blokkolt felhasználók megjelenítése',
       submit: 'Keresés',
       clear: 'Törlés',
     },

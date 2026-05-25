@@ -345,6 +345,7 @@
     search: {
       label: 'Ieškoti naudotojų',
       placeholder: 'Vardas arba el. pašto adresas',
+      includeBlocked: 'Įtraukti užblokuotus naudotojus',
       submit: 'Ieškoti',
       clear: 'Išvalyti',
     },

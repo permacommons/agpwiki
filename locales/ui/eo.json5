@@ -343,6 +343,7 @@
     search: {
       label: 'Serĉi uzantojn',
       placeholder: 'Nomo aŭ retpoŝtadreso',
+      includeBlocked: 'Inkluzivi blokitajn uzantojn',
       submit: 'Serĉi',
       clear: 'Forigi',
     },

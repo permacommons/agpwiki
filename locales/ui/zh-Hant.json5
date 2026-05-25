@@ -344,6 +344,7 @@
     search: {
       label: '搜尋使用者',
       placeholder: '姓名或電子郵件地址',
+      includeBlocked: '包含已封鎖使用者',
       submit: '搜尋',
       clear: '清除',
     },

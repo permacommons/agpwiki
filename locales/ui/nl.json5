@@ -345,6 +345,7 @@
     search: {
       label: 'Gebruikers zoeken',
       placeholder: 'Naam of e-mailadres',
+      includeBlocked: 'Geblokkeerde gebruikers opnemen',
       submit: 'Zoeken',
       clear: 'Wissen',
     },

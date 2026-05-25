@@ -345,6 +345,7 @@
     search: {
       label: 'صارفین تلاش کریں',
       placeholder: 'نام یا ای میل پتہ',
+      includeBlocked: 'بلاک شدہ صارفین شامل کریں',
       submit: 'تلاش کریں',
       clear: 'صاف کریں',
     },

@@ -344,6 +344,7 @@
     search: {
       label: 'Kullanıcı ara',
       placeholder: 'Ad veya e-posta adresi',
+      includeBlocked: 'Engellenen kullanıcıları dahil et',
       submit: 'Ara',
       clear: 'Temizle',
     },

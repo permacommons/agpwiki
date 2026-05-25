@@ -345,6 +345,7 @@
     search: {
       label: 'Cari pengguna',
       placeholder: 'Nama atau alamat email',
+      includeBlocked: 'Sertakan pengguna yang diblokir',
       submit: 'Cari',
       clear: 'Bersihkan',
     },

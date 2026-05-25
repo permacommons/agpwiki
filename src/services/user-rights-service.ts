@@ -36,6 +36,11 @@ export type UserRightsUpdateResult = {
   afterRoles: ValidRole[];
 };
 
+export type UserRightsSearchOptions = {
+  includeBlocked?: boolean;
+  limit?: number;
+};
+
 const normalizeRoles = (roles: string[]): ValidRole[] =>
   VALID_ROLES.filter(role => roles.includes(role));
 
@@ -63,20 +68,27 @@ const mapUserRightsRow = (row: Record<string, unknown>): UserRightsSummary => ({
 export async function searchVerifiedUsersWithRights(
   dal: DataAccessLayer,
   query: string,
-  limit = 100
+  options: number | UserRightsSearchOptions = 100
 ): Promise<UserRightsSummary[]> {
   const trimmedQuery = query.trim();
+  const limit = typeof options === 'number' ? options : (options.limit ?? 100);
+  const includeBlocked = typeof options === 'number' ? false : Boolean(options.includeBlocked);
   const clampedLimit = Math.min(Math.max(limit, 1), 200);
   const params: Array<string | number> = [clampedLimit];
-  let searchClause = '';
+  const clauses = ['u.email_verified_at IS NOT NULL'];
+
+  if (!includeBlocked) {
+    clauses.push('u.blocked_at IS NULL');
+  }
 
   if (trimmedQuery) {
     params.push(`%${trimmedQuery}%`);
-    searchClause = `AND (
-      u.username ILIKE $2 OR
-      u.display_name ILIKE $2 OR
-      u.email ILIKE $2
-    )`;
+    const searchParam = `$${params.length}`;
+    clauses.push(`(
+      u.username ILIKE ${searchParam} OR
+      u.display_name ILIKE ${searchParam} OR
+      u.email ILIKE ${searchParam}
+    )`);
   }
 
   const result = await dal.query(
@@ -88,8 +100,7 @@ export async function searchVerifiedUsersWithRights(
        COALESCE(array_agg(ur.role ORDER BY ur.role) FILTER (WHERE ur.role IS NOT NULL), '{}') AS roles
      FROM users u
      LEFT JOIN user_roles ur ON ur.user_id = u.id
-     WHERE u.email_verified_at IS NOT NULL
-       ${searchClause}
+     WHERE ${clauses.join('\n       AND ')}
      GROUP BY u.id, u.username, u.display_name, u.email
      ORDER BY lower(u.display_name), lower(u.username), lower(u.email)
      LIMIT $1`,

@@ -345,6 +345,7 @@
     search: {
       label: 'Sök användare',
       placeholder: 'Namn eller e-postadress',
+      includeBlocked: 'Inkludera blockerade användare',
       submit: 'Sök',
       clear: 'Rensa',
     },
