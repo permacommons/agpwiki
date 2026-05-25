@@ -15,9 +15,16 @@ import {
 } from '../src/lib/errors.js';
 import {
   FORUM_MODERATOR_ROLE,
+  BLOG_ADMIN_ROLE,
+  BLOG_AUTHOR_ROLE,
+  SITE_ADMIN_ROLE,
   WIKI_ADMIN_ROLE,
   grantRoleUpsert,
 } from '../src/services/roles.js';
+import {
+  searchVerifiedUsersWithRights,
+  updateUserRightsBelowSiteAdmin,
+} from '../src/services/user-rights-service.js';
 import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import {
   createCitation,
@@ -761,6 +768,107 @@ test('Notification worker startup reset returns processing jobs to pending', asy
   } finally {
     await dal.query('DELETE FROM notification_deliveries');
     await dal.query('DELETE FROM notification_jobs');
+  }
+});
+
+test('User rights search returns verified users with roles and excludes unverified users', async () => {
+  const dal = await getDal();
+  let verifiedUserId: string | null = null;
+  let unverifiedUserId: string | null = null;
+
+  try {
+    const verifiedUser = await createVerifiedTestUser();
+    const unverifiedUser = await createTestUser();
+    verifiedUserId = verifiedUser.id;
+    unverifiedUserId = unverifiedUser.id;
+
+    verifiedUser.displayName = 'Rights Search Match';
+    verifiedUser.email = `rights-search-${Date.now()}@example.com`;
+    await verifiedUser.save();
+    unverifiedUser.displayName = 'Rights Search Match Unverified';
+    unverifiedUser.email = `rights-unverified-${Date.now()}@example.com`;
+    await unverifiedUser.save();
+
+    await grantRoleUpsert(dal, verifiedUser.id, WIKI_ADMIN_ROLE);
+
+    const results = await searchVerifiedUsersWithRights(dal, 'rights-search');
+
+    assert.ok(results.some(user => user.id === verifiedUser.id));
+    assert.ok(!results.some(user => user.id === unverifiedUser.id));
+    assert.deepEqual(
+      results.find(user => user.id === verifiedUser.id)?.roles,
+      [WIKI_ADMIN_ROLE]
+    );
+  } finally {
+    if (verifiedUserId) {
+      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [verifiedUserId]);
+      await dal.query('DELETE FROM users WHERE id = $1', [verifiedUserId]);
+    }
+    if (unverifiedUserId) {
+      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [unverifiedUserId]);
+      await dal.query('DELETE FROM users WHERE id = $1', [unverifiedUserId]);
+    }
+  }
+});
+
+test('User rights update changes only roles below site admin', async () => {
+  const dal = await getDal();
+  let userId: string | null = null;
+
+  try {
+    const user = await createVerifiedTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, SITE_ADMIN_ROLE);
+    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+    const result = await updateUserRightsBelowSiteAdmin(dal, user.id, [
+      BLOG_ADMIN_ROLE,
+      BLOG_ADMIN_ROLE,
+      BLOG_AUTHOR_ROLE,
+    ]);
+
+    assert.deepEqual(
+      result.changes.map(change => change.role).sort(),
+      [BLOG_ADMIN_ROLE, WIKI_ADMIN_ROLE].sort()
+    );
+    assert.equal(result.changes.find(change => change.role === BLOG_ADMIN_ROLE)?.before, false);
+    assert.equal(result.changes.find(change => change.role === BLOG_ADMIN_ROLE)?.after, true);
+    assert.equal(result.changes.find(change => change.role === WIKI_ADMIN_ROLE)?.before, true);
+    assert.equal(result.changes.find(change => change.role === WIKI_ADMIN_ROLE)?.after, false);
+    assert.deepEqual(
+      result.afterRoles.sort(),
+      [BLOG_ADMIN_ROLE, BLOG_AUTHOR_ROLE, SITE_ADMIN_ROLE].sort()
+    );
+  } finally {
+    if (userId) {
+      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
+      await dal.query('DELETE FROM users WHERE id = $1', [userId]);
+    }
+  }
+});
+
+test('User rights update rejects site admin and unknown rights', async () => {
+  const dal = await getDal();
+  let userId: string | null = null;
+
+  try {
+    const user = await createVerifiedTestUser();
+    userId = user.id;
+
+    await assert.rejects(
+      () => updateUserRightsBelowSiteAdmin(dal, user.id, [SITE_ADMIN_ROLE]),
+      /site_admin cannot be changed/
+    );
+    await assert.rejects(
+      () => updateUserRightsBelowSiteAdmin(dal, user.id, ['definitely_not_a_role']),
+      /Unknown user right/
+    );
+  } finally {
+    if (userId) {
+      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
+      await dal.query('DELETE FROM users WHERE id = $1', [userId]);
+    }
   }
 });
 
