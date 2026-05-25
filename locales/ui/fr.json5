@@ -345,6 +345,7 @@
     search: {
       label: 'Rechercher des utilisateurs',
       placeholder: 'Nom ou adresse e-mail',
+      includeBlocked: 'Inclure les utilisateurs bloqués',
       submit: 'Rechercher',
       clear: 'Effacer',
     },

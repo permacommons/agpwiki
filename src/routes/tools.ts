@@ -419,8 +419,13 @@ export const registerToolRoutes = (app: Express) => {
     if (!adminContext) return;
 
     const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
-    const users = await searchVerifiedUsersWithRights(adminContext.dalInstance, query);
+    const includeBlocked = req.query.includeBlocked === '1';
+    const users = await searchVerifiedUsersWithRights(adminContext.dalInstance, query, {
+      includeBlocked,
+    });
     const rows = renderUserRightsRows(users, req);
+    const includeBlockedChecked = includeBlocked ? ' checked' : '';
+    const hasActiveFilter = Boolean(query || includeBlocked);
     const bodyHtml = `<div class="tool-page">
   <div class="form-card">
     <p class="form-help">${escapeHtml(req.t('userRights.description'))}</p>
@@ -430,8 +435,12 @@ export const registerToolRoutes = (app: Express) => {
         <span>${escapeHtml(req.t('userRights.search.label'))}</span>
         <input type="search" name="q" value="${escapeHtml(query)}" placeholder="${escapeHtml(req.t('userRights.search.placeholder'))}" />
       </label>
+      <label class="user-rights-filter-checkbox">
+        <input type="checkbox" name="includeBlocked" value="1"${includeBlockedChecked} />
+        <span>${escapeHtml(req.t('userRights.search.includeBlocked'))}</span>
+      </label>
       <button type="submit">${escapeHtml(req.t('userRights.search.submit'))}</button>
-      ${query ? `<a href="${USER_RIGHTS_PATH}">${escapeHtml(req.t('userRights.search.clear'))}</a>` : ''}
+      ${hasActiveFilter ? `<a href="${USER_RIGHTS_PATH}">${escapeHtml(req.t('userRights.search.clear'))}</a>` : ''}
     </form>
     <div class="table-stack-mobile">
       <table class="token-table user-rights-table">

@@ -343,6 +343,7 @@
     search: {
       label: 'Benutzer suchen',
       placeholder: 'Name oder E-Mail-Adresse',
+      includeBlocked: 'Gesperrte Benutzer einbeziehen',
       submit: 'Suchen',
       clear: 'Zurücksetzen',
     },

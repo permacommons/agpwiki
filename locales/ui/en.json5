@@ -540,6 +540,7 @@
     "search": {
       "label": "Search users",
       "placeholder": "Name or email address",
+      "includeBlocked": "Include blocked users",
       "submit": "Search",
       "clear": "Clear"
     },

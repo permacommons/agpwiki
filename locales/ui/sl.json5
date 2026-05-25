@@ -345,6 +345,7 @@
     search: {
       label: 'Išči uporabnike',
       placeholder: 'Ime ali e-poštni naslov',
+      includeBlocked: 'Vključi blokirane uporabnike',
       submit: 'Išči',
       clear: 'Počisti',
     },

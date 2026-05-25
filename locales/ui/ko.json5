@@ -344,6 +344,7 @@
     search: {
       label: '사용자 검색',
       placeholder: '이름 또는 이메일 주소',
+      includeBlocked: '차단된 사용자 포함',
       submit: '검색',
       clear: '지우기',
     },

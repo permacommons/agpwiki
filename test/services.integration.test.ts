@@ -775,12 +775,15 @@ test('User rights search returns verified users with roles and excludes unverifi
   const dal = await getDal();
   let verifiedUserId: string | null = null;
   let unverifiedUserId: string | null = null;
+  let blockedUserId: string | null = null;
 
   try {
     const verifiedUser = await createVerifiedTestUser();
     const unverifiedUser = await createTestUser();
+    const blockedUser = await createVerifiedTestUser();
     verifiedUserId = verifiedUser.id;
     unverifiedUserId = unverifiedUser.id;
+    blockedUserId = blockedUser.id;
 
     verifiedUser.displayName = 'Rights Search Match';
     verifiedUser.email = `rights-search-${Date.now()}@example.com`;
@@ -788,18 +791,33 @@ test('User rights search returns verified users with roles and excludes unverifi
     unverifiedUser.displayName = 'Rights Search Match Unverified';
     unverifiedUser.email = `rights-unverified-${Date.now()}@example.com`;
     await unverifiedUser.save();
+    blockedUser.displayName = 'Rights Search Match Blocked';
+    blockedUser.email = `rights-blocked-${Date.now()}@example.com`;
+    await blockedUser.save();
 
     await grantRoleUpsert(dal, verifiedUser.id, WIKI_ADMIN_ROLE);
+    await blockUserAccount(dal, blockedUser.id, verifiedUser.id, 'Test block');
 
-    const results = await searchVerifiedUsersWithRights(dal, 'rights-search');
+    const results = await searchVerifiedUsersWithRights(dal, 'Rights Search Match');
+    const resultsIncludingBlocked = await searchVerifiedUsersWithRights(
+      dal,
+      'Rights Search Match',
+      { includeBlocked: true }
+    );
 
     assert.ok(results.some(user => user.id === verifiedUser.id));
     assert.ok(!results.some(user => user.id === unverifiedUser.id));
+    assert.ok(!results.some(user => user.id === blockedUser.id));
+    assert.ok(resultsIncludingBlocked.some(user => user.id === blockedUser.id));
     assert.deepEqual(
       results.find(user => user.id === verifiedUser.id)?.roles,
       [WIKI_ADMIN_ROLE]
     );
   } finally {
+    if (blockedUserId) {
+      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [blockedUserId]);
+      await dal.query('DELETE FROM users WHERE id = $1', [blockedUserId]);
+    }
     if (verifiedUserId) {
       await dal.query('DELETE FROM user_roles WHERE user_id = $1', [verifiedUserId]);
       await dal.query('DELETE FROM users WHERE id = $1', [verifiedUserId]);
