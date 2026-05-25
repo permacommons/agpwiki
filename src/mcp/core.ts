@@ -8,6 +8,7 @@ import {
   ReadResourceRequestSchema,
   type ReadResourceResult,
 } from '@modelcontextprotocol/sdk/types.js';
+import config from 'config';
 import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
@@ -102,6 +103,12 @@ import {
   updatePageCheck,
 } from '../services/page-check-service.js';
 import {
+  getWikiPageEditability,
+  type PageProtectionInput,
+  protectWikiPage,
+  unprotectWikiPage,
+} from '../services/page-protection-service.js';
+import {
   addWikiPageAlias,
   applyWikiPagePatch,
   createWikiPage,
@@ -132,7 +139,12 @@ export type FormatToolResult = (payload: unknown) => CallToolResult;
 
 export interface CreateMcpServerOptions {
   userRoles?: string[];
+  skipPolicyCheck?: boolean;
 }
+
+type McpRuntimeConfig = {
+  skipPolicyCheck?: boolean;
+};
 
 const POLICY_PAGE_SLUG = 'meta/policy';
 const POLICY_HASH_ERROR_MESSAGE =
@@ -142,6 +154,18 @@ const TITLE_MAX_LENGTH = 200;
 const BODY_MAX_LENGTH = 20000;
 const BLOG_SUMMARY_MAX_LENGTH = 500;
 const REV_SUMMARY_MAX_LENGTH = 300;
+
+const shouldSkipPolicyCheck = (override?: boolean) => {
+  if (override !== undefined) return override;
+  if (typeof config.has === 'function' && config.has('mcp.skipPolicyCheck')) {
+    return config.get<boolean>('mcp.skipPolicyCheck');
+  }
+  if (typeof config.has === 'function' && config.has('mcp')) {
+    const mcpConfig = config.get<McpRuntimeConfig>('mcp');
+    return mcpConfig.skipPolicyCheck === true;
+  }
+  return false;
+};
 const CITATION_KEY_MAX_LENGTH = 200;
 const CITATION_CLAIM_ID_MAX_LENGTH = 200;
 const LANGUAGE_TAG_MAX_LENGTH = 8;
@@ -301,6 +325,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   const requireAuthUserId = async (extra?: { authInfo?: AuthInfo }) =>
     resolveAuthUserId({ authInfo: extra?.authInfo });
 
+  const resolveOptionalAuthUserId = (extra?: { authInfo?: AuthInfo }) => {
+    const authUser = extra?.authInfo?.extra?.userId;
+    return typeof authUser === 'string' && authUser ? authUser : null;
+  };
+
   const getAgentTags = () => {
     const info = server.server.getClientVersion();
     if (!info?.name) return [];
@@ -324,6 +353,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
     policyHash?: string
   ) => {
+    if (shouldSkipPolicyCheck(options.skipPolicyCheck)) return;
     const policyPage = await readWikiPage(dal, POLICY_PAGE_SLUG);
     if (policyHash === policyPage.contentHash) return;
     throw new PreconditionFailedError(POLICY_HASH_ERROR_MESSAGE, {
@@ -1048,10 +1078,20 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         slug: slugSchema,
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPage(dal, args.slug);
-      return payload;
+      const editability = await getWikiPageEditability(
+        dal,
+        { id: payload.id },
+        resolveOptionalAuthUserId(extra)
+      );
+      return {
+        ...payload,
+        isProtected: editability.isProtected,
+        isEditable: editability.isEditable,
+        protection: editability.protection,
+      };
     })
   );
 
@@ -1619,6 +1659,52 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     })
   );
 
+  const wikiProtectPageTool = server.registerTool(
+    'wiki_protectPage',
+    {
+      title: 'Protect Wiki Page',
+      description:
+        'Protect a wiki page so only wiki admins can edit it. Requires wiki_admin role.',
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        reason: z.string().optional(),
+        policyHash: policyHashSchema,
+      },
+    },
+    withToolErrorHandling(async (args: PageProtectionInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const protection = await protectWikiPage(dal, writeArgs, userId);
+      return { protected: true, protection };
+    })
+  );
+
+  const wikiUnprotectPageTool = server.registerTool(
+    'wiki_unprotectPage',
+    {
+      title: 'Unprotect Wiki Page',
+      description:
+        'Remove wiki page protection so authenticated users can edit it. Requires wiki_admin role.',
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        reason: z.string().optional(),
+        policyHash: policyHashSchema,
+      },
+    },
+    withToolErrorHandling(async (args: PageProtectionInput & { policyHash: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...writeArgs } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      const protection = await unprotectWikiPage(dal, writeArgs, userId);
+      return { protected: false, removed: Boolean(protection), protection };
+    })
+  );
+
   const citationDeleteTool = server.registerTool(
     'citation_delete',
     {
@@ -1719,6 +1805,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   const adminTools = {
     wikiDeletePageTool,
+    wikiProtectPageTool,
+    wikiUnprotectPageTool,
     citationDeleteTool,
     claimDeleteTool,
     mediaDeleteTool,
@@ -1728,6 +1816,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   if (!canUseWikiAdminTools(userRoles)) {
     wikiDeletePageTool.disable();
+    wikiProtectPageTool.disable();
+    wikiUnprotectPageTool.disable();
     citationDeleteTool.disable();
     claimDeleteTool.disable();
     mediaDeleteTool.disable();

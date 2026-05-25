@@ -62,6 +62,12 @@ import {
 } from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import {
+  getPageProtectionForPage,
+  protectWikiPage,
+  unprotectWikiPage,
+} from '../src/services/page-protection-service.js';
+import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
+import {
   createForumComment,
   createForumThread,
   deleteForumComment,
@@ -972,6 +978,14 @@ const cleanupTestArtifacts = async (
 ) => {
   if (slugPrefix) {
     await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [slugPrefix]);
+    await dal.query(
+      'DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
+    await dal.query(
+      'DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
   }
   if (mediaSlugPrefix) {
@@ -999,6 +1013,7 @@ const cleanupTestArtifacts = async (
     await dal.query("DELETE FROM forum_threads WHERE title->>'en' LIKE $1", [forumThreadPrefix]);
   }
   if (userId) {
+    await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
     await dal.query('DELETE FROM notification_deliveries WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM forum_thread_subscriptions WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
@@ -1014,6 +1029,104 @@ const cleanupTestArtifacts = async (
     await dal.query('DELETE FROM users WHERE id = $1', [userId]);
   }
 };
+
+test('Service page protection blocks non-admin wiki edits', async () => {
+  const dal = await getDal();
+  const slug = `test-protected-page-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let adminId: string | null = null;
+  let editorId: string | null = null;
+
+  try {
+    const admin = await createTestUser();
+    const editor = await createTestUser();
+    adminId = admin.id;
+    editorId = editor.id;
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+
+    const page = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Protected Page' },
+        body: { en: 'Original text.' },
+        originalLanguage: 'en',
+      },
+      editor.id
+    );
+
+    const protection = await protectWikiPage(
+      dal,
+      { slug: `/${slug}`, reason: 'Prompt injection mitigation.' },
+      admin.id
+    );
+    assert.equal(protection.pageId, page.id);
+
+    await assert.rejects(
+      () =>
+        updateWikiPage(
+          dal,
+          {
+            slug,
+            body: { en: 'Non-admin edit.' },
+            revSummary: { en: 'Try edit.' },
+          },
+          editor.id
+        ),
+      ForbiddenError
+    );
+
+    const patch = [
+      '--- before',
+      '+++ after',
+      '@@ -1 +1 @@',
+      '-Original text.',
+      '+Patched text.',
+    ].join('\n');
+    await assert.rejects(
+      () =>
+        applyWikiPagePatch(
+          dal,
+          {
+            slug,
+            patch,
+            format: 'unified',
+            lang: 'en',
+            revSummary: { en: 'Try patch.' },
+          },
+          editor.id
+        ),
+      ForbiddenError
+    );
+
+    const updated = await updateWikiPage(
+      dal,
+      {
+        slug,
+        body: { en: 'Admin edit.' },
+        revSummary: { en: 'Admin edit protected page.' },
+      },
+      admin.id
+    );
+    assert.equal(updated.body?.en, 'Admin edit.');
+
+    const events = await listRecentAdminEvents(dal, 10);
+    assert.ok(events.some(event => event.eventType === 'wiki_page_protected'));
+    assert.ok(events.some(event => event.eventType === 'protected_wiki_page_edited'));
+
+    const removed = await unprotectWikiPage(dal, { slug: `/${slug}`, reason: 'Done.' }, admin.id);
+    assert.equal(removed?.pageId, page.id);
+    assert.equal(await getPageProtectionForPage(dal, page.id), null);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      slugPrefix,
+      userId: editorId ?? undefined,
+    });
+    await cleanupTestArtifacts(dal, {
+      userId: adminId ?? undefined,
+    });
+  }
+});
 
 test('Service auth + wiki create/update writes revisions', async () => {
   const dal = await getDal();

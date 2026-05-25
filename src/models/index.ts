@@ -1,4 +1,5 @@
 export { default as AccountRequest } from './account-request.js';
+export { default as AdminEvent } from './admin-event.js';
 export { default as AgentAccessRequest } from './agent-access-request.js';
 export { default as ApiToken } from './api-token.js';
 export { default as AuthSession } from './auth-session.js';
@@ -18,6 +19,7 @@ export { default as OAuthClient } from './oauth-client.js';
 export { default as OAuthRefreshToken } from './oauth-refresh-token.js';
 export { default as PageAlias } from './page-alias.js';
 export { default as PageCheck } from './page-check.js';
+export { default as PageProtection } from './page-protection.js';
 export { default as PasswordResetToken } from './password-reset-token.js';
 export { default as SignupInvite } from './signup-invite.js';
 export { default as User } from './user.js';

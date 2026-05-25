@@ -24,7 +24,13 @@ import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
+import {
+  ADMIN_EVENT_PROTECTED_WIKI_PAGE_EDITED,
+  ADMIN_EVENT_TARGET_WIKI_PAGE,
+  recordAdminEvent,
+} from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { assertCanEditWikiPage } from './page-protection-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
@@ -258,6 +264,22 @@ const toWikiPageAliasResult = (alias: PageAliasInstance): WikiPageAliasResult =>
   updatedAt: alias.updatedAt ?? null,
   createdBy: alias.createdBy ?? null,
 });
+
+const recordProtectedWikiPageEdit = async (
+  dalInstance: DataAccessLayer,
+  page: WikiPageInstance,
+  userId: string,
+  operation: string
+) => {
+  await recordAdminEvent(dalInstance, {
+    eventType: ADMIN_EVENT_PROTECTED_WIKI_PAGE_EDITED,
+    actorUserId: userId,
+    targetType: ADMIN_EVENT_TARGET_WIKI_PAGE,
+    targetId: page.id,
+    targetRevId: page._revID,
+    details: { operation },
+  });
+};
 
 const findCurrentPageBySlug = async (slug: string) =>
   WikiPage.filterWhere({
@@ -580,7 +602,7 @@ export async function createWikiPage(
 }
 
 export async function updateWikiPage(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   {
     slug,
     newSlug,
@@ -619,6 +641,7 @@ export async function updateWikiPage(
       slug: normalizedSlug,
     });
   }
+  const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
     const slugMatch = await findCurrentPageBySlug(normalizedNewSlug);
@@ -648,12 +671,15 @@ export async function updateWikiPage(
   page.updatedAt = new Date();
 
   await page.save();
+  if (protection) {
+    await recordProtectedWikiPageEdit(dalInstance, page, userId, 'update');
+  }
 
   return toWikiPageResult(page);
 }
 
 export async function applyWikiPagePatch(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, patch, format, lang = 'en', baseRevId, tags = [], revSummary }: WikiPagePatchInput,
   userId: string
 ): Promise<WikiPageResult> {
@@ -675,6 +701,7 @@ export async function applyWikiPagePatch(
       slug: normalizedSlug,
     });
   }
+  const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (baseRevId && baseRevId !== page._revID) {
     throw new PreconditionFailedError(
@@ -705,12 +732,15 @@ export async function applyWikiPagePatch(
   page.updatedAt = new Date();
 
   await page.save();
+  if (protection) {
+    await recordProtectedWikiPageEdit(dalInstance, page, userId, 'patch');
+  }
 
   return toWikiPageResult(page);
 }
 
 export async function rewriteWikiPageSection(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   {
     slug,
     target = 'heading',
@@ -770,6 +800,7 @@ export async function rewriteWikiPageSection(
       slug: normalizedSlug,
     });
   }
+  const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (expectedRevId && expectedRevId !== page._revID) {
     throw new PreconditionFailedError(
@@ -857,12 +888,15 @@ export async function rewriteWikiPageSection(
   page.updatedAt = new Date();
 
   await page.save();
+  if (protection) {
+    await recordProtectedWikiPageEdit(dalInstance, page, userId, 'rewrite-section');
+  }
 
   return toWikiPageResult(page);
 }
 
 export async function replaceWikiPageExactText(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   {
     slug,
     replacements,
@@ -899,6 +933,7 @@ export async function replaceWikiPageExactText(
       slug: normalizedSlug,
     });
   }
+  const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (expectedRevId && expectedRevId !== page._revID) {
     throw new PreconditionFailedError(
@@ -935,12 +970,15 @@ export async function replaceWikiPageExactText(
   page.updatedAt = new Date();
 
   await page.save();
+  if (protection) {
+    await recordProtectedWikiPageEdit(dalInstance, page, userId, 'replace-exact');
+  }
 
   return toWikiPageResult(page);
 }
 
 export async function addWikiPageAlias(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, pageSlug, lang }: WikiPageAliasInput,
   userId: string
 ): Promise<WikiPageAliasResult> {
@@ -963,6 +1001,7 @@ export async function addWikiPageAlias(
       slug: normalizedPageSlug,
     });
   }
+  await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (page.slug === normalizedSlug) {
     throw new ConflictError(`Alias slug matches the current page slug: ${normalizedSlug}`, {
@@ -999,7 +1038,7 @@ export async function addWikiPageAlias(
 }
 
 export async function removeWikiPageAlias(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   slug: string,
   userId: string
 ): Promise<WikiPageAliasDeleteResult> {
@@ -1013,6 +1052,10 @@ export async function removeWikiPageAlias(
     throw new NotFoundError(`Wiki page alias not found: ${normalizedSlug}`, {
       slug: normalizedSlug,
     });
+  }
+  const page = await findCurrentPageById(alias.pageId);
+  if (page) {
+    await assertCanEditWikiPage(dalInstance, page, userId);
   }
 
   await alias.delete();

@@ -4,7 +4,7 @@ import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
 import { initializePostgreSQL } from '../src/db.js';
-import { BLOG_ADMIN_ROLE, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
+import { BLOG_ADMIN_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 import User from '../src/models/user.js';
 
@@ -39,9 +39,18 @@ const cleanupTestArtifacts = async (
   { slugPrefix, userId }: { slugPrefix?: string; userId?: string }
 ) => {
   if (slugPrefix) {
+    await dal.query(
+      'DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
+    await dal.query(
+      'DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
   }
   if (userId) {
+    await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM users WHERE id = $1', [userId]);
   }
@@ -59,6 +68,8 @@ test('MCP admin tools are disabled without admin roles', () => {
   const mcpWithoutRoles = createMcpServer({ userRoles: [] });
 
   assert.ok(mcpWithoutRoles.adminTools.wikiDeletePageTool);
+  assert.ok(mcpWithoutRoles.adminTools.wikiProtectPageTool);
+  assert.ok(mcpWithoutRoles.adminTools.wikiUnprotectPageTool);
   assert.ok(mcpWithoutRoles.adminTools.citationDeleteTool);
   assert.ok(mcpWithoutRoles.adminTools.claimDeleteTool);
   assert.ok(mcpWithoutRoles.adminTools.mediaDeleteTool);
@@ -66,6 +77,8 @@ test('MCP admin tools are disabled without admin roles', () => {
   assert.ok(mcpWithoutRoles.adminTools.blogDeleteTool);
 
   assert.equal(mcpWithoutRoles.adminTools.wikiDeletePageTool.enabled, false);
+  assert.equal(mcpWithoutRoles.adminTools.wikiProtectPageTool.enabled, false);
+  assert.equal(mcpWithoutRoles.adminTools.wikiUnprotectPageTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.citationDeleteTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.claimDeleteTool.enabled, false);
   assert.equal(mcpWithoutRoles.adminTools.mediaDeleteTool.enabled, false);
@@ -77,6 +90,8 @@ test('MCP wiki admin tools are enabled with wiki_admin role', () => {
   const mcpWithWikiAdmin = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
 
   assert.equal(mcpWithWikiAdmin.adminTools.wikiDeletePageTool.enabled, true);
+  assert.equal(mcpWithWikiAdmin.adminTools.wikiProtectPageTool.enabled, true);
+  assert.equal(mcpWithWikiAdmin.adminTools.wikiUnprotectPageTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.citationDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.claimDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.mediaDeleteTool.enabled, true);
@@ -89,6 +104,8 @@ test('MCP blog admin tool is enabled with blog_admin role', () => {
 
   assert.equal(mcpWithBlogAdmin.adminTools.blogDeleteTool.enabled, true);
   assert.equal(mcpWithBlogAdmin.adminTools.wikiDeletePageTool.enabled, false);
+  assert.equal(mcpWithBlogAdmin.adminTools.wikiProtectPageTool.enabled, false);
+  assert.equal(mcpWithBlogAdmin.adminTools.wikiUnprotectPageTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.citationDeleteTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.claimDeleteTool.enabled, false);
   assert.equal(mcpWithBlogAdmin.adminTools.mediaDeleteTool.enabled, false);
@@ -134,6 +151,96 @@ test('MCP wiki_readPage returns content hash and current revision id', async () 
     await cleanupTestArtifacts(dal, {
       slugPrefix,
       userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('MCP wiki protection tools update read editability hints', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-protect-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let adminId: string | null = null;
+  let editorId: string | null = null;
+
+  try {
+    const admin = await createTestUser();
+    const editor = await createTestUser();
+    adminId = admin.id;
+    editorId = editor.id;
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+
+    await createWikiPage(
+      dal,
+      {
+        slug: 'meta/policy',
+        title: { en: 'Policy' },
+        body: { en: 'Current policy text.' },
+        originalLanguage: 'en',
+      },
+      admin.id
+    );
+    await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Protect Test' },
+        body: { en: 'Editable content.' },
+        originalLanguage: 'en',
+      },
+      editor.id
+    );
+
+    const { server } = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
+    const tools = getToolHandlers(server);
+    const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
+    const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
+
+    const protectedResult = await tools.wiki_protectPage.handler(
+      {
+        slug,
+        reason: 'Prompt injection mitigation.',
+        policyHash,
+      },
+      { authInfo: { extra: { userId: admin.id } } }
+    );
+    assert.equal(protectedResult.isError, undefined);
+
+    const editorRead = await tools.wiki_readPage.handler(
+      { slug },
+      { authInfo: { extra: { userId: editor.id } } }
+    );
+    const editorPayload = editorRead.structuredContent as {
+      isProtected?: boolean;
+      isEditable?: boolean;
+    };
+    assert.equal(editorPayload.isProtected, true);
+    assert.equal(editorPayload.isEditable, false);
+
+    const adminRead = await tools.wiki_readPage.handler(
+      { slug },
+      { authInfo: { extra: { userId: admin.id } } }
+    );
+    const adminPayload = adminRead.structuredContent as {
+      isProtected?: boolean;
+      isEditable?: boolean;
+    };
+    assert.equal(adminPayload.isProtected, true);
+    assert.equal(adminPayload.isEditable, true);
+  } finally {
+    await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug = $1)', [
+      'meta/policy',
+    ]);
+    await dal.query('DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug = $1)', [
+      'meta/policy',
+    ]);
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+    await cleanupTestArtifacts(dal, {
+      slugPrefix,
+      userId: editorId ?? undefined,
+    });
+    await cleanupTestArtifacts(dal, {
+      userId: adminId ?? undefined,
     });
   }
 });
@@ -267,6 +374,44 @@ test('MCP wiki write tools require the latest policy hash', async () => {
         title: { en: 'Policy Gate Test' },
         body: { en: 'Allowed with policy hash.' },
         policyHash,
+      },
+      { authInfo }
+    );
+    const acceptedPayload = accepted.structuredContent as { slug?: string };
+
+    assert.equal(accepted.isError, undefined);
+    assert.equal(acceptedPayload.slug, slug);
+  } finally {
+    const pagePrefixes = ['meta/policy', slug];
+    for (const pagePrefix of pagePrefixes) {
+      await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
+    }
+    await cleanupTestArtifacts(dal, {
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('MCP policy hash gate can be explicitly skipped for bootstrap', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-policy-skip-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+
+    const { server } = createMcpServer({ skipPolicyCheck: true });
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const accepted = await tools.wiki_createPage.handler(
+      {
+        slug,
+        title: { en: 'Policy Skip Test' },
+        body: { en: 'Allowed during bootstrap.' },
+        policyHash: '',
       },
       { authInfo }
     );

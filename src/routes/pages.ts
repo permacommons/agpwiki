@@ -4,7 +4,7 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { ConflictError, NotFoundError, ValidationError } from '../lib/errors.js';
+import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
@@ -39,6 +39,7 @@ import {
   listPageChecks,
   readPageCheckRevision,
 } from '../services/page-check-service.js';
+import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
@@ -98,6 +99,22 @@ const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
 
 const pageViewPath = (slug: string, lang?: string) =>
   lang ? `/${encodeURIComponent(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeURIComponent(slug)}`;
+
+const iconLock =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M256 160L256 224L384 224L384 160C384 124.7 355.3 96 320 96C284.7 96 256 124.7 256 160zM192 224L192 160C192 89.3 249.3 32 320 32C390.7 32 448 89.3 448 160L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 288C128 252.7 156.7 224 192 224z"/></svg>';
+
+const renderPageTypeLabel = (req: Request, label: string, protectedEditable?: boolean) => {
+  const protectedHtml =
+    protectedEditable === undefined
+      ? ''
+      : `<span class="page-protection-icon" data-meta="true" title="${escapeHtml(
+          req.t(protectedEditable ? 'page.protectedDetailsAdmin' : 'page.protectedDetails')
+        )}">${iconLock}</span>`;
+  return `<div class="page-label-row">
+  <div class="page-label">${escapeHtml(label)}</div>
+  ${protectedHtml}
+</div>`;
+};
 
 const buildRedLinkIntroHtml = (req: Request, signedIn: boolean) =>
   signedIn
@@ -786,6 +803,11 @@ export const registerPageRoutes = (app: Express) => {
     try {
       const dalInstance = await initializePostgreSQL();
       const page = await readWikiPage(dalInstance, slug);
+      const editability = await getWikiPageEditability(dalInstance, { id: page.id }, session.userId);
+      if (editability.isProtected && !editability.isEditable) {
+        res.status(403).type('text').send(req.t('operatorEdit.protectedForbidden'));
+        return;
+      }
       const availableLangs = getAvailableLanguages(page.body, page.title);
       const contentLang = resolveContentLanguage({
         uiLocale: res.locals.locale,
@@ -877,6 +899,10 @@ export const registerPageRoutes = (app: Express) => {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('operatorEdit.protectedForbidden'));
+        return;
+      }
       if (error instanceof ValidationError || error instanceof ConflictError) {
         const previewHtml =
           titleValue.trim() || bodyValue.trim()
@@ -938,6 +964,12 @@ export const registerPageRoutes = (app: Express) => {
       })();
       if (!pageResult) return;
       const { page, revisionsResult } = pageResult;
+      const session = await resolveSessionUser(req);
+      const editability = await getWikiPageEditability(
+        dalInstance,
+        { id: page.id },
+        session?.userId ?? null
+      );
 
       const revisions = revisionsResult.revisions;
       const selectedRevision = revIdParam
@@ -978,11 +1010,6 @@ export const registerPageRoutes = (app: Express) => {
         selectedRevision.title,
         canonicalSlug
       );
-      const metaLabel = canonicalSlug.startsWith('meta/')
-        ? `<div class="page-label">${req.t('label.meta')}</div>`
-        : canonicalSlug.startsWith('tool/')
-          ? `<div class="page-label">${req.t('label.tool')}</div>`
-          : `<div class="page-label">${req.t('label.article')}</div>`;
       const bodySource = resolvedBody?.str ?? '';
 
       if (formatParam === 'raw') {
@@ -1159,8 +1186,9 @@ export const registerPageRoutes = (app: Express) => {
         : canonicalSlug.startsWith('meta/')
           ? forumCategoryPagePath('policy', canonicalSlug)
           : '';
-      const signedIn = Boolean(await resolveSessionUser(req));
-      const canShowOperatorEditLink = !revIdParam && !diffFrom && !diffTo;
+      const signedIn = Boolean(session);
+      const canShowOperatorEditLink =
+        !revIdParam && !diffFrom && !diffTo && (!editability.isProtected || editability.isEditable);
       const operatorEditLinkHtml = renderOperatorEditRelatedLink({
         signedIn,
         visible: canShowOperatorEditLink,
@@ -1184,9 +1212,19 @@ export const registerPageRoutes = (app: Express) => {
 </div>`
         : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
+      const pageTypeLabel = canonicalSlug.startsWith('meta/')
+        ? req.t('label.meta')
+        : canonicalSlug.startsWith('tool/')
+          ? req.t('label.tool')
+          : req.t('label.article');
+      const labelHtml = renderPageTypeLabel(
+        req,
+        pageTypeLabel,
+        editability.isProtected ? editability.isEditable : undefined
+      );
       res.render('layout', {
         title: prepareTitle(title),
-        labelHtml: metaLabel,
+        labelHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
