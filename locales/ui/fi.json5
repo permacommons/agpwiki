@@ -8,6 +8,7 @@
     forum: 'Foorumi',
     recentChanges: 'Tuoreet muutokset',
     reviewAccounts: 'Tarkasta tilit',
+    userRights: 'Käyttäjäoikeudet',
     signOut: 'Kirjaudu ulos',
     help: 'Apua',
     menu: 'Valikko',
@@ -333,6 +334,60 @@
     previous: 'Edellinen',
     next: 'Seuraava',
     pagination: 'Sivu {{page}} / {{totalPages}}',
+  },
+  userRights: {
+    title: 'Käyttäjäoikeudet',
+    description: 'Etsi vahvistettuja käyttäjiä nimen tai sähköpostiosoitteen perusteella ja hallitse sivuston ylläpitäjää alempia oikeuksia.',
+    none: 'Ei mitään',
+    empty: 'Vahvistettuja käyttäjiä ei löytynyt.',
+    save: 'Tallenna oikeudet',
+    siteAdminLocked: 'Sivuston ylläpitäjää voi muuttaa vain CLI:stä.',
+    search: {
+      label: 'Etsi käyttäjiä',
+      placeholder: 'Nimi tai sähköpostiosoite',
+      submit: 'Etsi',
+      clear: 'Tyhjennä',
+    },
+    headers: {
+      user: 'Käyttäjä',
+      email: 'Sähköposti',
+      currentRights: 'Nykyiset oikeudet',
+      edit: 'Muokkaa oikeuksia',
+    },
+    notice: {
+      updated: 'Käyttäjän {{user}} oikeudet muutettu.',
+      unchanged: 'Käyttäjän {{user}} oikeuksia ei muutettu.',
+      error: 'Oikeuksia ei voitu päivittää.',
+      yes: 'Kyllä',
+      no: 'Ei',
+      headers: {
+        right: 'Oikeus',
+        before: 'Ennen',
+        after: 'Jälkeen',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Sivuston ylläpitäjä',
+        description: 'Hallitse sivuston laajuisia asetuksia ja tilipyyntöjä.',
+      },
+      wiki_admin: {
+        label: 'Wikin ylläpitäjä',
+        description: 'Hallitse wikin sisältöä ja poistoja.',
+      },
+      blog_author: {
+        label: 'Blogin kirjoittaja',
+        description: 'Luo ja päivitä blogikirjoituksia.',
+      },
+      blog_admin: {
+        label: 'Blogin ylläpitäjä',
+        description: 'Poista blogikirjoituksia ja hallitse blogin sisältöä.',
+      },
+      forum_moderator: {
+        label: 'Foorumin moderaattori',
+        description: 'Moderoi foorumin ketjuja ja kommentteja.',
+      },
+    },
   },
   auth: {
     login: {

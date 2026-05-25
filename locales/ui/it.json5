@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Modifiche recenti',
     reviewAccounts: 'Revisione account',
+    userRights: 'Diritti utente',
     signOut: 'Disconnetti',
     help: 'Aiuto',
     menu: 'Menu di navigazione',
@@ -332,6 +333,60 @@
     previous: 'Precedente',
     next: 'Successivo',
     pagination: 'Pagina {{page}} di {{totalPages}}',
+  },
+  userRights: {
+    title: 'Diritti utente',
+    description: 'Cerca utenti verificati per nome o indirizzo email e gestisci i diritti sotto amministratore del sito.',
+    none: 'Nessuno',
+    empty: 'Nessun utente verificato trovato.',
+    save: 'Salva diritti',
+    siteAdminLocked: 'L’amministratore del sito può essere modificato solo dalla CLI.',
+    search: {
+      label: 'Cerca utenti',
+      placeholder: 'Nome o indirizzo email',
+      submit: 'Cerca',
+      clear: 'Cancella',
+    },
+    headers: {
+      user: 'Utente',
+      email: 'Email',
+      currentRights: 'Diritti attuali',
+      edit: 'Modifica diritti',
+    },
+    notice: {
+      updated: 'Diritti utente modificati per {{user}}.',
+      unchanged: 'Nessun diritto modificato per {{user}}.',
+      error: 'Impossibile aggiornare i diritti.',
+      yes: 'Sì',
+      no: 'No',
+      headers: {
+        right: 'Diritto',
+        before: 'Prima',
+        after: 'Dopo',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Amministratore del sito',
+        description: 'Gestire impostazioni dell’intero sito e richieste di account.',
+      },
+      wiki_admin: {
+        label: 'Amministratore wiki',
+        description: 'Amministrare contenuti wiki ed eliminazioni.',
+      },
+      blog_author: {
+        label: 'Autore blog',
+        description: 'Creare e aggiornare post del blog.',
+      },
+      blog_admin: {
+        label: 'Amministratore blog',
+        description: 'Eliminare post e gestire contenuti del blog.',
+      },
+      forum_moderator: {
+        label: 'Moderatore forum',
+        description: 'Moderare thread e commenti del forum.',
+      },
+    },
   },
   auth: {
     login: {

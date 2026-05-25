@@ -1,7 +1,7 @@
-import type { Express } from 'express';
+import type { Express, Request, Response } from 'express';
 import type { TFunction } from 'i18next';
-
 import dal from 'rev-dal';
+import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import { formatMediaLabel } from '../lib/media.js';
@@ -25,11 +25,21 @@ import {
   renderText,
   type SafeText,
 } from '../render.js';
+import { getUserRoles, hasRole, SITE_ADMIN_ROLE, type ValidRole } from '../services/roles.js';
+import {
+  EDITABLE_USER_RIGHTS,
+  type EditableUserRight,
+  searchVerifiedUsersWithRights,
+  type UserRightsSummary,
+  updateUserRightsBelowSiteAdmin,
+} from '../services/user-rights-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 
 const { mlString } = dal;
+
+const USER_RIGHTS_PATH = '/tool/user-rights';
 
 type RecentListAction = {
   label: string;
@@ -213,7 +223,265 @@ const getRecentRelatedLinks = (current: RecentToolKey, t: TFunction) => {
   return links.filter(link => link.key !== current);
 };
 
+const renderToolLayout = (res: Response, title: string, bodyHtml: string) => {
+  res.render('layout', {
+    title: prepareTitle(title),
+    labelHtml: `<div class="page-label">${res.req.t('label.tool')}</div>`,
+    bodyHtml,
+    topHtml: prependAccountBanner(res),
+  });
+};
+
+const requireSiteAdmin = async (req: Request, res: Response) => {
+  const session = await resolveSessionUser(req);
+  if (!session) {
+    res.redirect(302, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || USER_RIGHTS_PATH)}`);
+    return null;
+  }
+
+  const dalInstance = await initializePostgreSQL();
+  const roles = await getUserRoles(dalInstance, session.userId);
+  if (!hasRole(roles, SITE_ADMIN_ROLE)) {
+    res.status(403);
+    renderToolLayout(
+      res,
+      req.t('page.forbidden'),
+      `<div class="tool-page"><p>${escapeHtml(req.t('page.accessDenied'))}</p></div>`
+    );
+    return null;
+  }
+
+  return { session, dalInstance };
+};
+
+const roleLabelKey = (role: ValidRole) => `userRights.roles.${role}.label`;
+const roleDescriptionKey = (role: ValidRole) => `userRights.roles.${role}.description`;
+
+const renderRightsBadges = (roles: ValidRole[], t: TFunction) => {
+  if (!roles.length) {
+    return `<span class="user-rights-empty">${escapeHtml(t('userRights.none'))}</span>`;
+  }
+
+  return `<div class="user-rights-badges">${roles
+    .map(role => `<span class="user-rights-badge">${escapeHtml(t(roleLabelKey(role)))}</span>`)
+    .join('')}</div>`;
+};
+
+const renderUserRightsStatus = (req: Request) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : '';
+  if (status !== 'updated' && status !== 'unchanged' && status !== 'error') return '';
+
+  const user = typeof req.query.user === 'string' ? req.query.user : '';
+  if (status === 'unchanged') {
+    return `<div class="account-review-notice" role="status">${escapeHtml(
+      req.t('userRights.notice.unchanged', { user })
+    )}</div>`;
+  }
+
+  if (status === 'error') {
+    return `<div class="form-error" role="alert">${escapeHtml(req.t('userRights.notice.error'))}</div>`;
+  }
+
+  const granted = typeof req.query.granted === 'string' && req.query.granted
+    ? req.query.granted.split(',').filter(Boolean)
+    : [];
+  const revoked = typeof req.query.revoked === 'string' && req.query.revoked
+    ? req.query.revoked.split(',').filter(Boolean)
+    : [];
+  const rows = [
+    ...granted.map(role => ({ role, before: false, after: true })),
+    ...revoked.map(role => ({ role, before: true, after: false })),
+  ].filter((change): change is { role: EditableUserRight; before: boolean; after: boolean } =>
+    EDITABLE_USER_RIGHTS.includes(change.role as EditableUserRight)
+  );
+
+  if (!rows.length) return '';
+
+  const yes = req.t('userRights.notice.yes');
+  const no = req.t('userRights.notice.no');
+  return `<div class="user-rights-change-overview" role="status">
+    <div class="user-rights-notice">
+    <div class="user-rights-notice-heading">${escapeHtml(
+      req.t('userRights.notice.updated', { user })
+    )}</div>
+    </div>
+    <table class="token-table user-rights-change-table">
+      <thead>
+        <tr>
+          <th>${escapeHtml(req.t('userRights.notice.headers.right'))}</th>
+          <th>${escapeHtml(req.t('userRights.notice.headers.before'))}</th>
+          <th>${escapeHtml(req.t('userRights.notice.headers.after'))}</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows
+          .map(
+            change => `<tr>
+              <td>${escapeHtml(req.t(roleLabelKey(change.role)))}</td>
+              <td>${escapeHtml(change.before ? yes : no)}</td>
+              <td>${escapeHtml(change.after ? yes : no)}</td>
+            </tr>`
+          )
+          .join('')}
+      </tbody>
+    </table>
+  </div>`;
+};
+
+const renderUserRightsForm = (user: UserRightsSummary, req: Request) => {
+  const editableRows = EDITABLE_USER_RIGHTS.map(role => {
+    const checked = user.roles.includes(role) ? ' checked' : '';
+    return `<label class="user-rights-checkbox">
+      <input type="checkbox" name="rights" value="${escapeHtml(role)}"${checked} />
+      <span>
+        <strong>${escapeHtml(req.t(roleLabelKey(role)))}</strong>
+        <small>${escapeHtml(req.t(roleDescriptionKey(role)))}</small>
+      </span>
+    </label>`;
+  }).join('');
+  const siteAdminChecked = user.roles.includes(SITE_ADMIN_ROLE) ? ' checked' : '';
+
+  return `<form method="post" action="${USER_RIGHTS_PATH}/${encodeURIComponent(user.id)}" class="user-rights-form">
+    <input type="hidden" name="redirectTo" value="${escapeHtml(req.originalUrl || USER_RIGHTS_PATH)}" />
+    <div class="user-rights-checkboxes">
+      ${editableRows}
+      <label class="user-rights-checkbox user-rights-checkbox--locked">
+        <input type="checkbox" disabled${siteAdminChecked} />
+        <span>
+          <strong>${escapeHtml(req.t(roleLabelKey(SITE_ADMIN_ROLE)))}</strong>
+          <small>${escapeHtml(req.t('userRights.siteAdminLocked'))}</small>
+        </span>
+      </label>
+    </div>
+    <button class="account-review-action-button" type="submit">${escapeHtml(req.t('userRights.save'))}</button>
+  </form>`;
+};
+
+const renderUserRightsRows = (users: UserRightsSummary[], req: Request) => {
+  if (!users.length) {
+    return `<tr><td colspan="4">${escapeHtml(req.t('userRights.empty'))}</td></tr>`;
+  }
+
+  return users
+    .map(
+      user => `<tr>
+        <td data-label="${escapeHtml(req.t('userRights.headers.user'))}">
+          <div>${escapeHtml(user.displayName)}</div>
+          <div class="form-hint">${escapeHtml(user.username)}</div>
+        </td>
+        <td data-label="${escapeHtml(req.t('userRights.headers.email'))}">${escapeHtml(user.email)}</td>
+        <td data-label="${escapeHtml(req.t('userRights.headers.currentRights'))}">${renderRightsBadges(user.roles, req.t)}</td>
+        <td data-label="${escapeHtml(req.t('userRights.headers.edit'))}">${renderUserRightsForm(user, req)}</td>
+      </tr>`
+    )
+    .join('');
+};
+
+const appendUserRightsStatus = (
+  redirectTo: string,
+  result: {
+    status: 'updated' | 'unchanged' | 'error';
+    user?: string;
+    granted?: string[];
+    revoked?: string[];
+  }
+) => {
+  const url = new URL(redirectTo, 'http://local');
+  url.searchParams.delete('status');
+  url.searchParams.delete('user');
+  url.searchParams.delete('granted');
+  url.searchParams.delete('revoked');
+  url.searchParams.set('status', result.status);
+  if (result.user) url.searchParams.set('user', result.user);
+  if (result.granted?.length) url.searchParams.set('granted', result.granted.join(','));
+  if (result.revoked?.length) url.searchParams.set('revoked', result.revoked.join(','));
+  return `${url.pathname}${url.search}`;
+};
+
+const getUserRightsRedirect = (value: unknown) => {
+  if (typeof value !== 'string') return USER_RIGHTS_PATH;
+  try {
+    const url = new URL(value, 'http://local');
+    return url.pathname === USER_RIGHTS_PATH ? `${url.pathname}${url.search}` : USER_RIGHTS_PATH;
+  } catch {
+    return USER_RIGHTS_PATH;
+  }
+};
+
+const parseSubmittedRights = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map(entry => String(entry));
+  return value ? [String(value)] : [];
+};
+
 export const registerToolRoutes = (app: Express) => {
+  app.get(USER_RIGHTS_PATH, async (req, res) => {
+    const adminContext = await requireSiteAdmin(req, res);
+    if (!adminContext) return;
+
+    const query = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const users = await searchVerifiedUsersWithRights(adminContext.dalInstance, query);
+    const rows = renderUserRightsRows(users, req);
+    const bodyHtml = `<div class="tool-page">
+  <div class="form-card">
+    <p class="form-help">${escapeHtml(req.t('userRights.description'))}</p>
+    ${renderUserRightsStatus(req)}
+    <form method="get" action="${USER_RIGHTS_PATH}" class="form-inline user-rights-search">
+      <label>
+        <span>${escapeHtml(req.t('userRights.search.label'))}</span>
+        <input type="search" name="q" value="${escapeHtml(query)}" placeholder="${escapeHtml(req.t('userRights.search.placeholder'))}" />
+      </label>
+      <button type="submit">${escapeHtml(req.t('userRights.search.submit'))}</button>
+      ${query ? `<a href="${USER_RIGHTS_PATH}">${escapeHtml(req.t('userRights.search.clear'))}</a>` : ''}
+    </form>
+    <div class="table-stack-mobile">
+      <table class="token-table user-rights-table">
+        <thead>
+          <tr>
+            <th>${escapeHtml(req.t('userRights.headers.user'))}</th>
+            <th>${escapeHtml(req.t('userRights.headers.email'))}</th>
+            <th>${escapeHtml(req.t('userRights.headers.currentRights'))}</th>
+            <th>${escapeHtml(req.t('userRights.headers.edit'))}</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  </div>
+</div>`;
+
+    renderToolLayout(res, req.t('userRights.title'), bodyHtml);
+  });
+
+  app.post(`${USER_RIGHTS_PATH}/:userId`, async (req, res) => {
+    const adminContext = await requireSiteAdmin(req, res);
+    if (!adminContext) return;
+
+    const redirectTo = getUserRightsRedirect(req.body.redirectTo);
+    try {
+      const result = await updateUserRightsBelowSiteAdmin(
+        adminContext.dalInstance,
+        req.params.userId,
+        parseSubmittedRights(req.body.rights)
+      );
+      const granted = result.changes.filter(change => change.after).map(change => change.role);
+      const revoked = result.changes.filter(change => !change.after).map(change => change.role);
+      res.redirect(
+        302,
+        appendUserRightsStatus(redirectTo, {
+          status: result.changes.length ? 'updated' : 'unchanged',
+          user: result.user.displayName || result.user.username || result.user.email,
+          granted,
+          revoked,
+        })
+      );
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Failed to update user rights:', error.message);
+      }
+      res.redirect(302, appendUserRightsStatus(redirectTo, { status: 'error' }));
+    }
+  });
+
   app.get('/tool/recent-changes', async (req, res) => {
     const limit = parseRecentLimit(req.query.limit);
     const preferredLang = res.locals.locale;

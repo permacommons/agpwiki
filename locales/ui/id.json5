@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Perubahan terbaru',
     reviewAccounts: 'Tinjau akun',
+    userRights: 'Hak pengguna',
     signOut: 'Keluar',
     help: 'Bantuan',
     menu: 'Menu navigasi',
@@ -333,6 +334,60 @@
     previous: 'Sebelumnya',
     next: 'Berikutnya',
     pagination: 'Halaman {{page}} dari {{totalPages}}',
+  },
+  userRights: {
+    title: 'Hak Pengguna',
+    description: 'Cari pengguna terverifikasi berdasarkan nama atau alamat email dan kelola hak di bawah admin situs.',
+    none: 'Tidak ada',
+    empty: 'Tidak ada pengguna terverifikasi yang ditemukan.',
+    save: 'Simpan hak',
+    siteAdminLocked: 'Admin situs hanya dapat diubah dari CLI.',
+    search: {
+      label: 'Cari pengguna',
+      placeholder: 'Nama atau alamat email',
+      submit: 'Cari',
+      clear: 'Bersihkan',
+    },
+    headers: {
+      user: 'Pengguna',
+      email: 'Email',
+      currentRights: 'Hak saat ini',
+      edit: 'Edit hak',
+    },
+    notice: {
+      updated: 'Hak pengguna diubah untuk {{user}}.',
+      unchanged: 'Tidak ada hak yang diubah untuk {{user}}.',
+      error: 'Hak tidak dapat diperbarui.',
+      yes: 'Ya',
+      no: 'Tidak',
+      headers: {
+        right: 'Hak',
+        before: 'Sebelum',
+        after: 'Sesudah',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Admin situs',
+        description: 'Mengelola pengaturan seluruh situs dan permintaan akun.',
+      },
+      wiki_admin: {
+        label: 'Admin wiki',
+        description: 'Mengelola konten wiki dan penghapusan.',
+      },
+      blog_author: {
+        label: 'Penulis blog',
+        description: 'Membuat dan memperbarui posting blog.',
+      },
+      blog_admin: {
+        label: 'Admin blog',
+        description: 'Menghapus posting blog dan mengelola konten blog.',
+      },
+      forum_moderator: {
+        label: 'Moderator forum',
+        description: 'Memoderasi utas dan komentar forum.',
+      },
+    },
   },
   auth: {
     login: {

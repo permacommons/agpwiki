@@ -8,6 +8,7 @@
     forum: 'Fórum',
     recentChanges: 'Alterações recentes',
     reviewAccounts: 'Rever contas',
+    userRights: 'Direitos de utilizador',
     signOut: 'Sair',
     help: 'Ajuda',
     menu: 'Menu de navegação',
@@ -332,6 +333,60 @@
     previous: 'Anterior',
     next: 'Próximo',
     pagination: 'Página {{page}} de {{totalPages}}',
+  },
+  userRights: {
+    title: 'Direitos de Utilizador',
+    description: 'Pesquisa utilizadores verificados por nome ou endereço de email e gere direitos abaixo de administrador do site.',
+    none: 'Nenhum',
+    empty: 'Nenhum utilizador verificado encontrado.',
+    save: 'Guardar direitos',
+    siteAdminLocked: 'Administrador do site só pode ser alterado pela CLI.',
+    search: {
+      label: 'Pesquisar utilizadores',
+      placeholder: 'Nome ou endereço de email',
+      submit: 'Pesquisar',
+      clear: 'Limpar',
+    },
+    headers: {
+      user: 'Utilizador',
+      email: 'Email',
+      currentRights: 'Direitos atuais',
+      edit: 'Editar direitos',
+    },
+    notice: {
+      updated: 'Direitos de utilizador alterados para {{user}}.',
+      unchanged: 'Nenhum direito alterado para {{user}}.',
+      error: 'Não foi possível atualizar os direitos.',
+      yes: 'Sim',
+      no: 'Não',
+      headers: {
+        right: 'Direito',
+        before: 'Antes',
+        after: 'Depois',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Administrador do site',
+        description: 'Gerir definições do site e pedidos de conta.',
+      },
+      wiki_admin: {
+        label: 'Administrador do wiki',
+        description: 'Administrar conteúdo do wiki e eliminações.',
+      },
+      blog_author: {
+        label: 'Autor do blog',
+        description: 'Criar e atualizar publicações do blog.',
+      },
+      blog_admin: {
+        label: 'Administrador do blog',
+        description: 'Eliminar publicações e gerir conteúdo do blog.',
+      },
+      forum_moderator: {
+        label: 'Moderador do fórum',
+        description: 'Moderar tópicos e comentários do fórum.',
+      },
+    },
   },
   auth: {
     login: {

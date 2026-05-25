@@ -8,6 +8,7 @@
     forum: 'Fórum',
     recentChanges: 'Nedávne zmeny',
     reviewAccounts: 'Skontrolovať účty',
+    userRights: 'Používateľské práva',
     signOut: 'Odhlásiť sa',
     help: 'Pomoc',
     menu: 'Navigačné menu',
@@ -333,6 +334,60 @@
     previous: 'Predchádzajúca',
     next: 'Ďalšia',
     pagination: 'Strana {{page}} z {{totalPages}}',
+  },
+  userRights: {
+    title: 'Používateľské práva',
+    description: 'Vyhľadajte overených používateľov podľa mena alebo e-mailovej adresy a spravujte práva nižšie ako správca lokality.',
+    none: 'Žiadne',
+    empty: 'Nenašli sa žiadni overení používatelia.',
+    save: 'Uložiť práva',
+    siteAdminLocked: 'Správcu lokality možno zmeniť iba cez CLI.',
+    search: {
+      label: 'Hľadať používateľov',
+      placeholder: 'Meno alebo e-mailová adresa',
+      submit: 'Hľadať',
+      clear: 'Vymazať',
+    },
+    headers: {
+      user: 'Používateľ',
+      email: 'E-mail',
+      currentRights: 'Aktuálne práva',
+      edit: 'Upraviť práva',
+    },
+    notice: {
+      updated: 'Používateľské práva zmenené pre {{user}}.',
+      unchanged: 'Pre {{user}} sa nezmenili žiadne práva.',
+      error: 'Práva sa nepodarilo aktualizovať.',
+      yes: 'Áno',
+      no: 'Nie',
+      headers: {
+        right: 'Právo',
+        before: 'Predtým',
+        after: 'Potom',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Správca lokality',
+        description: 'Spravovať nastavenia celej lokality a žiadosti o účty.',
+      },
+      wiki_admin: {
+        label: 'Správca wiki',
+        description: 'Spravovať obsah wiki a odstraňovanie.',
+      },
+      blog_author: {
+        label: 'Autor blogu',
+        description: 'Vytvárať a aktualizovať blogové príspevky.',
+      },
+      blog_admin: {
+        label: 'Správca blogu',
+        description: 'Odstraňovať príspevky a spravovať obsah blogu.',
+      },
+      forum_moderator: {
+        label: 'Moderátor fóra',
+        description: 'Moderovať vlákna a komentáre fóra.',
+      },
+    },
   },
   auth: {
     login: {

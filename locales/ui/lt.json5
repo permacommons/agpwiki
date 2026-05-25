@@ -8,6 +8,7 @@
     forum: 'Forumas',
     recentChanges: 'Naujausi pakeitimai',
     reviewAccounts: 'Peržiūrėti paskyras',
+    userRights: 'Naudotojų teisės',
     signOut: 'Atsijungti',
     help: 'Pagalba',
     menu: 'Meniu',
@@ -333,6 +334,60 @@
     previous: 'Ankstesnis',
     next: 'Kitas',
     pagination: 'Puslapis {{page}} iš {{totalPages}}',
+  },
+  userRights: {
+    title: 'Naudotojų teisės',
+    description: 'Ieškokite patvirtintų naudotojų pagal vardą arba el. pašto adresą ir tvarkykite teises, žemesnes nei svetainės administratoriaus.',
+    none: 'Nėra',
+    empty: 'Patvirtintų naudotojų nerasta.',
+    save: 'Išsaugoti teises',
+    siteAdminLocked: 'Svetainės administratorių galima keisti tik per CLI.',
+    search: {
+      label: 'Ieškoti naudotojų',
+      placeholder: 'Vardas arba el. pašto adresas',
+      submit: 'Ieškoti',
+      clear: 'Išvalyti',
+    },
+    headers: {
+      user: 'Naudotojas',
+      email: 'El. paštas',
+      currentRights: 'Dabartinės teisės',
+      edit: 'Redaguoti teises',
+    },
+    notice: {
+      updated: '{{user}} naudotojo teisės pakeistos.',
+      unchanged: '{{user}} teisės nepakeistos.',
+      error: 'Teisių nepavyko atnaujinti.',
+      yes: 'Taip',
+      no: 'Ne',
+      headers: {
+        right: 'Teisė',
+        before: 'Prieš',
+        after: 'Po',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Svetainės administratorius',
+        description: 'Tvarkyti visos svetainės nustatymus ir paskyrų prašymus.',
+      },
+      wiki_admin: {
+        label: 'Vikio administratorius',
+        description: 'Tvarkyti vikio turinį ir šalinimus.',
+      },
+      blog_author: {
+        label: 'Tinklaraščio autorius',
+        description: 'Kurti ir atnaujinti tinklaraščio įrašus.',
+      },
+      blog_admin: {
+        label: 'Tinklaraščio administratorius',
+        description: 'Šalinti tinklaraščio įrašus ir tvarkyti turinį.',
+      },
+      forum_moderator: {
+        label: 'Forumo moderatorius',
+        description: 'Moderuoti forumo temas ir komentarus.',
+      },
+    },
   },
   auth: {
     login: {

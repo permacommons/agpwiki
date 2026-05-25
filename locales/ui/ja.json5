@@ -8,6 +8,7 @@
     forum: 'フォーラム',
     recentChanges: '最近の更新',
     reviewAccounts: 'アカウントの審査',
+    userRights: 'ユーザー権限',
     signOut: 'ログアウト',
     help: 'ヘルプ',
     menu: 'メニュー',
@@ -332,6 +333,60 @@
     previous: '前へ',
     next: '次へ',
     pagination: 'ページ {{page}} / {{totalPages}}',
+  },
+  userRights: {
+    title: 'ユーザー権限',
+    description: '名前またはメールアドレスで確認済みユーザーを検索し、サイト管理者未満の権限を管理します。',
+    none: 'なし',
+    empty: '確認済みユーザーが見つかりません。',
+    save: '権限を保存',
+    siteAdminLocked: 'サイト管理者は CLI からのみ変更できます。',
+    search: {
+      label: 'ユーザーを検索',
+      placeholder: '名前またはメールアドレス',
+      submit: '検索',
+      clear: 'クリア',
+    },
+    headers: {
+      user: 'ユーザー',
+      email: 'メール',
+      currentRights: '現在の権限',
+      edit: '権限を編集',
+    },
+    notice: {
+      updated: '{{user}} のユーザー権限を変更しました。',
+      unchanged: '{{user}} の権限は変更されませんでした。',
+      error: '権限を更新できませんでした。',
+      yes: 'はい',
+      no: 'いいえ',
+      headers: {
+        right: '権限',
+        before: '変更前',
+        after: '変更後',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'サイト管理者',
+        description: 'サイト全体の設定とアカウント申請を管理します。',
+      },
+      wiki_admin: {
+        label: 'ウィキ管理者',
+        description: 'ウィキのコンテンツと削除を管理します。',
+      },
+      blog_author: {
+        label: 'ブログ著者',
+        description: 'ブログ投稿を作成および更新します。',
+      },
+      blog_admin: {
+        label: 'ブログ管理者',
+        description: 'ブログ投稿の削除とブログコンテンツの管理を行います。',
+      },
+      forum_moderator: {
+        label: 'フォーラムモデレーター',
+        description: 'フォーラムのスレッドとコメントをモデレートします。',
+      },
+    },
   },
   auth: {
     login: {

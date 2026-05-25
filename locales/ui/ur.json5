@@ -8,6 +8,7 @@
     forum: 'فورم',
     recentChanges: 'حالیہ تبدیلیاں',
     reviewAccounts: 'اکاؤنٹس کا جائزہ',
+    userRights: 'صارف کے حقوق',
     signOut: 'لاگ آؤٹ',
     help: 'مدد',
     menu: 'مینو',
@@ -333,6 +334,60 @@
     previous: 'پچھلا',
     next: 'اگلا',
     pagination: 'صفحہ {{page}} از {{totalPages}}',
+  },
+  userRights: {
+    title: 'صارف کے حقوق',
+    description: 'نام یا ای میل پتے سے تصدیق شدہ صارفین تلاش کریں اور سائٹ منتظم سے نیچے کے حقوق کا انتظام کریں۔',
+    none: 'کوئی نہیں',
+    empty: 'کوئی تصدیق شدہ صارف نہیں ملا۔',
+    save: 'حقوق محفوظ کریں',
+    siteAdminLocked: 'سائٹ منتظم صرف CLI سے تبدیل کیا جا سکتا ہے۔',
+    search: {
+      label: 'صارفین تلاش کریں',
+      placeholder: 'نام یا ای میل پتہ',
+      submit: 'تلاش کریں',
+      clear: 'صاف کریں',
+    },
+    headers: {
+      user: 'صارف',
+      email: 'ای میل',
+      currentRights: 'موجودہ حقوق',
+      edit: 'حقوق میں ترمیم کریں',
+    },
+    notice: {
+      updated: '{{user}} کے صارف حقوق تبدیل کر دیے گئے۔',
+      unchanged: '{{user}} کے لیے کوئی حقوق تبدیل نہیں ہوئے۔',
+      error: 'حقوق اپ ڈیٹ نہیں ہو سکے۔',
+      yes: 'ہاں',
+      no: 'نہیں',
+      headers: {
+        right: 'حق',
+        before: 'پہلے',
+        after: 'بعد',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'سائٹ منتظم',
+        description: 'سائٹ بھر کی ترتیبات اور اکاؤنٹ درخواستوں کا انتظام کریں۔',
+      },
+      wiki_admin: {
+        label: 'وکی منتظم',
+        description: 'وکی مواد اور حذف کرنے کا انتظام کریں۔',
+      },
+      blog_author: {
+        label: 'بلاگ مصنف',
+        description: 'بلاگ پوسٹس بنائیں اور اپ ڈیٹ کریں۔',
+      },
+      blog_admin: {
+        label: 'بلاگ منتظم',
+        description: 'بلاگ پوسٹس حذف کریں اور بلاگ مواد کا انتظام کریں۔',
+      },
+      forum_moderator: {
+        label: 'فورم نگران',
+        description: 'فورم موضوعات اور تبصروں کی نگرانی کریں۔',
+      },
+    },
   },
   auth: {
     login: {

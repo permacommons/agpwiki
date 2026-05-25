@@ -1247,6 +1247,118 @@ pre.diff ins {
 .account-review-actions .form-field {
   margin-bottom: 0.5rem;
 }
+.user-rights-search {
+  margin: 1rem 0;
+}
+.user-rights-search input,
+.user-rights-search button,
+.user-rights-search a {
+  box-sizing: border-box;
+  min-height: 2.4rem;
+  padding: 0.5rem 0.75rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.2;
+}
+.user-rights-search input {
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+}
+.user-rights-search button,
+.user-rights-search a {
+  padding: 0.55rem 1rem;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+  text-decoration: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.user-rights-search a {
+  background: transparent;
+  color: var(--accent);
+}
+.user-rights-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.user-rights-badge,
+.user-rights-empty {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--rule);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+}
+.user-rights-empty {
+  color: var(--muted);
+}
+.user-rights-form {
+  display: grid;
+  gap: 0.75rem;
+  min-width: min(24rem, 100%);
+}
+.user-rights-checkboxes {
+  display: grid;
+  gap: 0.45rem;
+}
+.user-rights-checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem;
+  align-items: start;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.user-rights-checkbox input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0.2rem 0 0;
+  accent-color: var(--accent);
+}
+.user-rights-checkbox strong,
+.user-rights-checkbox small {
+  display: block;
+}
+.user-rights-checkbox strong {
+  font-size: 0.9rem;
+}
+.user-rights-checkbox small {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+.user-rights-checkbox--locked {
+  opacity: 0.7;
+}
+.user-rights-change-overview {
+  margin: 1rem 0;
+}
+.user-rights-notice {
+  padding: 0.8rem;
+  margin-bottom: 0.75rem;
+  background: #fffdf7;
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.user-rights-notice-heading {
+  font-weight: 600;
+}
+.user-rights-change-table {
+  max-width: 36rem;
+}
+.user-rights-change-table th {
+  background: #f5f0e7;
+}
+.user-rights-change-table th,
+.user-rights-change-table td {
+  border-color: #d9d0c0;
+}
 .token-display {
   padding: 0.75rem 1rem;
   background: #f5f0e7;

@@ -8,6 +8,7 @@
     forum: 'Foro',
     recentChanges: 'Cambios recientes',
     reviewAccounts: 'Revisar cuentas',
+    userRights: 'Derechos de usuario',
     signOut: 'Cerrar sesión',
     help: 'Ayuda',
     menu: 'Menú',
@@ -332,6 +333,60 @@
     previous: 'Anterior',
     next: 'Siguiente',
     pagination: 'Página {{page}} de {{totalPages}}',
+  },
+  userRights: {
+    title: 'Derechos de usuario',
+    description: 'Busca usuarios verificados por nombre o correo electrónico y gestiona derechos por debajo de administrador del sitio.',
+    none: 'Ninguno',
+    empty: 'No se encontraron usuarios verificados.',
+    save: 'Guardar derechos',
+    siteAdminLocked: 'El administrador del sitio solo puede cambiarse desde la CLI.',
+    search: {
+      label: 'Buscar usuarios',
+      placeholder: 'Nombre o correo electrónico',
+      submit: 'Buscar',
+      clear: 'Limpiar',
+    },
+    headers: {
+      user: 'Usuario',
+      email: 'Correo electrónico',
+      currentRights: 'Derechos actuales',
+      edit: 'Editar derechos',
+    },
+    notice: {
+      updated: 'Derechos de usuario cambiados para {{user}}.',
+      unchanged: 'No se cambiaron derechos para {{user}}.',
+      error: 'No se pudieron actualizar los derechos.',
+      yes: 'Sí',
+      no: 'No',
+      headers: {
+        right: 'Derecho',
+        before: 'Antes',
+        after: 'Después',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Administrador del sitio',
+        description: 'Gestionar ajustes de todo el sitio y solicitudes de cuenta.',
+      },
+      wiki_admin: {
+        label: 'Administrador del wiki',
+        description: 'Administrar contenido del wiki y eliminaciones.',
+      },
+      blog_author: {
+        label: 'Autor del blog',
+        description: 'Crear y actualizar entradas del blog.',
+      },
+      blog_admin: {
+        label: 'Administrador del blog',
+        description: 'Eliminar entradas y gestionar contenido del blog.',
+      },
+      forum_moderator: {
+        label: 'Moderador del foro',
+        description: 'Moderar hilos y comentarios del foro.',
+      },
+    },
   },
   auth: {
     login: {

@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Senaste ändringar',
     reviewAccounts: 'Granska konton',
+    userRights: 'Användarrättigheter',
     signOut: 'Logga ut',
     help: 'Hjälp',
     menu: 'Meny',
@@ -333,6 +334,60 @@
     previous: 'Föregående',
     next: 'Nästa',
     pagination: 'Sida {{page}} av {{totalPages}}',
+  },
+  userRights: {
+    title: 'Användarrättigheter',
+    description: 'Sök verifierade användare efter namn eller e-postadress och hantera rättigheter under webbplatsadministratör.',
+    none: 'Inga',
+    empty: 'Inga verifierade användare hittades.',
+    save: 'Spara rättigheter',
+    siteAdminLocked: 'Webbplatsadministratör kan bara ändras från CLI.',
+    search: {
+      label: 'Sök användare',
+      placeholder: 'Namn eller e-postadress',
+      submit: 'Sök',
+      clear: 'Rensa',
+    },
+    headers: {
+      user: 'Användare',
+      email: 'E-post',
+      currentRights: 'Nuvarande rättigheter',
+      edit: 'Redigera rättigheter',
+    },
+    notice: {
+      updated: 'Användarrättigheter ändrade för {{user}}.',
+      unchanged: 'Inga rättigheter ändrades för {{user}}.',
+      error: 'Rättigheterna kunde inte uppdateras.',
+      yes: 'Ja',
+      no: 'Nej',
+      headers: {
+        right: 'Rättighet',
+        before: 'Före',
+        after: 'Efter',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Webbplatsadministratör',
+        description: 'Hantera webbplatsövergripande inställningar och kontoförfrågningar.',
+      },
+      wiki_admin: {
+        label: 'Wikiadministratör',
+        description: 'Administrera wikiinnehåll och raderingar.',
+      },
+      blog_author: {
+        label: 'Bloggförfattare',
+        description: 'Skapa och uppdatera blogginlägg.',
+      },
+      blog_admin: {
+        label: 'Bloggadministratör',
+        description: 'Ta bort blogginlägg och hantera blogginnehåll.',
+      },
+      forum_moderator: {
+        label: 'Forummoderator',
+        description: 'Moderera forumtrådar och kommentarer.',
+      },
+    },
   },
   auth: {
     login: {

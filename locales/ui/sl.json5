@@ -8,6 +8,7 @@
     forum: 'Forum',
     recentChanges: 'Nedavne spremembe',
     reviewAccounts: 'Preglej račune',
+    userRights: 'Uporabniške pravice',
     signOut: 'Odjava',
     help: 'Pomoč',
     menu: 'Meni',
@@ -333,6 +334,60 @@
     previous: 'Prejšnja',
     next: 'Naslednja',
     pagination: 'Stran {{page}} od {{totalPages}}',
+  },
+  userRights: {
+    title: 'Uporabniške pravice',
+    description: 'Poiščite potrjene uporabnike po imenu ali e-poštnem naslovu in upravljajte pravice pod skrbnikom spletnega mesta.',
+    none: 'Brez',
+    empty: 'Ni najdenih potrjenih uporabnikov.',
+    save: 'Shrani pravice',
+    siteAdminLocked: 'Skrbnika spletnega mesta je mogoče spremeniti samo prek CLI.',
+    search: {
+      label: 'Išči uporabnike',
+      placeholder: 'Ime ali e-poštni naslov',
+      submit: 'Išči',
+      clear: 'Počisti',
+    },
+    headers: {
+      user: 'Uporabnik',
+      email: 'E-pošta',
+      currentRights: 'Trenutne pravice',
+      edit: 'Uredi pravice',
+    },
+    notice: {
+      updated: 'Uporabniške pravice spremenjene za {{user}}.',
+      unchanged: 'Za {{user}} ni bilo spremenjenih pravic.',
+      error: 'Pravic ni bilo mogoče posodobiti.',
+      yes: 'Da',
+      no: 'Ne',
+      headers: {
+        right: 'Pravica',
+        before: 'Prej',
+        after: 'Potem',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Skrbnik spletnega mesta',
+        description: 'Upravljanje nastavitev celotnega mesta in zahtev za račune.',
+      },
+      wiki_admin: {
+        label: 'Skrbnik wikija',
+        description: 'Upravljanje vsebine wikija in brisanj.',
+      },
+      blog_author: {
+        label: 'Avtor bloga',
+        description: 'Ustvarjanje in posodabljanje objav v blogu.',
+      },
+      blog_admin: {
+        label: 'Skrbnik bloga',
+        description: 'Brisanje objav in upravljanje vsebine bloga.',
+      },
+      forum_moderator: {
+        label: 'Moderator foruma',
+        description: 'Moderiranje forumskih tem in komentarjev.',
+      },
+    },
   },
   auth: {
     login: {

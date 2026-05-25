@@ -22,6 +22,7 @@
       "citation.field.doi",
       "citation.field.url",
       "forum.category.general",
+      "userRights.notice.no",
       "redLink.hover.wikipediaHeading"
     ],
      "fi": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
@@ -48,6 +49,7 @@
       "nav.forum",
       "forum.title",
       "forum.relatedLabel",
+      "userRights.headers.email",
       "redLink.hover.wikipediaHeading"
     ],
     "it": [
@@ -58,6 +60,8 @@
       "citation.field.url",
       "forum.title",
       "forum.relatedLabel",
+      "userRights.headers.email",
+      "userRights.notice.no",
       "redLink.hover.wikipediaHeading"
     ],
      "ja": ["site.name", "nav.home", "redLink.hover.wikipediaHeading"],
@@ -84,8 +88,8 @@
       "forum.relatedLabel",
       "redLink.hover.wikipediaHeading"
     ],
-     "pt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
-     "pt-PT": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
+     "pt": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "userRights.headers.email"],
+     "pt-PT": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "userRights.headers.email"],
      "ru": ["site.name", "nav.home"],
      "sk": ["site.name", "nav.home", "citation.field.doi", "citation.field.url", "redLink.hover.wikipediaHeading"],
      "sl": [
@@ -166,6 +170,7 @@
     "forum": "Forum",
     "recentChanges": "Recent changes",
     "reviewAccounts": "Review accounts",
+    "userRights": "User rights",
     "signOut": "Sign out",
     "help": "Help",
     "menu": "Menu"
@@ -524,6 +529,60 @@
     "previous": "Previous",
     "next": "Next",
     "pagination": "Page {{page}} of {{totalPages}}"
+  },
+  "userRights": {
+    "title": "User Rights",
+    "description": "Search verified users by name or email address and manage rights below site admin.",
+    "none": "None",
+    "empty": "No verified users found.",
+    "save": "Save rights",
+    "siteAdminLocked": "Site admin can only be changed from the CLI.",
+    "search": {
+      "label": "Search users",
+      "placeholder": "Name or email address",
+      "submit": "Search",
+      "clear": "Clear"
+    },
+    "headers": {
+      "user": "User",
+      "email": "Email",
+      "currentRights": "Current rights",
+      "edit": "Edit rights"
+    },
+    "notice": {
+      "updated": "User rights changed for {{user}}.",
+      "unchanged": "No rights changed for {{user}}.",
+      "error": "Rights could not be updated.",
+      "yes": "Yes",
+      "no": "No",
+      "headers": {
+        "right": "Right",
+        "before": "Before",
+        "after": "After"
+      }
+    },
+    "roles": {
+      "site_admin": {
+        "label": "Site admin",
+        "description": "Manage site-wide settings and account requests."
+      },
+      "wiki_admin": {
+        "label": "Wiki admin",
+        "description": "Administer wiki content and deletions."
+      },
+      "blog_author": {
+        "label": "Blog author",
+        "description": "Create and update blog posts."
+      },
+      "blog_admin": {
+        "label": "Blog admin",
+        "description": "Delete blog posts and manage blog content."
+      },
+      "forum_moderator": {
+        "label": "Forum moderator",
+        "description": "Moderate forum threads and comments."
+      }
+    }
   },
   "auth": {
     "login": {

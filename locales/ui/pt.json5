@@ -8,6 +8,7 @@
     forum: 'Fórum',
     recentChanges: 'Mudanças recentes',
     reviewAccounts: 'Revisar contas',
+    userRights: 'Direitos de usuário',
     signOut: 'Sair',
     help: 'Ajuda',
     menu: 'Menu de navegação',
@@ -332,6 +333,60 @@
     previous: 'Anterior',
     next: 'Próximo',
     pagination: 'Página {{page}} de {{totalPages}}',
+  },
+  userRights: {
+    title: 'Direitos de Usuário',
+    description: 'Pesquise usuários verificados por nome ou endereço de email e gerencie direitos abaixo de administrador do site.',
+    none: 'Nenhum',
+    empty: 'Nenhum usuário verificado encontrado.',
+    save: 'Salvar direitos',
+    siteAdminLocked: 'Administrador do site só pode ser alterado pela CLI.',
+    search: {
+      label: 'Pesquisar usuários',
+      placeholder: 'Nome ou endereço de email',
+      submit: 'Pesquisar',
+      clear: 'Limpar',
+    },
+    headers: {
+      user: 'Usuário',
+      email: 'Email',
+      currentRights: 'Direitos atuais',
+      edit: 'Editar direitos',
+    },
+    notice: {
+      updated: 'Direitos de usuário alterados para {{user}}.',
+      unchanged: 'Nenhum direito alterado para {{user}}.',
+      error: 'Não foi possível atualizar os direitos.',
+      yes: 'Sim',
+      no: 'Não',
+      headers: {
+        right: 'Direito',
+        before: 'Antes',
+        after: 'Depois',
+      },
+    },
+    roles: {
+      site_admin: {
+        label: 'Administrador do site',
+        description: 'Gerenciar configurações do site e solicitações de conta.',
+      },
+      wiki_admin: {
+        label: 'Administrador do wiki',
+        description: 'Administrar conteúdo do wiki e exclusões.',
+      },
+      blog_author: {
+        label: 'Autor do blog',
+        description: 'Criar e atualizar posts do blog.',
+      },
+      blog_admin: {
+        label: 'Administrador do blog',
+        description: 'Excluir posts e gerenciar conteúdo do blog.',
+      },
+      forum_moderator: {
+        label: 'Moderador do fórum',
+        description: 'Moderar tópicos e comentários do fórum.',
+      },
+    },
   },
   auth: {
     login: {
