@@ -12,7 +12,7 @@ const wikiPageManifest = {
     id: types.string().uuid(4),
     slug: types.string().max(200).required(),
     title: mlString.getSafeTextSchema({ maxLength: 200 }),
-    body: mlString.getHTMLSchema({ maxLength: 20000 }),
+    body: mlString.getHTMLSchema({ maxLength: 50000 }),
     originalLanguage: types.string().max(8),
     createdAt: types.date().default(() => new Date()),
     updatedAt: types.date().default(() => new Date()),

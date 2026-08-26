@@ -207,7 +207,7 @@ export const validateBody = (value: LocalizedMapInput, errors?: ValidationCollec
   const normalized = sanitizeLocalizedMapInput(value);
   if (normalized === null) return;
   try {
-    mlString.validate(normalized, { maxLength: 20000, allowHTML: true });
+    mlString.validate(normalized, { maxLength: 50000, allowHTML: true });
     ensureNoControlCharacters(normalized, 'body', errors);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Invalid body value.';
