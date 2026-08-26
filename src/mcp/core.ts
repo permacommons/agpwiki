@@ -151,7 +151,7 @@ const POLICY_HASH_ERROR_MESSAGE =
   'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.';
 const SLUG_MAX_LENGTH = 200;
 const TITLE_MAX_LENGTH = 200;
-const BODY_MAX_LENGTH = 20000;
+const BODY_MAX_LENGTH = 50000;
 const BLOG_SUMMARY_MAX_LENGTH = 500;
 const REV_SUMMARY_MAX_LENGTH = 300;
 

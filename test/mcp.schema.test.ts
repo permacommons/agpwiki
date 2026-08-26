@@ -213,7 +213,7 @@ test('MCP tool schema hints describe character caps', () => {
   const wikiCreate = getSchemaShape(tools.wiki_createPage.inputSchema);
   assert.ok(wikiCreate.slug?.description?.includes('Max 200 characters'));
   assert.ok(wikiCreate.title?.description?.includes('Max 200 characters per language'));
-  assert.ok(wikiCreate.body?.description?.includes('Max 20000 characters per language'));
+  assert.ok(wikiCreate.body?.description?.includes('Max 50000 characters per language'));
   assert.ok(wikiCreate.originalLanguage?.description?.includes('Max 8 characters'));
   assert.ok(wikiCreate.revSummary?.description?.includes('Max 300 characters per language'));
 
