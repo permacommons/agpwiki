@@ -29,4 +29,5 @@ For contributing to a wiki running this software, the canonical guide is [agpedi
 **Notes**
 - Markdown is rendered with `html: false` and `linkify: true`.
 - MediaWiki syntax is not supported.
+- MCP wiki and blog write tools return compact metadata and omit full body content; use the corresponding read tool to retrieve content after writing.
 - UI translations are generated via LLM-assisted translation workflows.

@@ -4,7 +4,12 @@ import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
 import { initializePostgreSQL } from '../src/db.js';
-import { BLOG_ADMIN_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import {
+  BLOG_ADMIN_ROLE,
+  BLOG_AUTHOR_ROLE,
+  WIKI_ADMIN_ROLE,
+  grantRoleUpsert,
+} from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 import User from '../src/models/user.js';
 
@@ -36,7 +41,11 @@ const createTestUser = async () => {
 
 const cleanupTestArtifacts = async (
   dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
-  { slugPrefix, userId }: { slugPrefix?: string; userId?: string }
+  {
+    slugPrefix,
+    postSlugPrefix,
+    userId,
+  }: { slugPrefix?: string; postSlugPrefix?: string; userId?: string }
 ) => {
   if (slugPrefix) {
     await dal.query(
@@ -48,6 +57,9 @@ const cleanupTestArtifacts = async (
       [slugPrefix]
     );
     await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
+  }
+  if (postSlugPrefix) {
+    await dal.query('DELETE FROM posts WHERE slug LIKE $1', [postSlugPrefix]);
   }
   if (userId) {
     await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
@@ -295,13 +307,20 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
       { authInfo }
     );
     const payload = result.structuredContent as {
-      body?: Record<string, string>;
+      body?: unknown;
+      contentHash?: string;
       currentRevId?: string;
     };
 
     assert.equal(result.isError, undefined);
-    assert.equal(payload.body?.en, 'Hello revised world');
+    assert.equal(Object.hasOwn(payload, 'body'), false);
+    assert.equal(typeof payload.contentHash, 'string');
+    assert.equal(payload.contentHash?.length, 64);
     assert.notEqual(payload.currentRevId, currentRevId);
+
+    const updatedRead = await tools.wiki_readPage.handler({ slug });
+    const updatedPayload = updatedRead.structuredContent as { body?: Record<string, string> };
+    assert.equal(updatedPayload.body?.en, 'Hello revised world');
   } finally {
     const pagePrefixes = ['meta/policy', slug];
     for (const pagePrefix of pagePrefixes) {
@@ -377,10 +396,19 @@ test('MCP wiki write tools require the latest policy hash', async () => {
       },
       { authInfo }
     );
-    const acceptedPayload = accepted.structuredContent as { slug?: string };
+    const acceptedPayload = accepted.structuredContent as {
+      body?: unknown;
+      contentHash?: string;
+      currentRevId?: string;
+      slug?: string;
+    };
 
     assert.equal(accepted.isError, undefined);
     assert.equal(acceptedPayload.slug, slug);
+    assert.equal(Object.hasOwn(acceptedPayload, 'body'), false);
+    assert.equal(typeof acceptedPayload.contentHash, 'string');
+    assert.equal(acceptedPayload.contentHash?.length, 64);
+    assert.match(acceptedPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
   } finally {
     const pagePrefixes = ['meta/policy', slug];
     for (const pagePrefix of pagePrefixes) {
@@ -415,16 +443,80 @@ test('MCP policy hash gate can be explicitly skipped for bootstrap', async () =>
       },
       { authInfo }
     );
-    const acceptedPayload = accepted.structuredContent as { slug?: string };
+    const acceptedPayload = accepted.structuredContent as {
+      body?: unknown;
+      contentHash?: string;
+      currentRevId?: string;
+      slug?: string;
+    };
 
     assert.equal(accepted.isError, undefined);
     assert.equal(acceptedPayload.slug, slug);
+    assert.equal(Object.hasOwn(acceptedPayload, 'body'), false);
+    assert.equal(typeof acceptedPayload.contentHash, 'string');
+    assert.equal(acceptedPayload.contentHash?.length, 64);
+    assert.match(acceptedPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
   } finally {
     const pagePrefixes = ['meta/policy', slug];
     for (const pagePrefix of pagePrefixes) {
       await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
     }
     await cleanupTestArtifacts(dal, {
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('MCP blog write tools omit full body from responses', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-blog-write-${Date.now()}`;
+  const slugPrefix = `${slug}%`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const created = await tools.blog_createPost.handler(
+      {
+        slug,
+        title: { en: 'Blog Write Test' },
+        body: { en: 'Initial post body.' },
+        summary: { en: 'Initial summary.' },
+      },
+      { authInfo }
+    );
+    const createdPayload = created.structuredContent as { body?: unknown; slug?: string };
+
+    assert.equal(created.isError, undefined);
+    assert.equal(createdPayload.slug, slug);
+    assert.equal(Object.hasOwn(createdPayload, 'body'), false);
+
+    const updated = await tools.blog_updatePost.handler(
+      {
+        slug,
+        body: { en: 'Updated post body.' },
+        revSummary: { en: 'Update blog body.' },
+      },
+      { authInfo }
+    );
+    const updatedPayload = updated.structuredContent as { body?: unknown; slug?: string };
+
+    assert.equal(updated.isError, undefined);
+    assert.equal(updatedPayload.slug, slug);
+    assert.equal(Object.hasOwn(updatedPayload, 'body'), false);
+
+    const read = await tools.blog_readPost.handler({ slug });
+    const readPayload = read.structuredContent as { body?: Record<string, string> };
+    assert.equal(readPayload.body?.en, 'Updated post body.');
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      postSlugPrefix: slugPrefix,
       userId: userIdForCleanup ?? undefined,
     });
   }

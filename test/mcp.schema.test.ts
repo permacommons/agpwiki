@@ -205,6 +205,28 @@ test('MCP tool schemas describe localized fields', () => {
   assert.ok(pageCheckDelete.policyHash);
 });
 
+test('MCP wiki and blog write tool descriptions document compact responses', () => {
+  const { server } = createMcpServer();
+  const tools = (server as {
+    _registeredTools: Record<string, { description?: string }>;
+  })._registeredTools;
+  const writeTools = [
+    'wiki_createPage',
+    'wiki_updatePage',
+    'wiki_applyPatch',
+    'wiki_rewriteSection',
+    'wiki_replaceExactText',
+    'blog_createPost',
+    'blog_updatePost',
+  ];
+
+  for (const name of writeTools) {
+    const description = tools[name]?.description ?? '';
+    assert.ok(description.includes('omit full body content'), `${name} documents body omission`);
+    assert.ok(description.includes('Use the read tool'), `${name} points callers to read tools`);
+  }
+});
+
 test('MCP tool schema hints describe character caps', () => {
   const { server } = createMcpServer();
   const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
