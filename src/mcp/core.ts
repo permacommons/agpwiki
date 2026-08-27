@@ -35,6 +35,7 @@ import { canUseBlogAdminTools, canUseWikiAdminTools } from '../services/authoriz
 import {
   type BlogPostDeleteInput,
   type BlogPostDiffInput,
+  type BlogPostResult,
   type BlogPostUpdateInput,
   type BlogPostWriteInput,
   createBlogPost,
@@ -126,6 +127,7 @@ import {
   type WikiPageDeleteInput,
   type WikiPagePatchInput,
   type WikiPageReplaceExactTextInput,
+  type WikiPageResult,
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
   type WikiPageWriteInput,
@@ -172,6 +174,31 @@ const LANGUAGE_TAG_MAX_LENGTH = 8;
 const CITATION_CLAIM_LOCATOR_TYPE_MAX_LENGTH = 32;
 const PAGE_CHECK_TYPE_MAX_LENGTH = 64;
 const PAGE_CHECK_STATUS_MAX_LENGTH = 32;
+const WRITE_RESPONSE_DESCRIPTION =
+  'Write responses return compact metadata and omit full body content. Use the read tool to retrieve content after writing.';
+
+const toWikiWriteResponse = ({
+  id,
+  slug,
+  currentRevId,
+  contentHash,
+  createdAt,
+  updatedAt,
+}: WikiPageResult) => ({
+  id,
+  slug,
+  currentRevId,
+  contentHash,
+  createdAt,
+  updatedAt,
+});
+
+const toBlogWriteResponse = ({ id, slug, createdAt, updatedAt }: BlogPostResult) => ({
+  id,
+  slug,
+  createdAt,
+  updatedAt,
+});
 
 const ensureMcpErrorMap = () => {
   const existing = z.getErrorMap();
@@ -276,7 +303,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       version: '0.1.0',
     },
     {
-      instructions: 'Use tools to create/update wiki pages, citations, and media (Wikimedia Commons), and resources to read them.',
+      instructions:
+        'Use tools to create/update wiki pages, citations, and media (Wikimedia Commons), and resources to read them. Wiki and blog write tools return compact metadata and omit full body content; use read tools to retrieve content after writing.',
     }
   );
 
@@ -557,7 +585,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        'Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy.',
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -579,7 +607,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
-      return payload;
+      return toWikiWriteResponse(payload);
     })
   );
 
@@ -645,7 +673,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Blog Post',
       description:
-        'Create a new blog post with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}.',
+        `Create a new blog post with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -661,7 +689,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await createBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return payload;
+      return toBlogWriteResponse(payload);
     })
   );
 
@@ -670,7 +698,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Blog Post',
       description:
-        'Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}.',
+        `Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -687,7 +715,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const payload = await updateBlogPost(dal, { ...args, tags: mergeTags(args.tags) }, userId);
-      return payload;
+      return toBlogWriteResponse(payload);
     })
   );
 
@@ -1453,7 +1481,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Apply Wiki Patch',
       description:
-        'Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy.',
+        `Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1476,7 +1504,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
-      return payload;
+      return toWikiWriteResponse(payload);
     })
   );
 
@@ -1485,7 +1513,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        'Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite \'Legacy\' section to match sources"}. Before making edits, review policies linked from /meta/policy.',
+        `Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite 'Legacy' section to match sources"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1516,7 +1544,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
-      return payload;
+      return toWikiWriteResponse(payload);
       }
     )
   );
@@ -1526,7 +1554,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Replace Exact Text',
       description:
-        'Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy.',
+        `Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1556,7 +1584,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
-      return payload;
+      return toWikiWriteResponse(payload);
       }
     )
   );
@@ -1566,7 +1594,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Wiki Page',
       description:
-        'Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy.',
+        `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1589,7 +1617,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         { ...writeArgs, tags: mergeTags(writeArgs.tags) },
         userId
       );
-      return payload;
+      return toWikiWriteResponse(payload);
     })
   );
 

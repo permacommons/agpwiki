@@ -29,3 +29,4 @@ Once I've signed off on your proposed citations:
 - Use the wiki_createPage tool to create the article
 - Use `[@citation-key]` syntax for inline citations, optionally with `:claim-id`
 - The bibliography will be auto-generated from your citations
+- The create response omits the full body; use wiki_readPage if you need to inspect the saved content
