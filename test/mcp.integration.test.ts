@@ -491,11 +491,23 @@ test('MCP blog write tools omit full body from responses', async () => {
       },
       { authInfo }
     );
-    const createdPayload = created.structuredContent as { body?: unknown; slug?: string };
+    const createdPayload = created.structuredContent as {
+      body?: unknown;
+      slug?: string;
+      currentRevId?: string;
+    };
 
     assert.equal(created.isError, undefined);
     assert.equal(createdPayload.slug, slug);
     assert.equal(Object.hasOwn(createdPayload, 'body'), false);
+    assert.deepEqual(Object.keys(createdPayload).sort(), [
+      'createdAt',
+      'currentRevId',
+      'id',
+      'slug',
+      'updatedAt',
+    ]);
+    assert.match(createdPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
 
     const updated = await tools.blog_updatePost.handler(
       {
@@ -505,15 +517,24 @@ test('MCP blog write tools omit full body from responses', async () => {
       },
       { authInfo }
     );
-    const updatedPayload = updated.structuredContent as { body?: unknown; slug?: string };
+    const updatedPayload = updated.structuredContent as {
+      body?: unknown;
+      slug?: string;
+      currentRevId?: string;
+    };
 
     assert.equal(updated.isError, undefined);
     assert.equal(updatedPayload.slug, slug);
     assert.equal(Object.hasOwn(updatedPayload, 'body'), false);
+    assert.notEqual(updatedPayload.currentRevId, createdPayload.currentRevId);
 
     const read = await tools.blog_readPost.handler({ slug });
-    const readPayload = read.structuredContent as { body?: Record<string, string> };
+    const readPayload = read.structuredContent as {
+      body?: Record<string, string>;
+      currentRevId?: string;
+    };
     assert.equal(readPayload.body?.en, 'Updated post body.');
+    assert.equal(readPayload.currentRevId, updatedPayload.currentRevId);
   } finally {
     await cleanupTestArtifacts(dal, {
       postSlugPrefix: slugPrefix,

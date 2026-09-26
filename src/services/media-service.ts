@@ -33,6 +33,7 @@ import { validateMediaSlugFormat } from '../lib/media-validation.js';
 import type { MediaInstance } from '../models/manifests/media.js';
 import Media from '../models/media.js';
 import { assertCanDeleteMedia } from './authorization.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
@@ -62,12 +63,14 @@ export interface MediaUpdateInput {
   title?: LocalizedMapInput;
   caption?: LocalizedMapInput;
   altText?: LocalizedMapInput;
+  expectedRevId?: string;
   tags?: string[];
   revSummary: Record<string, string | null>;
 }
 
 export interface MediaRefreshInput {
   slug: string;
+  expectedRevId?: string;
   tags?: string[];
   revSummary: Record<string, string | null>;
 }
@@ -90,6 +93,7 @@ export interface MediaDeleteInput {
 export interface MediaResult {
   id: string;
   slug: string;
+  currentRevId: string;
   title: LocalizedMap | null;
   commonsTitle: string;
   mediaType: MediaType;
@@ -157,6 +161,7 @@ export interface MediaServiceOptions {
 const toMediaResult = (media: MediaInstance): MediaResult => ({
   id: media.id,
   slug: media.slug,
+  currentRevId: media._revID,
   title: (media.title ?? null) as LocalizedMap | null,
   commonsTitle: media.commonsTitle,
   mediaType: media.mediaType as MediaType,
@@ -322,7 +327,7 @@ export async function createMedia(
 
 export async function updateMedia(
   _dalInstance: DataAccessLayer,
-  { slug, newSlug, title, caption, altText, tags = [], revSummary }: MediaUpdateInput,
+  { slug, newSlug, title, caption, altText, expectedRevId, tags = [], revSummary }: MediaUpdateInput,
   userId: string,
   options: MediaServiceOptions = {}
 ): Promise<MediaResult> {
@@ -336,6 +341,7 @@ export async function updateMedia(
       ensureKeyLength(normalizedNewSlug, 'newSlug', MEDIA_SLUG_MAX_LENGTH, errors);
     }
   }
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   validateLocalizedField(title, 'title', MEDIA_TITLE_MAX_LENGTH, errors);
   validateLocalizedField(caption, 'caption', MEDIA_CAPTION_MAX_LENGTH, errors);
@@ -347,6 +353,7 @@ export async function updateMedia(
   if (!media) {
     throw new NotFoundError(`Media not found: ${slug}`, { slug });
   }
+  assertExpectedRevision(media._revID, expectedRevId);
 
   const targetSlug = normalizedNewSlug ?? null;
   if (targetSlug && targetSlug !== slug) {
@@ -378,7 +385,7 @@ export async function updateMedia(
   if (normalizedRevSummary !== undefined) media._revSummary = normalizedRevSummary;
   media.updatedAt = new Date();
 
-  await media.save();
+  await saveWithExpectedRevision(media, expectedRevId);
 
   // Move stored thumbnails to the new slug directory if the slug
   // changed. Storage is best-effort: a missing source dir is fine
@@ -393,12 +400,13 @@ export async function updateMedia(
 
 export async function refreshMedia(
   _dalInstance: DataAccessLayer,
-  { slug, tags = [], revSummary }: MediaRefreshInput,
+  { slug, expectedRevId, tags = [], revSummary }: MediaRefreshInput,
   userId: string,
   options: MediaServiceOptions = {}
 ): Promise<MediaResult> {
   const errors = new ValidationCollector('Invalid media refresh input.');
   ensureNonEmptyString(slug, 'slug', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
@@ -407,6 +415,7 @@ export async function refreshMedia(
   if (!media) {
     throw new NotFoundError(`Media not found: ${slug}`, { slug });
   }
+  assertExpectedRevision(media._revID, expectedRevId);
 
   const fetcher = options.commonsFetcher ?? fetchCommonsMetadata;
   const fetched = await fetcher(media.commonsTitle);
@@ -420,7 +429,7 @@ export async function refreshMedia(
   if (normalizedRevSummary !== undefined) media._revSummary = normalizedRevSummary;
   media.updatedAt = new Date();
 
-  await media.save();
+  await saveWithExpectedRevision(media, expectedRevId);
 
   // Cached thumbnails reflect the previous Commons state. Wipe them
   // so the next render-time miss re-fetches against the current URL.

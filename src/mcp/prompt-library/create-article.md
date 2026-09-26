@@ -30,3 +30,4 @@ Once I've signed off on your proposed citations:
 - Use `[@citation-key]` syntax for inline citations, optionally with `:claim-id`
 - The bibliography will be auto-generated from your citations
 - The create response omits the full body; use wiki_readPage if you need to inspect the saved content
+- To revise the article later, pass the `currentRevId` from your latest read or write as `expectedRevId` (`baseRevId` for wiki_applyPatch). If an edit fails with `precondition_failed` or `conflict`, nothing was saved: re-read the page with wiki_readPage and reapply your edit to the current version.

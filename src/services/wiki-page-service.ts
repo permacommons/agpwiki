@@ -31,6 +31,7 @@ import {
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
@@ -77,6 +78,7 @@ export interface WikiPageWriteInput {
 
 export interface WikiPageUpdateInput extends WikiPageWriteInput {
   newSlug?: string;
+  expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
 
@@ -609,6 +611,7 @@ export async function updateWikiPage(
     title,
     body,
     originalLanguage,
+    expectedRevId,
     tags = [],
     revSummary,
   }: WikiPageUpdateInput,
@@ -619,6 +622,7 @@ export async function updateWikiPage(
   const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   requireRevSummary(revSummary, errors);
@@ -642,6 +646,7 @@ export async function updateWikiPage(
     });
   }
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
+  assertExpectedRevision(page._revID, expectedRevId);
 
   if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
     const slugMatch = await findCurrentPageBySlug(normalizedNewSlug);
@@ -670,7 +675,7 @@ export async function updateWikiPage(
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
-  await page.save();
+  await saveWithExpectedRevision(page, expectedRevId);
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'update');
   }
@@ -703,12 +708,7 @@ export async function applyWikiPagePatch(
   }
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
-  if (baseRevId && baseRevId !== page._revID) {
-    throw new PreconditionFailedError(
-      `Revision mismatch: current is ${page._revID ?? 'unknown'}, base was ${baseRevId}.`,
-      { currentRevId: page._revID ?? null, baseRevId }
-    );
-  }
+  assertExpectedRevision(page._revID, baseRevId, 'baseRevId');
 
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
@@ -731,7 +731,7 @@ export async function applyWikiPagePatch(
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
-  await page.save();
+  await saveWithExpectedRevision(page, baseRevId, 'baseRevId');
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'patch');
   }
@@ -802,12 +802,7 @@ export async function rewriteWikiPageSection(
   }
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
-  if (expectedRevId && expectedRevId !== page._revID) {
-    throw new PreconditionFailedError(
-      `Revision mismatch: current is ${page._revID ?? 'unknown'}, expected was ${expectedRevId}.`,
-      { currentRevId: page._revID ?? null, expectedRevId }
-    );
-  }
+  assertExpectedRevision(page._revID, expectedRevId);
 
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
@@ -887,7 +882,7 @@ export async function rewriteWikiPageSection(
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
-  await page.save();
+  await saveWithExpectedRevision(page, expectedRevId);
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'rewrite-section');
   }
@@ -935,12 +930,7 @@ export async function replaceWikiPageExactText(
   }
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
-  if (expectedRevId && expectedRevId !== page._revID) {
-    throw new PreconditionFailedError(
-      `Revision mismatch: current is ${page._revID ?? 'unknown'}, expected was ${expectedRevId}.`,
-      { currentRevId: page._revID ?? null, expectedRevId }
-    );
-  }
+  assertExpectedRevision(page._revID, expectedRevId);
 
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
@@ -969,7 +959,7 @@ export async function replaceWikiPageExactText(
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
-  await page.save();
+  await saveWithExpectedRevision(page, expectedRevId);
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'replace-exact');
   }

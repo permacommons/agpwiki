@@ -16,11 +16,13 @@ import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/medi
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
 import {
   ensureNonEmptyString,
   ensureOptionalLanguage,
+  ensureOptionalString,
   normalizeOptionalSlug,
   normalizeSlugInput,
   requireRevSummary,
@@ -52,9 +54,10 @@ const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector)
 const findCurrentPostBySlug = async (slug: string) =>
   BlogPost.filterWhere({ slug, _oldRevOf: null, _revDeleted: false } as Record<string, unknown>).first();
 
-const toBlogPostResult = (post: BlogPostInstance) => ({
+const toBlogPostResult = (post: BlogPostInstance): BlogPostResult => ({
   id: post.id,
   slug: post.slug,
+  currentRevId: post._revID,
   title: post.title ?? null,
   body: post.body ?? null,
   summary: post.summary ?? null,
@@ -75,12 +78,14 @@ export interface BlogPostWriteInput {
 
 export interface BlogPostUpdateInput extends BlogPostWriteInput {
   newSlug?: string;
+  expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
 
 export interface BlogPostResult {
   id: string;
   slug: string;
+  currentRevId: string;
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
   summary: Record<string, string> | null | undefined;
@@ -284,7 +289,17 @@ export async function createBlogPost(
 
 export async function updateBlogPost(
   dalInstance: DataAccessLayer,
-  { slug, newSlug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostUpdateInput,
+  {
+    slug,
+    newSlug,
+    title,
+    body,
+    summary,
+    originalLanguage,
+    expectedRevId,
+    tags = [],
+    revSummary,
+  }: BlogPostUpdateInput,
   userId: string
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post update input.');
@@ -292,6 +307,7 @@ export async function updateBlogPost(
   const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   validateSummary(summary, errors);
@@ -315,6 +331,7 @@ export async function updateBlogPost(
       slug: normalizedSlug,
     });
   }
+  assertExpectedRevision(post._revID, expectedRevId);
   if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
     const slugMatch = await findCurrentPostBySlug(normalizedNewSlug);
     if (slugMatch) {
@@ -336,7 +353,7 @@ export async function updateBlogPost(
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.updatedAt = new Date();
-  await post.save();
+  await saveWithExpectedRevision(post, expectedRevId);
 
   return toBlogPostResult(post);
 }

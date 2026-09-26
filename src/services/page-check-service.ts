@@ -21,11 +21,13 @@ import {
 import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageCheck from '../models/page-check.js';
 import { assertCanDeletePageCheck } from './authorization.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNoControlCharacters,
   ensureNonEmptyString,
   ensureOptionalLanguage,
+  ensureOptionalString,
   normalizeSlugInput,
   parseOptionalDate,
   requireRevSummary,
@@ -58,12 +60,14 @@ export interface PageCheckUpdateInput {
   metrics?: PageCheckMetrics;
   targetRevId?: string;
   completedAt?: string | null;
+  expectedRevId?: string;
   tags?: string[];
   revSummary: Record<string, string | null>;
 }
 
 export interface PageCheckResult {
   id: string;
+  currentRevId: string;
   pageId: string;
   type: string;
   status: string;
@@ -142,6 +146,7 @@ export interface PageCheckDeleteResult {
 
 const toPageCheckResult = (check: PageCheckInstance): PageCheckResult => ({
   id: check.id,
+  currentRevId: check._revID,
   pageId: check.pageId,
   type: check.type,
   status: check.status,
@@ -409,6 +414,7 @@ export async function updatePageCheck(
     metrics,
     targetRevId,
     completedAt,
+    expectedRevId,
     tags = [],
     revSummary,
   }: PageCheckUpdateInput,
@@ -416,6 +422,7 @@ export async function updatePageCheck(
 ): Promise<PageCheckResult> {
   const errors = new ValidationCollector('Invalid page check update input.');
   ensureNonEmptyString(checkId, 'checkId', errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   validatePageCheckType(type, errors);
   validatePageCheckStatus(status, errors);
@@ -455,6 +462,7 @@ export async function updatePageCheck(
       checkId,
     });
   }
+  assertExpectedRevision(check._revID, expectedRevId);
 
   if (targetRevId) {
     const targetRevision = await fetchPageRevisionByRevId(dalInstance, check.pageId, targetRevId);
@@ -496,7 +504,7 @@ export async function updatePageCheck(
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) check._revSummary = normalizedRevSummary;
 
-  await check.save();
+  await saveWithExpectedRevision(check, expectedRevId);
 
   return toPageCheckResult(check);
 }

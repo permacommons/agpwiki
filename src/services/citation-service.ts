@@ -13,6 +13,7 @@ import { sanitizeLocalizedMapInput } from '../lib/localized.js';
 import Citation from '../models/citation.js';
 import type { CitationInstance } from '../models/manifests/citation.js';
 import { assertCanDeleteCitation } from './authorization.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
@@ -38,6 +39,7 @@ export interface CitationUpdateInput {
   key: string;
   newKey?: string;
   data?: Record<string, unknown> | null;
+  expectedRevId?: string;
   tags?: string[];
   revSummary: Record<string, string | null>;
 }
@@ -45,6 +47,7 @@ export interface CitationUpdateInput {
 export interface CitationResult {
   id: string;
   key: string;
+  currentRevId: string;
   data: Record<string, unknown> | null | undefined;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
@@ -133,6 +136,7 @@ export interface CitationDeleteResult {
 const toCitationResult = (citation: CitationInstance): CitationResult => ({
   id: citation.id,
   key: citation.key,
+  currentRevId: citation._revID,
   data: citation.data ?? null,
   createdAt: citation.createdAt ?? null,
   updatedAt: citation.updatedAt ?? null,
@@ -350,7 +354,7 @@ export async function createCitation(
 
 export async function updateCitation(
   _dalInstance: DataAccessLayer,
-  { key, newKey, data, tags = [], revSummary }: CitationUpdateInput,
+  { key, newKey, data, expectedRevId, tags = [], revSummary }: CitationUpdateInput,
   userId: string
 ): Promise<CitationResult> {
   const errors = new ValidationCollector('Invalid citation update input.');
@@ -360,6 +364,7 @@ export async function updateCitation(
   }
   ensureOptionalString(newKey, 'newKey', errors);
   if (newKey) ensureKeyLength(newKey, 'newKey', 200, errors);
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureObject(data, 'data', {}, errors);
   const { sanitized: sanitizedData, warnings } =
@@ -376,6 +381,7 @@ export async function updateCitation(
       key,
     });
   }
+  assertExpectedRevision(citation._revID, expectedRevId);
 
   if (newKey && newKey !== key) {
     const keyMatch = await findCurrentCitationByKey(newKey);
@@ -394,7 +400,7 @@ export async function updateCitation(
   if (normalizedRevSummary !== undefined) citation._revSummary = normalizedRevSummary;
   citation.updatedAt = new Date();
 
-  await citation.save();
+  await saveWithExpectedRevision(citation, expectedRevId);
 
   return {
     ...toCitationResult(citation),

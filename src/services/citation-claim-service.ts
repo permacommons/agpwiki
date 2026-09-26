@@ -20,6 +20,7 @@ import CitationClaim from '../models/citation-claim.js';
 import type { CitationClaimInstance } from '../models/manifests/citation-claim.js';
 import { assertCanDeleteCitationClaim } from './authorization.js';
 import { findCurrentCitationByKey } from './citation-service.js';
+import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureKeyLength,
@@ -50,12 +51,14 @@ export interface CitationClaimWriteInput {
 export interface CitationClaimUpdateInput extends CitationClaimWriteInput {
   revSummary: Record<string, string | null>;
   newClaimId?: string;
+  expectedRevId?: string;
 }
 
 export interface CitationClaimResult {
   id: string;
   citationId: string;
   claimId: string;
+  currentRevId: string;
   assertion: Record<string, string> | null | undefined;
   quote: Record<string, string> | null | undefined;
   quoteLanguage: string | null | undefined;
@@ -139,6 +142,7 @@ const toCitationClaimResult = (claim: CitationClaimInstance): CitationClaimResul
   id: claim.id,
   citationId: claim.citationId,
   claimId: claim.claimId,
+  currentRevId: claim._revID,
   assertion: claim.assertion ?? null,
   quote: claim.quote ?? null,
   quoteLanguage: claim.quoteLanguage ?? null,
@@ -475,6 +479,7 @@ export async function updateCitationClaim(
     locatorType,
     locatorValue,
     locatorLabel,
+    expectedRevId,
     tags = [],
     revSummary,
   }: CitationClaimUpdateInput,
@@ -489,6 +494,7 @@ export async function updateCitationClaim(
     ensureClaimIdFormat(newClaimId, 'newClaimId', errors);
     ensureKeyLength(newClaimId, 'newClaimId', 200, errors);
   }
+  ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   if (assertion !== undefined) {
     if (requireMlString(assertion, 'assertion', errors)) {
@@ -523,6 +529,7 @@ export async function updateCitationClaim(
       claimId,
     });
   }
+  assertExpectedRevision(claim._revID, expectedRevId);
 
   if (newClaimId && newClaimId !== claimId) {
     const claimMatch = await findCurrentCitationClaim(citation.id, newClaimId);
@@ -558,7 +565,7 @@ export async function updateCitationClaim(
   if (normalizedRevSummary !== undefined) claim._revSummary = normalizedRevSummary;
   claim.updatedAt = new Date();
 
-  await claim.save();
+  await saveWithExpectedRevision(claim, expectedRevId);
 
   return toCitationClaimResult(claim);
 }
