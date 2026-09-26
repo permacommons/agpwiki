@@ -175,6 +175,7 @@
     relatedLabel: 'Fórum',
     discussThisPage: 'Az oldal megbeszélése',
     signInToPost: 'Jelentkezz be új témák indításához és válaszok közzétételéhez.',
+    editConflict: 'Ez a téma megváltozott, miközben dolgoztál rajta. Töltsd újra, és próbáld meg ismét.',
     verifyEmailToPost: 'Erősítsd meg az e-mail-címedet, mielőtt témát indítasz vagy választ teszel közzé.',
     index: {
       descriptionHtml: 'Válassz az alábbi beszélgetési kategóriák közül. A(z) {{articlesCategory}} kategória az egyes Agpedia-cikkek megbeszélésére szolgál. Ha nem vagy biztos benne, hová írj, használd a(z) {{generalCategory}} kategóriát.',

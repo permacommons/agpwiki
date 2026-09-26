@@ -175,6 +175,7 @@
     relatedLabel: 'Forum',
     discussThisPage: 'Bahas halaman ini',
     signInToPost: 'Masuk untuk memulai topik dan memublikasikan balasan.',
+    editConflict: 'Topik ini berubah saat Anda sedang mengerjakannya. Muat ulang lalu coba lagi.',
     verifyEmailToPost: 'Konfirmasikan alamat surel Anda sebelum memulai topik atau memublikasikan balasan.',
     index: {
       descriptionHtml: 'Pilih salah satu kategori diskusi di bawah ini. Kategori {{articlesCategory}} ditujukan untuk diskusi tentang artikel Agpedia tertentu. Jika kamu tidak yakin harus memposting di mana, gunakan kategori {{generalCategory}}.',

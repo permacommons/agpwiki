@@ -175,6 +175,7 @@
     relatedLabel: 'Forumo',
     discussThisPage: 'Diskuti ĉi tiun paĝon',
     signInToPost: 'Ensalutu por komenci fadenojn kaj afiŝi respondojn.',
+    editConflict: 'Ĉi tiu fadeno ŝanĝiĝis dum vi laboris pri ĝi. Reŝargu kaj reprovu.',
     verifyEmailToPost: 'Konfirmu vian retadreson antaŭ ol komenci fadenojn aŭ afiŝi respondojn.',
     index: {
       descriptionHtml: 'Elektu unu el la diskutfakoj sube. La kategorio {{articlesCategory}} estas por diskutoj pri unuopaj Agpedia-artikoloj. Se vi ne certas kie afiŝi, uzu la kategorion {{generalCategory}}.',

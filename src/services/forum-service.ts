@@ -3,6 +3,7 @@ import debug from '../../util/debug.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import {
   ForbiddenError,
+  isRevisionConflictError,
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
@@ -496,7 +497,14 @@ export const createForumComment = async (
     { tags: ['activity', 'comment'], date: createdAt }
   );
   threadRevision.updatedAt = createdAt;
-  await threadRevision.save();
+  try {
+    await threadRevision.save();
+  } catch (error) {
+    // The reply is already saved; failing the request now would misreport it
+    // as lost, while a concurrent thread revision has refreshed the thread.
+    if (!isRevisionConflictError(error)) throw error;
+    debug.error(`Skipped activity bump for thread ${thread.id}: ${error.message}`);
+  }
 
   try {
     await subscribeActorToForumThread(thread.id, userId);

@@ -368,6 +368,7 @@
     "relatedLabel": "Forum",
     "discussThisPage": "Discuss this page",
     "signInToPost": "Sign in to start threads and post replies.",
+    "editConflict": "This thread changed while you were working on it. Reload and try again.",
     "verifyEmailToPost": "Confirm your email address before starting threads or posting replies.",
     "index": {
       "descriptionHtml": "Select from one of the discussion categories below. The {{articlesCategory}} category is for discussions of individual Agpedia articles. If you're unsure where to post, use the {{generalCategory}} category.",

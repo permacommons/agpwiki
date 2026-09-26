@@ -175,6 +175,7 @@
     relatedLabel: 'Fórum',
     discussThisPage: 'Diskutovať o tejto stránke',
     signInToPost: 'Prihláste sa, aby ste mohli začínať vlákna a pridávať odpovede.',
+    editConflict: 'Toto vlákno sa zmenilo, kým ste na ňom pracovali. Znova ho načítajte a skúste to ešte raz.',
     verifyEmailToPost: 'Potvrď svoju e-mailovú adresu pred začatím vlákna alebo odoslaním odpovede.',
     index: {
       descriptionHtml: 'Vyberte si jednu z diskusných kategórií nižšie. Kategória {{articlesCategory}} je určená na diskusiu o jednotlivých článkoch Agpedie. Ak si nie ste istí, kam prispieť, použite kategóriu {{generalCategory}}.',

@@ -174,6 +174,7 @@
     relatedLabel: 'Foro',
     discussThisPage: 'Discutir esta página',
     signInToPost: 'Inicia sesión para abrir temas y publicar respuestas.',
+    editConflict: 'Este tema cambió mientras trabajabas en él. Recárgalo e inténtalo de nuevo.',
     verifyEmailToPost: 'Confirma tu dirección de correo electrónico antes de abrir temas o publicar respuestas.',
     index: {
       descriptionHtml: 'Selecciona una de las categorías de discusión de abajo. La categoría {{articlesCategory}} es para discusiones sobre artículos individuales de Agpedia. Si no estás seguro de dónde publicar, usa la categoría {{generalCategory}}.',

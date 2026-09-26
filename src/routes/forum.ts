@@ -6,6 +6,7 @@ import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import {
   ForbiddenError,
+  isRevisionConflictError,
   NotFoundError,
   ValidationError,
 } from '../lib/errors.js';
@@ -1096,6 +1097,10 @@ export const registerForumRoutes = (app: Express) => {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
+      if (isRevisionConflictError(error)) {
+        res.status(409).type('text').send(req.t('forum.editConflict'));
+        return;
+      }
       console.error('Failed to pin forum thread:', error);
       res.status(500).type('text').send(req.t('page.serverError'));
     }
@@ -1120,6 +1125,10 @@ export const registerForumRoutes = (app: Express) => {
       }
       if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (isRevisionConflictError(error)) {
+        res.status(409).type('text').send(req.t('forum.editConflict'));
         return;
       }
       console.error('Failed to delete forum thread:', error);
@@ -1148,6 +1157,10 @@ export const registerForumRoutes = (app: Express) => {
       }
       if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (isRevisionConflictError(error)) {
+        res.status(409).type('text').send(req.t('forum.editConflict'));
         return;
       }
       console.error('Failed to delete forum comment:', error);

@@ -175,6 +175,7 @@
     relatedLabel: 'Forumas',
     discussThisPage: 'Aptarti šį puslapį',
     signInToPost: 'Prisijunkite, jei norite pradėti gijas ir skelbti atsakymus.',
+    editConflict: 'Ši gija pasikeitė, kol su ja dirbote. Įkelkite iš naujo ir bandykite dar kartą.',
     verifyEmailToPost: 'Patvirtink savo el. pašto adresą prieš pradėdamas gijas ar skelbdamas atsakymus.',
     index: {
       descriptionHtml: 'Pasirinkite vieną iš toliau pateiktų diskusijų kategorijų. Kategorija {{articlesCategory}} skirta atskirų Agpedia straipsnių aptarimui. Jei nesate tikri, kur skelbti, naudokite kategoriją {{generalCategory}}.',
