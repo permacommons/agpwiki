@@ -37,7 +37,7 @@ Summarize formatting issues by severity.
 Short guidance or rationale for the formatting concerns.
 
 ## Step 5: Collaborate on fixes (if any)
-Coordinate with a human editor on which edits to apply before making changes. If edits are approved, apply them and track what was fixed. When editing, pass the `currentRevId` from your latest read or write of the page as `expectedRevId` (`baseRevId` for `wiki_applyPatch`); on a `precondition_failed` or `conflict` error, nothing was saved, so re-read the page and reapply your edit to the current version.
+Coordinate with a human editor on which edits to apply before making changes. If edits are approved, apply them and track what was fixed.
 
 ## Step 6: Submit the page check (required)
 Submit a **Completed** page check with the `page_check_create` tool:
