@@ -175,6 +175,7 @@
     relatedLabel: 'Forum',
     discussThisPage: 'Discuter cette page',
     signInToPost: 'Connecte-toi pour ouvrir des fils et publier des réponses.',
+    editConflict: 'Ce fil a changé pendant que tu travaillais dessus. Recharge-le et réessaie.',
     verifyEmailToPost: 'Confirme ton adresse e-mail avant d’ouvrir des fils ou de publier des réponses.',
     index: {
       descriptionHtml: 'Choisis l’une des catégories de discussion ci-dessous. La catégorie {{articlesCategory}} sert aux discussions sur des articles Agpedia précis. Si tu ne sais pas où publier, utilise la catégorie {{generalCategory}}.',

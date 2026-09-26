@@ -175,6 +175,7 @@
     relatedLabel: 'Forum',
     discussThisPage: 'Razpravljaj o tej strani',
     signInToPost: 'Prijavite se za začetek niti in objavljanje odgovorov.',
+    editConflict: 'Ta nit se je spremenila, medtem ko ste delali na njej. Znova jo naložite in poskusite še enkrat.',
     verifyEmailToPost: 'Potrdi svoj e-poštni naslov, preden začneš niti ali objaviš odgovore.',
     index: {
       descriptionHtml: 'Izberite eno od spodnjih kategorij razprave. Kategorija {{articlesCategory}} je namenjena razpravam o posameznih člankih Agpedie. Če niste prepričani, kam objaviti, uporabite kategorijo {{generalCategory}}.',

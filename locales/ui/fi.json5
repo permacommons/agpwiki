@@ -175,6 +175,7 @@
     relatedLabel: 'Foorumi',
     discussThisPage: 'Keskustele tästä sivusta',
     signInToPost: 'Kirjaudu sisään aloittaaksesi ketjuja ja julkaistaksesi vastauksia.',
+    editConflict: 'Tämä ketju muuttui samalla kun työskentelit sen parissa. Lataa se uudelleen ja yritä uudelleen.',
     verifyEmailToPost: 'Vahvista sähköpostiosoitteesi ennen ketjujen aloittamista tai vastausten julkaisemista.',
     index: {
       descriptionHtml: 'Valitse yksi alla olevista keskusteluluokista. Luokka {{articlesCategory}} on tarkoitettu yksittäisiä Agpedia-artikkeleita koskeville keskusteluille. Jos et ole varma, minne julkaista, käytä luokkaa {{generalCategory}}.',

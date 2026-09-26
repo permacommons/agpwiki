@@ -174,6 +174,7 @@
     relatedLabel: 'Forum',
     discussThisPage: 'Bu sayfayı tartış',
     signInToPost: 'Başlık açmak ve yanıt göndermek için oturum aç.',
+    editConflict: 'Siz üzerinde çalışırken bu başlık değişti. Yeniden yükleyip tekrar deneyin.',
     verifyEmailToPost: 'Başlık açmadan veya yanıt göndermeden önce e-posta adresinizi doğrulayın.',
     index: {
       descriptionHtml: 'Aşağıdaki tartışma kategorilerinden birini seç. {{articlesCategory}} kategorisi, belirli Agpedia makaleleriyle ilgili tartışmalar içindir. Nereye yazacağından emin değilsen {{generalCategory}} kategorisini kullan.',
