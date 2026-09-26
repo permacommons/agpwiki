@@ -71,10 +71,37 @@ export class NotFoundError extends McpToolError {
 }
 
 export class ConflictError extends McpToolError {
-  constructor(message: string, details?: Record<string, unknown>) {
-    super('conflict', message, { details, retryable: false });
+  constructor(
+    message: string,
+    details?: Record<string, unknown>,
+    options: { retryable?: boolean } = {}
+  ) {
+    super('conflict', message, { details, retryable: options.retryable ?? false });
   }
 }
+
+type RevisionConflictLike = Error & {
+  name: 'RevisionConflictError';
+  documentId?: string | null;
+  expectedRevId?: string | null;
+  currentRevId?: string | null;
+};
+
+// Matched by name so this module stays free of DAL imports.
+export const isRevisionConflictError = (error: unknown): error is RevisionConflictLike =>
+  error instanceof Error && error.name === 'RevisionConflictError';
+
+export const toRevisionConflictError = (error: RevisionConflictLike) =>
+  new ConflictError(
+    'The document was changed by another revision since it was loaded. ' +
+      'Re-read it and reapply your edit.',
+    {
+      documentId: error.documentId ?? null,
+      expectedRevId: error.expectedRevId ?? null,
+      currentRevId: error.currentRevId ?? null,
+    },
+    { retryable: true }
+  );
 
 export class ForbiddenError extends McpToolError {
   constructor(message: string, details?: Record<string, unknown>) {

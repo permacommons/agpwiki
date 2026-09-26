@@ -67,10 +67,16 @@ type RecentListItem = {
   actions?: RecentListAction[];
 };
 
-const parseRecentLimit = (limitQuery: unknown) => {
-  const limitParam = typeof limitQuery === 'string' ? Number(limitQuery) : 50;
-  return Number.isNaN(limitParam) ? 50 : Math.min(Math.max(limitParam, 1), 100);
+const parseIntegerQuery = (
+  value: unknown,
+  { fallback, min, max }: { fallback: number; min: number; max: number }
+) => {
+  const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN;
+  return Number.isNaN(parsed) ? fallback : Math.min(Math.max(parsed, min), max);
 };
+
+const parseRecentLimit = (limitQuery: unknown) =>
+  parseIntegerQuery(limitQuery, { fallback: 50, min: 1, max: 100 });
 
 const resolvePreferredText = (
   value: Record<string, string> | null,
@@ -961,10 +967,13 @@ export const registerToolRoutes = (app: Express) => {
   });
 
   app.get('/tool/pages', async (req, res) => {
-    const pageParam = typeof req.query.page === 'string' ? Number(req.query.page) : 1;
-    const page = Number.isNaN(pageParam) ? 1 : Math.max(pageParam, 1);
-    const perParam = typeof req.query.per === 'string' ? Number(req.query.per) : 50;
-    const per = Number.isNaN(perParam) ? 50 : Math.min(Math.max(perParam, 1), 200);
+    const per = parseIntegerQuery(req.query.per, { fallback: 50, min: 1, max: 200 });
+    // Keeps the offset a safe integer, which limit()/offset() require.
+    const page = parseIntegerQuery(req.query.page, {
+      fallback: 1,
+      min: 1,
+      max: Math.floor(Number.MAX_SAFE_INTEGER / per),
+    });
     const offset = (page - 1) * per;
 
     const { notLike } = WikiPage.ops;

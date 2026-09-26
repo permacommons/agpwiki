@@ -16,9 +16,11 @@ export {
 
 import {
   type FieldError,
+  isRevisionConflictError,
   McpToolError,
   type ToolErrorCode,
   type ToolErrorPayload,
+  toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
 
@@ -110,6 +112,9 @@ export const toToolErrorPayload = (error: unknown): ToolErrorPayload => {
         retryable: false,
       },
     };
+  }
+  if (isRevisionConflictError(error)) {
+    return toRevisionConflictError(error).toPayload();
   }
   const message = error instanceof Error ? error.message : String(error);
   const code = mapMessageToCode(message);

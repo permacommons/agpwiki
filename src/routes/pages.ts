@@ -4,7 +4,14 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { ConflictError, ForbiddenError, NotFoundError, ValidationError } from '../lib/errors.js';
+import {
+  ConflictError,
+  ForbiddenError,
+  isRevisionConflictError,
+  NotFoundError,
+  toRevisionConflictError,
+  ValidationError,
+} from '../lib/errors.js';
 import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
@@ -894,7 +901,8 @@ export const registerPageRoutes = (app: Express) => {
       );
 
       res.redirect(303, pageViewPath(slug, lang));
-    } catch (error) {
+    } catch (caught) {
+      const error = isRevisionConflictError(caught) ? toRevisionConflictError(caught) : caught;
       if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
