@@ -73,21 +73,19 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
       debug.db('Initializing PostgreSQL DAL...');
 
       const dalConfig = getPostgresConfig();
-      postgresDAL = createDataAccessLayer(
+      const dal = createDataAccessLayer(
         dalConfig as Partial<PostgresConfig> & JsonObject
       ) as unknown as DataAccessLayer;
 
-      await postgresDAL.connect();
-      initializeManifestModels(postgresDAL);
+      await dal.connect();
+      initializeManifestModels(dal);
       setBootstrapResolver(() => ({
-        getModel: postgresDAL?.getModel.bind(postgresDAL) ?? (() => null),
+        getModel: dal.getModel.bind(dal),
       }));
 
       if (shouldRunMigrations()) {
-        // Migrations must complete successfully before the DAL is considered
-        // ready; otherwise callers can observe a partially created schema.
-        await withMigrationLock(postgresDAL, async () => {
-          await postgresDAL.migrate();
+        await withMigrationLock(dal, async () => {
+          await dal.migrate();
           debug.db('PostgreSQL migrations completed');
         });
       } else {
@@ -95,12 +93,15 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
       }
 
       debug.db('PostgreSQL DAL connected successfully');
-      return postgresDAL;
+      // Publish the DAL only once it is connected and migrated: callers that
+      // arrive meanwhile wait on connectionPromise instead of receiving a DAL
+      // whose pool already works against a partially created schema.
+      postgresDAL = dal;
+      return dal;
     } catch (error) {
       // Clear cached state so a later retry does not inherit a failed
       // initialization attempt.
       connectionPromise = null;
-      postgresDAL = null;
       const message = error instanceof Error ? error.message : String(error);
       debug.error(`Failed to initialize PostgreSQL DAL: ${message}`);
       debug.error({ error: error instanceof Error ? error : new Error(message) });
