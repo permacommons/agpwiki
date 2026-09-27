@@ -13,6 +13,7 @@
     "build": "tsc -p tsconfig.build.json",
     "postbuild": "node util/copy-assets.mjs",
     "start": "node dist/src/index.js",
+    "smoke:start": "node util/smoke-start.mjs",
     "mcp": "tsx src/mcp/stdio.ts",
     "mcp-http": "tsx src/mcp/http.ts",
     "create-user": "node --import tsx src/scripts/create-user.ts",
