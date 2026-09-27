@@ -620,3 +620,458 @@ test('MCP citation_create rejects a stale or wrong policy hash', async () => {
     });
   }
 });
+
+type ToolHandlers = ReturnType<typeof getToolHandlers>;
+type ToolAuthInfo = { extra: { userId: string } };
+
+const callTool = async <T>(
+  tools: ToolHandlers,
+  name: string,
+  args: unknown,
+  authInfo?: ToolAuthInfo
+): Promise<T> => {
+  const result = await tools[name].handler(args, authInfo ? { authInfo } : undefined);
+  assert.equal(
+    result.isError,
+    undefined,
+    `${name} failed: ${JSON.stringify(result.structuredContent)}`
+  );
+  return result.structuredContent as T;
+};
+
+type RevisionRead<T> = { revision: T & { revId: string } };
+
+type WikiRevisionFields = {
+  title: Record<string, string> | null;
+  body: Record<string, string> | null;
+};
+
+const HISTORY_ORIGINAL_BODY_EN = 'Lead text.\n\n## History\n\nOld history.\n';
+const HISTORY_BODY_DE = 'Einleitung.\n\n## Geschichte\n\nAlte Geschichte.\n';
+const HISTORY_TITLE = { en: 'History Test', de: 'Verlaufstest' };
+
+const wikiHistoryCases: Array<{
+  tool: string;
+  args: (slug: string, currentRevId: string) => Record<string, unknown>;
+}> = [
+  {
+    tool: 'wiki_updatePage',
+    args: (slug, currentRevId) => ({
+      slug,
+      body: { en: 'Lead text.\n\n## History\n\nNew history.\n' },
+      expectedRevId: currentRevId,
+    }),
+  },
+  {
+    tool: 'wiki_applyPatch',
+    args: (slug, currentRevId) => ({
+      slug,
+      format: 'unified',
+      lang: 'en',
+      patch: [
+        '--- before',
+        '+++ after',
+        '@@ -3,3 +3,3 @@',
+        ' ## History',
+        ' ',
+        '-Old history.',
+        '+New history.',
+      ].join('\n'),
+      baseRevId: currentRevId,
+    }),
+  },
+  {
+    tool: 'wiki_rewriteSection',
+    args: (slug, currentRevId) => ({
+      slug,
+      heading: 'History',
+      content: 'New history.',
+      lang: 'en',
+      expectedRevId: currentRevId,
+    }),
+  },
+  {
+    tool: 'wiki_replaceExactText',
+    args: (slug, currentRevId) => ({
+      slug,
+      replacements: [{ from: 'Old history.', to: 'New history.' }],
+      lang: 'en',
+      expectedRevId: currentRevId,
+    }),
+  },
+];
+
+for (const { tool, args } of wikiHistoryCases) {
+  test(`MCP ${tool} leaves the previous wiki revision intact`, async () => {
+    const dal = await getDal();
+    const slug = `test-mcp-history-${tool.toLowerCase().replace('_', '-')}-${Date.now()}`;
+    let userIdForCleanup: string | null = null;
+
+    try {
+      const user = await createTestUser();
+      userIdForCleanup = user.id;
+      await createWikiPage(
+        dal,
+        {
+          slug,
+          title: HISTORY_TITLE,
+          body: { en: HISTORY_ORIGINAL_BODY_EN, de: HISTORY_BODY_DE },
+          originalLanguage: 'en',
+        },
+        user.id
+      );
+
+      const { server } = createMcpServer({ skipPolicyCheck: true });
+      const tools = getToolHandlers(server);
+      const authInfo = { extra: { userId: user.id } };
+
+      const before = await callTool<WikiRevisionFields & { currentRevId: string }>(
+        tools,
+        'wiki_readPage',
+        { slug }
+      );
+      assert.equal(before.body?.en, HISTORY_ORIGINAL_BODY_EN);
+
+      const written = await callTool<{ currentRevId: string }>(
+        tools,
+        tool,
+        {
+          ...args(slug, before.currentRevId),
+          policyHash: '',
+          revSummary: { en: `History check for ${tool}.` },
+        },
+        authInfo
+      );
+      assert.notEqual(written.currentRevId, before.currentRevId);
+
+      const previous = await callTool<RevisionRead<WikiRevisionFields>>(
+        tools,
+        'wiki_readRevision',
+        { slug, revId: before.currentRevId }
+      );
+      assert.equal(previous.revision.revId, before.currentRevId);
+      assert.equal(previous.revision.body?.en, HISTORY_ORIGINAL_BODY_EN);
+      assert.equal(previous.revision.body?.de, HISTORY_BODY_DE);
+      assert.deepEqual(previous.revision.title, HISTORY_TITLE);
+
+      const current = await callTool<WikiRevisionFields & { currentRevId: string }>(
+        tools,
+        'wiki_readPage',
+        { slug }
+      );
+      assert.equal(current.currentRevId, written.currentRevId);
+      assert.match(current.body?.en ?? '', /New history\./);
+      assert.doesNotMatch(current.body?.en ?? '', /Old history\./);
+      assert.equal(current.body?.de, HISTORY_BODY_DE);
+      assert.deepEqual(current.title, HISTORY_TITLE);
+    } finally {
+      await cleanupTestArtifacts(dal, {
+        slugPrefix: `${slug}%`,
+        userId: userIdForCleanup ?? undefined,
+      });
+    }
+  });
+}
+
+test('MCP blog_updatePost leaves the previous blog revision intact', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-history-blog-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const title = { en: 'Blog History', de: 'Blog-Verlauf' };
+    const summary = { en: 'Summary.', de: 'Zusammenfassung.' };
+    const created = await callTool<{ currentRevId: string }>(
+      tools,
+      'blog_createPost',
+      {
+        slug,
+        title,
+        summary,
+        body: { en: 'Old blog body.', de: 'Deutscher Text.' },
+      },
+      authInfo
+    );
+
+    const updated = await callTool<{ currentRevId: string }>(
+      tools,
+      'blog_updatePost',
+      {
+        slug,
+        body: { en: 'New blog body.' },
+        expectedRevId: created.currentRevId,
+        revSummary: { en: 'Revise English body.' },
+      },
+      authInfo
+    );
+    assert.notEqual(updated.currentRevId, created.currentRevId);
+
+    type BlogFields = {
+      title: Record<string, string> | null;
+      summary: Record<string, string> | null;
+      body: Record<string, string> | null;
+    };
+    const previous = await callTool<RevisionRead<BlogFields>>(tools, 'blog_readRevision', {
+      slug,
+      revId: created.currentRevId,
+    });
+    assert.deepEqual(previous.revision.body, { en: 'Old blog body.', de: 'Deutscher Text.' });
+    assert.deepEqual(previous.revision.title, title);
+    assert.deepEqual(previous.revision.summary, summary);
+
+    const current = await callTool<BlogFields & { currentRevId: string }>(
+      tools,
+      'blog_readPost',
+      { slug }
+    );
+    assert.equal(current.currentRevId, updated.currentRevId);
+    assert.deepEqual(current.body, { en: 'New blog body.', de: 'Deutscher Text.' });
+    assert.deepEqual(current.title, title);
+    assert.deepEqual(current.summary, summary);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      postSlugPrefix: `${slug}%`,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('MCP citation_update and claim_update leave previous revisions intact', async () => {
+  const dal = await getDal();
+  const key = `test-mcp-history-cite-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+
+    const { server } = createMcpServer({ skipPolicyCheck: true });
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const originalData = {
+      type: 'book',
+      title: 'Old citation title',
+      author: [{ family: 'Doe', given: 'Jane' }],
+      issued: { 'date-parts': [[2020]] },
+    };
+    const createdCitation = await callTool<{ currentRevId: string }>(
+      tools,
+      'citation_create',
+      { key, data: originalData, policyHash: '' },
+      authInfo
+    );
+
+    const updatedData = { ...originalData, title: 'New citation title' };
+    const updatedCitation = await callTool<{ currentRevId: string }>(
+      tools,
+      'citation_update',
+      {
+        key,
+        data: updatedData,
+        expectedRevId: createdCitation.currentRevId,
+        policyHash: '',
+        revSummary: { en: 'Fix title.' },
+      },
+      authInfo
+    );
+    assert.notEqual(updatedCitation.currentRevId, createdCitation.currentRevId);
+
+    type CitationFields = { data: Record<string, unknown> | null };
+    const previousCitation = await callTool<RevisionRead<CitationFields>>(
+      tools,
+      'citation_readRevision',
+      { key, revId: createdCitation.currentRevId }
+    );
+    assert.equal(previousCitation.revision.data?.title, 'Old citation title');
+    assert.deepEqual(previousCitation.revision.data?.author, originalData.author);
+    assert.deepEqual(previousCitation.revision.data?.issued, originalData.issued);
+
+    const currentCitation = await callTool<CitationFields & { currentRevId: string }>(
+      tools,
+      'citation_read',
+      { key }
+    );
+    assert.equal(currentCitation.currentRevId, updatedCitation.currentRevId);
+    assert.equal(currentCitation.data?.title, 'New citation title');
+    assert.deepEqual(currentCitation.data?.author, originalData.author);
+    assert.deepEqual(currentCitation.data?.issued, originalData.issued);
+
+    const claimId = 'history';
+    const locatorValue = { en: '12' };
+    const createdClaim = await callTool<{ currentRevId: string }>(
+      tools,
+      'claim_create',
+      {
+        key,
+        claimId,
+        assertion: { en: 'Old assertion.', de: 'Deutsche Aussage.' },
+        locatorType: 'page',
+        locatorValue,
+        policyHash: '',
+      },
+      authInfo
+    );
+
+    const updatedClaim = await callTool<{ currentRevId: string }>(
+      tools,
+      'claim_update',
+      {
+        key,
+        claimId,
+        assertion: { en: 'New assertion.' },
+        expectedRevId: createdClaim.currentRevId,
+        policyHash: '',
+        revSummary: { en: 'Refine assertion.' },
+      },
+      authInfo
+    );
+    assert.notEqual(updatedClaim.currentRevId, createdClaim.currentRevId);
+
+    type ClaimFields = {
+      assertion: Record<string, string> | null;
+      locatorValue: Record<string, string> | null;
+    };
+    const previousClaim = await callTool<RevisionRead<ClaimFields>>(
+      tools,
+      'claim_readRevision',
+      { key, claimId, revId: createdClaim.currentRevId }
+    );
+    assert.deepEqual(previousClaim.revision.assertion, {
+      en: 'Old assertion.',
+      de: 'Deutsche Aussage.',
+    });
+    assert.deepEqual(previousClaim.revision.locatorValue, locatorValue);
+
+    const currentClaim = await callTool<ClaimFields & { currentRevId: string }>(
+      tools,
+      'claim_read',
+      { key, claimId }
+    );
+    assert.equal(currentClaim.currentRevId, updatedClaim.currentRevId);
+    assert.deepEqual(currentClaim.assertion, { en: 'New assertion.', de: 'Deutsche Aussage.' });
+    assert.deepEqual(currentClaim.locatorValue, locatorValue);
+  } finally {
+    await dal.query(
+      'DELETE FROM citation_claims WHERE citation_id IN (SELECT id FROM citations WHERE key LIKE $1)',
+      [`${key}%`]
+    );
+    await dal.query('DELETE FROM citations WHERE key LIKE $1', [`${key}%`]);
+    await cleanupTestArtifacts(dal, { userId: userIdForCleanup ?? undefined });
+  }
+});
+
+test('MCP page_check_update leaves the previous page check revision intact', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-history-check-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const page = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Page Check History' },
+        body: { en: 'Checked text.' },
+        originalLanguage: 'en',
+      },
+      user.id
+    );
+
+    const { server } = createMcpServer({ skipPolicyCheck: true });
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+
+    const originalMetrics = {
+      issues_found: { high: 1, medium: 2, low: 0 },
+      issues_fixed: { high: 0, medium: 1, low: 0 },
+    };
+    const notes = { en: 'Reviewer notes.' };
+    const created = await callTool<{ id: string; currentRevId: string }>(
+      tools,
+      'page_check_create',
+      {
+        slug,
+        type: 'fact_check',
+        status: 'in_progress',
+        checkResults: { en: 'Old results.', de: 'Alte Ergebnisse.' },
+        notes,
+        metrics: originalMetrics,
+        targetRevId: page.currentRevId,
+        policyHash: '',
+      },
+      authInfo
+    );
+
+    const updatedMetrics = {
+      issues_found: { high: 1, medium: 2, low: 0 },
+      issues_fixed: { high: 1, medium: 2, low: 0 },
+    };
+    const updated = await callTool<{ currentRevId: string }>(
+      tools,
+      'page_check_update',
+      {
+        checkId: created.id,
+        status: 'completed',
+        checkResults: { en: 'New results.' },
+        metrics: updatedMetrics,
+        expectedRevId: created.currentRevId,
+        policyHash: '',
+        revSummary: { en: 'Record fixes.' },
+      },
+      authInfo
+    );
+    assert.notEqual(updated.currentRevId, created.currentRevId);
+
+    type CheckFields = {
+      status: string;
+      checkResults: Record<string, string> | null;
+      notes: Record<string, string> | null;
+      metrics: typeof originalMetrics | null;
+      targetRevId: string;
+    };
+    const previous = await callTool<RevisionRead<CheckFields>>(
+      tools,
+      'page_check_readRevision',
+      { checkId: created.id, revId: created.currentRevId }
+    );
+    assert.equal(previous.revision.status, 'in_progress');
+    assert.deepEqual(previous.revision.checkResults, {
+      en: 'Old results.',
+      de: 'Alte Ergebnisse.',
+    });
+    assert.deepEqual(previous.revision.metrics, originalMetrics);
+    assert.deepEqual(previous.revision.notes, notes);
+    assert.equal(previous.revision.targetRevId, page.currentRevId);
+
+    type ListedCheck = CheckFields & { id: string; currentRevId: string };
+    const listed = await callTool<{ checks: ListedCheck[] }>(tools, 'page_check_list', { slug });
+    const current = listed.checks.find(check => check.id === created.id);
+    assert.ok(current);
+    assert.equal(current.currentRevId, updated.currentRevId);
+    assert.equal(current.status, 'completed');
+    assert.deepEqual(current.checkResults, { en: 'New results.', de: 'Alte Ergebnisse.' });
+    assert.deepEqual(current.metrics, updatedMetrics);
+    assert.deepEqual(current.notes, notes);
+    assert.equal(current.targetRevId, page.currentRevId);
+  } finally {
+    await dal.query(
+      'DELETE FROM page_checks WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [`${slug}%`]
+    );
+    await cleanupTestArtifacts(dal, {
+      slugPrefix: `${slug}%`,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});

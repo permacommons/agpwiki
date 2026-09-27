@@ -89,6 +89,7 @@ import {
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
 import AuthSession from '../src/models/auth-session.js';
+import ForumThread from '../src/models/forum-thread.js';
 import NotificationDelivery from '../src/models/notification-delivery.js';
 import NotificationJob from '../src/models/notification-job.js';
 import PasswordResetToken from '../src/models/password-reset-token.js';
@@ -1524,6 +1525,87 @@ test('Forum moderator can pin and delete thread and comments', async () => {
   } finally {
     await cleanupTestArtifacts(dal, {
       forumThreadPrefix,
+      userId: authorIdForCleanup ?? undefined,
+    });
+    await cleanupTestArtifacts(dal, {
+      userId: moderatorIdForCleanup ?? undefined,
+    });
+  }
+});
+
+const readForumThreadRevision = async (threadId: string, revId: string) => {
+  const revision = await ForumThread.filterWhere({}).getRevisionByRevId(revId, threadId).first();
+  assert.ok(revision, `Forum thread revision not found: ${revId}`);
+  return revision;
+};
+
+test('Forum thread pin and reply revisions leave previous revisions intact', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-history-${Date.now()}`;
+  let authorIdForCleanup: string | null = null;
+  let moderatorIdForCleanup: string | null = null;
+
+  try {
+    const author = await createTestUser();
+    const moderator = await createTestUser();
+    authorIdForCleanup = author.id;
+    moderatorIdForCleanup = moderator.id;
+    await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
+
+    const thread = await createForumThread(
+      { category: 'technology', title: baseTitle, body: 'Opening post.', language: 'en' },
+      author.id
+    );
+    const created = await ForumThread.getById(thread.id);
+    assert.ok(created);
+    const createdRevId = created._revID;
+    const createdUpdatedAt = created.updatedAt?.getTime();
+    const title = created.title;
+    assert.deepEqual(title, { en: baseTitle });
+
+    await setForumThreadPinned(
+      dal,
+      { threadId: thread.id, pinned: true, revSummary: { en: 'Pin thread.' } },
+      moderator.id
+    );
+
+    const beforePin = await readForumThreadRevision(thread.id, createdRevId);
+    assert.equal(beforePin.pinned, 0);
+    assert.deepEqual(beforePin.title, title);
+
+    const pinned = await ForumThread.getById(thread.id);
+    assert.ok(pinned);
+    assert.notEqual(pinned._revID, createdRevId);
+    assert.equal(pinned.pinned, 1);
+    assert.deepEqual(pinned.title, title);
+    const pinnedRevId = pinned._revID;
+    const pinnedUpdatedAt = pinned.updatedAt?.getTime();
+    assert.ok(pinnedUpdatedAt !== undefined && createdUpdatedAt !== undefined);
+
+    await new Promise(resolve => setTimeout(resolve, 5));
+    await createForumComment(
+      { threadId: thread.id, body: 'A reply.', language: 'en' },
+      author.id
+    );
+
+    const beforeReply = await readForumThreadRevision(thread.id, pinnedRevId);
+    assert.equal(beforeReply.updatedAt?.getTime(), pinnedUpdatedAt);
+    assert.equal(beforeReply.pinned, 1);
+    assert.deepEqual(beforeReply.title, title);
+
+    const afterReply = await ForumThread.getById(thread.id);
+    assert.ok(afterReply);
+    assert.notEqual(afterReply._revID, pinnedRevId);
+    assert.ok((afterReply.updatedAt?.getTime() ?? 0) > pinnedUpdatedAt);
+    assert.equal(afterReply.pinned, 1);
+    assert.deepEqual(afterReply.title, title);
+
+    const original = await readForumThreadRevision(thread.id, createdRevId);
+    assert.equal(original.pinned, 0);
+    assert.equal(original.updatedAt?.getTime(), createdUpdatedAt);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      forumThreadPrefix: `${baseTitle}%`,
       userId: authorIdForCleanup ?? undefined,
     });
     await cleanupTestArtifacts(dal, {
@@ -3872,6 +3954,125 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
       const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       console.warn(`Cleanup failed: ${message}`);
     }
+  }
+});
+
+test('Service updateMedia leaves the previous media revision intact', async () => {
+  const { createMedia, readMedia, readMediaRevision, updateMedia } = await import(
+    '../src/services/media-service.js'
+  );
+  const dal = await getDal();
+  const slug = `test-media-history-update-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const title = { en: 'History Media', de: 'Verlaufsmedium' };
+    const stubCommons = buildStubCommonsResponse();
+
+    const created = await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: `File:HistoryUpdate_${Date.now()}.jpg`,
+        title,
+        caption: { en: 'Old caption', de: 'Deutsche Bildunterschrift' },
+        revSummary: { en: 'Initial.' },
+      },
+      user.id,
+      { commonsFetcher: async () => stubCommons }
+    );
+
+    const updated = await updateMedia(
+      dal,
+      {
+        slug,
+        caption: { en: 'New caption' },
+        expectedRevId: created.currentRevId,
+        revSummary: { en: 'Revise English caption.' },
+      },
+      user.id
+    );
+    assert.notEqual(updated.currentRevId, created.currentRevId);
+
+    const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
+    assert.deepEqual(previous.caption, { en: 'Old caption', de: 'Deutsche Bildunterschrift' });
+    assert.deepEqual(previous.title, title);
+    assert.deepEqual(previous.data, stubCommons.data);
+
+    const current = await readMedia(dal, slug);
+    assert.equal(current.currentRevId, updated.currentRevId);
+    assert.deepEqual(current.caption, { en: 'New caption', de: 'Deutsche Bildunterschrift' });
+    assert.deepEqual(current.title, title);
+    assert.deepEqual(current.data, stubCommons.data);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      mediaSlugPrefix: `${slug}%`,
+      userId: userIdForCleanup ?? undefined,
+    });
+  }
+});
+
+test('Service refreshMedia leaves the previous media revision intact', async () => {
+  const { createMedia, readMedia, readMediaRevision, refreshMedia } = await import(
+    '../src/services/media-service.js'
+  );
+  const dal = await getDal();
+  const slug = `test-media-history-refresh-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const title = { en: 'Refresh History', de: 'Aktualisierungsverlauf' };
+    const caption = { en: 'Caption', de: 'Bildunterschrift' };
+    const initialCommons = buildStubCommonsResponse({ license: 'CC-BY-2.0' });
+    const refreshedCommons = buildStubCommonsResponse({
+      license: 'CC-BY-SA-4.0',
+      fetchedAt: '2026-05-03T00:00:00Z',
+    });
+
+    const created = await createMedia(
+      dal,
+      {
+        slug,
+        commonsTitle: `File:HistoryRefresh_${Date.now()}.jpg`,
+        title,
+        caption,
+        revSummary: { en: 'Initial.' },
+      },
+      user.id,
+      { commonsFetcher: async () => initialCommons }
+    );
+
+    const refreshed = await refreshMedia(
+      dal,
+      {
+        slug,
+        expectedRevId: created.currentRevId,
+        revSummary: { en: 'License updated upstream.' },
+      },
+      user.id,
+      { commonsFetcher: async () => refreshedCommons }
+    );
+    assert.notEqual(refreshed.currentRevId, created.currentRevId);
+
+    const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
+    assert.deepEqual(previous.data, initialCommons.data);
+    assert.deepEqual(previous.title, title);
+    assert.deepEqual(previous.caption, caption);
+
+    const current = await readMedia(dal, slug);
+    assert.equal(current.currentRevId, refreshed.currentRevId);
+    assert.deepEqual(current.data, refreshedCommons.data);
+    assert.deepEqual(current.title, title);
+    assert.deepEqual(current.caption, caption);
+  } finally {
+    await cleanupTestArtifacts(dal, {
+      mediaSlugPrefix: `${slug}%`,
+      userId: userIdForCleanup ?? undefined,
+    });
   }
 });
 

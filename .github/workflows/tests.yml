@@ -54,5 +54,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: npm run build
+
+      # Runs before the tests so the servers start against a fresh database
+      # and race each other through migrations.
+      - name: Smoke-test production startup
+        run: npm run smoke:start
+
       - name: Run tests
         run: npm test

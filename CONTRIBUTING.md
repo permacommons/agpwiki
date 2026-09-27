@@ -109,3 +109,17 @@ it or set it back to `false` and restart the MCP server.
 - **Connection failures:** Verify PostgreSQL is running on `localhost:5432`
 - **Permission errors:** Re-run `node_modules/rev-dal/setup-db-grants.sql`
 - **Missing extensions:** Ensure `pgcrypto` exists in both databases
+
+## Checks
+
+CI runs `npm run lint`, `npm run typecheck` and `npm test`. It also builds the
+app and starts each production entry point (web, MCP HTTP, MCP stdio) from
+`dist/` against `agpwiki_test`:
+
+```bash
+npm run build
+npm run smoke:start
+```
+
+The smoke test needs ports 3000 and 3333 free. On failure it prints each
+process's output; set `SMOKE_VERBOSE=1` to print it on success too.
