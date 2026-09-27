@@ -69,6 +69,7 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
   }
 
   connectionPromise = (async () => {
+    let attemptDal: DataAccessLayer | null = null;
     try {
       debug.db('Initializing PostgreSQL DAL...');
 
@@ -76,6 +77,7 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
       const dal = createDataAccessLayer(
         dalConfig as Partial<PostgresConfig> & JsonObject
       ) as unknown as DataAccessLayer;
+      attemptDal = dal;
 
       await dal.connect();
       initializeManifestModels(dal);
@@ -100,8 +102,10 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
       return dal;
     } catch (error) {
       // Clear cached state so a later retry does not inherit a failed
-      // initialization attempt.
+      // initialization attempt, and close this attempt's pool: retries each
+      // open a new one.
       connectionPromise = null;
+      await attemptDal?.disconnect().catch(() => undefined);
       const message = error instanceof Error ? error.message : String(error);
       debug.error(`Failed to initialize PostgreSQL DAL: ${message}`);
       debug.error({ error: error instanceof Error ? error : new Error(message) });
