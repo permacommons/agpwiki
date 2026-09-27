@@ -176,6 +176,10 @@ const PAGE_CHECK_TYPE_MAX_LENGTH = 64;
 const PAGE_CHECK_STATUS_MAX_LENGTH = 32;
 const WRITE_RESPONSE_DESCRIPTION =
   'Write responses return compact metadata and omit full body content. Use the read tool to retrieve content after writing.';
+const READ_REVISION_DESCRIPTION =
+  'The result includes currentRevId; pass it as expectedRevId (baseRevId for wiki_applyPatch) when you edit.';
+const CONCURRENCY_DESCRIPTION =
+  'Pass expectedRevId (the currentRevId from your last read or write of this document) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the document again, reapply your change to the current version, and retry.';
 
 const toWikiWriteResponse = ({
   id,
@@ -193,9 +197,10 @@ const toWikiWriteResponse = ({
   updatedAt,
 });
 
-const toBlogWriteResponse = ({ id, slug, createdAt, updatedAt }: BlogPostResult) => ({
+const toBlogWriteResponse = ({ id, slug, currentRevId, createdAt, updatedAt }: BlogPostResult) => ({
   id,
   slug,
+  currentRevId,
   createdAt,
   updatedAt,
 });
@@ -453,6 +458,16 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   const notesDescription = 'Optional; leave empty if not needed.';
   const rewriteContentDescription =
     'Section content to write. For target "heading", provide body text only; the heading line is preserved automatically. For target "lead", this replaces/prepends/appends the lead text before the first heading.';
+  const expectedRevIdSchema = uuidSchema
+    .optional()
+    .describe(
+      'Optional. The currentRevId from your last read or write of this document. If another revision has been saved since, nothing is written and a precondition_failed error returns the currentRevId.'
+    );
+  const baseRevIdSchema = uuidSchema
+    .optional()
+    .describe(
+      'Optional. The currentRevId from your last read or write of this page, i.e. the revision the patch was made against. If another revision has been saved since, nothing is written and a precondition_failed error returns the currentRevId.'
+    );
   const policyHashSchema = z
     .string()
     .describe(
@@ -698,7 +713,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Blog Post',
       description:
-        `Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new revision for an existing blog post. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Clarify expedition timeline per source A"}. ${CONCURRENCY_DESCRIPTION} ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -707,6 +722,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        expectedRevId: expectedRevIdSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
       },
@@ -760,7 +776,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'blog_readPost',
     {
       title: 'Read Blog Post',
-      description: 'Read a single blog post by slug.',
+      description: `Read a single blog post by slug. ${READ_REVISION_DESCRIPTION}`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -851,7 +867,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'citation_read',
     {
       title: 'Read Citation',
-      description: 'Read a citation by key.',
+      description: `Read a citation by key. ${READ_REVISION_DESCRIPTION}`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
@@ -887,12 +903,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Citation',
       description:
-        'Create a new revision for an existing citation. data.id is ignored; the citation key is authoritative for identity. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}.',
+        `Create a new revision for an existing citation. data.id is ignored; the citation key is authoritative for identity. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Update citation"}. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         newKey: optionalCitationKeySchema,
         data: z.record(z.string(), z.unknown()).optional(),
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -952,12 +969,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Citation Claim',
       description:
-        'Create a new revision for an existing claim. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary is required.',
+        `Create a new revision for an existing claim. assertion and quote are localized plain-text maps (not Markdown). quoteLanguage identifies the source language when quote is provided. revSummary is required. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
         claimId: citationClaimIdSchema,
         newClaimId: optionalCitationClaimIdSchema,
+        expectedRevId: expectedRevIdSchema,
         assertion: localizedAssertionSchema.optional,
         quote: localizedQuoteSchema.optional,
         quoteLanguage: languageTagSchema.optionalNullable,
@@ -1026,7 +1044,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'claim_read',
     {
       title: 'Read Citation Claim',
-      description: 'Read a citation claim by key and claimId.',
+      description: `Read a citation claim by key and claimId. ${READ_REVISION_DESCRIPTION}`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         key: citationKeySchema,
@@ -1100,7 +1118,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_readPage',
     {
       title: 'Read Wiki Page',
-      description: 'Read a single wiki page by slug.',
+      description: `Read a single wiki page by slug. ${READ_REVISION_DESCRIPTION}`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1178,7 +1196,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Media',
       description:
-        'Create a new revision for an existing media entity. Updates curated fields only: slug, title, caption, and altText. Use media_refresh to re-fetch Commons metadata.',
+        `Create a new revision for an existing media entity. Updates curated fields only: slug, title, caption, and altText. Use media_refresh to re-fetch Commons metadata. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
@@ -1186,6 +1204,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         caption: localizedCaptionSchema.optional,
         altText: localizedAltTextSchema.optional,
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1211,10 +1230,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Refresh Media Metadata',
       description:
-        'Re-fetch Commons metadata for an existing media entity and store it as a new revision. Cached thumbnails are invalidated and rebuilt on demand.',
+        `Re-fetch Commons metadata for an existing media entity and store it as a new revision. Cached thumbnails are invalidated and rebuilt on demand. ${CONCURRENCY_DESCRIPTION}`,
       annotations: externalDestructiveWriteToolAnnotations,
       inputSchema: {
         slug: z.string(),
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1263,7 +1283,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'media_read',
     {
       title: 'Read Media',
-      description: 'Read a media entity by slug.',
+      description: `Read a media entity by slug. ${READ_REVISION_DESCRIPTION}`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: z.string(),
@@ -1372,7 +1392,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Page Check',
       description:
-        'Create a new revision for a page check. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales).',
+        `Create a new revision for a page check. revSummary is required and uses a language-keyed map keyed by supported locale codes (see agpwiki://locales). targetRevId is the wiki page revision the check covers; expectedRevId is the page check's own currentRevId. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         checkId: uuidSchema,
@@ -1385,6 +1405,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         metrics: pageCheckMetricsSchema.optional(),
         targetRevId: uuidSchema.optional(),
         completedAt: z.string().datetime().optional().nullable(),
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1408,7 +1429,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'page_check_list',
     {
       title: 'List Page Checks',
-      description: 'List the current page checks for a wiki page by slug.',
+      description:
+        'List the current page checks for a wiki page by slug. Each check includes its currentRevId; pass it as expectedRevId to page_check_update.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1481,14 +1503,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Apply Wiki Patch',
       description:
-        `Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Pass baseRevId (the currentRevId from your last read or write of this page) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the page again, rebuild the patch against the current version, and retry. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         patch: z.string(),
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
-        baseRevId: uuidSchema.optional(),
+        baseRevId: baseRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1513,7 +1535,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Rewrite Wiki Section',
       description:
-        `Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite 'Legacy' section to match sources"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite 'Legacy' section to match sources"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1527,7 +1549,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         mode: z.enum(['replace', 'prepend', 'append']).optional(),
         content: z.string().describe(rewriteContentDescription),
         lang: languageTagSchema.optional,
-        expectedRevId: uuidSchema.optional(),
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1554,7 +1576,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Replace Exact Text',
       description:
-        `Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1567,7 +1589,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           )
           .min(1),
         lang: languageTagSchema.optional,
-        expectedRevId: uuidSchema.optional(),
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1594,7 +1616,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Wiki Page',
       description:
-        `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1602,6 +1624,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,

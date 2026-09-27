@@ -227,6 +227,61 @@ test('MCP wiki and blog write tool descriptions document compact responses', () 
   }
 });
 
+test('MCP update tools accept an optional expected revision', () => {
+  const { server } = createMcpServer();
+  const tools = (server as {
+    _registeredTools: Record<string, { description?: string; inputSchema: unknown }>;
+  })._registeredTools;
+  const revisionParams: Record<string, 'expectedRevId' | 'baseRevId'> = {
+    wiki_updatePage: 'expectedRevId',
+    wiki_applyPatch: 'baseRevId',
+    wiki_rewriteSection: 'expectedRevId',
+    wiki_replaceExactText: 'expectedRevId',
+    blog_updatePost: 'expectedRevId',
+    citation_update: 'expectedRevId',
+    claim_update: 'expectedRevId',
+    media_update: 'expectedRevId',
+    media_refresh: 'expectedRevId',
+    page_check_update: 'expectedRevId',
+  };
+
+  for (const [name, param] of Object.entries(revisionParams)) {
+    const field = getSchemaShape(tools[name]?.inputSchema)[param] as
+      | { description?: string; safeParse: (value: unknown) => { success: boolean } }
+      | undefined;
+    assert.ok(field, `${name} accepts ${param}`);
+    assert.equal(field.safeParse(undefined).success, true, `${name} ${param} is optional`);
+    assert.equal(
+      field.safeParse('3f5c2a4e-8b1d-4c6e-9f0a-1b2c3d4e5f60').success,
+      true,
+      `${name} ${param} accepts a revision UUID`
+    );
+    assert.equal(field.safeParse('not-a-uuid').success, false, `${name} ${param} rejects non-UUIDs`);
+    assert.ok(field.description?.includes('currentRevId'), `${name} ${param} names currentRevId`);
+
+    const description = tools[name]?.description ?? '';
+    assert.ok(description.includes(param), `${name} description mentions ${param}`);
+    assert.ok(
+      description.includes('precondition_failed') && description.includes('conflict'),
+      `${name} description explains how to recover from revision errors`
+    );
+  }
+
+  for (const name of [
+    'wiki_readPage',
+    'blog_readPost',
+    'citation_read',
+    'claim_read',
+    'media_read',
+    'page_check_list',
+  ]) {
+    assert.ok(
+      tools[name]?.description?.includes('currentRevId'),
+      `${name} description points callers to currentRevId`
+    );
+  }
+});
+
 test('MCP tool schema hints describe character caps', () => {
   const { server } = createMcpServer();
   const tools = (server as { _registeredTools: Record<string, { inputSchema: unknown }> })
