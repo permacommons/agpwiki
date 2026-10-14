@@ -48,6 +48,13 @@ import {
 } from '../services/page-check-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
+  canSignOffPages,
+  isSignoffPageSlug,
+  listActivePageSignoffs,
+  signOffPage,
+  withdrawPageSignoff,
+} from '../services/page-signoff-service.js';
+import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
   findExistingWikiLinkSlugs,
@@ -86,6 +93,7 @@ import {
   renderPageChecksList,
   renderPageChecksSummary,
 } from './lib/page-checks.js';
+import { renderPageSignoffs } from './lib/page-signoffs.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
@@ -939,6 +947,49 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/sign-off$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+
+    const intent = req.body?.intent === 'withdraw' ? 'withdraw' : 'signoff';
+    const comment = normalizeLineEndings(typeof req.body?.comment === 'string' ? req.body.comment : '');
+
+    try {
+      const dalInstance = await initializePostgreSQL();
+      if (intent === 'withdraw') {
+        await withdrawPageSignoff(dalInstance, { slug }, session.userId);
+      } else {
+        const stance = typeof req.body?.stance === 'string' ? req.body.stance : '';
+        await signOffPage(dalInstance, { slug, stance, comment }, session.userId);
+      }
+      res.redirect(303, `${pageViewPath(slug)}#page-signoffs-title`);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('signoff.forbidden'));
+        return;
+      }
+      if (error instanceof ConflictError || error instanceof ValidationError) {
+        res.status(400).type('text').send(req.t('signoff.invalid'));
+        return;
+      }
+      console.error('Failed to record sign-off:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.get(/^\/(.+)$/, async (req, res) => {
     const slug = req.params[0];
     const revIdParam = typeof req.query.rev === 'string' ? req.query.rev : undefined;
@@ -1129,6 +1180,12 @@ export const registerPageRoutes = (app: Express) => {
       for (const check of pageChecks) {
         if (check.revUser) userIds.add(check.revUser);
       }
+      const signoffs = isSignoffPageSlug(canonicalSlug)
+        ? await listActivePageSignoffs(dalInstance, page.id)
+        : null;
+      for (const signoff of signoffs ?? []) {
+        userIds.add(signoff.userId);
+      }
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
@@ -1219,6 +1276,17 @@ export const registerPageRoutes = (app: Express) => {
   <span class="tool-related-links">${relatedLinks.join(' · ')}</span>
 </div>`
         : '';
+      const signoffsHtml = signoffs
+        ? renderPageSignoffs({
+            slug: canonicalSlug,
+            currentRevId: page.currentRevId,
+            signoffs,
+            userMap,
+            viewerId: session?.userId ?? null,
+            canSignOff: await canSignOffPages(dalInstance, session?.userId),
+            t: req.t,
+          })
+        : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')
         ? req.t('label.meta')
@@ -1233,7 +1301,7 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         labelHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${signoffsHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

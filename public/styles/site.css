@@ -589,6 +589,102 @@ pre.diff ins {
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
+.page-signoffs {
+  clear: both;
+  margin: 2rem 0 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--rule);
+  background: #fffdf7;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.95rem;
+}
+.page-signoffs h2 {
+  margin: 0 0 0.6rem;
+  font-size: 1.05rem;
+}
+.page-signoff-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.page-signoff + .page-signoff {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--rule);
+}
+.page-signoff-changed,
+.page-signoff-empty {
+  color: var(--muted);
+}
+.page-signoffs .page-signoff-comment {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+}
+.page-signoff-empty {
+  margin: 0;
+}
+.page-signoff-intro,
+.page-signoff-summary {
+  margin: 0 0 0.6rem;
+  color: var(--muted);
+}
+.page-signoff-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.page-signoff-stance {
+  display: inline-block;
+  padding: 0 0.4rem;
+  border: 1px solid currentColor;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.page-signoff-stance--support {
+  color: #2f6b3a;
+}
+.page-signoff-stance--neutral {
+  color: var(--muted);
+}
+.page-signoff-stance--oppose {
+  color: #9a3b2b;
+}
+.page-signoff-stances {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+}
+.page-signoff-stances legend {
+  padding: 0;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+.page-signoff-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+.page-signoff-form--withdraw {
+  margin-top: 0.4rem;
+}
+.page-signoff-form {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+.page-signoff-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid var(--rule);
+}
 .tool-related {
   /* Always start below any floated figures at the end of the body so
      this row doesn't wrap alongside a trailing flow image. */

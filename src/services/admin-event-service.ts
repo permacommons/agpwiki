@@ -6,6 +6,8 @@ export const ADMIN_EVENT_TARGET_WIKI_PAGE = 'wiki_page';
 export const ADMIN_EVENT_WIKI_PAGE_PROTECTED = 'wiki_page_protected';
 export const ADMIN_EVENT_WIKI_PAGE_UNPROTECTED = 'wiki_page_unprotected';
 export const ADMIN_EVENT_PROTECTED_WIKI_PAGE_EDITED = 'protected_wiki_page_edited';
+export const ADMIN_EVENT_WIKI_PAGE_SIGNED_OFF = 'wiki_page_signed_off';
+export const ADMIN_EVENT_WIKI_PAGE_SIGNOFF_WITHDRAWN = 'wiki_page_signoff_withdrawn';
 
 export interface AdminEventInput {
   eventType: string;

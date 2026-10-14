@@ -524,8 +524,42 @@
     "events": {
       "wiki_page_protected": "Protected page",
       "wiki_page_unprotected": "Unprotected page",
-      "protected_wiki_page_edited": "Edited protected page"
+      "protected_wiki_page_edited": "Edited protected page",
+      "wiki_page_signed_off": "Stated a position on a proposal",
+      "wiki_page_signoff_withdrawn": "Withdrew a position on a proposal"
     }
+  },
+  "signoff": {
+    // Section on proposal pages (meta/proposals/...) where contributors state their position.
+    "title": "Positions",
+    "intro": "State your position on this proposal. For discussion, use the comments.",
+    "empty": "No one has stated a position yet.",
+    "unknownUser": "Unknown user",
+    // Link to the page revision that was current when the person stated their position.
+    "signedRevision": "on this version",
+    "changedSince": "The proposal has changed since.",
+    "viewChanges": "View changes",
+    "legend": "Your position",
+    "changeLegend": "Change your position",
+    "stance": {
+      "support": "Support",
+      "neutral": "Neutral",
+      "oppose": "Oppose"
+    },
+    "count": {
+      "support_one": "{{count}} support",
+      "support_other": "{{count}} support",
+      "neutral_one": "{{count}} neutral",
+      "neutral_other": "{{count}} neutral",
+      "oppose_one": "{{count}} oppose",
+      "oppose_other": "{{count}} oppose"
+    },
+    "commentLabel": "Comment (optional)",
+    "submit": "Save my position",
+    "update": "Update my position",
+    "withdraw": "Withdraw my position",
+    "forbidden": "Your account cannot state a position on proposals.",
+    "invalid": "This position could not be saved. Choose support, neutral or oppose, and keep the comment under 2,000 characters."
   },
   "tool": {
     "view": "View",

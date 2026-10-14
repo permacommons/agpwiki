@@ -8,6 +8,7 @@ import { hashToken } from '../src/auth/tokens.js';
 import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
 import {
+  ConflictError,
   ForbiddenError,
   InvalidRequestError,
   NotFoundError,
@@ -61,6 +62,11 @@ import {
   subscribeUserToForumThread,
 } from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
+import {
+  listActivePageSignoffs,
+  signOffPage,
+  withdrawPageSignoff,
+} from '../src/services/page-signoff-service.js';
 import {
   getPageProtectionForPage,
   protectWikiPage,
@@ -984,6 +990,10 @@ const cleanupTestArtifacts = async (
       [slugPrefix]
     );
     await dal.query(
+      'DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
+    await dal.query(
       'DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
       [slugPrefix]
     );
@@ -1015,6 +1025,7 @@ const cleanupTestArtifacts = async (
   }
   if (userId) {
     await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
+    await dal.query('DELETE FROM page_signoffs WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM notification_deliveries WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM forum_thread_subscriptions WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM password_reset_tokens WHERE user_id = $1', [userId]);
@@ -1126,6 +1137,91 @@ test('Service page protection blocks non-admin wiki edits', async () => {
     await cleanupTestArtifacts(dal, {
       userId: adminId ?? undefined,
     });
+  }
+});
+
+test('Service page positions let any signed-in user support, oppose or stay neutral on proposals', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const slug = `meta/proposals/test-signoff-${stamp}`;
+  const otherSlug = `test-signoff-article-${stamp}`;
+  let authorId: string | null = null;
+  let operatorId: string | null = null;
+  let blockedId: string | null = null;
+
+  try {
+    const author = await createTestUser();
+    const operator = await createTestUser();
+    const blocked = await createTestUser();
+    authorId = author.id;
+    operatorId = operator.id;
+    blockedId = blocked.id;
+    blocked.blockedAt = new Date();
+    await blocked.save();
+
+    const page = await createWikiPage(
+      dal,
+      { slug, title: { en: 'Test proposal' }, body: { en: 'Proposed text.' }, originalLanguage: 'en' },
+      author.id
+    );
+    await createWikiPage(
+      dal,
+      { slug: otherSlug, title: { en: 'Article' }, body: { en: 'Text.' }, originalLanguage: 'en' },
+      author.id
+    );
+
+    await assert.rejects(() => signOffPage(dal, { slug, stance: 'support' }, blocked.id), ForbiddenError);
+    await assert.rejects(
+      () => signOffPage(dal, { slug: otherSlug, stance: 'support' }, operator.id),
+      ForbiddenError
+    );
+    await assert.rejects(() => signOffPage(dal, { slug, stance: 'maybe' }, operator.id), ValidationError);
+
+    const signoff = await signOffPage(
+      dal,
+      { slug, stance: 'oppose', comment: '  Needs a clearer example.  ' },
+      operator.id
+    );
+    assert.equal(signoff.pageId, page.id);
+    assert.equal(signoff.revId, page.currentRevId);
+    assert.equal(signoff.stance, 'oppose');
+    assert.equal(signoff.comment, 'Needs a clearer example.');
+    assert.ok(signoff.signedAt instanceof Date);
+
+    const changed = await signOffPage(dal, { slug, stance: 'support', comment: 'Fixed now.' }, operator.id);
+    assert.equal(changed.stance, 'support');
+    await signOffPage(dal, { slug, stance: 'neutral' }, author.id);
+
+    const active = await listActivePageSignoffs(dal, page.id);
+    assert.deepEqual(
+      active.map(item => [item.userId, item.stance]),
+      [
+        [operator.id, 'support'],
+        [author.id, 'neutral'],
+      ]
+    );
+
+    await withdrawPageSignoff(dal, { slug }, operator.id);
+    assert.deepEqual(
+      (await listActivePageSignoffs(dal, page.id)).map(item => item.userId),
+      [author.id]
+    );
+    await assert.rejects(() => withdrawPageSignoff(dal, { slug }, operator.id), NotFoundError);
+
+    const history = await dal.query('SELECT stance FROM page_signoffs WHERE page_id = $1 AND user_id = $2', [
+      page.id,
+      operator.id,
+    ]);
+    assert.equal(history.rowCount, 2);
+
+    const events = await listRecentAdminEvents(dal, 10);
+    assert.ok(events.some(event => event.eventType === 'wiki_page_signed_off'));
+    assert.ok(events.some(event => event.eventType === 'wiki_page_signoff_withdrawn'));
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `meta/proposals/test-signoff-${stamp}%` });
+    await cleanupTestArtifacts(dal, { slugPrefix: `${otherSlug}%`, userId: authorId ?? undefined });
+    await cleanupTestArtifacts(dal, { userId: operatorId ?? undefined });
+    await cleanupTestArtifacts(dal, { userId: blockedId ?? undefined });
   }
 });
 

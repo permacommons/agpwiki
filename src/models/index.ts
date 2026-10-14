@@ -20,6 +20,7 @@ export { default as OAuthRefreshToken } from './oauth-refresh-token.js';
 export { default as PageAlias } from './page-alias.js';
 export { default as PageCheck } from './page-check.js';
 export { default as PageProtection } from './page-protection.js';
+export { default as PageSignoff } from './page-signoff.js';
 export { default as PasswordResetToken } from './password-reset-token.js';
 export { default as SignupInvite } from './signup-invite.js';
 export { default as User } from './user.js';
