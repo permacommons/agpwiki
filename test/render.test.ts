@@ -128,29 +128,22 @@ test('renderToc returns empty string for no items', () => {
   assert.equal(result, '');
 });
 
-test('renderMarkdown marks 3-column tables for mobile stacking and labels cells', async () => {
-  const markdown = `| One | Two | Three |
-| --- | --- | --- |
-| A | B | C |`;
-
-  const { html } = await renderMarkdown(markdown, []);
-
-  assert.match(html, /<div class="table-scroll table-stack-mobile"><table>/);
-  assert.match(html, /<td data-label="One">A<\/td>/);
-  assert.match(html, /<td data-label="Two">B<\/td>/);
-  assert.match(html, /<td data-label="Three">C<\/td>/);
-});
-
-test('renderMarkdown keeps 4-column tables in horizontal scroll mode', async () => {
-  const markdown = `| One | Two | Three | Four |
+test('renderMarkdown keeps tables of any width as tables in a scroll container', async () => {
+  for (const markdown of [
+    `| One | Two |
+| --- | --- |
+| A | B |`,
+    `| One | Two | Three | Four |
 | --- | --- | --- | --- |
-| A | B | C | D |`;
+| A | B | C | D |`,
+  ]) {
+    const { html } = await renderMarkdown(markdown, []);
 
-  const { html } = await renderMarkdown(markdown, []);
-
-  assert.match(html, /<div class="table-scroll"><table>/);
-  assert.doesNotMatch(html, /table-stack-mobile/);
-  assert.doesNotMatch(html, /data-label=/);
+    assert.match(html, /<div class="table-scroll"><table>/);
+    assert.match(html, /<td>A<\/td>/);
+    assert.doesNotMatch(html, /table-stack-mobile/);
+    assert.doesNotMatch(html, /data-label=/);
+  }
 });
 
 test('parseWikiLinkSlug accepts internal page paths and rejects reserved routes', () => {
