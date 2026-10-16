@@ -20,7 +20,11 @@ import {
   BLOG_AUTHOR_ROLE,
   SITE_ADMIN_ROLE,
   WIKI_ADMIN_ROLE,
+  grantRole,
   grantRoleUpsert,
+  hasRole,
+  revokeRole,
+  userHasRole,
 } from '../src/services/roles.js';
 import {
   searchVerifiedUsersWithRights,
@@ -1244,6 +1248,43 @@ test('Service page positions let any signed-in user support, oppose or stay neut
     await cleanupTestArtifacts(dal, { slugPrefix: `${otherSlug}%`, userId: authorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: operatorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: blockedId ?? undefined });
+  }
+});
+
+test('Service site admins hold every role without separate grants', async () => {
+  const dal = await getDal();
+  const slug = `test-site-admin-protected-${Date.now()}`;
+  let siteAdminId: string | null = null;
+
+  try {
+    const siteAdmin = await createTestUser();
+    siteAdminId = siteAdmin.id;
+    await grantRoleUpsert(dal, siteAdmin.id, SITE_ADMIN_ROLE);
+
+    for (const role of [WIKI_ADMIN_ROLE, BLOG_ADMIN_ROLE, BLOG_AUTHOR_ROLE, FORUM_MODERATOR_ROLE]) {
+      assert.equal(await userHasRole(dal, siteAdmin.id, role), true);
+    }
+    assert.equal(hasRole([SITE_ADMIN_ROLE], WIKI_ADMIN_ROLE), true);
+    assert.equal(hasRole([BLOG_ADMIN_ROLE], WIKI_ADMIN_ROLE), false);
+
+    await createWikiPage(
+      dal,
+      { slug, title: { en: 'Protected' }, body: { en: 'Original.' }, originalLanguage: 'en' },
+      siteAdmin.id
+    );
+    await protectWikiPage(dal, { slug, reason: 'Policy page.' }, siteAdmin.id);
+    const updated = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'Edited by a site admin.' }, revSummary: { en: 'Edit.' } },
+      siteAdmin.id
+    );
+    assert.equal(updated.body?.en, 'Edited by a site admin.');
+
+    await grantRole(dal, siteAdmin.id, WIKI_ADMIN_ROLE);
+    await revokeRole(dal, siteAdmin.id, WIKI_ADMIN_ROLE);
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
+    await cleanupTestArtifacts(dal, { userId: siteAdminId ?? undefined });
   }
 });
 

@@ -7,6 +7,7 @@ import { initializePostgreSQL } from '../src/db.js';
 import {
   BLOG_ADMIN_ROLE,
   BLOG_AUTHOR_ROLE,
+  SITE_ADMIN_ROLE,
   WIKI_ADMIN_ROLE,
   grantRoleUpsert,
 } from '../src/services/roles.js';
@@ -114,6 +115,14 @@ test('MCP wiki admin tools are enabled with wiki_admin role', () => {
   assert.equal(mcpWithWikiAdmin.adminTools.mediaDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.pageCheckDeleteTool.enabled, true);
   assert.equal(mcpWithWikiAdmin.adminTools.blogDeleteTool.enabled, false);
+});
+
+test('MCP admin tools are all enabled for site admins', () => {
+  const mcpWithSiteAdmin = createMcpServer({ userRoles: [SITE_ADMIN_ROLE] });
+
+  for (const tool of Object.values(mcpWithSiteAdmin.adminTools)) {
+    assert.equal(tool.enabled, true);
+  }
 });
 
 test('MCP blog admin tool is enabled with blog_admin role', () => {

@@ -3,13 +3,14 @@ import { ForbiddenError } from '../lib/errors.js';
 import {
   BLOG_ADMIN_ROLE,
   FORUM_MODERATOR_ROLE,
+  hasRole,
   userHasRole,
   WIKI_ADMIN_ROLE,
 } from './roles.js';
 
-export const canUseWikiAdminTools = (roles: string[]) => roles.includes(WIKI_ADMIN_ROLE);
+export const canUseWikiAdminTools = (roles: string[]) => hasRole(roles, WIKI_ADMIN_ROLE);
 
-export const canUseBlogAdminTools = (roles: string[]) => roles.includes(BLOG_ADMIN_ROLE);
+export const canUseBlogAdminTools = (roles: string[]) => hasRole(roles, BLOG_ADMIN_ROLE);
 
 const assertUserHasRole = async (
   dal: DataAccessLayer,
