@@ -47,23 +47,25 @@ export async function getUserRoles(dal: DataAccessLayer, userId: string): Promis
 }
 
 /**
- * Check if a user has a specific role.
+ * Check if a user has a specific role. Site admins hold every role, so
+ * whoever can grant rights never has to grant them to themselves.
  *
  * @param roles - Array of user's roles
  * @param role - Role to check for
- * @returns True if user has the role
+ * @returns True if user has the role, directly or as a site admin
  */
 export function hasRole(roles: string[], role: string): boolean {
-  return roles.includes(role);
+  return roles.includes(role) || roles.includes(SITE_ADMIN_ROLE);
 }
 
 /**
- * Check if a user has a specific role via database lookup.
+ * Check if a user has a specific role via database lookup. Site admins hold
+ * every role.
  *
  * @param dal - Database access layer
  * @param userId - User ID to check
  * @param role - Role to check for
- * @returns True if user has the role
+ * @returns True if user has the role, directly or as a site admin
  */
 export async function userHasRole(
   dal: DataAccessLayer,
@@ -71,11 +73,19 @@ export async function userHasRole(
   role: string
 ): Promise<boolean> {
   const result = await dal.query(
+    'SELECT 1 FROM user_roles WHERE user_id = $1 AND role IN ($2, $3) LIMIT 1',
+    [userId, role, SITE_ADMIN_ROLE]
+  );
+  return result.rowCount !== null && result.rowCount > 0;
+}
+
+const hasRoleAssignment = async (dal: DataAccessLayer, userId: string, role: string) => {
+  const result = await dal.query(
     'SELECT 1 FROM user_roles WHERE user_id = $1 AND role = $2 LIMIT 1',
     [userId, role]
   );
   return result.rowCount !== null && result.rowCount > 0;
-}
+};
 
 /**
  * Grant a role to a user.
@@ -90,7 +100,7 @@ export async function grantRole(
   userId: string,
   role: string
 ): Promise<void> {
-  const hasExisting = await userHasRole(dal, userId, role);
+  const hasExisting = await hasRoleAssignment(dal, userId, role);
   if (hasExisting) {
     throw new Error(`User already has role ${role}.`);
   }
@@ -129,7 +139,7 @@ export async function revokeRole(
   userId: string,
   role: string
 ): Promise<void> {
-  const hasExisting = await userHasRole(dal, userId, role);
+  const hasExisting = await hasRoleAssignment(dal, userId, role);
   if (!hasExisting) {
     throw new Error(`User does not have role ${role}.`);
   }
