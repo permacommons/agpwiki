@@ -327,10 +327,42 @@
     empty: 'अभी तक कोई प्रशासनिक कार्रवाई दर्ज नहीं की गई है।',
     unknownTarget: 'अज्ञात लक्ष्य',
     events: {
+      "wiki_page_signoff_withdrawn": "एक प्रस्ताव पर अपना रुख वापस लिया",
+      "wiki_page_signed_off": "एक प्रस्ताव पर अपना रुख दर्ज किया",
       wiki_page_protected: 'पृष्ठ सुरक्षित किया गया',
       wiki_page_unprotected: 'पृष्ठ की सुरक्षा हटाई गई',
       protected_wiki_page_edited: 'सुरक्षित पृष्ठ संपादित किया गया',
     },
+  },
+  "signoff": {
+    "title": "रुख",
+    "empty": "अभी तक किसी ने अपना रुख दर्ज नहीं किया है।",
+    "unknownUser": "अज्ञात उपयोगकर्ता",
+    "signedRevision": "इस संस्करण पर",
+    "changedSince": "तब से प्रस्ताव बदल गया है।",
+    "viewChanges": "बदलाव देखें",
+    "legend": "आपका रुख",
+    "stance": {
+      "support": "समर्थन",
+      "neutral": "तटस्थ",
+      "oppose": "विरोध"
+    },
+    "count": {
+      "support_one": "समर्थन: {{count}}",
+      "support_other": "समर्थन: {{count}}",
+      "neutral_one": "तटस्थ: {{count}}",
+      "neutral_other": "तटस्थ: {{count}}",
+      "oppose_one": "विरोध: {{count}}",
+      "oppose_other": "विरोध: {{count}}"
+    },
+    "commentLabel": "संक्षिप्त तर्क (वैकल्पिक)",
+    "language": "आपके तर्क की भाषा",
+    "discussion": "चर्चा",
+    "submit": "सहेजें",
+    "update": "अपडेट करें",
+    "withdraw": "वापस लें",
+    "forbidden": "आपका खाता प्रस्तावों पर रुख दर्ज नहीं कर सकता।",
+    "invalid": "यह रुख सहेजा नहीं जा सका। समर्थन, तटस्थ या विरोध चुनें। तर्क 2,000 अक्षरों तक रखें और समर्थित भाषा चुनें।"
   },
   tool: {
     view: 'देखें',

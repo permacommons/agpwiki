@@ -327,10 +327,42 @@
     empty: 'Még nincs rögzített adminisztrátori művelet.',
     unknownTarget: 'Ismeretlen cél',
     events: {
+      "wiki_page_signoff_withdrawn": "Visszavonta egy javaslattal kapcsolatos állásfoglalását",
+      "wiki_page_signed_off": "Állást foglalt egy javaslatról",
       wiki_page_protected: 'Oldal levédve',
       wiki_page_unprotected: 'Oldal védelme feloldva',
       protected_wiki_page_edited: 'Védett oldal szerkesztve',
     },
+  },
+  "signoff": {
+    "title": "Állásfoglalások",
+    "empty": "Még senki sem foglalt állást.",
+    "unknownUser": "Ismeretlen felhasználó",
+    "signedRevision": "erről a változatról",
+    "changedSince": "A javaslat azóta megváltozott.",
+    "viewChanges": "Változások megtekintése",
+    "legend": "Az álláspontod",
+    "stance": {
+      "support": "Támogatom",
+      "neutral": "Semleges",
+      "oppose": "Ellenzem"
+    },
+    "count": {
+      "support_one": "Támogatja: {{count}}",
+      "support_other": "Támogatja: {{count}}",
+      "neutral_one": "Semleges: {{count}}",
+      "neutral_other": "Semleges: {{count}}",
+      "oppose_one": "Ellenzi: {{count}}",
+      "oppose_other": "Ellenzi: {{count}}"
+    },
+    "commentLabel": "Rövid indoklás (nem kötelező)",
+    "language": "Az indoklásod nyelve",
+    "discussion": "Vita",
+    "submit": "Mentés",
+    "update": "Frissítés",
+    "withdraw": "Visszavonás",
+    "forbidden": "A fiókoddal nem foglalhatsz állást a javaslatokról.",
+    "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot. Az indoklás legfeljebb 2000 karakter lehet, és támogatott nyelvet kell választanod."
   },
   tool: {
     view: 'Megtekintés',

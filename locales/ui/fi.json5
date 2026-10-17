@@ -327,10 +327,42 @@
     empty: 'Ylläpitotoimia ei ole vielä kirjattu.',
     unknownTarget: 'Tuntematon kohde',
     events: {
+      "wiki_page_signoff_withdrawn": "Perui kantansa ehdotukseen",
+      "wiki_page_signed_off": "Ilmaisi kantansa ehdotukseen",
       wiki_page_protected: 'Sivu suojattiin',
       wiki_page_unprotected: 'Sivun suojaus poistettiin',
       protected_wiki_page_edited: 'Suojattua sivua muokattiin',
     },
+  },
+  "signoff": {
+    "title": "Kannanotot",
+    "empty": "Kukaan ei ole vielä ilmaissut kantaansa.",
+    "unknownUser": "Tuntematon käyttäjä",
+    "signedRevision": "tästä versiosta",
+    "changedSince": "Ehdotusta on muutettu tämän jälkeen.",
+    "viewChanges": "Näytä muutokset",
+    "legend": "Kantasi",
+    "stance": {
+      "support": "Kannatan",
+      "neutral": "Neutraali",
+      "oppose": "Vastustan"
+    },
+    "count": {
+      "support_one": "Kannatus: {{count}}",
+      "support_other": "Kannatus: {{count}}",
+      "neutral_one": "Neutraali: {{count}}",
+      "neutral_other": "Neutraali: {{count}}",
+      "oppose_one": "Vastustus: {{count}}",
+      "oppose_other": "Vastustus: {{count}}"
+    },
+    "commentLabel": "Lyhyt perustelu (valinnainen)",
+    "language": "Perustelusi kieli",
+    "discussion": "Keskustelu",
+    "submit": "Tallenna",
+    "update": "Päivitä",
+    "withdraw": "Peru",
+    "forbidden": "Tililläsi ei voi ottaa kantaa ehdotuksiin.",
+    "invalid": "Kannanottoa ei voitu tallentaa. Valitse kannatan, neutraali tai vastustan. Perustelussa saa olla enintään 2 000 merkkiä. Valitse tuettu kieli."
   },
   tool: {
     view: 'Näytä',

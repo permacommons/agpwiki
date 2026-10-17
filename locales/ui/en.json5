@@ -2,6 +2,15 @@
   /*
    i18n-identical-allowlist:
    {
+     "de": ["signoff.stance.neutral"],
+     "es": ["signoff.stance.neutral"],
+     "fr": ["signoff.discussion"],
+     "sv": ["signoff.stance.neutral"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // Locale -> intentionally identical leaf keys (dot notation).
      "ar": ["site.name", "nav.home"],
      "bn": ["site.name", "nav.home"],

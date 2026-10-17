@@ -325,10 +325,42 @@
     empty: 'Neniuj administraj agoj ankoraŭ estis registritaj.',
     unknownTarget: 'Nekonata celo',
     events: {
+      "wiki_page_signoff_withdrawn": "Retiris starpunkton pri propono",
+      "wiki_page_signed_off": "Esprimis starpunkton pri propono",
       wiki_page_protected: 'Protektis paĝon',
       wiki_page_unprotected: 'Malprotektis paĝon',
       protected_wiki_page_edited: 'Redaktis protektitan paĝon',
     },
+  },
+  "signoff": {
+    "title": "Starpunktoj",
+    "empty": "Neniu ankoraŭ esprimis starpunkton.",
+    "unknownUser": "Nekonata uzanto",
+    "signedRevision": "pri ĉi tiu versio",
+    "changedSince": "La propono ŝanĝiĝis ekde tiam.",
+    "viewChanges": "Vidi ŝanĝojn",
+    "legend": "Via starpunkto",
+    "stance": {
+      "support": "Subtena",
+      "neutral": "Neŭtrala",
+      "oppose": "Kontraŭa"
+    },
+    "count": {
+      "support_one": "Subtena: {{count}}",
+      "support_other": "Subtenaj: {{count}}",
+      "neutral_one": "Neŭtrala: {{count}}",
+      "neutral_other": "Neŭtralaj: {{count}}",
+      "oppose_one": "Kontraŭa: {{count}}",
+      "oppose_other": "Kontraŭaj: {{count}}"
+    },
+    "commentLabel": "Mallonga klarigo (nedeviga)",
+    "language": "Lingvo de via klarigo",
+    "discussion": "Diskuto",
+    "submit": "Konservi",
+    "update": "Ĝisdatigi",
+    "withdraw": "Retiri",
+    "forbidden": "Via konto ne rajtas esprimi starpunktojn pri proponoj.",
+    "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton. Limigu la klarigon al 2 000 signoj kaj elektu subtenatan lingvon."
   },
   tool: {
     view: 'Vidi',

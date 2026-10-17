@@ -326,10 +326,42 @@
     empty: '尚未记录任何管理操作。',
     unknownTarget: '未知目标',
     events: {
+      "wiki_page_signoff_withdrawn": "撤回了对提案的立场",
+      "wiki_page_signed_off": "就提案表明了立场",
       wiki_page_protected: '已保护页面',
       wiki_page_unprotected: '已取消页面保护',
       protected_wiki_page_edited: '已编辑受保护页面',
     },
+  },
+  "signoff": {
+    "title": "立场",
+    "empty": "还没有人表明立场。",
+    "unknownUser": "未知用户",
+    "signedRevision": "针对这一版本",
+    "changedSince": "提案此后已发生更改。",
+    "viewChanges": "查看更改",
+    "legend": "你的立场",
+    "stance": {
+      "support": "支持",
+      "neutral": "中立",
+      "oppose": "反对"
+    },
+    "count": {
+      "support_one": "支持：{{count}}",
+      "support_other": "支持：{{count}}",
+      "neutral_one": "中立：{{count}}",
+      "neutral_other": "中立：{{count}}",
+      "oppose_one": "反对：{{count}}",
+      "oppose_other": "反对：{{count}}"
+    },
+    "commentLabel": "简要理由（可选）",
+    "language": "理由的语言",
+    "discussion": "讨论",
+    "submit": "保存",
+    "update": "更新",
+    "withdraw": "撤回",
+    "forbidden": "你的账户无法对提案表明立场。",
+    "invalid": "无法保存此立场。请选择支持、中立或反对，理由不超过 2,000 个字符，并选择受支持的语言。"
   },
   tool: {
     view: '查看',

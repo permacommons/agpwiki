@@ -326,10 +326,42 @@
     empty: 'Nenhuma ação administrativa foi registrada ainda.',
     unknownTarget: 'Destino desconhecido',
     events: {
+      "wiki_page_signoff_withdrawn": "Retirou sua posição sobre uma proposta",
+      "wiki_page_signed_off": "Registrou uma posição sobre uma proposta",
       wiki_page_protected: 'Página protegida',
       wiki_page_unprotected: 'Proteção da página removida',
       protected_wiki_page_edited: 'Página protegida editada',
     },
+  },
+  "signoff": {
+    "title": "Posições",
+    "empty": "Ninguém registrou uma posição ainda.",
+    "unknownUser": "Usuário desconhecido",
+    "signedRevision": "sobre esta versão",
+    "changedSince": "A proposta foi alterada desde então.",
+    "viewChanges": "Ver alterações",
+    "legend": "Sua posição",
+    "stance": {
+      "support": "A favor",
+      "neutral": "Neutro",
+      "oppose": "Contra"
+    },
+    "count": {
+      "support_one": "A favor: {{count}}",
+      "support_other": "A favor: {{count}}",
+      "neutral_one": "Neutro: {{count}}",
+      "neutral_other": "Neutros: {{count}}",
+      "oppose_one": "Contra: {{count}}",
+      "oppose_other": "Contra: {{count}}"
+    },
+    "commentLabel": "Justificativa breve (opcional)",
+    "language": "Idioma da sua justificativa",
+    "discussion": "Discussão",
+    "submit": "Salvar",
+    "update": "Atualizar",
+    "withdraw": "Retirar",
+    "forbidden": "Sua conta não pode registrar posições sobre propostas.",
+    "invalid": "Não foi possível salvar esta posição. Escolha a favor, neutro ou contra. Limite a justificativa a 2.000 caracteres e selecione um idioma compatível."
   },
   tool: {
     view: 'Ver',

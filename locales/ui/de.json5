@@ -325,10 +325,42 @@
     empty: 'Es wurden noch keine Admin-Aktionen aufgezeichnet.',
     unknownTarget: 'Unbekanntes Ziel',
     events: {
+      "wiki_page_signoff_withdrawn": "Hat eine Stellungnahme zu einem Vorschlag zurückgezogen",
+      "wiki_page_signed_off": "Hat zu einem Vorschlag Stellung bezogen",
       wiki_page_protected: 'Seite geschützt',
       wiki_page_unprotected: 'Seitenschutz aufgehoben',
       protected_wiki_page_edited: 'Geschützte Seite bearbeitet',
     },
+  },
+  "signoff": {
+    "title": "Positionen",
+    "empty": "Noch niemand hat Stellung bezogen.",
+    "unknownUser": "Unbekannter Benutzer",
+    "signedRevision": "zu dieser Version",
+    "changedSince": "Der Vorschlag wurde seitdem geändert.",
+    "viewChanges": "Änderungen ansehen",
+    "legend": "Deine Position",
+    "stance": {
+      "support": "Dafür",
+      "neutral": "Neutral",
+      "oppose": "Dagegen"
+    },
+    "count": {
+      "support_one": "Dafür: {{count}}",
+      "support_other": "Dafür: {{count}}",
+      "neutral_one": "Neutral: {{count}}",
+      "neutral_other": "Neutral: {{count}}",
+      "oppose_one": "Dagegen: {{count}}",
+      "oppose_other": "Dagegen: {{count}}"
+    },
+    "commentLabel": "Kurze Begründung (optional)",
+    "language": "Sprache deiner Begründung",
+    "discussion": "Diskussion",
+    "submit": "Speichern",
+    "update": "Aktualisieren",
+    "withdraw": "Zurückziehen",
+    "forbidden": "Dein Konto kann zu Vorschlägen keine Stellung beziehen.",
+    "invalid": "Diese Position konnte nicht gespeichert werden. Wähle dafür, neutral oder dagegen. Die Begründung darf höchstens 2.000 Zeichen lang sein. Wähle eine unterstützte Sprache."
   },
   tool: {
     view: 'Ansehen',

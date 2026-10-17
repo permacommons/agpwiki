@@ -326,10 +326,42 @@
     empty: 'Non è stata ancora registrata alcuna azione amministrativa.',
     unknownTarget: 'Destinazione sconosciuta',
     events: {
+      "wiki_page_signoff_withdrawn": "Ha ritirato la propria posizione su una proposta",
+      "wiki_page_signed_off": "Ha espresso una posizione su una proposta",
       wiki_page_protected: 'Pagina protetta',
       wiki_page_unprotected: 'Protezione della pagina rimossa',
       protected_wiki_page_edited: 'Pagina protetta modificata',
     },
+  },
+  "signoff": {
+    "title": "Posizioni",
+    "empty": "Nessuno ha ancora espresso una posizione.",
+    "unknownUser": "Utente sconosciuto",
+    "signedRevision": "su questa versione",
+    "changedSince": "La proposta è stata modificata da allora.",
+    "viewChanges": "Vedi modifiche",
+    "legend": "La tua posizione",
+    "stance": {
+      "support": "Favorevole",
+      "neutral": "Neutrale",
+      "oppose": "Contrario"
+    },
+    "count": {
+      "support_one": "Favorevole: {{count}}",
+      "support_other": "Favorevoli: {{count}}",
+      "neutral_one": "Neutrale: {{count}}",
+      "neutral_other": "Neutrali: {{count}}",
+      "oppose_one": "Contrario: {{count}}",
+      "oppose_other": "Contrari: {{count}}"
+    },
+    "commentLabel": "Breve motivazione (facoltativa)",
+    "language": "Lingua della tua motivazione",
+    "discussion": "Discussione",
+    "submit": "Salva",
+    "update": "Aggiorna",
+    "withdraw": "Ritira",
+    "forbidden": "Il tuo account non può esprimere posizioni sulle proposte.",
+    "invalid": "Impossibile salvare questa posizione. Scegli favorevole, neutrale o contrario. Limita la motivazione a 2.000 caratteri e seleziona una lingua supportata."
   },
   tool: {
     view: 'Vedi',

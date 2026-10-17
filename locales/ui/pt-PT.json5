@@ -326,10 +326,42 @@
     empty: 'Ainda não foram registadas ações administrativas.',
     unknownTarget: 'Destino desconhecido',
     events: {
+      "wiki_page_signoff_withdrawn": "Retirou a sua posição sobre uma proposta",
+      "wiki_page_signed_off": "Registou uma posição sobre uma proposta",
       wiki_page_protected: 'Página protegida',
       wiki_page_unprotected: 'Proteção da página removida',
       protected_wiki_page_edited: 'Página protegida editada',
     },
+  },
+  "signoff": {
+    "title": "Posições",
+    "empty": "Ainda ninguém registou uma posição.",
+    "unknownUser": "Utilizador desconhecido",
+    "signedRevision": "sobre esta versão",
+    "changedSince": "A proposta foi alterada entretanto.",
+    "viewChanges": "Ver alterações",
+    "legend": "A tua posição",
+    "stance": {
+      "support": "A favor",
+      "neutral": "Neutro",
+      "oppose": "Contra"
+    },
+    "count": {
+      "support_one": "A favor: {{count}}",
+      "support_other": "A favor: {{count}}",
+      "neutral_one": "Neutro: {{count}}",
+      "neutral_other": "Neutros: {{count}}",
+      "oppose_one": "Contra: {{count}}",
+      "oppose_other": "Contra: {{count}}"
+    },
+    "commentLabel": "Justificação breve (opcional)",
+    "language": "Idioma da tua justificação",
+    "discussion": "Discussão",
+    "submit": "Guardar",
+    "update": "Atualizar",
+    "withdraw": "Retirar",
+    "forbidden": "A tua conta não pode registar posições sobre propostas.",
+    "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra. Limita a justificação a 2.000 carateres e seleciona um idioma suportado."
   },
   tool: {
     view: 'Ver',

@@ -326,10 +326,42 @@
     empty: 'Nie zapisano jeszcze żadnych działań administratorów.',
     unknownTarget: 'Nieznany cel',
     events: {
+      "wiki_page_signoff_withdrawn": "Wycofał stanowisko wobec propozycji",
+      "wiki_page_signed_off": "Zajął stanowisko wobec propozycji",
       wiki_page_protected: 'Strona zabezpieczona',
       wiki_page_unprotected: 'Zabezpieczenie strony usunięte',
       protected_wiki_page_edited: 'Zabezpieczona strona edytowana',
     },
+  },
+  "signoff": {
+    "title": "Stanowiska",
+    "empty": "Nikt jeszcze nie zajął stanowiska.",
+    "unknownUser": "Nieznany użytkownik",
+    "signedRevision": "wobec tej wersji",
+    "changedSince": "Od tego czasu propozycja uległa zmianie.",
+    "viewChanges": "Zobacz zmiany",
+    "legend": "Twoje stanowisko",
+    "stance": {
+      "support": "Za",
+      "neutral": "Neutralnie",
+      "oppose": "Przeciw"
+    },
+    "count": {
+      "support_one": "Za: {{count}}",
+      "support_other": "Za: {{count}}",
+      "neutral_one": "Neutralnie: {{count}}",
+      "neutral_other": "Neutralnie: {{count}}",
+      "oppose_one": "Przeciw: {{count}}",
+      "oppose_other": "Przeciw: {{count}}"
+    },
+    "commentLabel": "Krótkie uzasadnienie (opcjonalnie)",
+    "language": "Język uzasadnienia",
+    "discussion": "Dyskusja",
+    "submit": "Zapisz",
+    "update": "Aktualizuj",
+    "withdraw": "Wycofaj",
+    "forbidden": "Twoje konto nie może zajmować stanowiska wobec propozycji.",
+    "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw. Uzasadnienie może mieć do 2000 znaków. Wybierz obsługiwany język."
   },
   tool: {
     view: 'Widok',

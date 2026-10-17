@@ -327,10 +327,42 @@
     empty: 'Er zijn nog geen beheerdersacties vastgelegd.',
     unknownTarget: 'Onbekend doel',
     events: {
+      "wiki_page_signoff_withdrawn": "Heeft een standpunt over een voorstel ingetrokken",
+      "wiki_page_signed_off": "Heeft een standpunt over een voorstel ingenomen",
       wiki_page_protected: 'Pagina beveiligd',
       wiki_page_unprotected: 'Paginabeveiliging opgeheven',
       protected_wiki_page_edited: 'Beveiligde pagina bewerkt',
     },
+  },
+  "signoff": {
+    "title": "Standpunten",
+    "empty": "Nog niemand heeft een standpunt ingenomen.",
+    "unknownUser": "Onbekende gebruiker",
+    "signedRevision": "over deze versie",
+    "changedSince": "Het voorstel is sindsdien gewijzigd.",
+    "viewChanges": "Wijzigingen bekijken",
+    "legend": "Jouw standpunt",
+    "stance": {
+      "support": "Voor",
+      "neutral": "Neutraal",
+      "oppose": "Tegen"
+    },
+    "count": {
+      "support_one": "Voor: {{count}}",
+      "support_other": "Voor: {{count}}",
+      "neutral_one": "Neutraal: {{count}}",
+      "neutral_other": "Neutraal: {{count}}",
+      "oppose_one": "Tegen: {{count}}",
+      "oppose_other": "Tegen: {{count}}"
+    },
+    "commentLabel": "Korte toelichting (optioneel)",
+    "language": "Taal van je toelichting",
+    "discussion": "Discussie",
+    "submit": "Opslaan",
+    "update": "Bijwerken",
+    "withdraw": "Intrekken",
+    "forbidden": "Je account kan geen standpunten over voorstellen innemen.",
+    "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen. Beperk je toelichting tot 2.000 tekens en selecteer een ondersteunde taal."
   },
   tool: {
     view: 'Bekijk',

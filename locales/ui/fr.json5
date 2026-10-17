@@ -327,10 +327,42 @@
     empty: 'Aucune action d’administration n’a encore été enregistrée.',
     unknownTarget: 'Cible inconnue',
     events: {
+      "wiki_page_signoff_withdrawn": "A retiré sa prise de position sur une proposition",
+      "wiki_page_signed_off": "A pris position sur une proposition",
       wiki_page_protected: 'Page protégée',
       wiki_page_unprotected: 'Protection de page retirée',
       protected_wiki_page_edited: 'Page protégée modifiée',
     },
+  },
+  "signoff": {
+    "title": "Prises de position",
+    "empty": "Personne n’a encore pris position.",
+    "unknownUser": "Utilisateur inconnu",
+    "signedRevision": "sur cette version",
+    "changedSince": "La proposition a changé depuis.",
+    "viewChanges": "Voir les modifications",
+    "legend": "Ta position",
+    "stance": {
+      "support": "Pour",
+      "neutral": "Neutre",
+      "oppose": "Contre"
+    },
+    "count": {
+      "support_one": "Pour : {{count}}",
+      "support_other": "Pour : {{count}}",
+      "neutral_one": "Neutre : {{count}}",
+      "neutral_other": "Neutre : {{count}}",
+      "oppose_one": "Contre : {{count}}",
+      "oppose_other": "Contre : {{count}}"
+    },
+    "commentLabel": "Brève justification (facultatif)",
+    "language": "Langue de ta justification",
+    "discussion": "Discussion",
+    "submit": "Enregistrer",
+    "update": "Mettre à jour",
+    "withdraw": "Retirer",
+    "forbidden": "Ton compte ne peut pas prendre position sur les propositions.",
+    "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre. Limite ta justification à 2 000 caractères et sélectionne une langue prise en charge."
   },
   tool: {
     view: 'Voir',

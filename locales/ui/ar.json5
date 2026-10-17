@@ -324,10 +324,42 @@
     empty: 'لم تُسجّل أي إجراءات إدارية بعد.',
     unknownTarget: 'هدف غير معروف',
     events: {
+      "wiki_page_signoff_withdrawn": "سحب موقفه من مقترح",
+      "wiki_page_signed_off": "سجّل موقفًا من مقترح",
       wiki_page_protected: 'حماية صفحة',
       wiki_page_unprotected: 'إلغاء حماية صفحة',
       protected_wiki_page_edited: 'تعديل صفحة محمية',
     },
+  },
+  "signoff": {
+    "title": "المواقف",
+    "empty": "لم يسجّل أحد موقفًا بعد.",
+    "unknownUser": "مستخدم غير معروف",
+    "signedRevision": "لهذه النسخة",
+    "changedSince": "تغيّر المقترح منذ ذلك الحين.",
+    "viewChanges": "عرض التغييرات",
+    "legend": "موقفك",
+    "stance": {
+      "support": "مؤيد",
+      "neutral": "محايد",
+      "oppose": "معارض"
+    },
+    "count": {
+      "support_one": "التأييد: {{count}}",
+      "support_other": "التأييد: {{count}}",
+      "neutral_one": "الحياد: {{count}}",
+      "neutral_other": "الحياد: {{count}}",
+      "oppose_one": "المعارضة: {{count}}",
+      "oppose_other": "المعارضة: {{count}}"
+    },
+    "commentLabel": "تعليل موجز (اختياري)",
+    "language": "لغة تعليلك",
+    "discussion": "النقاش",
+    "submit": "حفظ",
+    "update": "تحديث",
+    "withdraw": "سحب",
+    "forbidden": "لا يمكن لحسابك تسجيل موقف من المقترحات.",
+    "invalid": "تعذّر حفظ هذا الموقف. اختر مؤيدًا أو محايدًا أو معارضًا. يجب ألا يتجاوز التعليل 2,000 حرف، مع اختيار لغة مدعومة."
   },
   tool: {
     view: 'عرض',

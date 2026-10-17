@@ -327,10 +327,42 @@
     empty: 'Zatiaľ neboli zaznamenané žiadne administrátorské akcie.',
     unknownTarget: 'Neznámy cieľ',
     events: {
+      "wiki_page_signoff_withdrawn": "Stiahol svoj postoj k návrhu",
+      "wiki_page_signed_off": "Vyjadril postoj k návrhu",
       wiki_page_protected: 'Stránka chránená',
       wiki_page_unprotected: 'Ochrana stránky odstránená',
       protected_wiki_page_edited: 'Chránená stránka upravená',
     },
+  },
+  "signoff": {
+    "title": "Postoje",
+    "empty": "Zatiaľ nikto nevyjadril svoj postoj.",
+    "unknownUser": "Neznámy používateľ",
+    "signedRevision": "k tejto verzii",
+    "changedSince": "Návrh sa odvtedy zmenil.",
+    "viewChanges": "Zobraziť zmeny",
+    "legend": "Tvoj postoj",
+    "stance": {
+      "support": "Za",
+      "neutral": "Neutrálny",
+      "oppose": "Proti"
+    },
+    "count": {
+      "support_one": "Za: {{count}}",
+      "support_other": "Za: {{count}}",
+      "neutral_one": "Neutrálny: {{count}}",
+      "neutral_other": "Neutrálni: {{count}}",
+      "oppose_one": "Proti: {{count}}",
+      "oppose_other": "Proti: {{count}}"
+    },
+    "commentLabel": "Stručné odôvodnenie (nepovinné)",
+    "language": "Jazyk tvojho odôvodnenia",
+    "discussion": "Diskusia",
+    "submit": "Uložiť",
+    "update": "Aktualizovať",
+    "withdraw": "Stiahnuť",
+    "forbidden": "Tvoj účet nemôže vyjadrovať postoje k návrhom.",
+    "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti. Odôvodnenie môže mať najviac 2 000 znakov a musíš vybrať podporovaný jazyk."
   },
   tool: {
     view: 'Zobraziť',
