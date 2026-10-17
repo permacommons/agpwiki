@@ -326,10 +326,42 @@
     empty: '管理操作はまだ記録されていません。',
     unknownTarget: '不明な対象',
     events: {
+      "wiki_page_signoff_withdrawn": "提案への立場表明を撤回しました",
+      "wiki_page_signed_off": "提案への立場を表明しました",
       wiki_page_protected: 'ページを保護',
       wiki_page_unprotected: 'ページの保護を解除',
       protected_wiki_page_edited: '保護されたページを編集',
     },
+  },
+  "signoff": {
+    "title": "立場表明",
+    "empty": "まだ誰も立場を表明していません。",
+    "unknownUser": "不明なユーザー",
+    "signedRevision": "この版に対する表明",
+    "changedSince": "その後、提案が変更されています。",
+    "viewChanges": "変更を表示",
+    "legend": "あなたの立場",
+    "stance": {
+      "support": "賛成",
+      "neutral": "中立",
+      "oppose": "反対"
+    },
+    "count": {
+      "support_one": "賛成：{{count}}",
+      "support_other": "賛成：{{count}}",
+      "neutral_one": "中立：{{count}}",
+      "neutral_other": "中立：{{count}}",
+      "oppose_one": "反対：{{count}}",
+      "oppose_other": "反対：{{count}}"
+    },
+    "commentLabel": "簡単な理由（任意）",
+    "language": "理由の記述言語",
+    "discussion": "議論",
+    "submit": "保存",
+    "update": "更新",
+    "withdraw": "撤回",
+    "forbidden": "このアカウントでは提案への立場を表明できません。",
+    "invalid": "立場を保存できませんでした。賛成、中立、反対のいずれかを選んでください。理由は2,000文字以内にし、対応言語を選択してください。"
   },
   tool: {
     view: '表示',

@@ -2,6 +2,15 @@
   /*
    i18n-identical-allowlist:
    {
+     "de": ["signoff.stance.neutral"],
+     "es": ["signoff.stance.neutral"],
+     "fr": ["signoff.discussion"],
+     "sv": ["signoff.stance.neutral"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // Locale -> intentionally identical leaf keys (dot notation).
      "ar": ["site.name", "nav.home"],
      "bn": ["site.name", "nav.home"],
@@ -524,8 +533,42 @@
     "events": {
       "wiki_page_protected": "Protected page",
       "wiki_page_unprotected": "Unprotected page",
-      "protected_wiki_page_edited": "Edited protected page"
+      "protected_wiki_page_edited": "Edited protected page",
+      "wiki_page_signed_off": "Stated a position on a proposal",
+      "wiki_page_signoff_withdrawn": "Withdrew a position on a proposal"
     }
+  },
+  "signoff": {
+    // Section on proposal pages (meta/proposals/...) where contributors state their position.
+    "title": "Positions",
+    "empty": "No one has stated a position yet.",
+    "unknownUser": "Unknown user",
+    // Link to the page revision that was current when the person stated their position.
+    "signedRevision": "on this version",
+    "changedSince": "The proposal has changed since.",
+    "viewChanges": "View changes",
+    "legend": "Your position",
+    "stance": {
+      "support": "Support",
+      "neutral": "Neutral",
+      "oppose": "Oppose"
+    },
+    "count": {
+      "support_one": "{{count}} support",
+      "support_other": "{{count}} support",
+      "neutral_one": "{{count}} neutral",
+      "neutral_other": "{{count}} neutral",
+      "oppose_one": "{{count}} oppose",
+      "oppose_other": "{{count}} oppose"
+    },
+    "commentLabel": "Brief rationale (optional)",
+    "language": "Language of your rationale",
+    "discussion": "Discussion",
+    "submit": "Save",
+    "update": "Update",
+    "withdraw": "Withdraw",
+    "forbidden": "Your account cannot state a position on proposals.",
+    "invalid": "This position could not be saved. Choose support, neutral or oppose. Keep the rationale within 2,000 characters and select a supported language."
   },
   "tool": {
     "view": "View",

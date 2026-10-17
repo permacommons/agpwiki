@@ -326,10 +326,42 @@
     empty: 'Aún no se ha registrado ninguna acción administrativa.',
     unknownTarget: 'Destino desconocido',
     events: {
+      "wiki_page_signoff_withdrawn": "Retiró su postura sobre una propuesta",
+      "wiki_page_signed_off": "Expresó su postura sobre una propuesta",
       wiki_page_protected: 'Página protegida',
       wiki_page_unprotected: 'Página desprotegida',
       protected_wiki_page_edited: 'Página protegida editada',
     },
+  },
+  "signoff": {
+    "title": "Posturas",
+    "empty": "Todavía nadie ha expresado su postura.",
+    "unknownUser": "Usuario desconocido",
+    "signedRevision": "sobre esta versión",
+    "changedSince": "La propuesta ha cambiado desde entonces.",
+    "viewChanges": "Ver cambios",
+    "legend": "Tu postura",
+    "stance": {
+      "support": "A favor",
+      "neutral": "Neutral",
+      "oppose": "En contra"
+    },
+    "count": {
+      "support_one": "A favor: {{count}}",
+      "support_other": "A favor: {{count}}",
+      "neutral_one": "Neutral: {{count}}",
+      "neutral_other": "Neutral: {{count}}",
+      "oppose_one": "En contra: {{count}}",
+      "oppose_other": "En contra: {{count}}"
+    },
+    "commentLabel": "Justificación breve (opcional)",
+    "language": "Idioma de tu justificación",
+    "discussion": "Discusión",
+    "submit": "Guardar",
+    "update": "Actualizar",
+    "withdraw": "Retirar",
+    "forbidden": "Tu cuenta no puede expresar posturas sobre propuestas.",
+    "invalid": "No se pudo guardar esta postura. Elige a favor, neutral o en contra. Limita la justificación a 2.000 caracteres y selecciona un idioma admitido."
   },
   tool: {
     view: 'Ver',

@@ -327,10 +327,42 @@
     empty: 'ابھی تک کوئی منتظم کارروائی ریکارڈ نہیں کی گئی۔',
     unknownTarget: 'نامعلوم ہدف',
     events: {
+      "wiki_page_signoff_withdrawn": "ایک تجویز پر اپنا مؤقف واپس لیا",
+      "wiki_page_signed_off": "ایک تجویز پر اپنا مؤقف درج کیا",
       wiki_page_protected: 'صفحہ محفوظ کیا گیا',
       wiki_page_unprotected: 'صفحے کا تحفظ ہٹایا گیا',
       protected_wiki_page_edited: 'محفوظ صفحے میں ترمیم کی گئی',
     },
+  },
+  "signoff": {
+    "title": "مؤقف",
+    "empty": "ابھی تک کسی نے اپنا مؤقف درج نہیں کیا۔",
+    "unknownUser": "نامعلوم صارف",
+    "signedRevision": "اس نسخے پر",
+    "changedSince": "اس کے بعد تجویز میں تبدیلی ہو چکی ہے۔",
+    "viewChanges": "تبدیلیاں دیکھیں",
+    "legend": "آپ کا مؤقف",
+    "stance": {
+      "support": "حمایت",
+      "neutral": "غیر جانب دار",
+      "oppose": "مخالفت"
+    },
+    "count": {
+      "support_one": "حمایت: {{count}}",
+      "support_other": "حمایت: {{count}}",
+      "neutral_one": "غیر جانب دار: {{count}}",
+      "neutral_other": "غیر جانب دار: {{count}}",
+      "oppose_one": "مخالفت: {{count}}",
+      "oppose_other": "مخالفت: {{count}}"
+    },
+    "commentLabel": "مختصر وجہ (اختیاری)",
+    "language": "آپ کی وجہ کی زبان",
+    "discussion": "گفتگو",
+    "submit": "محفوظ کریں",
+    "update": "تازہ کریں",
+    "withdraw": "واپس لیں",
+    "forbidden": "آپ کا اکاؤنٹ تجاویز پر مؤقف درج نہیں کر سکتا۔",
+    "invalid": "یہ مؤقف محفوظ نہیں ہو سکا۔ حمایت، غیر جانب دار یا مخالفت منتخب کریں۔ وجہ 2,000 حروف تک محدود رکھیں اور دستیاب زبان منتخب کریں۔"
   },
   tool: {
     view: 'دیکھیں',

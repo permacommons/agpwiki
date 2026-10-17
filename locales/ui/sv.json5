@@ -327,10 +327,42 @@
     empty: 'Inga administratörsåtgärder har registrerats ännu.',
     unknownTarget: 'Okänt mål',
     events: {
+      "wiki_page_signoff_withdrawn": "Drog tillbaka sitt ställningstagande till ett förslag",
+      "wiki_page_signed_off": "Tog ställning till ett förslag",
       wiki_page_protected: 'Sida skyddad',
       wiki_page_unprotected: 'Sidskydd borttaget',
       protected_wiki_page_edited: 'Skyddad sida redigerad',
     },
+  },
+  "signoff": {
+    "title": "Ställningstaganden",
+    "empty": "Ingen har tagit ställning ännu.",
+    "unknownUser": "Okänd användare",
+    "signedRevision": "om denna version",
+    "changedSince": "Förslaget har ändrats sedan dess.",
+    "viewChanges": "Visa ändringar",
+    "legend": "Ditt ställningstagande",
+    "stance": {
+      "support": "För",
+      "neutral": "Neutral",
+      "oppose": "Emot"
+    },
+    "count": {
+      "support_one": "För: {{count}}",
+      "support_other": "För: {{count}}",
+      "neutral_one": "Neutral: {{count}}",
+      "neutral_other": "Neutrala: {{count}}",
+      "oppose_one": "Emot: {{count}}",
+      "oppose_other": "Emot: {{count}}"
+    },
+    "commentLabel": "Kort motivering (valfritt)",
+    "language": "Språk för din motivering",
+    "discussion": "Diskussion",
+    "submit": "Spara",
+    "update": "Uppdatera",
+    "withdraw": "Dra tillbaka",
+    "forbidden": "Ditt konto kan inte ta ställning till förslag.",
+    "invalid": "Det gick inte att spara ställningstagandet. Välj för, neutral eller emot. Motiveringen får innehålla högst 2 000 tecken. Välj ett språk som stöds."
   },
   tool: {
     view: 'Visa',

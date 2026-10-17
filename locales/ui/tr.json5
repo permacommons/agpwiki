@@ -326,10 +326,42 @@
     empty: 'Henüz hiçbir yönetici işlemi kaydedilmedi.',
     unknownTarget: 'Bilinmeyen hedef',
     events: {
+      "wiki_page_signoff_withdrawn": "Bir öneri hakkındaki görüşünü geri çekti",
+      "wiki_page_signed_off": "Bir öneri hakkında görüş bildirdi",
       wiki_page_protected: 'Sayfa korumaya alındı',
       wiki_page_unprotected: 'Sayfa koruması kaldırıldı',
       protected_wiki_page_edited: 'Korumalı sayfa düzenlendi',
     },
+  },
+  "signoff": {
+    "title": "Görüşler",
+    "empty": "Henüz kimse görüş bildirmedi.",
+    "unknownUser": "Bilinmeyen kullanıcı",
+    "signedRevision": "bu sürüm hakkında",
+    "changedSince": "Öneri o zamandan beri değişti.",
+    "viewChanges": "Değişiklikleri gör",
+    "legend": "Görüşünüz",
+    "stance": {
+      "support": "Destekliyorum",
+      "neutral": "Tarafsız",
+      "oppose": "Karşıyım"
+    },
+    "count": {
+      "support_one": "Destekleyen: {{count}}",
+      "support_other": "Destekleyen: {{count}}",
+      "neutral_one": "Tarafsız: {{count}}",
+      "neutral_other": "Tarafsız: {{count}}",
+      "oppose_one": "Karşı çıkan: {{count}}",
+      "oppose_other": "Karşı çıkan: {{count}}"
+    },
+    "commentLabel": "Kısa gerekçe (isteğe bağlı)",
+    "language": "Gerekçenizin dili",
+    "discussion": "Tartışma",
+    "submit": "Kaydet",
+    "update": "Güncelle",
+    "withdraw": "Geri çek",
+    "forbidden": "Hesabınız öneriler hakkında görüş bildiremez.",
+    "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini seçin. Gerekçeyi 2.000 karakterle sınırlayın ve desteklenen bir dil seçin."
   },
   tool: {
     view: 'Görüntüle',

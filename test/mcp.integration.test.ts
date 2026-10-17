@@ -53,6 +53,10 @@ const cleanupTestArtifacts = async (
       [slugPrefix]
     );
     await dal.query(
+      'DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [slugPrefix]
+    );
+    await dal.query(
       'DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
       [slugPrefix]
     );
@@ -63,6 +67,7 @@ const cleanupTestArtifacts = async (
   }
   if (userId) {
     await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
+    await dal.query('DELETE FROM page_signoffs WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM users WHERE id = $1', [userId]);
   }

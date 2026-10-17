@@ -327,10 +327,42 @@
     empty: 'Administravimo veiksmų dar neužregistruota.',
     unknownTarget: 'Nežinomas taikinys',
     events: {
+      "wiki_page_signoff_withdrawn": "Atšaukė poziciją dėl pasiūlymo",
+      "wiki_page_signed_off": "Išreiškė poziciją dėl pasiūlymo",
       wiki_page_protected: 'Puslapis apsaugotas',
       wiki_page_unprotected: 'Puslapio apsauga pašalinta',
       protected_wiki_page_edited: 'Apsaugotas puslapis redaguotas',
     },
+  },
+  "signoff": {
+    "title": "Pozicijos",
+    "empty": "Dar niekas neišreiškė savo pozicijos.",
+    "unknownUser": "Nežinomas naudotojas",
+    "signedRevision": "dėl šios versijos",
+    "changedSince": "Nuo to laiko pasiūlymas pasikeitė.",
+    "viewChanges": "Peržiūrėti pakeitimus",
+    "legend": "Tavo pozicija",
+    "stance": {
+      "support": "Pritariu",
+      "neutral": "Neutrali",
+      "oppose": "Nepritariu"
+    },
+    "count": {
+      "support_one": "Pritaria: {{count}}",
+      "support_other": "Pritaria: {{count}}",
+      "neutral_one": "Neutrali pozicija: {{count}}",
+      "neutral_other": "Neutrali pozicija: {{count}}",
+      "oppose_one": "Nepritaria: {{count}}",
+      "oppose_other": "Nepritaria: {{count}}"
+    },
+    "commentLabel": "Trumpas pagrindimas (neprivaloma)",
+    "language": "Tavo pagrindimo kalba",
+    "discussion": "Diskusija",
+    "submit": "Išsaugoti",
+    "update": "Atnaujinti",
+    "withdraw": "Atšaukti",
+    "forbidden": "Tavo paskyra negali reikšti pozicijos dėl pasiūlymų.",
+    "invalid": "Nepavyko išsaugoti šios pozicijos. Pasirink „Pritariu“, „Neutrali“ arba „Nepritariu“. Pagrindimas negali viršyti 2 000 ženklų. Pasirink palaikomą kalbą."
   },
   tool: {
     view: 'Peržiūrėti',

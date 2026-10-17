@@ -327,10 +327,42 @@
     empty: 'Zabeleženo ni še nobeno skrbniško dejanje.',
     unknownTarget: 'Neznan cilj',
     events: {
+      "wiki_page_signoff_withdrawn": "Umaknil stališče do predloga",
+      "wiki_page_signed_off": "Izrazil stališče do predloga",
       wiki_page_protected: 'Stran zaščitena',
       wiki_page_unprotected: 'Zaščita strani odstranjena',
       protected_wiki_page_edited: 'Zaščitena stran urejena',
     },
+  },
+  "signoff": {
+    "title": "Stališča",
+    "empty": "Nihče še ni izrazil stališča.",
+    "unknownUser": "Neznan uporabnik",
+    "signedRevision": "o tej različici",
+    "changedSince": "Predlog se je od takrat spremenil.",
+    "viewChanges": "Ogled sprememb",
+    "legend": "Tvoje stališče",
+    "stance": {
+      "support": "Za",
+      "neutral": "Nevtralno",
+      "oppose": "Proti"
+    },
+    "count": {
+      "support_one": "Za: {{count}}",
+      "support_other": "Za: {{count}}",
+      "neutral_one": "Nevtralen: {{count}}",
+      "neutral_other": "Nevtralni: {{count}}",
+      "oppose_one": "Proti: {{count}}",
+      "oppose_other": "Proti: {{count}}"
+    },
+    "commentLabel": "Kratka utemeljitev (neobvezno)",
+    "language": "Jezik tvoje utemeljitve",
+    "discussion": "Razprava",
+    "submit": "Shrani",
+    "update": "Posodobi",
+    "withdraw": "Umakni",
+    "forbidden": "Tvoj račun ne more izražati stališč do predlogov.",
+    "invalid": "Tega stališča ni bilo mogoče shraniti. Izberi za, nevtralno ali proti. Utemeljitev omeji na 2.000 znakov in izberi podprt jezik."
   },
   tool: {
     view: 'Prikaži',

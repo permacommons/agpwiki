@@ -326,10 +326,42 @@
     empty: '尚未記錄任何管理操作。',
     unknownTarget: '未知目標',
     events: {
+      "wiki_page_signoff_withdrawn": "撤回了對提案的立場",
+      "wiki_page_signed_off": "就提案表明了立場",
       wiki_page_protected: '已保護頁面',
       wiki_page_unprotected: '已取消頁面保護',
       protected_wiki_page_edited: '已編輯受保護頁面',
     },
+  },
+  "signoff": {
+    "title": "立場",
+    "empty": "尚未有人表明立場。",
+    "unknownUser": "未知使用者",
+    "signedRevision": "針對此版本",
+    "changedSince": "提案之後已變更。",
+    "viewChanges": "檢視變更",
+    "legend": "你的立場",
+    "stance": {
+      "support": "支持",
+      "neutral": "中立",
+      "oppose": "反對"
+    },
+    "count": {
+      "support_one": "支持：{{count}}",
+      "support_other": "支持：{{count}}",
+      "neutral_one": "中立：{{count}}",
+      "neutral_other": "中立：{{count}}",
+      "oppose_one": "反對：{{count}}",
+      "oppose_other": "反對：{{count}}"
+    },
+    "commentLabel": "簡要理由（選填）",
+    "language": "理由的語言",
+    "discussion": "討論",
+    "submit": "儲存",
+    "update": "更新",
+    "withdraw": "撤回",
+    "forbidden": "你的帳號無法對提案表明立場。",
+    "invalid": "無法儲存此立場。請選擇支持、中立或反對，理由不超過 2,000 個字元，並選擇支援的語言。"
   },
   tool: {
     view: '檢視',

@@ -327,10 +327,42 @@
     empty: 'Belum ada tindakan admin yang dicatat.',
     unknownTarget: 'Target tidak dikenal',
     events: {
+      "wiki_page_signoff_withdrawn": "Menarik sikap terhadap usulan",
+      "wiki_page_signed_off": "Menyatakan sikap terhadap usulan",
       wiki_page_protected: 'Halaman dilindungi',
       wiki_page_unprotected: 'Perlindungan halaman dicabut',
       protected_wiki_page_edited: 'Halaman terlindungi disunting',
     },
+  },
+  "signoff": {
+    "title": "Sikap",
+    "empty": "Belum ada yang menyatakan sikap.",
+    "unknownUser": "Pengguna tidak dikenal",
+    "signedRevision": "pada versi ini",
+    "changedSince": "Usulan telah berubah sejak saat itu.",
+    "viewChanges": "Lihat perubahan",
+    "legend": "Sikap Anda",
+    "stance": {
+      "support": "Mendukung",
+      "neutral": "Netral",
+      "oppose": "Menentang"
+    },
+    "count": {
+      "support_one": "Mendukung: {{count}}",
+      "support_other": "Mendukung: {{count}}",
+      "neutral_one": "Netral: {{count}}",
+      "neutral_other": "Netral: {{count}}",
+      "oppose_one": "Menentang: {{count}}",
+      "oppose_other": "Menentang: {{count}}"
+    },
+    "commentLabel": "Alasan singkat (opsional)",
+    "language": "Bahasa alasan Anda",
+    "discussion": "Diskusi",
+    "submit": "Simpan",
+    "update": "Perbarui",
+    "withdraw": "Tarik",
+    "forbidden": "Akun Anda tidak dapat menyatakan sikap terhadap usulan.",
+    "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang. Batasi alasan hingga 2.000 karakter dan pilih bahasa yang didukung."
   },
   tool: {
     view: 'Lihat',
