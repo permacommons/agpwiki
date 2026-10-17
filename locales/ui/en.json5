@@ -532,7 +532,6 @@
   "signoff": {
     // Section on proposal pages (meta/proposals/...) where contributors state their position.
     "title": "Positions",
-    "intro": "State your position on this proposal. For discussion, use the comments.",
     "empty": "No one has stated a position yet.",
     "unknownUser": "Unknown user",
     // Link to the page revision that was current when the person stated their position.
@@ -540,7 +539,6 @@
     "changedSince": "The proposal has changed since.",
     "viewChanges": "View changes",
     "legend": "Your position",
-    "changeLegend": "Change your position",
     "stance": {
       "support": "Support",
       "neutral": "Neutral",
@@ -554,12 +552,14 @@
       "oppose_one": "{{count}} oppose",
       "oppose_other": "{{count}} oppose"
     },
-    "commentLabel": "Comment (optional)",
-    "submit": "Save my position",
-    "update": "Update my position",
-    "withdraw": "Withdraw my position",
+    "commentLabel": "Brief rationale (optional)",
+    "language": "Language of your rationale",
+    "discussion": "Discussion",
+    "submit": "Save",
+    "update": "Update",
+    "withdraw": "Withdraw",
     "forbidden": "Your account cannot state a position on proposals.",
-    "invalid": "This position could not be saved. Choose support, neutral or oppose, and keep the comment under 2,000 characters."
+    "invalid": "This position could not be saved. Choose support, neutral or oppose. Keep the rationale within 2,000 characters and select a supported language."
   },
   "tool": {
     "view": "View",

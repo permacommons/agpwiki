@@ -969,7 +969,8 @@ export const registerPageRoutes = (app: Express) => {
         await withdrawPageSignoff(dalInstance, { slug }, session.userId);
       } else {
         const stance = typeof req.body?.stance === 'string' ? req.body.stance : '';
-        await signOffPage(dalInstance, { slug, stance, comment }, session.userId);
+        const commentLanguage = typeof req.body?.commentLanguage === 'string' ? req.body.commentLanguage : undefined;
+        await signOffPage(dalInstance, { slug, stance, comment, commentLanguage }, session.userId);
       }
       res.redirect(303, `${pageViewPath(slug)}#page-signoffs-title`);
     } catch (error) {
@@ -1285,6 +1286,8 @@ export const registerPageRoutes = (app: Express) => {
             viewerId: session?.userId ?? null,
             canSignOff: await canSignOffPages(dalInstance, session?.userId),
             t: req.t,
+            language: req.language ?? 'en',
+            languageOptions: res.locals.languageOptions,
           })
         : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';

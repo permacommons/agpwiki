@@ -5,6 +5,7 @@ import { layoutAssets } from '../src/asset-urls.js';
 
 test('layoutAssets include deterministic version query strings', () => {
   assert.match(layoutAssets.siteCss, /^\/static\/styles\/site\.css\?v=[\da-f]{8}$/);
+  assert.match(layoutAssets.formLanguageSelectorJs, /^\/static\/scripts\/form-language-selector\.js\?v=[\da-f]{8}$/);
   assert.match(layoutAssets.forumJs, /^\/static\/scripts\/forum\.js\?v=[\da-f]{8}$/);
   assert.match(
     layoutAssets.markdownPreviewJs,

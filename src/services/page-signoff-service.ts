@@ -9,7 +9,7 @@ import {
   ADMIN_EVENT_WIKI_PAGE_SIGNOFF_WITHDRAWN,
   recordAdminEvent,
 } from './admin-event-service.js';
-import { ensureNonEmptyString, ensureOptionalString, normalizeSlugInput } from './validation.js';
+import { ensureNonEmptyString, ensureOptionalLanguage, ensureOptionalString, normalizeSlugInput } from './validation.js';
 import { readWikiPage } from './wiki-page-service.js';
 
 export const SIGNOFF_PAGE_PREFIX = 'meta/proposals/';
@@ -27,6 +27,7 @@ export interface PageSignoffResult {
   userId: string;
   stance: SignoffStance;
   comment: string | null;
+  commentLanguage: string | null;
   signedAt: Date | null;
 }
 
@@ -34,6 +35,7 @@ export interface PageSignoffInput {
   slug: string;
   stance: string;
   comment?: string | null;
+  commentLanguage?: string | null;
 }
 
 export const isSignoffPageSlug = (slug: string) => slug.startsWith(SIGNOFF_PAGE_PREFIX);
@@ -45,6 +47,7 @@ const toPageSignoffResult = (signoff: PageSignoffInstance): PageSignoffResult =>
   userId: signoff.userId,
   stance: isSignoffStance(signoff.stance) ? signoff.stance : 'support',
   comment: signoff.comment ?? null,
+  commentLanguage: signoff.commentLanguage ?? null,
   signedAt: signoff.signedAt ?? null,
 });
 
@@ -97,7 +100,7 @@ const resolveSignoffPage = async (
 
 export const signOffPage = async (
   dalInstance: DataAccessLayer,
-  { slug, stance, comment }: PageSignoffInput,
+  { slug, stance, comment, commentLanguage }: PageSignoffInput,
   userId: string
 ): Promise<PageSignoffResult> => {
   const errors = new ValidationCollector('Invalid sign-off input.');
@@ -105,6 +108,10 @@ export const signOffPage = async (
     errors.add('stance', `Must be one of: ${SIGNOFF_STANCES.join(', ')}.`, 'invalid');
   }
   ensureOptionalString(comment, 'comment', errors);
+  ensureOptionalLanguage(commentLanguage, 'commentLanguage', errors);
+  if (typeof comment === 'string' && comment.trim()) {
+    ensureNonEmptyString(commentLanguage, 'commentLanguage', errors);
+  }
   if (typeof comment === 'string' && comment.trim().length > SIGNOFF_COMMENT_MAX_LENGTH) {
     errors.add('comment', `Must be ${SIGNOFF_COMMENT_MAX_LENGTH} characters or fewer.`, 'max_length');
   }
@@ -124,6 +131,7 @@ export const signOffPage = async (
     userId,
     stance,
     comment: normalizedComment,
+    commentLanguage: normalizedComment ? commentLanguage : null,
     signedAt: new Date(),
   });
 
@@ -136,6 +144,7 @@ export const signOffPage = async (
     details: {
       stance,
       comment: normalizedComment,
+      commentLanguage: normalizedComment ? commentLanguage : null,
       previousStance: previous?.stance ?? null,
     },
   });

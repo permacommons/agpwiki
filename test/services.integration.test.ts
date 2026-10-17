@@ -1179,17 +1179,39 @@ test('Service page positions let any signed-in user support, oppose or stay neut
 
     const signoff = await signOffPage(
       dal,
-      { slug, stance: 'oppose', comment: '  Needs a clearer example.  ' },
+      { slug, stance: 'oppose', comment: '  Needs a clearer example.  ', commentLanguage: 'en' },
       operator.id
     );
     assert.equal(signoff.pageId, page.id);
     assert.equal(signoff.revId, page.currentRevId);
     assert.equal(signoff.stance, 'oppose');
     assert.equal(signoff.comment, 'Needs a clearer example.');
+    assert.equal(signoff.commentLanguage, 'en');
     assert.ok(signoff.signedAt instanceof Date);
+    const relabeled = await signOffPage(dal, {
+      slug, stance: 'oppose', comment: signoff.comment, commentLanguage: 'fr',
+    }, operator.id);
+    assert.equal(relabeled.comment, signoff.comment);
+    assert.equal(relabeled.commentLanguage, 'fr');
+    assert.equal((await listActivePageSignoffs(dal, page.id))[0].commentLanguage, 'fr');
 
-    const changed = await signOffPage(dal, { slug, stance: 'support', comment: 'Fixed now.' }, operator.id);
+
+    const changed = await signOffPage(dal, { slug, stance: 'support', comment: 'Jetzt behoben.', commentLanguage: 'de' }, operator.id);
     assert.equal(changed.stance, 'support');
+    assert.equal(changed.commentLanguage, 'de');
+    await assert.rejects(
+      () => signOffPage(dal, { slug, stance: 'oppose', comment: 'Missing language.' }, operator.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => signOffPage(dal, { slug, stance: 'oppose', comment: 'Invalid language.', commentLanguage: 'xx' }, operator.id),
+      ValidationError
+    );
+    assert.equal((await listActivePageSignoffs(dal, page.id))[0].commentLanguage, 'de');
+    const cleared = await signOffPage(dal, { slug, stance: 'support', comment: '  ', commentLanguage: 'de' }, operator.id);
+    assert.equal(cleared.comment, null);
+    assert.equal(cleared.commentLanguage, null);
+    assert.equal((await listForumThreads(dal, 'policy', { pageSlug: slug })).length, 0);
     await signOffPage(dal, { slug, stance: 'neutral' }, author.id);
 
     const active = await listActivePageSignoffs(dal, page.id);
@@ -1212,7 +1234,7 @@ test('Service page positions let any signed-in user support, oppose or stay neut
       page.id,
       operator.id,
     ]);
-    assert.equal(history.rowCount, 2);
+    assert.equal(history.rowCount, 4);
 
     const events = await listRecentAdminEvents(dal, 10);
     assert.ok(events.some(event => event.eventType === 'wiki_page_signed_off'));

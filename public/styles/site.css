@@ -598,8 +598,15 @@ pre.diff ins {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.95rem;
 }
+.page-signoff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.6rem;
+}
 .page-signoffs h2 {
-  margin: 0 0 0.6rem;
+  margin: 0;
   font-size: 1.05rem;
 }
 .page-signoff-list {
@@ -612,7 +619,19 @@ pre.diff ins {
   padding-top: 0.75rem;
   border-top: 1px solid var(--rule);
 }
-.page-signoff-changed,
+.page-signoff-changed {
+  color: var(--muted);
+}
+.page-signoff-language {
+  margin: 0.3rem 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.page-signoff-form p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 .page-signoff-empty {
   color: var(--muted);
 }
@@ -623,7 +642,6 @@ pre.diff ins {
 .page-signoff-empty {
   margin: 0;
 }
-.page-signoff-intro,
 .page-signoff-summary {
   margin: 0 0 0.6rem;
   color: var(--muted);
@@ -658,18 +676,29 @@ pre.diff ins {
   flex-wrap: wrap;
   gap: 0.4rem 1rem;
 }
-.page-signoff-stances legend {
-  padding: 0;
-  margin-bottom: 0.3rem;
-  font-weight: 600;
-}
+
 .page-signoff-option {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
 }
-.page-signoff-form--withdraw {
-  margin-top: 0.4rem;
+.page-signoff-actions {
+  gap: 0.6rem;
+  width: 100%;
+}
+.page-signoff-actions .page-signoff-stances {
+  margin-right: auto;
+}
+.page-signoff-actions button {
+  padding: 0.35rem 0.65rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+.page-signoff-actions .page-signoff-withdraw {
+  padding-inline: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--muted);
 }
 .page-signoff-form {
   display: flex;
@@ -1835,26 +1864,31 @@ button {
   height: 100%;
   fill: currentColor;
 }
-.forum-compose-language-control {
+.form-language-control {
   display: inline-flex;
   flex: none;
 }
-.forum-compose-lang-menu {
+.form-language-menu {
   margin-right: 0.1rem;
 }
-.forum-compose-lang-menu .lang-menu-panel {
+.form-language-menu .lang-menu-panel {
   left: 0;
   right: auto;
 }
-.forum-language-option {
+.form-language-option {
   position: relative;
 }
-.forum-language-radio {
+.form-language-radio {
   position: absolute;
   opacity: 0;
   pointer-events: none;
 }
-.forum-language-radio:focus + .lang-menu-option {
+.form-language-radio:checked + .lang-menu-option {
+  background: rgba(45, 95, 115, 0.1);
+  color: var(--accent);
+  font-weight: 600;
+}
+.form-language-radio:focus-visible + .lang-menu-option {
   background: var(--panel);
   outline: none;
 }
@@ -2325,10 +2359,10 @@ altcha-widget {
     width: 100%;
     justify-content: space-between;
   }
-  .forum-compose-language-control {
+  .form-language-control {
     flex: 0 0 auto;
   }
-  .forum-compose-lang-menu .lang-menu-summary {
+  .form-language-menu .lang-menu-summary {
     justify-content: space-between;
   }
   footer.site-footer {
