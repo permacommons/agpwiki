@@ -1152,14 +1152,18 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const target = args.toRevId
         ? (await readWikiPageRevision(dal, args.slug, args.toRevId)).revision
         : await readWikiPage(dal, args.slug);
-      const availableLanguages = listAvailableLanguages(target.title, target.body);
+      const source = (await readWikiPageRevision(dal, args.slug, args.fromRevId)).revision;
+      const targetLanguages = listAvailableLanguages(target.title, target.body);
+      const availableLanguages = [
+        ...new Set([...listAvailableLanguages(source.title, source.body), ...targetLanguages]),
+      ].sort();
       const selectedLanguage =
         args.lang === ALL_LANGUAGES
           ? ALL_LANGUAGES
           : selectContentLanguage({
               requested: args.lang,
               originalLanguage: target.originalLanguage,
-              availableLanguages,
+              availableLanguages: args.lang ? availableLanguages : targetLanguages,
               slug: args.slug,
             });
       const diff = await diffWikiPageRevisions(dal, {

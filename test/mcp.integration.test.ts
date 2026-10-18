@@ -372,6 +372,61 @@ test('MCP reads return one language by default and compact history', async () =>
   }
 });
 
+test('MCP diffs allow an explicit language removed from the target revision', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-removed-language-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const created = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Language test', de: 'Sprachtest' },
+        body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
+        originalLanguage: 'de',
+      },
+      user.id
+    );
+    const updated = await updateWikiPage(
+      dal,
+      { slug, title: { de: null }, body: { de: null }, revSummary: { en: 'Remove German.' } },
+      user.id
+    );
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    type Diff = {
+      selectedLanguage: string;
+      availableLanguages: string[];
+      fields: {
+        body?: { removed: Array<{ lang: string; characters: number; value?: string }> };
+      };
+    };
+
+    for (const toRevId of [updated.currentRevId, undefined]) {
+      const args = { slug, fromRevId: created.currentRevId, toRevId };
+      const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', { ...args, lang: 'de' });
+      assert.equal(diff.selectedLanguage, 'de');
+      assert.deepEqual(diff.availableLanguages, ['de', 'en']);
+      assert.deepEqual(diff.fields.body?.removed, [
+        { lang: 'de', characters: 'Deutscher Text.\n'.length },
+      ]);
+
+      const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', args);
+      assert.equal(defaultDiff.selectedLanguage, 'en');
+      assert.equal(defaultDiff.fields.body, undefined);
+
+      const missing = await tools.wiki_diffRevisions.handler({ ...args, lang: 'ja' });
+      assert.equal(missing.isError, true);
+      assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
+    }
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userIdForCleanup ?? undefined });
+  }
+});
+
 test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
   const dal = await getDal();
   const slug = `test-mcp-expected-rev-${Date.now()}`;
