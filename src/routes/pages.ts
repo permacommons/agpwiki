@@ -1053,10 +1053,11 @@ export const registerPageRoutes = (app: Express) => {
       );
 
       const revisions = revisionsResult.revisions;
-      const selectedRevision = revIdParam
+      const selectedRevId = revIdParam ?? (diffFrom && diffTo ? diffTo : undefined);
+      const selectedRevision = selectedRevId
         ? await (async () => {
             try {
-              return (await readWikiPageRevision(dalInstance, slug, revIdParam)).revision;
+              return (await readWikiPageRevision(dalInstance, slug, selectedRevId)).revision;
             } catch (error) {
               if (error instanceof NotFoundError) {
                 res.status(404).type('text').send(req.t('page.revisionNotFound'));

@@ -1320,10 +1320,19 @@ test('Article footer uses the selected revision Wikidata ID', async () => {
     const address = server.address();
     assert.ok(address && typeof address !== 'string');
     const url = `http://127.0.0.1:${address.port}/${slug}`;
-    const assertFooter = async (revId: string | null, wikidata: string | null) => {
-      const response = await fetch(revId ? `${url}?rev=${revId}` : url);
+    const assertFooter = async (
+      revId: string | null,
+      wikidata: string | null,
+      fromRevId?: string,
+      expectedBody?: string
+    ) => {
+      const query = fromRevId
+        ? `?diffFrom=${fromRevId}&diffTo=${revId}`
+        : revId ? `?rev=${revId}` : '';
+      const response = await fetch(`${url}${query}`);
       assert.equal(response.status, 200);
       const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+      if (expectedBody) assert.ok(bodyHtml.includes(`<p>${expectedBody}</p>`));
       if (wikidata) {
         assert.match(
           bodyHtml,
@@ -1341,13 +1350,19 @@ test('Article footer uses the selected revision Wikidata ID', async () => {
       { slug, title: { en: 'Wikidata footer' }, body: { en: 'Text.' } },
       user.id
     );
+    const historical = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'Historical body.' }, revSummary: { en: 'Edit body.' } },
+      user.id
+    );
     const added = await updateWikiPage(
       dal,
-      { slug, wikidata: 'Q42', revSummary: { en: 'Add Wikidata ID.' } },
+      { slug, body: { en: 'Current body.' }, wikidata: 'Q42', revSummary: { en: 'Add Wikidata ID.' } },
       user.id
     );
     await assertFooter(null, 'Q42');
     await assertFooter(created.currentRevId, null);
+    await assertFooter(historical.currentRevId, null, created.currentRevId, 'Historical body.');
 
     await updateWikiPage(
       dal,
@@ -1356,6 +1371,7 @@ test('Article footer uses the selected revision Wikidata ID', async () => {
     );
     await assertFooter(null, 'Q698');
     await assertFooter(added.currentRevId, 'Q42');
+    await assertFooter(added.currentRevId, 'Q42', historical.currentRevId, 'Current body.');
 
     await updateWikiPage(
       dal,
