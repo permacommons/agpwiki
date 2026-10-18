@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import test from 'node:test';
-import { hashPassword, verifyPassword } from '../src/auth/password.js';
+
+import { initializePostgreSQL } from '../src/db.js';
 import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
-import { initializePostgreSQL } from '../src/db.js';
+import { hashPassword, verifyPassword } from '../src/auth/password.js';
+import { createBlogPost } from '../src/services/blog-post-service.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -12,25 +14,23 @@ import {
   NotFoundError,
   ValidationError,
 } from '../src/lib/errors.js';
-import AuthSession from '../src/models/auth-session.js';
-import ForumThread from '../src/models/forum-thread.js';
-import NotificationDelivery from '../src/models/notification-delivery.js';
-import NotificationJob from '../src/models/notification-job.js';
-import PasswordResetToken from '../src/models/password-reset-token.js';
-import User from '../src/models/user.js';
-import { renderMarkdown } from '../src/render.js';
 import {
-  blockUserAccount,
-  getAccountLifecycleState,
-  unblockUserAccount,
-} from '../src/services/account-lifecycle.js';
-import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
-import { createBlogPost } from '../src/services/blog-post-service.js';
+  FORUM_MODERATOR_ROLE,
+  BLOG_ADMIN_ROLE,
+  BLOG_AUTHOR_ROLE,
+  SITE_ADMIN_ROLE,
+  WIKI_ADMIN_ROLE,
+  grantRole,
+  grantRoleUpsert,
+  hasRole,
+  revokeRole,
+  userHasRole,
+} from '../src/services/roles.js';
 import {
-  createCitationClaim,
-  readCitationClaim,
-  updateCitationClaim,
-} from '../src/services/citation-claim-service.js';
+  searchVerifiedUsersWithRights,
+  updateUserRightsBelowSiteAdmin,
+} from '../src/services/user-rights-service.js';
+import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import {
   createCitation,
   deleteCitation,
@@ -38,9 +38,48 @@ import {
   updateCitation,
 } from '../src/services/citation-service.js';
 import {
-  FORUM_REPLY_CREATED_NOTIFICATION,
+  createCitationClaim,
+  readCitationClaim,
+  updateCitationClaim,
+} from '../src/services/citation-claim-service.js';
+import {
+  blockUserAccount,
+  getAccountLifecycleState,
+  unblockUserAccount,
+} from '../src/services/account-lifecycle.js';
+import {
+  createPasswordResetToken,
+  requestPasswordReset,
+  resetPasswordWithToken,
+} from '../src/services/password-reset.js';
+import {
   processForumReplyCreatedNotification,
+  FORUM_REPLY_CREATED_NOTIFICATION,
 } from '../src/services/forum-notification-service.js';
+import {
+  claimPendingNotificationJobs,
+  resetProcessingNotificationJobs,
+  markNotificationJobProcessed,
+} from '../src/services/notification-queue.js';
+import {
+  isUserSubscribedToForumThread,
+  subscribeUserToForumThread,
+} from '../src/services/forum-subscription-service.js';
+import { createPageCheck } from '../src/services/page-check-service.js';
+import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
+import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import {
+  findRevisionsWithChangedText,
+  listActivePageSignoffs,
+  signOffPage,
+  withdrawPageSignoff,
+} from '../src/services/page-signoff-service.js';
+import {
+  getPageProtectionForPage,
+  protectWikiPage,
+  unprotectWikiPage,
+} from '../src/services/page-protection-service.js';
+import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
 import {
   createForumComment,
   createForumThread,
@@ -52,63 +91,25 @@ import {
   setForumThreadPinned,
 } from '../src/services/forum-service.js';
 import {
-  isUserSubscribedToForumThread,
-  subscribeUserToForumThread,
-} from '../src/services/forum-subscription-service.js';
-import {
-  claimPendingNotificationJobs,
-  markNotificationJobProcessed,
-  resetProcessingNotificationJobs,
-} from '../src/services/notification-queue.js';
-import { createPageCheck } from '../src/services/page-check-service.js';
-import {
-  getPageProtectionForPage,
-  protectWikiPage,
-  unprotectWikiPage,
-} from '../src/services/page-protection-service.js';
-import {
-  findRevisionsWithChangedText,
-  listActivePageSignoffs,
-  signOffPage,
-  withdrawPageSignoff,
-} from '../src/services/page-signoff-service.js';
-import {
-  createPasswordResetToken,
-  requestPasswordReset,
-  resetPasswordWithToken,
-} from '../src/services/password-reset.js';
-import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
-import { setProposalStatus } from '../src/services/proposal-status-service.js';
-import {
-  BLOG_ADMIN_ROLE,
-  BLOG_AUTHOR_ROLE,
-  FORUM_MODERATOR_ROLE,
-  grantRole,
-  grantRoleUpsert,
-  hasRole,
-  revokeRole,
-  SITE_ADMIN_ROLE,
-  userHasRole,
-  WIKI_ADMIN_ROLE,
-} from '../src/services/roles.js';
-import {
-  searchVerifiedUsersWithRights,
-  updateUserRightsBelowSiteAdmin,
-} from '../src/services/user-rights-service.js';
-import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
-import {
   addWikiPageAlias,
+  listPagesMissingWikidata,
+  readWikiPageRevision,
   applyWikiPagePatch,
   createWikiPage,
   deleteWikiPage,
-  listPagesMissingWikidata,
   listWikiPageRevisions,
   readWikiPage,
-  readWikiPageRevision,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import AuthSession from '../src/models/auth-session.js';
+import ForumThread from '../src/models/forum-thread.js';
+import NotificationDelivery from '../src/models/notification-delivery.js';
+import NotificationJob from '../src/models/notification-job.js';
+import PasswordResetToken from '../src/models/password-reset-token.js';
+import User from '../src/models/user.js';
+import { renderMarkdown } from '../src/render.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
