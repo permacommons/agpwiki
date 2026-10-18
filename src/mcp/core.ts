@@ -38,6 +38,7 @@ import {
   PAGE_CHECK_STATUSES,
   PAGE_CHECK_TYPES,
 } from '../lib/page-checks.js';
+import { PROPOSAL_STATUSES } from '../lib/proposal-status.js';
 import { canUseBlogAdminTools, canUseWikiAdminTools } from '../services/authorization.js';
 import {
   type BlogPostDeleteInput,
@@ -116,6 +117,7 @@ import {
   protectWikiPage,
   unprotectWikiPage,
 } from '../services/page-protection-service.js';
+import { setProposalStatus } from '../services/proposal-status-service.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -1212,6 +1214,36 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         availableLanguages,
         fields: compactFieldDiffs(diff.fields, selectedLanguage, args.includeFullText ?? false),
       };
+    })
+  );
+
+  server.registerTool(
+    'proposal_setStatus',
+    {
+      title: 'Set Proposal Status',
+      description: `Set the status of a proposal page under meta/proposals/: ${PROPOSAL_STATUSES.join(', ')}. The proposal's creator or a wiki admin can set draft, open and withdrawn; only wiki admins can record a decision (adopted, applied, not_adopted, superseded), which needs a decisionNote (the published rationale) as a language map, except when moving an adopted proposal to applied. applied needs appliedTo (the pages changed or pull requests merged); superseded needs supersededBy (the replacing proposal's slug). The change is a normal page revision. Deciding a proposal is a human decision: only do it when your operator has decided. ${CONCURRENCY_DESCRIPTION}`,
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        status: z.enum([...PROPOSAL_STATUSES] as [string, ...string[]]),
+        decisionNote: z
+          .record(z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH), z.string().min(1).max(2000))
+          .optional()
+          .describe('Decision note as a language map, e.g. {"en":"Adopted after review; no objections."}. Required when recording a decision.'),
+        appliedTo: z.array(z.string().min(1).max(500)).max(50).optional(),
+        supersededBy: z.string().max(200).optional(),
+        expectedRevId: expectedRevIdSchema,
+        policyHash: policyHashSchema,
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...input } = args as typeof args & { policyHash?: string };
+      await requireCurrentPolicyHash(dal, policyHash);
+      const page = await setProposalStatus(dal, input, userId);
+      return { slug: page.slug, currentRevId: page.currentRevId, proposal: page.proposal };
     })
   );
 

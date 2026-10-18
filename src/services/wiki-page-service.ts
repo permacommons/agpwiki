@@ -19,6 +19,7 @@ import {
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
+import { type ProposalStatusInfo, readProposalStatus } from '../lib/proposal-status.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
@@ -91,6 +92,7 @@ export interface WikiPageResult {
   body: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
   wikidata: string | null;
+  proposal: ProposalStatusInfo | null;
   contentHash: string;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
@@ -267,6 +269,7 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   body: page.body ?? null,
   originalLanguage: page.originalLanguage ?? null,
   wikidata: readWikidataId(page),
+  proposal: readProposalStatus(page.properties),
   contentHash: computeWikiPageContentHash({
     slug: page.slug,
     title: page.title ?? null,

@@ -49,11 +49,16 @@ import {
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
   canSignOffPages,
+  findRevisionsWithChangedText,
   isSignoffPageSlug,
   listActivePageSignoffs,
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import {
+  getProposalStatusPermissions,
+  setProposalStatus,
+} from '../services/proposal-status-service.js';
 import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
@@ -94,6 +99,7 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
+import { renderProposalBanner, renderProposalStatusForm } from './lib/proposal-status.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
@@ -968,6 +974,58 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/proposal-status$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    const lang = normalizeOverrideLang(typeof req.body?.lang === 'string' ? req.body.lang : undefined) ?? 'en';
+    const note = typeof req.body?.decisionNote === 'string' ? normalizeLineEndings(req.body.decisionNote).trim() : '';
+    const appliedTo =
+      typeof req.body?.appliedTo === 'string'
+        ? req.body.appliedTo
+            .split(/[\r\n]+/)
+            .map((line: string) => line.trim())
+            .filter(Boolean)
+        : [];
+    try {
+      const dalInstance = await initializePostgreSQL();
+      await setProposalStatus(
+        dalInstance,
+        {
+          slug,
+          status: typeof req.body?.status === 'string' ? req.body.status : '',
+          decisionNote: note ? { [lang]: note } : undefined,
+          appliedTo,
+          supersededBy: typeof req.body?.supersededBy === 'string' ? req.body.supersededBy : undefined,
+        },
+        session.userId
+      );
+      res.redirect(303, pageViewPath(slug));
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('proposalStatus.forbidden'));
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).type('text').send(`${req.t('proposalStatus.invalid')} ${error.message}`);
+        return;
+      }
+      console.error('Failed to set proposal status:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/sign-off$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1209,6 +1267,7 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
+      if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
@@ -1299,10 +1358,40 @@ export const registerPageRoutes = (app: Express) => {
   <span class="tool-related-links">${relatedLinks.join(' · ')}</span>
 </div>`
         : '';
+      const changedRevIds = signoffs
+        ? await findRevisionsWithChangedText(
+            dalInstance,
+            page.id,
+            [...new Set(signoffs.map(signoff => signoff.revId))].filter(id => id !== page.currentRevId)
+          )
+        : new Set<string>();
+      const proposalPermissions = signoffs
+        ? await getProposalStatusPermissions(dalInstance, page.id, session?.userId)
+        : { canChange: false, isAdmin: false };
+      const proposalHtml = signoffs
+        ? `${renderProposalBanner({
+            info: selectedRevision.proposal,
+            userMap,
+            locale: (res.locals.locale as string | undefined) ?? 'en',
+            contentLang,
+            t: req.t,
+          })}${
+            proposalPermissions.canChange && editability.isEditable && !revIdParam
+              ? renderProposalStatusForm({
+                  slug: canonicalSlug,
+                  info: page.proposal,
+                  isAdmin: proposalPermissions.isAdmin,
+                  contentLang,
+                  t: req.t,
+                })
+              : ''
+          }`
+        : '';
       const signoffsHtml = signoffs
         ? renderPageSignoffs({
             slug: canonicalSlug,
             currentRevId: page.currentRevId,
+            changedRevIds,
             signoffs,
             userMap,
             viewerId: session?.userId ?? null,
@@ -1330,7 +1419,7 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         labelHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {
