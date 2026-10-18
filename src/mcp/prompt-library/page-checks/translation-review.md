@@ -8,7 +8,7 @@ Verify translation accuracy against the source language. The default source lang
 {{metaPages}}
 
 ## Step 2: Retrieve the article and translations
-Use `wiki_readPage` to retrieve the article content and determine which translations are available.
+Use `wiki_readPage` with `lang: "*"` to retrieve the article in all its languages and determine which translations are available. (Without `lang`, it returns only one language.)
 
 Default behavior:
 - Review **all** available translations.
