@@ -1,17 +1,18 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import test from 'node:test';
-import { initializePostgreSQL } from '../src/db.js';
+
 import { createMcpServer } from '../src/mcp/core.js';
-import User from '../src/models/user.js';
+import { initializePostgreSQL } from '../src/db.js';
 import {
   BLOG_ADMIN_ROLE,
   BLOG_AUTHOR_ROLE,
-  grantRoleUpsert,
   SITE_ADMIN_ROLE,
   WIKI_ADMIN_ROLE,
+  grantRoleUpsert,
 } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import User from '../src/models/user.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -274,7 +275,7 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
   const dal = await getDal();
   const slug = `test-mcp-expected-rev-${Date.now()}`;
   const user = await createTestUser();
-  const userIdForCleanup: string | null = user.id;
+  let userIdForCleanup: string | null = user.id;
 
   try {
     await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
@@ -560,7 +561,7 @@ test('MCP citation_create rejects a stale or wrong policy hash', async () => {
   const dal = await getDal();
   const citationKey = `test-mcp-policy-cite-${Date.now()}`;
   const user = await createTestUser();
-  const userIdForCleanup: string | null = user.id;
+  let userIdForCleanup: string | null = user.id;
 
   try {
     await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);

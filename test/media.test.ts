@@ -9,8 +9,8 @@ import {
   formatMediaLabel,
   formatMediaMissingHtml,
   formatMediaPageTitle,
-  type MediaData,
   resolveWikimediaStepForWidth,
+  type MediaData,
 } from '../src/lib/media.js';
 
 const buildImageData = (): MediaData => ({
