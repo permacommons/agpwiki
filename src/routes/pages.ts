@@ -1312,8 +1312,8 @@ export const registerPageRoutes = (app: Express) => {
           })
         : '';
       const wikidataHtml =
-        isArticle && page.wikidata
-          ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(page.wikidata)}" rel="noopener">${escapeHtml(page.wikidata)}</a></p>`
+        isArticle && selectedRevision.wikidata
+          ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
           : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')
