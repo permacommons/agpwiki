@@ -66,7 +66,9 @@ import {
   subscribeUserToForumThread,
 } from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
+import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import {
+  findRevisionsWithChangedText,
   listActivePageSignoffs,
   signOffPage,
   withdrawPageSignoff,
@@ -1346,6 +1348,86 @@ test('Service wiki pages record a versioned Wikidata ID', async () => {
     assert.equal(first.revision.wikidata, 'Q698');
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userId ?? undefined });
+  }
+});
+
+test('Service proposal status follows who may set what and keeps decisions', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const slug = `meta/proposals/test-status-${stamp}`;
+  const otherSlug = `meta/proposals/test-status-next-${stamp}`;
+  const userIds: string[] = [];
+
+  try {
+    const author = await createTestUser();
+    const stranger = await createTestUser();
+    const admin = await createTestUser();
+    userIds.push(author.id, stranger.id, admin.id);
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+
+    const created = await createWikiPage(
+      dal,
+      { slug, title: { en: 'Status test' }, body: { en: 'Proposal text.' } },
+      author.id
+    );
+    await createWikiPage(dal, { slug: otherSlug, title: { en: 'Next' }, body: { en: 'Text.' } }, author.id);
+    assert.equal(created.proposal, null);
+
+    const opened = await setProposalStatus(dal, { slug, status: 'open' }, author.id);
+    assert.equal(opened.proposal?.status, 'open');
+    assert.equal(opened.body?.en, 'Proposal text.');
+
+    await assert.rejects(() => setProposalStatus(dal, { slug, status: 'withdrawn' }, stranger.id), ForbiddenError);
+    await assert.rejects(
+      () => setProposalStatus(dal, { slug, status: 'adopted', decisionNote: { en: 'Yes.' } }, author.id),
+      ForbiddenError
+    );
+    await assert.rejects(() => setProposalStatus(dal, { slug, status: 'adopted' }, admin.id), ValidationError);
+    await assert.rejects(() => setProposalStatus(dal, { slug, status: 'maybe' }, admin.id), ValidationError);
+
+    const adopted = await setProposalStatus(
+      dal,
+      { slug, status: 'adopted', decisionNote: { en: 'Adopted after review.' } },
+      admin.id
+    );
+    assert.equal(adopted.proposal?.decidedBy, admin.id);
+    assert.deepEqual(adopted.proposal?.decisionNote, { en: 'Adopted after review.' });
+
+    await assert.rejects(() => setProposalStatus(dal, { slug, status: 'applied' }, admin.id), ValidationError);
+    const applied = await setProposalStatus(
+      dal,
+      { slug, status: 'applied', appliedTo: ['meta/values'] },
+      admin.id
+    );
+    assert.equal(applied.proposal?.status, 'applied');
+    assert.deepEqual(applied.proposal?.appliedTo, ['meta/values']);
+    assert.deepEqual(applied.proposal?.decisionNote, { en: 'Adopted after review.' });
+
+    await assert.rejects(
+      () => setProposalStatus(dal, { slug, status: 'superseded', decisionNote: { en: 'Replaced.' }, supersededBy: 'firefox' }, admin.id),
+      ValidationError
+    );
+    const superseded = await setProposalStatus(
+      dal,
+      { slug, status: 'superseded', decisionNote: { en: 'Replaced.' }, supersededBy: otherSlug },
+      admin.id
+    );
+    assert.equal(superseded.proposal?.supersededBy, otherSlug);
+
+    await assert.rejects(
+      () => setProposalStatus(dal, { slug: otherSlug.replace('meta/proposals/', 'test-not-proposal-'), status: 'open' }, admin.id),
+      NotFoundError
+    );
+
+    const unchanged = await findRevisionsWithChangedText(dal, created.id, [opened.currentRevId, adopted.currentRevId]);
+    assert.equal(unchanged.size, 0);
+    await updateWikiPage(dal, { slug, body: { en: 'Edited proposal text.' }, revSummary: { en: 'Edit.' } }, author.id);
+    const changed = await findRevisionsWithChangedText(dal, created.id, [opened.currentRevId]);
+    assert.equal(changed.has(opened.currentRevId), true);
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `meta/proposals/test-status-${stamp}%` });
+    await cleanupTestArtifacts(dal, { slugPrefix: `meta/proposals/test-status-next-${stamp}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
   }
 });
 

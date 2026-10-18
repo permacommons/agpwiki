@@ -589,6 +589,65 @@ pre.diff ins {
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
+.proposal-banner {
+  margin: 0 0 1.25rem;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--rule);
+  border-left-width: 6px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.92rem;
+  background: #fffdf7;
+}
+.proposal-banner-note {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+}
+.proposal-banner--draft,
+.proposal-banner--none {
+  border-left-color: #b9b0a6;
+  background: #f4f1ec;
+}
+.proposal-banner--open {
+  border-left-color: #2d5f73;
+  background: #e8f0f3;
+}
+.proposal-banner--adopted {
+  border-left-color: #7fae6a;
+  background: #eef5e9;
+}
+.proposal-banner--applied {
+  border-left-color: #2f6b3a;
+  background: #e3efe0;
+}
+.proposal-banner--not_adopted {
+  border-left-color: #9a3b2b;
+  background: #f6e8e4;
+}
+.proposal-banner--withdrawn,
+.proposal-banner--superseded {
+  border-left-color: #5e5852;
+  background: #ece9e5;
+}
+.proposal-status-form {
+  margin: -0.75rem 0 1.25rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.88rem;
+}
+.proposal-status-form summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+.proposal-status-form form {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  justify-items: start;
+}
+.proposal-status-form textarea,
+.proposal-status-form input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+}
 .page-wikidata {
   clear: both;
   margin: 1.5rem 0 0.5rem;

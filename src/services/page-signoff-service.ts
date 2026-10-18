@@ -57,6 +57,31 @@ export const canSignOffPages = async (_dalInstance: DataAccessLayer, userId?: st
   return Boolean(user && !user.blockedAt);
 };
 
+/**
+ * Revision IDs among the given ones whose title or body differ from the
+ * page's current revision. Revisions that only changed metadata, such as a
+ * proposal's status, are not counted as changes to the proposal.
+ */
+export const findRevisionsWithChangedText = async (
+  dalInstance: DataAccessLayer,
+  pageId: string,
+  revIds: string[]
+): Promise<Set<string>> => {
+  const changed = new Set<string>();
+  if (!revIds.length) return changed;
+  const result = await dalInstance.query(
+    `SELECT r._rev_id AS rev_id
+       FROM pages r
+       JOIN pages c ON c.id = $1 AND c._old_rev_of IS NULL
+      WHERE (r.id = $1 OR r._old_rev_of = $1)
+        AND r._rev_id = ANY($2)
+        AND (r.title IS DISTINCT FROM c.title OR r.body IS DISTINCT FROM c.body)`,
+    [pageId, revIds]
+  );
+  for (const row of result.rows as Array<{ rev_id: string }>) changed.add(row.rev_id);
+  return changed;
+};
+
 export const listActivePageSignoffs = async (
   _dalInstance: DataAccessLayer,
   pageId: string

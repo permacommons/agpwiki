@@ -543,6 +543,35 @@
       "wiki_page_signoff_withdrawn": "Withdrew a position on a proposal"
     }
   },
+  "proposalStatus": {
+    // Banner at the top of proposal pages (meta/proposals/...).
+    "status": {
+      "draft": "Draft",
+      "open": "Open for discussion",
+      "adopted": "Adopted, not yet applied",
+      "applied": "Applied",
+      "not_adopted": "Not adopted",
+      "withdrawn": "Withdrawn",
+      "superseded": "Superseded"
+    },
+    "noStatus": "No status set yet",
+    "since": "since {{date}}",
+    "decided": "decided on {{date}} by {{name}}",
+    "appliedTo": "applied on {{date}} to",
+    "supersededBy": "replaced by",
+    "forbidden": "Only the proposal's creator or a wiki admin can change its status, and only wiki admins can record a decision.",
+    "invalid": "The status could not be saved.",
+    "form": {
+      "title": "Change status",
+      "status": "Status",
+      "decisionNote": "Decision note (required for a decision; it is the published rationale)",
+      "appliedTo": "Applied to (pages or pull requests, one per line; required for Applied)",
+      "supersededBy": "Replaced by (proposal address; required for Superseded)",
+      "helpAdmin": "Draft, Open and Withdrawn can be set by the proposal's creator; decisions only by admins.",
+      "helpAuthor": "As the proposal's creator, you can mark it Draft, Open or Withdrawn. Decisions are recorded by admins.",
+      "save": "Save status"
+    }
+  },
   "signoff": {
     // Section on proposal pages (meta/proposals/...) where contributors state their position.
     "title": "Positions",

@@ -12,6 +12,7 @@ import { renderFormLanguageSelector } from './form-language-selector.js';
 type PageSignoffsParams = {
   slug: string;
   currentRevId: string;
+  changedRevIds?: Set<string>;
   signoffs: PageSignoffResult[];
   userMap: Map<string, string>;
   viewerId: string | null;
@@ -28,6 +29,7 @@ const stanceLabel = (stance: SignoffStance, t: TFunction) => t(`signoff.stance.$
 export const renderPageSignoffs = ({
   slug,
   currentRevId,
+  changedRevIds,
   signoffs,
   userMap,
   viewerId,
@@ -44,7 +46,7 @@ export const renderPageSignoffs = ({
         t('signoff.signedRevision')
       )}</a>`;
       const changedHtml =
-        signoff.revId === currentRevId
+        !(changedRevIds ? changedRevIds.has(signoff.revId) : signoff.revId !== currentRevId)
           ? ''
           : ` · <span class="page-signoff-changed">${escapeHtml(t('signoff.changedSince'))}</span> <a href="${pagePath}?diffFrom=${encodeURIComponent(
               signoff.revId
