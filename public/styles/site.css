@@ -589,6 +589,13 @@ pre.diff ins {
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
+.page-wikidata {
+  clear: both;
+  margin: 1.5rem 0 0.5rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
 .page-signoffs {
   clear: both;
   margin: 2rem 0 1rem;

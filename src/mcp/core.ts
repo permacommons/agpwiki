@@ -115,6 +115,7 @@ import {
   createWikiPage,
   deleteWikiPage,
   diffWikiPageRevisions,
+  listPagesMissingWikidata,
   listWikiPageResources,
   listWikiPageRevisions,
   readWikiPage,
@@ -301,6 +302,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .nullable()
     .describe(
       `Citation locator type. Must be one of: ${CITATION_CLAIM_LOCATOR_TYPES.join(', ')}. Max ${CITATION_CLAIM_LOCATOR_TYPE_MAX_LENGTH} characters.`
+    );
+  const wikidataIdSchema = z
+    .string()
+    .regex(/^Q[1-9][0-9]{0,11}$/, { error: 'Expected a Wikidata item ID such as "Q42".' })
+    .nullable()
+    .optional()
+    .describe(
+      'Wikidata item ID for this article, such as "Q42". Optional but strongly recommended for articles; null removes it. Shown at the bottom of the article and recorded in its history.'
     );
   const server = new McpServer(
     {
@@ -530,6 +539,29 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
   );
 
   server.registerResource(
+    'Articles Missing a Wikidata ID',
+    'agpwiki://pages/missing-wikidata',
+    {
+      title: 'Articles Missing a Wikidata ID',
+      description: 'Current articles that have no Wikidata ID yet, by slug.',
+      mimeType: 'application/json',
+    },
+    async uri => {
+      const dal = await initializePostgreSQL();
+      const pages = await listPagesMissingWikidata(dal);
+      return {
+        contents: [
+          {
+            uri: uri.toString(),
+            mimeType: 'application/json',
+            text: JSON.stringify({ total: pages.length, pages }, null, 2),
+          },
+        ],
+      };
+    }
+  );
+
+  server.registerResource(
     'Blog Posts Index',
     'agpwiki://blog/posts',
     {
@@ -607,6 +639,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        wikidata: wikidataIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
@@ -1624,6 +1657,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
+        wikidata: wikidataIdSchema,
         expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),

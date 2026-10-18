@@ -331,6 +331,9 @@
     "modifiedLanguages": "Modified languages"
   },
   "page": {
+    // Label before the Wikidata item link at the bottom of an article.
+    "wikidata": "Wikidata:",
+    "missingWikidata": "Articles without a Wikidata ID",
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
@@ -454,6 +457,7 @@
     "signedOut": "{{loginLink}} or {{signupLink}} to edit",
     "intro": "Editing the {{language}} version of this page.",
     "banner": "Generally, edits are performed via AI Agents. Use operator edits for quick fixes or changes that would take longer to explain to an agent than to make directly.",
+    "wikidataHelp": "Optional but recommended for articles: the ID of the matching Wikidata item, such as Q42. Leave empty to remove it.",
     "summaryHelp": "This summary will appear in the revision history.",
     "protectedForbidden": "This page is protected. Only wiki admins can edit it.",
     "validation": {
@@ -467,7 +471,8 @@
     "fields": {
       "title": "Title",
       "body": "Body",
-      "summary": "Edit summary"
+      "summary": "Edit summary",
+      "wikidata": "Wikidata ID"
     },
     "actions": {
       "save": "Save changes"
@@ -571,6 +576,8 @@
     "invalid": "This position could not be saved. Choose support, neutral or oppose. Keep the rationale within 2,000 characters and select a supported language."
   },
   "tool": {
+    "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
+    "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",

@@ -89,6 +89,8 @@ import {
 } from '../src/services/forum-service.js';
 import {
   addWikiPageAlias,
+  listPagesMissingWikidata,
+  readWikiPageRevision,
   applyWikiPagePatch,
   createWikiPage,
   deleteWikiPage,
@@ -1285,6 +1287,65 @@ test('Service site admins hold every role without separate grants', async () => 
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
     await cleanupTestArtifacts(dal, { userId: siteAdminId ?? undefined });
+  }
+});
+
+test('Service wiki pages record a versioned Wikidata ID', async () => {
+  const dal = await getDal();
+  const slug = `test-wikidata-id-${Date.now()}`;
+  let userId: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+
+    await assert.rejects(
+      () =>
+        createWikiPage(
+          dal,
+          { slug, title: { en: 'Bad' }, body: { en: 'Text.' }, wikidata: 'Firefox' },
+          user.id
+        ),
+      ValidationError
+    );
+
+    const created = await createWikiPage(
+      dal,
+      { slug, title: { en: 'Firefox test' }, body: { en: 'Text.' }, wikidata: 'Q698' },
+      user.id
+    );
+    assert.equal(created.wikidata, 'Q698');
+    assert.equal((await readWikiPage(dal, slug)).wikidata, 'Q698');
+
+    const missingBefore = await listPagesMissingWikidata(dal);
+    assert.equal(missingBefore.some(page => page.slug === slug), false);
+
+    const changed = await updateWikiPage(
+      dal,
+      { slug, wikidata: 'Q699', revSummary: { en: 'Fix Wikidata ID.' } },
+      user.id
+    );
+    assert.equal(changed.wikidata, 'Q699');
+
+    const bodyOnly = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'New text.' }, revSummary: { en: 'Edit text.' } },
+      user.id
+    );
+    assert.equal(bodyOnly.wikidata, 'Q699');
+
+    const removed = await updateWikiPage(
+      dal,
+      { slug, wikidata: null, revSummary: { en: 'Remove Wikidata ID.' } },
+      user.id
+    );
+    assert.equal(removed.wikidata, null);
+    assert.equal((await listPagesMissingWikidata(dal)).some(page => page.slug === slug), true);
+
+    const first = await readWikiPageRevision(dal, slug, created.currentRevId);
+    assert.equal(first.revision.wikidata, 'Q698');
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userId ?? undefined });
   }
 });
 

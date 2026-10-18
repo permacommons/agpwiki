@@ -14,6 +14,7 @@ const wikiPageManifest = {
     title: mlString.getSafeTextSchema({ maxLength: 200 }),
     body: mlString.getHTMLSchema({ maxLength: 50000 }),
     originalLanguage: types.string().max(8),
+    properties: types.object(),
     createdAt: types.date().default(() => new Date()),
     updatedAt: types.date().default(() => new Date()),
   },
