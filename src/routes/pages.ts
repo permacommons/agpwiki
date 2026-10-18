@@ -1266,7 +1266,7 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
-      if (page.proposal?.decidedBy) userIds.add(page.proposal.decidedBy);
+      if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
@@ -1369,13 +1369,13 @@ export const registerPageRoutes = (app: Express) => {
         : { canChange: false, isAdmin: false };
       const proposalHtml = signoffs
         ? `${renderProposalBanner({
-            info: page.proposal,
+            info: selectedRevision.proposal,
             userMap,
             locale: (res.locals.locale as string | undefined) ?? 'en',
             contentLang,
             t: req.t,
           })}${
-            proposalPermissions.canChange && !revIdParam
+            proposalPermissions.canChange && editability.isEditable && !revIdParam
               ? renderProposalStatusForm({
                   slug: canonicalSlug,
                   info: page.proposal,

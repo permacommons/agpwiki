@@ -10,6 +10,7 @@ import {
   type ProposalStatusInfo,
   readProposalStatus,
 } from '../lib/proposal-status.js';
+import { assertCanEditWikiPage } from './page-protection-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
 import { ensureNonEmptyString, normalizeSlugInput } from './validation.js';
@@ -67,7 +68,11 @@ export async function setProposalStatus(
   if (!isProposalStatus(input.status)) {
     errors.add('status', `Must be one of: ${PROPOSAL_STATUSES.join(', ')}.`, 'invalid');
   }
-  const decisionNote = sanitizeLocalizedMapInput(input.decisionNote ?? undefined) ?? null;
+  const decisionNote = Object.fromEntries(
+    Object.entries(sanitizeLocalizedMapInput(input.decisionNote ?? undefined) ?? {})
+      .map(([lang, text]) => [lang, text.trim()])
+      .filter(([, text]) => text.length > 0)
+  );
   for (const [lang, text] of Object.entries(decisionNote ?? {})) {
     if (typeof text === 'string' && text.length > PROPOSAL_DECISION_NOTE_MAX_LENGTH) {
       errors.add(`decisionNote.${lang}`, `Must be ${PROPOSAL_DECISION_NOTE_MAX_LENGTH} characters or fewer.`, 'max_length');
@@ -86,6 +91,7 @@ export async function setProposalStatus(
     });
   }
   assertExpectedRevision(page._revID, input.expectedRevId);
+  await assertCanEditWikiPage(dalInstance, page, userId);
 
   const isAdmin = await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE);
   const isDecision = DECISION_STATUSES.includes(status);
