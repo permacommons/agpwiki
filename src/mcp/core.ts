@@ -20,11 +20,18 @@ import {
   CITATION_CLAIM_LOCATOR_VALUE_MAX_LENGTH,
   CITATION_CLAIM_QUOTE_MAX_LENGTH,
 } from '../lib/citation-claims.js';
+import { compactFieldDiffs } from '../lib/diff-compact.js';
 import {
   InvalidRequestError,
   PreconditionFailedError,
   UnsupportedError,
 } from '../lib/errors.js';
+import {
+  ALL_LANGUAGES,
+  listAvailableLanguages,
+  selectContentLanguage,
+  selectPayloadLanguage,
+} from '../lib/language-selection.js';
 import {
   PAGE_CHECK_NOTES_MAX_LENGTH,
   PAGE_CHECK_RESULTS_MAX_LENGTH,
@@ -311,6 +318,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .describe(
       'Wikidata item ID for this article, such as "Q42". Optional but strongly recommended for articles; null removes it. Shown at the bottom of the article and recorded in its history.'
     );
+  const contentLanguageMessage =
+    'Expected a supported locale code (see agpwiki://locales) or "*" for all languages.';
+  const contentLanguageSchema = z
+    .string({ error: contentLanguageMessage })
+    .min(1, { error: contentLanguageMessage })
+    .max(LANGUAGE_TAG_MAX_LENGTH, { error: contentLanguageMessage })
+    .optional()
+    .describe(
+      'Language to return: a supported locale code, or "*" for all languages. Without it, the page\'s original language is returned when it has text, otherwise English, otherwise the first available language. The response lists selectedLanguage and availableLanguages; a missing language is an error, never a fallback.'
+    );
+  const REVISION_LIST_DEFAULT_LIMIT = 50;
+  const REVISION_LIST_MAX_LIMIT = 100;
+
   const server = new McpServer(
     {
       name: 'agpwiki',
@@ -1114,16 +1134,34 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_listRevisions',
     {
       title: 'List Wiki Page Revisions',
-      description: 'List revisions for a wiki page by slug.',
+      description: `List revisions for a wiki page by slug, newest first: revision IDs, dates, authors, summaries and tags, without content. Use wiki_readRevision to read one revision's content. Results are paginated: pass offset (default 0) and limit (default ${REVISION_LIST_DEFAULT_LIMIT}, max ${REVISION_LIST_MAX_LIMIT}); nextOffset is null on the last page.`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
+        offset: z.number().int().min(0).optional(),
+        limit: z.number().int().min(1).max(REVISION_LIST_MAX_LIMIT).optional(),
       },
     },
     withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
-      const payload = await listWikiPageRevisions(dal, args.slug);
-      return payload;
+      const { pageId, revisions } = await listWikiPageRevisions(dal, args.slug);
+      const offset = args.offset ?? 0;
+      const limit = args.limit ?? REVISION_LIST_DEFAULT_LIMIT;
+      const page = revisions.slice(offset, offset + limit);
+      return {
+        pageId,
+        total: revisions.length,
+        offset,
+        limit,
+        nextOffset: offset + page.length < revisions.length ? offset + page.length : null,
+        revisions: page.map(revision => ({
+          revId: revision.revId,
+          revDate: revision.revDate,
+          revUser: revision.revUser,
+          revTags: revision.revTags,
+          revSummary: revision.revSummary,
+        })),
+      };
     })
   );
 
@@ -1131,19 +1169,49 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_diffRevisions',
     {
       title: 'Diff Wiki Page Revisions',
-      description: 'Generate a unified diff between two revisions.',
+      description:
+        'Compare two revisions of a wiki page. Returns unified diffs and change statistics for one language by default (chosen like wiki_readPage, against the newer revision); pass lang: "*" for all languages. Complete before/after texts are omitted unless includeFullText is true.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
-        lang: languageTagSchema.optional,
+        lang: contentLanguageSchema,
+        includeFullText: z.boolean().optional(),
       },
     },
     withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
-      const payload = await diffWikiPageRevisions(dal, args);
-      return payload;
+      const target = args.toRevId
+        ? (await readWikiPageRevision(dal, args.slug, args.toRevId)).revision
+        : await readWikiPage(dal, args.slug);
+      const source = (await readWikiPageRevision(dal, args.slug, args.fromRevId)).revision;
+      const targetLanguages = listAvailableLanguages(target.title, target.body);
+      const availableLanguages = [
+        ...new Set([...listAvailableLanguages(source.title, source.body), ...targetLanguages]),
+      ].sort();
+      const selectedLanguage =
+        args.lang === ALL_LANGUAGES
+          ? ALL_LANGUAGES
+          : selectContentLanguage({
+              requested: args.lang,
+              originalLanguage: target.originalLanguage,
+              availableLanguages: args.lang ? availableLanguages : targetLanguages,
+              slug: args.slug,
+            });
+      const diff = await diffWikiPageRevisions(dal, {
+        slug: args.slug,
+        fromRevId: args.fromRevId,
+        toRevId: args.toRevId,
+        lang: selectedLanguage === ALL_LANGUAGES ? undefined : (selectedLanguage ?? undefined),
+      });
+      return {
+        ...diff,
+        language: selectedLanguage,
+        selectedLanguage,
+        availableLanguages,
+        fields: compactFieldDiffs(diff.fields, selectedLanguage, args.includeFullText ?? false),
+      };
     })
   );
 
@@ -1151,15 +1219,16 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_readPage',
     {
       title: 'Read Wiki Page',
-      description: `Read a single wiki page by slug. ${READ_REVISION_DESCRIPTION}`,
+      description: `Read a single wiki page by slug, in one language by default (see lang; pass "*" for all languages). ${READ_REVISION_DESCRIPTION} contentHash always covers every language.`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
+        lang: contentLanguageSchema,
       },
     },
     withToolErrorHandling(async (args, extra) => {
       const dal = await initializePostgreSQL();
-      const payload = await readWikiPage(dal, args.slug);
+      const payload = selectPayloadLanguage(await readWikiPage(dal, args.slug), args.lang, args.slug);
       const editability = await getWikiPageEditability(
         dal,
         { id: payload.id },
@@ -1178,17 +1247,22 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_readRevision',
     {
       title: 'Read Wiki Page Revision',
-      description: 'Read a specific wiki page revision by revision ID.',
+      description:
+        'Read a specific wiki page revision by revision ID, in one language by default (see lang; pass "*" for all languages).',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         revId: uuidSchema,
+        lang: contentLanguageSchema,
       },
     },
     withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPageRevision(dal, args.slug, args.revId);
-      return payload;
+      return {
+        ...payload,
+        revision: selectPayloadLanguage(payload.revision, args.lang, args.slug),
+      };
     })
   );
 
