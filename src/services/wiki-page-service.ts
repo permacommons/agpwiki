@@ -19,7 +19,12 @@ import {
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
-import { type ProposalStatusInfo, readProposalStatus } from '../lib/proposal-status.js';
+import {
+  type ProposalLinks,
+  type ProposalStatusInfo,
+  readProposalLinks,
+  readProposalStatus,
+} from '../lib/proposal-status.js';
 import { isBlockedSlug } from '../lib/slug.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
@@ -93,6 +98,7 @@ export interface WikiPageResult {
   originalLanguage: string | null | undefined;
   wikidata: string | null;
   proposal: ProposalStatusInfo | null;
+  proposalLinks: ProposalLinks | null;
   contentHash: string;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
@@ -270,6 +276,7 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   originalLanguage: page.originalLanguage ?? null,
   wikidata: readWikidataId(page),
   proposal: readProposalStatus(page.properties),
+  proposalLinks: readProposalLinks(page.properties),
   contentHash: computeWikiPageContentHash({
     slug: page.slug,
     title: page.title ?? null,
@@ -301,7 +308,7 @@ const toWikiPageAliasResult = (alias: PageAliasInstance): WikiPageAliasResult =>
   createdBy: alias.createdBy ?? null,
 });
 
-const recordProtectedWikiPageEdit = async (
+export const recordProtectedWikiPageEdit = async (
   dalInstance: DataAccessLayer,
   page: WikiPageInstance,
   userId: string,

@@ -8,6 +8,7 @@ import {
   PROPOSAL_STATUSES,
   type ProposalStatus,
   type ProposalStatusInfo,
+  readProposalLinks,
   readProposalStatus,
 } from '../lib/proposal-status.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
@@ -103,8 +104,11 @@ export async function setProposalStatus(
   }
 
   const current = readProposalStatus(page.properties);
+  const links = readProposalLinks(page.properties);
   const now = new Date().toISOString();
   const next: ProposalStatusInfo = { status, changedAt: now, changedBy: userId };
+  if (links?.pullRequests.length) next.pullRequests = links.pullRequests;
+  if (links?.parent) next.parent = links.parent;
   const hasNote = Boolean(decisionNote && Object.keys(decisionNote).length);
   const fieldErrors = new ValidationCollector('Invalid proposal status input.');
 

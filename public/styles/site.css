@@ -628,6 +628,70 @@ pre.diff ins {
   border-left-color: #5e5852;
   background: #ece9e5;
 }
+.proposal-links {
+  margin: 0 0 1.25rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.92rem;
+}
+.proposal-links dl {
+  margin: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+.proposal-links dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+}
+.proposal-links dt {
+  font-weight: 600;
+}
+.proposal-links dd {
+  margin: 0;
+}
+.proposal-pr-list,
+.proposal-parts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.proposal-parts-list {
+  flex-direction: column;
+}
+.pr-state,
+.proposal-part-status {
+  font-size: 0.8rem;
+  color: var(--muted, #6f655a);
+}
+.pr-state--merged {
+  color: #6f42c1;
+}
+.pr-state--open {
+  color: #1a7f37;
+}
+.pr-state--closed {
+  color: #b42318;
+}
+.proposal-links-form {
+  margin-top: 0.5rem;
+}
+.proposal-links-form summary {
+  cursor: pointer;
+}
+.proposal-links-form form {
+  display: grid;
+  gap: 0.6rem;
+  margin-top: 0.6rem;
+  max-width: 36rem;
+}
+.proposal-links-form textarea,
+.proposal-links-form input[type='text'] {
+  width: 100%;
+  box-sizing: border-box;
+}
 .proposal-status-form {
   margin: -0.75rem 0 1.25rem;
   font-family: 'IBM Plex Sans', sans-serif;

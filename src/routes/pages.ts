@@ -55,10 +55,12 @@ import {
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
   getProposalStatusPermissions,
   setProposalStatus,
 } from '../services/proposal-status-service.js';
+import { pullRequestStates } from '../services/pull-request-state.js';
 import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
@@ -66,6 +68,7 @@ import {
 } from '../services/wiki-link-preview-service.js';
 import {
   diffWikiPageRevisions,
+  findCurrentPageBySlugOrAlias,
   listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
@@ -99,7 +102,11 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
-import { renderProposalBanner, renderProposalStatusForm } from './lib/proposal-status.js';
+import {
+  renderProposalBanner,
+  renderProposalLinks,
+  renderProposalStatusForm,
+} from './lib/proposal-status.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
@@ -974,6 +981,54 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/proposal-links$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    const pullRequests =
+      typeof req.body?.pullRequests === 'string'
+        ? req.body.pullRequests
+            .split(/[\r\n]+/)
+            .map((line: string) => line.trim())
+            .filter(Boolean)
+        : [];
+    try {
+      const dalInstance = await initializePostgreSQL();
+      await setProposalLinks(
+        dalInstance,
+        {
+          slug,
+          pullRequests,
+          parent: typeof req.body?.parent === 'string' ? req.body.parent : null,
+        },
+        session.userId
+      );
+      res.redirect(303, pageViewPath(slug));
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('proposalLinks.forbidden'));
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).type('text').send(`${req.t('proposalLinks.invalid')} ${error.message}`);
+        return;
+      }
+      console.error('Failed to set proposal links:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/proposal-status$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1384,7 +1439,28 @@ export const registerPageRoutes = (app: Express) => {
                   t: req.t,
                 })
               : ''
-          }`
+          }${await (async () => {
+            const links = page.proposalLinks;
+            const [pullRequests, parentPage, parts] = await Promise.all([
+              pullRequestStates.getStates(links?.pullRequests ?? []),
+              links?.parent ? findCurrentPageBySlugOrAlias(links.parent) : null,
+              listProposalParts(dalInstance, canonicalSlug),
+            ]);
+            const titleOf = (title: Record<string, string> | null | undefined, fallback: string) =>
+              resolveSafeText(mlString.resolve, contentLang, title, fallback);
+            return renderProposalLinks({
+              slug: canonicalSlug,
+              pullRequests,
+              parent: parentPage
+                ? { slug: parentPage.slug, title: titleOf(parentPage.title, parentPage.slug) }
+                : null,
+              parts: parts.map(part => ({ ...part, title: titleOf(part.title, part.slug) })),
+              canEdit:
+                signedIn && !revIdParam && (!editability.isProtected || editability.isEditable),
+              contentLang,
+              t: req.t,
+            });
+          })()}`
         : '';
       const signoffsHtml = signoffs
         ? renderPageSignoffs({

@@ -1,12 +1,10 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import test from 'node:test';
-
-import { initializePostgreSQL } from '../src/db.js';
+import { hashPassword, verifyPassword } from '../src/auth/password.js';
 import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
-import { hashPassword, verifyPassword } from '../src/auth/password.js';
-import { createBlogPost } from '../src/services/blog-post-service.js';
+import { initializePostgreSQL } from '../src/db.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -14,23 +12,25 @@ import {
   NotFoundError,
   ValidationError,
 } from '../src/lib/errors.js';
+import AuthSession from '../src/models/auth-session.js';
+import ForumThread from '../src/models/forum-thread.js';
+import NotificationDelivery from '../src/models/notification-delivery.js';
+import NotificationJob from '../src/models/notification-job.js';
+import PasswordResetToken from '../src/models/password-reset-token.js';
+import User from '../src/models/user.js';
+import { renderMarkdown } from '../src/render.js';
 import {
-  FORUM_MODERATOR_ROLE,
-  BLOG_ADMIN_ROLE,
-  BLOG_AUTHOR_ROLE,
-  SITE_ADMIN_ROLE,
-  WIKI_ADMIN_ROLE,
-  grantRole,
-  grantRoleUpsert,
-  hasRole,
-  revokeRole,
-  userHasRole,
-} from '../src/services/roles.js';
+  blockUserAccount,
+  getAccountLifecycleState,
+  unblockUserAccount,
+} from '../src/services/account-lifecycle.js';
+import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
+import { createBlogPost } from '../src/services/blog-post-service.js';
 import {
-  searchVerifiedUsersWithRights,
-  updateUserRightsBelowSiteAdmin,
-} from '../src/services/user-rights-service.js';
-import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
+  createCitationClaim,
+  readCitationClaim,
+  updateCitationClaim,
+} from '../src/services/citation-claim-service.js';
 import {
   createCitation,
   deleteCitation,
@@ -38,47 +38,9 @@ import {
   updateCitation,
 } from '../src/services/citation-service.js';
 import {
-  createCitationClaim,
-  readCitationClaim,
-  updateCitationClaim,
-} from '../src/services/citation-claim-service.js';
-import {
-  blockUserAccount,
-  getAccountLifecycleState,
-  unblockUserAccount,
-} from '../src/services/account-lifecycle.js';
-import {
-  createPasswordResetToken,
-  requestPasswordReset,
-  resetPasswordWithToken,
-} from '../src/services/password-reset.js';
-import {
-  processForumReplyCreatedNotification,
   FORUM_REPLY_CREATED_NOTIFICATION,
+  processForumReplyCreatedNotification,
 } from '../src/services/forum-notification-service.js';
-import {
-  claimPendingNotificationJobs,
-  resetProcessingNotificationJobs,
-  markNotificationJobProcessed,
-} from '../src/services/notification-queue.js';
-import {
-  isUserSubscribedToForumThread,
-  subscribeUserToForumThread,
-} from '../src/services/forum-subscription-service.js';
-import { createPageCheck } from '../src/services/page-check-service.js';
-import { setProposalStatus } from '../src/services/proposal-status-service.js';
-import {
-  findRevisionsWithChangedText,
-  listActivePageSignoffs,
-  signOffPage,
-  withdrawPageSignoff,
-} from '../src/services/page-signoff-service.js';
-import {
-  getPageProtectionForPage,
-  protectWikiPage,
-  unprotectWikiPage,
-} from '../src/services/page-protection-service.js';
-import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
 import {
   createForumComment,
   createForumThread,
@@ -90,25 +52,63 @@ import {
   setForumThreadPinned,
 } from '../src/services/forum-service.js';
 import {
+  isUserSubscribedToForumThread,
+  subscribeUserToForumThread,
+} from '../src/services/forum-subscription-service.js';
+import {
+  claimPendingNotificationJobs,
+  markNotificationJobProcessed,
+  resetProcessingNotificationJobs,
+} from '../src/services/notification-queue.js';
+import { createPageCheck } from '../src/services/page-check-service.js';
+import {
+  getPageProtectionForPage,
+  protectWikiPage,
+  unprotectWikiPage,
+} from '../src/services/page-protection-service.js';
+import {
+  findRevisionsWithChangedText,
+  listActivePageSignoffs,
+  signOffPage,
+  withdrawPageSignoff,
+} from '../src/services/page-signoff-service.js';
+import {
+  createPasswordResetToken,
+  requestPasswordReset,
+  resetPasswordWithToken,
+} from '../src/services/password-reset.js';
+import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
+import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import {
+  BLOG_ADMIN_ROLE,
+  BLOG_AUTHOR_ROLE,
+  FORUM_MODERATOR_ROLE,
+  grantRole,
+  grantRoleUpsert,
+  hasRole,
+  revokeRole,
+  SITE_ADMIN_ROLE,
+  userHasRole,
+  WIKI_ADMIN_ROLE,
+} from '../src/services/roles.js';
+import {
+  searchVerifiedUsersWithRights,
+  updateUserRightsBelowSiteAdmin,
+} from '../src/services/user-rights-service.js';
+import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
+import {
   addWikiPageAlias,
-  listPagesMissingWikidata,
-  readWikiPageRevision,
   applyWikiPagePatch,
   createWikiPage,
   deleteWikiPage,
+  listPagesMissingWikidata,
   listWikiPageRevisions,
   readWikiPage,
+  readWikiPageRevision,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
-import AuthSession from '../src/models/auth-session.js';
-import ForumThread from '../src/models/forum-thread.js';
-import NotificationDelivery from '../src/models/notification-delivery.js';
-import NotificationJob from '../src/models/notification-job.js';
-import PasswordResetToken from '../src/models/password-reset-token.js';
-import User from '../src/models/user.js';
-import { renderMarkdown } from '../src/render.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -1348,6 +1348,107 @@ test('Service wiki pages record a versioned Wikidata ID', async () => {
     assert.equal(first.revision.wikidata, 'Q698');
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userId ?? undefined });
+  }
+});
+
+test('Service proposal links record pull requests and main proposals', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const prefix = `meta/proposals/test-links-${stamp}`;
+  const mainSlug = `${prefix}/main`;
+  const partSlug = `${prefix}/main/part`;
+  const otherSlug = `${prefix}/other`;
+  const userIds: string[] = [];
+
+  try {
+    const author = await createTestUser();
+    const editor = await createTestUser();
+    const admin = await createTestUser();
+    userIds.push(author.id, editor.id, admin.id);
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+
+    await createWikiPage(dal, { slug: mainSlug, title: { en: 'Main' }, body: { en: 'Main.' } }, author.id);
+    const part = await createWikiPage(
+      dal,
+      { slug: partSlug, title: { en: 'Part' }, body: { en: 'Part.' } },
+      author.id
+    );
+    await createWikiPage(dal, { slug: otherSlug, title: { en: 'Other' }, body: { en: 'Other.' } }, author.id);
+    assert.equal(part.proposalLinks, null);
+
+    // Any editor may add links; URLs are normalized and de-duplicated.
+    const linked = await setProposalLinks(
+      dal,
+      {
+        slug: partSlug,
+        pullRequests: [
+          'https://github.com/permacommons/agpwiki/pull/86/files',
+          'https://github.com/permacommons/agpwiki/pull/86',
+          'https://github.com/permacommons/agpwiki/pull/87',
+        ],
+        parent: mainSlug,
+        expectedRevId: part.currentRevId,
+      },
+      editor.id
+    );
+    assert.deepEqual(linked.proposalLinks, {
+      pullRequests: [
+        'https://github.com/permacommons/agpwiki/pull/86',
+        'https://github.com/permacommons/agpwiki/pull/87',
+      ],
+      parent: mainSlug,
+    });
+    assert.equal(linked.proposal, null);
+    assert.equal(linked.body?.en, 'Part.');
+
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, pullRequests: ['https://example.com/pull/1'] }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, parent: partSlug }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, parent: 'firefox' }, editor.id),
+      ValidationError
+    );
+    // The main proposal cannot become part of its own part.
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: mainSlug, parent: partSlug }, editor.id),
+      ValidationError
+    );
+
+    const parts = await listProposalParts(dal, mainSlug);
+    assert.deepEqual(
+      parts.map(item => [item.slug, item.status]),
+      [[partSlug, null]]
+    );
+
+    // A status change keeps the links, and changing only one field keeps the other.
+    const opened = await setProposalStatus(dal, { slug: partSlug, status: 'open' }, author.id);
+    assert.equal(opened.proposal?.status, 'open');
+    assert.equal(opened.proposalLinks?.parent, mainSlug);
+    assert.equal(opened.proposalLinks?.pullRequests.length, 2);
+    assert.equal((await listProposalParts(dal, mainSlug))[0].status, 'open');
+
+    const moved = await setProposalLinks(dal, { slug: partSlug, parent: otherSlug }, editor.id);
+    assert.equal(moved.proposalLinks?.pullRequests.length, 2);
+    assert.equal(moved.proposal?.status, 'open');
+    assert.deepEqual(await listProposalParts(dal, mainSlug), []);
+
+    const cleared = await setProposalLinks(dal, { slug: partSlug, pullRequests: [], parent: null }, editor.id);
+    assert.equal(cleared.proposalLinks, null);
+    assert.equal(cleared.proposal?.status, 'open');
+
+    // Links only exist on proposals.
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: 'firefox', pullRequests: [] }, admin.id),
+      (error: unknown) => error instanceof ValidationError || error instanceof NotFoundError
+    );
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${prefix}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
   }
 });
 

@@ -572,6 +572,29 @@
       "save": "Save status"
     }
   },
+  "proposalLinks": {
+    // Box under the status banner on proposal pages: the pull requests implementing the proposal and its main proposal.
+    "label": "Pull requests and related proposals",
+    "pullRequests": "Pull requests",
+    "partOf": "Part of",
+    "parts": "Parts",
+    // State of a pull request on GitHub.
+    "state": {
+      "open": "Open",
+      "draft": "Draft",
+      "merged": "Merged",
+      "closed": "Closed without merging",
+      "unknown": "State not available"
+    },
+    "forbidden": "This proposal is protected; only wiki admins can change its links.",
+    "invalid": "The links could not be saved.",
+    "form": {
+      "title": "Edit pull requests and main proposal",
+      "pullRequests": "Pull requests (links to github.com/permacommons/agpwiki/pull/…, one per line)",
+      "parent": "Part of (address of the main proposal; leave empty if none)",
+      "save": "Save links"
+    }
+  },
   "signoff": {
     // Section on proposal pages (meta/proposals/...) where contributors state their position.
     "title": "Positions",

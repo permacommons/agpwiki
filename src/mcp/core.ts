@@ -110,6 +110,7 @@ import {
   protectWikiPage,
   unprotectWikiPage,
 } from '../services/page-protection-service.js';
+import { setProposalLinks } from '../services/proposal-links-service.js';
 import { setProposalStatus } from '../services/proposal-status-service.js';
 import {
   addWikiPageAlias,
@@ -1176,6 +1177,31 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       await requireCurrentPolicyHash(dal, policyHash);
       const page = await setProposalStatus(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposal: page.proposal };
+    })
+  );
+
+  server.registerTool(
+    'proposal_setLinks',
+    {
+      title: 'Set Proposal Links',
+      description: `Set the pull requests implementing a proposal under meta/proposals/ and, optionally, the main proposal it is part of. Anyone who can edit the proposal page can do this. pullRequests replaces the whole list (links to github.com/permacommons/agpwiki/pull/N; an empty list removes them); parent is the main proposal's slug (null or "" removes it). Omit a field to leave it unchanged. Use a main proposal only when grouping helps, for example a large change built in several steps. The change is a normal page revision. ${CONCURRENCY_DESCRIPTION}`,
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        pullRequests: z.array(z.string().min(1).max(300)).max(20).optional(),
+        parent: z.string().max(200).nullable().optional(),
+        expectedRevId: expectedRevIdSchema,
+        policyHash: policyHashSchema,
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...input } = args as typeof args & { policyHash?: string };
+      await requireCurrentPolicyHash(dal, policyHash);
+      const page = await setProposalLinks(dal, input, userId);
+      return { slug: page.slug, currentRevId: page.currentRevId, proposalLinks: page.proposalLinks };
     })
   );
 
