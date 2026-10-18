@@ -44,6 +44,7 @@ import {
   type UserRightsSummary,
   updateUserRightsBelowSiteAdmin,
 } from '../services/user-rights-service.js';
+import { listPagesMissingWikidata } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
@@ -1032,6 +1033,27 @@ export const registerToolRoutes = (app: Express) => {
           locale: res.locals.locale,
         }),
       },
+    });
+  });
+
+  app.get('/tool/missing-wikidata', async (req, res) => {
+    const dalInstance = await initializePostgreSQL();
+    const pages = await listPagesMissingWikidata(dalInstance);
+    const listItems = pages
+      .map(item => {
+        const title = resolveSafeTextWithFallback(mlString.resolve, 'en', item.title, item.slug);
+        return `<li><a href="/${escapeHtml(item.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(item.slug)}">${renderText(title)}</a></li>`;
+      })
+      .join('');
+    const bodyHtml = `<div class="tool-page">
+  <p>${escapeHtml(req.t('tool.missingWikidataDescription', { count: pages.length }))}</p>
+  <ul class="change-list">${listItems}</ul>
+</div>`;
+    res.render('layout', {
+      title: prepareTitle(req.t('page.missingWikidata')),
+      labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
+      bodyHtml,
+      topHtml: prependAccountBanner(res),
     });
   });
 

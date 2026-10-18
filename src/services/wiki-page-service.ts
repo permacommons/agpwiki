@@ -69,6 +69,7 @@ const computeWikiPageContentHash = (page: {
 
 export interface WikiPageWriteInput {
   slug: string;
+  wikidata?: string | null;
   title?: LocalizedMapInput;
   body?: LocalizedMapInput;
   originalLanguage?: string | null;
@@ -89,6 +90,7 @@ export interface WikiPageResult {
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
+  wikidata: string | null;
   contentHash: string;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
@@ -229,6 +231,34 @@ export interface WikiPageSearchItem {
   title: string;
 }
 
+export const WIKIDATA_ID_PATTERN = /^Q[1-9][0-9]{0,11}$/;
+
+type PageProperties = { wikidata?: string };
+
+const readWikidataId = (page: WikiPageInstance): string | null => {
+  const value = (page.properties as PageProperties | null | undefined)?.wikidata;
+  return typeof value === 'string' ? value : null;
+};
+
+const ensureOptionalWikidataId = (
+  value: unknown,
+  field: string,
+  errors: ValidationCollector
+) => {
+  if (value === undefined || value === null) return;
+  if (typeof value !== 'string' || !WIKIDATA_ID_PATTERN.test(value)) {
+    errors.add(field, 'must be a Wikidata item ID such as "Q42", or null to remove it.', 'invalid');
+  }
+};
+
+const applyWikidataId = (page: WikiPageInstance, wikidata: string | null | undefined) => {
+  if (wikidata === undefined) return;
+  const properties: PageProperties = { ...((page.properties as PageProperties | null) ?? {}) };
+  if (wikidata === null) delete properties.wikidata;
+  else properties.wikidata = wikidata;
+  page.properties = Object.keys(properties).length ? properties : null;
+};
+
 const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   id: page.id,
   slug: page.slug,
@@ -236,6 +266,7 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   title: page.title ?? null,
   body: page.body ?? null,
   originalLanguage: page.originalLanguage ?? null,
+  wikidata: readWikidataId(page),
   contentHash: computeWikiPageContentHash({
     slug: page.slug,
     title: page.title ?? null,
@@ -479,6 +510,30 @@ const applyExactReplacements = (
   return nextText;
 };
 
+export interface MissingWikidataPage {
+  slug: string;
+  title: Record<string, string> | null;
+}
+
+/**
+ * Current articles (not meta/ or tool/ pages) without a Wikidata ID.
+ */
+export async function listPagesMissingWikidata(
+  dalInstance: DataAccessLayer
+): Promise<MissingWikidataPage[]> {
+  const result = await dalInstance.query(
+    `SELECT slug, title FROM pages
+      WHERE _old_rev_of IS NULL AND _rev_deleted = false
+        AND slug NOT LIKE 'meta/%' AND slug NOT LIKE 'tool/%'
+        AND (properties->>'wikidata') IS NULL
+      ORDER BY slug`
+  );
+  return (result.rows as Array<{ slug: string; title: Record<string, string> | null }>).map(row => ({
+    slug: row.slug,
+    title: row.title,
+  }));
+}
+
 export async function listWikiPageResources(
   _dalInstance: DataAccessLayer
 ): Promise<WikiPageListResult> {
@@ -545,13 +600,14 @@ export async function readWikiPage(
 
 export async function createWikiPage(
   _dalInstance: DataAccessLayer,
-  { slug, title, body, originalLanguage, tags = [], revSummary }: WikiPageWriteInput,
+  { slug, title, body, originalLanguage, wikidata, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalWikidataId(wikidata, 'wikidata', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   validateRevSummary(revSummary, errors);
@@ -593,6 +649,7 @@ export async function createWikiPage(
   if (normalizedTitle !== undefined) page.title = normalizedTitle;
   if (normalizedBody !== undefined) page.body = normalizedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
+  applyWikidataId(page, wikidata);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.createdAt = createdAt;
@@ -611,6 +668,7 @@ export async function updateWikiPage(
     title,
     body,
     originalLanguage,
+    wikidata,
     expectedRevId,
     tags = [],
     revSummary,
@@ -622,6 +680,7 @@ export async function updateWikiPage(
   const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalWikidataId(wikidata, 'wikidata', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
@@ -671,6 +730,7 @@ export async function updateWikiPage(
   if (mergedTitle !== undefined) page.title = mergedTitle;
   if (mergedBody !== undefined) page.body = mergedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
+  applyWikidataId(page, wikidata);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -1145,6 +1205,8 @@ export async function diffWikiPageRevisions(
     toRev.originalLanguage ?? null
   );
   if (originalLangDiff) fields.originalLanguage = originalLangDiff;
+  const wikidataDiff = diffScalarField('wikidata', readWikidataId(fromRev), readWikidataId(toRev));
+  if (wikidataDiff) fields.wikidata = wikidataDiff;
 
   return {
     pageId: page.id,

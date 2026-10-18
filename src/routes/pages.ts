@@ -170,6 +170,7 @@ const renderOperatorEditForm = ({
   titleValue,
   bodyValue,
   summaryValue,
+  wikidataValue,
   previewHtml,
   errorMessage,
 }: {
@@ -180,6 +181,7 @@ const renderOperatorEditForm = ({
   titleValue: string;
   bodyValue: string;
   summaryValue: string;
+  wikidataValue: string;
   previewHtml?: string;
   errorMessage?: string;
 }) => {
@@ -210,6 +212,18 @@ const renderOperatorEditForm = ({
         data-markdown-preview-field
       >${escapeHtml(bodyValue)}</textarea>
     </label>
+    <label class="form-field">
+      <span>${escapeHtml(req.t('operatorEdit.fields.wikidata'))}</span>
+      <input
+        type="text"
+        name="wikidata"
+        value="${escapeHtml(wikidataValue)}"
+        maxlength="13"
+        pattern="Q[1-9][0-9]*"
+        placeholder="Q42"
+      />
+    </label>
+    <p class="form-help">${escapeHtml(req.t('operatorEdit.wikidataHelp'))}</p>
     <label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.summary'))}</span>
       <input type="text" name="summary" value="${escapeHtml(summaryValue)}" maxlength="300" />
@@ -249,6 +263,7 @@ const renderOperatorEditPage = async ({
   titleValue,
   bodyValue,
   summaryValue,
+  wikidataValue,
   errorMessage,
   previewHtml,
 }: {
@@ -259,6 +274,7 @@ const renderOperatorEditPage = async ({
   titleValue: string;
   bodyValue: string;
   summaryValue: string;
+  wikidataValue?: string;
   errorMessage?: string;
   previewHtml?: string;
 }) => {
@@ -287,6 +303,7 @@ const renderOperatorEditPage = async ({
       titleValue,
       bodyValue,
       summaryValue,
+      wikidataValue: wikidataValue ?? page.wikidata ?? '',
       errorMessage,
       previewHtml,
     }),
@@ -873,6 +890,7 @@ export const registerPageRoutes = (app: Express) => {
       typeof req.body?.summary === 'string' ? req.body.summary : ''
     );
     const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'save';
+    const wikidataValue = typeof req.body?.wikidata === 'string' ? req.body.wikidata.trim() : '';
 
     try {
       const dalInstance = await initializePostgreSQL();
@@ -892,6 +910,7 @@ export const registerPageRoutes = (app: Express) => {
           titleValue,
           bodyValue,
           summaryValue,
+          wikidataValue,
           previewHtml,
         });
         return;
@@ -903,6 +922,7 @@ export const registerPageRoutes = (app: Express) => {
           slug,
           title: { [lang]: titleValue },
           body: { [lang]: bodyValue },
+          wikidata: wikidataValue || null,
           revSummary: { [lang]: summaryValue },
         },
         session.userId
@@ -937,6 +957,7 @@ export const registerPageRoutes = (app: Express) => {
           titleValue,
           bodyValue,
           summaryValue,
+          wikidataValue,
           errorMessage: resolveOperatorEditValidationMessage(req.t, error),
           previewHtml,
         });
@@ -1032,10 +1053,11 @@ export const registerPageRoutes = (app: Express) => {
       );
 
       const revisions = revisionsResult.revisions;
-      const selectedRevision = revIdParam
+      const selectedRevId = revIdParam ?? (diffFrom && diffTo ? diffTo : undefined);
+      const selectedRevision = selectedRevId
         ? await (async () => {
             try {
-              return (await readWikiPageRevision(dalInstance, slug, revIdParam)).revision;
+              return (await readWikiPageRevision(dalInstance, slug, selectedRevId)).revision;
             } catch (error) {
               if (error instanceof NotFoundError) {
                 res.status(404).type('text').send(req.t('page.revisionNotFound'));
@@ -1290,6 +1312,10 @@ export const registerPageRoutes = (app: Express) => {
             languageOptions: res.locals.languageOptions,
           })
         : '';
+      const wikidataHtml =
+        isArticle && selectedRevision.wikidata
+          ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
+          : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')
         ? req.t('label.meta')
@@ -1304,7 +1330,7 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         labelHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${signoffsHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {
