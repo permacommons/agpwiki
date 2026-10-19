@@ -331,7 +331,7 @@ const findCurrentPageBySlug = async (slug: string) =>
     _revDeleted: false,
   } as Record<string, unknown>).first();
 
-const findCurrentPageById = async (id: string) =>
+export const findCurrentPageById = async (id: string) =>
   WikiPage.filterWhere({
     id,
     _oldRevOf: null,

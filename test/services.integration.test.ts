@@ -92,6 +92,7 @@ import {
 } from '../src/services/forum-service.js';
 import {
   addWikiPageAlias,
+  findCurrentPageById,
   listPagesMissingWikidata,
   readWikiPageRevision,
   applyWikiPagePatch,
@@ -1368,7 +1369,11 @@ test('Service proposal links record pull requests and main proposals', async () 
     userIds.push(author.id, editor.id, admin.id);
     await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
 
-    await createWikiPage(dal, { slug: mainSlug, title: { en: 'Main' }, body: { en: 'Main.' } }, author.id);
+    const main = await createWikiPage(
+      dal,
+      { slug: mainSlug, title: { en: 'Main' }, body: { en: 'Main.' } },
+      author.id
+    );
     const part = await createWikiPage(
       dal,
       { slug: partSlug, title: { en: 'Part' }, body: { en: 'Part.' } },
@@ -1397,7 +1402,7 @@ test('Service proposal links record pull requests and main proposals', async () 
         'https://github.com/permacommons/agpwiki/pull/86',
         'https://github.com/permacommons/agpwiki/pull/87',
       ],
-      parent: mainSlug,
+      parentId: main.id,
     });
     assert.equal(linked.proposal, null);
     assert.equal(linked.body?.en, 'Part.');
@@ -1425,23 +1430,54 @@ test('Service proposal links record pull requests and main proposals', async () 
       ValidationError
     );
 
-    const parts = await listProposalParts(dal, mainSlug);
+    const parts = await listProposalParts(dal, main.id);
     assert.deepEqual(
       parts.map(item => [item.slug, item.status]),
       [[partSlug, null]]
     );
 
+    const renamedSlug = `${prefix}/renamed-main`;
+    const renamed = await updateWikiPage(
+      dal,
+      {
+        slug: mainSlug,
+        newSlug: renamedSlug,
+        title: { en: 'Renamed main' },
+        revSummary: { en: 'Rename main proposal.' },
+      },
+      author.id
+    );
+    assert.equal(renamed.id, main.id);
+    assert.deepEqual(await listProposalParts(dal, renamed.id), parts);
+    const child = await readWikiPage(dal, partSlug);
+    assert.equal(child.proposalLinks?.parentId, main.id);
+    assert.ok(child.proposalLinks?.parentId);
+    const parent = await findCurrentPageById(child.proposalLinks.parentId);
+    assert.equal(parent?.slug, renamedSlug);
+    assert.equal(parent?.title?.en, 'Renamed main');
+    const replacement = await createWikiPage(
+      dal,
+      { slug: mainSlug, title: { en: 'Replacement' }, body: { en: 'Replacement.' } },
+      author.id
+    );
+    assert.deepEqual(await listProposalParts(dal, replacement.id), []);
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: renamedSlug, parent: otherSlug }, editor.id),
+      ValidationError
+    );
+
     // A status change keeps the links, and changing only one field keeps the other.
     const opened = await setProposalStatus(dal, { slug: partSlug, status: 'open' }, author.id);
     assert.equal(opened.proposal?.status, 'open');
-    assert.equal(opened.proposalLinks?.parent, mainSlug);
+    assert.equal(opened.proposalLinks?.parentId, main.id);
+    assert.equal(opened.proposal?.parentId, main.id);
     assert.equal(opened.proposalLinks?.pullRequests.length, 2);
-    assert.equal((await listProposalParts(dal, mainSlug))[0].status, 'open');
+    assert.equal((await listProposalParts(dal, main.id))[0].status, 'open');
 
     const moved = await setProposalLinks(dal, { slug: partSlug, parent: otherSlug }, editor.id);
     assert.equal(moved.proposalLinks?.pullRequests.length, 2);
     assert.equal(moved.proposal?.status, 'open');
-    assert.deepEqual(await listProposalParts(dal, mainSlug), []);
+    assert.deepEqual(await listProposalParts(dal, main.id), []);
 
     const cleared = await setProposalLinks(dal, { slug: partSlug, pullRequests: [], parent: null }, editor.id);
     assert.equal(cleared.proposalLinks, null);

@@ -23,7 +23,7 @@ export interface ProposalLinksInput {
   slug: string;
   // Omitted: unchanged. Empty list: removes all links.
   pullRequests?: string[] | null;
-  // Omitted: unchanged. null or empty: removes the main proposal.
+  // Parent slug or alias. Omitted: unchanged. null or empty: removes it.
   parent?: string | null;
   expectedRevId?: string;
   revSummary?: Record<string, string | null> | null;
@@ -84,22 +84,22 @@ export async function setProposalLinks(
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
   assertExpectedRevision(page._revID, input.expectedRevId);
 
-  let parent: string | null | undefined;
+  let parentId: string | null | undefined;
   if (input.parent !== undefined) {
     const target = input.parent?.trim();
     if (!target) {
-      parent = null;
+      parentId = null;
     } else {
       const parentPage = await findCurrentPageBySlugOrAlias(target);
       if (!parentPage || !isProposalSlug(parentPage.slug) || parentPage.id === page.id) {
         fieldErrors.add('parent', 'must name another proposal under meta/proposals/.', 'invalid');
-      } else if (readProposalLinks(parentPage.properties)?.parent) {
+      } else if (readProposalLinks(parentPage.properties)?.parentId) {
         // One level only: a part cannot have parts of its own.
         fieldErrors.add('parent', 'is itself part of another proposal; parts cannot have parts.', 'invalid');
-      } else if ((await listProposalParts(dalInstance, page.slug)).length) {
+      } else if ((await listProposalParts(dalInstance, page.id)).length) {
         fieldErrors.add('parent', 'cannot be set on a proposal that has parts of its own.', 'invalid');
       } else {
-        parent = parentPage.slug;
+        parentId = parentPage.id;
       }
     }
   }
@@ -111,9 +111,9 @@ export async function setProposalLinks(
     if (pullRequests.length) proposal.pullRequests = pullRequests;
     else delete proposal.pullRequests;
   }
-  if (parent !== undefined) {
-    if (parent) proposal.parent = parent;
-    else delete proposal.parent;
+  if (parentId !== undefined) {
+    if (parentId) proposal.parentId = parentId;
+    else delete proposal.parentId;
   }
   if (Object.keys(proposal).length) properties.proposal = proposal;
   else delete properties.proposal;
@@ -137,14 +137,14 @@ export async function setProposalLinks(
  */
 export async function listProposalParts(
   dalInstance: DataAccessLayer,
-  slug: string
+  parentId: string
 ): Promise<ProposalPart[]> {
   const result = await dalInstance.query(
     `SELECT slug, title, properties FROM pages
       WHERE _old_rev_of IS NULL AND _rev_deleted = false
-        AND properties->'proposal'->>'parent' = $1
+        AND properties->'proposal'->>'parentId' = $1
       ORDER BY slug`,
-    [slug]
+    [parentId]
   );
   return (
     result.rows as Array<{ slug: string; title: Record<string, string> | null; properties: unknown }>

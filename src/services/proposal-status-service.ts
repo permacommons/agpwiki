@@ -108,7 +108,7 @@ export async function setProposalStatus(
   const now = new Date().toISOString();
   const next: ProposalStatusInfo = { status, changedAt: now, changedBy: userId };
   if (links?.pullRequests.length) next.pullRequests = links.pullRequests;
-  if (links?.parent) next.parent = links.parent;
+  if (links?.parentId) next.parentId = links.parentId;
   const hasNote = Boolean(decisionNote && Object.keys(decisionNote).length);
   const fieldErrors = new ValidationCollector('Invalid proposal status input.');
 

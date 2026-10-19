@@ -31,7 +31,7 @@ export interface ProposalStatusInfo {
   appliedTo?: string[];
   supersededBy?: string;
   pullRequests?: string[];
-  parent?: string;
+  parentId?: string;
 }
 
 // Links stored next to the status: the pull requests implementing the
@@ -39,7 +39,7 @@ export interface ProposalStatusInfo {
 // before any status exists, so they are read separately.
 export interface ProposalLinks {
   pullRequests: string[];
-  parent: string | null;
+  parentId: string | null;
 }
 
 export const PULL_REQUEST_REPOSITORY = 'permacommons/agpwiki';
@@ -83,6 +83,6 @@ export const readProposalLinks = (properties: unknown): ProposalLinks | null => 
   const pullRequests = Array.isArray(proposal.pullRequests)
     ? proposal.pullRequests.filter((item): item is string => typeof item === 'string')
     : [];
-  const parent = typeof proposal.parent === 'string' && proposal.parent ? proposal.parent : null;
-  return pullRequests.length || parent ? { pullRequests, parent } : null;
+  const parentId = typeof proposal.parentId === 'string' && proposal.parentId ? proposal.parentId : null;
+  return pullRequests.length || parentId ? { pullRequests, parentId } : null;
 };

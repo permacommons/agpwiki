@@ -22,11 +22,11 @@ test('readProposalLinks reads links with or without a status', () => {
   assert.equal(readProposalLinks({ proposal: { status: 'open' } }), null);
   assert.deepEqual(
     readProposalLinks({ proposal: { pullRequests: ['https://github.com/permacommons/agpwiki/pull/1', 3] } }),
-    { pullRequests: ['https://github.com/permacommons/agpwiki/pull/1'], parent: null }
+    { pullRequests: ['https://github.com/permacommons/agpwiki/pull/1'], parentId: null }
   );
-  assert.deepEqual(readProposalLinks({ proposal: { status: 'open', parent: 'meta/proposals/x' } }), {
+  assert.deepEqual(readProposalLinks({ proposal: { status: 'open', parentId: 'parent-page-id' } }), {
     pullRequests: [],
-    parent: 'meta/proposals/x',
+    parentId: 'parent-page-id',
   });
 });
 
