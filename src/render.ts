@@ -421,6 +421,7 @@ export type RenderResult = {
 };
 
 export type RenderMarkdownOptions = {
+  afterLeadHtml?: string;
   backToCitationLabel?: string;
   wikiLinks?: {
     missingSlugs: Set<string>;
@@ -463,7 +464,18 @@ export const renderMarkdown = async (
     (env.variables as Record<string, string>).article_count = String(count);
   }
 
-  const html = markdown.render(bodySource, env);
+  let html: string;
+  if (options.afterLeadHtml) {
+    const tokens = markdown.parse(bodySource, env);
+    const boundary = tokens.findIndex(token => token.level === 0 &&
+      (token.type === 'heading_open' || token.type === 'refs_container'));
+    const index = boundary < 0 ? tokens.length : boundary;
+    html = markdown.renderer.render(tokens.slice(0, index), markdown.options, env) +
+      options.afterLeadHtml +
+      markdown.renderer.render(tokens.slice(index), markdown.options, env);
+  } else {
+    html = markdown.render(bodySource, env);
+  }
   const citeprocInstance = env.citeprocInstance as { free?: () => void } | undefined;
   if (typeof citeprocInstance?.free === 'function') {
     citeprocInstance.free();

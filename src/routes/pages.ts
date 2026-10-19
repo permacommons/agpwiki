@@ -103,8 +103,10 @@ import {
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
 import {
-  renderProposalBanner,
+  renderProposalHeader,
   renderProposalLinks,
+  renderProposalLinksForm,
+  renderProposalParts,
   renderProposalStatusForm,
 } from './lib/proposal-status.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
@@ -1220,11 +1222,21 @@ export const registerPageRoutes = (app: Express) => {
         candidateLinkSlugs.filter(candidateSlug => !existingLinkSlugs.has(candidateSlug))
       );
 
+      const titleOfProposal = (title: Record<string, string> | null | undefined, fallback: string) =>
+        resolveSafeText(mlString.resolve, contentLang, title, fallback);
+      const proposalParts = isSignoffPageSlug(canonicalSlug)
+        ? await listProposalParts(dalInstance, page.id)
+        : [];
+      const partsHtml = renderProposalParts({
+        parts: proposalParts.map(part => ({ ...part, title: titleOfProposal(part.title, part.slug) })),
+        t: req.t,
+      });
       const { html: bodyHtml, toc } = await renderMarkdown(
         bodySource,
         citationEntries,
         {
           ...markdownOptions,
+          afterLeadHtml: partsHtml,
           wikiLinks: {
             missingSlugs: missingLinkSlugs,
           },
@@ -1423,44 +1435,35 @@ export const registerPageRoutes = (app: Express) => {
         ? await getProposalStatusPermissions(dalInstance, page.id, session?.userId)
         : { canChange: false, isAdmin: false };
       const proposalHtml = signoffs
-        ? `${renderProposalBanner({
-            info: page.proposal,
-            userMap,
-            locale: (res.locals.locale as string | undefined) ?? 'en',
-            contentLang,
-            t: req.t,
-          })}${
-            proposalPermissions.canChange && !revIdParam
-              ? renderProposalStatusForm({
-                  slug: canonicalSlug,
-                  info: page.proposal,
-                  isAdmin: proposalPermissions.isAdmin,
-                  contentLang,
-                  t: req.t,
-                })
-              : ''
-          }${await (async () => {
+        ? await (async () => {
             const links = page.proposalLinks;
-            const [pullRequests, parentPage, parts] = await Promise.all([
+            const [pullRequests, parentPage] = await Promise.all([
               pullRequestStates.getStates(links?.pullRequests ?? []),
               links?.parent?.slug ? findCurrentPageById(links.parent.id) : null,
-              listProposalParts(dalInstance, page.id),
             ]);
-            const titleOf = (title: Record<string, string> | null | undefined, fallback: string) =>
-              resolveSafeText(mlString.resolve, contentLang, title, fallback);
-            return renderProposalLinks({
-              slug: canonicalSlug,
-              pullRequests,
-              parent: parentPage
-                ? { slug: parentPage.slug, title: titleOf(parentPage.title, parentPage.slug) }
-                : null,
-              parts: parts.map(part => ({ ...part, title: titleOf(part.title, part.slug) })),
-              canEdit:
-                signedIn && !revIdParam && (!editability.isProtected || editability.isEditable),
+            const parent = parentPage
+              ? { slug: parentPage.slug, title: titleOfProposal(parentPage.title, parentPage.slug) }
+              : null;
+            const canEditLinks =
+              signedIn && !revIdParam && (!editability.isProtected || editability.isEditable);
+            return renderProposalHeader({
+              info: page.proposal,
+              userMap,
+              locale: (res.locals.locale as string | undefined) ?? 'en',
               contentLang,
+              linksHtml: renderProposalLinks({ pullRequests, parent, t: req.t }),
+              statusFormHtml: proposalPermissions.canChange && !revIdParam
+                ? renderProposalStatusForm({
+                    slug: canonicalSlug, info: page.proposal,
+                    isAdmin: proposalPermissions.isAdmin, contentLang, t: req.t,
+                  })
+                : '',
+              linksFormHtml: canEditLinks
+                ? renderProposalLinksForm({ slug: canonicalSlug, pullRequests, parent, contentLang, t: req.t })
+                : '',
               t: req.t,
             });
-          })()}`
+          })()
         : '';
       const signoffsHtml = signoffs
         ? renderPageSignoffs({

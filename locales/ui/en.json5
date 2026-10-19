@@ -544,7 +544,9 @@
     }
   },
   "proposalStatus": {
-    // Banner at the top of proposal pages (meta/proposals/...).
+    // Overview at the top of proposal pages (meta/proposals/...).
+    "overview": "Proposal overview",
+    "manage": "Manage proposal",
     "status": {
       "draft": "Draft",
       "open": "Open for discussion",
@@ -573,7 +575,7 @@
     }
   },
   "proposalLinks": {
-    // Box under the status banner on proposal pages: the pull requests implementing the proposal and its main proposal.
+    // Related proposals and implementation links in the proposal overview.
     "label": "Pull requests and related proposals",
     "pullRequests": "Pull requests",
     "partOf": "Part of",
