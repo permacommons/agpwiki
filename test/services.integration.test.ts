@@ -1414,9 +1414,14 @@ test('Service proposal links record pull requests and main proposals', async () 
       () => setProposalLinks(dal, { slug: partSlug, parent: 'firefox' }, editor.id),
       ValidationError
     );
-    // The main proposal cannot become part of its own part.
+    // One level only: a main proposal cannot become a part, and nothing can
+    // become part of a part.
     await assert.rejects(
-      () => setProposalLinks(dal, { slug: mainSlug, parent: partSlug }, editor.id),
+      () => setProposalLinks(dal, { slug: mainSlug, parent: otherSlug }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: otherSlug, parent: partSlug }, editor.id),
       ValidationError
     );
 

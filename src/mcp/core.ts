@@ -1184,7 +1184,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'proposal_setLinks',
     {
       title: 'Set Proposal Links',
-      description: `Set the pull requests implementing a proposal under meta/proposals/ and, optionally, the main proposal it is part of. Anyone who can edit the proposal page can do this. pullRequests replaces the whole list (links to github.com/permacommons/agpwiki/pull/N; an empty list removes them); parent is the main proposal's slug (null or "" removes it). Omit a field to leave it unchanged. Use a main proposal only when grouping helps, for example a large change built in several steps. The change is a normal page revision. ${CONCURRENCY_DESCRIPTION}`,
+      description: `Set the pull requests implementing a proposal under meta/proposals/ and, optionally, the main proposal it is part of. Anyone who can edit the proposal page can do this. pullRequests replaces the whole list (links to github.com/permacommons/agpwiki/pull/N; an empty list removes them); parent is the main proposal's slug (null or "" removes it). Omit a field to leave it unchanged. Use a main proposal only when grouping helps, for example a large change built in several steps. Grouping is one level deep: a part cannot have parts, and a proposal with parts cannot become a part. The change is a normal page revision. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,

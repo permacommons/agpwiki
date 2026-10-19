@@ -6,6 +6,7 @@ import {
   MAX_PULL_REQUESTS,
   normalizePullRequestUrl,
   type ProposalStatus,
+  readProposalLinks,
   readProposalStatus,
 } from '../lib/proposal-status.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
@@ -17,9 +18,6 @@ import {
   recordProtectedWikiPageEdit,
   type WikiPageResult,
 } from './wiki-page-service.js';
-
-// How far up the chain of main proposals we look when checking for loops.
-const MAX_PARENT_DEPTH = 10;
 
 export interface ProposalLinksInput {
   slug: string;
@@ -39,8 +37,9 @@ export interface ProposalPart {
 
 /**
  * Set the pull requests implementing a proposal and the main proposal it is
- * part of. Anyone who can edit the proposal page can change them; the change
- * is a normal page revision.
+ * part of. Grouping is one level deep: a main proposal cannot itself be part
+ * of another, and a part cannot have parts. Anyone who can edit the proposal
+ * page can change these; the change is a normal page revision.
  */
 export async function setProposalLinks(
   dalInstance: DataAccessLayer,
@@ -94,8 +93,11 @@ export async function setProposalLinks(
       const parentPage = await findCurrentPageBySlugOrAlias(target);
       if (!parentPage || !isProposalSlug(parentPage.slug) || parentPage.id === page.id) {
         fieldErrors.add('parent', 'must name another proposal under meta/proposals/.', 'invalid');
-      } else if (await leadsBackTo(parentPage.properties, page.slug)) {
-        fieldErrors.add('parent', 'would make the proposal part of itself.', 'invalid');
+      } else if (readProposalLinks(parentPage.properties)?.parent) {
+        // One level only: a part cannot have parts of its own.
+        fieldErrors.add('parent', 'is itself part of another proposal; parts cannot have parts.', 'invalid');
+      } else if ((await listProposalParts(dalInstance, page.slug)).length) {
+        fieldErrors.add('parent', 'cannot be set on a proposal that has parts of its own.', 'invalid');
       } else {
         parent = parentPage.slug;
       }
@@ -129,19 +131,6 @@ export async function setProposalLinks(
 
   return readWikiPage(dalInstance, page.slug);
 }
-
-const leadsBackTo = async (properties: unknown, slug: string) => {
-  let current = properties;
-  for (let depth = 0; depth < MAX_PARENT_DEPTH; depth++) {
-    const parent = (current as { proposal?: { parent?: unknown } } | null)?.proposal?.parent;
-    if (typeof parent !== 'string' || !parent) return false;
-    if (parent === slug) return true;
-    const next = await findCurrentPageBySlugOrAlias(parent);
-    if (!next) return false;
-    current = next.properties;
-  }
-  return false;
-};
 
 /**
  * The proposals that name this one as their main proposal, with their status.
