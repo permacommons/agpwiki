@@ -70,6 +70,7 @@ import {
   subscribeUserToForumThread,
 } from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
+import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import {
   findRevisionsWithChangedText,
@@ -95,6 +96,7 @@ import {
 } from '../src/services/forum-service.js';
 import {
   addWikiPageAlias,
+  findCurrentPageById,
   listPagesMissingWikidata,
   readWikiPageRevision,
   applyWikiPagePatch,
@@ -1448,6 +1450,174 @@ test('Service wiki pages record a versioned Wikidata ID', async () => {
     assert.equal(first.revision.wikidata, 'Q698');
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userId ?? undefined });
+  }
+});
+
+test('Service proposal links record pull requests and main proposals', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const prefix = `meta/proposals/test-links-${stamp}`;
+  const mainSlug = `${prefix}/main`;
+  const partSlug = `${prefix}/main/part`;
+  const otherSlug = `${prefix}/other`;
+  const userIds: string[] = [];
+
+  try {
+    const author = await createTestUser();
+    const editor = await createTestUser();
+    const admin = await createTestUser();
+    userIds.push(author.id, editor.id, admin.id);
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+
+    const main = await createWikiPage(
+      dal,
+      { slug: mainSlug, title: { en: 'Main' }, body: { en: 'Main.' } },
+      author.id
+    );
+    const part = await createWikiPage(
+      dal,
+      { slug: partSlug, title: { en: 'Part' }, body: { en: 'Part.' } },
+      author.id
+    );
+    await createWikiPage(dal, { slug: otherSlug, title: { en: 'Other' }, body: { en: 'Other.' } }, author.id);
+    assert.equal(part.proposalLinks, null);
+
+    // Any editor may add links; URLs are normalized and de-duplicated.
+    const linked = await setProposalLinks(
+      dal,
+      {
+        slug: partSlug,
+        pullRequests: [
+          'https://github.com/permacommons/agpwiki/pull/86/files',
+          'https://github.com/permacommons/agpwiki/pull/86',
+          'https://github.com/permacommons/agpwiki/pull/87',
+        ],
+        parent: mainSlug,
+        expectedRevId: part.currentRevId,
+      },
+      editor.id
+    );
+    assert.deepEqual(linked.proposalLinks, {
+      pullRequests: [
+        'https://github.com/permacommons/agpwiki/pull/86',
+        'https://github.com/permacommons/agpwiki/pull/87',
+      ],
+      parent: { id: main.id, slug: mainSlug },
+    });
+    assert.equal(linked.proposal, null);
+    assert.equal(linked.body?.en, 'Part.');
+
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, pullRequests: ['https://example.com/pull/1'] }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, parent: partSlug }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: partSlug, parent: 'firefox' }, editor.id),
+      ValidationError
+    );
+    // One level only: a main proposal cannot become a part, and nothing can
+    // become part of a part.
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: mainSlug, parent: otherSlug }, editor.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: otherSlug, parent: partSlug }, editor.id),
+      ValidationError
+    );
+
+    const parts = await listProposalParts(dal, main.id);
+    assert.deepEqual(
+      parts.map(item => [item.slug, item.status]),
+      [[partSlug, null]]
+    );
+
+    const renamedSlug = `${prefix}/renamed-main`;
+    const renamed = await updateWikiPage(
+      dal,
+      {
+        slug: mainSlug,
+        newSlug: renamedSlug,
+        title: { en: 'Renamed main' },
+        revSummary: { en: 'Rename main proposal.' },
+      },
+      author.id
+    );
+    assert.equal(renamed.id, main.id);
+    assert.deepEqual(await listProposalParts(dal, renamed.id), parts);
+    const child = await readWikiPage(dal, partSlug);
+    assert.deepEqual(child.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    const storedChild = await findCurrentPageById(child.id);
+    assert.equal((storedChild?.properties as { proposal: { parentId: string } }).proposal.parentId, main.id);
+    const parent = await findCurrentPageById(main.id);
+    assert.equal(parent?.slug, renamedSlug);
+    assert.equal(parent?.title?.en, 'Renamed main');
+    const historical = await readWikiPageRevision(dal, partSlug, linked.currentRevId);
+    assert.deepEqual(historical.revision.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    const history = await listWikiPageRevisions(dal, partSlug);
+    assert.deepEqual(
+      history.revisions.find(revision => revision.revId === linked.currentRevId)?.proposalLinks?.parent,
+      { id: main.id, slug: renamedSlug }
+    );
+    const replacement = await createWikiPage(
+      dal,
+      { slug: mainSlug, title: { en: 'Replacement' }, body: { en: 'Replacement.' } },
+      author.id
+    );
+    assert.deepEqual(await listProposalParts(dal, replacement.id), []);
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: renamedSlug, parent: otherSlug }, editor.id),
+      ValidationError
+    );
+
+    // A status change keeps the links, and changing only one field keeps the other.
+    const opened = await setProposalStatus(dal, { slug: partSlug, status: 'open' }, author.id);
+    assert.equal(opened.proposal?.status, 'open');
+    assert.deepEqual(opened.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    assert.ok(opened.proposal);
+    assert.equal('parentId' in opened.proposal, false);
+    assert.equal('pullRequests' in opened.proposal, false);
+    assert.equal(opened.proposalLinks?.pullRequests.length, 2);
+    assert.equal((await listProposalParts(dal, main.id))[0].status, 'open');
+    const statusRevision = await readWikiPageRevision(dal, partSlug, opened.currentRevId);
+    assert.deepEqual(statusRevision.revision.proposal, opened.proposal);
+    assert.deepEqual(statusRevision.revision.proposalLinks, opened.proposalLinks);
+    const statusHistory = await listWikiPageRevisions(dal, partSlug);
+    assert.deepEqual(
+      statusHistory.revisions.find(revision => revision.revId === opened.currentRevId)?.proposal,
+      opened.proposal
+    );
+    const reread = await readWikiPage(dal, partSlug);
+    assert.deepEqual(reread.proposal, opened.proposal);
+    assert.deepEqual(reread.proposalLinks, opened.proposalLinks);
+
+    const moved = await setProposalLinks(dal, { slug: partSlug, parent: otherSlug }, editor.id);
+    assert.equal(moved.proposalLinks?.pullRequests.length, 2);
+    assert.deepEqual(moved.proposalLinks?.parent, { id: (await readWikiPage(dal, otherSlug)).id, slug: otherSlug });
+    assert.equal(moved.proposal?.status, 'open');
+    assert.deepEqual(await listProposalParts(dal, main.id), []);
+
+    const cleared = await setProposalLinks(dal, { slug: partSlug, pullRequests: [], parent: null }, editor.id);
+    assert.equal(cleared.proposalLinks, null);
+    assert.equal(cleared.proposal?.status, 'open');
+
+    // Links only exist on proposals.
+    await assert.rejects(
+      () => setProposalLinks(dal, { slug: 'firefox', pullRequests: [] }, admin.id),
+      (error: unknown) => error instanceof ValidationError || error instanceof NotFoundError
+    );
+
+    await setProposalLinks(dal, { slug: partSlug, parent: renamedSlug }, editor.id);
+    await deleteWikiPage(dal, { slug: renamedSlug, revSummary: { en: 'Delete test parent.' } }, admin.id);
+    const orphaned = await readWikiPage(dal, partSlug);
+    assert.deepEqual(orphaned.proposalLinks, { pullRequests: [], parent: { id: main.id, slug: null } });
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${prefix}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
   }
 });
 

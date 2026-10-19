@@ -8,6 +8,7 @@ import {
   PROPOSAL_STATUSES,
   type ProposalStatus,
   type ProposalStatusInfo,
+  readProposalLinks,
   readProposalStatus,
 } from '../lib/proposal-status.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
@@ -109,6 +110,7 @@ export async function setProposalStatus(
   }
 
   const current = readProposalStatus(page.properties);
+  const links = readProposalLinks(page.properties);
   const now = new Date().toISOString();
   const next: ProposalStatusInfo = { status, changedAt: now, changedBy: userId };
   const hasNote = Boolean(decisionNote && Object.keys(decisionNote).length);
@@ -148,7 +150,14 @@ export async function setProposalStatus(
   fieldErrors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['proposal-status'] });
-  page.properties = { ...((page.properties as Record<string, unknown> | null) ?? {}), proposal: next };
+  page.properties = {
+    ...((page.properties as Record<string, unknown> | null) ?? {}),
+    proposal: {
+      ...next,
+      ...(links?.pullRequests.length ? { pullRequests: links.pullRequests } : {}),
+      ...(links?.parentId ? { parentId: links.parentId } : {}),
+    },
+  };
   page._revSummary = sanitizeLocalizedMapInput(input.revSummary ?? undefined) ?? {
     en: `Proposal status: ${status.replace('_', ' ')}`,
   };

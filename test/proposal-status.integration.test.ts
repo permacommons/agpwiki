@@ -11,6 +11,7 @@ import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { protectWikiPage } from '../src/services/page-protection-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import { setProposalLinks } from '../src/services/proposal-links-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { createWikiPage, readWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -83,7 +84,7 @@ test('Proposal decisions reject whitespace-only notes and trim valid notes', asy
   } finally { await cleanup(); }
 });
 
-test('Proposal history renders the selected revision status and decision author', async () => {
+test('Proposal history renders the selected revision status, links and decision author', async () => {
   const { dal, author, admin, slug, page, cleanup } = await setup();
   const app = express();
   app.use((req, res, next) => {
@@ -104,24 +105,39 @@ test('Proposal history renders the selected revision status and decision author'
     });
     const address = server.address();
     assert.ok(address && typeof address !== 'string');
+    await setProposalLinks(dal, {
+      slug, pullRequests: ['https://github.com/permacommons/agpwiki/pull/86'],
+    }, author.id);
     const adopted = await setProposalStatus(dal, {
       slug, status: 'adopted', decisionNote: { en: 'Historical adoption rationale.' },
     }, admin.id);
-    await setProposalStatus(dal, { slug, status: 'withdrawn' }, author.id);
-    const banner = async (revId?: string) => {
-      const response = await fetch(`http://127.0.0.1:${address.port}/${slug}${revId ? `?rev=${revId}` : ''}`);
+    const withdrawn = await setProposalStatus(dal, { slug, status: 'withdrawn' }, author.id);
+    await setProposalLinks(dal, {
+      slug, pullRequests: ['https://github.com/permacommons/agpwiki/pull/87'],
+    }, author.id);
+    const header = async (query = '') => {
+      const response = await fetch(`http://127.0.0.1:${address.port}/${slug}${query}`);
       assert.equal(response.status, 200);
       const { bodyHtml } = await response.json() as { bodyHtml: string };
-      const match = bodyHtml.match(/<aside class="proposal-banner[\s\S]*?<\/aside>/);
+      const match = bodyHtml.match(/<section class="proposal-header[\s\S]*?<\/section>/);
       assert.ok(match);
       return match[0];
     };
-    assert.match(await banner(page.currentRevId), /No status set yet/);
-    const adoptedBanner = await banner(adopted.currentRevId);
-    assert.match(adoptedBanner, /Adopted, not yet applied/);
-    assert.match(adoptedBanner, /Historical adoption rationale\./);
-    assert.ok(adoptedBanner.includes(admin.displayName!));
-    assert.match(await banner(), /Withdrawn/);
+    assert.match(await header(`?rev=${page.currentRevId}`), /No status set yet/);
+    const adoptedHeader = await header(`?rev=${adopted.currentRevId}`);
+    assert.match(adoptedHeader, /Adopted, not yet applied/);
+    assert.match(adoptedHeader, /Historical adoption rationale\./);
+    assert.ok(adoptedHeader.includes(admin.displayName!));
+    assert.match(adoptedHeader, /pull\/86/);
+    assert.doesNotMatch(adoptedHeader, /pull\/87|proposal-manage/);
+    const diffHeader = await header(`?diffFrom=${withdrawn.currentRevId}&diffTo=${adopted.currentRevId}`);
+    assert.match(diffHeader, /Adopted, not yet applied/);
+    assert.match(diffHeader, /pull\/86/);
+    assert.doesNotMatch(diffHeader, /pull\/87|proposal-manage/);
+    const currentHeader = await header();
+    assert.match(currentHeader, /Withdrawn/);
+    assert.match(currentHeader, /pull\/87/);
+    assert.doesNotMatch(currentHeader, /pull\/86/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
     await cleanup();

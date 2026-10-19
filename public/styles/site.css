@@ -589,64 +589,189 @@ pre.diff ins {
 .change-meta { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .change-summary { margin-top: 0.25rem; color: #444; }
 .change-actions { margin-top: 0.35rem; }
-.proposal-banner {
-  margin: 0 0 1.25rem;
-  padding: 0.7rem 0.9rem;
-  border: 1px solid var(--rule);
-  border-left-width: 6px;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.92rem;
-  background: #fffdf7;
-}
-.proposal-banner-note {
-  margin: 0.4rem 0 0;
-  white-space: pre-wrap;
-}
-.proposal-banner--draft,
-.proposal-banner--none {
-  border-left-color: #b9b0a6;
-  background: #f4f1ec;
-}
-.proposal-banner--open {
-  border-left-color: #2d5f73;
-  background: #e8f0f3;
-}
-.proposal-banner--adopted {
-  border-left-color: #7fae6a;
-  background: #eef5e9;
-}
-.proposal-banner--applied {
-  border-left-color: #2f6b3a;
-  background: #e3efe0;
-}
-.proposal-banner--not_adopted {
-  border-left-color: #9a3b2b;
-  background: #f6e8e4;
-}
-.proposal-banner--withdrawn,
-.proposal-banner--superseded {
-  border-left-color: #5e5852;
-  background: #ece9e5;
-}
-.proposal-status-form {
-  margin: -0.75rem 0 1.25rem;
+.proposal-header {
+  position: relative;
+  margin: -0.3rem 0 1.75rem;
+  padding: 0 0 1rem;
+  border-bottom: 1px solid var(--rule);
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.88rem;
 }
-.proposal-status-form summary {
-  cursor: pointer;
+.proposal-status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.75rem;
+  min-height: 2rem;
+}
+.proposal-header--manageable .proposal-status-summary {
+  padding-inline-end: 10rem;
+}
+.proposal-status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.65rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  background: #ece9e5;
+  color: #514b45;
+}
+.proposal-status--open {
+  background: #e4edf1;
+  color: #244e60;
+}
+.proposal-status--adopted,
+.proposal-status--applied {
+  background: #e3eddf;
+  color: #315b33;
+}
+.proposal-status--not_adopted {
+  background: #f1e5df;
+  color: #823b2c;
+}
+.proposal-status-detail,
+.proposal-links dt,
+.proposal-part-status {
+  color: var(--muted);
+}
+.proposal-decision-note {
+  margin: 0.85rem 0 0;
+  max-width: 65ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.proposal-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem 1.5rem;
+  margin: 0.6rem 0 0;
+}
+.proposal-links > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.5rem;
+  min-width: 0;
+}
+.proposal-links dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.proposal-pr-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.proposal-pr {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  text-decoration: none;
+}
+.proposal-pr:hover,
+.proposal-pr:focus-visible {
+  text-decoration: underline;
+}
+.pr-state {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+.pr-state--merged { color: #67449a; }
+.pr-state--open { color: #35623e; }
+.pr-state--closed { color: #8e4034; }
+.proposal-manage > summary {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  padding: 0.15rem 0;
   color: var(--accent);
+  cursor: pointer;
 }
-.proposal-status-form form {
+.proposal-manage > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.proposal-management-forms {
   display: grid;
-  gap: 0.5rem;
-  margin-top: 0.6rem;
-  justify-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: #fffdf7;
+  border: 1px solid var(--rule);
+  border-radius: 0.4rem;
 }
-.proposal-status-form textarea,
-.proposal-status-form input[type='text'] {
+.proposal-management-forms form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  min-width: 0;
+  margin: 0;
+}
+.proposal-management-forms .proposal-form-title {
+  margin: 0 0 0.25rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+.proposal-management-forms .form-field { margin: 0; }
+.proposal-management-forms .form-field > span {
+  color: var(--ink);
+  font-size: 0.85rem;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.proposal-management-forms .form-field[hidden] { display: none; }
+.proposal-management-forms textarea,
+.proposal-management-forms input[type='text'],
+.proposal-management-forms select {
   width: 100%;
   box-sizing: border-box;
+}
+.proposal-management-forms button { align-self: flex-start; }
+.proposal-management-forms .form-help { margin: 0; }
+.proposal-parts {
+  margin: 1.5rem 0 2rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.proposal-parts h2 {
+  margin: 0 0 0.6rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 1.05rem;
+}
+.proposal-parts-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--rule);
+}
+.proposal-parts-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.2rem 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.proposal-part-status { font-size: 0.8rem; }
+@media (max-width: 540px) {
+  .proposal-header--manageable .proposal-status-summary { padding-inline-end: 0; }
+  .proposal-manage > summary {
+    position: static;
+    margin-top: 0.6rem;
+    width: fit-content;
+  }
+  .proposal-management-forms { padding: 1rem; }
 }
 .page-wikidata {
   clear: both;

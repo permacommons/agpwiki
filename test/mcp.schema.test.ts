@@ -76,6 +76,7 @@ test('MCP tools expose review annotations', () => {
     'media_update',
     'media_refresh',
     'page_check_update',
+    'proposal_setLinks',
     'proposal_setStatus',
     'wiki_removeAlias',
     'wiki_deletePage',

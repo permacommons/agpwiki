@@ -2,6 +2,23 @@
   /*
    i18n-identical-allowlist:
    {
+     // Wikidata is a proper name; Status is also the local word.
+     "de": ["page.wikidata", "proposalStatus.form.status"],
+     "es": ["page.wikidata"],
+     "fi": ["page.wikidata"],
+     "hu": ["page.wikidata"],
+     "id": ["page.wikidata", "proposalStatus.form.status"],
+     "it": ["page.wikidata"],
+     "nl": ["page.wikidata", "proposalStatus.form.status"],
+     "pl": ["proposalStatus.form.status"],
+     "pt": ["page.wikidata", "proposalStatus.form.status"],
+     "pt-PT": ["page.wikidata"],
+     "sv": ["page.wikidata", "proposalStatus.form.status"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      "de": ["signoff.stance.neutral"],
      "es": ["signoff.stance.neutral"],
      "fr": ["signoff.discussion"],
@@ -544,7 +561,9 @@
     }
   },
   "proposalStatus": {
-    // Banner at the top of proposal pages (meta/proposals/...).
+    // Overview at the top of proposal pages (meta/proposals/...).
+    "overview": "Proposal overview",
+    "manage": "Manage proposal",
     "status": {
       "draft": "Draft",
       "open": "Open for discussion",
@@ -570,6 +589,29 @@
       "helpAdmin": "Draft, Open and Withdrawn can be set by the proposal's creator; decisions only by admins.",
       "helpAuthor": "As the proposal's creator, you can mark it Draft, Open or Withdrawn. Decisions are recorded by admins.",
       "save": "Save status"
+    }
+  },
+  "proposalLinks": {
+    // Related proposals and implementation links in the proposal overview.
+    "label": "Pull requests and related proposals",
+    "pullRequests": "Pull requests",
+    "partOf": "Part of",
+    "parts": "Parts",
+    // State of a pull request on GitHub.
+    "state": {
+      "open": "Open",
+      "draft": "Draft",
+      "merged": "Merged",
+      "closed": "Closed without merging",
+      "unknown": "State not available"
+    },
+    "forbidden": "This proposal is protected; only wiki admins can change its links.",
+    "invalid": "The links could not be saved.",
+    "form": {
+      "title": "Edit pull requests and main proposal",
+      "pullRequests": "Pull requests (links to github.com/permacommons/agpwiki/pull/…, one per line)",
+      "parent": "Part of (address of the main proposal; leave empty if none)",
+      "save": "Save links"
     }
   },
   "signoff": {

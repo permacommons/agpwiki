@@ -55,10 +55,12 @@ import {
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
   getProposalStatusPermissions,
   setProposalStatus,
 } from '../services/proposal-status-service.js';
+import { pullRequestStates } from '../services/pull-request-state.js';
 import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
@@ -66,6 +68,7 @@ import {
 } from '../services/wiki-link-preview-service.js';
 import {
   diffWikiPageRevisions,
+  findCurrentPageById,
   listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
@@ -99,7 +102,13 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
-import { renderProposalBanner, renderProposalStatusForm } from './lib/proposal-status.js';
+import {
+  renderProposalHeader,
+  renderProposalLinks,
+  renderProposalLinksForm,
+  renderProposalParts,
+  renderProposalStatusForm,
+} from './lib/proposal-status.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
@@ -974,6 +983,54 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/proposal-links$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    const pullRequests =
+      typeof req.body?.pullRequests === 'string'
+        ? req.body.pullRequests
+            .split(/[\r\n]+/)
+            .map((line: string) => line.trim())
+            .filter(Boolean)
+        : [];
+    try {
+      const dalInstance = await initializePostgreSQL();
+      await setProposalLinks(
+        dalInstance,
+        {
+          slug,
+          pullRequests,
+          parent: typeof req.body?.parent === 'string' ? req.body.parent : null,
+        },
+        session.userId
+      );
+      res.redirect(303, pageViewPath(slug));
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('proposalLinks.forbidden'));
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).type('text').send(`${req.t('proposalLinks.invalid')} ${error.message}`);
+        return;
+      }
+      console.error('Failed to set proposal links:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/proposal-status$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1166,11 +1223,21 @@ export const registerPageRoutes = (app: Express) => {
         candidateLinkSlugs.filter(candidateSlug => !existingLinkSlugs.has(candidateSlug))
       );
 
+      const titleOfProposal = (title: Record<string, string> | null | undefined, fallback: string) =>
+        resolveSafeText(mlString.resolve, contentLang, title, fallback);
+      const proposalParts = isSignoffPageSlug(canonicalSlug)
+        ? await listProposalParts(dalInstance, page.id)
+        : [];
+      const partsHtml = renderProposalParts({
+        parts: proposalParts.map(part => ({ ...part, title: titleOfProposal(part.title, part.slug) })),
+        t: req.t,
+      });
       const { html: bodyHtml, toc } = await renderMarkdown(
         bodySource,
         citationEntries,
         {
           ...markdownOptions,
+          afterLeadHtml: partsHtml,
           wikiLinks: {
             missingSlugs: missingLinkSlugs,
           },
@@ -1369,23 +1436,35 @@ export const registerPageRoutes = (app: Express) => {
         ? await getProposalStatusPermissions(dalInstance, page.id, session?.userId)
         : { canChange: false, isAdmin: false };
       const proposalHtml = signoffs
-        ? `${renderProposalBanner({
-            info: selectedRevision.proposal,
-            userMap,
-            locale: (res.locals.locale as string | undefined) ?? 'en',
-            contentLang,
-            t: req.t,
-          })}${
-            proposalPermissions.canChange && editability.isEditable && !revIdParam
-              ? renderProposalStatusForm({
-                  slug: canonicalSlug,
-                  info: page.proposal,
-                  isAdmin: proposalPermissions.isAdmin,
-                  contentLang,
-                  t: req.t,
-                })
-              : ''
-          }`
+        ? await (async () => {
+            const links = selectedRevision.proposalLinks;
+            const [pullRequests, parentPage] = await Promise.all([
+              pullRequestStates.getStates(links?.pullRequests ?? []),
+              links?.parent?.slug ? findCurrentPageById(links.parent.id) : null,
+            ]);
+            const parent = parentPage
+              ? { slug: parentPage.slug, title: titleOfProposal(parentPage.title, parentPage.slug) }
+              : null;
+            const canEditLinks =
+              signedIn && editability.isEditable && !selectedRevId;
+            return renderProposalHeader({
+              info: selectedRevision.proposal,
+              userMap,
+              locale: (res.locals.locale as string | undefined) ?? 'en',
+              contentLang,
+              linksHtml: renderProposalLinks({ pullRequests, parent, t: req.t }),
+              statusFormHtml: proposalPermissions.canChange && editability.isEditable && !selectedRevId
+                ? renderProposalStatusForm({
+                    slug: canonicalSlug, info: page.proposal,
+                    isAdmin: proposalPermissions.isAdmin, contentLang, t: req.t,
+                  })
+                : '',
+              linksFormHtml: canEditLinks
+                ? renderProposalLinksForm({ slug: canonicalSlug, pullRequests, parent, contentLang, t: req.t })
+                : '',
+              t: req.t,
+            });
+          })()
         : '';
       const signoffsHtml = signoffs
         ? renderPageSignoffs({

@@ -32,14 +32,57 @@ export interface ProposalStatusInfo {
   supersededBy?: string;
 }
 
+// Links stored next to the status: the pull requests implementing the
+// proposal and, optionally, the main proposal it is part of. They can be set
+// before any status exists, so they are read separately.
+export interface ProposalLinks {
+  pullRequests: string[];
+  parentId: string | null;
+}
+
+export const PULL_REQUEST_REPOSITORY = 'permacommons/agpwiki';
+export const PULL_REQUEST_URL_PATTERN =
+  /^https?:\/\/(?:www\.)?github\.com\/permacommons\/agpwiki\/pull\/([1-9][0-9]{0,6})(?:[/?#].*)?$/i;
+export const MAX_PULL_REQUESTS = 20;
+
+export const pullRequestUrl = (number: number | string) =>
+  `https://github.com/${PULL_REQUEST_REPOSITORY}/pull/${number}`;
+
+// Normalize a pull request link to its canonical URL, or null if it is not a
+// pull request on the Agpedia software repository.
+export const normalizePullRequestUrl = (value: string): string | null => {
+  const match = PULL_REQUEST_URL_PATTERN.exec(value.trim());
+  return match ? pullRequestUrl(match[1]) : null;
+};
+
+export const pullRequestNumber = (url: string): number | null => {
+  const match = PULL_REQUEST_URL_PATTERN.exec(url);
+  return match ? Number(match[1]) : null;
+};
+
 export const isProposalSlug = (slug: string) => slug.startsWith(PROPOSAL_PAGE_PREFIX);
 
 export const isProposalStatus = (value: unknown): value is ProposalStatus =>
   typeof value === 'string' && (PROPOSAL_STATUSES as readonly string[]).includes(value);
 
-export const readProposalStatus = (properties: unknown): ProposalStatusInfo | null => {
+const readProposalObject = (properties: unknown): Record<string, unknown> | null => {
   const proposal = (properties as { proposal?: unknown } | null | undefined)?.proposal;
-  if (!proposal || typeof proposal !== 'object') return null;
-  const info = proposal as ProposalStatusInfo;
-  return isProposalStatus(info.status) ? info : null;
+  return proposal && typeof proposal === 'object' ? (proposal as Record<string, unknown>) : null;
+};
+
+export const readProposalStatus = (properties: unknown): ProposalStatusInfo | null => {
+  const info = readProposalObject(properties);
+  if (!info || !isProposalStatus(info.status)) return null;
+  const { parentId: _parentId, pullRequests: _pullRequests, ...status } = info;
+  return status as unknown as ProposalStatusInfo;
+};
+
+export const readProposalLinks = (properties: unknown): ProposalLinks | null => {
+  const proposal = readProposalObject(properties);
+  if (!proposal) return null;
+  const pullRequests = Array.isArray(proposal.pullRequests)
+    ? proposal.pullRequests.filter((item): item is string => typeof item === 'string')
+    : [];
+  const parentId = typeof proposal.parentId === 'string' && proposal.parentId ? proposal.parentId : null;
+  return pullRequests.length || parentId ? { pullRequests, parentId } : null;
 };
