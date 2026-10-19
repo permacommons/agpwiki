@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
+import http from 'node:http';
 import test from 'node:test';
 
+import express from 'express';
+
+import { registerPageRoutes } from '../src/routes/pages.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
@@ -1291,6 +1295,102 @@ test('Service site admins hold every role without separate grants', async () => 
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
     await cleanupTestArtifacts(dal, { userId: siteAdminId ?? undefined });
+  }
+});
+
+test('Article footer uses the selected revision Wikidata ID', async () => {
+  const dal = await getDal();
+  const slug = `test-wikidata-footer-${Date.now()}`;
+  let userId: string | null = null;
+  const app = express();
+  app.use((req, res, next) => {
+    req.t = ((key: string) => key) as typeof req.t;
+    res.locals.locale = 'en';
+    res.locals.languageOptions = [];
+    res.locals.accountBannerHtml = '';
+    res.render = ((_view: string, options?: Record<string, unknown>) => {
+      res.json({ bodyHtml: options?.bodyHtml });
+    }) as express.Response['render'];
+    next();
+  });
+  registerPageRoutes(app);
+  const server = http.createServer(app);
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const url = `http://127.0.0.1:${address.port}/${slug}`;
+    const assertFooter = async (
+      revId: string | null,
+      wikidata: string | null,
+      fromRevId?: string,
+      expectedBody?: string
+    ) => {
+      const query = fromRevId
+        ? `?diffFrom=${fromRevId}&diffTo=${revId}`
+        : revId ? `?rev=${revId}` : '';
+      const response = await fetch(`${url}${query}`);
+      assert.equal(response.status, 200);
+      const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+      if (expectedBody) assert.ok(bodyHtml.includes(`<p>${expectedBody}</p>`));
+      if (wikidata) {
+        assert.match(
+          bodyHtml,
+          new RegExp(`<p class="page-wikidata">.*href="https://www\\.wikidata\\.org/wiki/${wikidata}"[^>]*>${wikidata}</a></p>`)
+        );
+      } else {
+        assert.doesNotMatch(bodyHtml, /class="page-wikidata"/);
+      }
+    };
+
+    const user = await createTestUser();
+    userId = user.id;
+    const created = await createWikiPage(
+      dal,
+      { slug, title: { en: 'Wikidata footer' }, body: { en: 'Text.' } },
+      user.id
+    );
+    const historical = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'Historical body.' }, revSummary: { en: 'Edit body.' } },
+      user.id
+    );
+    const added = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'Current body.' }, wikidata: 'Q42', revSummary: { en: 'Add Wikidata ID.' } },
+      user.id
+    );
+    await assertFooter(null, 'Q42');
+    await assertFooter(created.currentRevId, null);
+    await assertFooter(historical.currentRevId, null, created.currentRevId, 'Historical body.');
+
+    await updateWikiPage(
+      dal,
+      { slug, wikidata: 'Q698', revSummary: { en: 'Change Wikidata ID.' } },
+      user.id
+    );
+    await assertFooter(null, 'Q698');
+    await assertFooter(added.currentRevId, 'Q42');
+    await assertFooter(added.currentRevId, 'Q42', historical.currentRevId, 'Current body.');
+
+    await updateWikiPage(
+      dal,
+      { slug, wikidata: null, revSummary: { en: 'Remove Wikidata ID.' } },
+      user.id
+    );
+    await assertFooter(null, null);
+    await assertFooter(added.currentRevId, 'Q42');
+  } finally {
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close(error => (error ? reject(error) : resolve()));
+      });
+    }
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userId ?? undefined });
   }
 });
 

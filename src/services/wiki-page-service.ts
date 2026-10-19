@@ -1247,6 +1247,8 @@ export async function diffWikiPageRevisions(
     toRev.originalLanguage ?? null
   );
   if (originalLangDiff) fields.originalLanguage = originalLangDiff;
+  const wikidataDiff = diffScalarField('wikidata', readWikidataId(fromRev), readWikidataId(toRev));
+  if (wikidataDiff) fields.wikidata = wikidataDiff;
 
   return {
     pageId: page.id,

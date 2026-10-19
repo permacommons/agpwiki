@@ -1168,10 +1168,11 @@ export const registerPageRoutes = (app: Express) => {
       );
 
       const revisions = revisionsResult.revisions;
-      const selectedRevision = revIdParam
+      const selectedRevId = revIdParam ?? (diffFrom && diffTo ? diffTo : undefined);
+      const selectedRevision = selectedRevId
         ? await (async () => {
             try {
-              return (await readWikiPageRevision(dalInstance, slug, revIdParam)).revision;
+              return (await readWikiPageRevision(dalInstance, slug, selectedRevId)).revision;
             } catch (error) {
               if (error instanceof NotFoundError) {
                 res.status(404).type('text').send(req.t('page.revisionNotFound'));
@@ -1333,7 +1334,7 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
-      if (page.proposal?.decidedBy) userIds.add(page.proposal.decidedBy);
+      if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
@@ -1436,7 +1437,7 @@ export const registerPageRoutes = (app: Express) => {
         : { canChange: false, isAdmin: false };
       const proposalHtml = signoffs
         ? await (async () => {
-            const links = page.proposalLinks;
+            const links = selectedRevision.proposalLinks;
             const [pullRequests, parentPage] = await Promise.all([
               pullRequestStates.getStates(links?.pullRequests ?? []),
               links?.parent?.slug ? findCurrentPageById(links.parent.id) : null,
@@ -1445,14 +1446,14 @@ export const registerPageRoutes = (app: Express) => {
               ? { slug: parentPage.slug, title: titleOfProposal(parentPage.title, parentPage.slug) }
               : null;
             const canEditLinks =
-              signedIn && !revIdParam && (!editability.isProtected || editability.isEditable);
+              signedIn && editability.isEditable && !selectedRevId;
             return renderProposalHeader({
-              info: page.proposal,
+              info: selectedRevision.proposal,
               userMap,
               locale: (res.locals.locale as string | undefined) ?? 'en',
               contentLang,
               linksHtml: renderProposalLinks({ pullRequests, parent, t: req.t }),
-              statusFormHtml: proposalPermissions.canChange && !revIdParam
+              statusFormHtml: proposalPermissions.canChange && editability.isEditable && !selectedRevId
                 ? renderProposalStatusForm({
                     slug: canonicalSlug, info: page.proposal,
                     isAdmin: proposalPermissions.isAdmin, contentLang, t: req.t,
@@ -1480,8 +1481,8 @@ export const registerPageRoutes = (app: Express) => {
           })
         : '';
       const wikidataHtml =
-        isArticle && page.wikidata
-          ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(page.wikidata)}" rel="noopener">${escapeHtml(page.wikidata)}</a></p>`
+        isArticle && selectedRevision.wikidata
+          ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
           : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')

@@ -11,7 +11,7 @@ import {
   WIKI_ADMIN_ROLE,
   grantRoleUpsert,
 } from '../src/services/roles.js';
-import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 import User from '../src/models/user.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
@@ -268,6 +268,162 @@ test('MCP wiki protection tools update read editability hints', async () => {
     await cleanupTestArtifacts(dal, {
       userId: adminId ?? undefined,
     });
+  }
+});
+
+test('MCP reads return one language by default and compact history', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-lang-scope-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const created = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Language test', de: 'Sprachtest' },
+        body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
+        originalLanguage: 'de',
+      },
+      user.id
+    );
+    const updated = await updateWikiPage(
+      dal,
+      { slug, body: { en: 'English text, revised.\n' }, revSummary: { en: 'Revise English.' } },
+      user.id
+    );
+
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+
+    type Read = {
+      body: Record<string, string>;
+      title: Record<string, string>;
+      selectedLanguage: string;
+      availableLanguages: string[];
+      contentHash: string;
+    };
+    const byDefault = await callTool<Read>(tools, 'wiki_readPage', { slug });
+    assert.equal(byDefault.selectedLanguage, 'de');
+    assert.deepEqual(byDefault.availableLanguages, ['de', 'en']);
+    assert.deepEqual(byDefault.body, { de: 'Deutscher Text.\n' });
+    assert.deepEqual(byDefault.title, { de: 'Sprachtest' });
+
+    const english = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: 'en' });
+    assert.deepEqual(english.body, { en: 'English text, revised.\n' });
+    const all = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: '*' });
+    assert.deepEqual(Object.keys(all.body).sort(), ['de', 'en']);
+    assert.equal(byDefault.contentHash, all.contentHash);
+
+    const missing = await tools.wiki_readPage.handler({ slug, lang: 'ja' });
+    assert.equal(missing.isError, true);
+    assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
+
+    const oldRevision = await callTool<{ revision: Read }>(tools, 'wiki_readRevision', {
+      slug,
+      revId: created.currentRevId,
+      lang: 'en',
+    });
+    assert.deepEqual(oldRevision.revision.body, { en: 'English text.\n' });
+
+    type Diff = {
+      selectedLanguage: string;
+      fields: { body?: { modified: Record<string, { unifiedDiff: string; from?: string }> } };
+    };
+    const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+      slug,
+      fromRevId: created.currentRevId,
+      toRevId: updated.currentRevId,
+      lang: 'en',
+    });
+    assert.match(diff.fields.body?.modified.en.unifiedDiff ?? '', /\+English text, revised\./);
+    assert.equal(diff.fields.body?.modified.en.from, undefined);
+    const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+      slug,
+      fromRevId: created.currentRevId,
+    });
+    assert.equal(defaultDiff.selectedLanguage, 'de');
+    assert.equal(defaultDiff.fields.body, undefined);
+    const fullDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+      slug,
+      fromRevId: created.currentRevId,
+      lang: '*',
+      includeFullText: true,
+    });
+    assert.equal(fullDiff.fields.body?.modified.en.from, 'English text.\n');
+
+    type List = {
+      total: number;
+      nextOffset: number | null;
+      revisions: Array<Record<string, unknown>>;
+    };
+    const firstPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1 });
+    assert.equal(firstPage.total, 2);
+    assert.equal(firstPage.nextOffset, 1);
+    assert.equal(firstPage.revisions[0].revId, updated.currentRevId);
+    assert.equal('body' in firstPage.revisions[0], false);
+    const secondPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1, offset: 1 });
+    assert.equal(secondPage.nextOffset, null);
+    assert.equal(secondPage.revisions[0].revId, created.currentRevId);
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userIdForCleanup ?? undefined });
+  }
+});
+
+test('MCP diffs allow an explicit language removed from the target revision', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-removed-language-${Date.now()}`;
+  let userIdForCleanup: string | null = null;
+
+  try {
+    const user = await createTestUser();
+    userIdForCleanup = user.id;
+    const created = await createWikiPage(
+      dal,
+      {
+        slug,
+        title: { en: 'Language test', de: 'Sprachtest' },
+        body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
+        originalLanguage: 'de',
+      },
+      user.id
+    );
+    const updated = await updateWikiPage(
+      dal,
+      { slug, title: { de: null }, body: { de: null }, revSummary: { en: 'Remove German.' } },
+      user.id
+    );
+    const { server } = createMcpServer();
+    const tools = getToolHandlers(server);
+    type Diff = {
+      selectedLanguage: string;
+      availableLanguages: string[];
+      fields: {
+        body?: { removed: Array<{ lang: string; characters: number; value?: string }> };
+      };
+    };
+
+    for (const toRevId of [updated.currentRevId, undefined]) {
+      const args = { slug, fromRevId: created.currentRevId, toRevId };
+      const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', { ...args, lang: 'de' });
+      assert.equal(diff.selectedLanguage, 'de');
+      assert.deepEqual(diff.availableLanguages, ['de', 'en']);
+      assert.deepEqual(diff.fields.body?.removed, [
+        { lang: 'de', characters: 'Deutscher Text.\n'.length },
+      ]);
+
+      const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', args);
+      assert.equal(defaultDiff.selectedLanguage, 'en');
+      assert.equal(defaultDiff.fields.body, undefined);
+
+      const missing = await tools.wiki_diffRevisions.handler({ ...args, lang: 'ja' });
+      assert.equal(missing.isError, true);
+      assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
+    }
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userIdForCleanup ?? undefined });
   }
 });
 
@@ -761,7 +917,7 @@ for (const { tool, args } of wikiHistoryCases) {
       const previous = await callTool<RevisionRead<WikiRevisionFields>>(
         tools,
         'wiki_readRevision',
-        { slug, revId: before.currentRevId }
+        { slug, revId: before.currentRevId, lang: '*' }
       );
       assert.equal(previous.revision.revId, before.currentRevId);
       assert.equal(previous.revision.body?.en, HISTORY_ORIGINAL_BODY_EN);
@@ -771,7 +927,7 @@ for (const { tool, args } of wikiHistoryCases) {
       const current = await callTool<WikiRevisionFields & { currentRevId: string }>(
         tools,
         'wiki_readPage',
-        { slug }
+        { slug, lang: '*' }
       );
       assert.equal(current.currentRevId, written.currentRevId);
       assert.match(current.body?.en ?? '', /New history\./);
