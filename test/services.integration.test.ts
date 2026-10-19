@@ -1402,7 +1402,7 @@ test('Service proposal links record pull requests and main proposals', async () 
         'https://github.com/permacommons/agpwiki/pull/86',
         'https://github.com/permacommons/agpwiki/pull/87',
       ],
-      parentId: main.id,
+      parent: { id: main.id, slug: mainSlug },
     });
     assert.equal(linked.proposal, null);
     assert.equal(linked.body?.en, 'Part.');
@@ -1450,11 +1450,19 @@ test('Service proposal links record pull requests and main proposals', async () 
     assert.equal(renamed.id, main.id);
     assert.deepEqual(await listProposalParts(dal, renamed.id), parts);
     const child = await readWikiPage(dal, partSlug);
-    assert.equal(child.proposalLinks?.parentId, main.id);
-    assert.ok(child.proposalLinks?.parentId);
-    const parent = await findCurrentPageById(child.proposalLinks.parentId);
+    assert.deepEqual(child.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    const storedChild = await findCurrentPageById(child.id);
+    assert.equal((storedChild?.properties as { proposal: { parentId: string } }).proposal.parentId, main.id);
+    const parent = await findCurrentPageById(main.id);
     assert.equal(parent?.slug, renamedSlug);
     assert.equal(parent?.title?.en, 'Renamed main');
+    const historical = await readWikiPageRevision(dal, partSlug, linked.currentRevId);
+    assert.deepEqual(historical.revision.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    const history = await listWikiPageRevisions(dal, partSlug);
+    assert.deepEqual(
+      history.revisions.find(revision => revision.revId === linked.currentRevId)?.proposalLinks?.parent,
+      { id: main.id, slug: renamedSlug }
+    );
     const replacement = await createWikiPage(
       dal,
       { slug: mainSlug, title: { en: 'Replacement' }, body: { en: 'Replacement.' } },
@@ -1469,13 +1477,27 @@ test('Service proposal links record pull requests and main proposals', async () 
     // A status change keeps the links, and changing only one field keeps the other.
     const opened = await setProposalStatus(dal, { slug: partSlug, status: 'open' }, author.id);
     assert.equal(opened.proposal?.status, 'open');
-    assert.equal(opened.proposalLinks?.parentId, main.id);
-    assert.equal(opened.proposal?.parentId, main.id);
+    assert.deepEqual(opened.proposalLinks?.parent, { id: main.id, slug: renamedSlug });
+    assert.ok(opened.proposal);
+    assert.equal('parentId' in opened.proposal, false);
+    assert.equal('pullRequests' in opened.proposal, false);
     assert.equal(opened.proposalLinks?.pullRequests.length, 2);
     assert.equal((await listProposalParts(dal, main.id))[0].status, 'open');
+    const statusRevision = await readWikiPageRevision(dal, partSlug, opened.currentRevId);
+    assert.deepEqual(statusRevision.revision.proposal, opened.proposal);
+    assert.deepEqual(statusRevision.revision.proposalLinks, opened.proposalLinks);
+    const statusHistory = await listWikiPageRevisions(dal, partSlug);
+    assert.deepEqual(
+      statusHistory.revisions.find(revision => revision.revId === opened.currentRevId)?.proposal,
+      opened.proposal
+    );
+    const reread = await readWikiPage(dal, partSlug);
+    assert.deepEqual(reread.proposal, opened.proposal);
+    assert.deepEqual(reread.proposalLinks, opened.proposalLinks);
 
     const moved = await setProposalLinks(dal, { slug: partSlug, parent: otherSlug }, editor.id);
     assert.equal(moved.proposalLinks?.pullRequests.length, 2);
+    assert.deepEqual(moved.proposalLinks?.parent, { id: (await readWikiPage(dal, otherSlug)).id, slug: otherSlug });
     assert.equal(moved.proposal?.status, 'open');
     assert.deepEqual(await listProposalParts(dal, main.id), []);
 
@@ -1488,6 +1510,11 @@ test('Service proposal links record pull requests and main proposals', async () 
       () => setProposalLinks(dal, { slug: 'firefox', pullRequests: [] }, admin.id),
       (error: unknown) => error instanceof ValidationError || error instanceof NotFoundError
     );
+
+    await setProposalLinks(dal, { slug: partSlug, parent: renamedSlug }, editor.id);
+    await deleteWikiPage(dal, { slug: renamedSlug, revSummary: { en: 'Delete test parent.' } }, admin.id);
+    const orphaned = await readWikiPage(dal, partSlug);
+    assert.deepEqual(orphaned.proposalLinks, { pullRequests: [], parent: { id: main.id, slug: null } });
   } finally {
     await cleanupTestArtifacts(dal, { slugPrefix: `${prefix}%` });
     for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });

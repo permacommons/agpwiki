@@ -1443,7 +1443,7 @@ export const registerPageRoutes = (app: Express) => {
             const links = page.proposalLinks;
             const [pullRequests, parentPage, parts] = await Promise.all([
               pullRequestStates.getStates(links?.pullRequests ?? []),
-              links?.parentId ? findCurrentPageById(links.parentId) : null,
+              links?.parent?.slug ? findCurrentPageById(links.parent.id) : null,
               listProposalParts(dalInstance, page.id),
             ]);
             const titleOf = (title: Record<string, string> | null | undefined, fallback: string) =>

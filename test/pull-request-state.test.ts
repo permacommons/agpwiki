@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { normalizePullRequestUrl, readProposalLinks } from '../src/lib/proposal-status.js';
+import { normalizePullRequestUrl, readProposalLinks, readProposalStatus } from '../src/lib/proposal-status.js';
 import { createPullRequestStateCache } from '../src/services/pull-request-state.js';
 
 const jsonResponse = (body: unknown, status = 200) =>
@@ -28,6 +28,31 @@ test('readProposalLinks reads links with or without a status', () => {
     pullRequests: [],
     parentId: 'parent-page-id',
   });
+});
+
+test('readProposalStatus excludes links without changing stored properties', () => {
+  const status = {
+    status: 'adopted',
+    changedAt: '2026-10-19T00:00:00Z',
+    changedBy: 'editor-id',
+    decidedAt: '2026-10-19T00:00:00Z',
+    decidedBy: 'admin-id',
+    decisionNote: { en: 'Adopted after review.' },
+  };
+  const properties = {
+    proposal: {
+      ...status,
+      parentId: 'parent-page-id',
+      pullRequests: ['https://github.com/permacommons/agpwiki/pull/1'],
+    },
+  };
+  assert.deepEqual(readProposalStatus(properties), status);
+  assert.deepEqual(readProposalLinks(properties), {
+    parentId: 'parent-page-id',
+    pullRequests: ['https://github.com/permacommons/agpwiki/pull/1'],
+  });
+  assert.equal(readProposalStatus(null), null);
+  assert.equal(readProposalStatus({ proposal: { parentId: 'parent-page-id' } }), null);
 });
 
 test('pull request states are read from GitHub and cached', async () => {

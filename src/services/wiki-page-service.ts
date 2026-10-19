@@ -20,7 +20,6 @@ import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } 
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
 import {
-  type ProposalLinks,
   type ProposalStatusInfo,
   readProposalLinks,
   readProposalStatus,
@@ -89,6 +88,11 @@ export interface WikiPageUpdateInput extends WikiPageWriteInput {
   revSummary: Record<string, string | null>;
 }
 
+export interface ProposalLinksResult {
+  pullRequests: string[];
+  parent: { id: string; slug: string | null } | null;
+}
+
 export interface WikiPageResult {
   id: string;
   slug: string;
@@ -98,7 +102,7 @@ export interface WikiPageResult {
   originalLanguage: string | null | undefined;
   wikidata: string | null;
   proposal: ProposalStatusInfo | null;
-  proposalLinks: ProposalLinks | null;
+  proposalLinks: ProposalLinksResult | null;
   contentHash: string;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
@@ -267,7 +271,31 @@ const applyWikidataId = (page: WikiPageInstance, wikidata: string | null | undef
   page.properties = Object.keys(properties).length ? properties : null;
 };
 
-const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
+type ParentPageCache = Map<string, Promise<WikiPageInstance | null>>;
+
+const resolveProposalLinks = async (
+  properties: unknown,
+  parents: ParentPageCache
+): Promise<ProposalLinksResult | null> => {
+  const links = readProposalLinks(properties);
+  if (!links) return null;
+  let parent: ProposalLinksResult['parent'] = null;
+  if (links.parentId) {
+    let lookup = parents.get(links.parentId);
+    if (!lookup) {
+      lookup = findCurrentPageById(links.parentId);
+      parents.set(links.parentId, lookup);
+    }
+    const page = await lookup;
+    parent = { id: links.parentId, slug: page?.slug ?? null };
+  }
+  return { pullRequests: links.pullRequests, parent };
+};
+
+const toWikiPageResult = async (
+  page: WikiPageInstance,
+  parents: ParentPageCache = new Map()
+): Promise<WikiPageResult> => ({
   id: page.id,
   slug: page.slug,
   currentRevId: page._revID,
@@ -276,7 +304,7 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   originalLanguage: page.originalLanguage ?? null,
   wikidata: readWikidataId(page),
   proposal: readProposalStatus(page.properties),
-  proposalLinks: readProposalLinks(page.properties),
+  proposalLinks: await resolveProposalLinks(page.properties, parents),
   contentHash: computeWikiPageContentHash({
     slug: page.slug,
     title: page.title ?? null,
@@ -287,8 +315,11 @@ const toWikiPageResult = (page: WikiPageInstance): WikiPageResult => ({
   updatedAt: page.updatedAt ?? null,
 });
 
-const toWikiPageRevisionResult = (page: WikiPageInstance): WikiPageRevisionResult => ({
-  ...toWikiPageResult(page),
+const toWikiPageRevisionResult = async (
+  page: WikiPageInstance,
+  parents: ParentPageCache = new Map()
+): Promise<WikiPageRevisionResult> => ({
+  ...(await toWikiPageResult(page, parents)),
   revId: page._revID,
   revDate: page._revDate,
   revUser: page._revUser ?? null,
@@ -1140,7 +1171,8 @@ export async function listWikiPageRevisions(
     .orderBy('_revDate', 'DESC')
     .run();
 
-  const revisions = revisionRows.map(row => toWikiPageRevisionResult(row));
+  const parents: ParentPageCache = new Map();
+  const revisions = await Promise.all(revisionRows.map(row => toWikiPageRevisionResult(row, parents)));
 
   return {
     pageId: page.id,
@@ -1170,7 +1202,7 @@ export async function readWikiPageRevision(
 
   return {
     pageId: page.id,
-    revision: toWikiPageRevisionResult(revision),
+    revision: await toWikiPageRevisionResult(revision),
   };
 }
 

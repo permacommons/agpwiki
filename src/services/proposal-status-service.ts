@@ -107,8 +107,6 @@ export async function setProposalStatus(
   const links = readProposalLinks(page.properties);
   const now = new Date().toISOString();
   const next: ProposalStatusInfo = { status, changedAt: now, changedBy: userId };
-  if (links?.pullRequests.length) next.pullRequests = links.pullRequests;
-  if (links?.parentId) next.parentId = links.parentId;
   const hasNote = Boolean(decisionNote && Object.keys(decisionNote).length);
   const fieldErrors = new ValidationCollector('Invalid proposal status input.');
 
@@ -146,7 +144,14 @@ export async function setProposalStatus(
   fieldErrors.throwIfAny();
 
   await page.newRevision({ id: userId }, { tags: ['proposal-status'] });
-  page.properties = { ...((page.properties as Record<string, unknown> | null) ?? {}), proposal: next };
+  page.properties = {
+    ...((page.properties as Record<string, unknown> | null) ?? {}),
+    proposal: {
+      ...next,
+      ...(links?.pullRequests.length ? { pullRequests: links.pullRequests } : {}),
+      ...(links?.parentId ? { parentId: links.parentId } : {}),
+    },
+  };
   page._revSummary = sanitizeLocalizedMapInput(input.revSummary ?? undefined) ?? {
     en: `Proposal status: ${status.replace('_', ' ')}`,
   };

@@ -30,8 +30,6 @@ export interface ProposalStatusInfo {
   appliedAt?: string;
   appliedTo?: string[];
   supersededBy?: string;
-  pullRequests?: string[];
-  parentId?: string;
 }
 
 // Links stored next to the status: the pull requests implementing the
@@ -73,8 +71,10 @@ const readProposalObject = (properties: unknown): Record<string, unknown> | null
 };
 
 export const readProposalStatus = (properties: unknown): ProposalStatusInfo | null => {
-  const info = readProposalObject(properties) as unknown as ProposalStatusInfo | null;
-  return info && isProposalStatus(info.status) ? info : null;
+  const info = readProposalObject(properties);
+  if (!info || !isProposalStatus(info.status)) return null;
+  const { parentId: _parentId, pullRequests: _pullRequests, ...status } = info;
+  return status as unknown as ProposalStatusInfo;
 };
 
 export const readProposalLinks = (properties: unknown): ProposalLinks | null => {
