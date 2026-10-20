@@ -22,5 +22,6 @@ export const layoutAssets = {
   tableScrollHintsJs: versionedAssetUrl('scripts/table-scroll-hints.js'),
   tocJs: versionedAssetUrl('scripts/toc.js'),
   proposalJs: versionedAssetUrl('scripts/proposal.js'),
+  toolsMenuJs: versionedAssetUrl('scripts/tools-menu.js'),
   recentMediaGridJs: versionedAssetUrl('scripts/recent-media-grid.js'),
 };

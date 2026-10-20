@@ -7,6 +7,7 @@
     blog: 'Dziennik',
     forum: 'Forum',
     recentChanges: 'Ostatnie zmiany',
+    "tools": "Narzędzia",
     reviewAccounts: 'Przeglądaj konta',
     userRights: 'Uprawnienia użytkowników',
     signOut: 'Wyloguj',
@@ -145,6 +146,7 @@
     revisionNotFound: 'Nie znaleziono wersji',
     serverError: 'Błąd serwera',
     "missingWikidata": "Artykuły bez identyfikatora Wikidanych",
+    "proposals": "Propozycje",
     "wikidata": "Wikidane:",
   },
   language: {
@@ -400,6 +402,8 @@
     pagination: 'Strona {{page}} z {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artykuł nie ma jeszcze identyfikatora Wikidanych. Dodaj go za pomocą edytora operatora lub narzędzi MCP.",
     "missingWikidataDescription_other": "Artykuły bez identyfikatora Wikidanych: {{count}}. Dodaj identyfikatory za pomocą edytora operatora lub narzędzi MCP.",
+    "proposalsDescription_one": "{{count}} propozycja, pogrupowana według statusu.",
+    "proposalsDescription_other": "Propozycje ({{count}}), pogrupowane według statusu.",
   },
   userRights: {
     title: 'Uprawnienia użytkowników',

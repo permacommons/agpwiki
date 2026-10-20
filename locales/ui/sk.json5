@@ -7,6 +7,7 @@
     blog: 'Blogová sekcia',
     forum: 'Fórum',
     recentChanges: 'Nedávne zmeny',
+    "tools": "Nástroje",
     reviewAccounts: 'Skontrolovať účty',
     userRights: 'Používateľské práva',
     signOut: 'Odhlásiť sa',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Revízia sa nenašla',
     serverError: 'Chyba servera',
     "missingWikidata": "Články bez identifikátora Wikidát",
+    "proposals": "Návrhy",
     "wikidata": "Wikidáta:",
   },
   language: {
@@ -401,6 +403,8 @@
     pagination: 'Strana {{page}} z {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} článok zatiaľ nemá identifikátor Wikidát. Pridajte ho pomocou editora pre operátorov alebo nástrojov MCP.",
     "missingWikidataDescription_other": "Články bez identifikátora Wikidát: {{count}}. Pridajte identifikátory pomocou editora pre operátorov alebo nástrojov MCP.",
+    "proposalsDescription_one": "{{count}} návrh, zoskupený podľa stavu.",
+    "proposalsDescription_other": "Návrhy ({{count}}), zoskupené podľa stavu.",
   },
   userRights: {
     title: 'Používateľské práva',

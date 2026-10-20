@@ -7,6 +7,7 @@
     blog: '블로그',
     forum: '포럼',
     recentChanges: '최근 바뀜',
+    "tools": "도구",
     reviewAccounts: '계정 검토',
     userRights: '사용자 권한',
     signOut: '로그아웃',
@@ -145,6 +146,7 @@
     revisionNotFound: '판을 찾을 수 없음',
     serverError: '서버 오류',
     "missingWikidata": "위키데이터 ID가 없는 문서",
+    "proposals": "제안",
     "wikidata": "위키데이터:",
   },
   language: {
@@ -400,6 +402,8 @@
     pagination: '페이지 {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "아직 {{count}}개 문서에 위키데이터 ID가 없습니다. 운영자 편집기 또는 MCP 도구로 추가하세요.",
     "missingWikidataDescription_other": "아직 {{count}}개 문서에 위키데이터 ID가 없습니다. 운영자 편집기 또는 MCP 도구로 추가하세요.",
+    "proposalsDescription_one": "제안 {{count}}개, 상태별로 묶음.",
+    "proposalsDescription_other": "제안 {{count}}개, 상태별로 묶음.",
   },
   userRights: {
     title: '사용자 권한',
