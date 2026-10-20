@@ -7,6 +7,7 @@
     blog: 'Blogue',
     forum: 'Fórum',
     recentChanges: 'Alterações recentes',
+    "tools": "Ferramentas",
     reviewAccounts: 'Rever contas',
     userRights: 'Direitos de utilizador',
     signOut: 'Sair',
@@ -145,6 +146,7 @@
     revisionNotFound: 'Revisão não encontrada',
     serverError: 'Erro do servidor',
     "missingWikidata": "Artigos sem ID do Wikidata",
+    "proposals": "Propostas",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -400,6 +402,8 @@
     pagination: 'Página {{page}} de {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artigo ainda não tem ID do Wikidata. Adiciona um com o editor do operador ou as ferramentas MCP.",
     "missingWikidataDescription_other": "{{count}} artigos ainda não têm ID do Wikidata. Adiciona os IDs com o editor do operador ou as ferramentas MCP.",
+    "proposalsDescription_one": "{{count}} proposta, agrupada por estado.",
+    "proposalsDescription_other": "{{count}} propostas, agrupadas por estado.",
   },
   userRights: {
     title: 'Direitos de Utilizador',

@@ -30,6 +30,7 @@ import {
   type AdminEventResult,
   listRecentAdminEvents,
 } from '../services/admin-event-service.js';
+import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
 import {
   getUserRoles,
   hasRole,
@@ -1033,6 +1034,40 @@ export const registerToolRoutes = (app: Express) => {
           locale: res.locals.locale,
         }),
       },
+    });
+  });
+
+  app.get('/tool/proposals', async (req, res) => {
+    const dalInstance = await initializePostgreSQL();
+    const proposals = await listProposalPages(dalInstance);
+    const lang = (res.locals.locale as string | undefined) ?? 'en';
+    const sections = PROPOSAL_LIST_ORDER.map(status => {
+      const items = proposals.filter(item => item.status === status);
+      if (!items.length) return '';
+      const label = status ? req.t(`proposalStatus.status.${status}`) : req.t('proposalStatus.noStatus');
+      const badge = `proposal-status-badge proposal-status--${status ?? 'none'}`;
+      const listItems = items
+        .map(item => {
+          const title = resolveSafeTextWithFallback(mlString.resolve, lang, item.title, item.slug);
+          return `<li><a href="/${escapeHtml(item.slug)}">${renderText(title)}</a>${
+            item.updatedAt ? ` <span class="proposal-list-date">${escapeHtml(formatDateUTC(item.updatedAt))}</span>` : ''
+          }</li>`;
+        })
+        .join('');
+      return `<section class="proposal-list-group">
+  <h2><span class="${badge}">${escapeHtml(label)}</span> <span class="proposal-list-count">${items.length}</span></h2>
+  <ul class="change-list">${listItems}</ul>
+</section>`;
+    }).join('');
+    const bodyHtml = `<div class="tool-page">
+  <p>${escapeHtml(req.t('tool.proposalsDescription', { count: proposals.length }))}</p>
+  ${sections}
+</div>`;
+    res.render('layout', {
+      title: prepareTitle(req.t('page.proposals')),
+      labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
+      bodyHtml,
+      topHtml: prependAccountBanner(res),
     });
   });
 

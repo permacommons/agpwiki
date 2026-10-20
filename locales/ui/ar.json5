@@ -7,6 +7,7 @@
     blog: 'مدونة',
     forum: 'منتدى',
     recentChanges: 'أحدث التغييرات',
+    "tools": "أدوات",
     reviewAccounts: 'مراجعة الحسابات',
     userRights: 'صلاحيات المستخدمين',
     signOut: 'خروج',
@@ -145,6 +146,7 @@
     revisionNotFound: 'مراجعة غير موجودة',
     serverError: 'خطأ في الخادم',
     "missingWikidata": "مقالات بلا معرّف ويكي بيانات",
+    "proposals": "المقترحات",
     "wikidata": "ويكي بيانات:",
   },
   language: {
@@ -398,6 +400,8 @@
     pagination: 'صفحة {{page}} من {{totalPages}}',
     "missingWikidataDescription_one": "لا يزال {{count}} مقال بلا معرّف ويكي بيانات. أضف معرّفًا باستخدام محرر المشغّل أو أدوات MCP.",
     "missingWikidataDescription_other": "مقالات بلا معرّف ويكي بيانات: {{count}}. أضف المعرّفات باستخدام محرر المشغّل أو أدوات MCP.",
+    "proposalsDescription_one": "المقترحات ({{count}})، مجمّعة حسب الحالة.",
+    "proposalsDescription_other": "المقترحات ({{count}})، مجمّعة حسب الحالة.",
   },
   userRights: {
     title: 'صلاحيات المستخدمين',

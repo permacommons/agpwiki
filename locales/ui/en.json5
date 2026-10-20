@@ -195,6 +195,7 @@
     "blog": "Blog",
     "forum": "Forum",
     "recentChanges": "Recent changes",
+    "tools": "Tools",
     "reviewAccounts": "Review accounts",
     "userRights": "User rights",
     "signOut": "Sign out",
@@ -351,6 +352,7 @@
     // Label before the Wikidata item link at the bottom of an article.
     "wikidata": "Wikidata:",
     "missingWikidata": "Articles without a Wikidata ID",
+    "proposals": "Proposals",
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
@@ -663,6 +665,8 @@
   "tool": {
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
+    "proposalsDescription_one": "{{count}} proposal, grouped by status.",
+    "proposalsDescription_other": "{{count}} proposals, grouped by status.",
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",
