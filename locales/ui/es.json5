@@ -219,7 +219,7 @@
       delete: 'Eliminar tema',
       subscribe: 'Suscribirse',
       unsubscribe: 'Cancelar suscripción',
-      notificationsDisabled: 'Las notificaciones por correo del foro están desactivadas actualmente en tu <a href="{{settingsHref}}">configuración</a>.',
+      notificationsDisabled: "Las notificaciones de respuestas del foro están desactivadas en tus <a href=\"{{settingsHref}}\">ajustes</a>.",
     },
     pageLink: {
       context: 'Discusión sobre {{page}}.',
@@ -643,12 +643,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Notificaciones",
+    "bellUnread_one": "Notificaciones: {{count}} sin leer",
+    "bellUnread_other": "Notificaciones: {{count}} sin leer",
+    "someone": "Alguien",
+    "kind": {
+      "forumReply": "{{name}} respondió en {{subject}}",
+      "other": "Nueva actividad en {{subject}}"
+    },
+    "markRead": "Marcar como leída",
+    "markAllRead": "Marcar todas como leídas",
+    "bar": {
+      "more_one": "{{count}} más",
+      "more_other": "{{count}} más",
+      "all": "Todas las notificaciones"
+    },
+    "unread": "nueva",
+    "settings": "Ajustes de notificaciones",
+    "empty": "Aún no hay notificaciones. Recibirás una cuando alguien responda en un hilo del foro que sigues."
+  },
   settings: {
     title: 'Configuración',
-    description: 'Cuando está activado, Agpedia te envía un correo cuando otra persona responde en un hilo al que estás suscrito. Puedes suscribirte o cancelar la suscripción en cada hilo.',
-    emailNotifications: 'Enviarme correos sobre la actividad del foro',
     save: 'Guardar configuración',
     saved: 'Tu configuración se ha actualizado.',
+    "notifications": {
+      "heading": "Notificaciones",
+      "intro": "Elige cómo te avisa Agpedia de cada tipo de actividad.",
+      "emailUnverified": "Las notificaciones por correo necesitan una dirección verificada. Hasta entonces solo aparecen en el sitio.",
+      "channel": {
+        "both": "Correo y en el sitio",
+        "site": "Solo en el sitio",
+        "email": "Solo por correo",
+        "none": "Ninguna"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Respuestas en hilos del foro que sigues",
+          "help": "Sigues un hilo cuando lo inicias o respondes en él. También puedes seguirlo o dejar de seguirlo desde el hilo."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Esta propuesta está protegida; solo los administradores de la wiki pueden cambiar sus enlaces.",

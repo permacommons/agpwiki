@@ -219,7 +219,7 @@
       delete: 'Usuń wątek',
       subscribe: 'Subskrybuj',
       unsubscribe: 'Anuluj subskrypcję',
-      notificationsDisabled: 'Powiadomienia e-mail z forum są obecnie wyłączone w <a href="{{settingsHref}}">ustawieniach</a>.',
+      notificationsDisabled: "Powiadomienia o odpowiedziach na forum są wyłączone w twoich <a href=\"{{settingsHref}}\">ustawieniach</a>.",
     },
     pageLink: {
       context: 'Dyskusja o {{page}}.',
@@ -643,12 +643,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Powiadomienia",
+    "bellUnread_one": "Powiadomienia nieprzeczytane: {{count}}",
+    "bellUnread_other": "Powiadomienia nieprzeczytane: {{count}}",
+    "someone": "Ktoś",
+    "kind": {
+      "forumReply": "{{name}} odpowiada w wątku {{subject}}",
+      "other": "Nowa aktywność: {{subject}}"
+    },
+    "markRead": "Oznacz jako przeczytane",
+    "markAllRead": "Oznacz wszystkie jako przeczytane",
+    "bar": {
+      "more_one": "Jeszcze: {{count}}",
+      "more_other": "Jeszcze: {{count}}",
+      "all": "Wszystkie powiadomienia"
+    },
+    "unread": "nowe",
+    "settings": "Ustawienia powiadomień",
+    "empty": "Brak powiadomień. Dostaniesz je, gdy ktoś odpowie w obserwowanym wątku forum."
+  },
   settings: {
     title: 'Ustawienia',
-    description: 'Po włączeniu Agpedia wysyła Ci e-mail, gdy ktoś inny odpowie w wątku, który subskrybujesz. Możesz subskrybować lub anulować subskrypcję w każdym wątku.',
-    emailNotifications: 'Wysyłaj mi e-maile o aktywności forum',
     save: 'Zapisz ustawienia',
     saved: 'Twoje ustawienia zostały zaktualizowane.',
+    "notifications": {
+      "heading": "Powiadomienia",
+      "intro": "Wybierz, jak Agpedia ma informować cię o każdym rodzaju aktywności.",
+      "emailUnverified": "Powiadomienia e-mail wymagają potwierdzonego adresu. Do tego czasu pojawiają się tylko na stronie.",
+      "channel": {
+        "both": "E-mail i na stronie",
+        "site": "Tylko na stronie",
+        "email": "Tylko e-mail",
+        "none": "Brak"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Odpowiedzi w obserwowanych wątkach forum",
+          "help": "Obserwujesz wątek, gdy go zakładasz lub w nim odpowiadasz. Możesz też włączyć lub wyłączyć obserwowanie w samym wątku."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Ta propozycja jest chroniona; tylko administratorzy wiki mogą zmieniać jej odnośniki.",
