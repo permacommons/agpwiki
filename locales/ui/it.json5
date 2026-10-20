@@ -220,7 +220,7 @@
       delete: 'Elimina thread',
       subscribe: 'Iscriviti',
       unsubscribe: 'Annulla iscrizione',
-      notificationsDisabled: 'Le notifiche e-mail del forum sono attualmente disattivate nelle tue <a href="{{settingsHref}}">impostazioni</a>.',
+      notificationsDisabled: "Le notifiche delle risposte nel forum sono disattivate nelle tue <a href=\"{{settingsHref}}\">impostazioni</a>.",
     },
     pageLink: {
       context: 'Discussione su {{page}}.',
@@ -675,12 +675,47 @@
     "allChecks": "Tutti",
     "empty": "Al momento nessun articolo in questo elenco."
   },
+  "notifications": {
+    "title": "Notifiche",
+    "bellUnread_one": "Notifiche: {{count}} da leggere",
+    "bellUnread_other": "Notifiche: {{count}} da leggere",
+    "someone": "Qualcuno",
+    "kind": {
+      "forumReply": "{{name}} ha risposto in {{subject}}",
+      "other": "Nuova attività in {{subject}}"
+    },
+    "markRead": "Segna come letta",
+    "markAllRead": "Segna tutte come lette",
+    "bar": {
+      "more_one": "Altre {{count}}",
+      "more_other": "Altre {{count}}",
+      "all": "Tutte le notifiche"
+    },
+    "unread": "nuova",
+    "settings": "Impostazioni delle notifiche",
+    "empty": "Ancora nessuna notifica. Ne riceverai una quando qualcuno risponde in una discussione del forum che segui."
+  },
   settings: {
     title: 'Impostazioni',
-    description: 'Quando è attivo, Agpedia ti invia un’e-mail quando qualcun altro risponde a una discussione a cui sei iscritto. Puoi iscriverti o annullare l’iscrizione per ogni discussione.',
-    emailNotifications: 'Inviami e-mail sull’attività del forum',
     save: 'Salva impostazioni',
     saved: 'Le tue impostazioni sono state aggiornate.',
+    "notifications": {
+      "heading": "Notifiche",
+      "intro": "Scegli come Agpedia ti avvisa di ogni tipo di attività.",
+      "emailUnverified": "Le notifiche via email richiedono un indirizzo verificato. Fino ad allora compaiono solo sul sito.",
+      "channel": {
+        "both": "Email e sul sito",
+        "site": "Solo sul sito",
+        "email": "Solo email",
+        "none": "Nessuna"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Risposte nelle discussioni del forum che segui",
+          "help": "Segui una discussione quando la apri o vi rispondi. Puoi anche seguirla o smettere di seguirla dalla discussione."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Questa proposta è protetta; solo gli amministratori del wiki possono modificarne i collegamenti.",

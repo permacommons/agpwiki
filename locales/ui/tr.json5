@@ -220,7 +220,7 @@
       delete: 'Başlığı sil',
       subscribe: 'Abone ol',
       unsubscribe: 'Abonelikten çık',
-      notificationsDisabled: 'Forum e-posta bildirimleri şu anda <a href="{{settingsHref}}">ayarlarınızda</a> devre dışı.',
+      notificationsDisabled: "Forum yanıtı bildirimleri <a href=\"{{settingsHref}}\">ayarlarınızda</a> kapalı.",
     },
     pageLink: {
       context: '{{page}} hakkında tartışma.',
@@ -675,12 +675,47 @@
     "allChecks": "Tümü",
     "empty": "Şu anda bu listede madde yok."
   },
+  "notifications": {
+    "title": "Bildirimler",
+    "bellUnread_one": "Bildirimler: {{count}} okunmamış",
+    "bellUnread_other": "Bildirimler: {{count}} okunmamış",
+    "someone": "Biri",
+    "kind": {
+      "forumReply": "{{name}}, {{subject}} konusunda yanıt verdi",
+      "other": "{{subject}} konusunda yeni etkinlik"
+    },
+    "markRead": "Okundu olarak işaretle",
+    "markAllRead": "Tümünü okundu olarak işaretle",
+    "bar": {
+      "more_one": "{{count}} tane daha",
+      "more_other": "{{count}} tane daha",
+      "all": "Tüm bildirimler"
+    },
+    "unread": "yeni",
+    "settings": "Bildirim ayarları",
+    "empty": "Henüz bildirim yok. Takip ettiğiniz bir forum konusunda biri yanıt verdiğinde bildirim alırsınız."
+  },
   settings: {
     title: 'Ayarlar',
-    description: 'Etkinleştirildiğinde Agpedia, abone olduğunuz bir başlığa başka biri yanıt verdiğinde size e-posta gönderir. Her başlıkta abone olabilir veya abonelikten çıkabilirsiniz.',
-    emailNotifications: 'Forum etkinliği hakkında bana e-posta gönder',
     save: 'Ayarları kaydet',
     saved: 'Ayarlarınız güncellendi.',
+    "notifications": {
+      "heading": "Bildirimler",
+      "intro": "Agpedia'nın her etkinlik türü için sizi nasıl bilgilendireceğini seçin.",
+      "emailUnverified": "E-posta bildirimleri için doğrulanmış bir e-posta adresi gerekir. O zamana kadar yalnızca sitede görünürler.",
+      "channel": {
+        "both": "E-posta ve sitede",
+        "site": "Yalnızca sitede",
+        "email": "Yalnızca e-posta",
+        "none": "Hiçbiri"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Takip ettiğiniz forum konularındaki yanıtlar",
+          "help": "Bir konuyu başlattığınızda veya yanıt verdiğinizde takip edersiniz. Konunun kendisinden de takip edebilir veya bırakabilirsiniz."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Bu öneri koruma altındadır; bağlantılarını yalnızca viki yöneticileri değiştirebilir.",

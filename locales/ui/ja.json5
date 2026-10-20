@@ -220,7 +220,7 @@
       delete: 'スレッドを削除',
       subscribe: '購読する',
       unsubscribe: '購読をやめる',
-      notificationsDisabled: 'フォーラムのメール通知は現在、あなたの<a href="{{settingsHref}}">設定</a>で無効になっています。',
+      notificationsDisabled: "フォーラムの返信通知は<a href=\"{{settingsHref}}\">設定</a>でオフになっています。",
     },
     pageLink: {
       context: '{{page}} についての議論。',
@@ -675,12 +675,47 @@
     "allChecks": "すべて",
     "empty": "現在この一覧に記事はありません。"
   },
+  "notifications": {
+    "title": "通知",
+    "bellUnread_one": "通知：未読 {{count}} 件",
+    "bellUnread_other": "通知：未読 {{count}} 件",
+    "someone": "誰か",
+    "kind": {
+      "forumReply": "{{name}} さんが {{subject}} に返信しました",
+      "other": "{{subject}} に新しい動きがあります"
+    },
+    "markRead": "既読にする",
+    "markAllRead": "すべて既読にする",
+    "bar": {
+      "more_one": "ほか {{count}} 件",
+      "more_other": "ほか {{count}} 件",
+      "all": "すべての通知"
+    },
+    "unread": "新着",
+    "settings": "通知の設定",
+    "empty": "通知はまだありません。フォローしているフォーラムのスレッドで誰かが返信すると届きます。"
+  },
   settings: {
     title: '設定',
-    description: '有効にすると、あなたが購読しているスレッドに他の人が返信したとき、Agpedia がメールを送信します。各スレッドで購読または購読解除できます。',
-    emailNotifications: 'フォーラムの活動についてメールを受け取る',
     save: '設定を保存',
     saved: '設定が更新されました。',
+    "notifications": {
+      "heading": "通知",
+      "intro": "活動の種類ごとに、Agpedia からの知らせ方を選んでください。",
+      "emailUnverified": "メール通知には確認済みのメールアドレスが必要です。それまではサイト上にのみ表示されます。",
+      "channel": {
+        "both": "メールとサイト",
+        "site": "サイトのみ",
+        "email": "メールのみ",
+        "none": "なし"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "フォローしているフォーラムのスレッドへの返信",
+          "help": "スレッドを作成するか返信すると、そのスレッドをフォローします。スレッド上でフォローの開始や解除もできます。"
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "この提案は保護されています。リンクを変更できるのはウィキ管理者のみです。",

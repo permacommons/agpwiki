@@ -221,7 +221,7 @@
       delete: 'Forigi fadenon',
       subscribe: 'Aboni',
       unsubscribe: 'Malaboni',
-      notificationsDisabled: 'Retpoŝtaj sciigoj pri la forumo estas nun malŝaltitaj en viaj <a href="{{settingsHref}}">agordoj</a>.',
+      notificationsDisabled: "Sciigoj pri forumaj respondoj estas malŝaltitaj en viaj <a href=\"{{settingsHref}}\">agordoj</a>.",
     },
     pageLink: {
       context: 'Diskuto pri {{page}}.',
@@ -675,12 +675,47 @@
     "allChecks": "Ĉiuj",
     "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
+  "notifications": {
+    "title": "Sciigoj",
+    "bellUnread_one": "Sciigoj: {{count}} nelegita",
+    "bellUnread_other": "Sciigoj: {{count}} nelegitaj",
+    "someone": "Iu",
+    "kind": {
+      "forumReply": "{{name}} respondis en {{subject}}",
+      "other": "Nova aktiveco en {{subject}}"
+    },
+    "markRead": "Marki kiel legitan",
+    "markAllRead": "Marki ĉiujn kiel legitajn",
+    "bar": {
+      "more_one": "{{count}} plia",
+      "more_other": "{{count}} pliaj",
+      "all": "Ĉiuj sciigoj"
+    },
+    "unread": "nova",
+    "settings": "Agordoj pri sciigoj",
+    "empty": "Ankoraŭ neniuj sciigoj. Vi ricevos unu, kiam iu respondos en forumfadeno, kiun vi sekvas."
+  },
   settings: {
     title: 'Agordoj',
-    description: 'Kiam ĉi tio estas ŝaltita, Agpedia retpoŝtos al vi kiam iu alia respondas en fadeno, kiun vi abonis. Vi povas aboni aŭ malaboni ĉe ĉiu fadeno.',
-    emailNotifications: 'Retpoŝtu al mi pri forumaj aktivaĵoj',
     save: 'Konservi agordojn',
     saved: 'Viaj agordoj estis ĝisdatigitaj.',
+    "notifications": {
+      "heading": "Sciigoj",
+      "intro": "Elektu, kiel Agpedia sciigu vin pri ĉiu speco de aktiveco.",
+      "emailUnverified": "Retpoŝtaj sciigoj bezonas kontrolitan retpoŝtadreson. Ĝis tiam ili aperas nur en la retejo.",
+      "channel": {
+        "both": "Retpoŝte kaj en la retejo",
+        "site": "Nur en la retejo",
+        "email": "Nur retpoŝte",
+        "none": "Neniuj"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Respondoj en forumfadenoj, kiujn vi sekvas",
+          "help": "Vi sekvas fadenon, kiam vi komencas ĝin aŭ respondas en ĝi. Vi ankaŭ povas eksekvi aŭ malsekvi ĝin en la fadeno."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Ĉi tiu propono estas protektita; nur vikiaj administrantoj povas ŝanĝi ĝiajn ligilojn.",

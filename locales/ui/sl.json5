@@ -221,7 +221,7 @@
       delete: 'Izbriši nit',
       subscribe: 'Naroči se',
       unsubscribe: 'Odjavi naročnino',
-      notificationsDisabled: 'E-poštna obvestila foruma so trenutno onemogočena v vaših <a href="{{settingsHref}}">nastavitvah</a>.',
+      notificationsDisabled: "Obvestila o odgovorih na forumu so izklopljena v tvojih <a href=\"{{settingsHref}}\">nastavitvah</a>.",
     },
     pageLink: {
       context: 'Razprava o {{page}}.',
@@ -677,12 +677,47 @@
     "allChecks": "Vsa",
     "empty": "Na tem seznamu trenutno ni člankov."
   },
+  "notifications": {
+    "title": "Obvestila",
+    "bellUnread_one": "Neprebrana obvestila: {{count}}",
+    "bellUnread_other": "Neprebrana obvestila: {{count}}",
+    "someone": "Nekdo",
+    "kind": {
+      "forumReply": "{{name}} je odgovoril(a) v niti {{subject}}",
+      "other": "Nova dejavnost: {{subject}}"
+    },
+    "markRead": "Označi kot prebrano",
+    "markAllRead": "Označi vse kot prebrano",
+    "bar": {
+      "more_one": "Še {{count}}",
+      "more_other": "Še {{count}}",
+      "all": "Vsa obvestila"
+    },
+    "unread": "novo",
+    "settings": "Nastavitve obvestil",
+    "empty": "Še ni obvestil. Prejmeš ga, ko nekdo odgovori v niti foruma, ki ji slediš."
+  },
   settings: {
     title: 'Nastavitve',
-    description: 'Ko je omogočeno, vam Agpedia pošlje e-pošto, ko nekdo drug odgovori v temi, na katero ste naročeni. Pri vsaki temi se lahko naročite ali odjavite.',
-    emailNotifications: 'Pošiljaj mi e-pošto o dejavnosti foruma',
     save: 'Shrani nastavitve',
     saved: 'Vaše nastavitve so bile posodobljene.',
+    "notifications": {
+      "heading": "Obvestila",
+      "intro": "Izberi, kako te Agpedia obvešča o posamezni vrsti dejavnosti.",
+      "emailUnverified": "Obvestila po e-pošti zahtevajo potrjen e-poštni naslov. Do takrat so prikazana samo na spletnem mestu.",
+      "channel": {
+        "both": "E-pošta in na spletnem mestu",
+        "site": "Samo na spletnem mestu",
+        "email": "Samo e-pošta",
+        "none": "Nobena"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Odgovori v nitih foruma, ki jim slediš",
+          "help": "Niti slediš, ko jo začneš ali v njej odgovoriš. Sledenje lahko vklopiš ali izklopiš tudi v sami niti."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Ta predlog je zaščiten; njegove povezave lahko spreminjajo samo skrbniki vikija.",

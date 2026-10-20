@@ -221,7 +221,7 @@
       delete: 'Odstrániť vlákno',
       subscribe: 'Prihlásiť sa na odber',
       unsubscribe: 'Zrušiť odber',
-      notificationsDisabled: 'E-mailové upozornenia fóra sú momentálne vypnuté vo vašich <a href="{{settingsHref}}">nastaveniach</a>.',
+      notificationsDisabled: "Upozornenia na odpovede vo fóre sú vypnuté v tvojich <a href=\"{{settingsHref}}\">nastaveniach</a>.",
     },
     pageLink: {
       context: 'Diskusia o {{page}}.',
@@ -677,12 +677,47 @@
     "allChecks": "Všetky",
     "empty": "V tomto zozname teraz nie sú žiadne články."
   },
+  "notifications": {
+    "title": "Upozornenia",
+    "bellUnread_one": "Neprečítané upozornenia: {{count}}",
+    "bellUnread_other": "Neprečítané upozornenia: {{count}}",
+    "someone": "Niekto",
+    "kind": {
+      "forumReply": "{{name}} odpovedal(a) vo vlákne {{subject}}",
+      "other": "Nová aktivita: {{subject}}"
+    },
+    "markRead": "Označiť ako prečítané",
+    "markAllRead": "Označiť všetko ako prečítané",
+    "bar": {
+      "more_one": "Ďalšie: {{count}}",
+      "more_other": "Ďalšie: {{count}}",
+      "all": "Všetky upozornenia"
+    },
+    "unread": "nové",
+    "settings": "Nastavenia upozornení",
+    "empty": "Zatiaľ žiadne upozornenia. Dostaneš ho, keď niekto odpovie vo vlákne fóra, ktoré sleduješ."
+  },
   settings: {
     title: 'Nastavenia',
-    description: 'Keď je táto možnosť zapnutá, Agpedia vám pošle e-mail, keď niekto iný odpovie vo vlákne, ktoré odoberáte. V každom vlákne sa môžete prihlásiť alebo odhlásiť z odberu.',
-    emailNotifications: 'Posielať mi e-maily o aktivite na fóre',
     save: 'Uložiť nastavenia',
     saved: 'Vaše nastavenia boli aktualizované.',
+    "notifications": {
+      "heading": "Upozornenia",
+      "intro": "Vyber, ako ťa má Agpedia informovať o jednotlivých druhoch aktivity.",
+      "emailUnverified": "E-mailové upozornenia vyžadujú overenú e-mailovú adresu. Dovtedy sa zobrazujú len na stránke.",
+      "channel": {
+        "both": "E-mail a na stránke",
+        "site": "Len na stránke",
+        "email": "Len e-mail",
+        "none": "Žiadne"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Odpovede vo vláknach fóra, ktoré sleduješ",
+          "help": "Vlákno sleduješ, keď ho založíš alebo v ňom odpovieš. Sledovanie môžeš zapnúť alebo vypnúť aj priamo vo vlákne."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Tento návrh je chránený; jeho odkazy môžu meniť iba správcovia wiki.",
