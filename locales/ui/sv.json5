@@ -240,7 +240,22 @@
       unknownOperator: 'Okänd operatör',
       quote: 'Citera',
       delete: 'Ta bort',
+      "edit": "Redigera",
+      "save": "Spara ändringar",
+      "edited": "redigerat",
+      "forbiddenEdit": "Bara den som skrev ett inlägg kan redigera det.",
+      "historyTitle": "Historik för ett inlägg",
+      "historyBack": "Tillbaka till inlägget",
+      "historyFirst": "Första versionen, av {{name}} den {{date}}",
+      "historyEdit": "Redigerat av {{name}} den {{date}}",
+      "historyBefore": "Före",
+      "historyAfter": "Efter",
+      "historyText": "Text"
     },
+    "position": {
+      "context": "Svar på ett ställningstagande om {{proposal}}",
+      "withdrawn": "Ställningstagandet har sedan dragits tillbaka."
+    }
   },
   history: {
     operator: 'operatör: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Uppdatera",
     "withdraw": "Dra tillbaka",
     "forbidden": "Ditt konto kan inte ta ställning till förslag.",
-    "invalid": "Det gick inte att spara ställningstagandet. Välj för, neutral eller emot. Motiveringen får innehålla högst 2 000 tecken. Välj ett språk som stöds."
+    "invalid": "Det gick inte att spara ställningstagandet. Välj för, neutral eller emot och ett språk som stöds.",
+    "reply": {
+      "open": "Svara",
+      "label": "Ditt svar",
+      "placeholder": "Skriv ett svar…",
+      "submit": "Skicka svar",
+      "forbidden": "Ditt konto kan inte svara på ställningstaganden, eller så är svaret inte ditt.",
+      "invalid": "Svaret kunde inte sparas. Skriv en text och välj ett språk som stöds.",
+      "openInForum": "Öppna svaren i forumet"
+    }
   },
   tool: {
     view: 'Visa',

@@ -240,7 +240,22 @@
       unknownOperator: 'Onbekende operator',
       quote: 'Citeren',
       delete: 'Verwijderen',
+      "edit": "Bewerken",
+      "save": "Wijzigingen opslaan",
+      "edited": "bewerkt",
+      "forbiddenEdit": "Alleen wie een bericht schreef, kan het bewerken.",
+      "historyTitle": "Geschiedenis van een bericht",
+      "historyBack": "Terug naar het bericht",
+      "historyFirst": "Eerste versie, door {{name}} op {{date}}",
+      "historyEdit": "Bewerkt door {{name}} op {{date}}",
+      "historyBefore": "Voor",
+      "historyAfter": "Na",
+      "historyText": "Tekst"
     },
+    "position": {
+      "context": "Reacties op een standpunt bij {{proposal}}",
+      "withdrawn": "Dit standpunt is inmiddels ingetrokken."
+    }
   },
   history: {
     operator: 'beheerder: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Bijwerken",
     "withdraw": "Intrekken",
     "forbidden": "Je account kan geen standpunten over voorstellen innemen.",
-    "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen. Beperk je toelichting tot 2.000 tekens en selecteer een ondersteunde taal."
+    "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen en selecteer een ondersteunde taal.",
+    "reply": {
+      "open": "Reageren",
+      "label": "Je reactie",
+      "placeholder": "Schrijf een reactie…",
+      "submit": "Reactie plaatsen",
+      "forbidden": "Je account kan niet reageren op standpunten, of deze reactie is niet van jou.",
+      "invalid": "De reactie kon niet worden opgeslagen. Schrijf een tekst en selecteer een ondersteunde taal.",
+      "openInForum": "Deze reacties openen op het forum"
+    }
   },
   tool: {
     view: 'Bekijk',

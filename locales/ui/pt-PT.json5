@@ -239,7 +239,22 @@
       unknownOperator: 'Operador desconhecido',
       quote: 'Citar',
       delete: 'Eliminar',
+      "edit": "Editar",
+      "save": "Guardar alterações",
+      "edited": "editado",
+      "forbiddenEdit": "Só quem escreveu uma mensagem a pode editar.",
+      "historyTitle": "Histórico de uma mensagem",
+      "historyBack": "Voltar à mensagem",
+      "historyFirst": "Primeira versão, de {{name}} em {{date}}",
+      "historyEdit": "Editado por {{name}} em {{date}}",
+      "historyBefore": "Antes",
+      "historyAfter": "Depois",
+      "historyText": "Texto"
     },
+    "position": {
+      "context": "Respostas a uma posição sobre {{proposal}}",
+      "withdrawn": "Esta posição foi entretanto retirada."
+    }
   },
   history: {
     operator: 'operador: {{name}}',
@@ -365,7 +380,16 @@
     "update": "Atualizar",
     "withdraw": "Retirar",
     "forbidden": "A tua conta não pode registar posições sobre propostas.",
-    "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra. Limita a justificação a 2.000 carateres e seleciona um idioma suportado."
+    "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra e seleciona um idioma suportado.",
+    "reply": {
+      "open": "Responder",
+      "label": "A tua resposta",
+      "placeholder": "Escreve uma resposta…",
+      "submit": "Publicar resposta",
+      "forbidden": "A tua conta não pode responder a posições, ou esta resposta não é tua.",
+      "invalid": "Não foi possível guardar a resposta. Escreve um texto e seleciona um idioma suportado.",
+      "openInForum": "Abrir estas respostas no fórum"
+    }
   },
   tool: {
     view: 'Ver',

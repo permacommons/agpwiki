@@ -48,9 +48,25 @@ export interface ForumThreadResult {
   title: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
   pinned: boolean;
+  attachedType: string | null;
+  attachedId: string | null;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
   commentCount?: number;
+}
+
+/** What a thread is attached to, when it is not only a page discussion. */
+export interface ForumThreadAttachment {
+  type: 'position';
+  id: string;
+}
+
+export interface ForumCommentVersion {
+  revId: string;
+  revDate: Date;
+  revUser: string | null;
+  body: Record<string, string> | null;
+  originalLanguage: string | null;
 }
 
 export interface ForumCommentResult {
@@ -62,6 +78,7 @@ export interface ForumCommentResult {
   updatedAt: Date | null | undefined;
   revDeleted?: boolean;
   revUser?: string | null | undefined;
+  edited?: boolean;
 }
 
 export interface ForumCategoryListItem {
@@ -94,6 +111,8 @@ export interface CreateForumThreadInput {
   title: string;
   body: string;
   language: string;
+  // Set by services only (never from a form): what the thread belongs to.
+  attachment?: ForumThreadAttachment;
 }
 
 export interface CreateForumCommentInput {
@@ -143,6 +162,8 @@ const toForumThreadResult = (thread: ForumThreadInstance): ForumThreadResult => 
   title: thread.title ?? null,
   originalLanguage: thread.originalLanguage ?? null,
   pinned: Boolean(thread.pinned),
+  attachedType: thread.attachedType ?? null,
+  attachedId: thread.attachedId ?? null,
   createdAt: thread.createdAt ?? null,
   updatedAt: thread.updatedAt ?? null,
 });
@@ -156,6 +177,9 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   updatedAt: comment.updatedAt ?? null,
   revDeleted: comment._revDeleted ?? false,
   revUser: comment._revUser ?? null,
+  edited: Boolean(
+    comment.createdAt && comment.updatedAt && comment.updatedAt.getTime() - comment.createdAt.getTime() > 1000
+  ),
 });
 
 const findCurrentThreadById = async (threadId: string) =>
@@ -389,7 +413,7 @@ export const readForumComment = async (
 ): Promise<ForumCommentResult> => toForumCommentResult(await requireComment(commentId));
 
 export const createForumThread = async (
-  { category, pageSlug, title, body, language }: CreateForumThreadInput,
+  { category, pageSlug, title, body, language, attachment }: CreateForumThreadInput,
   userId: string
 ): Promise<ForumThreadResult> => {
   const errors = new ValidationCollector('Invalid forum thread input.');
@@ -439,6 +463,8 @@ export const createForumThread = async (
   thread.title = sanitizeLocalizedMapInput({ [language]: escapeHtml(title.trim()) });
   thread.originalLanguage = language;
   thread.pinned = 0;
+  thread.attachedType = attachment?.type ?? null;
+  thread.attachedId = attachment?.id ?? null;
   thread.createdAt = createdAt;
   thread.updatedAt = createdAt;
   await thread.save();
@@ -525,6 +551,104 @@ export const createForumComment = async (
   }
 
   return toForumCommentResult(comment);
+};
+
+/** The person who wrote a post: the author of its first version. */
+export const findForumCommentAuthorId = async (
+  dalInstance: DataAccessLayer,
+  commentId: string
+): Promise<string | null> => {
+  const result = await dalInstance.query(
+    `SELECT _rev_user FROM ${ForumComment.tableName}
+      WHERE id = $1 OR _old_rev_of = $1
+      ORDER BY _rev_date ASC
+      LIMIT 1`,
+    [commentId]
+  );
+  return (result.rows[0] as { _rev_user: string | null } | undefined)?._rev_user ?? null;
+};
+
+export interface UpdateForumCommentInput {
+  commentId: string;
+  body: string;
+  language: string;
+}
+
+/**
+ * Change your own post. The earlier text is kept as an older version, so
+ * the post's history shows every version. Only the author can edit.
+ */
+export const updateForumComment = async (
+  dalInstance: DataAccessLayer,
+  { commentId, body, language }: UpdateForumCommentInput,
+  userId: string
+): Promise<ForumCommentResult> => {
+  const errors = new ValidationCollector('Invalid forum comment input.');
+  ensureNonEmptyString(userId, 'userId', errors);
+  ensureNonEmptyString(commentId, 'commentId', errors);
+  ensureNonEmptyString(language, 'language', errors);
+  ensureOptionalLanguage(language, 'language', errors);
+  await validateMarkdownBody(body, language, 'body', errors);
+  errors.throwIfAny();
+
+  const comment = await requireComment(commentId);
+  if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
+    throw new ForbiddenError('Only the author can edit a post.', { commentId });
+  }
+  const updatedAt = new Date();
+  const revision = await comment.newRevision({ id: userId }, { tags: ['edit'], date: updatedAt });
+  revision.body = sanitizeLocalizedMapInput({ [language]: body });
+  revision.originalLanguage = language;
+  revision.updatedAt = updatedAt;
+  await revision.save();
+  return toForumCommentResult(revision);
+};
+
+/** Every version of a post, oldest first. */
+export const listForumCommentVersions = async (
+  dalInstance: DataAccessLayer,
+  commentId: string
+): Promise<ForumCommentVersion[]> => {
+  await requireComment(commentId);
+  const result = await dalInstance.query(
+    `SELECT _rev_id, _rev_date, _rev_user, body, original_language
+       FROM ${ForumComment.tableName}
+      WHERE (id = $1 OR _old_rev_of = $1) AND _rev_deleted = false
+      ORDER BY _rev_date ASC`,
+    [commentId]
+  );
+  return (result.rows as Array<Record<string, unknown>>).map(row => ({
+    revId: row._rev_id as string,
+    revDate: row._rev_date as Date,
+    revUser: (row._rev_user as string | null) ?? null,
+    body: (row.body as Record<string, string> | null) ?? null,
+    originalLanguage: (row.original_language as string | null) ?? null,
+  }));
+};
+
+/** The current thread attached to something, if any. */
+export const findAttachedForumThread = async (attachment: ForumThreadAttachment) => {
+  const thread = await ForumThread.filterWhere({
+    attachedType: attachment.type,
+    attachedId: attachment.id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+  return thread ?? null;
+};
+
+/** Move a thread to a new attachment, e.g. when a position is saved again. */
+export const reattachForumThread = async (
+  from: ForumThreadAttachment,
+  toId: string,
+  userId: string
+) => {
+  const thread = await findAttachedForumThread(from);
+  if (!thread) return null;
+  const revision = await thread.newRevision({ id: userId }, { tags: ['reattach'] });
+  revision.attachedId = toId;
+  await revision.save();
+  return toForumThreadResult(revision);
 };
 
 export const setForumThreadPinned = async (

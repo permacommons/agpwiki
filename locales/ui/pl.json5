@@ -239,7 +239,22 @@
       unknownOperator: 'Nieznany operator',
       quote: 'Cytuj',
       delete: 'Usuń',
+      "edit": "Edytuj",
+      "save": "Zapisz zmiany",
+      "edited": "edytowano",
+      "forbiddenEdit": "Tylko autor wpisu może go edytować.",
+      "historyTitle": "Historia wpisu",
+      "historyBack": "Wróć do wpisu",
+      "historyFirst": "Pierwsza wersja, autor: {{name}}, {{date}}",
+      "historyEdit": "Edytowano przez: {{name}}, {{date}}",
+      "historyBefore": "Przed",
+      "historyAfter": "Po",
+      "historyText": "Tekst"
     },
+    "position": {
+      "context": "Odpowiedzi na stanowisko w sprawie: {{proposal}}",
+      "withdrawn": "To stanowisko zostało później wycofane."
+    }
   },
   history: {
     operator: 'obsługujący: {{name}}',
@@ -365,7 +380,16 @@
     "update": "Aktualizuj",
     "withdraw": "Wycofaj",
     "forbidden": "Twoje konto nie może zajmować stanowiska wobec propozycji.",
-    "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw. Uzasadnienie może mieć do 2000 znaków. Wybierz obsługiwany język."
+    "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw oraz obsługiwany język.",
+    "reply": {
+      "open": "Odpowiedz",
+      "label": "Twoja odpowiedź",
+      "placeholder": "Napisz odpowiedź…",
+      "submit": "Opublikuj odpowiedź",
+      "forbidden": "Twoje konto nie może odpowiadać na stanowiska albo ta odpowiedź nie jest twoja.",
+      "invalid": "Nie udało się zapisać odpowiedzi. Wpisz tekst i wybierz obsługiwany język.",
+      "openInForum": "Otwórz te odpowiedzi na forum"
+    }
   },
   tool: {
     view: 'Widok',

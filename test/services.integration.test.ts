@@ -72,6 +72,7 @@ import {
 import { createPageCheck } from '../src/services/page-check-service.js';
 import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import { listPositionReplies, replyToPosition } from '../src/services/position-reply-service.js';
 import {
   findRevisionsWithChangedText,
   listActivePageSignoffs,
@@ -91,7 +92,9 @@ import {
   deleteForumThread,
   listForumCategories,
   listForumThreads,
+  listForumCommentVersions,
   readForumThread,
+  updateForumComment,
   setForumThreadPinned,
 } from '../src/services/forum-service.js';
 import {
@@ -1258,6 +1261,155 @@ test('Service page positions let any signed-in user support, oppose or stay neut
     await cleanupTestArtifacts(dal, { slugPrefix: `${otherSlug}%`, userId: authorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: operatorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: blockedId ?? undefined });
+  }
+});
+
+test('Service position replies are forum posts in a thread attached to the position', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const slug = `meta/proposals/test-replies-${stamp}`;
+  const userIds: string[] = [];
+
+  try {
+    const author = await createVerifiedTestUser();
+    const replier = await createVerifiedTestUser();
+    const stranger = await createVerifiedTestUser();
+    const blocked = await createVerifiedTestUser();
+    const unverified = await createTestUser();
+    userIds.push(author.id, replier.id, stranger.id, blocked.id, unverified.id);
+    blocked.blockedAt = new Date();
+    await blocked.save();
+
+    await createWikiPage(
+      dal,
+      { slug, title: { en: 'Replies test' }, body: { en: 'Proposed text.' }, originalLanguage: 'en' },
+      author.id
+    );
+
+    // Position comments have no length limit any more.
+    const longComment = 'Detailed reasoning. '.repeat(200).trim();
+    const position = await signOffPage(
+      dal,
+      { slug, stance: 'neutral', comment: longComment, commentLanguage: 'en' },
+      author.id
+    );
+    assert.equal(position.comment?.length, longComment.length);
+    const silent = await signOffPage(dal, { slug, stance: 'support' }, stranger.id);
+
+    // The first reply starts a Policy thread attached to the position.
+    const first = await replyToPosition(
+      dal,
+      { slug, signoffId: position.id, body: 'Good point, see https://example.org/a.', language: 'en' },
+      replier.id
+    );
+    assert.equal(first.createdThread, true);
+    const thread = await readForumThread(dal, first.threadId);
+    assert.equal(thread.thread.category, 'policy');
+    assert.equal(thread.thread.pageSlug, slug);
+    assert.equal(thread.thread.attachedType, 'position');
+    assert.equal(thread.thread.attachedId, position.id);
+    assert.equal(thread.comments[0]?.id, first.commentId);
+    // The position's author follows the thread and is told about the first reply.
+    assert.equal(await isUserSubscribedToForumThread(first.threadId, author.id), true);
+    const jobs = await dal.query("SELECT payload FROM notification_jobs WHERE payload->>'commentId' = $1", [first.commentId]);
+    assert.deepEqual((jobs.rows[0] as { payload: { recipientUserIds: string[] } }).payload.recipientUserIds, [author.id]);
+
+    // Later replies join the same thread.
+    const second = await replyToPosition(
+      dal,
+      { slug, signoffId: position.id, body: 'Thanks, fixed.', language: 'en' },
+      author.id
+    );
+    assert.equal(second.createdThread, false);
+    assert.equal(second.threadId, first.threadId);
+
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: position.id, body: '   ', language: 'en' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: position.id, body: 'Hi', language: 'xx' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: silent.id, body: 'No comment to answer.', language: 'en' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: position.id, body: 'Blocked.', language: 'en' }, blocked.id),
+      ForbiddenError
+    );
+    // As in the rest of the forum, posting needs a confirmed email address.
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: position.id, body: 'Unconfirmed.', language: 'en' }, unverified.id),
+      ForbiddenError
+    );
+
+    let grouped = await listPositionReplies(dal, [position.id]);
+    assert.equal(grouped.get(position.id)?.threadId, first.threadId);
+    assert.deepEqual(
+      grouped.get(position.id)?.replies.map(reply => [reply.id, reply.authorId, reply.edited]),
+      [
+        [first.commentId, replier.id, false],
+        [second.commentId, author.id, false],
+      ]
+    );
+
+    // Only the author edits a post, and every version is kept.
+    await assert.rejects(
+      () => updateForumComment(dal, { commentId: first.commentId, body: 'Not mine.', language: 'en' }, stranger.id),
+      ForbiddenError
+    );
+    await new Promise(resolve => setTimeout(resolve, 1100));
+    const edited = await updateForumComment(
+      dal,
+      { commentId: first.commentId, body: 'Good point, now fixed in the text.', language: 'en' },
+      replier.id
+    );
+    assert.equal(edited.body?.en, 'Good point, now fixed in the text.');
+    assert.equal(edited.edited, true);
+    const versions = await listForumCommentVersions(dal, first.commentId);
+    assert.deepEqual(
+      versions.map(version => version.body?.en),
+      ['Good point, see https://example.org/a.', 'Good point, now fixed in the text.']
+    );
+    assert.deepEqual(versions.map(version => version.revUser), [replier.id, replier.id]);
+    grouped = await listPositionReplies(dal, [position.id]);
+    assert.equal(grouped.get(position.id)?.replies[0]?.edited, true);
+    assert.equal(grouped.get(position.id)?.replies[0]?.authorId, replier.id);
+
+    // A changed position keeps its thread.
+    const changed = await signOffPage(
+      dal,
+      { slug, stance: 'support', comment: 'Convinced now.', commentLanguage: 'en' },
+      author.id
+    );
+    grouped = await listPositionReplies(dal, [changed.id]);
+    assert.equal(grouped.get(changed.id)?.threadId, first.threadId);
+    assert.equal(grouped.get(changed.id)?.replies.length, 2);
+
+    // Withdrawn positions take no new replies.
+    await withdrawPageSignoff(dal, { slug }, author.id);
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: changed.id, body: 'Too late.', language: 'en' }, replier.id),
+      NotFoundError
+    );
+  } finally {
+    await dal.query(
+      "DELETE FROM notification_jobs WHERE payload->>'threadId' IN (SELECT id::text FROM forum_threads WHERE page_slug LIKE $1)",
+      [`${slug}%`]
+    );
+    await dal.query(
+      'DELETE FROM forum_thread_subscriptions WHERE thread_id IN (SELECT id FROM forum_threads WHERE page_slug LIKE $1)',
+      [`${slug}%`]
+    );
+    await dal.query(
+      'DELETE FROM forum_comments WHERE thread_id IN (SELECT id FROM forum_threads WHERE page_slug LIKE $1)',
+      [`${slug}%`]
+    );
+    await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${slug}%`]);
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
   }
 });
 

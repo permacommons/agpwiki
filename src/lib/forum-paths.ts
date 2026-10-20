@@ -27,3 +27,9 @@ export const forumCommentDeletePath = (commentId: string) =>
 
 export const forumCommentAnchor = (commentId: string) =>
   `comment-${encodeURIComponent(commentId)}`;
+
+export const forumCommentEditPath = (commentId: string) =>
+  `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/edit`;
+
+export const forumCommentHistoryPath = (commentId: string) =>
+  `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/history`;

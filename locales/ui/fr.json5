@@ -240,7 +240,22 @@
       unknownOperator: 'Opérateur inconnu',
       quote: 'Citer',
       delete: 'Supprimer',
+      "edit": "Modifier",
+      "save": "Enregistrer les modifications",
+      "edited": "modifié",
+      "forbiddenEdit": "Seule la personne qui a écrit un message peut le modifier.",
+      "historyTitle": "Historique d’un message",
+      "historyBack": "Retour au message",
+      "historyFirst": "Première version, par {{name}} le {{date}}",
+      "historyEdit": "Modifié par {{name}} le {{date}}",
+      "historyBefore": "Avant",
+      "historyAfter": "Après",
+      "historyText": "Texte"
     },
+    "position": {
+      "context": "Réponses à une position sur {{proposal}}",
+      "withdrawn": "Cette position a depuis été retirée."
+    }
   },
   history: {
     operator: 'opérateur : {{name}}',
@@ -366,7 +381,16 @@
     "update": "Mettre à jour",
     "withdraw": "Retirer",
     "forbidden": "Ton compte ne peut pas prendre position sur les propositions.",
-    "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre. Limite ta justification à 2 000 caractères et sélectionne une langue prise en charge."
+    "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre, et sélectionne une langue prise en charge.",
+    "reply": {
+      "open": "Répondre",
+      "label": "Ta réponse",
+      "placeholder": "Écris une réponse…",
+      "submit": "Publier la réponse",
+      "forbidden": "Ton compte ne peut pas répondre aux positions, ou cette réponse n’est pas la tienne.",
+      "invalid": "Impossible d’enregistrer la réponse. Écris un texte et sélectionne une langue prise en charge.",
+      "openInForum": "Ouvrir ces réponses dans le forum"
+    }
   },
   tool: {
     view: 'Voir',

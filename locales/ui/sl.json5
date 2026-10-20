@@ -240,7 +240,22 @@
       unknownOperator: 'Neznan operater',
       quote: 'Citiraj',
       delete: 'Izbriši',
+      "edit": "Uredi",
+      "save": "Shrani spremembe",
+      "edited": "urejeno",
+      "forbiddenEdit": "Prispevek lahko ureja samo njegov avtor.",
+      "historyTitle": "Zgodovina prispevka",
+      "historyBack": "Nazaj na prispevek",
+      "historyFirst": "Prva različica, avtor: {{name}}, {{date}}",
+      "historyEdit": "Uredil(a): {{name}}, {{date}}",
+      "historyBefore": "Prej",
+      "historyAfter": "Potem",
+      "historyText": "Besedilo"
     },
+    "position": {
+      "context": "Odgovori na stališče o: {{proposal}}",
+      "withdrawn": "To stališče je bilo medtem umaknjeno."
+    }
   },
   history: {
     operator: 'operater: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Posodobi",
     "withdraw": "Umakni",
     "forbidden": "Tvoj račun ne more izražati stališč do predlogov.",
-    "invalid": "Tega stališča ni bilo mogoče shraniti. Izberi za, nevtralno ali proti. Utemeljitev omeji na 2.000 znakov in izberi podprt jezik."
+    "invalid": "Tega stališča ni bilo mogoče shraniti. Izberi za, nevtralno ali proti ter podprt jezik.",
+    "reply": {
+      "open": "Odgovori",
+      "label": "Tvoj odgovor",
+      "placeholder": "Napiši odgovor…",
+      "submit": "Objavi odgovor",
+      "forbidden": "Tvoj račun ne more odgovarjati na stališča ali pa ta odgovor ni tvoj.",
+      "invalid": "Odgovora ni bilo mogoče shraniti. Napiši besedilo in izberi podprt jezik.",
+      "openInForum": "Odpri te odgovore na forumu"
+    }
   },
   tool: {
     view: 'Prikaži',

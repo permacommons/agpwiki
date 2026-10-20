@@ -14,7 +14,7 @@ import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
-import { createForumComment, createForumThread } from '../src/services/forum-service.js';
+import { createForumComment, createForumThread, readForumComment, readForumThread } from '../src/services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -285,6 +285,81 @@ test('Forum reply is kept when the thread activity bump hits a revision conflict
     assert.equal(saved?.threadId, thread.id);
   } finally {
     await cleanupForumThread(dal, threadId);
+    await cleanupUser(dal, userId);
+  }
+});
+
+test('Comment editing works without JavaScript, preserves failed drafts, and checks authorship', async t => {
+  const dal = await getDal();
+  const server = await makeTestServer(registerForumRoutes);
+  let userId: string | null = null;
+  let otherUserId: string | null = null;
+  let threadId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const other = await createTestUser();
+    otherUserId = other.id;
+    const thread = await createForumThread(
+      { category: 'general', title: `edit-${uniqueSuffix()}`, body: 'Original <text>.', language: 'en' },
+      user.id
+    );
+    threadId = thread.id;
+    const comment = (await readForumThread(dal, thread.id)).comments[0];
+    const { token } = await createSession(user.id);
+    const { token: otherToken } = await createSession(other.id);
+    const editUrl = `${server.url}/tool/forum/comment/${comment.id}/edit`;
+    const returnPath = `/meta%2Fproposals%2Ftest#reply-${comment.id}`;
+    const get = (url: string, sessionToken = token) => fetch(url, {
+      headers: { cookie: `agpwiki_session=${sessionToken}` }, redirect: 'manual',
+    });
+    const html = async (response: Response) => ((await response.json()) as { bodyHtml: string }).bodyHtml;
+
+    const page = await get(`${server.url}/tool/forum/thread/${thread.id}`);
+    assert.equal(page.status, 200);
+    const threadHtml = await html(page);
+    assert.ok(threadHtml.includes('data-comment-edit-link'));
+    assert.ok(threadHtml.includes('data-comment-editor hidden'));
+    assert.ok(!threadHtml.includes('<details class="forum-comment-edit">'));
+
+    const editor = await get(`${editUrl}?return=${encodeURIComponent(returnPath)}`);
+    assert.equal(editor.status, 200);
+    const editorHtml = await html(editor);
+    assert.ok(editorHtml.includes('Original &lt;text&gt;.'));
+    assert.ok(editorHtml.includes('data-comment-editor>'));
+    assert.ok(editorHtml.includes(`href="${returnPath}" data-comment-edit-cancel`));
+    assert.ok(editorHtml.includes(`name="return" value="${returnPath}"`));
+
+    for (const unsafeReturn of ['//example.com', '/\\example.com', '/\n/example.com']) {
+      const response = await get(`${editUrl}?return=${encodeURIComponent(unsafeReturn)}`);
+      assert.ok((await html(response)).includes(`name="return" value="/tool/forum/thread/${thread.id}#comment-${comment.id}"`));
+    }
+    assert.equal((await get(editUrl, otherToken)).status, 403);
+    assert.equal((await postForm(editUrl, otherToken, { body: 'Not mine.', language: 'en' })).status, 403);
+
+    const invalid = await postForm(editUrl, token, { body: '   ', language: 'en', return: returnPath });
+    assert.equal(invalid.status, 400);
+    const invalidHtml = await html(invalid);
+    assert.ok(invalidHtml.includes('operatorEdit.validation.generic'));
+    assert.ok(invalidHtml.includes('>   </textarea>'));
+    assert.ok(invalidHtml.includes(`name="return" value="${returnPath}"`));
+    assert.equal((await readForumComment(comment.id)).body?.en, 'Original <text>.');
+
+    saveConcurrentRevisionBeforeNextSave(t, ForumComment, user.id);
+    const conflict = await postForm(editUrl, token, { body: 'My unsaved draft.', language: 'en', return: returnPath });
+    assert.equal(conflict.status, 409);
+    const conflictHtml = await html(conflict);
+    assert.ok(conflictHtml.includes('forum.editConflict'));
+    assert.ok(conflictHtml.includes('>My unsaved draft.</textarea>'));
+
+    const saved = await postForm(editUrl, token, { body: 'Updated.', language: 'en', return: returnPath });
+    assert.equal(saved.status, 303);
+    assert.equal(saved.headers.get('location'), returnPath);
+    assert.equal((await readForumComment(comment.id)).body?.en, 'Updated.');
+  } finally {
+    await server.close();
+    await cleanupForumThread(dal, threadId);
+    await cleanupUser(dal, otherUserId);
     await cleanupUser(dal, userId);
   }
 });

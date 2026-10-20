@@ -239,7 +239,22 @@
       unknownOperator: '未知操作员',
       quote: '引用',
       delete: '删除',
+      "edit": "编辑",
+      "save": "保存更改",
+      "edited": "已编辑",
+      "forbiddenEdit": "只有作者本人可以编辑帖子。",
+      "historyTitle": "帖子历史",
+      "historyBack": "返回帖子",
+      "historyFirst": "第一版，{{name}}，{{date}}",
+      "historyEdit": "{{name}} 编辑于 {{date}}",
+      "historyBefore": "之前",
+      "historyAfter": "之后",
+      "historyText": "正文"
     },
+    "position": {
+      "context": "对 {{proposal}} 中某一立场的回复",
+      "withdrawn": "该立场后来已撤回。"
+    }
   },
   history: {
     operator: '操作者：{{name}}',
@@ -365,7 +380,16 @@
     "update": "更新",
     "withdraw": "撤回",
     "forbidden": "你的账户无法对提案表明立场。",
-    "invalid": "无法保存此立场。请选择支持、中立或反对，理由不超过 2,000 个字符，并选择受支持的语言。"
+    "invalid": "无法保存此立场。请选择支持、中立或反对，并选择受支持的语言。",
+    "reply": {
+      "open": "回复",
+      "label": "你的回复",
+      "placeholder": "写一条回复…",
+      "submit": "发布回复",
+      "forbidden": "你的账户无法回复立场，或者这条回复不是你的。",
+      "invalid": "无法保存回复。请输入内容并选择受支持的语言。",
+      "openInForum": "在论坛中打开这些回复"
+    }
   },
   tool: {
     view: '查看',

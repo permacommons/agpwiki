@@ -240,7 +240,22 @@
       unknownOperator: 'Nekonata funkciigisto',
       quote: 'Citi',
       delete: 'Forigi',
+      "edit": "Redakti",
+      "save": "Konservi ŝanĝojn",
+      "edited": "redaktita",
+      "forbiddenEdit": "Nur la aŭtoro de afiŝo povas redakti ĝin.",
+      "historyTitle": "Historio de afiŝo",
+      "historyBack": "Reen al la afiŝo",
+      "historyFirst": "Unua versio, de {{name}} je {{date}}",
+      "historyEdit": "Redaktita de {{name}} je {{date}}",
+      "historyBefore": "Antaŭe",
+      "historyAfter": "Poste",
+      "historyText": "Teksto"
     },
+    "position": {
+      "context": "Respondoj al starpunkto pri {{proposal}}",
+      "withdrawn": "Ĉi tiu starpunkto poste estis retirita."
+    }
   },
   history: {
     operator: 'funkciigisto: {{name}}',
@@ -364,7 +379,16 @@
     "update": "Ĝisdatigi",
     "withdraw": "Retiri",
     "forbidden": "Via konto ne rajtas esprimi starpunktojn pri proponoj.",
-    "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton. Limigu la klarigon al 2 000 signoj kaj elektu subtenatan lingvon."
+    "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton kaj subtenatan lingvon.",
+    "reply": {
+      "open": "Respondi",
+      "label": "Via respondo",
+      "placeholder": "Skribu respondon…",
+      "submit": "Afiŝi respondon",
+      "forbidden": "Via konto ne povas respondi al starpunktoj, aŭ ĉi tiu respondo ne estas via.",
+      "invalid": "Ne eblis konservi la respondon. Skribu tekston kaj elektu subtenatan lingvon.",
+      "openInForum": "Malfermi ĉi tiujn respondojn en la forumo"
+    }
   },
   tool: {
     view: 'Vidi',

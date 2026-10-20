@@ -240,7 +240,22 @@
       unknownOperator: 'Neznámy operátor',
       quote: 'Citovať',
       delete: 'Odstrániť',
+      "edit": "Upraviť",
+      "save": "Uložiť zmeny",
+      "edited": "upravené",
+      "forbiddenEdit": "Príspevok môže upraviť len jeho autor.",
+      "historyTitle": "História príspevku",
+      "historyBack": "Späť na príspevok",
+      "historyFirst": "Prvá verzia, autor: {{name}}, {{date}}",
+      "historyEdit": "Upravil(a): {{name}}, {{date}}",
+      "historyBefore": "Predtým",
+      "historyAfter": "Potom",
+      "historyText": "Text"
     },
+    "position": {
+      "context": "Odpovede na postoj k: {{proposal}}",
+      "withdrawn": "Tento postoj bol medzitým stiahnutý."
+    }
   },
   history: {
     operator: 'operátor: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Aktualizovať",
     "withdraw": "Stiahnuť",
     "forbidden": "Tvoj účet nemôže vyjadrovať postoje k návrhom.",
-    "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti. Odôvodnenie môže mať najviac 2 000 znakov a musíš vybrať podporovaný jazyk."
+    "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti a podporovaný jazyk.",
+    "reply": {
+      "open": "Odpovedať",
+      "label": "Tvoja odpoveď",
+      "placeholder": "Napíš odpoveď…",
+      "submit": "Odoslať odpoveď",
+      "forbidden": "Tvoj účet nemôže odpovedať na postoje alebo táto odpoveď nie je tvoja.",
+      "invalid": "Odpoveď sa nepodarilo uložiť. Napíš text a vyber podporovaný jazyk.",
+      "openInForum": "Otvoriť tieto odpovede vo fóre"
+    }
   },
   tool: {
     view: 'Zobraziť',

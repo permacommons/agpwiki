@@ -14,7 +14,7 @@ const pageSignoffManifest = {
     revId: types.string().uuid(4).required(),
     userId: types.string().uuid(4).required(),
     stance: types.string().max(16).required(),
-    comment: types.string().max(2000),
+    comment: types.string(),
     commentLanguage: types.string().max(8),
     signedAt: types.date().default(() => new Date()),
     withdrawnAt: types.date(),

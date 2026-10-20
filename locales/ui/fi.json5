@@ -240,7 +240,22 @@
       unknownOperator: 'Tuntematon operaattori',
       quote: 'Lainaa',
       delete: 'Poista',
+      "edit": "Muokkaa",
+      "save": "Tallenna muutokset",
+      "edited": "muokattu",
+      "forbiddenEdit": "Vain viestin kirjoittaja voi muokata sitä.",
+      "historyTitle": "Viestin historia",
+      "historyBack": "Takaisin viestiin",
+      "historyFirst": "Ensimmäinen versio, {{name}}, {{date}}",
+      "historyEdit": "Muokannut {{name}}, {{date}}",
+      "historyBefore": "Ennen",
+      "historyAfter": "Jälkeen",
+      "historyText": "Teksti"
     },
+    "position": {
+      "context": "Vastaukset kannanottoon: {{proposal}}",
+      "withdrawn": "Kannanotto on sittemmin peruttu."
+    }
   },
   history: {
     operator: 'ylläpitäjä: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Päivitä",
     "withdraw": "Peru",
     "forbidden": "Tililläsi ei voi ottaa kantaa ehdotuksiin.",
-    "invalid": "Kannanottoa ei voitu tallentaa. Valitse kannatan, neutraali tai vastustan. Perustelussa saa olla enintään 2 000 merkkiä. Valitse tuettu kieli."
+    "invalid": "Kannanottoa ei voitu tallentaa. Valitse kannatan, neutraali tai vastustan sekä tuettu kieli.",
+    "reply": {
+      "open": "Vastaa",
+      "label": "Vastauksesi",
+      "placeholder": "Kirjoita vastaus…",
+      "submit": "Lähetä vastaus",
+      "forbidden": "Tililläsi ei voi vastata kannanottoihin, tai vastaus ei ole sinun.",
+      "invalid": "Vastausta ei voitu tallentaa. Kirjoita tekstiä ja valitse tuettu kieli.",
+      "openInForum": "Avaa nämä vastaukset foorumilla"
+    }
   },
   tool: {
     view: 'Näytä',

@@ -239,7 +239,22 @@
       unknownOperator: '未知操作員',
       quote: '引用',
       delete: '刪除',
+      "edit": "編輯",
+      "save": "儲存變更",
+      "edited": "已編輯",
+      "forbiddenEdit": "只有作者本人可以編輯貼文。",
+      "historyTitle": "貼文歷史",
+      "historyBack": "返回貼文",
+      "historyFirst": "第一版，{{name}}，{{date}}",
+      "historyEdit": "{{name}} 編輯於 {{date}}",
+      "historyBefore": "之前",
+      "historyAfter": "之後",
+      "historyText": "內文"
     },
+    "position": {
+      "context": "對 {{proposal}} 中某一立場的回覆",
+      "withdrawn": "此立場其後已撤回。"
+    }
   },
   history: {
     operator: '操作者：{{name}}',
@@ -365,7 +380,16 @@
     "update": "更新",
     "withdraw": "撤回",
     "forbidden": "你的帳號無法對提案表明立場。",
-    "invalid": "無法儲存此立場。請選擇支持、中立或反對，理由不超過 2,000 個字元，並選擇支援的語言。"
+    "invalid": "無法儲存此立場。請選擇支持、中立或反對，並選擇支援的語言。",
+    "reply": {
+      "open": "回覆",
+      "label": "你的回覆",
+      "placeholder": "寫一則回覆…",
+      "submit": "發布回覆",
+      "forbidden": "你的帳號無法回覆立場，或這則回覆不是你的。",
+      "invalid": "無法儲存回覆。請輸入內容並選擇支援的語言。",
+      "openInForum": "在論壇中開啟這些回覆"
+    }
   },
   tool: {
     view: '檢視',
