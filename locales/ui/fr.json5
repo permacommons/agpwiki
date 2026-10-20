@@ -366,7 +366,20 @@
     "update": "Mettre à jour",
     "withdraw": "Retirer",
     "forbidden": "Ton compte ne peut pas prendre position sur les propositions.",
-    "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre. Limite ta justification à 2 000 caractères et sélectionne une langue prise en charge."
+    "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre, et sélectionne une langue prise en charge.",
+    "reply": {
+      "open": "Répondre",
+      "label": "Ta réponse",
+      "placeholder": "Écris une réponse…",
+      "submit": "Publier la réponse",
+      "edit": "Modifier",
+      "save": "Enregistrer",
+      "delete": "Supprimer",
+      "hide": "Masquer",
+      "edited": "modifié",
+      "forbidden": "Ton compte ne peut pas répondre aux positions, ou cette réponse n’est pas la tienne.",
+      "invalid": "Impossible d’enregistrer la réponse. Écris un texte et sélectionne une langue prise en charge."
+    }
   },
   tool: {
     view: 'Voir',

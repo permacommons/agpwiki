@@ -365,7 +365,20 @@
     "update": "Aktualizuj",
     "withdraw": "Wycofaj",
     "forbidden": "Twoje konto nie może zajmować stanowiska wobec propozycji.",
-    "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw. Uzasadnienie może mieć do 2000 znaków. Wybierz obsługiwany język."
+    "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw oraz obsługiwany język.",
+    "reply": {
+      "open": "Odpowiedz",
+      "label": "Twoja odpowiedź",
+      "placeholder": "Napisz odpowiedź…",
+      "submit": "Opublikuj odpowiedź",
+      "edit": "Edytuj",
+      "save": "Zapisz",
+      "delete": "Usuń",
+      "hide": "Ukryj",
+      "edited": "edytowano",
+      "forbidden": "Twoje konto nie może odpowiadać na stanowiska albo ta odpowiedź nie jest twoja.",
+      "invalid": "Nie udało się zapisać odpowiedzi. Wpisz tekst i wybierz obsługiwany język."
+    }
   },
   tool: {
     view: 'Widok',

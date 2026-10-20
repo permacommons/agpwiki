@@ -117,6 +117,8 @@ import {
   protectWikiPage,
   unprotectWikiPage,
 } from '../services/page-protection-service.js';
+import { listRepliesForSignoffs, replyToSignoff } from '../services/page-signoff-reply-service.js';
+import { isSignoffPageSlug, listActivePageSignoffs } from '../services/page-signoff-service.js';
 import { setProposalLinks } from '../services/proposal-links-service.js';
 import { setProposalStatus } from '../services/proposal-status-service.js';
 import {
@@ -1245,6 +1247,88 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       await requireCurrentPolicyHash(dal, policyHash);
       const page = await setProposalStatus(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposal: page.proposal };
+    })
+  );
+
+  server.registerTool(
+    'proposal_listPositions',
+    {
+      title: 'List Proposal Positions',
+      description:
+        'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition.',
+      annotations: readOnlyToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const page = await readWikiPage(dal, args.slug);
+      if (!isSignoffPageSlug(page.slug)) {
+        return { slug: page.slug, positions: [] };
+      }
+      const signoffs = await listActivePageSignoffs(dal, page.id);
+      const replies = await listRepliesForSignoffs(
+        dal,
+        signoffs.map(signoff => signoff.id)
+      );
+      const userIds = new Set<string>(signoffs.map(signoff => signoff.userId));
+      for (const list of replies.values()) for (const reply of list) userIds.add(reply.userId);
+      const names = new Map<string, string>();
+      if (userIds.size) {
+        const result = await dal.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [
+          [...userIds],
+        ]);
+        for (const row of result.rows as Array<{ id: string; display_name: string }>) {
+          names.set(row.id, row.display_name);
+        }
+      }
+      return {
+        slug: page.slug,
+        currentRevId: page.currentRevId,
+        positions: signoffs.map(signoff => ({
+          id: signoff.id,
+          user: names.get(signoff.userId) ?? null,
+          stance: signoff.stance,
+          comment: signoff.comment,
+          commentLanguage: signoff.commentLanguage,
+          revId: signoff.revId,
+          signedAt: signoff.signedAt,
+          replies: (replies.get(signoff.id) ?? []).map(reply => ({
+            id: reply.id,
+            user: names.get(reply.userId) ?? null,
+            body: reply.body,
+            bodyLanguage: reply.bodyLanguage,
+            createdAt: reply.createdAt,
+            updatedAt: reply.updatedAt,
+          })),
+        })),
+      };
+    })
+  );
+
+  server.registerTool(
+    'proposal_replyToPosition',
+    {
+      title: 'Reply to a Proposal Position',
+      description:
+        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are one level deep: they go under the position, not under another reply. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies. Longer discussion belongs in the proposal's forum thread.",
+      annotations: additiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        signoffId: uuidSchema,
+        body: z.string().min(1),
+        bodyLanguage: z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH),
+        policyHash: policyHashSchema,
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...input } = args as typeof args & { policyHash?: string };
+      await requireCurrentPolicyHash(dal, policyHash);
+      const reply = await replyToSignoff(dal, input, userId);
+      return { id: reply.id, signoffId: reply.signoffId, createdAt: reply.createdAt };
     })
   );
 

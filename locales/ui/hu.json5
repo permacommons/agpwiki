@@ -366,7 +366,20 @@
     "update": "Frissítés",
     "withdraw": "Visszavonás",
     "forbidden": "A fiókoddal nem foglalhatsz állást a javaslatokról.",
-    "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot. Az indoklás legfeljebb 2000 karakter lehet, és támogatott nyelvet kell választanod."
+    "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot és egy támogatott nyelvet.",
+    "reply": {
+      "open": "Válasz",
+      "label": "A válaszod",
+      "placeholder": "Írj választ…",
+      "submit": "Válasz küldése",
+      "edit": "Szerkesztés",
+      "save": "Mentés",
+      "delete": "Törlés",
+      "hide": "Elrejtés",
+      "edited": "szerkesztve",
+      "forbidden": "A fiókod nem válaszolhat az állásfoglalásokra, vagy ez a válasz nem a tiéd.",
+      "invalid": "A választ nem sikerült menteni. Írj szöveget, és válassz támogatott nyelvet."
+    }
   },
   tool: {
     view: 'Megtekintés',

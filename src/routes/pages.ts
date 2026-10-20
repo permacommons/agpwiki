@@ -48,6 +48,12 @@ import {
 } from '../services/page-check-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
+  listRepliesForSignoffs,
+  removeSignoffReply,
+  replyToSignoff,
+  updateSignoffReply,
+} from '../services/page-signoff-reply-service.js';
+import {
   canSignOffPages,
   findRevisionsWithChangedText,
   isSignoffPageSlug,
@@ -61,6 +67,7 @@ import {
   setProposalStatus,
 } from '../services/proposal-status-service.js';
 import { pullRequestStates } from '../services/pull-request-state.js';
+import { userHasRole, WIKI_ADMIN_ROLE } from '../services/roles.js';
 import {
   buildLocalWikiPreview,
   fetchWikipediaPreviewForSlug,
@@ -1083,6 +1090,60 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/position-reply$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    const field = (name: string) => (typeof req.body?.[name] === 'string' ? req.body[name] : '');
+    const body = normalizeLineEndings(field('body'));
+    const bodyLanguage = field('bodyLanguage');
+    try {
+      const dalInstance = await initializePostgreSQL();
+      const intent = field('intent');
+      let anchor = '#page-signoffs-title';
+      if (intent === 'update') {
+        const reply = await updateSignoffReply(
+          dalInstance,
+          { replyId: field('replyId'), body, bodyLanguage },
+          session.userId
+        );
+        anchor = `#reply-${reply.id}`;
+      } else if (intent === 'remove') {
+        await removeSignoffReply(dalInstance, { replyId: field('replyId') }, session.userId);
+      } else {
+        const reply = await replyToSignoff(
+          dalInstance,
+          { slug, signoffId: field('signoffId'), body, bodyLanguage },
+          session.userId
+        );
+        anchor = `#reply-${reply.id}`;
+      }
+      res.redirect(303, `${pageViewPath(slug)}${anchor}`);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('signoff.reply.forbidden'));
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).type('text').send(req.t('signoff.reply.invalid'));
+        return;
+      }
+      console.error('Failed to save reply:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/sign-off$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1334,6 +1395,15 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
+      const signoffReplies = signoffs
+        ? await listRepliesForSignoffs(
+            dalInstance,
+            signoffs.map(signoff => signoff.id)
+          )
+        : new Map();
+      for (const list of signoffReplies.values()) {
+        for (const reply of list) userIds.add(reply.userId);
+      }
       if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
@@ -1478,6 +1548,8 @@ export const registerPageRoutes = (app: Express) => {
             t: req.t,
             language: req.language ?? 'en',
             languageOptions: res.locals.languageOptions,
+            replies: signoffReplies,
+            isAdmin: session ? await userHasRole(dalInstance, session.userId, WIKI_ADMIN_ROLE) : false,
           })
         : '';
       const wikidataHtml =

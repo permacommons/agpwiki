@@ -365,7 +365,20 @@
     "update": "Atualizar",
     "withdraw": "Retirar",
     "forbidden": "A tua conta não pode registar posições sobre propostas.",
-    "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra. Limita a justificação a 2.000 carateres e seleciona um idioma suportado."
+    "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra e seleciona um idioma suportado.",
+    "reply": {
+      "open": "Responder",
+      "label": "A tua resposta",
+      "placeholder": "Escreve uma resposta…",
+      "submit": "Publicar resposta",
+      "edit": "Editar",
+      "save": "Guardar",
+      "delete": "Eliminar",
+      "hide": "Ocultar",
+      "edited": "editado",
+      "forbidden": "A tua conta não pode responder a posições, ou esta resposta não é tua.",
+      "invalid": "Não foi possível guardar a resposta. Escreve um texto e seleciona um idioma suportado."
+    }
   },
   tool: {
     view: 'Ver',

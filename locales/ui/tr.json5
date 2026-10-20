@@ -365,7 +365,20 @@
     "update": "Güncelle",
     "withdraw": "Geri çek",
     "forbidden": "Hesabınız öneriler hakkında görüş bildiremez.",
-    "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini seçin. Gerekçeyi 2.000 karakterle sınırlayın ve desteklenen bir dil seçin."
+    "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini ve desteklenen bir dil seçin.",
+    "reply": {
+      "open": "Yanıtla",
+      "label": "Yanıtınız",
+      "placeholder": "Bir yanıt yazın…",
+      "submit": "Yanıtı gönder",
+      "edit": "Düzenle",
+      "save": "Kaydet",
+      "delete": "Sil",
+      "hide": "Gizle",
+      "edited": "düzenlendi",
+      "forbidden": "Hesabınız görüşlere yanıt veremez veya bu yanıt size ait değil.",
+      "invalid": "Yanıt kaydedilemedi. Bir metin yazın ve desteklenen bir dil seçin."
+    }
   },
   tool: {
     view: 'Görüntüle',

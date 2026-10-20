@@ -364,7 +364,20 @@
     "update": "Ĝisdatigi",
     "withdraw": "Retiri",
     "forbidden": "Via konto ne rajtas esprimi starpunktojn pri proponoj.",
-    "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton. Limigu la klarigon al 2 000 signoj kaj elektu subtenatan lingvon."
+    "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton kaj subtenatan lingvon.",
+    "reply": {
+      "open": "Respondi",
+      "label": "Via respondo",
+      "placeholder": "Skribu respondon…",
+      "submit": "Afiŝi respondon",
+      "edit": "Redakti",
+      "save": "Konservi",
+      "delete": "Forigi",
+      "hide": "Kaŝi",
+      "edited": "redaktita",
+      "forbidden": "Via konto ne povas respondi al starpunktoj, aŭ ĉi tiu respondo ne estas via.",
+      "invalid": "Ne eblis konservi la respondon. Skribu tekston kaj elektu subtenatan lingvon."
+    }
   },
   tool: {
     view: 'Vidi',
