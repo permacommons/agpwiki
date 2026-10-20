@@ -7,6 +7,7 @@
     blog: 'Blog Agpedia',
     forum: 'Forum',
     recentChanges: 'Perubahan terbaru',
+    "tools": "Alat",
     reviewAccounts: 'Tinjau akun',
     userRights: 'Hak pengguna',
     signOut: 'Keluar',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Revisi tidak ditemukan',
     serverError: 'Kesalahan server',
     "missingWikidata": "Artikel tanpa ID Wikidata",
+    "proposals": "Usulan",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Halaman {{page}} dari {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel belum memiliki ID Wikidata. Tambahkan melalui editor operator atau alat MCP.",
     "missingWikidataDescription_other": "{{count}} artikel belum memiliki ID Wikidata. Tambahkan melalui editor operator atau alat MCP.",
+    "proposalsDescription_one": "{{count}} usulan, dikelompokkan menurut status.",
+    "proposalsDescription_other": "{{count}} usulan, dikelompokkan menurut status.",
   },
   userRights: {
     title: 'Hak Pengguna',

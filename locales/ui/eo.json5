@@ -7,6 +7,7 @@
     blog: 'Blogo',
     forum: 'Forumo',
     recentChanges: 'Lastaj ŝanĝoj',
+    "tools": "Iloj",
     reviewAccounts: 'Reviziu kontojn',
     userRights: 'Uzantorajtoj',
     signOut: 'Elsaluti',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Revizio ne trovita',
     serverError: 'Servila eraro',
     "missingWikidata": "Artikoloj sen Vikidatuma identigilo",
+    "proposals": "Proponoj",
     "wikidata": "Vikidatumoj:",
   },
   language: {
@@ -410,6 +412,8 @@
     pagination: 'Paĝo {{page}} el {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikolo ankoraŭ ne havas Vikidatuman identigilon. Aldonu ĝin per la operaciista redaktilo aŭ la MCP-iloj.",
     "missingWikidataDescription_other": "{{count}} artikoloj ankoraŭ ne havas Vikidatuman identigilon. Aldonu ĝin per la operaciista redaktilo aŭ la MCP-iloj.",
+    "proposalsDescription_one": "{{count}} propono, grupigita laŭ stato.",
+    "proposalsDescription_other": "{{count}} proponoj, grupigitaj laŭ stato.",
   },
   userRights: {
     title: 'Uzantorajtoj',

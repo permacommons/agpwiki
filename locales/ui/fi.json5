@@ -7,6 +7,7 @@
     blog: 'Blogi',
     forum: 'Foorumi',
     recentChanges: 'Tuoreet muutokset',
+    "tools": "Työkalut",
     reviewAccounts: 'Tarkasta tilit',
     userRights: 'Käyttäjäoikeudet',
     signOut: 'Kirjaudu ulos',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Versiota ei löytynyt',
     serverError: 'Palvelinvirhe',
     "missingWikidata": "Artikkelit ilman Wikidata-tunnistetta",
+    "proposals": "Ehdotukset",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Sivu {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikkelilta puuttuu vielä Wikidata-tunniste. Lisää tunniste operaattorin muokkaimella tai MCP-työkaluilla.",
     "missingWikidataDescription_other": "{{count}} artikkelilta puuttuu vielä Wikidata-tunniste. Lisää tunnisteet operaattorin muokkaimella tai MCP-työkaluilla.",
+    "proposalsDescription_one": "{{count}} ehdotus tilan mukaan ryhmiteltynä.",
+    "proposalsDescription_other": "{{count}} ehdotusta tilan mukaan ryhmiteltyinä.",
   },
   userRights: {
     title: 'Käyttäjäoikeudet',

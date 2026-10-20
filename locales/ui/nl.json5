@@ -8,6 +8,7 @@
     blog: 'Bloggedeelte',
     forum: 'Forum',
     recentChanges: 'Recente wijzigingen',
+    "tools": "Hulpmiddelen",
     reviewAccounts: 'Accounts beoordelen',
     userRights: 'Gebruikersrechten',
     signOut: 'Afmelden',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Versie niet gevonden',
     serverError: 'Serverfout',
     "missingWikidata": "Artikelen zonder Wikidata-ID",
+    "proposals": "Voorstellen",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Pagina {{page}} van {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel heeft nog geen Wikidata-ID. Voeg deze toe met de operatoreditor of de MCP-tools.",
     "missingWikidataDescription_other": "{{count}} artikelen hebben nog geen Wikidata-ID. Voeg deze toe met de operatoreditor of de MCP-tools.",
+    "proposalsDescription_one": "{{count}} voorstel, gegroepeerd per status.",
+    "proposalsDescription_other": "{{count}} voorstellen, gegroepeerd per status.",
   },
   userRights: {
     title: 'Gebruikersrechten',

@@ -7,6 +7,7 @@
     blog: 'Bitácora',
     forum: 'Foro',
     recentChanges: 'Cambios recientes',
+    "tools": "Herramientas",
     reviewAccounts: 'Revisar cuentas',
     userRights: 'Derechos de usuario',
     signOut: 'Cerrar sesión',
@@ -145,6 +146,7 @@
     revisionNotFound: 'Revisión no encontrada',
     serverError: 'Error del servidor',
     "missingWikidata": "Artículos sin identificador de Wikidata",
+    "proposals": "Propuestas",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -411,6 +413,8 @@
     pagination: 'Página {{page}} de {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artículo aún no tiene identificador de Wikidata. Añádelo con el editor del operador o las herramientas MCP.",
     "missingWikidataDescription_other": "{{count}} artículos aún no tienen identificador de Wikidata. Añádelos con el editor del operador o las herramientas MCP.",
+    "proposalsDescription_one": "{{count}} propuesta, agrupada por estado.",
+    "proposalsDescription_other": "{{count}} propuestas, agrupadas por estado.",
   },
   userRights: {
     title: 'Derechos de usuario',

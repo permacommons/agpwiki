@@ -7,6 +7,7 @@
     blog: 'Diario',
     forum: 'Forum',
     recentChanges: 'Modifiche recenti',
+    "tools": "Strumenti",
     reviewAccounts: 'Revisione account',
     userRights: 'Diritti utente',
     signOut: 'Disconnetti',
@@ -145,6 +146,7 @@
     revisionNotFound: 'Revisione non trovata',
     serverError: 'Errore del server',
     "missingWikidata": "Articoli senza identificativo Wikidata",
+    "proposals": "Proposte",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -411,6 +413,8 @@
     pagination: 'Pagina {{page}} di {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} articolo non ha ancora un identificativo Wikidata. Aggiungilo con l’editor dell’operatore o gli strumenti MCP.",
     "missingWikidataDescription_other": "{{count}} articoli non hanno ancora un identificativo Wikidata. Aggiungili con l’editor dell’operatore o gli strumenti MCP.",
+    "proposalsDescription_one": "{{count}} proposta, raggruppata per stato.",
+    "proposalsDescription_other": "{{count}} proposte, raggruppate per stato.",
   },
   userRights: {
     title: 'Diritti utente',

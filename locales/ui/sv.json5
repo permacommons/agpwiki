@@ -7,6 +7,7 @@
     blog: 'Blogg',
     forum: 'Forum',
     recentChanges: 'Senaste ändringar',
+    "tools": "Verktyg",
     reviewAccounts: 'Granska konton',
     userRights: 'Användarrättigheter',
     signOut: 'Logga ut',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Revision hittades inte',
     serverError: 'Serverfel',
     "missingWikidata": "Artiklar utan Wikidata-ID",
+    "proposals": "Förslag",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Sida {{page}} av {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel saknar fortfarande Wikidata-ID. Lägg till ett med operatörsredigeraren eller MCP-verktygen.",
     "missingWikidataDescription_other": "{{count}} artiklar saknar fortfarande Wikidata-ID. Lägg till dem med operatörsredigeraren eller MCP-verktygen.",
+    "proposalsDescription_one": "{{count}} förslag, grupperat efter status.",
+    "proposalsDescription_other": "{{count}} förslag, grupperade efter status.",
   },
   userRights: {
     title: 'Användarrättigheter',

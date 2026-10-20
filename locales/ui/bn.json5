@@ -7,6 +7,7 @@
     blog: 'ব্লগ',
     forum: 'ফোরাম',
     recentChanges: 'সাম্প্রতিক পরিবর্তন',
+    "tools": "সরঞ্জাম",
     reviewAccounts: 'অ্যাকাউন্ট পর্যালোচনা',
     userRights: 'ব্যবহারকারীর অধিকার',
     signOut: 'সাইন আউট',
@@ -146,6 +147,7 @@
     revisionNotFound: 'রিভিশন পাওয়া যায়নি',
     serverError: 'সার্ভার ত্রুটি',
     "missingWikidata": "উইকিউপাত্ত আইডিবিহীন নিবন্ধ",
+    "proposals": "প্রস্তাব",
     "wikidata": "উইকিউপাত্ত:",
   },
   language: {
@@ -410,6 +412,8 @@
     pagination: 'পৃষ্ঠা {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}}টি নিবন্ধে এখনো উইকিউপাত্ত আইডি নেই। অপারেটর সম্পাদনা সরঞ্জাম বা MCP সরঞ্জাম দিয়ে একটি যোগ করুন।",
     "missingWikidataDescription_other": "{{count}}টি নিবন্ধে এখনো উইকিউপাত্ত আইডি নেই। অপারেটর সম্পাদনা সরঞ্জাম বা MCP সরঞ্জাম দিয়ে আইডি যোগ করুন।",
+    "proposalsDescription_one": "{{count}}টি প্রস্তাব, অবস্থা অনুযায়ী সাজানো।",
+    "proposalsDescription_other": "{{count}}টি প্রস্তাব, অবস্থা অনুযায়ী সাজানো।",
   },
   userRights: {
     title: 'ব্যবহারকারীর অধিকার',

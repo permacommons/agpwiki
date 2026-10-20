@@ -8,6 +8,7 @@
     blog: 'Carnet',
     forum: 'Forum',
     recentChanges: 'Modifications récentes',
+    "tools": "Outils",
     reviewAccounts: 'Examiner les comptes',
     userRights: 'Droits utilisateur',
     signOut: 'Déconnexion',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Révision non trouvée',
     serverError: 'Erreur serveur',
     "missingWikidata": "Articles sans identifiant Wikidata",
+    "proposals": "Propositions",
     "wikidata": "Wikidata :",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Page {{page}} sur {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} article n’a pas encore d’identifiant Wikidata. Ajoutez-en un avec l’éditeur de l’opérateur ou les outils MCP.",
     "missingWikidataDescription_other": "{{count}} articles n’ont pas encore d’identifiant Wikidata. Ajoutez-en avec l’éditeur de l’opérateur ou les outils MCP.",
+    "proposalsDescription_one": "{{count}} proposition, regroupée par état.",
+    "proposalsDescription_other": "{{count}} propositions, regroupées par état.",
   },
   userRights: {
     title: 'Droits utilisateur',

@@ -7,6 +7,7 @@
     blog: 'بلاگ',
     forum: 'فورم',
     recentChanges: 'حالیہ تبدیلیاں',
+    "tools": "اوزار",
     reviewAccounts: 'اکاؤنٹس کا جائزہ',
     userRights: 'صارف کے حقوق',
     signOut: 'لاگ آؤٹ',
@@ -146,6 +147,7 @@
     revisionNotFound: 'نظرثانی نہیں ملی',
     serverError: 'سرور کی خرابی',
     "missingWikidata": "ویکی ڈیٹا شناخت کنندہ کے بغیر مضامین",
+    "proposals": "تجاویز",
     "wikidata": "ویکی ڈیٹا:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'صفحہ {{page}} از {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} مضمون میں ابھی ویکی ڈیٹا شناخت کنندہ نہیں ہے۔ آپریٹر ایڈیٹر یا MCP ٹولز سے شامل کریں۔",
     "missingWikidataDescription_other": "{{count}} مضامین میں ابھی ویکی ڈیٹا شناخت کنندہ نہیں ہے۔ آپریٹر ایڈیٹر یا MCP ٹولز سے شامل کریں۔",
+    "proposalsDescription_one": "{{count}} تجویز، حالت کے لحاظ سے گروہ بند۔",
+    "proposalsDescription_other": "{{count}} تجاویز، حالت کے لحاظ سے گروہ بند۔",
   },
   userRights: {
     title: 'صارف کے حقوق',

@@ -7,6 +7,7 @@
     blog: 'ブログ',
     forum: 'フォーラム',
     recentChanges: '最近の更新',
+    "tools": "ツール",
     reviewAccounts: 'アカウントの審査',
     userRights: 'ユーザー権限',
     signOut: 'ログアウト',
@@ -145,6 +146,7 @@
     revisionNotFound: 'リビジョンが見つかりません',
     serverError: 'サーバーエラー',
     "missingWikidata": "ウィキデータIDのない記事",
+    "proposals": "提案",
     "wikidata": "ウィキデータ:",
   },
   language: {
@@ -411,6 +413,8 @@
     pagination: 'ページ {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}}件の記事にウィキデータIDがまだ設定されていません。オペレーター用エディターまたはMCPツールで追加してください。",
     "missingWikidataDescription_other": "{{count}}件の記事にウィキデータIDがまだ設定されていません。オペレーター用エディターまたはMCPツールで追加してください。",
+    "proposalsDescription_one": "提案 {{count}} 件（状態別）。",
+    "proposalsDescription_other": "提案 {{count}} 件（状態別）。",
   },
   userRights: {
     title: 'ユーザー権限',

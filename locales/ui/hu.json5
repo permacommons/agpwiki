@@ -7,6 +7,7 @@
     blog: 'Napló',
     forum: 'Fórum',
     recentChanges: 'Friss változtatások',
+    "tools": "Eszközök",
     reviewAccounts: 'Fiókok áttekintése',
     userRights: 'Felhasználói jogok',
     signOut: 'Kijelentkezés',
@@ -146,6 +147,7 @@
     revisionNotFound: 'A változat nem található',
     serverError: 'Szerverhiba',
     "missingWikidata": "Wikidata-azonosító nélküli szócikkek",
+    "proposals": "Javaslatok",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: '{{page}} / {{totalPages}} oldal',
     "missingWikidataDescription_one": "{{count}} szócikknek még nincs Wikidata-azonosítója. Add hozzá az operátori szerkesztővel vagy az MCP-eszközökkel.",
     "missingWikidataDescription_other": "{{count}} szócikknek még nincs Wikidata-azonosítója. Add hozzá az operátori szerkesztővel vagy az MCP-eszközökkel.",
+    "proposalsDescription_one": "{{count}} javaslat, állapot szerint csoportosítva.",
+    "proposalsDescription_other": "{{count}} javaslat, állapot szerint csoportosítva.",
   },
   userRights: {
     title: 'Felhasználói jogok',

@@ -7,6 +7,7 @@
     blog: 'Blog bölümü',
     forum: 'Forum',
     recentChanges: 'Son değişiklikler',
+    "tools": "Araçlar",
     reviewAccounts: 'Hesapları gözden geçir',
     userRights: 'Kullanıcı hakları',
     signOut: 'Çıkış Yap',
@@ -145,6 +146,7 @@
     revisionNotFound: 'Revizyon bulunamadı',
     serverError: 'Sunucu hatası',
     "missingWikidata": "Vikiveri kimliği olmayan maddeler",
+    "proposals": "Öneriler",
     "wikidata": "Vikiveri:",
   },
   language: {
@@ -411,6 +413,8 @@
     pagination: 'Sayfa {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} maddede henüz Vikiveri kimliği yok. Operatör düzenleyicisi veya MCP araçlarıyla bir kimlik ekleyin.",
     "missingWikidataDescription_other": "{{count}} maddede henüz Vikiveri kimliği yok. Operatör düzenleyicisi veya MCP araçlarıyla kimlik ekleyin.",
+    "proposalsDescription_one": "{{count}} öneri, duruma göre gruplanmış.",
+    "proposalsDescription_other": "{{count}} öneri, duruma göre gruplanmış.",
   },
   userRights: {
     title: 'Kullanıcı Hakları',

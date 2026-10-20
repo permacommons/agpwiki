@@ -195,6 +195,76 @@ header.site-header {
 .user-menu:not([open]) .user-menu-panel {
   display: none;
 }
+.tools-menu {
+  position: relative;
+  order: 1;
+  margin-left: 0.6rem;
+}
+.tools-menu > .tools-menu-summary {
+  margin-left: 0;
+}
+.proposal-list-group h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  margin: 1.5rem 0 0.5rem;
+}
+.proposal-list-count {
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+.proposal-list-date {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.tools-menu-summary {
+  list-style: none;
+  cursor: pointer;
+}
+.tools-menu-summary::-webkit-details-marker {
+  display: none;
+}
+.tools-menu-summary::after {
+  content: '';
+  display: inline-block;
+  margin-left: 0.35em;
+  border: 0.28em solid transparent;
+  border-top-color: currentColor;
+  border-bottom: 0;
+  vertical-align: middle;
+}
+.tools-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  min-width: 14rem;
+  padding: 0.5rem;
+  background: #fffdf7;
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 20px rgba(31, 29, 26, 0.1);
+  z-index: 20;
+}
+.tools-menu:not([open]) .tools-menu-panel {
+  display: none;
+}
+.tools-menu-link {
+  display: block;
+  padding: 0.6rem 0.85rem;
+  border-radius: 0.35rem;
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.tools-menu-link:hover,
+.tools-menu-link:focus-visible {
+  background: var(--panel);
+  outline: none;
+}
 .nav-button {
   background: none;
   border: none;
@@ -2518,6 +2588,29 @@ altcha-widget {
   }
   .nav-menu-content .nav-form {
     margin: 0 0.5rem;
+  }
+  .nav-menu-content .tools-menu {
+    margin: 0 0.5rem;
+  }
+  .nav-menu-content .tools-menu-summary {
+    display: block;
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+    box-sizing: border-box;
+    border-radius: 0.25rem;
+  }
+  .nav-menu-content .tools-menu-panel {
+    position: static;
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 0.25rem 0.75rem;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+  .nav-menu-content .tools-menu-link {
+    padding: 0.75rem 1rem;
+    white-space: normal;
   }
   .nav-menu-content .user-menu {
     margin: 0.25rem 0.5rem 0;

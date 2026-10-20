@@ -7,6 +7,7 @@
     blog: 'Блог',
     forum: 'Форум',
     recentChanges: 'Останні зміни',
+    "tools": "Інструменти",
     reviewAccounts: 'Переглянути акаунти',
     userRights: 'Права користувачів',
     signOut: 'Вийти',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Ревізію не знайдено',
     serverError: 'Помилка сервера',
     "missingWikidata": "Статті без ідентифікатора Вікіданих",
+    "proposals": "Пропозиції",
     "wikidata": "Вікідані:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Сторінка {{page}} з {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} стаття ще не має ідентифікатора Вікіданих. Додайте його за допомогою редактора оператора або інструментів MCP.",
     "missingWikidataDescription_other": "Статті без ідентифікатора Вікіданих: {{count}}. Додайте ідентифікатори за допомогою редактора оператора або інструментів MCP.",
+    "proposalsDescription_one": "Пропозиції ({{count}}), згруповані за статусом.",
+    "proposalsDescription_other": "Пропозиції ({{count}}), згруповані за статусом.",
   },
   userRights: {
     title: 'Права користувачів',

@@ -7,6 +7,7 @@
     blog: 'ब्लॉग',
     forum: 'फ़ोरम',
     recentChanges: 'हाल के बदलाव',
+    "tools": "उपकरण",
     reviewAccounts: 'खाते समीक्षा करें',
     userRights: 'उपयोगकर्ता अधिकार',
     signOut: 'साइन आउट',
@@ -146,6 +147,7 @@
     revisionNotFound: 'संशोधन नहीं मिला',
     serverError: 'सर्वर त्रुटि',
     "missingWikidata": "विकिडेटा आईडी के बिना लेख",
+    "proposals": "प्रस्ताव",
     "wikidata": "विकिडेटा:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'पेज {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} लेख में अभी विकिडेटा आईडी नहीं है। संचालक संपादक या MCP उपकरणों से जोड़ें।",
     "missingWikidataDescription_other": "{{count}} लेखों में अभी विकिडेटा आईडी नहीं है। संचालक संपादक या MCP उपकरणों से जोड़ें।",
+    "proposalsDescription_one": "{{count}} प्रस्ताव, स्थिति के अनुसार समूहित।",
+    "proposalsDescription_other": "{{count}} प्रस्ताव, स्थिति के अनुसार समूहित।",
   },
   userRights: {
     title: 'उपयोगकर्ता अधिकार',

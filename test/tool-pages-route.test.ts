@@ -4,7 +4,12 @@ import test from 'node:test';
 
 import express from 'express';
 
+import { randomBytes } from 'node:crypto';
+
 import { initializePostgreSQL } from '../src/db.js';
+import User from '../src/models/user.js';
+import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import { createWikiPage } from '../src/services/wiki-page-service.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
@@ -95,6 +100,40 @@ test('GET /api/recent-changes accepts fractional and garbage limits', async () =
       assert.equal(response.status, 200, `limit=${limit}`);
     }
   } finally {
+    await server.close();
+  }
+});
+
+test('GET /tool/proposals groups proposals by status, open ones first', async () => {
+  const server = await makeTestServer();
+  const dal = sharedDal ?? (await initializePostgreSQL());
+  const stamp = Date.now();
+  const prefix = `meta/proposals/test-list-${stamp}`;
+  const user = await User.create({
+    username: `proposallist${stamp}`,
+    displayName: 'Proposal List Test',
+    email: `proposal-list-${stamp}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+  });
+  try {
+    await createWikiPage(dal, { slug: `${prefix}-draftless`, title: { en: 'Without status' }, body: { en: 'Text.' } }, user.id);
+    await createWikiPage(dal, { slug: `${prefix}-open`, title: { en: 'Open one' }, body: { en: 'Text.' } }, user.id);
+    await setProposalStatus(dal, { slug: `${prefix}-open`, status: 'open' }, user.id);
+
+    const response = await fetch(`${server.url}/tool/proposals`);
+    assert.equal(response.status, 200);
+    const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+    const openAt = bodyHtml.indexOf(`/${prefix}-open"`);
+    const noneAt = bodyHtml.indexOf(`/${prefix}-draftless"`);
+    assert.ok(openAt > -1 && noneAt > -1, 'both proposals are listed');
+    assert.ok(openAt < noneAt, 'open proposals come before those without a status');
+    assert.match(bodyHtml, /proposal-status--open">proposalStatus\.status\.open</);
+    assert.match(bodyHtml, /proposal-status--none">proposalStatus\.noStatus</);
+    assert.match(bodyHtml, /tool\.proposalsDescription\{&quot;count&quot;:\d+\}/);
+  } finally {
+    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
     await server.close();
   }
 });

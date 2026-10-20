@@ -7,6 +7,7 @@
     blog: 'Blogovni del',
     forum: 'Forum',
     recentChanges: 'Nedavne spremembe',
+    "tools": "Orodja",
     reviewAccounts: 'Preglej račune',
     userRights: 'Uporabniške pravice',
     signOut: 'Odjava',
@@ -146,6 +147,7 @@
     revisionNotFound: 'Revizija ni najdena',
     serverError: 'Napaka strežnika',
     "missingWikidata": "Članki brez identifikatorja Wikipodatkov",
+    "proposals": "Predlogi",
     "wikidata": "Wikipodatki:",
   },
   language: {
@@ -412,6 +414,8 @@
     pagination: 'Stran {{page}} od {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} članek še nima identifikatorja Wikipodatkov. Dodajte ga z urejevalnikom za operaterje ali orodji MCP.",
     "missingWikidataDescription_other": "Članki brez identifikatorja Wikipodatkov: {{count}}. Dodajte identifikatorje z urejevalnikom za operaterje ali orodji MCP.",
+    "proposalsDescription_one": "{{count}} predlog, razvrščen po stanju.",
+    "proposalsDescription_other": "Predlogi ({{count}}), razvrščeni po stanju.",
   },
   userRights: {
     title: 'Uporabniške pravice',
