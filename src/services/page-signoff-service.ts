@@ -13,7 +13,6 @@ import { ensureNonEmptyString, ensureOptionalLanguage, ensureOptionalString, nor
 import { readWikiPage } from './wiki-page-service.js';
 
 export const SIGNOFF_PAGE_PREFIX = 'meta/proposals/';
-export const SIGNOFF_COMMENT_MAX_LENGTH = 2000;
 export const SIGNOFF_STANCES = ['support', 'neutral', 'oppose'] as const;
 export type SignoffStance = (typeof SIGNOFF_STANCES)[number];
 
@@ -137,9 +136,6 @@ export const signOffPage = async (
   if (typeof comment === 'string' && comment.trim()) {
     ensureNonEmptyString(commentLanguage, 'commentLanguage', errors);
   }
-  if (typeof comment === 'string' && comment.trim().length > SIGNOFF_COMMENT_MAX_LENGTH) {
-    errors.add('comment', `Must be ${SIGNOFF_COMMENT_MAX_LENGTH} characters or fewer.`, 'max_length');
-  }
   errors.throwIfAny();
 
   const page = await resolveSignoffPage(dalInstance, slug, userId, 'Invalid sign-off input.');
@@ -159,6 +155,14 @@ export const signOffPage = async (
     commentLanguage: normalizedComment ? commentLanguage : null,
     signedAt: new Date(),
   });
+  if (previous) {
+    // A changed position is saved as a new one; replies to the comment
+    // follow it so the conversation stays in one place.
+    await dalInstance.query('UPDATE page_signoff_replies SET signoff_id = $2 WHERE signoff_id = $1', [
+      previous.id,
+      signoff.id,
+    ]);
+  }
 
   await recordAdminEvent(dalInstance, {
     eventType: ADMIN_EVENT_WIKI_PAGE_SIGNED_OFF,

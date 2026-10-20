@@ -364,7 +364,20 @@
     "update": "Aktualisieren",
     "withdraw": "Zurückziehen",
     "forbidden": "Dein Konto kann zu Vorschlägen keine Stellung beziehen.",
-    "invalid": "Diese Position konnte nicht gespeichert werden. Wähle dafür, neutral oder dagegen. Die Begründung darf höchstens 2.000 Zeichen lang sein. Wähle eine unterstützte Sprache."
+    "invalid": "Diese Position konnte nicht gespeichert werden. Wähle dafür, neutral oder dagegen und eine unterstützte Sprache.",
+    "reply": {
+      "open": "Antworten",
+      "label": "Deine Antwort",
+      "placeholder": "Antwort schreiben…",
+      "submit": "Antwort senden",
+      "edit": "Bearbeiten",
+      "save": "Speichern",
+      "delete": "Löschen",
+      "hide": "Ausblenden",
+      "edited": "bearbeitet",
+      "forbidden": "Dein Konto kann nicht auf Positionen antworten, oder diese Antwort gehört nicht dir.",
+      "invalid": "Die Antwort konnte nicht gespeichert werden. Schreibe einen Text und wähle eine unterstützte Sprache."
+    }
   },
   tool: {
     view: 'Ansehen',

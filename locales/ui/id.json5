@@ -366,7 +366,20 @@
     "update": "Perbarui",
     "withdraw": "Tarik",
     "forbidden": "Akun Anda tidak dapat menyatakan sikap terhadap usulan.",
-    "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang. Batasi alasan hingga 2.000 karakter dan pilih bahasa yang didukung."
+    "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang, dan pilih bahasa yang didukung.",
+    "reply": {
+      "open": "Balas",
+      "label": "Balasan Anda",
+      "placeholder": "Tulis balasan…",
+      "submit": "Kirim balasan",
+      "edit": "Sunting",
+      "save": "Simpan",
+      "delete": "Hapus",
+      "hide": "Sembunyikan",
+      "edited": "disunting",
+      "forbidden": "Akun Anda tidak dapat membalas sikap, atau balasan ini bukan milik Anda.",
+      "invalid": "Balasan tidak dapat disimpan. Tulis teks dan pilih bahasa yang didukung."
+    }
   },
   tool: {
     view: 'Lihat',

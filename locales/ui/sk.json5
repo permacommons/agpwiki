@@ -366,7 +366,20 @@
     "update": "Aktualizovať",
     "withdraw": "Stiahnuť",
     "forbidden": "Tvoj účet nemôže vyjadrovať postoje k návrhom.",
-    "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti. Odôvodnenie môže mať najviac 2 000 znakov a musíš vybrať podporovaný jazyk."
+    "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti a podporovaný jazyk.",
+    "reply": {
+      "open": "Odpovedať",
+      "label": "Tvoja odpoveď",
+      "placeholder": "Napíš odpoveď…",
+      "submit": "Odoslať odpoveď",
+      "edit": "Upraviť",
+      "save": "Uložiť",
+      "delete": "Odstrániť",
+      "hide": "Skryť",
+      "edited": "upravené",
+      "forbidden": "Tvoj účet nemôže odpovedať na postoje alebo táto odpoveď nie je tvoja.",
+      "invalid": "Odpoveď sa nepodarilo uložiť. Napíš text a vyber podporovaný jazyk."
+    }
   },
   tool: {
     view: 'Zobraziť',

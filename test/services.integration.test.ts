@@ -73,6 +73,12 @@ import { createPageCheck } from '../src/services/page-check-service.js';
 import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import {
+  listRepliesForSignoffs,
+  removeSignoffReply,
+  replyToSignoff,
+  updateSignoffReply,
+} from '../src/services/page-signoff-reply-service.js';
+import {
   findRevisionsWithChangedText,
   listActivePageSignoffs,
   signOffPage,
@@ -1039,6 +1045,7 @@ const cleanupTestArtifacts = async (
   }
   if (userId) {
     await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
+    await dal.query('DELETE FROM page_signoff_replies WHERE user_id = $1 OR hidden_by = $1', [userId]);
     await dal.query('DELETE FROM page_signoffs WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM notification_deliveries WHERE user_id = $1', [userId]);
     await dal.query('DELETE FROM forum_thread_subscriptions WHERE user_id = $1', [userId]);
@@ -1258,6 +1265,115 @@ test('Service page positions let any signed-in user support, oppose or stay neut
     await cleanupTestArtifacts(dal, { slugPrefix: `${otherSlug}%`, userId: authorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: operatorId ?? undefined });
     await cleanupTestArtifacts(dal, { userId: blockedId ?? undefined });
+  }
+});
+
+test('Service position replies stay one level, follow changed positions and respect authors', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const slug = `meta/proposals/test-replies-${stamp}`;
+  const userIds: string[] = [];
+
+  try {
+    const author = await createTestUser();
+    const replier = await createTestUser();
+    const admin = await createTestUser();
+    const blocked = await createTestUser();
+    userIds.push(author.id, replier.id, admin.id, blocked.id);
+    blocked.blockedAt = new Date();
+    await blocked.save();
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+
+    const page = await createWikiPage(
+      dal,
+      { slug, title: { en: 'Replies test' }, body: { en: 'Proposed text.' }, originalLanguage: 'en' },
+      author.id
+    );
+
+    // Position comments have no length limit any more.
+    const longComment = 'Detailed reasoning. '.repeat(200).trim();
+    const position = await signOffPage(
+      dal,
+      { slug, stance: 'neutral', comment: longComment, commentLanguage: 'en' },
+      author.id
+    );
+    assert.equal(position.comment?.length, longComment.length);
+    const silent = await signOffPage(dal, { slug, stance: 'support' }, admin.id);
+
+    const reply = await replyToSignoff(
+      dal,
+      { slug, signoffId: position.id, body: '  Good point, see https://example.org/a.  ', bodyLanguage: 'en' },
+      replier.id
+    );
+    assert.equal(reply.body, 'Good point, see https://example.org/a.');
+    assert.equal(reply.pageId, page.id);
+
+    await assert.rejects(
+      () => replyToSignoff(dal, { slug, signoffId: position.id, body: '   ', bodyLanguage: 'en' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToSignoff(dal, { slug, signoffId: position.id, body: 'Hi', bodyLanguage: 'xx' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToSignoff(dal, { slug, signoffId: silent.id, body: 'No comment to answer.', bodyLanguage: 'en' }, replier.id),
+      ValidationError
+    );
+    await assert.rejects(
+      () => replyToSignoff(dal, { slug, signoffId: position.id, body: 'Blocked.', bodyLanguage: 'en' }, blocked.id),
+      ForbiddenError
+    );
+
+    // Only the author edits; an admin hides someone else's reply.
+    await assert.rejects(
+      () => updateSignoffReply(dal, { replyId: reply.id, body: 'Not mine.', bodyLanguage: 'en' }, author.id),
+      ForbiddenError
+    );
+    const edited = await updateSignoffReply(
+      dal,
+      { replyId: reply.id, body: 'Good point, fixed.', bodyLanguage: 'en' },
+      replier.id
+    );
+    assert.equal(edited.body, 'Good point, fixed.');
+    assert.ok(edited.updatedAt instanceof Date);
+    const second = await replyToSignoff(
+      dal,
+      { slug, signoffId: position.id, body: 'Agreed.', bodyLanguage: 'en' },
+      author.id
+    );
+    await assert.rejects(() => removeSignoffReply(dal, { replyId: second.id }, replier.id), ForbiddenError);
+
+    // Changing a position keeps its replies under the new one.
+    const changed = await signOffPage(
+      dal,
+      { slug, stance: 'support', comment: 'Convinced now.', commentLanguage: 'en' },
+      author.id
+    );
+    let grouped = await listRepliesForSignoffs(dal, [changed.id]);
+    assert.deepEqual(
+      (grouped.get(changed.id) ?? []).map(item => item.id),
+      [reply.id, second.id]
+    );
+
+    assert.equal((await removeSignoffReply(dal, { replyId: second.id }, author.id)).removal, 'deleted');
+    assert.equal((await removeSignoffReply(dal, { replyId: reply.id }, admin.id)).removal, 'hidden');
+    grouped = await listRepliesForSignoffs(dal, [changed.id]);
+    assert.equal(grouped.get(changed.id), undefined);
+    await assert.rejects(
+      () => updateSignoffReply(dal, { replyId: reply.id, body: 'Back?', bodyLanguage: 'en' }, replier.id),
+      NotFoundError
+    );
+
+    // Withdrawn positions take no new replies.
+    await withdrawPageSignoff(dal, { slug }, author.id);
+    await assert.rejects(
+      () => replyToSignoff(dal, { slug, signoffId: changed.id, body: 'Too late.', bodyLanguage: 'en' }, replier.id),
+      NotFoundError
+    );
+  } finally {
+    await cleanupTestArtifacts(dal, { slugPrefix: `meta/proposals/test-replies-${stamp}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
   }
 });
 

@@ -366,7 +366,20 @@
     "update": "Uppdatera",
     "withdraw": "Dra tillbaka",
     "forbidden": "Ditt konto kan inte ta ställning till förslag.",
-    "invalid": "Det gick inte att spara ställningstagandet. Välj för, neutral eller emot. Motiveringen får innehålla högst 2 000 tecken. Välj ett språk som stöds."
+    "invalid": "Det gick inte att spara ställningstagandet. Välj för, neutral eller emot och ett språk som stöds.",
+    "reply": {
+      "open": "Svara",
+      "label": "Ditt svar",
+      "placeholder": "Skriv ett svar…",
+      "submit": "Skicka svar",
+      "edit": "Redigera",
+      "save": "Spara",
+      "delete": "Radera",
+      "hide": "Dölj",
+      "edited": "redigerat",
+      "forbidden": "Ditt konto kan inte svara på ställningstaganden, eller så är svaret inte ditt.",
+      "invalid": "Svaret kunde inte sparas. Skriv en text och välj ett språk som stöds."
+    }
   },
   tool: {
     view: 'Visa',

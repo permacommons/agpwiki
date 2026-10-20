@@ -365,7 +365,20 @@
     "update": "Actualizar",
     "withdraw": "Retirar",
     "forbidden": "Tu cuenta no puede expresar posturas sobre propuestas.",
-    "invalid": "No se pudo guardar esta postura. Elige a favor, neutral o en contra. Limita la justificación a 2.000 caracteres y selecciona un idioma admitido."
+    "invalid": "No se pudo guardar esta postura. Elige a favor, neutral o en contra, y selecciona un idioma admitido.",
+    "reply": {
+      "open": "Responder",
+      "label": "Tu respuesta",
+      "placeholder": "Escribe una respuesta…",
+      "submit": "Publicar respuesta",
+      "edit": "Editar",
+      "save": "Guardar",
+      "delete": "Eliminar",
+      "hide": "Ocultar",
+      "edited": "editado",
+      "forbidden": "Tu cuenta no puede responder a posturas, o esta respuesta no es tuya.",
+      "invalid": "No se pudo guardar la respuesta. Escribe un texto y selecciona un idioma admitido."
+    }
   },
   tool: {
     view: 'Ver',

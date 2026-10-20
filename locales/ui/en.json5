@@ -644,7 +644,21 @@
     "update": "Update",
     "withdraw": "Withdraw",
     "forbidden": "Your account cannot state a position on proposals.",
-    "invalid": "This position could not be saved. Choose support, neutral or oppose. Keep the rationale within 2,000 characters and select a supported language."
+    "invalid": "This position could not be saved. Choose support, neutral or oppose, and select a supported language.",
+    // Replies under a position's comment (one level).
+    "reply": {
+      "open": "Reply",
+      "label": "Your reply",
+      "placeholder": "Write a reply…",
+      "submit": "Post reply",
+      "edit": "Edit",
+      "save": "Save",
+      "delete": "Delete",
+      "hide": "Hide",
+      "edited": "edited",
+      "forbidden": "Your account cannot reply to positions, or this reply is not yours to change.",
+      "invalid": "This reply could not be saved. Write some text and select a supported language."
+    }
   },
   "tool": {
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",

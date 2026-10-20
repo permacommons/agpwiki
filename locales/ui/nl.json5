@@ -366,7 +366,20 @@
     "update": "Bijwerken",
     "withdraw": "Intrekken",
     "forbidden": "Je account kan geen standpunten over voorstellen innemen.",
-    "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen. Beperk je toelichting tot 2.000 tekens en selecteer een ondersteunde taal."
+    "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen en selecteer een ondersteunde taal.",
+    "reply": {
+      "open": "Reageren",
+      "label": "Je reactie",
+      "placeholder": "Schrijf een reactie…",
+      "submit": "Reactie plaatsen",
+      "edit": "Bewerken",
+      "save": "Opslaan",
+      "delete": "Verwijderen",
+      "hide": "Verbergen",
+      "edited": "bewerkt",
+      "forbidden": "Je account kan niet reageren op standpunten, of deze reactie is niet van jou.",
+      "invalid": "De reactie kon niet worden opgeslagen. Schrijf een tekst en selecteer een ondersteunde taal."
+    }
   },
   tool: {
     view: 'Bekijk',

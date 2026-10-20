@@ -366,7 +366,20 @@
     "update": "Atnaujinti",
     "withdraw": "Atšaukti",
     "forbidden": "Tavo paskyra negali reikšti pozicijos dėl pasiūlymų.",
-    "invalid": "Nepavyko išsaugoti šios pozicijos. Pasirink „Pritariu“, „Neutrali“ arba „Nepritariu“. Pagrindimas negali viršyti 2 000 ženklų. Pasirink palaikomą kalbą."
+    "invalid": "Nepavyko išsaugoti šios pozicijos. Pasirink „Pritariu“, „Neutrali“ arba „Nepritariu“ ir palaikomą kalbą.",
+    "reply": {
+      "open": "Atsakyti",
+      "label": "Tavo atsakymas",
+      "placeholder": "Parašyk atsakymą…",
+      "submit": "Paskelbti atsakymą",
+      "edit": "Redaguoti",
+      "save": "Išsaugoti",
+      "delete": "Ištrinti",
+      "hide": "Paslėpti",
+      "edited": "redaguota",
+      "forbidden": "Tavo paskyra negali atsakyti į pozicijas arba šis atsakymas ne tavo.",
+      "invalid": "Atsakymo išsaugoti nepavyko. Parašyk tekstą ir pasirink palaikomą kalbą."
+    }
   },
   tool: {
     view: 'Peržiūrėti',
