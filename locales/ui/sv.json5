@@ -220,7 +220,7 @@
       delete: 'Ta bort tråd',
       subscribe: 'Prenumerera',
       unsubscribe: 'Avsluta prenumeration',
-      notificationsDisabled: 'Forumets e-postaviseringar är för närvarande inaktiverade i dina <a href="{{settingsHref}}">inställningar</a>.',
+      notificationsDisabled: "Aviseringar om forumsvar är avstängda i dina <a href=\"{{settingsHref}}\">inställningar</a>.",
     },
     pageLink: {
       context: 'Diskussion om {{page}}.',
@@ -645,12 +645,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Aviseringar",
+    "bellUnread_one": "Aviseringar: {{count}} olästa",
+    "bellUnread_other": "Aviseringar: {{count}} olästa",
+    "someone": "Någon",
+    "kind": {
+      "forumReply": "{{name}} svarade i {{subject}}",
+      "other": "Ny aktivitet i {{subject}}"
+    },
+    "markRead": "Markera som läst",
+    "markAllRead": "Markera alla som lästa",
+    "bar": {
+      "more_one": "{{count}} till",
+      "more_other": "{{count}} till",
+      "all": "Alla aviseringar"
+    },
+    "unread": "ny",
+    "settings": "Inställningar för aviseringar",
+    "empty": "Inga aviseringar än. Du får en när någon svarar i en forumtråd som du följer."
+  },
   settings: {
     title: 'Inställningar',
-    description: 'När detta är aktiverat skickar Agpedia ett e-postmeddelande till dig när någon annan svarar i en tråd som du prenumererar på. Du kan prenumerera eller avsluta prenumerationen i varje tråd.',
-    emailNotifications: 'Skicka e-post till mig om forumaktivitet',
     save: 'Spara inställningar',
     saved: 'Dina inställningar har uppdaterats.',
+    "notifications": {
+      "heading": "Aviseringar",
+      "intro": "Välj hur Agpedia meddelar dig om varje typ av aktivitet.",
+      "emailUnverified": "Aviseringar via e-post kräver en bekräftad e-postadress. Tills dess visas de bara på webbplatsen.",
+      "channel": {
+        "both": "E-post och på webbplatsen",
+        "site": "Bara på webbplatsen",
+        "email": "Bara e-post",
+        "none": "Inga"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Svar i forumtrådar som du följer",
+          "help": "Du följer en tråd när du startar den eller svarar i den. Du kan också följa eller sluta följa den i tråden."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Det här förslaget är skyddat; endast wikiadministratörer kan ändra dess länkar.",

@@ -220,7 +220,7 @@
       delete: 'Supprimer le fil',
       subscribe: 'S’abonner',
       unsubscribe: 'Se désabonner',
-      notificationsDisabled: 'Les notifications du forum par e-mail sont actuellement désactivées dans vos <a href="{{settingsHref}}">paramètres</a>.',
+      notificationsDisabled: "Les notifications de réponses du forum sont désactivées dans tes <a href=\"{{settingsHref}}\">paramètres</a>.",
     },
     pageLink: {
       context: 'Discussion sur {{page}}.',
@@ -644,12 +644,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Notifications",
+    "bellUnread_one": "Notifications : {{count}} non lue",
+    "bellUnread_other": "Notifications : {{count}} non lues",
+    "someone": "Quelqu’un",
+    "kind": {
+      "forumReply": "{{name}} a répondu dans {{subject}}",
+      "other": "Nouvelle activité dans {{subject}}"
+    },
+    "markRead": "Marquer comme lu",
+    "markAllRead": "Tout marquer comme lu",
+    "bar": {
+      "more_one": "{{count}} autre",
+      "more_other": "{{count}} autres",
+      "all": "Toutes les notifications"
+    },
+    "unread": "nouveau",
+    "settings": "Paramètres des notifications",
+    "empty": "Aucune notification pour l’instant. Tu en reçois une quand quelqu’un répond dans un fil du forum que tu suis."
+  },
   settings: {
     title: 'Paramètres',
-    description: 'Lorsque cette option est activée, Agpedia vous envoie un e-mail quand une autre personne répond à un fil auquel vous êtes abonné. Vous pouvez vous abonner ou vous désabonner sur chaque fil.',
-    emailNotifications: 'M’envoyer des e-mails sur l’activité du forum',
     save: 'Enregistrer les paramètres',
     saved: 'Vos paramètres ont été mis à jour.',
+    "notifications": {
+      "heading": "Notifications",
+      "intro": "Choisis comment Agpedia te prévient de chaque type d’activité.",
+      "emailUnverified": "Les notifications par e-mail nécessitent une adresse e-mail vérifiée. D’ici là, elles s’affichent seulement sur le site.",
+      "channel": {
+        "both": "E-mail et sur le site",
+        "site": "Sur le site uniquement",
+        "email": "E-mail uniquement",
+        "none": "Aucune"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Réponses dans les fils du forum que tu suis",
+          "help": "Tu suis un fil quand tu le crées ou que tu y réponds. Tu peux aussi le suivre ou ne plus le suivre depuis le fil."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Cette proposition est protégée ; seuls les administrateurs du wiki peuvent modifier ses liens.",

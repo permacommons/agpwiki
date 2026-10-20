@@ -220,7 +220,7 @@
       delete: 'Thema löschen',
       subscribe: 'Abonnieren',
       unsubscribe: 'Abo beenden',
-      notificationsDisabled: 'Forum-E-Mail-Benachrichtigungen sind derzeit in deinen <a href="{{settingsHref}}">Einstellungen</a> deaktiviert.',
+      notificationsDisabled: "Benachrichtigungen zu Forumsantworten sind in deinen <a href=\"{{settingsHref}}\">Einstellungen</a> ausgeschaltet.",
     },
     pageLink: {
       context: 'Diskussion zu {{page}}.',
@@ -642,12 +642,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "bellUnread_one": "Benachrichtigungen: {{count}} ungelesen",
+    "bellUnread_other": "Benachrichtigungen: {{count}} ungelesen",
+    "someone": "Jemand",
+    "kind": {
+      "forumReply": "{{name}} hat in {{subject}} geantwortet",
+      "other": "Neue Aktivität in {{subject}}"
+    },
+    "markRead": "Als gelesen markieren",
+    "markAllRead": "Alle als gelesen markieren",
+    "bar": {
+      "more_one": "{{count}} weitere",
+      "more_other": "{{count}} weitere",
+      "all": "Alle Benachrichtigungen"
+    },
+    "unread": "neu",
+    "settings": "Benachrichtigungseinstellungen",
+    "empty": "Noch keine Benachrichtigungen. Du bekommst eine, wenn jemand in einem Forumsthema antwortet, dem du folgst."
+  },
   settings: {
     title: 'Einstellungen',
-    description: 'Wenn dies aktiviert ist, sendet dir Agpedia eine E-Mail, wenn jemand anders auf ein Thema antwortet, das du abonniert hast. Du kannst jedes Thema abonnieren oder das Abo beenden.',
-    emailNotifications: 'Mir E-Mails zu Forenaktivitäten senden',
     save: 'Einstellungen speichern',
     saved: 'Deine Einstellungen wurden aktualisiert.',
+    "notifications": {
+      "heading": "Benachrichtigungen",
+      "intro": "Wähle, wie Agpedia dich über die einzelnen Aktivitäten informiert.",
+      "emailUnverified": "Für E-Mail-Benachrichtigungen braucht es eine bestätigte E-Mail-Adresse. Bis dahin erscheinen sie nur auf der Website.",
+      "channel": {
+        "both": "E-Mail und auf der Website",
+        "site": "Nur auf der Website",
+        "email": "Nur per E-Mail",
+        "none": "Keine"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Antworten in Forumsthemen, denen du folgst",
+          "help": "Du folgst einem Thema, wenn du es eröffnest oder darin antwortest. Du kannst ihm auch im Thema selbst folgen oder nicht mehr folgen."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Dieser Vorschlag ist geschützt; nur Wiki-Admins können seine Verknüpfungen ändern.",

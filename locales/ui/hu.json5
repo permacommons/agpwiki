@@ -220,7 +220,7 @@
       delete: 'Téma törlése',
       subscribe: 'Feliratkozás',
       unsubscribe: 'Leiratkozás',
-      notificationsDisabled: 'A fórum e-mail-értesítései jelenleg ki vannak kapcsolva a <a href="{{settingsHref}}">beállításaidban</a>.',
+      notificationsDisabled: "A fórumválaszokról szóló értesítések ki vannak kapcsolva a <a href=\"{{settingsHref}}\">beállításaidban</a>.",
     },
     pageLink: {
       context: 'Beszélgetés erről: {{page}}.',
@@ -645,12 +645,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "Értesítések",
+    "bellUnread_one": "Értesítések: {{count}} olvasatlan",
+    "bellUnread_other": "Értesítések: {{count}} olvasatlan",
+    "someone": "Valaki",
+    "kind": {
+      "forumReply": "{{name}} válaszolt itt: {{subject}}",
+      "other": "Új tevékenység itt: {{subject}}"
+    },
+    "markRead": "Megjelölés olvasottként",
+    "markAllRead": "Összes megjelölése olvasottként",
+    "bar": {
+      "more_one": "Még {{count}}",
+      "more_other": "Még {{count}}",
+      "all": "Összes értesítés"
+    },
+    "unread": "új",
+    "settings": "Értesítési beállítások",
+    "empty": "Még nincsenek értesítések. Akkor kapsz egyet, ha valaki válaszol egy általad követett fórumszálban."
+  },
   settings: {
     title: 'Beállítások',
-    description: 'Ha engedélyezve van, az Agpedia e-mailt küld, amikor valaki más válaszol egy olyan témára, amelyre feliratkoztál. Minden témánál fel- vagy leiratkozhatsz.',
-    emailNotifications: 'Kérek e-mailt a fórumos aktivitásról',
     save: 'Beállítások mentése',
     saved: 'A beállításaid frissültek.',
+    "notifications": {
+      "heading": "Értesítések",
+      "intro": "Válaszd ki, hogyan értesítsen az Agpedia az egyes tevékenységekről.",
+      "emailUnverified": "Az e-mail-értesítésekhez megerősített e-mail-cím kell. Addig csak az oldalon jelennek meg.",
+      "channel": {
+        "both": "E-mail és az oldalon",
+        "site": "Csak az oldalon",
+        "email": "Csak e-mail",
+        "none": "Nincs"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Válaszok az általad követett fórumszálakban",
+          "help": "Egy szálat akkor követsz, ha elindítod vagy válaszolsz benne. A követést a szálban is be- vagy kikapcsolhatod."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Ez a javaslat védett; a hivatkozásait csak a wiki adminisztrátorai módosíthatják.",

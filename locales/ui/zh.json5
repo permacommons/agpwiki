@@ -219,7 +219,7 @@
       delete: '删除主题',
       subscribe: '订阅',
       unsubscribe: '取消订阅',
-      notificationsDisabled: '论坛电子邮件通知目前已在您的<a href="{{settingsHref}}">设置</a>中禁用。',
+      notificationsDisabled: "论坛回复通知已在你的<a href=\"{{settingsHref}}\">设置</a>中关闭。",
     },
     pageLink: {
       context: '关于 {{page}} 的讨论。',
@@ -643,12 +643,47 @@
       },
     },
   },
+  "notifications": {
+    "title": "通知",
+    "bellUnread_one": "通知：{{count}} 条未读",
+    "bellUnread_other": "通知：{{count}} 条未读",
+    "someone": "有人",
+    "kind": {
+      "forumReply": "{{name}} 在 {{subject}} 中回复了",
+      "other": "{{subject}} 有新动态"
+    },
+    "markRead": "标为已读",
+    "markAllRead": "全部标为已读",
+    "bar": {
+      "more_one": "还有 {{count}} 条",
+      "more_other": "还有 {{count}} 条",
+      "all": "全部通知"
+    },
+    "unread": "新",
+    "settings": "通知设置",
+    "empty": "还没有通知。当有人在你关注的论坛帖子中回复时，你会收到通知。"
+  },
   settings: {
     title: '设置',
-    description: '启用后，当其他人在您订阅的主题中回复时，Agpedia 会向您发送电子邮件。您可以在每个主题中订阅或取消订阅。',
-    emailNotifications: '向我发送有关论坛活动的电子邮件',
     save: '保存设置',
     saved: '您的设置已更新。',
+    "notifications": {
+      "heading": "通知",
+      "intro": "选择 Agpedia 如何告诉你各类活动。",
+      "emailUnverified": "邮件通知需要已验证的邮箱地址。在此之前，通知只显示在网站上。",
+      "channel": {
+        "both": "邮件和网站",
+        "site": "仅网站",
+        "email": "仅邮件",
+        "none": "不接收"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "你关注的论坛帖子中的回复",
+          "help": "你发起或回复帖子时就会关注它。你也可以在帖子页面关注或取消关注。"
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "此提案已受保护，只有维基管理员可以更改其链接。",
