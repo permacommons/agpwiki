@@ -52,12 +52,25 @@ export const renderNotificationBar = ({
 
 export const renderNotificationList = ({
   notifications,
+  unreadCount,
+  page,
+  totalPages,
   t,
 }: {
   notifications: SiteNotification[];
+  unreadCount: number;
+  page: number;
+  totalPages: number;
   t: TFunction;
 }) => {
-  const hasUnread = notifications.some(item => !item.readAt);
+  const pagePath = (number: number) => (number === 1 ? NOTIFICATIONS_PATH : `${NOTIFICATIONS_PATH}?page=${number}`);
+  const pagination = totalPages > 1
+    ? `<div class="history-actions">
+  ${page > 1 ? `<a rel="prev" href="${pagePath(page - 1)}">${escapeHtml(t('tool.previous'))}</a>` : ''}
+  <span>${escapeHtml(t('tool.pagination', { page, totalPages }))}</span>
+  ${page < totalPages ? `<a rel="next" href="${pagePath(page + 1)}">${escapeHtml(t('tool.next'))}</a>` : ''}
+</div>`
+    : '';
   const items = notifications
     .map(
       item => `<li class="notification-item${item.readAt ? '' : ' notification-item--unread'}">
@@ -71,10 +84,12 @@ export const renderNotificationList = ({
     .join('');
   return `<div class="tool-page notifications-page">
   <div class="notifications-actions">
-    ${hasUnread ? markReadForm(t, NOTIFICATIONS_PATH) : ''}
+    ${unreadCount > 0 ? markReadForm(t, pagePath(page)) : ''}
     <a href="/tool/settings">${escapeHtml(t('notifications.settings'))}</a>
   </div>
+  ${pagination}
   ${items ? `<ul class="notification-list">${items}</ul>` : `<p class="notification-empty">${escapeHtml(t('notifications.empty'))}</p>`}
+  ${pagination}
 </div>`;
 };
 

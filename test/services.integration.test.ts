@@ -6,6 +6,7 @@ import test from 'node:test';
 import express from 'express';
 
 import { registerPageRoutes } from '../src/routes/pages.js';
+import { registerNotificationRoutes } from '../src/routes/notifications.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
@@ -495,6 +496,82 @@ test('Site notifications can be counted, listed, opened and marked as read by th
     assert.ok(list.every(item => item.readAt instanceof Date));
   } finally {
     for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
+  }
+});
+
+test('Notification pages expose older entries and mark all unread entries as read', async () => {
+  const dal = await getDal();
+  let userId: string | null = null;
+  const app = express();
+  app.use(express.urlencoded({ extended: false }));
+  app.use((req, res, next) => {
+    req.t = ((key: string, options?: Record<string, unknown>) => {
+      if (key === 'notifications.kind.forumReply') return `${options?.name} ${options?.subject}`;
+      return options ? `${key}${JSON.stringify(options)}` : key;
+    }) as typeof req.t;
+    res.render = ((_view: string, options?: Record<string, unknown>) => {
+      res.json({ bodyHtml: options?.bodyHtml });
+    }) as express.Response['render'];
+    next();
+  });
+  registerNotificationRoutes(app);
+  const server = http.createServer(app);
+
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const session = await createSession(user.id);
+    const headers = { cookie: `agpwiki_session=${session.token}` };
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const url = `http://127.0.0.1:${address.port}/tool/notifications`;
+    const getPage = async (query = '') => {
+      const response = await fetch(`${url}${query}`, { headers });
+      assert.equal(response.status, 200);
+      return ((await response.json()) as { bodyHtml: string }).bodyHtml;
+    };
+    const empty = await getPage('?page=999');
+    assert.ok(empty.includes('notifications.empty'));
+    assert.ok(!empty.includes('notifications.markAllRead'));
+
+    await dal.query(`INSERT INTO notifications (user_id, kind, url, subject, created_at, read_at)
+      SELECT $1, 'forum.reply', '/tool/forum', 'Notification ' || n,
+             NOW() - n * INTERVAL '1 second', CASE WHEN n <= 200 THEN NOW() ELSE NULL END
+        FROM generate_series(1, 205) AS n`, [user.id]);
+    const pages = await Promise.all([getPage(), getPage('?page=2'), getPage('?page=3')]);
+    assert.deepEqual(pages.map(html => (html.match(/class="notification-item(?: notification-item--unread)?"/g) ?? []).length), [100, 100, 5]);
+    const ids = pages.flatMap(html => [...html.matchAll(/href="\/tool\/notifications\/([^/]+)\/open"/g)].map(match => match[1]));
+    assert.equal(new Set(ids).size, 205);
+    assert.ok(!pages[0].includes('notification-item--unread'));
+    assert.ok(pages[0].includes('notifications.markAllRead'));
+    assert.ok(pages[2].includes('notification-item--unread'));
+    assert.ok(pages[2].includes('name="return" value="/tool/notifications?page=3"'));
+    for (const query of ['?page=invalid', '?page=-1', '?page=1&page=2']) {
+      assert.equal(await getPage(query), pages[0]);
+    }
+    assert.equal(await getPage('?page=999999999999999999999'), pages[2]);
+
+    const response = await fetch(`${url}/read`, {
+      method: 'POST',
+      headers,
+      body: new URLSearchParams({ return: '/tool/notifications?page=3' }),
+      redirect: 'manual',
+    });
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.get('location'), '/tool/notifications?page=3');
+    assert.equal(await countUnreadNotifications(dal, user.id), 0);
+    assert.ok(!(await getPage()).includes('notifications.markAllRead'));
+  } finally {
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close(error => (error ? reject(error) : resolve()));
+      });
+    }
+    if (userId) await cleanupTestArtifacts(dal, { userId });
   }
 });
 

@@ -72,6 +72,11 @@ export const countUnreadNotifications = async (dal: DataAccessLayer, userId: str
   return (result.rows[0] as { count: number }).count;
 };
 
+export const countSiteNotifications = async (dal: DataAccessLayer, userId: string) => {
+  const result = await dal.query('SELECT COUNT(*)::int AS count FROM notifications WHERE user_id = $1', [userId]);
+  return (result.rows[0] as { count: number }).count;
+};
+
 export const findLatestUnreadNotification = async (dal: DataAccessLayer, userId: string) => {
   const result = await dal.query(
     `${SELECT_WITH_ACTOR} WHERE n.user_id = $1 AND n.read_at IS NULL ORDER BY n.created_at DESC LIMIT 1`,
@@ -86,7 +91,7 @@ export const listSiteNotifications = async (
   { limit = 50, offset = 0 }: { limit?: number; offset?: number } = {}
 ) => {
   const result = await dal.query(
-    `${SELECT_WITH_ACTOR} WHERE n.user_id = $1 ORDER BY n.created_at DESC LIMIT $2 OFFSET $3`,
+    `${SELECT_WITH_ACTOR} WHERE n.user_id = $1 ORDER BY n.created_at DESC, n.id DESC LIMIT $2 OFFSET $3`,
     [userId, Math.min(Math.max(limit, 1), 200), Math.max(offset, 0)]
   );
   return (result.rows as Array<Record<string, unknown>>).map(toSiteNotification);

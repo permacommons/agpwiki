@@ -28,14 +28,41 @@ test('The notification bar names who replied where, escapes everything and offer
 });
 
 test('The notification list marks unread items and links to the settings', () => {
-  const html = renderNotificationList({ notifications: [notification, { ...notification, id: 'n2', readAt: new Date() }], t });
+  const html = renderNotificationList({ notifications: [notification, { ...notification, id: 'n2', readAt: new Date() }], unreadCount: 1, page: 1, totalPages: 1, t });
   assert.equal((html.match(/notification-item--unread/g) ?? []).length, 1);
   assert.ok(html.includes('Mark all as read'));
   assert.ok(html.includes('href="/tool/settings"'));
   assert.ok(html.includes('A &lt;script&gt;reply&lt;/script&gt;'));
-  const empty = renderNotificationList({ notifications: [], t });
+  const empty = renderNotificationList({ notifications: [], unreadCount: 0, page: 1, totalPages: 1, t });
   assert.ok(empty.includes('No notifications yet'));
   assert.ok(!empty.includes('Mark all as read'));
+});
+
+test('Read pages still offer to mark unread notifications on other pages as read', () => {
+  const html = renderNotificationList({
+    notifications: [{ ...notification, readAt: new Date() }],
+    unreadCount: 1,
+    page: 2,
+    totalPages: 3,
+    t,
+  });
+  assert.ok(html.includes('Mark all as read'));
+  assert.ok(html.includes('name="return" value="/tool/notifications?page=2"'));
+  assert.ok(html.includes('Page 2 of 3'));
+  assert.ok(html.includes('rel="prev" href="/tool/notifications"'));
+  assert.ok(html.includes('rel="next" href="/tool/notifications?page=3"'));
+  assert.ok(!html.includes('notification-item--unread'));
+});
+
+test('Notification pagination only offers available directions', () => {
+  const render = (page: number, totalPages: number) => renderNotificationList({
+    notifications: [notification], unreadCount: 0, page, totalPages, t,
+  });
+  assert.ok(!render(1, 3).includes('rel="prev"'));
+  assert.ok(render(1, 3).includes('rel="next"'));
+  assert.ok(render(3, 3).includes('rel="prev"'));
+  assert.ok(!render(3, 3).includes('rel="next"'));
+  assert.ok(!render(1, 1).includes('history-actions'));
 });
 
 test('Only local paths are accepted to return to', () => {

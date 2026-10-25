@@ -5,6 +5,8 @@ import { initializePostgreSQL } from '../db.js';
 import { NotFoundError } from '../lib/errors.js';
 import { prepareTitle } from '../render.js';
 import {
+  countSiteNotifications,
+  countUnreadNotifications,
   listSiteNotifications,
   markSiteNotificationsRead,
   openSiteNotification,
@@ -31,11 +33,22 @@ export const registerNotificationRoutes = (app: Express) => {
     const session = await requireSession(req, res);
     if (!session) return;
     const dal = await initializePostgreSQL();
-    const notifications = await listSiteNotifications(dal, session.userId, { limit: 100 });
+    const perPage = 100;
+    const [total, unreadCount] = await Promise.all([
+      countSiteNotifications(dal, session.userId),
+      countUnreadNotifications(dal, session.userId),
+    ]);
+    const totalPages = Math.max(1, Math.ceil(total / perPage));
+    const requestedPage = typeof req.query.page === 'string' ? Number.parseInt(req.query.page, 10) : Number.NaN;
+    const page = Number.isNaN(requestedPage) ? 1 : Math.min(Math.max(requestedPage, 1), totalPages);
+    const notifications = await listSiteNotifications(dal, session.userId, {
+      limit: perPage,
+      offset: (page - 1) * perPage,
+    });
     res.render('layout', {
       title: prepareTitle(req.t('notifications.title')),
       labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
-      bodyHtml: renderNotificationList({ notifications, t: req.t }),
+      bodyHtml: renderNotificationList({ notifications, unreadCount, page, totalPages, t: req.t }),
       topHtml: prependAccountBanner(res),
     });
   });
