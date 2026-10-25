@@ -2,6 +2,19 @@
   /*
    i18n-identical-allowlist:
    {
+     // These tab labels are also the local words in these languages.
+     "fi": ["recentTabs.media"],
+     "fr": ["recentTabs.pages", "recentTabs.citations"],
+     "id": ["recentTabs.media"],
+     "it": ["recentTabs.media"],
+     "nl": ["recentTabs.media"],
+     "pl": ["recentTabs.media"],
+     "sv": ["recentTabs.media"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // Wikidata is a proper name; Status is also the local word.
      "de": ["page.wikidata", "proposalStatus.form.status"],
      "es": ["page.wikidata"],
