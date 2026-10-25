@@ -240,7 +240,22 @@
       unknownOperator: 'Ismeretlen operátor',
       quote: 'Idézés',
       delete: 'Törlés',
+      "edit": "Szerkesztés",
+      "save": "Módosítások mentése",
+      "edited": "szerkesztve",
+      "forbiddenEdit": "Egy hozzászólást csak a szerzője szerkeszthet.",
+      "historyTitle": "Hozzászólás előzményei",
+      "historyBack": "Vissza a hozzászóláshoz",
+      "historyFirst": "Első változat: {{name}}, {{date}}",
+      "historyEdit": "Szerkesztette: {{name}}, {{date}}",
+      "historyBefore": "Előtte",
+      "historyAfter": "Utána",
+      "historyText": "Szöveg"
     },
+    "position": {
+      "context": "Válaszok egy állásfoglalásra: {{proposal}}",
+      "withdrawn": "Ezt az állásfoglalást azóta visszavonták."
+    }
   },
   history: {
     operator: 'kezelő: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Frissítés",
     "withdraw": "Visszavonás",
     "forbidden": "A fiókoddal nem foglalhatsz állást a javaslatokról.",
-    "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot. Az indoklás legfeljebb 2000 karakter lehet, és támogatott nyelvet kell választanod."
+    "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot és egy támogatott nyelvet.",
+    "reply": {
+      "open": "Válasz",
+      "label": "A válaszod",
+      "placeholder": "Írj választ…",
+      "submit": "Válasz küldése",
+      "forbidden": "A fiókod nem válaszolhat az állásfoglalásokra, vagy ez a válasz nem a tiéd.",
+      "invalid": "A választ nem sikerült menteni. Írj szöveget, és válassz támogatott nyelvet.",
+      "openInForum": "Válaszok megnyitása a fórumon"
+    }
   },
   tool: {
     view: 'Megtekintés',

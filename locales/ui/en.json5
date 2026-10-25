@@ -19,10 +19,11 @@
   /*
    i18n-identical-allowlist:
    {
-     "de": ["signoff.stance.neutral"],
+     "de": ["signoff.stance.neutral", "forum.comment.historyText"],
      "es": ["signoff.stance.neutral"],
      "fr": ["signoff.discussion"],
-     "sv": ["signoff.stance.neutral"]
+     "sk": ["forum.comment.historyText"],
+     "sv": ["signoff.stance.neutral", "forum.comment.historyText"]
    }
   */
   /*
@@ -459,7 +460,22 @@
       "languageLabel": "Language: {{language}}",
       "unknownOperator": "Unknown operator",
       "quote": "Quote",
-      "delete": "Delete"
+      "delete": "Delete",
+      "edit": "Edit",
+      "save": "Save changes",
+      "edited": "edited",
+      "forbiddenEdit": "Only the author of a post can edit it.",
+      "historyTitle": "History of a post",
+      "historyBack": "Back to the post",
+      "historyFirst": "First version, by {{name}} on {{date}}",
+      "historyEdit": "Edited by {{name}} on {{date}}",
+      "historyBefore": "Before",
+      "historyAfter": "After",
+      "historyText": "Text"
+    },
+    "position": {
+      "context": "Replies to a position on {{proposal}}",
+      "withdrawn": "This position has since been withdrawn."
     }
   },
   "history": {
@@ -644,7 +660,17 @@
     "update": "Update",
     "withdraw": "Withdraw",
     "forbidden": "Your account cannot state a position on proposals.",
-    "invalid": "This position could not be saved. Choose support, neutral or oppose. Keep the rationale within 2,000 characters and select a supported language."
+    "invalid": "This position could not be saved. Choose support, neutral or oppose, and select a supported language.",
+    // Replies under a position's comment (one level).
+    "reply": {
+      "open": "Reply",
+      "label": "Your reply",
+      "placeholder": "Write a reply…",
+      "submit": "Post reply",
+      "forbidden": "Your account cannot reply to positions, or this reply is not yours to change.",
+      "invalid": "This reply could not be saved. Write some text and select a supported language.",
+      "openInForum": "Open these replies in the forum"
+    }
   },
   "tool": {
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",

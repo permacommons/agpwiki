@@ -240,7 +240,22 @@
       unknownOperator: 'Operator tidak dikenal',
       quote: 'Kutip',
       delete: 'Hapus',
+      "edit": "Sunting",
+      "save": "Simpan perubahan",
+      "edited": "disunting",
+      "forbiddenEdit": "Hanya penulis kiriman yang dapat menyuntingnya.",
+      "historyTitle": "Riwayat kiriman",
+      "historyBack": "Kembali ke kiriman",
+      "historyFirst": "Versi pertama, oleh {{name}} pada {{date}}",
+      "historyEdit": "Disunting oleh {{name}} pada {{date}}",
+      "historyBefore": "Sebelum",
+      "historyAfter": "Sesudah",
+      "historyText": "Teks"
     },
+    "position": {
+      "context": "Balasan untuk sikap tentang {{proposal}}",
+      "withdrawn": "Sikap ini kemudian ditarik."
+    }
   },
   history: {
     operator: 'operator sistem: {{name}}',
@@ -366,7 +381,16 @@
     "update": "Perbarui",
     "withdraw": "Tarik",
     "forbidden": "Akun Anda tidak dapat menyatakan sikap terhadap usulan.",
-    "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang. Batasi alasan hingga 2.000 karakter dan pilih bahasa yang didukung."
+    "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang, dan pilih bahasa yang didukung.",
+    "reply": {
+      "open": "Balas",
+      "label": "Balasan Anda",
+      "placeholder": "Tulis balasan…",
+      "submit": "Kirim balasan",
+      "forbidden": "Akun Anda tidak dapat membalas sikap, atau balasan ini bukan milik Anda.",
+      "invalid": "Balasan tidak dapat disimpan. Tulis teks dan pilih bahasa yang didukung.",
+      "openInForum": "Buka balasan ini di forum"
+    }
   },
   tool: {
     view: 'Lihat',

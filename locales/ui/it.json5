@@ -239,7 +239,22 @@
       unknownOperator: 'Operatore sconosciuto',
       quote: 'Cita',
       delete: 'Elimina',
+      "edit": "Modifica",
+      "save": "Salva le modifiche",
+      "edited": "modificato",
+      "forbiddenEdit": "Solo chi ha scritto un messaggio può modificarlo.",
+      "historyTitle": "Cronologia di un messaggio",
+      "historyBack": "Torna al messaggio",
+      "historyFirst": "Prima versione, di {{name}} il {{date}}",
+      "historyEdit": "Modificato da {{name}} il {{date}}",
+      "historyBefore": "Prima",
+      "historyAfter": "Dopo",
+      "historyText": "Testo"
     },
+    "position": {
+      "context": "Risposte a una posizione su {{proposal}}",
+      "withdrawn": "Questa posizione è stata poi ritirata."
+    }
   },
   history: {
     operator: 'operatore: {{name}}',
@@ -365,7 +380,16 @@
     "update": "Aggiorna",
     "withdraw": "Ritira",
     "forbidden": "Il tuo account non può esprimere posizioni sulle proposte.",
-    "invalid": "Impossibile salvare questa posizione. Scegli favorevole, neutrale o contrario. Limita la motivazione a 2.000 caratteri e seleziona una lingua supportata."
+    "invalid": "Impossibile salvare questa posizione. Scegli favorevole, neutrale o contrario e seleziona una lingua supportata.",
+    "reply": {
+      "open": "Rispondi",
+      "label": "La tua risposta",
+      "placeholder": "Scrivi una risposta…",
+      "submit": "Pubblica risposta",
+      "forbidden": "Il tuo account non può rispondere alle posizioni, oppure questa risposta non è tua.",
+      "invalid": "Impossibile salvare la risposta. Scrivi un testo e seleziona una lingua supportata.",
+      "openInForum": "Apri queste risposte nel forum"
+    }
   },
   tool: {
     view: 'Vedi',

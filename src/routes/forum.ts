@@ -4,6 +4,7 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
+import { diffLocalizedField } from '../lib/diff-engine.js';
 import {
   ForbiddenError,
   isRevisionConflictError,
@@ -15,6 +16,7 @@ import {
   forumCategoryPath,
   forumCommentAnchor,
   forumCommentDeletePath,
+  forumCommentHistoryPath,
   forumDismissPreamblePath,
   forumIndexPath,
   forumThreadCommentPath,
@@ -23,6 +25,7 @@ import {
   forumThreadPinPath,
 } from '../lib/forum-paths.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
+import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import {
   escapeHtml,
@@ -41,13 +44,17 @@ import {
   ensureForumCategory,
   FORUM_CATEGORY_KEYS,
   type ForumCategorySlug,
+  type ForumCommentResult,
+  findForumCommentAuthorId,
   listForumCategories,
+  listForumCommentVersions,
   listForumThreads,
   readForumComment,
   readForumThread,
   requireSignedInUserId,
   resolveForumPageTarget,
   setForumThreadPinned,
+  updateForumComment,
 } from '../services/forum-service.js';
 import {
   isUserSubscribedToForumThread,
@@ -57,8 +64,10 @@ import {
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { normalizeSlugInput } from '../services/validation.js';
 import { prependAccountBanner } from './lib/account-banner.js';
+import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderFormLanguageSelector } from './lib/form-language-selector.js';
+import { renderForumCommentEditLink, renderForumCommentEditor } from './lib/forum-comment-editor.js';
 import { fetchUserMap } from './lib/history.js';
 import {
   createPreviewHandler,
@@ -471,6 +480,35 @@ const requireForumSession = async (req: Request, res: Response) => {
   return userId;
 };
 
+const commentReturnPath = (value: unknown, comment: ForumCommentResult) =>
+  typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') &&
+  !/[\\\r\n\t]/.test(value)
+    ? value
+    : `${forumThreadPath(comment.threadId)}#comment-${comment.id}`;
+
+const renderCommentEditPage = (
+  req: Request,
+  res: Response,
+  comment: ForumCommentResult,
+  options: { body?: string; language?: string; errorMessage?: string } = {}
+) => {
+  const returnPath = commentReturnPath(req.body?.return ?? req.query.return, comment);
+  const editor = renderForumCommentEditor({
+    commentId: comment.id,
+    body: options.body ?? getCommentBodyForDisplay(comment.body, comment.originalLanguage),
+    language: options.language ?? comment.originalLanguage ?? 'en',
+    languageOptions: res.locals.languageOptions,
+    returnPath,
+    t: req.t,
+  });
+  withForumPage(
+    res,
+    req.t('forum.comment.edit'),
+    `<div class="forum-page"><h1>${escapeHtml(req.t('forum.comment.edit'))}</h1>${options.errorMessage ? `<p class="form-error" role="alert">${escapeHtml(options.errorMessage)}</p>` : ''}${editor}</div>`,
+    `<div class="page-label">${req.t('label.forum')}</div>`
+  );
+};
+
 const getPageLabel = (
   locale: string,
   title: Record<string, string> | null | undefined,
@@ -686,21 +724,35 @@ const renderThreadPage = async (
   <button type="submit">${req.t('forum.comment.delete')}</button>
 </form>`
           : '';
+        // Only authors edit their posts, so the latest version's user is the author.
+        const isOwn = Boolean(session && comment.revUser === session.userId);
+        const editedHtml = comment.edited
+          ? `<span><a href="${forumCommentHistoryPath(comment.id)}">${escapeHtml(req.t('forum.comment.edited'))}</a></span>`
+          : '';
+        const returnPath = `${forumThreadPath(threadId)}#comment-${comment.id}`;
+        const editHtml = isOwn
+          ? renderForumCommentEditor({
+              commentId: comment.id, body: bodySource, language: comment.originalLanguage ?? 'en',
+              languageOptions: res.locals.languageOptions, returnPath, t: req.t, hidden: true,
+            })
+          : '';
         const authorName = comment.revUser ? userMap.get(comment.revUser) ?? null : null;
         const operatorLabel = authorName ?? req.t('forum.comment.unknownOperator');
         const authorHtml = `<span>${req.t('history.operator', {
           name: escapeHtml(operatorLabel),
         })}</span>`;
-        return `<article class="forum-comment-card" id="comment-${encodeURIComponent(comment.id)}">
+        return `<article class="forum-comment-card" id="comment-${encodeURIComponent(comment.id)}" data-comment-edit>
   <div class="forum-comment-meta">
     ${authorHtml}
     <span>${req.t('forum.comment.postedAt', { date: escapeHtml(formatDateUTC(comment.createdAt)) })}</span>
     <span>${req.t('forum.comment.languageLabel', {
       language: escapeHtml(comment.originalLanguage ?? 'en'),
     })}</span>
+    ${editedHtml}
   </div>
-  <div class="forum-comment-body">${bodyHtml}</div>
-  <div class="forum-comment-actions">
+  <div class="forum-comment-body" data-comment-content>${bodyHtml}</div>
+  <div class="forum-comment-actions" data-comment-actions>
+    ${isOwn ? renderForumCommentEditLink(comment.id, returnPath, req.t) : ''}
     <a href="${quoteUrl}" class="forum-quote-link--fallback no-js-only">${req.t('forum.comment.quote')}</a>
     <button
       type="button"
@@ -711,6 +763,7 @@ const renderThreadPage = async (
     >${req.t('forum.comment.quote')}</button>
     ${moderatorControls}
   </div>
+  ${editHtml}
 </article>`;
       })
     )
@@ -797,6 +850,7 @@ const renderThreadPage = async (
       ${moderatorThreadControls}
     </div>
     ${subscriptionHelp}
+    ${await renderAttachedPositionContext(req, dalInstance, detail.thread, pageLabel)}
     <section class="forum-comments">${commentsHtml}</section>
     ${
       res.locals.signedIn && canContributeToForum(res)
@@ -818,6 +872,32 @@ const renderThreadPage = async (
     bodyHtml,
     `<div class="page-label">${req.t('label.forum')}</div>`
   );
+};
+
+/** For a thread of replies to a position: the position, quoted, with a link back. */
+const renderAttachedPositionContext = async (
+  req: Request,
+  dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>,
+  thread: { attachedType: string | null; attachedId: string | null; pageSlug?: string | null },
+  pageLabel: SafeText | string | null
+) => {
+  if (thread.attachedType !== 'position' || !thread.attachedId || !thread.pageSlug) return '';
+  const signoff = await PageSignoff.filterWhere({ id: thread.attachedId }).first();
+  if (!signoff) return '';
+  const names = await fetchUserMap(dalInstance, [signoff.userId]);
+  const proposalLink = `<a href="/${escapeHtml(thread.pageSlug)}#page-signoffs-title">${renderText(
+    pageLabel ?? thread.pageSlug
+  )}</a>`;
+  return `<aside class="forum-position-context">
+  <div class="forum-position-context-label">${req.t('forum.position.context', { proposal: proposalLink })}</div>
+  <div><span class="page-signoff-stance page-signoff-stance--${escapeHtml(signoff.stance)}">${escapeHtml(
+    req.t(`signoff.stance.${signoff.stance}`)
+  )}</span> <strong>${escapeHtml(names.get(signoff.userId) ?? req.t('signoff.unknownUser'))}</strong> · ${escapeHtml(
+    formatDateUTC(signoff.signedAt)
+  )}</div>
+  ${signoff.comment ? `<blockquote dir="auto"${signoff.commentLanguage ? ` lang="${escapeHtml(signoff.commentLanguage)}"` : ''}>${escapeHtml(signoff.comment)}</blockquote>` : ''}
+  ${signoff.withdrawnAt ? `<p class="forum-position-context-note">${escapeHtml(req.t('forum.position.withdrawn'))}</p>` : ''}
+</aside>`;
 };
 
 const registerPageLinkedForumRoutes = (
@@ -1131,6 +1211,126 @@ export const registerForumRoutes = (app: Express) => {
         return;
       }
       console.error('Failed to delete forum comment:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  app.get('/tool/forum/comment/:commentId/edit', async (req, res) => {
+    try {
+      const userId = await requireForumSession(req, res);
+      const dalInstance = await initializePostgreSQL();
+      const comment = await readForumComment(req.params.commentId);
+      if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
+        throw new ForbiddenError('Only the author can edit a post.');
+      }
+      renderCommentEditPage(req, res, comment);
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('forum.comment.forbiddenEdit'));
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      console.error('Failed to show comment editor:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  app.post('/tool/forum/comment/:commentId/edit', async (req, res) => {
+    let originalComment: ForumCommentResult | undefined;
+    try {
+      const userId = await requireForumSession(req, res);
+      const dalInstance = await initializePostgreSQL();
+      originalComment = await readForumComment(req.params.commentId);
+      if ((await findForumCommentAuthorId(dalInstance, originalComment.id)) !== userId) {
+        throw new ForbiddenError('Only the author can edit a post.');
+      }
+      const comment = await updateForumComment(
+        dalInstance,
+        {
+          commentId: req.params.commentId,
+          body: typeof req.body?.body === 'string' ? req.body.body : '',
+          language: getSelectedLanguage(req, resLocale(req)),
+        },
+        userId
+      );
+      res.redirect(303, commentReturnPath(req.body?.return, comment));
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('forum.comment.forbiddenEdit'));
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (originalComment && (error instanceof ValidationError || isRevisionConflictError(error))) {
+        res.status(error instanceof ValidationError ? 400 : 409);
+        renderCommentEditPage(req, res, originalComment, {
+          body: typeof req.body?.body === 'string' ? req.body.body : '',
+          language: getSelectedLanguage(req, resLocale(req)),
+          errorMessage: req.t(error instanceof ValidationError ? 'operatorEdit.validation.generic' : 'forum.editConflict'),
+        });
+        return;
+      }
+      console.error('Failed to edit forum comment:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  // Every version of a post, newest first, each compared with the one before.
+  app.get('/tool/forum/comment/:commentId/history', async (req, res) => {
+    try {
+      const dalInstance = await initializePostgreSQL();
+      const comment = await readForumComment(req.params.commentId);
+      const versions = await listForumCommentVersions(dalInstance, comment.id);
+      const names = await fetchUserMap(
+        dalInstance,
+        versions.map(version => version.revUser).filter((id): id is string => Boolean(id))
+      );
+      const labels = getDiffLabels(req.t);
+      const items = versions
+        .map((version, index) => {
+          const who = escapeHtml((version.revUser && names.get(version.revUser)) || req.t('forum.comment.unknownOperator'));
+          const when = escapeHtml(formatDateUTC(version.revDate));
+          const heading = req.t(index === 0 ? 'forum.comment.historyFirst' : 'forum.comment.historyEdit', {
+            name: who,
+            date: when,
+          });
+          const previous = versions[index - 1];
+          const diff = previous ? diffLocalizedField('body', previous.body, version.body) : null;
+          const bodyText = getCommentBodyForDisplay(version.body, version.originalLanguage);
+          return `<li class="forum-comment-version">
+  <h2>${heading}</h2>
+  ${
+    diff
+      ? renderEntityDiff({
+          fromLabel: req.t('forum.comment.historyBefore'),
+          toLabel: req.t('forum.comment.historyAfter'),
+          fields: [{ key: 'body', label: req.t('forum.comment.historyText'), diff }],
+          labels,
+        })
+      : `<pre class="forum-comment-version-text" dir="auto">${escapeHtml(bodyText)}</pre>`
+  }
+</li>`;
+        })
+        .reverse()
+        .join('');
+      const bodyHtml = `<div class="forum-page">
+  <p><a href="${forumThreadPath(comment.threadId)}#comment-${encodeURIComponent(comment.id)}">${escapeHtml(
+    req.t('forum.comment.historyBack')
+  )}</a></p>
+  <ol class="forum-comment-versions">${items}</ol>
+</div>`;
+      withForumPage(res, req.t('forum.comment.historyTitle'), bodyHtml, `<div class="page-label">${req.t('label.forum')}</div>`);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      console.error('Failed to render forum comment history:', error);
       res.status(500).type('text').send(req.t('page.serverError'));
     }
   });

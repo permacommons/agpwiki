@@ -239,7 +239,22 @@
       unknownOperator: 'Bilinmeyen operatör',
       quote: 'Alıntıla',
       delete: 'Sil',
+      "edit": "Düzenle",
+      "save": "Değişiklikleri kaydet",
+      "edited": "düzenlendi",
+      "forbiddenEdit": "Bir gönderiyi yalnızca yazarı düzenleyebilir.",
+      "historyTitle": "Gönderi geçmişi",
+      "historyBack": "Gönderiye dön",
+      "historyFirst": "İlk sürüm, {{name}}, {{date}}",
+      "historyEdit": "{{name}} tarafından düzenlendi, {{date}}",
+      "historyBefore": "Önce",
+      "historyAfter": "Sonra",
+      "historyText": "Metin"
     },
+    "position": {
+      "context": "{{proposal}} hakkındaki bir görüşe yanıtlar",
+      "withdrawn": "Bu görüş daha sonra geri çekildi."
+    }
   },
   history: {
     operator: 'operatör: {{name}}',
@@ -365,7 +380,16 @@
     "update": "Güncelle",
     "withdraw": "Geri çek",
     "forbidden": "Hesabınız öneriler hakkında görüş bildiremez.",
-    "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini seçin. Gerekçeyi 2.000 karakterle sınırlayın ve desteklenen bir dil seçin."
+    "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini ve desteklenen bir dil seçin.",
+    "reply": {
+      "open": "Yanıtla",
+      "label": "Yanıtınız",
+      "placeholder": "Bir yanıt yazın…",
+      "submit": "Yanıtı gönder",
+      "forbidden": "Hesabınız görüşlere yanıt veremez veya bu yanıt size ait değil.",
+      "invalid": "Yanıt kaydedilemedi. Bir metin yazın ve desteklenen bir dil seçin.",
+      "openInForum": "Bu yanıtları forumda aç"
+    }
   },
   tool: {
     view: 'Görüntüle',

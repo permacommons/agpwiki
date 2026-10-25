@@ -7,6 +7,7 @@ import express from 'express';
 
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
+import { NotFoundError } from '../src/lib/errors.js';
 import { toToolErrorPayload } from '../src/mcp/errors.js';
 import ForumComment from '../src/models/forum-comment.js';
 import ForumThread from '../src/models/forum-thread.js';
@@ -14,7 +15,15 @@ import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
-import { createForumComment, createForumThread } from '../src/services/forum-service.js';
+import {
+  createForumComment,
+  createForumThread,
+  deleteForumThread,
+  listForumCommentVersions,
+  readForumComment,
+  readForumThread,
+  updateForumComment,
+} from '../src/services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -284,6 +293,125 @@ test('Forum reply is kept when the thread activity bump hits a revision conflict
     const saved = await ForumComment.filterWhere({ id: reply.id }).first();
     assert.equal(saved?.threadId, thread.id);
   } finally {
+    await cleanupForumThread(dal, threadId);
+    await cleanupUser(dal, userId);
+  }
+});
+
+test('Comment editing works without JavaScript, preserves failed drafts, and checks authorship', async t => {
+  const dal = await getDal();
+  const server = await makeTestServer(registerForumRoutes);
+  let userId: string | null = null;
+  let otherUserId: string | null = null;
+  let threadId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const other = await createTestUser();
+    otherUserId = other.id;
+    const thread = await createForumThread(
+      { category: 'general', title: `edit-${uniqueSuffix()}`, body: 'Original <text>.', language: 'en' },
+      user.id
+    );
+    threadId = thread.id;
+    const comment = (await readForumThread(dal, thread.id)).comments[0];
+    const { token } = await createSession(user.id);
+    const { token: otherToken } = await createSession(other.id);
+    const editUrl = `${server.url}/tool/forum/comment/${comment.id}/edit`;
+    const returnPath = `/meta%2Fproposals%2Ftest#reply-${comment.id}`;
+    const get = (url: string, sessionToken = token) => fetch(url, {
+      headers: { cookie: `agpwiki_session=${sessionToken}` }, redirect: 'manual',
+    });
+    const html = async (response: Response) => ((await response.json()) as { bodyHtml: string }).bodyHtml;
+
+    const page = await get(`${server.url}/tool/forum/thread/${thread.id}`);
+    assert.equal(page.status, 200);
+    const threadHtml = await html(page);
+    assert.ok(threadHtml.includes('data-comment-edit-link'));
+    assert.ok(threadHtml.includes('data-comment-editor hidden'));
+    assert.ok(!threadHtml.includes('<details class="forum-comment-edit">'));
+
+    const editor = await get(`${editUrl}?return=${encodeURIComponent(returnPath)}`);
+    assert.equal(editor.status, 200);
+    const editorHtml = await html(editor);
+    assert.ok(editorHtml.includes('Original &lt;text&gt;.'));
+    assert.ok(editorHtml.includes('data-comment-editor>'));
+    assert.ok(editorHtml.includes(`href="${returnPath}" data-comment-edit-cancel`));
+    assert.ok(editorHtml.includes(`name="return" value="${returnPath}"`));
+
+    for (const unsafeReturn of ['//example.com', '/\\example.com', '/\n/example.com']) {
+      const response = await get(`${editUrl}?return=${encodeURIComponent(unsafeReturn)}`);
+      assert.ok((await html(response)).includes(`name="return" value="/tool/forum/thread/${thread.id}#comment-${comment.id}"`));
+    }
+    assert.equal((await get(editUrl, otherToken)).status, 403);
+    assert.equal((await postForm(editUrl, otherToken, { body: 'Not mine.', language: 'en' })).status, 403);
+
+    const invalid = await postForm(editUrl, token, { body: '   ', language: 'en', return: returnPath });
+    assert.equal(invalid.status, 400);
+    const invalidHtml = await html(invalid);
+    assert.ok(invalidHtml.includes('operatorEdit.validation.generic'));
+    assert.ok(invalidHtml.includes('>   </textarea>'));
+    assert.ok(invalidHtml.includes(`name="return" value="${returnPath}"`));
+    assert.equal((await readForumComment(comment.id)).body?.en, 'Original <text>.');
+
+    saveConcurrentRevisionBeforeNextSave(t, ForumComment, user.id);
+    const conflict = await postForm(editUrl, token, { body: 'My unsaved draft.', language: 'en', return: returnPath });
+    assert.equal(conflict.status, 409);
+    const conflictHtml = await html(conflict);
+    assert.ok(conflictHtml.includes('forum.editConflict'));
+    assert.ok(conflictHtml.includes('>My unsaved draft.</textarea>'));
+
+    const saved = await postForm(editUrl, token, { body: 'Updated.', language: 'en', return: returnPath });
+    assert.equal(saved.status, 303);
+    assert.equal(saved.headers.get('location'), returnPath);
+    assert.equal((await readForumComment(comment.id)).body?.en, 'Updated.');
+  } finally {
+    await server.close();
+    await cleanupForumThread(dal, threadId);
+    await cleanupUser(dal, otherUserId);
+    await cleanupUser(dal, userId);
+  }
+});
+
+
+test('Comment history is inaccessible after its parent thread is deleted', async () => {
+  const dal = await getDal();
+  const server = await makeTestServer(app => {
+    app.use((_req, res, next) => {
+      res.locals.signedIn = false;
+      next();
+    });
+    registerForumRoutes(app);
+  });
+  let userId: string | null = null;
+  let threadId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, FORUM_MODERATOR_ROLE);
+    const thread = await createForumThread(
+      { category: 'general', title: `history-${uniqueSuffix()}`, body: 'Original private rationale.', language: 'en' },
+      user.id
+    );
+    threadId = thread.id;
+    const commentId = thread.firstCommentId;
+    await updateForumComment(dal, { commentId, body: 'Revised private rationale.', language: 'en' }, user.id);
+    const historyUrl = `${server.url}/tool/forum/comment/${commentId}/history`;
+    const before = await fetch(historyUrl);
+    assert.equal(before.status, 200);
+    const beforeBody = await before.text();
+    assert.ok(beforeBody.includes('Original'));
+    assert.ok(beforeBody.includes('Revised'));
+
+    await deleteForumThread(dal, { threadId, revSummary: { en: 'Remove thread.' } }, user.id);
+    const deletedThread = await fetch(`${server.url}/tool/forum/thread/${threadId}`);
+    assert.equal(deletedThread.status, 404);
+    const after = await fetch(historyUrl);
+    assert.equal(after.status, 404, 'deleting a thread must also hide its comments history');
+    assert.equal(await after.text(), 'page.notFound');
+    await assert.rejects(() => listForumCommentVersions(dal, commentId), NotFoundError);
+  } finally {
+    await server.close();
     await cleanupForumThread(dal, threadId);
     await cleanupUser(dal, userId);
   }

@@ -9,11 +9,11 @@ import {
   ADMIN_EVENT_WIKI_PAGE_SIGNOFF_WITHDRAWN,
   recordAdminEvent,
 } from './admin-event-service.js';
+import { reattachForumThread } from './forum-service.js';
 import { ensureNonEmptyString, ensureOptionalLanguage, ensureOptionalString, normalizeSlugInput } from './validation.js';
 import { readWikiPage } from './wiki-page-service.js';
 
 export const SIGNOFF_PAGE_PREFIX = 'meta/proposals/';
-export const SIGNOFF_COMMENT_MAX_LENGTH = 2000;
 export const SIGNOFF_STANCES = ['support', 'neutral', 'oppose'] as const;
 export type SignoffStance = (typeof SIGNOFF_STANCES)[number];
 
@@ -137,9 +137,6 @@ export const signOffPage = async (
   if (typeof comment === 'string' && comment.trim()) {
     ensureNonEmptyString(commentLanguage, 'commentLanguage', errors);
   }
-  if (typeof comment === 'string' && comment.trim().length > SIGNOFF_COMMENT_MAX_LENGTH) {
-    errors.add('comment', `Must be ${SIGNOFF_COMMENT_MAX_LENGTH} characters or fewer.`, 'max_length');
-  }
   errors.throwIfAny();
 
   const page = await resolveSignoffPage(dalInstance, slug, userId, 'Invalid sign-off input.');
@@ -159,6 +156,11 @@ export const signOffPage = async (
     commentLanguage: normalizedComment ? commentLanguage : null,
     signedAt: new Date(),
   });
+  if (previous) {
+    // A changed position is saved as a new one; the forum thread with the
+    // replies to it follows, so the conversation stays in one place.
+    await reattachForumThread({ type: 'position', id: previous.id }, signoff.id, userId);
+  }
 
   await recordAdminEvent(dalInstance, {
     eventType: ADMIN_EVENT_WIKI_PAGE_SIGNED_OFF,

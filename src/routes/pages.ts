@@ -55,6 +55,7 @@ import {
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
 import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
   getProposalStatusPermissions,
@@ -1083,6 +1084,49 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/position-reply$/, async (req, res) => {
+    const slug = req.params[0];
+    if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    const field = (name: string) => (typeof req.body?.[name] === 'string' ? req.body[name] : '');
+    try {
+      const dalInstance = await initializePostgreSQL();
+      const reply = await replyToPosition(
+        dalInstance,
+        {
+          slug,
+          signoffId: field('signoffId'),
+          body: normalizeLineEndings(field('body')),
+          language: field('language'),
+        },
+        session.userId
+      );
+      res.redirect(303, `${pageViewPath(slug)}#reply-${reply.commentId}`);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('signoff.reply.forbidden'));
+        return;
+      }
+      if (error instanceof ValidationError) {
+        res.status(400).type('text').send(req.t('signoff.reply.invalid'));
+        return;
+      }
+      console.error('Failed to save reply:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/sign-off$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1334,6 +1378,34 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
+      const replyThreads = signoffs
+        ? await listPositionReplies(
+            dalInstance,
+            signoffs.map(signoff => signoff.id)
+          )
+        : new Map();
+      const replySources = [...replyThreads.values()].flatMap(thread => thread.replies.map(reply => reply.body));
+      const replyCitations = replySources.length
+        ? await loadCitationEntriesForSources(dalInstance, replySources)
+        : [];
+      const signoffReplies = new Map(
+        await Promise.all(
+          [...replyThreads.entries()].map(async ([signoffId, thread]) => {
+            for (const reply of thread.replies) if (reply.authorId) userIds.add(reply.authorId);
+            const replies = await Promise.all(
+              thread.replies.map(async reply => ({
+                ...reply,
+                bodyHtml: (
+                  await renderMarkdown(reply.body, replyCitations, {
+                    backToCitationLabel: req.t('citation.backToCitationAria'),
+                  })
+                ).html,
+              }))
+            );
+            return [signoffId, { threadId: thread.threadId, replies }] as const;
+          })
+        )
+      );
       if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
@@ -1475,9 +1547,13 @@ export const registerPageRoutes = (app: Express) => {
             userMap,
             viewerId: session?.userId ?? null,
             canSignOff: await canSignOffPages(dalInstance, session?.userId),
+            canReply:
+              (await canSignOffPages(dalInstance, session?.userId)) &&
+              Boolean((res.locals.accountState as { isEmailVerified?: boolean } | null)?.isEmailVerified),
             t: req.t,
             language: req.language ?? 'en',
             languageOptions: res.locals.languageOptions,
+            replies: signoffReplies,
           })
         : '';
       const wikidataHtml =

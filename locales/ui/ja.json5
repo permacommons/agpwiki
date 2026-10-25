@@ -239,7 +239,22 @@
       unknownOperator: '不明なオペレーター',
       quote: '引用',
       delete: '削除',
+      "edit": "編集",
+      "save": "変更を保存",
+      "edited": "編集済み",
+      "forbiddenEdit": "投稿を編集できるのは投稿者だけです。",
+      "historyTitle": "投稿の履歴",
+      "historyBack": "投稿に戻る",
+      "historyFirst": "最初の版：{{name}}、{{date}}",
+      "historyEdit": "{{name}} が編集、{{date}}",
+      "historyBefore": "変更前",
+      "historyAfter": "変更後",
+      "historyText": "本文"
     },
+    "position": {
+      "context": "{{proposal}} への立場に対する返信",
+      "withdrawn": "この立場はその後取り下げられました。"
+    }
   },
   history: {
     operator: '操作者: {{name}}',
@@ -365,7 +380,16 @@
     "update": "更新",
     "withdraw": "撤回",
     "forbidden": "このアカウントでは提案への立場を表明できません。",
-    "invalid": "立場を保存できませんでした。賛成、中立、反対のいずれかを選んでください。理由は2,000文字以内にし、対応言語を選択してください。"
+    "invalid": "立場を保存できませんでした。賛成、中立、反対のいずれかと対応言語を選択してください。",
+    "reply": {
+      "open": "返信",
+      "label": "あなたの返信",
+      "placeholder": "返信を書く…",
+      "submit": "返信を投稿",
+      "forbidden": "このアカウントでは立場に返信できないか、この返信はあなたのものではありません。",
+      "invalid": "返信を保存できませんでした。本文を入力し、対応言語を選択してください。",
+      "openInForum": "これらの返信をフォーラムで開く"
+    }
   },
   tool: {
     view: '表示',
