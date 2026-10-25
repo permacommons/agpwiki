@@ -415,7 +415,7 @@ export const readForumComment = async (
 export const createForumThread = async (
   { category, pageSlug, title, body, language, attachment }: CreateForumThreadInput,
   userId: string
-): Promise<ForumThreadResult> => {
+): Promise<ForumThreadResult & { firstCommentId: string }> => {
   const errors = new ValidationCollector('Invalid forum thread input.');
   const normalizedCategory = ensureForumCategory(category, 'category', errors);
   let normalizedPageSlug: string | null = null;
@@ -467,18 +467,21 @@ export const createForumThread = async (
   thread.attachedId = attachment?.id ?? null;
   thread.createdAt = createdAt;
   thread.updatedAt = createdAt;
-  await thread.save();
-
-  const comment = await ForumComment.createFirstRevision(
-    { id: userId },
-    { tags: ['create'], date: createdAt }
-  );
-  comment.threadId = thread.id;
-  comment.body = sanitizeLocalizedMapInput({ [language]: body });
-  comment.originalLanguage = language;
-  comment.createdAt = createdAt;
-  comment.updatedAt = createdAt;
-  await comment.save();
+  // A competing creator must see the opening comment when its insert loses.
+  const firstCommentId = await ForumThread.dal.transaction(async transaction => {
+    await thread.save({ transaction });
+    const comment = await ForumComment.createFirstRevision(
+      { id: userId },
+      { tags: ['create'], date: createdAt }
+    );
+    comment.threadId = thread.id;
+    comment.body = sanitizeLocalizedMapInput({ [language]: body });
+    comment.originalLanguage = language;
+    comment.createdAt = createdAt;
+    comment.updatedAt = createdAt;
+    await comment.save({ transaction });
+    return comment.id;
+  });
 
   try {
     await subscribeActorToForumThread(thread.id, userId);
@@ -490,6 +493,7 @@ export const createForumThread = async (
   return {
     ...toForumThreadResult(thread),
     commentCount: 1,
+    firstCommentId,
   };
 };
 

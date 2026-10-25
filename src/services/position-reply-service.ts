@@ -1,4 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { ConstraintError } from 'rev-dal/lib/errors';
 import debug from '../../util/debug.js';
 import { ForbiddenError, NotFoundError, ValidationCollector } from '../lib/errors.js';
 import PageSignoff from '../models/page-signoff.js';
@@ -8,7 +9,6 @@ import {
   createForumComment,
   createForumThread,
   findAttachedForumThread,
-  readForumThread,
 } from './forum-service.js';
 import { subscribeUserToForumThread } from './forum-subscription-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
@@ -146,19 +146,29 @@ export const replyToPosition = async (
     return { threadId: existing.id, commentId: comment.id, createdThread: false };
   }
 
-  const thread = await createForumThread(
-    {
-      category: 'policy',
-      pageSlug: page.slug,
-      title: `“${excerpt(signoff.comment ?? '', THREAD_TITLE_EXCERPT)}”`,
-      body: body.trim(),
-      language,
-      attachment,
-    },
-    userId
-  );
-  const detail = await readForumThread(dalInstance, thread.id);
-  const commentId = detail.comments[0]?.id ?? '';
+  let thread: Awaited<ReturnType<typeof createForumThread>>;
+  try {
+    thread = await createForumThread(
+      {
+        category: 'policy',
+        pageSlug: page.slug,
+        title: `“${excerpt(signoff.comment ?? '', THREAD_TITLE_EXCERPT)}”`,
+        body: body.trim(),
+        language,
+        attachment,
+      },
+      userId
+    );
+  } catch (error) {
+    if (!(error instanceof ConstraintError) || error.constraint !== 'uq_forum_threads_current_attachment') {
+      throw error;
+    }
+    const winner = await findAttachedForumThread(attachment);
+    if (!winner) throw error;
+    const comment = await createForumComment({ threadId: winner.id, body: body.trim(), language }, userId);
+    return { threadId: winner.id, commentId: comment.id, createdThread: false };
+  }
+  const commentId = thread.firstCommentId;
   await subscribeUserToForumThread(thread.id, signoff.userId);
   try {
     // A new thread does not notify by itself; this first reply should reach

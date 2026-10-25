@@ -113,6 +113,7 @@ import {
 } from '../src/services/wiki-page-service.js';
 import AuthSession from '../src/models/auth-session.js';
 import ForumThread from '../src/models/forum-thread.js';
+import ForumComment from '../src/models/forum-comment.js';
 import NotificationDelivery from '../src/models/notification-delivery.js';
 import NotificationJob from '../src/models/notification-job.js';
 import PasswordResetToken from '../src/models/password-reset-token.js';
@@ -1410,6 +1411,103 @@ test('Service position replies are forum posts in a thread attached to the posit
     await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${slug}%`]);
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
     for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
+  }
+});
+
+test('Concurrent first replies to a position share one forum thread', async t => {
+  const dal = await getDal();
+  const slug = `meta/proposals/test-concurrent-replies-${Date.now()}`;
+  const userIds: string[] = [];
+  try {
+    const author = await createVerifiedTestUser();
+    const firstReplier = await createVerifiedTestUser();
+    const secondReplier = await createVerifiedTestUser();
+    userIds.push(author.id, firstReplier.id, secondReplier.id);
+    await createWikiPage(
+      dal,
+      { slug, title: { en: 'Concurrent replies' }, body: { en: 'Proposal.' }, originalLanguage: 'en' },
+      author.id
+    );
+    const position = await signOffPage(
+      dal, { slug, stance: 'neutral', comment: 'Discuss this.', commentLanguage: 'en' }, author.id
+    );
+
+    // Both requests must finish their empty-thread lookup before either insert.
+    let arrivals = 0;
+    let release: () => void;
+    const bothCreating = new Promise<void>(resolve => { release = resolve; });
+    const timeout = setTimeout(() => release(), 5000);
+    t.after(() => clearTimeout(timeout));
+    const prototype = ForumThread.prototype;
+    const save = prototype.save;
+    t.mock.method(prototype, 'save', async function (...args) {
+      if (this.attachedId === position.id && arrivals < 2) {
+        arrivals++;
+        if (arrivals === 2) release();
+        await bothCreating;
+      }
+      return save.apply(this, args);
+    });
+    const outcomes = await Promise.allSettled([
+      replyToPosition(dal, { slug, signoffId: position.id, body: 'First response.', language: 'en' }, firstReplier.id),
+      replyToPosition(dal, { slug, signoffId: position.id, body: 'Second response.', language: 'en' }, secondReplier.id),
+    ]);
+    const replies = outcomes.map(outcome => {
+      assert.equal(outcome.status, 'fulfilled', outcome.status === 'rejected' ? String(outcome.reason) : '');
+      if (outcome.status === 'rejected') throw outcome.reason;
+      return outcome.value;
+    });
+    assert.equal(arrivals, 2);
+    assert.equal(new Set(replies.map(reply => reply.threadId)).size, 1, 'both replies must use the same thread');
+    assert.equal(replies.filter(reply => reply.createdThread).length, 1);
+    assert.equal(new Set(replies.map(reply => reply.commentId)).size, 2);
+    const threads = await dal.query(
+      `SELECT id FROM forum_threads WHERE attached_type = 'position' AND attached_id = $1
+         AND _old_rev_of IS NULL AND _rev_deleted = false`, [position.id]
+    );
+    assert.equal(threads.rowCount, 1);
+    const detail = await readForumThread(dal, replies[0].threadId);
+    assert.deepEqual(new Set(detail.comments.map(comment => comment.body?.en)), new Set(['First response.', 'Second response.']));
+    for (const [index, reply] of replies.entries()) {
+      assert.equal(detail.comments.find(comment => comment.id === reply.commentId)?.body?.en,
+        index === 0 ? 'First response.' : 'Second response.');
+    }
+
+    const changed = await signOffPage(
+      dal, { slug, stance: 'support', comment: 'Updated position.', commentLanguage: 'en' }, author.id
+    );
+    const grouped = await listPositionReplies(dal, [changed.id]);
+    assert.equal(grouped.get(changed.id)?.replies.length, 2);
+    assert.equal(grouped.get(changed.id)?.threadId, replies[0].threadId);
+  } finally {
+    await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' IN (SELECT id::text FROM forum_threads WHERE page_slug = $1)", [slug]);
+    await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id IN (SELECT id FROM forum_threads WHERE page_slug = $1)', [slug]);
+    await dal.query('DELETE FROM forum_comments WHERE thread_id IN (SELECT id FROM forum_threads WHERE page_slug = $1)', [slug]);
+    await dal.query('DELETE FROM forum_threads WHERE page_slug = $1', [slug]);
+    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
+  }
+});
+
+test('Forum thread creation rolls back when its opening comment cannot be saved', async t => {
+  const dal = await getDal();
+  const title = `test-atomic-thread-${Date.now()}`;
+  let userId: string | undefined;
+  try {
+    const user = await createVerifiedTestUser();
+    userId = user.id;
+    const failure = new Error('Opening comment could not be saved.');
+    const save = t.mock.method(ForumComment.prototype, 'save', async () => { throw failure; });
+    await assert.rejects(
+      () => createForumThread({ category: 'general', title, body: 'Opening.', language: 'en' }, user.id),
+      error => error === failure
+    );
+    save.mock.restore();
+    const threads = await dal.query("SELECT id FROM forum_threads WHERE title->>'en' = $1", [title]);
+    assert.equal(threads.rowCount, 0, 'failed creation must not leave an empty thread');
+  } finally {
+    await dal.query("DELETE FROM forum_threads WHERE title->>'en' = $1", [title]);
+    if (userId) await cleanupTestArtifacts(dal, { userId });
   }
 });
 
