@@ -10,6 +10,7 @@ export interface CommonsFetchResult {
 interface CommonsApiImageInfo {
   url?: string;
   thumburl?: string;
+  sha1?: string;
   thumbwidth?: number;
   thumbheight?: number;
   width?: number;
@@ -52,6 +53,9 @@ export interface FetchCommonsOptions {
 // such URL we can derive a URL at any other canonical step via
 // regex substitution. Returns null if the input doesn't look like
 // a Wikimedia thumbnail URL.
+export const withVersionTag = (url: string, version: string) =>
+  `${url}${url.includes('?') ? '&' : '?'}version=${encodeURIComponent(version)}`;
+
 export const buildThumbnailUrlForWidth = (
   template: string | null | undefined,
   width: number
@@ -228,10 +232,14 @@ export const fetchCommonsMetadata = async (
     action: 'query',
     prop: 'imageinfo',
     titles: normalized,
-    iiprop: 'url|size|mime|mediatype|extmetadata',
+    iiprop: 'url|size|mime|mediatype|extmetadata|sha1',
     iiurlwidth: String(sampleWidth),
     format: 'json',
     formatversion: '2',
+    // Commons lets shared caches keep API answers for an hour, so a
+    // refresh right after a new upload could get the old file's details.
+    // A unique request ID makes every fetch a cache miss.
+    requestid: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   });
 
   const controller = new AbortController();
@@ -329,12 +337,20 @@ export const fetchCommonsMetadata = async (
   // have no `/<W>px-` for buildThumbnailUrlForWidth to substitute,
   // so synthesize a real thumb URL from `info.url`. Falls through
   // to null if the original URL isn't recognizably Wikimedia.
-  const thumbnailUrlTemplate =
+  const baseThumbnailTemplate =
     mediaType === 'image' && info.thumburl
       ? /\/\d+px-/.test(info.thumburl)
         ? info.thumburl
         : synthesizeWikimediaThumbnailTemplate(info.url ?? null, sampleWidth)
       : null;
+  // A thumbnail URL is the same for every version of a file, so caches
+  // in front of Commons can keep serving the old picture after a new
+  // version is uploaded. Tagging the URL with the version's hash makes
+  // each version's thumbnails a separate cache entry.
+  const thumbnailUrlTemplate =
+    baseThumbnailTemplate && info.sha1
+      ? withVersionTag(baseThumbnailTemplate, info.sha1.slice(0, 12))
+      : baseThumbnailTemplate;
 
   const data: MediaData = {
     commonsPageUrl,
