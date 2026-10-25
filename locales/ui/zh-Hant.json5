@@ -220,7 +220,7 @@
       delete: '刪除主題',
       subscribe: '訂閱',
       unsubscribe: '取消訂閱',
-      notificationsDisabled: '論壇電子郵件通知目前已在你的<a href="{{settingsHref}}">設定</a>中停用。',
+      notificationsDisabled: "論壇回覆通知已在你的<a href=\"{{settingsHref}}\">設定</a>中關閉。",
     },
     pageLink: {
       context: '關於 {{page}} 的討論。',
@@ -675,12 +675,47 @@
     "allChecks": "全部",
     "empty": "目前此清單中沒有條目。"
   },
+  "notifications": {
+    "title": "通知",
+    "bellUnread_one": "通知：{{count}} 則未讀",
+    "bellUnread_other": "通知：{{count}} 則未讀",
+    "someone": "有人",
+    "kind": {
+      "forumReply": "{{name}} 在 {{subject}} 中回覆了",
+      "other": "{{subject}} 有新動態"
+    },
+    "markRead": "標為已讀",
+    "markAllRead": "全部標為已讀",
+    "bar": {
+      "more_one": "還有 {{count}} 則",
+      "more_other": "還有 {{count}} 則",
+      "all": "所有通知"
+    },
+    "unread": "新",
+    "settings": "通知設定",
+    "empty": "還沒有通知。當有人在你關注的論壇討論串中回覆時，你會收到通知。"
+  },
   settings: {
     title: '設定',
-    description: '啟用後，當其他人在你已訂閱的主題中回覆時，Agpedia 會寄送電子郵件給你。你可以在每個主題中訂閱或取消訂閱。',
-    emailNotifications: '寄送關於論壇活動的電子郵件給我',
     save: '儲存設定',
     saved: '你的設定已更新。',
+    "notifications": {
+      "heading": "通知",
+      "intro": "選擇 Agpedia 如何告訴你各類活動。",
+      "emailUnverified": "電子郵件通知需要已驗證的電子郵件地址。在此之前，通知只會顯示在網站上。",
+      "channel": {
+        "both": "電子郵件和網站",
+        "site": "僅網站",
+        "email": "僅電子郵件",
+        "none": "不接收"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "你關注的論壇討論串中的回覆",
+          "help": "你發起或回覆討論串時就會關注它。你也可以在討論串頁面關注或取消關注。"
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "此提案已受保護，只有維基管理員可以變更其連結。",

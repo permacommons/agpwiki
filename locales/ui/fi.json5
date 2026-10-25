@@ -221,7 +221,7 @@
       delete: 'Poista ketju',
       subscribe: 'Tilaa',
       unsubscribe: 'Peru tilaus',
-      notificationsDisabled: 'Foorumin sähköposti-ilmoitukset on tällä hetkellä poistettu käytöstä <a href="{{settingsHref}}">asetuksissasi</a>.',
+      notificationsDisabled: "Foorumivastausten ilmoitukset on poistettu käytöstä <a href=\"{{settingsHref}}\">asetuksissasi</a>.",
     },
     pageLink: {
       context: 'Keskustelu sivusta {{page}}.',
@@ -677,12 +677,47 @@
     "allChecks": "Kaikki",
     "empty": "Luettelossa ei ole nyt artikkeleita."
   },
+  "notifications": {
+    "title": "Ilmoitukset",
+    "bellUnread_one": "Ilmoitukset: {{count}} lukematon",
+    "bellUnread_other": "Ilmoitukset: {{count}} lukematonta",
+    "someone": "Joku",
+    "kind": {
+      "forumReply": "{{name}} vastasi ketjussa {{subject}}",
+      "other": "Uutta toimintaa: {{subject}}"
+    },
+    "markRead": "Merkitse luetuksi",
+    "markAllRead": "Merkitse kaikki luetuiksi",
+    "bar": {
+      "more_one": "{{count}} lisää",
+      "more_other": "{{count}} lisää",
+      "all": "Kaikki ilmoitukset"
+    },
+    "unread": "uusi",
+    "settings": "Ilmoitusasetukset",
+    "empty": "Ei vielä ilmoituksia. Saat ilmoituksen, kun joku vastaa seuraamassasi foorumiketjussa."
+  },
   settings: {
     title: 'Asetukset',
-    description: 'Kun tämä on käytössä, Agpedia lähettää sinulle sähköpostia, kun joku muu vastaa ketjuun, jota seuraat. Voit tilata tai perua tilauksen jokaisessa ketjussa.',
-    emailNotifications: 'Lähetä minulle sähköpostia foorumin toiminnasta',
     save: 'Tallenna asetukset',
     saved: 'Asetuksesi on päivitetty.',
+    "notifications": {
+      "heading": "Ilmoitukset",
+      "intro": "Valitse, miten Agpedia kertoo sinulle kustakin toiminnasta.",
+      "emailUnverified": "Sähköposti-ilmoitukset vaativat vahvistetun sähköpostiosoitteen. Siihen asti ne näkyvät vain sivustolla.",
+      "channel": {
+        "both": "Sähköposti ja sivusto",
+        "site": "Vain sivustolla",
+        "email": "Vain sähköposti",
+        "none": "Ei mitään"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Vastaukset seuraamissasi foorumiketjuissa",
+          "help": "Seuraat ketjua, kun aloitat sen tai vastaat siihen. Voit myös aloittaa tai lopettaa seuraamisen ketjussa."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Tämä ehdotus on suojattu; vain wikin ylläpitäjät voivat muuttaa sen linkkejä.",

@@ -220,7 +220,7 @@
       delete: '스레드 삭제',
       subscribe: '구독',
       unsubscribe: '구독 취소',
-      notificationsDisabled: '포럼 이메일 알림이 현재 <a href="{{settingsHref}}">설정</a>에서 비활성화되어 있습니다.',
+      notificationsDisabled: "포럼 답글 알림이 <a href=\"{{settingsHref}}\">설정</a>에서 꺼져 있습니다.",
     },
     pageLink: {
       context: '{{page}}에 대한 토론.',
@@ -675,12 +675,47 @@
     "allChecks": "전체",
     "empty": "지금은 이 목록에 문서가 없습니다."
   },
+  "notifications": {
+    "title": "알림",
+    "bellUnread_one": "알림: 읽지 않음 {{count}}개",
+    "bellUnread_other": "알림: 읽지 않음 {{count}}개",
+    "someone": "누군가",
+    "kind": {
+      "forumReply": "{{name}} 님이 {{subject}}에 답글을 남겼습니다",
+      "other": "{{subject}}에 새 활동이 있습니다"
+    },
+    "markRead": "읽음으로 표시",
+    "markAllRead": "모두 읽음으로 표시",
+    "bar": {
+      "more_one": "{{count}}개 더",
+      "more_other": "{{count}}개 더",
+      "all": "모든 알림"
+    },
+    "unread": "새 알림",
+    "settings": "알림 설정",
+    "empty": "아직 알림이 없습니다. 팔로우하는 포럼 스레드에 누군가 답글을 달면 알림을 받습니다."
+  },
   settings: {
     title: '설정',
-    description: '활성화하면 내가 구독한 스레드에 다른 사람이 답글을 달 때 Agpedia가 이메일을 보냅니다. 각 스레드에서 구독하거나 구독을 취소할 수 있습니다.',
-    emailNotifications: '포럼 활동에 대한 이메일 받기',
     save: '설정 저장',
     saved: '설정이 업데이트되었습니다.',
+    "notifications": {
+      "heading": "알림",
+      "intro": "활동 종류마다 Agpedia가 알려 주는 방식을 선택하세요.",
+      "emailUnverified": "이메일 알림을 받으려면 인증된 이메일 주소가 필요합니다. 그전까지는 사이트에만 표시됩니다.",
+      "channel": {
+        "both": "이메일과 사이트",
+        "site": "사이트만",
+        "email": "이메일만",
+        "none": "받지 않음"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "팔로우하는 포럼 스레드의 답글",
+          "help": "스레드를 시작하거나 답글을 달면 팔로우하게 됩니다. 스레드에서 팔로우하거나 해제할 수도 있습니다."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "이 제안은 보호되어 있습니다. 위키 관리자만 링크를 변경할 수 있습니다.",

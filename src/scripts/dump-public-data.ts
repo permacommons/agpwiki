@@ -62,6 +62,7 @@ interface RunCommandOptions extends SpawnOptions {
 const sanitizedUserOverrides: SelectOverrides = {
   email: "('redacted+' || u.id::text || '@example.invalid')::VARCHAR(254)",
   password_hash: "'redacted'::VARCHAR(255)",
+  notification_preferences: "'{}'::JSONB",
 };
 
 const VIEW_CONFIGS: ViewConfig[] = [

@@ -2,9 +2,9 @@
   /*
    i18n-identical-allowlist:
    {
-     // These tab labels are also the local words in these languages.
+     // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
-     "fr": ["recentTabs.pages", "recentTabs.citations"],
+     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading"],
      "id": ["recentTabs.media"],
      "it": ["recentTabs.media"],
      "nl": ["recentTabs.media"],
@@ -455,7 +455,7 @@
       "delete": "Delete thread",
       "subscribe": "Subscribe",
       "unsubscribe": "Unsubscribe",
-      "notificationsDisabled": "Forum email notifications are currently disabled in your <a href=\"{{settingsHref}}\">settings</a>."
+      "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
       "context": "Discussion for {{page}}.",
@@ -971,11 +971,47 @@
     "allChecks": "All",
     "empty": "No articles in this list right now."
   },
+  // On-site notifications: the bell in the header, the bar under it and the list page.
+  "notifications": {
+    "title": "Notifications",
+    "bellUnread_one": "Notifications: {{count}} unread",
+    "bellUnread_other": "Notifications: {{count}} unread",
+    "someone": "Someone",
+    "kind": {
+      "forumReply": "{{name}} replied in {{subject}}",
+      "other": "New activity in {{subject}}"
+    },
+    "markRead": "Mark as read",
+    "markAllRead": "Mark all as read",
+    "bar": {
+      "more_one": "{{count}} more",
+      "more_other": "{{count}} more",
+      "all": "All notifications"
+    },
+    "unread": "new",
+    "settings": "Notification settings",
+    "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."
+  },
   "settings": {
     "title": "Settings",
-    "description": "When enabled, Agpedia emails you when someone else replies to a thread you are subscribed to. You can subscribe or unsubscribe on each thread.",
-    "emailNotifications": "Email me about forum activity",
     "save": "Save settings",
-    "saved": "Your settings have been updated."
+    "saved": "Your settings have been updated.",
+    "notifications": {
+      "heading": "Notifications",
+      "intro": "Choose how Agpedia tells you about each kind of activity.",
+      "emailUnverified": "Email notifications need a verified email address. Until then they appear on the site only.",
+      "channel": {
+        "both": "Email and on site",
+        "site": "On site only",
+        "email": "Email only",
+        "none": "None"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Replies in forum threads you are subscribed to",
+          "help": "You are subscribed to a thread when you start it or reply in it. You can also subscribe or unsubscribe on the thread."
+        }
+      }
+    }
   }
 }

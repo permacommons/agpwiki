@@ -221,7 +221,7 @@
       delete: 'Hapus topik',
       subscribe: 'Berlangganan',
       unsubscribe: 'Berhenti berlangganan',
-      notificationsDisabled: 'Notifikasi email forum saat ini dinonaktifkan di <a href="{{settingsHref}}">pengaturan</a> Anda.',
+      notificationsDisabled: "Notifikasi balasan forum dimatikan di <a href=\"{{settingsHref}}\">pengaturan</a> Anda.",
     },
     pageLink: {
       context: 'Diskusi tentang {{page}}.',
@@ -677,12 +677,47 @@
     "allChecks": "Semua",
     "empty": "Saat ini tidak ada artikel dalam daftar ini."
   },
+  "notifications": {
+    "title": "Notifikasi",
+    "bellUnread_one": "Notifikasi: {{count}} belum dibaca",
+    "bellUnread_other": "Notifikasi: {{count}} belum dibaca",
+    "someone": "Seseorang",
+    "kind": {
+      "forumReply": "{{name}} membalas di {{subject}}",
+      "other": "Aktivitas baru di {{subject}}"
+    },
+    "markRead": "Tandai sudah dibaca",
+    "markAllRead": "Tandai semua sudah dibaca",
+    "bar": {
+      "more_one": "{{count}} lagi",
+      "more_other": "{{count}} lagi",
+      "all": "Semua notifikasi"
+    },
+    "unread": "baru",
+    "settings": "Pengaturan notifikasi",
+    "empty": "Belum ada notifikasi. Anda akan menerimanya saat seseorang membalas di utas forum yang Anda ikuti."
+  },
   settings: {
     title: 'Pengaturan',
-    description: 'Saat diaktifkan, Agpedia akan mengirim email kepada Anda ketika orang lain membalas utas yang Anda ikuti. Anda dapat berlangganan atau berhenti berlangganan pada setiap utas.',
-    emailNotifications: 'Kirim email kepada saya tentang aktivitas forum',
     save: 'Simpan pengaturan',
     saved: 'Pengaturan Anda telah diperbarui.',
+    "notifications": {
+      "heading": "Notifikasi",
+      "intro": "Pilih cara Agpedia memberi tahu Anda tentang setiap jenis aktivitas.",
+      "emailUnverified": "Notifikasi email memerlukan alamat email terverifikasi. Sampai saat itu, notifikasi hanya muncul di situs.",
+      "channel": {
+        "both": "Email dan di situs",
+        "site": "Hanya di situs",
+        "email": "Hanya email",
+        "none": "Tidak ada"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Balasan di utas forum yang Anda ikuti",
+          "help": "Anda mengikuti utas saat memulainya atau membalas di sana. Anda juga bisa mengikuti atau berhenti mengikuti dari utas itu."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Usulan ini dilindungi; hanya admin wiki yang dapat mengubah tautannya.",

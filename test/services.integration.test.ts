@@ -6,6 +6,7 @@ import test from 'node:test';
 import express from 'express';
 
 import { registerPageRoutes } from '../src/routes/pages.js';
+import { registerNotificationRoutes } from '../src/routes/notifications.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { createSession } from '../src/auth/session.js';
 import { hashToken } from '../src/auth/tokens.js';
@@ -74,6 +75,14 @@ import { listProposalParts, setProposalLinks } from '../src/services/proposal-li
 import { countArticlesWithIssues, listArticlesWithIssues } from '../src/services/article-issues-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { listPositionReplies, replyToPosition } from '../src/services/position-reply-service.js';
+import {
+  countUnreadNotifications,
+  createSiteNotification,
+  findLatestUnreadNotification,
+  listSiteNotifications,
+  markSiteNotificationsRead,
+  openSiteNotification,
+} from '../src/services/site-notification-service.js';
 import {
   findRevisionsWithChangedText,
   listActivePageSignoffs,
@@ -313,7 +322,7 @@ test('Forum notification processing emails subscribed verified users with notifi
     recipientIdForCleanup = recipient.id;
     mutedIdForCleanup = muted.id;
 
-    muted.emailNotificationsEnabled = false;
+    muted.notificationPreferences = { 'forum.reply': 'site' };
     await muted.save();
 
     const thread = await createForumThread(
@@ -354,7 +363,7 @@ test('Forum notification processing emails subscribed verified users with notifi
     assert.equal(sent.length, 1);
     assert.equal(sent[0]?.to, recipient.email);
 
-    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id, channel: 'email' }).run();
     assert.equal(deliveries.length, 1);
     assert.equal(deliveries[0]?.userId, recipient.id);
     assert.equal(deliveries[0]?.status, 'sent');
@@ -369,6 +378,200 @@ test('Forum notification processing emails subscribed verified users with notifi
       const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       console.warn(`Cleanup failed: ${message}`);
     }
+  }
+});
+
+test('Forum reply notifications follow each person\'s channel choice and are not repeated', async () => {
+  const dal = await getDal();
+  const baseTitle = `forum-channels-${Date.now()}`;
+  const forumThreadPrefix = `${baseTitle}%`;
+  const userIds: Array<string | null> = [];
+
+  try {
+    const actor = await createVerifiedTestUser();
+    const both = await createVerifiedTestUser();
+    const siteOnly = await createVerifiedTestUser();
+    const emailOnly = await createVerifiedTestUser();
+    const none = await createVerifiedTestUser();
+    const unverified = await createTestUser();
+    userIds.push(actor.id, both.id, siteOnly.id, emailOnly.id, none.id, unverified.id);
+    siteOnly.notificationPreferences = { 'forum.reply': 'site' };
+    emailOnly.notificationPreferences = { 'forum.reply': 'email' };
+    none.notificationPreferences = { 'forum.reply': 'none' };
+    await Promise.all([siteOnly.save(), emailOnly.save(), none.save()]);
+
+    const thread = await createForumThread(
+      { category: 'general', title: baseTitle, body: 'Opening post.', language: 'en' },
+      actor.id
+    );
+    for (const user of [both, siteOnly, emailOnly, none, unverified]) {
+      await subscribeUserToForumThread(thread.id, user.id);
+    }
+    const reply = await createForumComment(
+      { threadId: thread.id, body: 'A reply <b>with</b> markup.', language: 'en' },
+      actor.id
+    );
+
+    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    assert.ok(job);
+    const emailed: string[] = [];
+    const send = async (message: { to: string }) => {
+      emailed.push(message.to);
+      return { delivered: true as const, skipped: false as const };
+    };
+    const result = await processForumReplyCreatedNotification(dal, job, send);
+    assert.equal(result.sentCount, 2);
+    assert.equal(result.siteCount, 3);
+    assert.deepEqual(emailed.sort(), [both.email, emailOnly.email].sort());
+
+    const notified = await dal.query(
+      'SELECT user_id, kind, url, subject, actor_user_id FROM notifications WHERE job_id = $1',
+      [job.id]
+    );
+    const rows = notified.rows as Array<{ user_id: string; kind: string; url: string; subject: string; actor_user_id: string }>;
+    // Unverified people get on-site notifications, just no email.
+    assert.deepEqual(rows.map(row => row.user_id).sort(), [both.id, siteOnly.id, unverified.id].sort());
+    assert.equal(rows[0].kind, 'forum.reply');
+    assert.equal(rows[0].subject, baseTitle);
+    assert.equal(rows[0].actor_user_id, actor.id);
+    assert.ok(rows[0].url.startsWith('/tool/forum/thread/'));
+    assert.ok(rows[0].url.endsWith(`#comment-${reply.id}`));
+
+    // A retried job delivers nothing twice.
+    const again = await processForumReplyCreatedNotification(dal, job, send);
+    assert.equal(again.sentCount, 0);
+    assert.equal(again.siteCount ?? 0, 0);
+    assert.equal(emailed.length, 2);
+    const count = await dal.query('SELECT COUNT(*)::int AS n FROM notifications WHERE job_id = $1', [job.id]);
+    assert.equal((count.rows[0] as { n: number }).n, 3);
+  } finally {
+    await dal.query("DELETE FROM notifications WHERE subject LIKE $1", [forumThreadPrefix]);
+    await cleanupNotificationScenario(dal, forumThreadPrefix, userIds);
+  }
+});
+
+test('Site notifications can be counted, listed, opened and marked as read by their owner only', async () => {
+  const dal = await getDal();
+  const userIds: string[] = [];
+  try {
+    const owner = await createTestUser();
+    const other = await createTestUser();
+    userIds.push(owner.id, other.id);
+
+    const first = await createSiteNotification(dal, {
+      userId: owner.id,
+      kind: 'forum.reply',
+      actorUserId: other.id,
+      url: '/tool/forum/thread/a#comment-1',
+      subject: 'First',
+    });
+    await new Promise(resolve => setTimeout(resolve, 5));
+    const second = await createSiteNotification(dal, {
+      userId: owner.id,
+      kind: 'forum.reply',
+      actorUserId: other.id,
+      url: 'https://example.com/elsewhere',
+      subject: 'Second',
+      excerpt: 'Excerpt.',
+    });
+
+    assert.equal(await countUnreadNotifications(dal, owner.id), 2);
+    const latest = await findLatestUnreadNotification(dal, owner.id);
+    assert.equal(latest?.id, second);
+    assert.equal(latest?.actorName, other.displayName);
+    // Links never leave the site.
+    assert.equal(latest?.url, '/');
+
+    await assert.rejects(() => openSiteNotification(dal, other.id, first), NotFoundError);
+    assert.equal(await openSiteNotification(dal, owner.id, first), '/tool/forum/thread/a#comment-1');
+    assert.equal(await countUnreadNotifications(dal, owner.id), 1);
+
+    assert.equal(await markSiteNotificationsRead(dal, other.id), 0);
+    assert.equal(await markSiteNotificationsRead(dal, owner.id), 1);
+    assert.equal(await countUnreadNotifications(dal, owner.id), 0);
+    assert.equal(await findLatestUnreadNotification(dal, owner.id), null);
+
+    const list = await listSiteNotifications(dal, owner.id);
+    assert.deepEqual(list.map(item => item.subject), ['Second', 'First']);
+    assert.ok(list.every(item => item.readAt instanceof Date));
+  } finally {
+    for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
+  }
+});
+
+test('Notification pages expose older entries and mark all unread entries as read', async () => {
+  const dal = await getDal();
+  let userId: string | null = null;
+  const app = express();
+  app.use(express.urlencoded({ extended: false }));
+  app.use((req, res, next) => {
+    req.t = ((key: string, options?: Record<string, unknown>) => {
+      if (key === 'notifications.kind.forumReply') return `${options?.name} ${options?.subject}`;
+      return options ? `${key}${JSON.stringify(options)}` : key;
+    }) as typeof req.t;
+    res.render = ((_view: string, options?: Record<string, unknown>) => {
+      res.json({ bodyHtml: options?.bodyHtml });
+    }) as express.Response['render'];
+    next();
+  });
+  registerNotificationRoutes(app);
+  const server = http.createServer(app);
+
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const session = await createSession(user.id);
+    const headers = { cookie: `agpwiki_session=${session.token}` };
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const address = server.address();
+    assert.ok(address && typeof address !== 'string');
+    const url = `http://127.0.0.1:${address.port}/tool/notifications`;
+    const getPage = async (query = '') => {
+      const response = await fetch(`${url}${query}`, { headers });
+      assert.equal(response.status, 200);
+      return ((await response.json()) as { bodyHtml: string }).bodyHtml;
+    };
+    const empty = await getPage('?page=999');
+    assert.ok(empty.includes('notifications.empty'));
+    assert.ok(!empty.includes('notifications.markAllRead'));
+
+    await dal.query(`INSERT INTO notifications (user_id, kind, url, subject, created_at, read_at)
+      SELECT $1, 'forum.reply', '/tool/forum', 'Notification ' || n,
+             NOW() - n * INTERVAL '1 second', CASE WHEN n <= 200 THEN NOW() ELSE NULL END
+        FROM generate_series(1, 205) AS n`, [user.id]);
+    const pages = await Promise.all([getPage(), getPage('?page=2'), getPage('?page=3')]);
+    assert.deepEqual(pages.map(html => (html.match(/class="notification-item(?: notification-item--unread)?"/g) ?? []).length), [100, 100, 5]);
+    const ids = pages.flatMap(html => [...html.matchAll(/href="\/tool\/notifications\/([^/]+)\/open"/g)].map(match => match[1]));
+    assert.equal(new Set(ids).size, 205);
+    assert.ok(!pages[0].includes('notification-item--unread'));
+    assert.ok(pages[0].includes('notifications.markAllRead'));
+    assert.ok(pages[2].includes('notification-item--unread'));
+    assert.ok(pages[2].includes('name="return" value="/tool/notifications?page=3"'));
+    for (const query of ['?page=invalid', '?page=-1', '?page=1&page=2']) {
+      assert.equal(await getPage(query), pages[0]);
+    }
+    assert.equal(await getPage('?page=999999999999999999999'), pages[2]);
+
+    const response = await fetch(`${url}/read`, {
+      method: 'POST',
+      headers,
+      body: new URLSearchParams({ return: '/tool/notifications?page=3' }),
+      redirect: 'manual',
+    });
+    assert.equal(response.status, 303);
+    assert.equal(response.headers.get('location'), '/tool/notifications?page=3');
+    assert.equal(await countUnreadNotifications(dal, user.id), 0);
+    assert.ok(!(await getPage()).includes('notifications.markAllRead'));
+  } finally {
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close(error => (error ? reject(error) : resolve()));
+      });
+    }
+    if (userId) await cleanupTestArtifacts(dal, { userId });
   }
 });
 
@@ -476,7 +679,7 @@ test('Forum notification processing records disabled email delivery as skipped',
     }));
     assert.equal(result.sentCount, 0);
 
-    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id, channel: 'email' }).run();
     assert.equal(deliveries.length, 1);
     assert.equal(deliveries[0]?.userId, recipient.id);
     assert.equal(deliveries[0]?.status, 'skipped');
@@ -752,7 +955,7 @@ test('Forum notification processing skips deleted comments without retrying', as
     assert.equal(result.sentCount, 0);
     assert.equal(result.skipped, 'comment_not_found');
 
-    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id }).run();
+    const deliveries = await NotificationDelivery.filterWhere({ jobId: job.id, channel: 'email' }).run();
     assert.equal(deliveries.length, 0);
   } finally {
     try {

@@ -24,6 +24,7 @@ import {
   forumThreadPath,
   forumThreadPinPath,
 } from '../lib/forum-paths.js';
+import { readNotificationChannel } from '../lib/notification-preferences.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
@@ -800,7 +801,7 @@ const renderThreadPage = async (
 </div>`
     : '';
   const subscriptionHelp =
-    session && currentUser?.emailNotificationsEnabled === false
+    session && readNotificationChannel(currentUser?.notificationPreferences, 'forum.reply') === 'none'
       ? `<p class="form-help">${req.t('forum.thread.notificationsDisabled', {
           settingsHref: '/tool/settings',
         })}</p>`

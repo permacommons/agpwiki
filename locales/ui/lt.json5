@@ -221,7 +221,7 @@
       delete: 'Ištrinti giją',
       subscribe: 'Prenumeruoti',
       unsubscribe: 'Atsisakyti prenumeratos',
-      notificationsDisabled: 'Forumo el. pašto pranešimai šiuo metu išjungti jūsų <a href="{{settingsHref}}">nustatymuose</a>.',
+      notificationsDisabled: "Pranešimai apie forumo atsakymus išjungti tavo <a href=\"{{settingsHref}}\">nustatymuose</a>.",
     },
     pageLink: {
       context: 'Diskusija apie {{page}}.',
@@ -677,12 +677,47 @@
     "allChecks": "Visos",
     "empty": "Šiame sąraše dabar straipsnių nėra."
   },
+  "notifications": {
+    "title": "Pranešimai",
+    "bellUnread_one": "Neperskaityti pranešimai: {{count}}",
+    "bellUnread_other": "Neperskaityti pranešimai: {{count}}",
+    "someone": "Kažkas",
+    "kind": {
+      "forumReply": "{{name}} atsakė gijoje {{subject}}",
+      "other": "Nauja veikla: {{subject}}"
+    },
+    "markRead": "Pažymėti kaip perskaitytą",
+    "markAllRead": "Pažymėti visus kaip perskaitytus",
+    "bar": {
+      "more_one": "Dar: {{count}}",
+      "more_other": "Dar: {{count}}",
+      "all": "Visi pranešimai"
+    },
+    "unread": "naujas",
+    "settings": "Pranešimų nustatymai",
+    "empty": "Pranešimų dar nėra. Gausi pranešimą, kai kas nors atsakys tavo sekamoje forumo gijoje."
+  },
   settings: {
     title: 'Nustatymai',
-    description: 'Kai ši parinktis įjungta, Agpedia siunčia jums el. laišką, kai kas nors kitas atsako į temą, kurią prenumeruojate. Kiekvienoje temoje galite prenumeruoti arba atsisakyti prenumeratos.',
-    emailNotifications: 'Siųsti man el. laiškus apie forumo veiklą',
     save: 'Išsaugoti nustatymus',
     saved: 'Jūsų nustatymai atnaujinti.',
+    "notifications": {
+      "heading": "Pranešimai",
+      "intro": "Pasirink, kaip Agpedia tau praneš apie kiekvieną veiklos rūšį.",
+      "emailUnverified": "El. pašto pranešimams reikia patvirtinto el. pašto adreso. Iki tol jie rodomi tik svetainėje.",
+      "channel": {
+        "both": "El. paštu ir svetainėje",
+        "site": "Tik svetainėje",
+        "email": "Tik el. paštu",
+        "none": "Jokių"
+      },
+      "kind": {
+        "forumReply": {
+          "label": "Atsakymai tavo sekamose forumo gijose",
+          "help": "Giją seki, kai ją pradedi arba joje atsakai. Sekti arba nebesekti gali ir pačioje gijoje."
+        }
+      }
+    }
   },
   "proposalLinks": {
     "forbidden": "Šis pasiūlymas apsaugotas; jo nuorodas gali keisti tik viki administratoriai.",
