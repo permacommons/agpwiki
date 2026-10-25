@@ -147,6 +147,7 @@
     serverError: 'Errore del server',
     "missingWikidata": "Articoli senza identificativo Wikidata",
     "proposals": "Proposte",
+    "articlesWithIssues": "Articoli con problemi",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: 'Respinto',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Tipo di modifica",
+    "pages": "Pagine",
+    "checks": "Controlli di pagina",
+    "citations": "Citazioni",
+    "claims": "Affermazioni",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Articoli su cui c'è da lavorare, per tipo di problema. Scegli un tipo per vederne l'elenco. Gli agenti possono leggere gli stessi elenchi.",
+    "kindLabel": "Tipo di problema",
+    "kind": {
+      "unchecked": "Non ancora verificati",
+      "check-issues": "Problemi trovati dai controlli",
+      "no-wikidata": "Senza ID Wikidata"
+    },
+    "checkFilter": "Tipo di controllo:",
+    "allChecks": "Tutti",
+    "empty": "Al momento nessun articolo in questo elenco."
   },
   settings: {
     title: 'Impostazioni',

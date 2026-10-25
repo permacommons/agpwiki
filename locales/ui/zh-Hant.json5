@@ -147,6 +147,7 @@
     serverError: '伺服器錯誤',
     "missingWikidata": "沒有維基數據識別碼的條目",
     "proposals": "提案",
+    "articlesWithIssues": "有問題的條目",
     "wikidata": "維基數據：",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: '已拒絕',
       },
     },
+  },
+  "recentTabs": {
+    "label": "變更類型",
+    "pages": "頁面",
+    "checks": "頁面檢查",
+    "citations": "引用",
+    "claims": "論斷",
+    "media": "媒體"
+  },
+  "issues": {
+    "description": "需要改善的條目，依問題類型列出。選擇一種類型即可查看清單。智慧代理也能讀取相同的清單。",
+    "kindLabel": "問題類型",
+    "kind": {
+      "unchecked": "尚未查核事實",
+      "check-issues": "頁面檢查發現的問題",
+      "no-wikidata": "沒有維基數據 ID"
+    },
+    "checkFilter": "檢查類型：",
+    "allChecks": "全部",
+    "empty": "目前此清單中沒有條目。"
   },
   settings: {
     title: '設定',

@@ -147,6 +147,7 @@
     serverError: 'Error del servidor',
     "missingWikidata": "Artículos sin identificador de Wikidata",
     "proposals": "Propuestas",
+    "articlesWithIssues": "Artículos con problemas",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: 'Rechazada',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Tipo de cambio",
+    "pages": "Páginas",
+    "checks": "Revisiones de página",
+    "citations": "Citas",
+    "claims": "Afirmaciones",
+    "media": "Multimedia"
+  },
+  "issues": {
+    "description": "Artículos que necesitan trabajo, por tipo de problema. Elige un tipo para ver su lista. Los agentes pueden leer las mismas listas.",
+    "kindLabel": "Tipo de problema",
+    "kind": {
+      "unchecked": "Aún sin verificar",
+      "check-issues": "Problemas hallados en revisiones",
+      "no-wikidata": "Sin ID de Wikidata"
+    },
+    "checkFilter": "Tipo de revisión:",
+    "allChecks": "Todas",
+    "empty": "Ahora no hay artículos en esta lista."
   },
   settings: {
     title: 'Configuración',

@@ -148,6 +148,7 @@
     serverError: 'Servila eraro',
     "missingWikidata": "Artikoloj sen Vikidatuma identigilo",
     "proposals": "Proponoj",
+    "articlesWithIssues": "Artikoloj kun problemoj",
     "wikidata": "Vikidatumoj:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: 'Rifuzita',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Speco de ŝanĝo",
+    "pages": "Paĝoj",
+    "checks": "Paĝaj kontroloj",
+    "citations": "Citaĵoj",
+    "claims": "Asertoj",
+    "media": "Aŭdvidaĵoj"
+  },
+  "issues": {
+    "description": "Artikoloj, kiuj bezonas laboron, laŭ speco de problemo. Elektu specon por vidi ĝian liston. Agentoj povas legi la samajn listojn.",
+    "kindLabel": "Speco de problemo",
+    "kind": {
+      "unchecked": "Ankoraŭ ne kontrolitaj",
+      "check-issues": "Problemoj trovitaj de paĝaj kontroloj",
+      "no-wikidata": "Sen Vikidatumaj identigilo"
+    },
+    "checkFilter": "Speco de kontrolo:",
+    "allChecks": "Ĉiuj",
+    "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
   settings: {
     title: 'Agordoj',

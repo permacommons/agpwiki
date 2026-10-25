@@ -147,6 +147,7 @@
     serverError: 'Błąd serwera',
     "missingWikidata": "Artykuły bez identyfikatora Wikidanych",
     "proposals": "Propozycje",
+    "articlesWithIssues": "Artykuły z problemami",
     "wikidata": "Wikidane:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: 'Odrzucone',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Rodzaj zmiany",
+    "pages": "Strony",
+    "checks": "Kontrole stron",
+    "citations": "Przypisy",
+    "claims": "Twierdzenia",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artykuły wymagające pracy, według rodzaju problemu. Wybierz rodzaj, aby zobaczyć listę. Agenci mogą czytać te same listy.",
+    "kindLabel": "Rodzaj problemu",
+    "kind": {
+      "unchecked": "Jeszcze niesprawdzone",
+      "check-issues": "Problemy wykryte przez kontrole",
+      "no-wikidata": "Bez identyfikatora Wikidanych"
+    },
+    "checkFilter": "Rodzaj kontroli:",
+    "allChecks": "Wszystkie",
+    "empty": "Obecnie brak artykułów na tej liście."
   },
   settings: {
     title: 'Ustawienia',

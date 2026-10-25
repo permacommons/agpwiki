@@ -147,6 +147,7 @@
     serverError: 'Sunucu hatası',
     "missingWikidata": "Vikiveri kimliği olmayan maddeler",
     "proposals": "Öneriler",
+    "articlesWithIssues": "Sorunlu maddeler",
     "wikidata": "Vikiveri:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: 'Reddedildi',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Değişiklik türü",
+    "pages": "Sayfalar",
+    "checks": "Sayfa denetimleri",
+    "citations": "Kaynaklar",
+    "claims": "İddialar",
+    "media": "Medya"
+  },
+  "issues": {
+    "description": "Üzerinde çalışılması gereken maddeler, sorun türüne göre. Listesini görmek için bir tür seçin. Ajanlar aynı listeleri okuyabilir.",
+    "kindLabel": "Sorun türü",
+    "kind": {
+      "unchecked": "Henüz doğrulanmamış",
+      "check-issues": "Sayfa denetimlerinin bulduğu sorunlar",
+      "no-wikidata": "Vikiveri kimliği yok"
+    },
+    "checkFilter": "Denetim türü:",
+    "allChecks": "Tümü",
+    "empty": "Şu anda bu listede madde yok."
   },
   settings: {
     title: 'Ayarlar',

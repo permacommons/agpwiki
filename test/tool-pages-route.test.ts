@@ -137,3 +137,50 @@ test('GET /tool/proposals groups proposals by status, open ones first', async ()
     await server.close();
   }
 });
+
+test('GET /tool/issues shows one kind at a time, and the old Wikidata list redirects to it', async () => {
+  const server = await makeTestServer();
+  try {
+    const response = await fetch(`${server.url}/tool/issues?kind=no-wikidata`);
+    assert.equal(response.status, 200);
+    const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+    assert.match(bodyHtml, /class="issue-kind issue-kind--current" href="\/tool\/issues\?kind=no-wikidata" aria-current="page">issues\.kind\.no-wikidata/);
+    assert.match(bodyHtml, /href="\/tool\/issues\?kind=unchecked">issues\.kind\.unchecked/);
+    assert.doesNotMatch(bodyHtml, /issue-check-filter/);
+
+    const checks = (await (await fetch(`${server.url}/tool/issues?kind=check-issues&check=copy_edit`)).json()) as { bodyHtml: string };
+    assert.match(checks.bodyHtml, /issue-check-filter/);
+    assert.match(checks.bodyHtml, /check=copy_edit" aria-current="page"/);
+
+    // Unknown kinds fall back to the first one.
+    const fallback = (await (await fetch(`${server.url}/tool/issues?kind=nope`)).json()) as { bodyHtml: string };
+    assert.match(fallback.bodyHtml, /kind=unchecked" aria-current="page"/);
+
+    const redirect = await fetch(`${server.url}/tool/missing-wikidata`, { redirect: 'manual' });
+    assert.equal(redirect.status, 301);
+    assert.equal(redirect.headers.get('location'), '/tool/issues?kind=no-wikidata');
+  } finally {
+    await server.close();
+  }
+});
+
+test('The recent-changes pages are tabs of one Recent changes page', async () => {
+  const server = await makeTestServer();
+  try {
+    for (const [path, key] of [
+      ['/tool/recent-changes', 'recentTabs.pages'],
+      ['/tool/recent-citations', 'recentTabs.citations'],
+    ]) {
+      const response = await fetch(`${server.url}${path}`);
+      assert.equal(response.status, 200);
+      const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+      assert.match(bodyHtml, /<nav class="tool-tabs" aria-label="recentTabs\.label">/);
+      assert.ok(bodyHtml.includes(`class="tool-tab tool-tab--current" href="${path}" aria-current="page">${key}<`));
+      for (const href of ['/tool/recent-changes', '/tool/recent-checks', '/tool/recent-citations', '/tool/recent-claims', '/tool/recent-media']) {
+        assert.ok(bodyHtml.includes(`href="${href}"`), href);
+      }
+    }
+  } finally {
+    await server.close();
+  }
+});

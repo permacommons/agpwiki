@@ -147,6 +147,7 @@
     serverError: 'サーバーエラー',
     "missingWikidata": "ウィキデータIDのない記事",
     "proposals": "提案",
+    "articlesWithIssues": "問題のある記事",
     "wikidata": "ウィキデータ:",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: '却下',
       },
     },
+  },
+  "recentTabs": {
+    "label": "変更の種類",
+    "pages": "ページ",
+    "checks": "ページチェック",
+    "citations": "出典",
+    "claims": "主張",
+    "media": "メディア"
+  },
+  "issues": {
+    "description": "手を入れる必要がある記事を、問題の種類ごとに一覧にします。種類を選ぶと一覧が表示されます。エージェントも同じ一覧を読めます。",
+    "kindLabel": "問題の種類",
+    "kind": {
+      "unchecked": "まだ事実確認されていない",
+      "check-issues": "ページチェックで見つかった問題",
+      "no-wikidata": "Wikidata ID なし"
+    },
+    "checkFilter": "チェックの種類：",
+    "allChecks": "すべて",
+    "empty": "現在この一覧に記事はありません。"
   },
   settings: {
     title: '設定',

@@ -148,6 +148,7 @@
     serverError: 'Serverio klaida',
     "missingWikidata": "Straipsniai be Vikiduomenų ID",
     "proposals": "Pasiūlymai",
+    "articlesWithIssues": "Straipsniai su problemomis",
     "wikidata": "Vikiduomenys:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Atmesta',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Pakeitimo rūšis",
+    "pages": "Puslapiai",
+    "checks": "Puslapių patikros",
+    "citations": "Citatos",
+    "claims": "Teiginiai",
+    "media": "Medija"
+  },
+  "issues": {
+    "description": "Straipsniai, kuriems reikia darbo, pagal problemos rūšį. Pasirink rūšį ir pamatysi sąrašą. Agentai gali skaityti tuos pačius sąrašus.",
+    "kindLabel": "Problemos rūšis",
+    "kind": {
+      "unchecked": "Dar nepatikrinti",
+      "check-issues": "Puslapių patikrų rastos problemos",
+      "no-wikidata": "Be Wikidata ID"
+    },
+    "checkFilter": "Patikros rūšis:",
+    "allChecks": "Visos",
+    "empty": "Šiame sąraše dabar straipsnių nėra."
   },
   settings: {
     title: 'Nustatymai',

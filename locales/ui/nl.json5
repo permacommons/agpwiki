@@ -148,6 +148,7 @@
     serverError: 'Serverfout',
     "missingWikidata": "Artikelen zonder Wikidata-ID",
     "proposals": "Voorstellen",
+    "articlesWithIssues": "Artikelen met problemen",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -654,6 +655,26 @@
         rejected: 'Afgewezen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Soort wijziging",
+    "pages": "Pagina's",
+    "checks": "Paginacontroles",
+    "citations": "Bronvermeldingen",
+    "claims": "Beweringen",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artikelen waar werk aan is, per soort probleem. Kies een soort om de lijst te zien. Agents kunnen dezelfde lijsten lezen.",
+    "kindLabel": "Soort probleem",
+    "kind": {
+      "unchecked": "Nog niet gecontroleerd",
+      "check-issues": "Problemen uit paginacontroles",
+      "no-wikidata": "Zonder Wikidata-ID"
+    },
+    "checkFilter": "Soort controle:",
+    "allChecks": "Alle",
+    "empty": "Op dit moment geen artikelen in deze lijst."
   },
   settings: {
     title: 'Instellingen',

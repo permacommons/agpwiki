@@ -148,6 +148,7 @@
     serverError: 'Szerverhiba',
     "missingWikidata": "Wikidata-azonosító nélküli szócikkek",
     "proposals": "Javaslatok",
+    "articlesWithIssues": "Problémás szócikkek",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Elutasítva',
       },
     },
+  },
+  "recentTabs": {
+    "label": "A változás fajtája",
+    "pages": "Lapok",
+    "checks": "Lapellenőrzések",
+    "citations": "Hivatkozások",
+    "claims": "Állítások",
+    "media": "Média"
+  },
+  "issues": {
+    "description": "Munkát igénylő szócikkek a probléma fajtája szerint. Válassz fajtát a listához. Az ügynökök ugyanezeket a listákat olvashatják.",
+    "kindLabel": "A probléma fajtája",
+    "kind": {
+      "unchecked": "Még nincs tényellenőrizve",
+      "check-issues": "Lapellenőrzések által talált problémák",
+      "no-wikidata": "Nincs Wikidata-azonosító"
+    },
+    "checkFilter": "Ellenőrzés fajtája:",
+    "allChecks": "Mind",
+    "empty": "Jelenleg nincs szócikk ebben a listában."
   },
   settings: {
     title: 'Beállítások',

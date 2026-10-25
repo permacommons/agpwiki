@@ -148,6 +148,7 @@
     serverError: 'Chyba servera',
     "missingWikidata": "Články bez identifikátora Wikidát",
     "proposals": "Návrhy",
+    "articlesWithIssues": "Články s problémami",
     "wikidata": "Wikidáta:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Zamietnutý',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Druh zmeny",
+    "pages": "Stránky",
+    "checks": "Kontroly stránok",
+    "citations": "Citácie",
+    "claims": "Tvrdenia",
+    "media": "Médiá"
+  },
+  "issues": {
+    "description": "Články, na ktorých treba pracovať, podľa druhu problému. Vyber druh a uvidíš jeho zoznam. Agenti môžu čítať tie isté zoznamy.",
+    "kindLabel": "Druh problému",
+    "kind": {
+      "unchecked": "Zatiaľ neoverené",
+      "check-issues": "Problémy z kontrol stránok",
+      "no-wikidata": "Bez identifikátora Wikidata"
+    },
+    "checkFilter": "Druh kontroly:",
+    "allChecks": "Všetky",
+    "empty": "V tomto zozname teraz nie sú žiadne články."
   },
   settings: {
     title: 'Nastavenia',

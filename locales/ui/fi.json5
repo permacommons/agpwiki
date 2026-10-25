@@ -148,6 +148,7 @@
     serverError: 'Palvelinvirhe',
     "missingWikidata": "Artikkelit ilman Wikidata-tunnistetta",
     "proposals": "Ehdotukset",
+    "articlesWithIssues": "Artikkelit, joissa on ongelmia",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Hylätty',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Muutoksen laji",
+    "pages": "Sivut",
+    "checks": "Sivutarkistukset",
+    "citations": "Lähteet",
+    "claims": "Väitteet",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artikkelit, jotka tarvitsevat työtä, ongelman lajin mukaan. Valitse laji nähdäksesi luettelon. Agentit voivat lukea samat luettelot.",
+    "kindLabel": "Ongelman laji",
+    "kind": {
+      "unchecked": "Ei vielä tarkistettu",
+      "check-issues": "Sivutarkistusten löytämät ongelmat",
+      "no-wikidata": "Ei Wikidata-tunnistetta"
+    },
+    "checkFilter": "Tarkistuksen laji:",
+    "allChecks": "Kaikki",
+    "empty": "Luettelossa ei ole nyt artikkeleita."
   },
   settings: {
     title: 'Asetukset',

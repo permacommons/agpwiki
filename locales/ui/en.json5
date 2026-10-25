@@ -354,6 +354,7 @@
     "wikidata": "Wikidata:",
     "missingWikidata": "Articles without a Wikidata ID",
     "proposals": "Proposals",
+    "articlesWithIssues": "Articles with issues",
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
@@ -934,6 +935,28 @@
         "rejected": "Rejected"
       }
     }
+  },
+  // Tabs on the Recent changes page, one per kind of change.
+  "recentTabs": {
+    "label": "Kind of change",
+    "pages": "Pages",
+    "checks": "Page checks",
+    "citations": "Citations",
+    "claims": "Claims",
+    "media": "Media"
+  },
+  // The Articles with issues page: lists of articles that need work.
+  "issues": {
+    "description": "Articles that need work, by kind of issue. Pick a kind to see its list. Agents can read the same lists.",
+    "kindLabel": "Kind of issue",
+    "kind": {
+      "unchecked": "Not yet fact-checked",
+      "check-issues": "Issues found by page checks",
+      "no-wikidata": "No Wikidata ID"
+    },
+    "checkFilter": "Kind of check:",
+    "allChecks": "All",
+    "empty": "No articles in this list right now."
   },
   "settings": {
     "title": "Settings",

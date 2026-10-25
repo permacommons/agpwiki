@@ -148,6 +148,7 @@
     serverError: 'Napaka strežnika',
     "missingWikidata": "Članki brez identifikatorja Wikipodatkov",
     "proposals": "Predlogi",
+    "articlesWithIssues": "Članki s težavami",
     "wikidata": "Wikipodatki:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Zavrnjen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Vrsta spremembe",
+    "pages": "Strani",
+    "checks": "Preverjanja strani",
+    "citations": "Navedbe",
+    "claims": "Trditve",
+    "media": "Mediji"
+  },
+  "issues": {
+    "description": "Članki, ki potrebujejo delo, po vrsti težave. Izberi vrsto, da vidiš njen seznam. Agenti lahko berejo iste sezname.",
+    "kindLabel": "Vrsta težave",
+    "kind": {
+      "unchecked": "Še ne preverjeni",
+      "check-issues": "Težave iz preverjanj strani",
+      "no-wikidata": "Brez Wikidata ID"
+    },
+    "checkFilter": "Vrsta preverjanja:",
+    "allChecks": "Vsa",
+    "empty": "Na tem seznamu trenutno ni člankov."
   },
   settings: {
     title: 'Nastavitve',

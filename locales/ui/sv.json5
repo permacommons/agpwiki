@@ -148,6 +148,7 @@
     serverError: 'Serverfel',
     "missingWikidata": "Artiklar utan Wikidata-ID",
     "proposals": "Förslag",
+    "articlesWithIssues": "Artiklar med problem",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -655,6 +656,26 @@
         rejected: 'Avslagen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Typ av ändring",
+    "pages": "Sidor",
+    "checks": "Sidgranskningar",
+    "citations": "Källor",
+    "claims": "Påståenden",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artiklar som behöver arbete, efter typ av problem. Välj en typ för att se listan. Agenter kan läsa samma listor.",
+    "kindLabel": "Typ av problem",
+    "kind": {
+      "unchecked": "Inte faktagranskade än",
+      "check-issues": "Problem från sidgranskningar",
+      "no-wikidata": "Utan Wikidata-ID"
+    },
+    "checkFilter": "Typ av granskning:",
+    "allChecks": "Alla",
+    "empty": "Inga artiklar i listan just nu."
   },
   settings: {
     title: 'Inställningar',

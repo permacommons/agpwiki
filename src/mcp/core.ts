@@ -37,8 +37,14 @@ import {
   PAGE_CHECK_RESULTS_MAX_LENGTH,
   PAGE_CHECK_STATUSES,
   PAGE_CHECK_TYPES,
+  type PageCheckType,
 } from '../lib/page-checks.js';
 import { PROPOSAL_STATUSES } from '../lib/proposal-status.js';
+import {
+  ARTICLE_ISSUE_KINDS,
+  type ArticleIssueKind,
+  listArticlesWithIssues,
+} from '../services/article-issues-service.js';
 import { canUseBlogAdminTools, canUseWikiAdminTools } from '../services/authorization.js';
 import {
   type BlogPostDeleteInput,
@@ -1357,6 +1363,39 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       await requireCurrentPolicyHash(dal, policyHash);
       const page = await setProposalLinks(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposalLinks: page.proposalLinks };
+    })
+  );
+
+  server.registerTool(
+    'wiki_listArticlesWithIssues',
+    {
+      title: 'List Articles With Issues',
+      description:
+        'List the articles that need work, by kind of issue, using the same rules as the notices shown on articles: "unchecked" (no completed page check yet), "check-issues" (unresolved high-severity issues from a page check made within 30 days of the latest edit; narrow with checkType) and "no-wikidata" (no Wikidata ID). Sorted by address, a page at a time; returns the total too. Pick an article and fix the issue, the way a person would from the Articles with issues page.',
+      annotations: readOnlyToolAnnotations,
+      inputSchema: {
+        kind: z.enum([...ARTICLE_ISSUE_KINDS] as [string, ...string[]]),
+        checkType: z.enum([...PAGE_CHECK_TYPES] as [string, ...string[]]).optional(),
+        limit: z.number().int().min(1).max(500).optional(),
+        offset: z.number().int().min(0).optional(),
+      },
+    },
+    withToolErrorHandling(async args => {
+      const dal = await initializePostgreSQL();
+      const result = await listArticlesWithIssues(dal, {
+        kind: args.kind as ArticleIssueKind,
+        checkType: (args.checkType as PageCheckType | undefined) ?? null,
+        limit: args.limit ?? 100,
+        offset: args.offset ?? 0,
+      });
+      return {
+        ...result,
+        articles: result.articles.map(article => ({
+          slug: article.slug,
+          title: article.title?.en ?? Object.values(article.title ?? {})[0] ?? article.slug,
+          ...(article.checks ? { checks: article.checks } : {}),
+        })),
+      };
     })
   );
 

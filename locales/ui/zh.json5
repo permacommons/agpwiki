@@ -147,6 +147,7 @@
     serverError: '服务器错误',
     "missingWikidata": "没有维基数据标识符的条目",
     "proposals": "提案",
+    "articlesWithIssues": "有问题的条目",
     "wikidata": "维基数据：",
   },
   language: {
@@ -653,6 +654,26 @@
         rejected: '已拒绝',
       },
     },
+  },
+  "recentTabs": {
+    "label": "更改类型",
+    "pages": "页面",
+    "checks": "页面检查",
+    "citations": "引用",
+    "claims": "论断",
+    "media": "媒体"
+  },
+  "issues": {
+    "description": "需要完善的条目，按问题类型列出。选择一种类型即可查看列表。智能体也能读取相同的列表。",
+    "kindLabel": "问题类型",
+    "kind": {
+      "unchecked": "尚未核查事实",
+      "check-issues": "页面检查发现的问题",
+      "no-wikidata": "没有维基数据 ID"
+    },
+    "checkFilter": "检查类型：",
+    "allChecks": "全部",
+    "empty": "目前此列表中没有条目。"
   },
   settings: {
     title: '设置',
