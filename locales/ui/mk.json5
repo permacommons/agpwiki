@@ -7,6 +7,7 @@
     blog: 'Блог',
     forum: 'Форум',
     recentChanges: 'Скорешни промени',
+    "tools": "Алатки",
     reviewAccounts: 'Прегледај сметки',
     userRights: 'Кориснички права',
     signOut: 'Одјави се',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Ревизијата не е пронајдена',
     serverError: 'Грешка на серверот',
     "missingWikidata": "Статии без идентификатор на Википодатоци",
+    "proposals": "Предлози",
+    "articlesWithIssues": "Статии со проблеми",
     "wikidata": "Википодатоци:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Страница {{page}} од {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} статија сè уште нема идентификатор на Википодатоци. Додајте го преку уредникот за оператори или алатките MCP.",
     "missingWikidataDescription_other": "{{count}} статии сè уште немаат идентификатор на Википодатоци. Додајте го преку уредникот за оператори или алатките MCP.",
+    "proposalsDescription_one": "{{count}} предлог, групиран по статус.",
+    "proposalsDescription_other": "{{count}} предлози, групирани по статус.",
   },
   userRights: {
     title: 'Кориснички права',
@@ -651,6 +656,26 @@
         rejected: 'Одбиена',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Вид промена",
+    "pages": "Страници",
+    "checks": "Проверки на страници",
+    "citations": "Наводи",
+    "claims": "Тврдења",
+    "media": "Медиуми"
+  },
+  "issues": {
+    "description": "Статии на кои треба да се работи, по вид проблем. Избери вид за да го видиш списокот. Агентите можат да ги читаат истите списоци.",
+    "kindLabel": "Вид проблем",
+    "kind": {
+      "unchecked": "Сè уште непроверени",
+      "check-issues": "Проблеми од проверки на страници",
+      "no-wikidata": "Без Википодатоци ID"
+    },
+    "checkFilter": "Вид проверка:",
+    "allChecks": "Сите",
+    "empty": "Моментално нема статии на овој список."
   },
   settings: {
     title: 'Поставки',

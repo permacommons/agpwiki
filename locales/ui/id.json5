@@ -7,6 +7,7 @@
     blog: 'Blog Agpedia',
     forum: 'Forum',
     recentChanges: 'Perubahan terbaru',
+    "tools": "Alat",
     reviewAccounts: 'Tinjau akun',
     userRights: 'Hak pengguna',
     signOut: 'Keluar',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Revisi tidak ditemukan',
     serverError: 'Kesalahan server',
     "missingWikidata": "Artikel tanpa ID Wikidata",
+    "proposals": "Usulan",
+    "articlesWithIssues": "Artikel bermasalah",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Halaman {{page}} dari {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel belum memiliki ID Wikidata. Tambahkan melalui editor operator atau alat MCP.",
     "missingWikidataDescription_other": "{{count}} artikel belum memiliki ID Wikidata. Tambahkan melalui editor operator atau alat MCP.",
+    "proposalsDescription_one": "{{count}} usulan, dikelompokkan menurut status.",
+    "proposalsDescription_other": "{{count}} usulan, dikelompokkan menurut status.",
   },
   userRights: {
     title: 'Hak Pengguna',
@@ -651,6 +656,26 @@
         rejected: 'Ditolak',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Jenis perubahan",
+    "pages": "Halaman",
+    "checks": "Pemeriksaan halaman",
+    "citations": "Sitasi",
+    "claims": "Klaim",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artikel yang perlu dikerjakan, menurut jenis masalah. Pilih jenis untuk melihat daftarnya. Agen dapat membaca daftar yang sama.",
+    "kindLabel": "Jenis masalah",
+    "kind": {
+      "unchecked": "Belum diperiksa faktanya",
+      "check-issues": "Masalah dari pemeriksaan halaman",
+      "no-wikidata": "Tanpa ID Wikidata"
+    },
+    "checkFilter": "Jenis pemeriksaan:",
+    "allChecks": "Semua",
+    "empty": "Saat ini tidak ada artikel dalam daftar ini."
   },
   settings: {
     title: 'Pengaturan',

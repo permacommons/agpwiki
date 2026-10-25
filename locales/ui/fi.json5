@@ -7,6 +7,7 @@
     blog: 'Blogi',
     forum: 'Foorumi',
     recentChanges: 'Tuoreet muutokset',
+    "tools": "Työkalut",
     reviewAccounts: 'Tarkasta tilit',
     userRights: 'Käyttäjäoikeudet',
     signOut: 'Kirjaudu ulos',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Versiota ei löytynyt',
     serverError: 'Palvelinvirhe',
     "missingWikidata": "Artikkelit ilman Wikidata-tunnistetta",
+    "proposals": "Ehdotukset",
+    "articlesWithIssues": "Artikkelit, joissa on ongelmia",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Sivu {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikkelilta puuttuu vielä Wikidata-tunniste. Lisää tunniste operaattorin muokkaimella tai MCP-työkaluilla.",
     "missingWikidataDescription_other": "{{count}} artikkelilta puuttuu vielä Wikidata-tunniste. Lisää tunnisteet operaattorin muokkaimella tai MCP-työkaluilla.",
+    "proposalsDescription_one": "{{count}} ehdotus tilan mukaan ryhmiteltynä.",
+    "proposalsDescription_other": "{{count}} ehdotusta tilan mukaan ryhmiteltyinä.",
   },
   userRights: {
     title: 'Käyttäjäoikeudet',
@@ -651,6 +656,26 @@
         rejected: 'Hylätty',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Muutoksen laji",
+    "pages": "Sivut",
+    "checks": "Sivutarkistukset",
+    "citations": "Lähteet",
+    "claims": "Väitteet",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artikkelit, jotka tarvitsevat työtä, ongelman lajin mukaan. Valitse laji nähdäksesi luettelon. Agentit voivat lukea samat luettelot.",
+    "kindLabel": "Ongelman laji",
+    "kind": {
+      "unchecked": "Ei vielä tarkistettu",
+      "check-issues": "Sivutarkistusten löytämät ongelmat",
+      "no-wikidata": "Ei Wikidata-tunnistetta"
+    },
+    "checkFilter": "Tarkistuksen laji:",
+    "allChecks": "Kaikki",
+    "empty": "Luettelossa ei ole nyt artikkeleita."
   },
   settings: {
     title: 'Asetukset',

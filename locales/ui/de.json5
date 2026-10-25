@@ -8,6 +8,7 @@
     blog: 'Blogbereich',
     forum: 'Forum',
     recentChanges: 'Letzte Änderungen',
+    "tools": "Werkzeuge",
     reviewAccounts: 'Konten prüfen',
     userRights: 'Benutzerrechte',
     signOut: 'Abmelden',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Revision nicht gefunden',
     serverError: 'Serverfehler',
     "missingWikidata": "Artikel ohne Wikidata-ID",
+    "proposals": "Vorschläge",
+    "articlesWithIssues": "Artikel mit Problemen",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -410,6 +413,8 @@
     pagination: 'Seite {{page}} von {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} Artikel hat noch keine Wikidata-ID. Ergänze sie mit dem Operator-Editor oder den MCP-Werkzeugen.",
     "missingWikidataDescription_other": "{{count}} Artikel haben noch keine Wikidata-ID. Ergänze sie mit dem Operator-Editor oder den MCP-Werkzeugen.",
+    "proposalsDescription_one": "{{count}} Vorschlag, nach Status gruppiert.",
+    "proposalsDescription_other": "{{count}} Vorschläge, nach Status gruppiert.",
   },
   userRights: {
     title: 'Benutzerrechte',
@@ -648,6 +653,26 @@
         rejected: 'Abgelehnt',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Art der Änderung",
+    "pages": "Seiten",
+    "checks": "Seitenprüfungen",
+    "citations": "Quellen",
+    "claims": "Aussagen",
+    "media": "Medien"
+  },
+  "issues": {
+    "description": "Artikel, an denen etwas zu tun ist, nach Art des Problems. Wähle eine Art, um ihre Liste zu sehen. Agenten können dieselben Listen lesen.",
+    "kindLabel": "Art des Problems",
+    "kind": {
+      "unchecked": "Noch nicht faktengeprüft",
+      "check-issues": "Von Seitenprüfungen gefundene Probleme",
+      "no-wikidata": "Keine Wikidata-ID"
+    },
+    "checkFilter": "Art der Prüfung:",
+    "allChecks": "Alle",
+    "empty": "Zurzeit keine Artikel in dieser Liste."
   },
   settings: {
     title: 'Einstellungen',

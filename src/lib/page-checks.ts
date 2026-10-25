@@ -26,6 +26,7 @@ export const PAGE_CHECK_TYPES = [
   'translation_review',
   'formatting_check',
 ] as const;
+export type PageCheckType = (typeof PAGE_CHECK_TYPES)[number];
 
 export const PAGE_CHECK_STATUSES = [
   'queued',

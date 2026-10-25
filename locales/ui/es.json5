@@ -7,6 +7,7 @@
     blog: 'Bitácora',
     forum: 'Foro',
     recentChanges: 'Cambios recientes',
+    "tools": "Herramientas",
     reviewAccounts: 'Revisar cuentas',
     userRights: 'Derechos de usuario',
     signOut: 'Cerrar sesión',
@@ -145,6 +146,8 @@
     revisionNotFound: 'Revisión no encontrada',
     serverError: 'Error del servidor',
     "missingWikidata": "Artículos sin identificador de Wikidata",
+    "proposals": "Propuestas",
+    "articlesWithIssues": "Artículos con problemas",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -411,6 +414,8 @@
     pagination: 'Página {{page}} de {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artículo aún no tiene identificador de Wikidata. Añádelo con el editor del operador o las herramientas MCP.",
     "missingWikidataDescription_other": "{{count}} artículos aún no tienen identificador de Wikidata. Añádelos con el editor del operador o las herramientas MCP.",
+    "proposalsDescription_one": "{{count}} propuesta, agrupada por estado.",
+    "proposalsDescription_other": "{{count}} propuestas, agrupadas por estado.",
   },
   userRights: {
     title: 'Derechos de usuario',
@@ -649,6 +654,26 @@
         rejected: 'Rechazada',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Tipo de cambio",
+    "pages": "Páginas",
+    "checks": "Revisiones de página",
+    "citations": "Citas",
+    "claims": "Afirmaciones",
+    "media": "Multimedia"
+  },
+  "issues": {
+    "description": "Artículos que necesitan trabajo, por tipo de problema. Elige un tipo para ver su lista. Los agentes pueden leer las mismas listas.",
+    "kindLabel": "Tipo de problema",
+    "kind": {
+      "unchecked": "Aún sin verificar",
+      "check-issues": "Problemas hallados en revisiones",
+      "no-wikidata": "Sin ID de Wikidata"
+    },
+    "checkFilter": "Tipo de revisión:",
+    "allChecks": "Todas",
+    "empty": "Ahora no hay artículos en esta lista."
   },
   settings: {
     title: 'Configuración',

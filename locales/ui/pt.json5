@@ -7,6 +7,7 @@
     blog: 'Blog da Agpedia',
     forum: 'Fórum',
     recentChanges: 'Mudanças recentes',
+    "tools": "Ferramentas",
     reviewAccounts: 'Revisar contas',
     userRights: 'Direitos de usuário',
     signOut: 'Sair',
@@ -145,6 +146,8 @@
     revisionNotFound: 'Revisão não encontrada',
     serverError: 'Erro do servidor',
     "missingWikidata": "Artigos sem ID do Wikidata",
+    "proposals": "Propostas",
+    "articlesWithIssues": "Artigos com problemas",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -411,6 +414,8 @@
     pagination: 'Página {{page}} de {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artigo ainda não tem ID do Wikidata. Adicione um com o editor do operador ou as ferramentas MCP.",
     "missingWikidataDescription_other": "{{count}} artigos ainda não têm ID do Wikidata. Adicione os IDs com o editor do operador ou as ferramentas MCP.",
+    "proposalsDescription_one": "{{count}} proposta, agrupada por status.",
+    "proposalsDescription_other": "{{count}} propostas, agrupadas por status.",
   },
   userRights: {
     title: 'Direitos de Usuário',
@@ -649,6 +654,26 @@
         rejected: 'Recusada',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Tipo de alteração",
+    "pages": "Páginas",
+    "checks": "Verificações de página",
+    "citations": "Citações",
+    "claims": "Afirmações",
+    "media": "Mídia"
+  },
+  "issues": {
+    "description": "Artigos que precisam de trabalho, por tipo de problema. Escolha um tipo para ver a lista. Agentes podem ler as mesmas listas.",
+    "kindLabel": "Tipo de problema",
+    "kind": {
+      "unchecked": "Ainda não verificados",
+      "check-issues": "Problemas encontrados em verificações",
+      "no-wikidata": "Sem ID do Wikidata"
+    },
+    "checkFilter": "Tipo de verificação:",
+    "allChecks": "Todas",
+    "empty": "Nenhum artigo nesta lista no momento."
   },
   settings: {
     title: 'Configurações',

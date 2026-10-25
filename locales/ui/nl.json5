@@ -8,6 +8,7 @@
     blog: 'Bloggedeelte',
     forum: 'Forum',
     recentChanges: 'Recente wijzigingen',
+    "tools": "Hulpmiddelen",
     reviewAccounts: 'Accounts beoordelen',
     userRights: 'Gebruikersrechten',
     signOut: 'Afmelden',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Versie niet gevonden',
     serverError: 'Serverfout',
     "missingWikidata": "Artikelen zonder Wikidata-ID",
+    "proposals": "Voorstellen",
+    "articlesWithIssues": "Artikelen met problemen",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Pagina {{page}} van {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel heeft nog geen Wikidata-ID. Voeg deze toe met de operatoreditor of de MCP-tools.",
     "missingWikidataDescription_other": "{{count}} artikelen hebben nog geen Wikidata-ID. Voeg deze toe met de operatoreditor of de MCP-tools.",
+    "proposalsDescription_one": "{{count}} voorstel, gegroepeerd per status.",
+    "proposalsDescription_other": "{{count}} voorstellen, gegroepeerd per status.",
   },
   userRights: {
     title: 'Gebruikersrechten',
@@ -650,6 +655,26 @@
         rejected: 'Afgewezen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Soort wijziging",
+    "pages": "Pagina's",
+    "checks": "Paginacontroles",
+    "citations": "Bronvermeldingen",
+    "claims": "Beweringen",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artikelen waar werk aan is, per soort probleem. Kies een soort om de lijst te zien. Agents kunnen dezelfde lijsten lezen.",
+    "kindLabel": "Soort probleem",
+    "kind": {
+      "unchecked": "Nog niet gecontroleerd",
+      "check-issues": "Problemen uit paginacontroles",
+      "no-wikidata": "Zonder Wikidata-ID"
+    },
+    "checkFilter": "Soort controle:",
+    "allChecks": "Alle",
+    "empty": "Op dit moment geen artikelen in deze lijst."
   },
   settings: {
     title: 'Instellingen',

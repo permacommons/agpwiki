@@ -7,6 +7,7 @@
     blog: 'ब्लॉग',
     forum: 'फ़ोरम',
     recentChanges: 'हाल के बदलाव',
+    "tools": "उपकरण",
     reviewAccounts: 'खाते समीक्षा करें',
     userRights: 'उपयोगकर्ता अधिकार',
     signOut: 'साइन आउट',
@@ -146,6 +147,8 @@
     revisionNotFound: 'संशोधन नहीं मिला',
     serverError: 'सर्वर त्रुटि',
     "missingWikidata": "विकिडेटा आईडी के बिना लेख",
+    "proposals": "प्रस्ताव",
+    "articlesWithIssues": "समस्याओं वाले लेख",
     "wikidata": "विकिडेटा:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'पेज {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} लेख में अभी विकिडेटा आईडी नहीं है। संचालक संपादक या MCP उपकरणों से जोड़ें।",
     "missingWikidataDescription_other": "{{count}} लेखों में अभी विकिडेटा आईडी नहीं है। संचालक संपादक या MCP उपकरणों से जोड़ें।",
+    "proposalsDescription_one": "{{count}} प्रस्ताव, स्थिति के अनुसार समूहित।",
+    "proposalsDescription_other": "{{count}} प्रस्ताव, स्थिति के अनुसार समूहित।",
   },
   userRights: {
     title: 'उपयोगकर्ता अधिकार',
@@ -651,6 +656,26 @@
         rejected: 'अस्वीकृत',
       },
     },
+  },
+  "recentTabs": {
+    "label": "बदलाव का प्रकार",
+    "pages": "पृष्ठ",
+    "checks": "पृष्ठ जाँच",
+    "citations": "उद्धरण",
+    "claims": "दावे",
+    "media": "मीडिया"
+  },
+  "issues": {
+    "description": "ऐसे लेख जिन पर काम चाहिए, समस्या के प्रकार के अनुसार। सूची देखने के लिए एक प्रकार चुनें। एजेंट भी यही सूचियाँ पढ़ सकते हैं।",
+    "kindLabel": "समस्या का प्रकार",
+    "kind": {
+      "unchecked": "अभी तथ्य-जाँच नहीं हुई",
+      "check-issues": "पृष्ठ जाँच में मिली समस्याएँ",
+      "no-wikidata": "विकिडेटा आईडी नहीं"
+    },
+    "checkFilter": "जाँच का प्रकार:",
+    "allChecks": "सभी",
+    "empty": "इस समय इस सूची में कोई लेख नहीं है।"
   },
   settings: {
     title: 'सेटिंग्स',

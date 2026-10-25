@@ -7,6 +7,7 @@
     blog: 'Tinklaraštis',
     forum: 'Forumas',
     recentChanges: 'Naujausi pakeitimai',
+    "tools": "Įrankiai",
     reviewAccounts: 'Peržiūrėti paskyras',
     userRights: 'Naudotojų teisės',
     signOut: 'Atsijungti',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Versija nerasta',
     serverError: 'Serverio klaida',
     "missingWikidata": "Straipsniai be Vikiduomenų ID",
+    "proposals": "Pasiūlymai",
+    "articlesWithIssues": "Straipsniai su problemomis",
     "wikidata": "Vikiduomenys:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Puslapis {{page}} iš {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} straipsnis dar neturi Vikiduomenų ID. Pridėkite jį naudodami operatoriaus redaktorių arba MCP įrankius.",
     "missingWikidataDescription_other": "Straipsnių, dar neturinčių Vikiduomenų ID: {{count}}. Pridėkite ID naudodami operatoriaus redaktorių arba MCP įrankius.",
+    "proposalsDescription_one": "{{count}} pasiūlymas, sugrupuotas pagal būseną.",
+    "proposalsDescription_other": "Pasiūlymai ({{count}}), sugrupuoti pagal būseną.",
   },
   userRights: {
     title: 'Naudotojų teisės',
@@ -651,6 +656,26 @@
         rejected: 'Atmesta',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Pakeitimo rūšis",
+    "pages": "Puslapiai",
+    "checks": "Puslapių patikros",
+    "citations": "Citatos",
+    "claims": "Teiginiai",
+    "media": "Medija"
+  },
+  "issues": {
+    "description": "Straipsniai, kuriems reikia darbo, pagal problemos rūšį. Pasirink rūšį ir pamatysi sąrašą. Agentai gali skaityti tuos pačius sąrašus.",
+    "kindLabel": "Problemos rūšis",
+    "kind": {
+      "unchecked": "Dar nepatikrinti",
+      "check-issues": "Puslapių patikrų rastos problemos",
+      "no-wikidata": "Be Wikidata ID"
+    },
+    "checkFilter": "Patikros rūšis:",
+    "allChecks": "Visos",
+    "empty": "Šiame sąraše dabar straipsnių nėra."
   },
   settings: {
     title: 'Nustatymai',

@@ -7,6 +7,7 @@
     blog: '블로그',
     forum: '포럼',
     recentChanges: '최근 바뀜',
+    "tools": "도구",
     reviewAccounts: '계정 검토',
     userRights: '사용자 권한',
     signOut: '로그아웃',
@@ -145,6 +146,8 @@
     revisionNotFound: '판을 찾을 수 없음',
     serverError: '서버 오류',
     "missingWikidata": "위키데이터 ID가 없는 문서",
+    "proposals": "제안",
+    "articlesWithIssues": "문제가 있는 문서",
     "wikidata": "위키데이터:",
   },
   language: {
@@ -411,6 +414,8 @@
     pagination: '페이지 {{page}} / {{totalPages}}',
     "missingWikidataDescription_one": "아직 {{count}}개 문서에 위키데이터 ID가 없습니다. 운영자 편집기 또는 MCP 도구로 추가하세요.",
     "missingWikidataDescription_other": "아직 {{count}}개 문서에 위키데이터 ID가 없습니다. 운영자 편집기 또는 MCP 도구로 추가하세요.",
+    "proposalsDescription_one": "제안 {{count}}개, 상태별로 묶음.",
+    "proposalsDescription_other": "제안 {{count}}개, 상태별로 묶음.",
   },
   userRights: {
     title: '사용자 권한',
@@ -649,6 +654,26 @@
         rejected: '거부됨',
       },
     },
+  },
+  "recentTabs": {
+    "label": "변경 종류",
+    "pages": "문서",
+    "checks": "문서 점검",
+    "citations": "출처",
+    "claims": "주장",
+    "media": "미디어"
+  },
+  "issues": {
+    "description": "손봐야 할 문서를 문제 종류별로 보여 줍니다. 종류를 고르면 목록이 나옵니다. 에이전트도 같은 목록을 읽을 수 있습니다.",
+    "kindLabel": "문제 종류",
+    "kind": {
+      "unchecked": "아직 사실 확인 안 됨",
+      "check-issues": "문서 점검에서 찾은 문제",
+      "no-wikidata": "위키데이터 ID 없음"
+    },
+    "checkFilter": "점검 종류:",
+    "allChecks": "전체",
+    "empty": "지금은 이 목록에 문서가 없습니다."
   },
   settings: {
     title: '설정',

@@ -6,7 +6,14 @@
     <div class="nav-menu-content">
       <a class="nav-link" href="/blog">{{__ "nav.blog"}}</a>
       <a class="nav-link" href="/tool/forum">{{__ "nav.forum"}}</a>
-      <a class="nav-link" href="/tool/recent-changes">{{__ "nav.recentChanges"}}</a>
+      <details class="tools-menu" data-tools-menu>
+        <summary class="tools-menu-summary nav-link">{{__ "nav.tools"}}</summary>
+        <div class="tools-menu-panel">
+          <a class="tools-menu-link" href="/tool/recent-changes">{{__ "page.recentChanges"}}</a>
+          <a class="tools-menu-link" href="/tool/proposals">{{__ "page.proposals"}}</a>
+          <a class="tools-menu-link" href="/tool/issues">{{__ "page.articlesWithIssues"}}</a>
+        </div>
+      </details>
       <a class="nav-link" href="/meta/help">{{__ "nav.help"}}</a>
       {{#if signedIn}}
       <details class="user-menu">

@@ -5,6 +5,7 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import { formatMediaLabel } from '../lib/media.js';
+import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
 import {
   getRecentCitationChanges,
   getRecentCitationClaimChanges,
@@ -31,6 +32,15 @@ import {
   listRecentAdminEvents,
 } from '../services/admin-event-service.js';
 import {
+  ARTICLE_ISSUE_KINDS,
+  type ArticleIssueKind,
+  countArticlesWithIssues,
+  isArticleIssueKind,
+  isPageCheckType,
+  listArticlesWithIssues,
+} from '../services/article-issues-service.js';
+import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
+import {
   getUserRoles,
   hasRole,
   SITE_ADMIN_ROLE,
@@ -44,7 +54,6 @@ import {
   type UserRightsSummary,
   updateUserRightsBelowSiteAdmin,
 } from '../services/user-rights-service.js';
-import { listPagesMissingWikidata } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap } from './lib/history.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
@@ -52,6 +61,7 @@ import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 const { mlString } = dal;
 
 const USER_RIGHTS_PATH = '/tool/user-rights';
+export const ISSUES_PATH = '/tool/issues';
 
 type RecentListAction = {
   label: string;
@@ -134,25 +144,6 @@ const renderRecentList = (
     })
     .join('');
 
-const renderRelatedTools = (
-  links: Array<{ href: string; label: string }>,
-  t: TFunction
-) => {
-  if (!links.length) return '';
-  const items = links
-    .map(
-      (link, index) =>
-        `<a href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>${
-          index < links.length - 1 ? ' · ' : ''
-        }`
-    )
-    .join('');
-  return `<div class="tool-related">
-  <span class="tool-related-label">${escapeHtml(t('tool.relatedLabel'))}</span>
-  <span class="tool-related-links">${items}</span>
-</div>`;
-};
-
 type RecentMediaView = 'grid' | 'list';
 
 const RECENT_MEDIA_THUMB_WIDTH = 500;
@@ -229,28 +220,33 @@ const renderRecentMediaGrid = (
 
 type RecentToolKey = 'changes' | 'citations' | 'claims' | 'checks' | 'media' | 'admin';
 
-const getRecentRelatedLinks = (
-  current: RecentToolKey,
-  t: TFunction,
-  options: { includeAdminActions?: boolean } = {}
-) => {
-  const links = [
-    { key: 'changes', href: '/tool/recent-changes', label: t('page.recentChanges') },
-    { key: 'citations', href: '/tool/recent-citations', label: t('page.recentCitations') },
-    { key: 'claims', href: '/tool/recent-claims', label: t('page.recentClaims') },
-    { key: 'media', href: '/tool/recent-media', label: t('page.recentMedia') },
-    { key: 'checks', href: '/tool/recent-checks', label: t('page.recentChecks') },
+// The recent-changes pages are one page with a tab for each kind of
+// change. Each tab keeps its own address.
+const getRecentTabs = (t: TFunction, options: { includeAdminActions?: boolean } = {}) => {
+  const tabs: Array<{ key: RecentToolKey; href: string; label: string }> = [
+    { key: 'changes', href: '/tool/recent-changes', label: t('recentTabs.pages') },
+    { key: 'checks', href: '/tool/recent-checks', label: t('recentTabs.checks') },
+    { key: 'citations', href: '/tool/recent-citations', label: t('recentTabs.citations') },
+    { key: 'claims', href: '/tool/recent-claims', label: t('recentTabs.claims') },
+    { key: 'media', href: '/tool/recent-media', label: t('recentTabs.media') },
   ];
   if (options.includeAdminActions) {
-    links.push({
-      key: 'admin',
-      href: '/tool/recent-admin-actions',
-      label: t('page.recentAdminActions'),
-    });
+    tabs.push({ key: 'admin', href: '/tool/recent-admin-actions', label: t('page.recentAdminActions') });
   }
-
-  return links.filter(link => link.key !== current);
+  return tabs;
 };
+
+export const renderTabNav = (
+  tabs: Array<{ key: string; href: string; label: string }>,
+  current: string,
+  label: string
+) => `<nav class="tool-tabs" aria-label="${escapeHtml(label)}">${tabs
+  .map(tab =>
+    tab.key === current
+      ? `<a class="tool-tab tool-tab--current" href="${escapeHtml(tab.href)}" aria-current="page">${escapeHtml(tab.label)}</a>`
+      : `<a class="tool-tab" href="${escapeHtml(tab.href)}">${escapeHtml(tab.label)}</a>`
+  )
+  .join('')}</nav>`;
 
 const canShowAdminActionsLink = async (req: Request, dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>) => {
   const session = await resolveSessionUser(req);
@@ -264,11 +260,10 @@ const renderRecentRelatedTools = async (
   req: Request,
   dalInstance: Awaited<ReturnType<typeof initializePostgreSQL>>
 ) =>
-  renderRelatedTools(
-    getRecentRelatedLinks(current, req.t, {
-      includeAdminActions: await canShowAdminActionsLink(req, dalInstance),
-    }),
-    req.t
+  renderTabNav(
+    getRecentTabs(req.t, { includeAdminActions: await canShowAdminActionsLink(req, dalInstance) }),
+    current,
+    req.t('recentTabs.label')
   );
 
 const renderToolLayout = (res: Response, title: string, bodyHtml: string) => {
@@ -664,7 +659,7 @@ export const registerToolRoutes = (app: Express) => {
   ${relatedHtml}
   ${eventsHtml}
 </div>`;
-    renderToolLayout(res, req.t('adminActions.title'), bodyHtml);
+    renderToolLayout(res, req.t('page.recentChanges'), bodyHtml);
   });
 
   app.get('/tool/recent-changes', async (req, res) => {
@@ -771,7 +766,7 @@ export const registerToolRoutes = (app: Express) => {
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
-      title: prepareTitle(req.t('page.recentCitations')),
+      title: prepareTitle(req.t('page.recentChanges')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
@@ -834,7 +829,7 @@ export const registerToolRoutes = (app: Express) => {
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
-      title: prepareTitle(req.t('page.recentClaims')),
+      title: prepareTitle(req.t('page.recentChanges')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
@@ -896,7 +891,7 @@ export const registerToolRoutes = (app: Express) => {
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
-      title: prepareTitle(req.t('page.recentMedia')),
+      title: prepareTitle(req.t('page.recentChanges')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
@@ -960,7 +955,7 @@ export const registerToolRoutes = (app: Express) => {
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
-      title: prepareTitle(req.t('page.recentChecks')),
+      title: prepareTitle(req.t('page.recentChanges')),
       labelHtml,
       bodyHtml,
       topHtml: prependAccountBanner(res),
@@ -1036,21 +1031,112 @@ export const registerToolRoutes = (app: Express) => {
     });
   });
 
-  app.get('/tool/missing-wikidata', async (req, res) => {
+  app.get('/tool/proposals', async (req, res) => {
     const dalInstance = await initializePostgreSQL();
-    const pages = await listPagesMissingWikidata(dalInstance);
-    const listItems = pages
-      .map(item => {
-        const title = resolveSafeTextWithFallback(mlString.resolve, 'en', item.title, item.slug);
-        return `<li><a href="/${escapeHtml(item.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(item.slug)}">${renderText(title)}</a></li>`;
-      })
-      .join('');
-    const bodyHtml = `<div class="tool-page">
-  <p>${escapeHtml(req.t('tool.missingWikidataDescription', { count: pages.length }))}</p>
+    const proposals = await listProposalPages(dalInstance);
+    const lang = (res.locals.locale as string | undefined) ?? 'en';
+    const sections = PROPOSAL_LIST_ORDER.map(status => {
+      const items = proposals.filter(item => item.status === status);
+      if (!items.length) return '';
+      const label = status ? req.t(`proposalStatus.status.${status}`) : req.t('proposalStatus.noStatus');
+      const badge = `proposal-status-badge proposal-status--${status ?? 'none'}`;
+      const listItems = items
+        .map(item => {
+          const title = resolveSafeTextWithFallback(mlString.resolve, lang, item.title, item.slug);
+          return `<li><a href="/${escapeHtml(item.slug)}">${renderText(title)}</a>${
+            item.updatedAt ? ` <span class="proposal-list-date">${escapeHtml(formatDateUTC(item.updatedAt))}</span>` : ''
+          }</li>`;
+        })
+        .join('');
+      return `<section class="proposal-list-group">
+  <h2><span class="${badge}">${escapeHtml(label)}</span> <span class="proposal-list-count">${items.length}</span></h2>
   <ul class="change-list">${listItems}</ul>
+</section>`;
+    }).join('');
+    const bodyHtml = `<div class="tool-page">
+  <p>${escapeHtml(req.t('tool.proposalsDescription', { count: proposals.length }))}</p>
+  ${sections}
 </div>`;
     res.render('layout', {
-      title: prepareTitle(req.t('page.missingWikidata')),
+      title: prepareTitle(req.t('page.proposals')),
+      labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
+      bodyHtml,
+      topHtml: prependAccountBanner(res),
+    });
+  });
+
+  // The Wikidata list became one kind of the Articles with issues page.
+  app.get('/tool/missing-wikidata', (_req, res) => {
+    res.redirect(301, `${ISSUES_PATH}?kind=no-wikidata`);
+  });
+
+  app.get(ISSUES_PATH, async (req, res) => {
+    const dalInstance = await initializePostgreSQL();
+    const kind: ArticleIssueKind = isArticleIssueKind(req.query.kind) ? req.query.kind : 'unchecked';
+    const checkType = kind === 'check-issues' && isPageCheckType(req.query.check) ? req.query.check : null;
+    const per = 100;
+    const pageNumber = parseIntegerQuery(req.query.page, { fallback: 1, min: 1, max: 10_000 });
+    const [counts, list] = await Promise.all([
+      countArticlesWithIssues(dalInstance),
+      listArticlesWithIssues(dalInstance, { kind, checkType, limit: per, offset: (pageNumber - 1) * per }),
+    ]);
+    const kindLabel = (k: ArticleIssueKind) => req.t(`issues.kind.${k}`);
+    const kindHref = (k: ArticleIssueKind) => `${ISSUES_PATH}?kind=${k}`;
+    const kindsHtml = `<nav class="issue-kinds" aria-label="${escapeHtml(req.t('issues.kindLabel'))}">${ARTICLE_ISSUE_KINDS.map(
+      k =>
+        `<a class="issue-kind${k === kind ? ' issue-kind--current' : ''}" href="${kindHref(k)}"${
+          k === kind ? ' aria-current="page"' : ''
+        }>${escapeHtml(kindLabel(k))} <span class="issue-kind-count">${counts[k]}</span></a>`
+    ).join('')}</nav>`;
+    const checkFilterHtml =
+      kind === 'check-issues'
+        ? `<p class="issue-check-filter">${escapeHtml(req.t('issues.checkFilter'))} ${[
+            `<a href="${kindHref(kind)}"${checkType ? '' : ' aria-current="page"'}>${escapeHtml(req.t('issues.allChecks'))}</a>`,
+            ...PAGE_CHECK_TYPES.map(
+              type =>
+                `<a href="${kindHref(kind)}&amp;check=${type}"${type === checkType ? ' aria-current="page"' : ''}>${escapeHtml(
+                  formatCheckType(type, req.t)
+                )}</a>`
+            ),
+          ].join(' · ')}</p>`
+        : '';
+    const itemsHtml = list.articles
+      .map(article => {
+        const title = resolveSafeTextWithFallback(mlString.resolve, res.locals.locale ?? 'en', article.title, article.slug);
+        const checks = article.checks?.length
+          ? ` <span class="issue-checks">${article.checks
+              .map(
+                check =>
+                  `<a href="/${encodeURIComponent(article.slug)}/checks/${encodeURIComponent(check.id)}">${escapeHtml(
+                    formatCheckType(check.type, req.t)
+                  )}</a> (${escapeHtml(req.t('warning.unresolvedIssues', { count: check.unresolved }))})`
+              )
+              .join(', ')}</span>`
+          : '';
+        return `<li><a href="/${escapeHtml(article.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(article.slug)}">${renderText(title)}</a>${checks}</li>`;
+      })
+      .join('');
+    const totalPages = Math.max(Math.ceil(list.total / per), 1);
+    const pageHref = (n: number) =>
+      `${kindHref(kind)}${checkType ? `&amp;check=${checkType}` : ''}&amp;page=${n}`;
+    const paginationHtml =
+      totalPages > 1
+        ? `<div class="history-actions">
+  ${pageNumber > 1 ? `<a href="${pageHref(pageNumber - 1)}">${req.t('tool.previous')}</a>` : ''}
+  <span>${req.t('tool.pagination', { page: pageNumber, totalPages })}</span>
+  ${pageNumber < totalPages ? `<a href="${pageHref(pageNumber + 1)}">${req.t('tool.next')}</a>` : ''}
+</div>`
+        : '';
+    const bodyHtml = `<div class="tool-page">
+  <p>${escapeHtml(req.t('issues.description'))}</p>
+  ${kindsHtml}
+  ${checkFilterHtml}
+  <h2 class="issue-list-heading">${escapeHtml(kindLabel(kind))} <span class="issue-kind-count">(${list.total})</span></h2>
+  ${itemsHtml ? `<ul class="change-list">${itemsHtml}</ul>` : `<p>${escapeHtml(req.t('issues.empty'))}</p>`}
+  ${paginationHtml}
+</div>`;
+    res.render('layout', {
+      title: prepareTitle(req.t('page.articlesWithIssues')),
       labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
       bodyHtml,
       topHtml: prependAccountBanner(res),

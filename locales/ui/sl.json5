@@ -7,6 +7,7 @@
     blog: 'Blogovni del',
     forum: 'Forum',
     recentChanges: 'Nedavne spremembe',
+    "tools": "Orodja",
     reviewAccounts: 'Preglej račune',
     userRights: 'Uporabniške pravice',
     signOut: 'Odjava',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Revizija ni najdena',
     serverError: 'Napaka strežnika',
     "missingWikidata": "Članki brez identifikatorja Wikipodatkov",
+    "proposals": "Predlogi",
+    "articlesWithIssues": "Članki s težavami",
     "wikidata": "Wikipodatki:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Stran {{page}} od {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} članek še nima identifikatorja Wikipodatkov. Dodajte ga z urejevalnikom za operaterje ali orodji MCP.",
     "missingWikidataDescription_other": "Članki brez identifikatorja Wikipodatkov: {{count}}. Dodajte identifikatorje z urejevalnikom za operaterje ali orodji MCP.",
+    "proposalsDescription_one": "{{count}} predlog, razvrščen po stanju.",
+    "proposalsDescription_other": "Predlogi ({{count}}), razvrščeni po stanju.",
   },
   userRights: {
     title: 'Uporabniške pravice',
@@ -651,6 +656,26 @@
         rejected: 'Zavrnjen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Vrsta spremembe",
+    "pages": "Strani",
+    "checks": "Preverjanja strani",
+    "citations": "Navedbe",
+    "claims": "Trditve",
+    "media": "Mediji"
+  },
+  "issues": {
+    "description": "Članki, ki potrebujejo delo, po vrsti težave. Izberi vrsto, da vidiš njen seznam. Agenti lahko berejo iste sezname.",
+    "kindLabel": "Vrsta težave",
+    "kind": {
+      "unchecked": "Še ne preverjeni",
+      "check-issues": "Težave iz preverjanj strani",
+      "no-wikidata": "Brez Wikidata ID"
+    },
+    "checkFilter": "Vrsta preverjanja:",
+    "allChecks": "Vsa",
+    "empty": "Na tem seznamu trenutno ni člankov."
   },
   settings: {
     title: 'Nastavitve',

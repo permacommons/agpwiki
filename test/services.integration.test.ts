@@ -71,6 +71,7 @@ import {
 } from '../src/services/forum-subscription-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import { listProposalParts, setProposalLinks } from '../src/services/proposal-links-service.js';
+import { countArticlesWithIssues, listArticlesWithIssues } from '../src/services/article-issues-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { listPositionReplies, replyToPosition } from '../src/services/position-reply-service.js';
 import {
@@ -1411,6 +1412,75 @@ test('Service position replies are forum posts in a thread attached to the posit
     await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${slug}%`]);
     await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%` });
     for (const id of userIds) await cleanupTestArtifacts(dal, { userId: id });
+  }
+});
+
+test('Service issue lists follow the same rules as the notices on articles', async () => {
+  const dal = await getDal();
+  const stamp = Date.now();
+  const prefix = `test-issues-${stamp}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const make = (name: string, wikidata?: string) =>
+      createWikiPage(dal, { slug: `${prefix}-${name}`, title: { en: name }, body: { en: 'Text.' }, wikidata }, user.id);
+    const unchecked = await make('unchecked');
+    const flagged = await make('flagged', 'Q42');
+    const clean = await make('clean', 'Q43');
+    const check = (page: { slug: string; currentRevId: string }, high: number, fixed: number, type = 'fact_check') =>
+      createPageCheck(
+        dal,
+        {
+          slug: page.slug,
+          type,
+          status: 'completed',
+          checkResults: { en: 'Checked.' },
+          metrics: {
+            issues_found: { high, medium: 0, low: 0 },
+            issues_fixed: { high: fixed, medium: 0, low: 0 },
+          },
+          targetRevId: page.currentRevId,
+          revSummary: { en: 'Check.' },
+        },
+        user.id
+      );
+    await check(flagged, 2, 0);
+    await check(clean, 1, 1, 'copy_edit');
+
+    const ours = (list: { articles: Array<{ slug: string }> }) =>
+      list.articles.map(article => article.slug).filter(slug => slug.startsWith(prefix)).sort();
+
+    const notChecked = await listArticlesWithIssues(dal, { kind: 'unchecked', limit: 500 });
+    assert.deepEqual(ours(notChecked), [unchecked.slug]);
+
+    const issues = await listArticlesWithIssues(dal, { kind: 'check-issues', limit: 500 });
+    assert.deepEqual(ours(issues), [flagged.slug]);
+    const flaggedEntry = issues.articles.find(article => article.slug === flagged.slug);
+    assert.deepEqual(
+      flaggedEntry?.checks?.map(item => [item.type, item.unresolved]),
+      [['fact_check', 2]]
+    );
+    const onlyCopyEdits = await listArticlesWithIssues(dal, { kind: 'check-issues', checkType: 'copy_edit', limit: 500 });
+    assert.deepEqual(ours(onlyCopyEdits), []);
+
+    const noWikidata = await listArticlesWithIssues(dal, { kind: 'no-wikidata', limit: 500 });
+    assert.deepEqual(ours(noWikidata), [unchecked.slug]);
+
+    const counts = await countArticlesWithIssues(dal);
+    assert.equal(counts.unchecked, notChecked.total);
+    assert.equal(counts['check-issues'], issues.total);
+    assert.equal(counts['no-wikidata'], noWikidata.total);
+
+    const paged = await listArticlesWithIssues(dal, { kind: 'no-wikidata', limit: 1, offset: 0 });
+    assert.equal(paged.articles.length, 1);
+    assert.equal(paged.total, noWikidata.total);
+  } finally {
+    await dal.query(
+      'DELETE FROM page_checks WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
+      [`${prefix}%`]
+    );
+    await cleanupTestArtifacts(dal, { slugPrefix: `${prefix}%`, userId: userId ?? undefined });
   }
 });
 

@@ -7,6 +7,7 @@
     blog: 'مدونة',
     forum: 'منتدى',
     recentChanges: 'أحدث التغييرات',
+    "tools": "أدوات",
     reviewAccounts: 'مراجعة الحسابات',
     userRights: 'صلاحيات المستخدمين',
     signOut: 'خروج',
@@ -145,6 +146,8 @@
     revisionNotFound: 'مراجعة غير موجودة',
     serverError: 'خطأ في الخادم',
     "missingWikidata": "مقالات بلا معرّف ويكي بيانات",
+    "proposals": "المقترحات",
+    "articlesWithIssues": "مقالات فيها مشكلات",
     "wikidata": "ويكي بيانات:",
   },
   language: {
@@ -409,6 +412,8 @@
     pagination: 'صفحة {{page}} من {{totalPages}}',
     "missingWikidataDescription_one": "لا يزال {{count}} مقال بلا معرّف ويكي بيانات. أضف معرّفًا باستخدام محرر المشغّل أو أدوات MCP.",
     "missingWikidataDescription_other": "مقالات بلا معرّف ويكي بيانات: {{count}}. أضف المعرّفات باستخدام محرر المشغّل أو أدوات MCP.",
+    "proposalsDescription_one": "المقترحات ({{count}})، مجمّعة حسب الحالة.",
+    "proposalsDescription_other": "المقترحات ({{count}})، مجمّعة حسب الحالة.",
   },
   userRights: {
     title: 'صلاحيات المستخدمين',
@@ -647,6 +652,26 @@
         rejected: 'مرفوض',
       },
     },
+  },
+  "recentTabs": {
+    "label": "نوع التغيير",
+    "pages": "الصفحات",
+    "checks": "فحوص الصفحات",
+    "citations": "الاستشهادات",
+    "claims": "الادعاءات",
+    "media": "الوسائط"
+  },
+  "issues": {
+    "description": "مقالات تحتاج إلى عمل، حسب نوع المشكلة. اختر نوعًا لترى قائمته. يمكن للوكلاء قراءة القوائم نفسها.",
+    "kindLabel": "نوع المشكلة",
+    "kind": {
+      "unchecked": "لم يُتحقق منها بعد",
+      "check-issues": "مشكلات وجدتها فحوص الصفحات",
+      "no-wikidata": "بلا معرّف ويكي بيانات"
+    },
+    "checkFilter": "نوع الفحص:",
+    "allChecks": "الكل",
+    "empty": "لا توجد مقالات في هذه القائمة حاليًا."
   },
   settings: {
     title: 'الإعدادات',

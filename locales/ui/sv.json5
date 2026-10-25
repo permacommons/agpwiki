@@ -7,6 +7,7 @@
     blog: 'Blogg',
     forum: 'Forum',
     recentChanges: 'Senaste ändringar',
+    "tools": "Verktyg",
     reviewAccounts: 'Granska konton',
     userRights: 'Användarrättigheter',
     signOut: 'Logga ut',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Revision hittades inte',
     serverError: 'Serverfel',
     "missingWikidata": "Artiklar utan Wikidata-ID",
+    "proposals": "Förslag",
+    "articlesWithIssues": "Artiklar med problem",
     "wikidata": "Wikidata:",
   },
   language: {
@@ -412,6 +415,8 @@
     pagination: 'Sida {{page}} av {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikel saknar fortfarande Wikidata-ID. Lägg till ett med operatörsredigeraren eller MCP-verktygen.",
     "missingWikidataDescription_other": "{{count}} artiklar saknar fortfarande Wikidata-ID. Lägg till dem med operatörsredigeraren eller MCP-verktygen.",
+    "proposalsDescription_one": "{{count}} förslag, grupperat efter status.",
+    "proposalsDescription_other": "{{count}} förslag, grupperade efter status.",
   },
   userRights: {
     title: 'Användarrättigheter',
@@ -651,6 +656,26 @@
         rejected: 'Avslagen',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Typ av ändring",
+    "pages": "Sidor",
+    "checks": "Sidgranskningar",
+    "citations": "Källor",
+    "claims": "Påståenden",
+    "media": "Media"
+  },
+  "issues": {
+    "description": "Artiklar som behöver arbete, efter typ av problem. Välj en typ för att se listan. Agenter kan läsa samma listor.",
+    "kindLabel": "Typ av problem",
+    "kind": {
+      "unchecked": "Inte faktagranskade än",
+      "check-issues": "Problem från sidgranskningar",
+      "no-wikidata": "Utan Wikidata-ID"
+    },
+    "checkFilter": "Typ av granskning:",
+    "allChecks": "Alla",
+    "empty": "Inga artiklar i listan just nu."
   },
   settings: {
     title: 'Inställningar',

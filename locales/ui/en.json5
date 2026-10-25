@@ -2,6 +2,19 @@
   /*
    i18n-identical-allowlist:
    {
+     // These tab labels are also the local words in these languages.
+     "fi": ["recentTabs.media"],
+     "fr": ["recentTabs.pages", "recentTabs.citations"],
+     "id": ["recentTabs.media"],
+     "it": ["recentTabs.media"],
+     "nl": ["recentTabs.media"],
+     "pl": ["recentTabs.media"],
+     "sv": ["recentTabs.media"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // Wikidata is a proper name; Status is also the local word.
      "de": ["page.wikidata", "proposalStatus.form.status"],
      "es": ["page.wikidata"],
@@ -196,6 +209,7 @@
     "blog": "Blog",
     "forum": "Forum",
     "recentChanges": "Recent changes",
+    "tools": "Tools",
     "reviewAccounts": "Review accounts",
     "userRights": "User rights",
     "signOut": "Sign out",
@@ -352,6 +366,8 @@
     // Label before the Wikidata item link at the bottom of an article.
     "wikidata": "Wikidata:",
     "missingWikidata": "Articles without a Wikidata ID",
+    "proposals": "Proposals",
+    "articlesWithIssues": "Articles with issues",
     "recentChanges": "Recent Changes",
     "recentChecks": "Recent Page Checks",
     "recentCitations": "Recent Citations",
@@ -675,6 +691,8 @@
   "tool": {
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
+    "proposalsDescription_one": "{{count}} proposal, grouped by status.",
+    "proposalsDescription_other": "{{count}} proposals, grouped by status.",
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",
@@ -930,6 +948,28 @@
         "rejected": "Rejected"
       }
     }
+  },
+  // Tabs on the Recent changes page, one per kind of change.
+  "recentTabs": {
+    "label": "Kind of change",
+    "pages": "Pages",
+    "checks": "Page checks",
+    "citations": "Citations",
+    "claims": "Claims",
+    "media": "Media"
+  },
+  // The Articles with issues page: lists of articles that need work.
+  "issues": {
+    "description": "Articles that need work, by kind of issue. Pick a kind to see its list. Agents can read the same lists.",
+    "kindLabel": "Kind of issue",
+    "kind": {
+      "unchecked": "Not yet fact-checked",
+      "check-issues": "Issues found by page checks",
+      "no-wikidata": "No Wikidata ID"
+    },
+    "checkFilter": "Kind of check:",
+    "allChecks": "All",
+    "empty": "No articles in this list right now."
   },
   "settings": {
     "title": "Settings",

@@ -7,6 +7,7 @@
     blog: 'Blogo',
     forum: 'Forumo',
     recentChanges: 'Lastaj ŝanĝoj',
+    "tools": "Iloj",
     reviewAccounts: 'Reviziu kontojn',
     userRights: 'Uzantorajtoj',
     signOut: 'Elsaluti',
@@ -146,6 +147,8 @@
     revisionNotFound: 'Revizio ne trovita',
     serverError: 'Servila eraro',
     "missingWikidata": "Artikoloj sen Vikidatuma identigilo",
+    "proposals": "Proponoj",
+    "articlesWithIssues": "Artikoloj kun problemoj",
     "wikidata": "Vikidatumoj:",
   },
   language: {
@@ -410,6 +413,8 @@
     pagination: 'Paĝo {{page}} el {{totalPages}}',
     "missingWikidataDescription_one": "{{count}} artikolo ankoraŭ ne havas Vikidatuman identigilon. Aldonu ĝin per la operaciista redaktilo aŭ la MCP-iloj.",
     "missingWikidataDescription_other": "{{count}} artikoloj ankoraŭ ne havas Vikidatuman identigilon. Aldonu ĝin per la operaciista redaktilo aŭ la MCP-iloj.",
+    "proposalsDescription_one": "{{count}} propono, grupigita laŭ stato.",
+    "proposalsDescription_other": "{{count}} proponoj, grupigitaj laŭ stato.",
   },
   userRights: {
     title: 'Uzantorajtoj',
@@ -649,6 +654,26 @@
         rejected: 'Rifuzita',
       },
     },
+  },
+  "recentTabs": {
+    "label": "Speco de ŝanĝo",
+    "pages": "Paĝoj",
+    "checks": "Paĝaj kontroloj",
+    "citations": "Citaĵoj",
+    "claims": "Asertoj",
+    "media": "Aŭdvidaĵoj"
+  },
+  "issues": {
+    "description": "Artikoloj, kiuj bezonas laboron, laŭ speco de problemo. Elektu specon por vidi ĝian liston. Agentoj povas legi la samajn listojn.",
+    "kindLabel": "Speco de problemo",
+    "kind": {
+      "unchecked": "Ankoraŭ ne kontrolitaj",
+      "check-issues": "Problemoj trovitaj de paĝaj kontroloj",
+      "no-wikidata": "Sen Vikidatumaj identigilo"
+    },
+    "checkFilter": "Speco de kontrolo:",
+    "allChecks": "Ĉiuj",
+    "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
   settings: {
     title: 'Agordoj',
