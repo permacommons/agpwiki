@@ -2,9 +2,9 @@
   /*
    i18n-identical-allowlist:
    {
-     // These tab labels are also the local words in these languages.
+     // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
-     "fr": ["recentTabs.pages", "recentTabs.citations"],
+     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading"],
      "id": ["recentTabs.media"],
      "it": ["recentTabs.media"],
      "nl": ["recentTabs.media"],
