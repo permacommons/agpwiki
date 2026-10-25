@@ -7,6 +7,7 @@ import express from 'express';
 
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
+import { NotFoundError } from '../src/lib/errors.js';
 import { toToolErrorPayload } from '../src/mcp/errors.js';
 import ForumComment from '../src/models/forum-comment.js';
 import ForumThread from '../src/models/forum-thread.js';
@@ -14,7 +15,15 @@ import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
-import { createForumComment, createForumThread, readForumComment, readForumThread } from '../src/services/forum-service.js';
+import {
+  createForumComment,
+  createForumThread,
+  deleteForumThread,
+  listForumCommentVersions,
+  readForumComment,
+  readForumThread,
+  updateForumComment,
+} from '../src/services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -360,6 +369,50 @@ test('Comment editing works without JavaScript, preserves failed drafts, and che
     await server.close();
     await cleanupForumThread(dal, threadId);
     await cleanupUser(dal, otherUserId);
+    await cleanupUser(dal, userId);
+  }
+});
+
+
+test('Comment history is inaccessible after its parent thread is deleted', async () => {
+  const dal = await getDal();
+  const server = await makeTestServer(app => {
+    app.use((_req, res, next) => {
+      res.locals.signedIn = false;
+      next();
+    });
+    registerForumRoutes(app);
+  });
+  let userId: string | null = null;
+  let threadId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, FORUM_MODERATOR_ROLE);
+    const thread = await createForumThread(
+      { category: 'general', title: `history-${uniqueSuffix()}`, body: 'Original private rationale.', language: 'en' },
+      user.id
+    );
+    threadId = thread.id;
+    const commentId = thread.firstCommentId;
+    await updateForumComment(dal, { commentId, body: 'Revised private rationale.', language: 'en' }, user.id);
+    const historyUrl = `${server.url}/tool/forum/comment/${commentId}/history`;
+    const before = await fetch(historyUrl);
+    assert.equal(before.status, 200);
+    const beforeBody = await before.text();
+    assert.ok(beforeBody.includes('Original'));
+    assert.ok(beforeBody.includes('Revised'));
+
+    await deleteForumThread(dal, { threadId, revSummary: { en: 'Remove thread.' } }, user.id);
+    const deletedThread = await fetch(`${server.url}/tool/forum/thread/${threadId}`);
+    assert.equal(deletedThread.status, 404);
+    const after = await fetch(historyUrl);
+    assert.equal(after.status, 404, 'deleting a thread must also hide its comments history');
+    assert.equal(await after.text(), 'page.notFound');
+    await assert.rejects(() => listForumCommentVersions(dal, commentId), NotFoundError);
+  } finally {
+    await server.close();
+    await cleanupForumThread(dal, threadId);
     await cleanupUser(dal, userId);
   }
 });

@@ -613,7 +613,8 @@ export const listForumCommentVersions = async (
   dalInstance: DataAccessLayer,
   commentId: string
 ): Promise<ForumCommentVersion[]> => {
-  await requireComment(commentId);
+  const comment = await requireComment(commentId);
+  await requireThread(comment.threadId);
   const result = await dalInstance.query(
     `SELECT _rev_id, _rev_date, _rev_user, body, original_language
        FROM ${ForumComment.tableName}
