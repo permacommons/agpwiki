@@ -266,6 +266,38 @@
     title: 'História verzií',
     compare: 'Porovnať vybrané revízie',
   },
+  "revert": {
+    "tag": "vrátenie",
+    "restore": {
+      "link": "Obnoviť",
+      "title": "Obnoviť túto verziu",
+      "submit": "Obnoviť túto verziu"
+    },
+    "rollback": {
+      "link": "Vrátiť späť",
+      "title": "Vrátiť späť",
+      "submit": "Vrátiť tieto úpravy"
+    },
+    "summary": "Tým sa vráti verzia z {{date}} od {{name}}. Zrušené úpravy: {{count}}, od {{names}}.",
+    "seeChanges": "Pozrieť zmeny",
+    "reason": "Dôvod",
+    "reasonHelp": "Napíšte prečo, napríklad „žiadne zdroje pre novú sekciu“. Stane sa zhrnutím úpravy a ľudia, ktorých úpravy sa rušia, ho uvidia.",
+    "reasonRequired": "Zadajte dôvod.",
+    "changed": "Stránka sa zmenila, kým ste si ju prezerali. Skontrolujte, čo by sa teraz zrušilo, skôr ako budete pokračovať.",
+    "forbidden": "Na tejto stránke nemôžete vracať úpravy.",
+    "invalid": "Tu to nie je možné: verzia už možno je aktuálna alebo nie je čo vrátiť.",
+    "guard": {
+      "title": "Vaše vrátenie bolo zrušené",
+      "body": "Niekto zrušil vaše vrátenie na tejto stránke. Podľa pravidiel správania operátorov je ďalším krokom diskusia, nie ďalšie vrátenie.",
+      "discuss": "Diskutovať o tejto stránke",
+      "conduct": "Prečítať pravidlá správania"
+    },
+    "recent": {
+      "showReverts": "Zobraziť iba vrátenia",
+      "onlyReverts": "Zobrazujú sa iba vrátenia",
+      "all": "Zobraziť všetky zmeny"
+    }
+  },
   operatorEdit: {
     title: 'Operátorská úprava',
     link: 'Operátorská úprava',
@@ -684,6 +716,7 @@
     "someone": "Niekto",
     "kind": {
       "forumReply": "{{name}} odpovedal(a) vo vlákne {{subject}}",
+      "pageRevert": "{{name}} vrátil(a) vaše úpravy stránky {{subject}}",
       "other": "Nová aktivita: {{subject}}"
     },
     "markRead": "Označiť ako prečítané",
@@ -715,6 +748,10 @@
         "forumReply": {
           "label": "Odpovede vo vláknach fóra, ktoré sleduješ",
           "help": "Vlákno sleduješ, keď ho založíš alebo v ňom odpovieš. Sledovanie môžeš zapnúť alebo vypnúť aj priamo vo vlákne."
+        },
+        "pageRevert": {
+          "label": "Vrátenia vašich úprav",
+          "help": "Keď niekto obnoví staršiu verziu stránky alebo vráti vaše úpravy. Uvidíte dôvod."
         }
       }
     }

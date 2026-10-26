@@ -59,25 +59,31 @@ export interface CitationClaimChange {
  */
 export async function getRecentWikiChanges(
   dal: DataAccessLayer,
-  limit: number
+  limit: number,
+  { tag = null }: { tag?: string | null } = {}
 ): Promise<WikiPageChange[]> {
+  // The tag filter applies after the window, so prev_rev_id still points at
+  // the revision just before, whatever its tags.
   const result = await dal.query(
-    `SELECT slug,
-            title,
-            _rev_id,
-            _rev_date,
-            _rev_user,
-            _rev_summary,
-            _rev_tags,
-            LEAD(_rev_id) OVER (
-              PARTITION BY COALESCE(_old_rev_of, id)
-              ORDER BY _rev_date DESC, _rev_id DESC
-            ) AS prev_rev_id
-     FROM ${WikiPage.tableName}
-     WHERE _rev_deleted = false
+    `SELECT * FROM (
+       SELECT slug,
+              title,
+              _rev_id,
+              _rev_date,
+              _rev_user,
+              _rev_summary,
+              _rev_tags,
+              LEAD(_rev_id) OVER (
+                PARTITION BY COALESCE(_old_rev_of, id)
+                ORDER BY _rev_date DESC, _rev_id DESC
+              ) AS prev_rev_id
+       FROM ${WikiPage.tableName}
+       WHERE _rev_deleted = false
+     ) changes
+     WHERE $2::text IS NULL OR $2::text = ANY(_rev_tags)
      ORDER BY _rev_date DESC, _rev_id DESC
      LIMIT $1`,
-    [limit]
+    [limit, tag]
   );
 
   return result.rows.map(

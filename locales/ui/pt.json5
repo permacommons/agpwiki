@@ -265,6 +265,38 @@
     title: 'Histórico de versões',
     compare: 'Comparar revisões selecionadas',
   },
+  "revert": {
+    "tag": "reversão",
+    "restore": {
+      "link": "Restaurar",
+      "title": "Restaurar esta versão",
+      "submit": "Restaurar esta versão"
+    },
+    "rollback": {
+      "link": "Reverter",
+      "title": "Reverter",
+      "submit": "Reverter estas edições"
+    },
+    "summary": "Isto traz de volta a versão de {{date}} de {{name}}. Edições desfeitas: {{count}}, de {{names}}.",
+    "seeChanges": "Ver as mudanças",
+    "reason": "Motivo",
+    "reasonHelp": "Diga por quê, por exemplo \"sem fontes para a nova seção\". Ele vira o resumo da edição, e as pessoas cujas edições são desfeitas o veem.",
+    "reasonRequired": "Informe um motivo.",
+    "changed": "A página mudou enquanto você a olhava. Confira o que isto desfaria agora antes de continuar.",
+    "forbidden": "Você não pode reverter esta página.",
+    "invalid": "Não é possível aqui: a versão talvez já seja a atual, ou não há nada para reverter.",
+    "guard": {
+      "title": "Sua reversão foi desfeita",
+      "body": "Alguém desfez sua reversão desta página. Pela conduta dos operadores, o próximo passo é uma discussão, não outra reversão.",
+      "discuss": "Discutir esta página",
+      "conduct": "Ler a conduta dos operadores"
+    },
+    "recent": {
+      "showReverts": "Mostrar só reversões",
+      "onlyReverts": "Mostrando só reversões",
+      "all": "Mostrar todas as mudanças"
+    }
+  },
   operatorEdit: {
     title: 'Edição de operador',
     link: 'Edição de operador',
@@ -682,6 +714,7 @@
     "someone": "Alguém",
     "kind": {
       "forumReply": "{{name}} respondeu em {{subject}}",
+      "pageRevert": "{{name}} reverteu suas edições em {{subject}}",
       "other": "Nova atividade em {{subject}}"
     },
     "markRead": "Marcar como lida",
@@ -713,6 +746,10 @@
         "forumReply": {
           "label": "Respostas em tópicos do fórum que você segue",
           "help": "Você segue um tópico quando o inicia ou responde nele. Também pode seguir ou deixar de seguir pelo próprio tópico."
+        },
+        "pageRevert": {
+          "label": "Reversões das suas edições",
+          "help": "Quando alguém restaura uma versão anterior de uma página ou reverte suas edições. Você vê o motivo."
         }
       }
     }

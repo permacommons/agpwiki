@@ -266,6 +266,38 @@
     title: 'Versijų istorija',
     compare: 'Palyginti pasirinktas versijas',
   },
+  "revert": {
+    "tag": "atšaukimas",
+    "restore": {
+      "link": "Atkurti",
+      "title": "Atkurti šią versiją",
+      "submit": "Atkurti šią versiją"
+    },
+    "rollback": {
+      "link": "Atšaukti",
+      "title": "Atšaukti",
+      "submit": "Atšaukti šiuos keitimus"
+    },
+    "summary": "Tai grąžina {{date}} versiją, kurią sukūrė {{name}}. Atšaukti keitimai: {{count}}, autoriai: {{names}}.",
+    "seeChanges": "Žiūrėti pakeitimus",
+    "reason": "Priežastis",
+    "reasonHelp": "Parašykite kodėl, pavyzdžiui, „naujam skyriui nėra šaltinių“. Tai taps keitimo santrauka, ir žmonės, kurių keitimai atšaukiami, ją matys.",
+    "reasonRequired": "Įrašykite priežastį.",
+    "changed": "Puslapis pasikeitė, kol jį žiūrėjote. Prieš tęsdami patikrinkite, ką dabar tai atšauktų.",
+    "forbidden": "Šiame puslapyje negalite atšaukti keitimų.",
+    "invalid": "Čia to padaryti negalima: versija gal jau dabartinė arba nėra ką atšaukti.",
+    "guard": {
+      "title": "Jūsų atšaukimas buvo atšauktas",
+      "body": "Kažkas atšaukė jūsų atšaukimą šiame puslapyje. Pagal operatorių elgesio taisykles kitas žingsnis yra diskusija, o ne naujas atšaukimas.",
+      "discuss": "Aptarti šį puslapį",
+      "conduct": "Skaityti elgesio taisykles"
+    },
+    "recent": {
+      "showReverts": "Rodyti tik atšaukimus",
+      "onlyReverts": "Rodomi tik atšaukimai",
+      "all": "Rodyti visus pakeitimus"
+    }
+  },
   operatorEdit: {
     title: 'Operatoriaus redagavimas',
     link: 'Operatoriaus redagavimas',
@@ -684,6 +716,7 @@
     "someone": "Kažkas",
     "kind": {
       "forumReply": "{{name}} atsakė gijoje {{subject}}",
+      "pageRevert": "{{name}} atšaukė jūsų keitimus puslapyje {{subject}}",
       "other": "Nauja veikla: {{subject}}"
     },
     "markRead": "Pažymėti kaip perskaitytą",
@@ -715,6 +748,10 @@
         "forumReply": {
           "label": "Atsakymai tavo sekamose forumo gijose",
           "help": "Giją seki, kai ją pradedi arba joje atsakai. Sekti arba nebesekti gali ir pačioje gijoje."
+        },
+        "pageRevert": {
+          "label": "Jūsų keitimų atšaukimai",
+          "help": "Kai kas nors atkuria ankstesnę puslapio versiją arba atšaukia jūsų keitimus. Matote priežastį."
         }
       }
     }

@@ -265,6 +265,38 @@
     title: '版本歷史',
     compare: '比較選定的版本',
   },
+  "revert": {
+    "tag": "回退",
+    "restore": {
+      "link": "恢復",
+      "title": "恢復此版本",
+      "submit": "恢復此版本"
+    },
+    "rollback": {
+      "link": "回滾",
+      "title": "回滾",
+      "submit": "回滾這些編輯"
+    },
+    "summary": "這會恢復 {{name}} 於 {{date}} 的版本。撤銷的編輯：{{count}} 次，作者：{{names}}。",
+    "seeChanges": "查看變更",
+    "reason": "理由",
+    "reasonHelp": "說明原因，例如「新章節沒有來源」。理由會成為編輯摘要，編輯被撤銷的人也會看到。",
+    "reasonRequired": "請填寫理由。",
+    "changed": "你查看期間頁面已變更。繼續之前，請檢查現在會撤銷哪些內容。",
+    "forbidden": "你不能在此頁面回退。",
+    "invalid": "此處無法執行：該版本可能已是目前版本，或沒有可回滾的內容。",
+    "guard": {
+      "title": "你的回退已被撤銷",
+      "body": "有人撤銷了你在此頁面的回退。根據操作者行為準則，下一步應是討論，而不是再次回退。",
+      "discuss": "討論此頁面",
+      "conduct": "閱讀行為準則"
+    },
+    "recent": {
+      "showReverts": "只顯示回退",
+      "onlyReverts": "正在只顯示回退",
+      "all": "顯示所有變更"
+    }
+  },
   operatorEdit: {
     title: '操作員編輯',
     link: '操作員編輯',
@@ -682,6 +714,7 @@
     "someone": "有人",
     "kind": {
       "forumReply": "{{name}} 在 {{subject}} 中回覆了",
+      "pageRevert": "{{name}} 回退了你對 {{subject}} 的編輯",
       "other": "{{subject}} 有新動態"
     },
     "markRead": "標為已讀",
@@ -713,6 +746,10 @@
         "forumReply": {
           "label": "你關注的論壇討論串中的回覆",
           "help": "你發起或回覆討論串時就會關注它。你也可以在討論串頁面關注或取消關注。"
+        },
+        "pageRevert": {
+          "label": "你的編輯被回退",
+          "help": "當有人恢復頁面的較早版本或回滾你的編輯時。你會看到其理由。"
         }
       }
     }
