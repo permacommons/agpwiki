@@ -8,6 +8,7 @@ import {
   ValidationCollector,
 } from '../lib/errors.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { isUuid } from '../lib/uuid.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import type { ForumCommentInstance } from '../models/manifests/forum-comment.js';
@@ -182,19 +183,23 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   ),
 });
 
-const findCurrentThreadById = async (threadId: string) =>
-  ForumThread.filterWhere({
+const findCurrentThreadById = async (threadId: string) => {
+  if (!isUuid(threadId)) return null;
+  return ForumThread.filterWhere({
     id: threadId,
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>).first();
+};
 
-const findCurrentCommentById = async (commentId: string) =>
-  ForumComment.filterWhere({
+const findCurrentCommentById = async (commentId: string) => {
+  if (!isUuid(commentId)) return null;
+  return ForumComment.filterWhere({
     id: commentId,
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>).first();
+};
 
 const requireThread = async (threadId: string) => {
   const thread = await findCurrentThreadById(threadId);
