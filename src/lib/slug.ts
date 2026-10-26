@@ -16,6 +16,13 @@ const RESERVED_SUFFIXES = ['comments', 'checks'];
 export const normalizeSlug = (slug: string) =>
   slug.trim().replace(/^\/+/, '').replace(/\/+$/, '');
 
+/**
+ * The form every address is stored in: lowercase, with hyphens for spaces
+ * and underscores. Typed variants such as "Belt_Buckle" map to it.
+ */
+export const toAddressForm = (slug: string) =>
+  normalizeSlug(slug).toLowerCase().replace(/[\s_]+/g, '-');
+
 export const isBlockedSlug = (slug: string) => {
   if (!slug) return true;
   const [prefix] = slug.split('/');

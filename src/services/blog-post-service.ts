@@ -13,6 +13,7 @@ import {
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { toAddressForm } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
@@ -258,7 +259,7 @@ export async function createBlogPost(
   userId: string
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post input.');
-  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   validateTitle(title, errors);
@@ -330,7 +331,8 @@ export async function updateBlogPost(
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post update input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
-  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const rawNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const normalizedNewSlug = rawNewSlug === undefined ? undefined : toAddressForm(rawNewSlug);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);

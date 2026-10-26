@@ -203,3 +203,51 @@ test('Renaming a blog post keeps its old address as a redirect', async () => {
     await cleanup(prefix, userId);
   }
 });
+
+test('Addresses are stored in lowercase, and typed variants lead to the real address', async () => {
+  const dal = await getDal();
+  const prefix = `test-lowercase-${Date.now()}`;
+  let userId: string | null = null;
+  const server = await startServer();
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+    const page = await createWikiPage(
+      dal,
+      { slug: `${prefix.toUpperCase()}_Belt Buckle`, title: { en: 'Belt buckle' }, body: { en: 'Text.' } },
+      user.id
+    );
+    assert.equal(page.slug, `${prefix}-belt-buckle`);
+    const renamed = await updateWikiPage(
+      dal,
+      { slug: page.slug, newSlug: `${prefix}-Belt_Clasp`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    assert.equal(renamed.slug, `${prefix}-belt-clasp`);
+
+    const typed = await fetch(`${server.url}/${prefix.toUpperCase()}_BELT_CLASP?lang=en`, { redirect: 'manual' });
+    assert.equal(typed.status, 301);
+    assert.equal(typed.headers.get('location'), `/${prefix}-belt-clasp?lang=en`);
+    // A typed variant of an old address goes straight to the main address.
+    const typedOld = await fetch(`${server.url}/${prefix}-Belt%20Buckle`, { redirect: 'manual' });
+    assert.equal(typedOld.status, 301);
+    assert.equal(typedOld.headers.get('location'), `/${prefix}-belt-clasp`);
+    const missing = await fetch(`${server.url}/${prefix.toUpperCase()}_NOTHING`, { redirect: 'manual' });
+    assert.equal(missing.status, 404);
+
+    const post = await createBlogPost(
+      dal,
+      { slug: `${prefix}-My_Post`, title: { en: 'Post' }, body: { en: 'Text.' } },
+      user.id
+    );
+    assert.equal(post.slug, `${prefix}-my-post`);
+    const typedPost = await fetch(`${server.url}/blog/${prefix}-MY_POST`, { redirect: 'manual' });
+    assert.equal(typedPost.status, 301);
+    assert.equal(typedPost.headers.get('location'), `/blog/${prefix}-my-post`);
+  } finally {
+    await server.close();
+    await cleanup(prefix, userId);
+  }
+});
