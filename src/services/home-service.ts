@@ -128,6 +128,9 @@ const loadThreads = async (dalInstance: DataAccessLayer): Promise<HomeThread[]> 
        LEFT JOIN forum_comments c
          ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
       WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
+        -- Attached threads are titled with a quote from what they attach to,
+        -- not a topic someone chose; they belong on that page, not here.
+        AND t.attached_type IS NULL
       GROUP BY t.id
       ORDER BY last_activity_at DESC
       LIMIT $1`,

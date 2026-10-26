@@ -179,7 +179,7 @@ test('The home page shows the sections below its text, and the page list sorts n
   const prefix = `test-home-${Date.now()}`;
   const server = await makeServer();
   let userId: string | null = null;
-  let threadId: string | null = null;
+  const threadIds: string[] = [];
   const welcomeExisted =
     ((await dal.query('SELECT 1 FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [HOME_PAGE_SLUG])).rowCount ?? 0) >
     0;
@@ -212,12 +212,23 @@ test('The home page shows the sections below its text, and the page list sorts n
       { category: 'general', title: `${prefix} thread`, body: 'First post.', language: 'en' },
       user.id
     );
-    threadId = thread.id;
+    threadIds.push(thread.id);
+    const attached = await createForumThread(
+      { category: 'general', title: `${prefix} attached`, body: 'A reply.', language: 'en' },
+      user.id
+    );
+    threadIds.push(attached.id);
+    await dal.query(
+      "UPDATE forum_threads SET attached_type = 'position', attached_id = gen_random_uuid() WHERE id = $1",
+      [attached.id]
+    );
 
     const loaded = await loadHomeSections(dal, 'en', { fresh: true });
     const newer = loaded.articles.find(article => article.slug === `${prefix}-newer`);
     assert.equal(newer?.excerpt, 'The newer article is about tea.');
-    assert.ok(loaded.threads.some(item => item.id === threadId));
+    assert.ok(loaded.threads.some(item => item.id === thread.id));
+    // Threads attached to a position are titled with a quote, so they stay off the home page.
+    assert.ok(!loaded.threads.some(item => item.id === attached.id));
     assert.equal(typeof loaded.issues.unchecked, 'number');
 
     const home = await getBody(`${server.url}/${HOME_PAGE_SLUG}`);
@@ -240,7 +251,7 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(byTitle, /href="\/tool\/pages\?per=200&amp;sort=new">tool\.pagesSortNew/);
   } finally {
     await server.close();
-    if (threadId) {
+    for (const threadId of threadIds) {
       await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = $1', [threadId]);
       await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' = $1", [threadId]);
       await dal.query('DELETE FROM forum_comments WHERE thread_id = $1', [threadId]);
