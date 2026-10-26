@@ -436,6 +436,25 @@
       "openInForum": "یہ جوابات فورم میں کھولیں"
     }
   },
+  "home": {
+    "newArticles": "Agpedia پر نیا",
+    "seeMoreArticles": "مزید نئے مضامین",
+    "fromBlog": "بلاگ سے",
+    "seeAllPosts": "بلاگ کی تمام تحریریں",
+    "inForum": "فورم میں",
+    "goToForum": "فورم پر جائیں",
+    "waysToHelp": "مدد کے طریقے:",
+    "waitingForCheck_one": "حقائق کی جانچ کے منتظر مضامین: {{count}}",
+    "waitingForCheck_other": "حقائق کی جانچ کے منتظر مضامین: {{count}}",
+    "needWikidata_one": "ویکی ڈیٹا ربط درکار: {{count}}",
+    "needWikidata_other": "ویکی ڈیٹا ربط درکار: {{count}}",
+    "howToContribute": "حصہ کیسے ڈالیں",
+    "newArticleLabel": "نیا مضمون",
+    "blogLabel": "بلاگ",
+    "noArticles": "ابھی کوئی مضمون نہیں۔",
+    "noPosts": "ابھی کوئی بلاگ تحریر نہیں۔",
+    "noThreads": "ابھی کوئی گفتگو نہیں۔"
+  },
   tool: {
     view: 'دیکھیں',
     diff: 'فرق',
@@ -451,6 +470,9 @@
     relatedLabel: 'متعلقہ',
     seeAlso: 'مزید دیکھیں: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'انسائیکلوپیڈیا صفحات (کل {{total}})۔',
+    "pagesSort": "ترتیب:",
+    "pagesSortTitle": "حروفِ تہجی",
+    "pagesSortNew": "نئے پہلے",
     previous: 'پچھلا',
     next: 'اگلا',
     pagination: 'صفحہ {{page}} از {{totalPages}}',

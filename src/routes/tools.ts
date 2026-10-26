@@ -976,6 +976,9 @@ export const registerToolRoutes = (app: Express) => {
       max: Math.floor(Number.MAX_SAFE_INTEGER / per),
     });
     const offset = (page - 1) * per;
+    // Newest first is where the home page's "See more new articles" leads.
+    const sortNew = req.query.sort === 'new';
+    const sortParam = sortNew ? '&sort=new' : '';
 
     const { notLike } = WikiPage.ops;
 
@@ -985,7 +988,7 @@ export const registerToolRoutes = (app: Express) => {
 
     const pageResults = await WikiPage.filterWhere({ slug: notLike('meta/%') })
       .and({ slug: notLike('tool/%') })
-      .orderBy('slug', 'ASC')
+      .orderBy(sortNew ? 'createdAt' : 'slug', sortNew ? 'DESC' : 'ASC')
       .limit(per)
       .offset(offset)
       .run();
@@ -993,18 +996,30 @@ export const registerToolRoutes = (app: Express) => {
     const pages = pageResults.map(p => ({
       slug: p.slug,
       title: resolveSafeTextWithFallback(mlString.resolve, 'en', p.title, p.slug),
+      createdAt: p.createdAt,
     }));
 
     const totalPages = Math.max(Math.ceil(total / per), 1);
     const prevLink =
-      page > 1 ? `/tool/pages?page=${page - 1}&per=${per}` : '';
+      page > 1 ? `/tool/pages?page=${page - 1}&per=${per}${sortParam}` : '';
     const nextLink =
-      page < totalPages ? `/tool/pages?page=${page + 1}&per=${per}` : '';
+      page < totalPages ? `/tool/pages?page=${page + 1}&per=${per}${sortParam}` : '';
 
     const listItems = pages
       .map(
         item =>
-          `<li><a href="/${escapeHtml(item.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(item.slug)}">${renderText(item.title)}</a></li>`
+          `<li><a href="/${escapeHtml(item.slug)}" data-wiki-link="true" data-wiki-link-slug="${escapeHtml(item.slug)}">${renderText(item.title)}</a>${
+            sortNew && item.createdAt
+              ? ` <span class="pages-created">${escapeHtml(
+                  item.createdAt.toLocaleDateString(res.locals.locale ?? 'en', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    timeZone: 'UTC',
+                  })
+                )}</span>`
+              : ''
+          }</li>`
       )
       .join('');
 
@@ -1016,6 +1031,11 @@ export const registerToolRoutes = (app: Express) => {
 
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.pagesDescription', { total })}</p>
+  <p class="pages-sort">${escapeHtml(req.t('tool.pagesSort'))} ${
+    sortNew
+      ? `<a href="/tool/pages?per=${per}">${escapeHtml(req.t('tool.pagesSortTitle'))}</a> · <strong aria-current="true">${escapeHtml(req.t('tool.pagesSortNew'))}</strong>`
+      : `<strong aria-current="true">${escapeHtml(req.t('tool.pagesSortTitle'))}</strong> · <a href="/tool/pages?per=${per}&amp;sort=new">${escapeHtml(req.t('tool.pagesSortNew'))}</a>`
+  }</p>
   ${pagination}
   <ul class="change-list">${listItems}</ul>
   ${pagination}

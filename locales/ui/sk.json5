@@ -436,6 +436,25 @@
       "openInForum": "Otvoriť tieto odpovede vo fóre"
     }
   },
+  "home": {
+    "newArticles": "Novinky na Agpedii",
+    "seeMoreArticles": "Ďalšie nové články",
+    "fromBlog": "Z blogu",
+    "seeAllPosts": "Všetky príspevky na blogu",
+    "inForum": "Vo fóre",
+    "goToForum": "Prejsť do fóra",
+    "waysToHelp": "Ako pomôcť:",
+    "waitingForCheck_one": "Články čakajúce na overenie faktov: {{count}}",
+    "waitingForCheck_other": "Články čakajúce na overenie faktov: {{count}}",
+    "needWikidata_one": "Bez prepojenia na Wikiúdaje: {{count}}",
+    "needWikidata_other": "Bez prepojenia na Wikiúdaje: {{count}}",
+    "howToContribute": "Ako prispieť",
+    "newArticleLabel": "Nový článok",
+    "blogLabel": "Blog",
+    "noArticles": "Zatiaľ žiadne články.",
+    "noPosts": "Zatiaľ žiadne príspevky.",
+    "noThreads": "Zatiaľ žiadne diskusie."
+  },
   tool: {
     view: 'Zobraziť',
     diff: 'Rozdiel',
@@ -451,6 +470,9 @@
     relatedLabel: 'Súvisiace',
     seeAlso: 'Pozri aj: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Encyklopedické stránky (spolu {{total}}).',
+    "pagesSort": "Zoradiť:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Najnovšie najskôr",
     previous: 'Predchádzajúca',
     next: 'Ďalšia',
     pagination: 'Strana {{page}} z {{totalPages}}',
