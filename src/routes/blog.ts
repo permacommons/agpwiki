@@ -21,6 +21,7 @@ import {
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
+import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -143,6 +144,10 @@ export const registerBlogRoutes = (app: Express) => {
         }
       })();
       if (!post) return;
+      if (post.slug !== slug) {
+        res.redirect(301, `/blog/${encodeURIComponent(post.slug)}${queryStringOf(req.originalUrl)}`);
+        return;
+      }
 
       const revisionsResult = await listBlogPostRevisions(dalInstance, slug);
       const revisions = revisionsResult.revisions;
@@ -312,6 +317,7 @@ export const registerBlogRoutes = (app: Express) => {
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       res.render('layout', {
         title: prepareTitle(title),
+        canonicalUrl: canonicalUrlFor(`/blog/${encodeURIComponent(post.slug)}`),
         labelHtml,
         bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
         topHtml: prependAccountBanner(res, topHtml),
