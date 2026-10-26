@@ -141,6 +141,8 @@
     actions: 'Åtgärder',
     protectedDetails: 'Endast wikiadministratörer kan redigera den här sidan.',
     protectedDetailsAdmin: 'Din roll som wikiadministratör låter dig redigera den här sidan.',
+    "protectedExperienced": "Bara erfarna redigerare kan redigera den här sidan. Man blir erfaren efter fem redigeringar som är äldre än en vecka och aldrig har återställts.",
+    "protectedExperiencedEditable": "Bara erfarna redigerare kan redigera den här sidan. Du kan, som erfaren redigerare eller administratör.",
     forbidden: 'Förbjudet',
     accessDenied: 'Åtkomst nekad.',
     notFound: 'Hittades inte',
@@ -306,6 +308,7 @@
     banner: 'Redigeringar görs i allmänhet via AI-agenter. Använd operatörsredigeringar för snabba rättelser eller ändringar som skulle ta längre tid att förklara för en agent än att göra direkt.',
     summaryHelp: 'Den här sammanfattningen visas i versionshistoriken.',
     protectedForbidden: 'Den här sidan är skyddad. Endast wikiadministratörer kan redigera den.',
+    "protectedForbiddenExperienced": "Sidan är skyddad. Bara erfarna redigerare och wikiadministratörer kan redigera den.",
     validation: {
       generic: 'Det gick inte att spara din redigering. Kontrollera fälten och försök igen.',
       titleInvalid: 'Ange en giltig titel.',
@@ -382,11 +385,29 @@
     unknownTarget: 'Okänt mål',
     events: {
       "wiki_page_signoff_withdrawn": "Drog tillbaka sitt ställningstagande till ett förslag",
+      "experienced_status_changed": "Ändrade status som erfaren redigerare",
       "wiki_page_signed_off": "Tog ställning till ett förslag",
       wiki_page_protected: 'Sida skyddad',
       wiki_page_unprotected: 'Sidskydd borttaget',
       protected_wiki_page_edited: 'Skyddad sida redigerad',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Erfaren redigerare sedan {{date}}",
+      "granted": "Erfaren redigerare sedan {{date}}, beviljad i förtid av en administratör",
+      "revoked": "Inte erfaren redigerare: fråntagen av en administratör",
+      "notYet": "Inte erfaren redigerare än: {{count}} av {{total}} bestående redigeringar"
+    },
+    "form": {
+      "label": "Erfaren redigerare",
+      "auto": "Automatiskt",
+      "granted": "Bevilja i förtid",
+      "revoked": "Ta bort",
+      "reason": "Skäl",
+      "submit": "Spara",
+      "saved": "Status som erfaren redigerare uppdaterad för {{user}}."
+    }
   },
   "signoff": {
     "title": "Ställningstaganden",

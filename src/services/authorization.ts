@@ -4,6 +4,7 @@ import {
   BLOG_ADMIN_ROLE,
   FORUM_MODERATOR_ROLE,
   hasRole,
+  SITE_ADMIN_ROLE,
   userHasRole,
   WIKI_ADMIN_ROLE,
 } from './roles.js';
@@ -27,6 +28,10 @@ export const assertCanDeleteWikiPage = async (dal: DataAccessLayer, userId: stri
 
 export const assertCanProtectWikiPage = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);
+
+// Like other changes to a person's rights, through the user rights tool.
+export const assertCanManageExperiencedStatus = async (dal: DataAccessLayer, userId: string) =>
+  assertUserHasRole(dal, userId, SITE_ADMIN_ROLE);
 
 export const assertCanDeleteCitation = async (dal: DataAccessLayer, userId: string) =>
   assertUserHasRole(dal, userId, WIKI_ADMIN_ROLE);

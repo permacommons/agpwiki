@@ -140,6 +140,8 @@
     actions: 'İşlemler',
     protectedDetails: 'Bu sayfayı yalnızca wiki yöneticileri düzenleyebilir.',
     protectedDetailsAdmin: 'Wiki yöneticisi rolünüz bu sayfayı düzenlemenize izin verir.',
+    "protectedExperienced": "Bu sayfayı yalnızca deneyimli editörler düzenleyebilir. Bir haftadan eski ve hiç geri alınmamış beş düzenlemeden sonra deneyimli olunur.",
+    "protectedExperiencedEditable": "Bu sayfayı yalnızca deneyimli editörler düzenleyebilir. Deneyimli editör ya da yönetici olarak siz düzenleyebilirsiniz.",
     forbidden: 'Yasak',
     accessDenied: 'Erişim reddedildi.',
     notFound: 'Bulunamadı',
@@ -305,6 +307,7 @@
     banner: 'Düzenlemeler genellikle yapay zekâ ajanları aracılığıyla yapılır. Operatör düzenlemelerini hızlı düzeltmeler veya bir ajana açıklaması doğrudan yapmaktan daha uzun sürecek değişiklikler için kullanın.',
     summaryHelp: 'Bu özet revizyon geçmişinde görünecektir.',
     protectedForbidden: 'Bu sayfa korumalıdır. Yalnızca wiki yöneticileri düzenleyebilir.',
+    "protectedForbiddenExperienced": "Bu sayfa koruma altında. Yalnızca deneyimli editörler ve viki yöneticileri düzenleyebilir.",
     validation: {
       generic: 'Düzenlemeniz kaydedilemedi. Alanları kontrol edip tekrar deneyin.',
       titleInvalid: 'Geçerli bir başlık girin.',
@@ -381,11 +384,29 @@
     unknownTarget: 'Bilinmeyen hedef',
     events: {
       "wiki_page_signoff_withdrawn": "Bir öneri hakkındaki görüşünü geri çekti",
+      "experienced_status_changed": "Deneyimli editör durumu değiştirildi",
       "wiki_page_signed_off": "Bir öneri hakkında görüş bildirdi",
       wiki_page_protected: 'Sayfa korumaya alındı',
       wiki_page_unprotected: 'Sayfa koruması kaldırıldı',
       protected_wiki_page_edited: 'Korumalı sayfa düzenlendi',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "{{date}} tarihinden beri deneyimli editör",
+      "granted": "{{date}} tarihinden beri deneyimli editör, bir yönetici erken verdi",
+      "revoked": "Deneyimli editör değil: bir yönetici geri aldı",
+      "notYet": "Henüz deneyimli editör değil: {{total}} kalıcı düzenlemeden {{count}}"
+    },
+    "form": {
+      "label": "Deneyimli editör",
+      "auto": "Otomatik",
+      "granted": "Erken ver",
+      "revoked": "Geri al",
+      "reason": "Neden",
+      "submit": "Kaydet",
+      "saved": "{{user}} için deneyimli editör durumu güncellendi."
+    }
   },
   "signoff": {
     "title": "Görüşler",

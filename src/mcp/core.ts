@@ -120,6 +120,7 @@ import {
 import {
   getWikiPageEditability,
   type PageProtectionInput,
+  PROTECTION_LEVELS,
   protectWikiPage,
   unprotectWikiPage,
 } from '../services/page-protection-service.js';
@@ -1986,7 +1987,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_rollbackPage',
     {
       title: 'Roll Back Page',
-      description: `Undo the latest run of edits to a wiki page by one contributor (someone other than you), bringing back the last version before them. Limited to wiki admins. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
+      description: `Undo the latest run of edits to a wiki page by one contributor (someone other than you), bringing back the last version before them. Limited to experienced editors and wiki admins. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -2075,11 +2076,15 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Protect Wiki Page',
       description:
-        'Protect a wiki page so only wiki admins can edit it. Requires wiki_admin role.',
+        'Protect a wiki page so only wiki admins can edit it (level "admins", the default), or only experienced editors and wiki admins (level "experienced"). Calling it on a protected page changes the level. Requires wiki_admin role.',
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         reason: z.string().optional(),
+        level: z
+          .enum(PROTECTION_LEVELS)
+          .optional()
+          .describe('"admins" (default) or "experienced".'),
         policyHash: policyHashSchema,
       },
     },

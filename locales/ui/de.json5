@@ -141,6 +141,8 @@
     actions: 'Aktionen',
     protectedDetails: 'Nur Wiki-Admins können diese Seite bearbeiten.',
     protectedDetailsAdmin: 'Deine Wiki-Admin-Rolle erlaubt dir, diese Seite zu bearbeiten.',
+    "protectedExperienced": "Nur erfahrene Bearbeiter können diese Seite bearbeiten. Erfahren wird man nach fünf Bearbeitungen, die älter als eine Woche sind und nie zurückgesetzt wurden.",
+    "protectedExperiencedEditable": "Nur erfahrene Bearbeiter können diese Seite bearbeiten. Du kannst es, als erfahrener Bearbeiter oder Admin.",
     forbidden: 'Verboten',
     accessDenied: 'Zugriff verweigert.',
     notFound: 'Nicht gefunden',
@@ -306,6 +308,7 @@
     banner: 'Im Allgemeinen werden Bearbeitungen durch KI-Agenten vorgenommen. Nutze Operator-Bearbeitungen für schnelle Korrekturen oder Änderungen, die länger zu erklären wären, als sie direkt vorzunehmen.',
     summaryHelp: 'Diese Zusammenfassung erscheint im Versionsverlauf.',
     protectedForbidden: 'Diese Seite ist geschützt. Nur Wiki-Admins können sie bearbeiten.',
+    "protectedForbiddenExperienced": "Diese Seite ist geschützt. Nur erfahrene Bearbeiter und Wiki-Admins können sie bearbeiten.",
     validation: {
       generic: 'Deine Bearbeitung konnte nicht gespeichert werden. Prüfe die Felder und versuche es erneut.',
       titleInvalid: 'Gib einen gültigen Titel ein.',
@@ -380,11 +383,29 @@
     unknownTarget: 'Unbekanntes Ziel',
     events: {
       "wiki_page_signoff_withdrawn": "Hat eine Stellungnahme zu einem Vorschlag zurückgezogen",
+      "experienced_status_changed": "Status als erfahrener Bearbeiter geändert",
       "wiki_page_signed_off": "Hat zu einem Vorschlag Stellung bezogen",
       wiki_page_protected: 'Seite geschützt',
       wiki_page_unprotected: 'Seitenschutz aufgehoben',
       protected_wiki_page_edited: 'Geschützte Seite bearbeitet',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Erfahrener Bearbeiter seit {{date}}",
+      "granted": "Erfahrener Bearbeiter seit {{date}}, vorzeitig von einem Admin vergeben",
+      "revoked": "Kein erfahrener Bearbeiter: von einem Admin entzogen",
+      "notYet": "Noch kein erfahrener Bearbeiter: {{count}} von {{total}} bleibenden Bearbeitungen"
+    },
+    "form": {
+      "label": "Erfahrener Bearbeiter",
+      "auto": "Automatisch",
+      "granted": "Vorzeitig vergeben",
+      "revoked": "Entziehen",
+      "reason": "Grund",
+      "submit": "Speichern",
+      "saved": "Status als erfahrener Bearbeiter für {{user}} aktualisiert."
+    }
   },
   "signoff": {
     "title": "Positionen",
