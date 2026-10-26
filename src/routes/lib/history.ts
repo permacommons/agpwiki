@@ -4,6 +4,9 @@ import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
+// The page tabs link here, so a page shows at most one revision history.
+export const HISTORY_ANCHOR = 'history';
+
 export type HistoryRevision = {
   revId: string;
   dateLabel: string;
@@ -89,7 +92,7 @@ export const renderRevisionHistory = ({
     })
     .join('\n');
 
-  return `<details class="page-history">
+  return `<details class="page-history" id="${HISTORY_ANCHOR}">
   <summary>${t('history.title')}</summary>
   <form class="history-form" method="get" action="${escapeHtml(action)}">
     <div class="history-actions">

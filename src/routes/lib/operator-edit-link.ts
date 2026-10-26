@@ -2,6 +2,11 @@ import type { TFunction } from 'i18next';
 
 import { escapeHtml } from '../../render.js';
 
+export const HOW_TO_EDIT_PATH = '/tool/how-to-edit';
+
+export const howToEditPath = (slug: string) =>
+  `${HOW_TO_EDIT_PATH}?page=${encodeURIComponent(slug)}`;
+
 type OperatorEditLinkParams = {
   signedIn: boolean;
   visible: boolean;

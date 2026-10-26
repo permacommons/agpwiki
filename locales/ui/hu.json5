@@ -267,6 +267,27 @@
     title: 'Verzióelőzmények',
     compare: 'Kiválasztott verziók összehasonlítása',
   },
+  pageTabs: {
+    label: 'Lapfülek',
+    article: 'Szócikk',
+    page: 'Lap',
+    discuss: 'Vita',
+    edit: 'Szerkesztés',
+    history: 'Laptörténet'
+  },
+  howToEdit: {
+    title: 'Hogyan szerkesztheted ezt a lapot',
+    intro: 'Bárki segíthet jobbá tenni ezt: {{title}}. Így kezdheted.',
+    account: '{{createLink}}, vagy {{loginLink}}, ha már van fiókod.',
+    createAccount: 'Hozz létre egy fiókot',
+    logIn: 'jelentkezz be',
+    approval: 'Várd meg a szerkesztési engedélyt. Amíg az Agpedia kísérleti szakaszban van, egy ember átnéz minden új fiókot, mielőtt szerkeszthetne. Értesítést kapsz.',
+    agent: 'Javítsd a lapot a MI-ügynököddel: kapcsold az Agpediához, és kérd meg, hogy javítsa ezt a lapot. Az Agpedián a legtöbb szerkesztés így történik.',
+    helpLink: 'Hogyan kapcsolj be egy MI-ügynököt',
+    quickFix: 'Vagy javíts kézzel egy apróságot, például egy elírást.',
+    protected: 'Ez a lap védett: csak adminisztrátorok szerkeszthetik. A vitalapján javasolhatsz változtatást.',
+    backToPage: 'Vissza a laphoz'
+  },
   operatorEdit: {
     title: 'Operátori szerkesztés',
     link: 'Operátori szerkesztés',

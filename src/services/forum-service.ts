@@ -380,6 +380,26 @@ export const listForumThreads = async (
   }));
 };
 
+/** Comments in all current threads about one page, for the Discuss tab. */
+export const countForumCommentsForPage = async (
+  dalInstance: DataAccessLayer,
+  pageSlug: string
+): Promise<number> => {
+  const result = await dalInstance.query(
+    `SELECT COUNT(c.id)::int AS comment_count
+     FROM ${ForumThread.tableName} t
+     INNER JOIN ${ForumComment.tableName} c
+       ON c.thread_id = t.id
+      AND c._old_rev_of IS NULL
+      AND c._rev_deleted = false
+     WHERE t._old_rev_of IS NULL
+       AND t._rev_deleted = false
+       AND t.page_slug = $1`,
+    [normalizeSlugInput(pageSlug, 'pageSlug')]
+  );
+  return Number(result.rows[0]?.comment_count) || 0;
+};
+
 export const readForumThread = async (
   dalInstance: DataAccessLayer,
   threadId: string

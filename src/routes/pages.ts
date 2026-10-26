@@ -40,6 +40,7 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { countForumCommentsForPage } from '../services/forum-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,
@@ -91,7 +92,7 @@ import {
   renderMarkdownPreviewHtml,
   renderMarkdownPreviewPanel,
 } from './lib/markdown-preview.js';
-import { renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
+import { howToEditPath, renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
 import {
   formatCheckStatus,
   formatCheckType,
@@ -103,6 +104,7 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
+import { renderPageTabs } from './lib/page-tabs.js';
 import {
   renderProposalHeader,
   renderProposalLinks,
@@ -1491,6 +1493,17 @@ export const registerPageRoutes = (app: Express) => {
           : '',
         operatorEditLinkHtml,
       ].filter(Boolean);
+      const isCurrentView = !revIdParam && !diffFrom && !diffTo;
+      const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
+      const tabsHtml = renderPageTabs({
+        isArticle,
+        pageHref: pageViewPath(canonicalSlug, langOverride),
+        isCurrentView,
+        discussHref: forumPath || null,
+        discussCount: forumPath ? await countForumCommentsForPage(dalInstance, canonicalSlug) : 0,
+        editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+        t: req.t,
+      });
       const forumLinkHtml = relatedLinks.length
         ? `<div class="tool-related">
   <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
@@ -1574,6 +1587,7 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         labelHtml,
+        tabsHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
