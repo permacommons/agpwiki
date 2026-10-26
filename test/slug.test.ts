@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { isBlockedSlug, normalizeSlug } from '../src/lib/slug.js';
+import { encodeSlugPath, isBlockedSlug, normalizeSlug } from '../src/lib/slug.js';
+import { pageSignoffPath, positionReplyPath } from '../src/routes/lib/page-signoffs.js';
+import { proposalLinksPath, proposalStatusPath } from '../src/routes/lib/proposal-status.js';
 
 test('isBlockedSlug blocks empty or reserved prefixes', () => {
   assert.equal(isBlockedSlug(''), true);
@@ -40,4 +42,18 @@ test('normalizeSlug trims leading and trailing slashes', () => {
   assert.equal(normalizeSlug('/foo/bar'), 'foo/bar');
   assert.equal(normalizeSlug('foo/bar/'), 'foo/bar');
   assert.equal(normalizeSlug('///foo/bar///'), 'foo/bar');
+});
+
+test('encodeSlugPath keeps slashes and encodes each segment', () => {
+  assert.equal(encodeSlugPath('belt-buckle'), 'belt-buckle');
+  assert.equal(encodeSlugPath('meta/proposals/profiles'), 'meta/proposals/profiles');
+  assert.equal(encodeSlugPath('meta/a b/c?d#e'), 'meta/a%20b/c%3Fd%23e');
+});
+
+test('page form and redirect paths keep the slashes of nested slugs', () => {
+  const slug = 'meta/proposals/profiles';
+  assert.equal(positionReplyPath(slug), '/meta/proposals/profiles/position-reply');
+  assert.equal(pageSignoffPath(slug), '/meta/proposals/profiles/sign-off');
+  assert.equal(proposalStatusPath(slug), '/meta/proposals/profiles/proposal-status');
+  assert.equal(proposalLinksPath(slug), '/meta/proposals/profiles/proposal-links');
 });

@@ -7,6 +7,7 @@ import {
   type ProposalStatus,
   type ProposalStatusInfo,
 } from '../../lib/proposal-status.js';
+import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
 import type { PullRequestInfo } from '../../services/pull-request-state.js';
 
@@ -14,8 +15,8 @@ const { mlString } = dal;
 
 type RelatedProposal = { slug: string; title: string | SafeText };
 
-export const proposalStatusPath = (slug: string) => `/${encodeURIComponent(slug)}/proposal-status`;
-export const proposalLinksPath = (slug: string) => `/${encodeURIComponent(slug)}/proposal-links`;
+export const proposalStatusPath = (slug: string) => `/${encodeSlugPath(slug)}/proposal-status`;
+export const proposalLinksPath = (slug: string) => `/${encodeSlugPath(slug)}/proposal-links`;
 
 const formatDay = (iso: string | undefined, locale: string) => {
   if (!iso) return '';
