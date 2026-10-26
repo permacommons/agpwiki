@@ -9,6 +9,7 @@ import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
 import { mediaPlugin } from './markdown/media.js';
+import { type SectionEditLinkRenderer, sectionEditPlugin } from './markdown/section-edit.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
 import { getArticleCount } from './metrics.js';
@@ -149,6 +150,7 @@ const citationStyle = fs.readFileSync(citationStylePath, 'utf8');
 const markdown = new MarkdownIt({ html: false, linkify: true });
 markdown.use(variablesPlugin());
 markdown.use(tocPlugin());
+markdown.use(sectionEditPlugin());
 
 type RuleName = 'table_open' | 'table_close';
 const getRuleOrDefault = (name: RuleName) =>
@@ -428,6 +430,8 @@ export type RenderMarkdownOptions = {
   };
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
+  // Adds an edit link inside each heading of the source text.
+  sectionEditLink?: SectionEditLinkRenderer;
 };
 
 type RenderEnv = Record<string, unknown> & {
@@ -439,6 +443,7 @@ type RenderEnv = Record<string, unknown> & {
   citeprocInstance?: { free?: () => void };
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
+  sectionEditLink?: SectionEditLinkRenderer;
 };
 
 export const renderMarkdown = async (
@@ -454,6 +459,7 @@ export const renderMarkdown = async (
     wikiLinks: options.wikiLinks,
     mediaRegistry: options.mediaRegistry,
     locale: options.locale,
+    sectionEditLink: options.sectionEditLink,
   };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);

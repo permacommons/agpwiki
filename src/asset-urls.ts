@@ -25,4 +25,5 @@ export const layoutAssets = {
   toolsMenuJs: versionedAssetUrl('scripts/tools-menu.js'),
   recentMediaGridJs: versionedAssetUrl('scripts/recent-media-grid.js'),
   notificationPanelJs: versionedAssetUrl('scripts/notification-panel.js'),
+  editorToolbarJs: versionedAssetUrl('scripts/editor-toolbar.js'),
 };

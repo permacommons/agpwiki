@@ -288,6 +288,25 @@
     protected: 'Deze pagina is beveiligd: alleen beheerders kunnen hem bewerken. Je kunt een wijziging voorstellen in het overleg.',
     backToPage: 'Terug naar de pagina'
   },
+  sectionEdit: {
+    link: 'bewerken',
+    linkLabel: 'Sectie bewerken: {{section}}',
+    lead: 'Inleiding',
+    editLead: 'inleiding bewerken',
+    editing: 'Sectie bewerken: {{section}}',
+    wholePage: 'Hele pagina bewerken',
+    changed: 'Deze sectie is gewijzigd terwijl je bewerkte. Laad haar opnieuw en probeer het nog eens.',
+    toolbarLabel: 'Opmaak',
+    bold: 'Vet',
+    italic: 'Cursief',
+    articleLink: 'Link naar een artikel',
+    articleLinkPrompt: 'Adres van het artikel, bijvoorbeeld belt-buckle',
+    heading: 'Kop',
+    list: 'Lijst',
+    citation: 'Bron toevoegen',
+    citationSearch: 'Bronnen zoeken op titel of auteur',
+    citationNone: 'Geen bronnen gevonden.'
+  },
   operatorEdit: {
     title: 'Operatorbewerking',
     link: 'Operatorbewerking',
