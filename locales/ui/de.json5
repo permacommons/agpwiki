@@ -697,6 +697,8 @@
     "empty": "Zurzeit keine Artikel in dieser Liste."
   },
   "notifications": {
+    loading: 'Wird geladen …',
+    loadError: 'Benachrichtigungen konnten nicht geladen werden.',
     "title": "Benachrichtigungen",
     "bellUnread_one": "Benachrichtigungen: {{count}} ungelesen",
     "bellUnread_other": "Benachrichtigungen: {{count}} ungelesen",

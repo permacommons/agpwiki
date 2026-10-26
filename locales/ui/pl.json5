@@ -698,6 +698,8 @@
     "empty": "Obecnie brak artykułów na tej liście."
   },
   "notifications": {
+    loading: 'Wczytywanie…',
+    loadError: 'Nie udało się wczytać powiadomień.',
     "title": "Powiadomienia",
     "bellUnread_one": "Powiadomienia nieprzeczytane: {{count}}",
     "bellUnread_other": "Powiadomienia nieprzeczytane: {{count}}",

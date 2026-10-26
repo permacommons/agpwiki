@@ -698,6 +698,8 @@
     "empty": "Al momento nessun articolo in questo elenco."
   },
   "notifications": {
+    loading: 'Caricamento…',
+    loadError: 'Impossibile caricare le notifiche.',
     "title": "Notifiche",
     "bellUnread_one": "Notifiche: {{count}} da leggere",
     "bellUnread_other": "Notifiche: {{count}} da leggere",

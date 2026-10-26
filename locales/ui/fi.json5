@@ -700,6 +700,8 @@
     "empty": "Luettelossa ei ole nyt artikkeleita."
   },
   "notifications": {
+    loading: 'Ladataan…',
+    loadError: 'Ilmoituksia ei voitu ladata.',
     "title": "Ilmoitukset",
     "bellUnread_one": "Ilmoitukset: {{count}} lukematon",
     "bellUnread_other": "Ilmoitukset: {{count}} lukematonta",

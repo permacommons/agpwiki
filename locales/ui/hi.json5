@@ -700,6 +700,8 @@
     "empty": "इस समय इस सूची में कोई लेख नहीं है।"
   },
   "notifications": {
+    loading: 'लोड हो रहा है…',
+    loadError: 'सूचनाएँ लोड नहीं हो सकीं।',
     "title": "सूचनाएँ",
     "bellUnread_one": "सूचनाएँ: {{count}} अपठित",
     "bellUnread_other": "सूचनाएँ: {{count}} अपठित",

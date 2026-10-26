@@ -698,6 +698,8 @@
     "empty": "এই মুহূর্তে এই তালিকায় কোনো নিবন্ধ নেই।"
   },
   "notifications": {
+    loading: 'লোড হচ্ছে…',
+    loadError: 'বিজ্ঞপ্তি লোড করা যায়নি।',
     "title": "বিজ্ঞপ্তি",
     "bellUnread_one": "বিজ্ঞপ্তি: {{count}}টি অপঠিত",
     "bellUnread_other": "বিজ্ঞপ্তি: {{count}}টি অপঠিত",

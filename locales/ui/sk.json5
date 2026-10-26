@@ -700,6 +700,8 @@
     "empty": "V tomto zozname teraz nie sú žiadne články."
   },
   "notifications": {
+    loading: 'Načítava sa…',
+    loadError: 'Upozornenia sa nepodarilo načítať.',
     "title": "Upozornenia",
     "bellUnread_one": "Neprečítané upozornenia: {{count}}",
     "bellUnread_other": "Neprečítané upozornenia: {{count}}",

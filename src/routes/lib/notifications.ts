@@ -6,6 +6,8 @@ import type { SiteNotification } from '../../services/site-notification-service.
 export const NOTIFICATIONS_PATH = '/tool/notifications';
 export const notificationOpenPath = (id: string) => `${NOTIFICATIONS_PATH}/${encodeURIComponent(id)}/open`;
 export const NOTIFICATIONS_READ_PATH = `${NOTIFICATIONS_PATH}/read`;
+export const NOTIFICATIONS_PANEL_PATH = `${NOTIFICATIONS_PATH}/panel.json`;
+export const NOTIFICATIONS_PANEL_LIMIT = 8;
 
 /** One line describing a notification, e.g. "Erik replied in Values". */
 export const renderNotificationText = (notification: SiteNotification, t: TFunction) => {
@@ -92,6 +94,18 @@ export const renderNotificationList = ({
   ${pagination}
 </div>`;
 };
+
+/** What the bell's panel shows: the latest notifications, newest first. */
+export const toNotificationPanelData = (notifications: SiteNotification[], unreadCount: number, t: TFunction) => ({
+  unreadCount,
+  items: notifications.map(item => ({
+    id: item.id,
+    html: renderNotificationText(item, t),
+    excerpt: item.excerpt,
+    date: formatDateUTC(item.createdAt),
+    unread: !item.readAt,
+  })),
+});
 
 /** Only local paths are accepted as a place to go back to. */
 export const safeReturnPath = (value: unknown) =>

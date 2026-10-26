@@ -700,6 +700,8 @@
     "empty": "Inga artiklar i listan just nu."
   },
   "notifications": {
+    loading: 'Laddar …',
+    loadError: 'Det gick inte att läsa in aviseringarna.',
     "title": "Aviseringar",
     "bellUnread_one": "Aviseringar: {{count}} olästa",
     "bellUnread_other": "Aviseringar: {{count}} olästa",

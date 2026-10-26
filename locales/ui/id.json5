@@ -700,6 +700,8 @@
     "empty": "Saat ini tidak ada artikel dalam daftar ini."
   },
   "notifications": {
+    loading: 'Memuat…',
+    loadError: 'Notifikasi tidak dapat dimuat.',
     "title": "Notifikasi",
     "bellUnread_one": "Notifikasi: {{count}} belum dibaca",
     "bellUnread_other": "Notifikasi: {{count}} belum dibaca",

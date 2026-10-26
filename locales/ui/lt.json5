@@ -700,6 +700,8 @@
     "empty": "Šiame sąraše dabar straipsnių nėra."
   },
   "notifications": {
+    loading: 'Įkeliama…',
+    loadError: 'Nepavyko įkelti pranešimų.',
     "title": "Pranešimai",
     "bellUnread_one": "Neperskaityti pranešimai: {{count}}",
     "bellUnread_other": "Neperskaityti pranešimai: {{count}}",

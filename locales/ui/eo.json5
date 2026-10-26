@@ -698,6 +698,8 @@
     "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
   "notifications": {
+    loading: 'Ŝargante…',
+    loadError: 'Ne eblis ŝargi la sciigojn.',
     "title": "Sciigoj",
     "bellUnread_one": "Sciigoj: {{count}} nelegita",
     "bellUnread_other": "Sciigoj: {{count}} nelegitaj",

@@ -700,6 +700,8 @@
     "empty": "Jelenleg nincs szócikk ebben a listában."
   },
   "notifications": {
+    loading: 'Betöltés…',
+    loadError: 'Az értesítéseket nem sikerült betölteni.',
     "title": "Értesítések",
     "bellUnread_one": "Értesítések: {{count}} olvasatlan",
     "bellUnread_other": "Értesítések: {{count}} olvasatlan",

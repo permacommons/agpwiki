@@ -699,6 +699,8 @@
     "empty": "Op dit moment geen artikelen in deze lijst."
   },
   "notifications": {
+    loading: 'Laden…',
+    loadError: 'Meldingen konden niet worden geladen.',
     "title": "Meldingen",
     "bellUnread_one": "Meldingen: {{count}} ongelezen",
     "bellUnread_other": "Meldingen: {{count}} ongelezen",

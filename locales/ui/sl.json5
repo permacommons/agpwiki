@@ -700,6 +700,8 @@
     "empty": "Na tem seznamu trenutno ni člankov."
   },
   "notifications": {
+    loading: 'Nalaganje …',
+    loadError: 'Obvestil ni bilo mogoče naložiti.',
     "title": "Obvestila",
     "bellUnread_one": "Neprebrana obvestila: {{count}}",
     "bellUnread_other": "Neprebrana obvestila: {{count}}",

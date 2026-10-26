@@ -52,6 +52,7 @@ a.wiki-red-link:focus-visible {
   color: #7e1e1e;
 }
 header.site-header {
+  position: relative;
   padding: 0.6rem 1.5rem;
   border-bottom: 1px solid var(--rule);
   background: #fff;
@@ -106,8 +107,9 @@ header.site-header {
   display: flex;
   align-items: center;
 }
+/* Your own links sit on the right, after search and the language menu. */
 .user-menu {
-  order: 1;
+  order: 5;
   margin-left: 0.6rem;
   position: relative;
 }
@@ -197,7 +199,7 @@ header.site-header {
   display: none;
 }
 .notification-bell {
-  order: 1;
+  order: 4;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -3467,5 +3469,96 @@ altcha-widget {
   }
   .sidebar {
     padding: 1rem 0 0;
+  }
+}
+
+.nav-link--account {
+  order: 5;
+}
+
+/* The bell's panel with the latest notifications. */
+.notification-panel {
+  position: absolute;
+  top: 100%;
+  right: 1.5rem;
+  z-index: 30;
+  width: 24rem;
+  max-width: calc(100vw - 2rem);
+  max-height: 70vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+  margin-top: 0.25rem;
+  padding: 0.75rem 0 0.5rem;
+  background: #fff;
+  border: 1px solid var(--rule);
+  box-shadow: 0 10px 24px rgba(31, 29, 26, 0.14);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.notification-panel[hidden] {
+  display: none;
+}
+.notification-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 1rem 0.5rem;
+  border-bottom: 1px solid var(--rule);
+}
+.notification-panel-read-all {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  padding: 0.2rem 0.5rem;
+}
+.notification-panel-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.notification-panel-item {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid #efe8de;
+  overflow-wrap: anywhere;
+}
+.notification-panel-item--unread {
+  background: #eef4f7;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+.notification-panel-excerpt {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+.notification-panel-meta {
+  margin-top: 0.2rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.notification-panel-status {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  color: var(--muted);
+}
+.notification-panel-status[hidden] {
+  display: none;
+}
+.notification-panel-all {
+  display: block;
+  padding: 0.6rem 1rem 0.2rem;
+}
+@media (max-width: 900px) {
+  .notification-bell {
+    order: 1;
+  }
+  /* A full-width sheet under the header. */
+  .notification-panel {
+    left: 0;
+    right: 0;
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+    border-left: none;
+    border-right: none;
   }
 }

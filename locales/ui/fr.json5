@@ -699,6 +699,8 @@
     "empty": "Aucun article dans cette liste pour le moment."
   },
   "notifications": {
+    loading: 'Chargement…',
+    loadError: 'Impossible de charger les notifications.',
     "title": "Notifications",
     "bellUnread_one": "Notifications : {{count}} non lue",
     "bellUnread_other": "Notifications : {{count}} non lues",

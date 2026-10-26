@@ -698,6 +698,8 @@
     "empty": "Şu anda bu listede madde yok."
   },
   "notifications": {
+    loading: 'Yükleniyor…',
+    loadError: 'Bildirimler yüklenemedi.',
     "title": "Bildirimler",
     "bellUnread_one": "Bildirimler: {{count}} okunmamış",
     "bellUnread_other": "Bildirimler: {{count}} okunmamış",

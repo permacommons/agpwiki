@@ -696,6 +696,8 @@
     "empty": "لا توجد مقالات في هذه القائمة حاليًا."
   },
   "notifications": {
+    loading: 'جارٍ التحميل…',
+    loadError: 'تعذّر تحميل الإشعارات.',
     "title": "الإشعارات",
     "bellUnread_one": "الإشعارات: {{count}} غير مقروء",
     "bellUnread_other": "الإشعارات غير المقروءة: {{count}}",

@@ -698,6 +698,8 @@
     "empty": "目前此列表中没有条目。"
   },
   "notifications": {
+    loading: '正在加载…',
+    loadError: '无法加载通知。',
     "title": "通知",
     "bellUnread_one": "通知：{{count}} 条未读",
     "bellUnread_other": "通知：{{count}} 条未读",

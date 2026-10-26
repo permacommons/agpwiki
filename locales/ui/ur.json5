@@ -700,6 +700,8 @@
     "empty": "اس وقت اس فہرست میں کوئی مضمون نہیں۔"
   },
   "notifications": {
+    loading: 'لوڈ ہو رہا ہے…',
+    loadError: 'اطلاعات لوڈ نہیں ہو سکیں۔',
     "title": "اطلاعات",
     "bellUnread_one": "اطلاعات: {{count}} غیر پڑھی",
     "bellUnread_other": "اطلاعات: {{count}} غیر پڑھی",
