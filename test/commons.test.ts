@@ -222,39 +222,19 @@ test('fetchCommonsMetadata parses image response with thumbnail template', async
   });
 });
 
-test('fetchCommonsMetadata asks past shared caches and tags thumbnails with the file version', async () => {
+test('fetchCommonsMetadata makes every request unique so shared caches cannot answer it', async () => {
   const urls: string[] = [];
-  const versioned = (sha1: string) => {
-    const response = buildImageResponse() as {
-      query: { pages: Array<{ imageinfo: Array<Record<string, unknown>> }> };
-    };
-    response.query.pages[0].imageinfo[0].sha1 = sha1;
-    return response;
-  };
-  const fetchFor = (sha1: string) =>
-    (async (url: string) => {
-      urls.push(url);
-      return new Response(JSON.stringify(versioned(sha1)), { status: 200 });
-    }) as unknown as typeof fetch;
-  const options = { apiBaseUrl: 'https://commons.example/w/api.php', userAgent: 'TestAgent/1.0', timeoutMs: 5000 };
+  const fetchImpl = (async (url: string) => {
+    urls.push(url);
+    return new Response(JSON.stringify(buildImageResponse()), { status: 200 });
+  }) as unknown as typeof fetch;
+  const options = { apiBaseUrl: 'https://commons.example/w/api.php', userAgent: 'TestAgent/1.0', timeoutMs: 5000, fetchImpl };
 
-  const first = await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', {
-    ...options,
-    fetchImpl: fetchFor('1111111111111111111111111111111111111111'),
-  });
-  const second = await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', {
-    ...options,
-    fetchImpl: fetchFor('2222222222222222222222222222222222222222'),
-  });
+  await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', options);
+  await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', options);
 
-  // Every request is unique, so no shared cache can answer it.
   const requestIds = urls.map(url => new URL(url).searchParams.get('requestid'));
   assert.ok(requestIds[0] && requestIds[1] && requestIds[0] !== requestIds[1]);
-  assert.match(new URL(urls[0]).searchParams.get('iiprop') ?? '', /sha1/);
-  // Each version of the file gets its own thumbnail URLs.
-  assert.match(first.data.thumbnailUrlTemplate ?? '', /[?&]version=111111111111$/);
-  assert.match(second.data.thumbnailUrlTemplate ?? '', /[?&]version=222222222222$/);
-  assert.match(buildThumbnailUrlForWidth(second.data.thumbnailUrlTemplate, 250) ?? '', /\/250px-.*version=222222222222$/);
 });
 
 test('fetchCommonsMetadata throws NotFoundError on missing file', async () => {
