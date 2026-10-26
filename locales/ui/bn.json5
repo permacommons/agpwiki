@@ -94,7 +94,8 @@
       invalidWidthShort: "অবৈধ প্রস্থ।",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'উইকিমিডিয়া কমন্সে খুলুন, নতুন ট্যাবে',
+      commonsBadge: 'Commons',
       missing: "অনুপস্থিত মিডিয়া: {{slug}}",
       invalidSlug: "[অবৈধ মিডিয়া স্লাগ: {{slug}}। স্লাগে ছোট হাতের অক্ষর, সংখ্যা ও হাইফেন থাকতে হবে, এবং অংশগুলোর মাঝে ঐচ্ছিক `/` থাকতে পারে — যেমন `/media/golden-rice` বা `/media/biology/erik-portrait`।]",
       invalidAttrs: "[মিডিয়া {{slug}}-এ অজানা অ্যাট্রিবিউট: {{tokens}}। `{...}`-এর স্বীকৃত কী: `size=N`, `caption=\"...\"`। বিকল্প লেখা সাধারণ ছবির স্থানে দিন: `![Alt](/media/{{slug}}){...}`।]",

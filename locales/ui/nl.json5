@@ -94,7 +94,8 @@
       invalidWidthShort: "Ongeldige breedte.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Openen op Wikimedia Commons, nieuw tabblad',
+      commonsBadge: 'Commons',
       missing: "Ontbrekende media: {{slug}}",
       invalidSlug: "[ongeldige mediaslug: {{slug}}. Slugs moeten kleine letters, cijfers en koppeltekens bevatten, met optioneel `/` tussen segmenten — bijv. `/media/golden-rice` of `/media/biology/erik-portrait`.]",
       invalidAttrs: "[onbekende attributen op media {{slug}}: {{tokens}}. Herkende sleutels binnen `{...}`: `size=N`, `caption=\"...\"`. Alternatieve tekst staat op de standaard afbeeldingspositie: `![Alt](/media/{{slug}}){...}`.]",

@@ -94,7 +94,8 @@
       invalidWidthShort: "Невалидна ширина.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Отвори на Ризницата, во ново јазиче',
+      commonsBadge: 'Commons',
       missing: "Недостасува медиум: {{slug}}",
       invalidSlug: "[невалиден медиумски slug: {{slug}}. Slug мора да содржи мали букви, цифри и цртички, со изборен `/` меѓу сегменти — на пр. `/media/golden-rice` или `/media/biology/erik-portrait`.]",
       invalidAttrs: "[непознати атрибути на медиумот {{slug}}: {{tokens}}. Препознаени клучеви во `{...}`: `size=N`, `caption=\"...\"`. Алтернативниот текст оди во стандардната позиција за слика: `![Alt](/media/{{slug}}){...}`.]",

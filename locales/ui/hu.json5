@@ -94,7 +94,8 @@
       invalidWidthShort: "Érvénytelen szélesség.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Megnyitás a Wikimedia Commonsban, új lapon',
+      commonsBadge: 'Commons',
       missing: "Hiányzó média: {{slug}}",
       invalidSlug: "[érvénytelen médiaslug: {{slug}}. A slug kisbetűkből, számokból és kötőjelekből állhat, opcionális `/` jellel a szegmensek között — pl. `/media/golden-rice` vagy `/media/biology/erik-portrait`.]",
       invalidAttrs: "[ismeretlen attribútumok a(z) {{slug}} médián: {{tokens}}. Felismert kulcsok a `{...}` részben: `size=N`, `caption=\"...\"`. A helyettesítő szöveg a szabványos képpozícióba kerül: `![Alt](/media/{{slug}}){...}`.]",

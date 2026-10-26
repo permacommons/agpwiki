@@ -94,7 +94,8 @@
       invalidWidthShort: "Neveljavna širina.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Odpri v Wikimedijini zbirki, nov zavihek',
+      commonsBadge: 'Commons',
       missing: "Manjkajoča predstavnostna vsebina: {{slug}}",
       invalidSlug: "[neveljaven predstavnostni slug: {{slug}}. Slugi morajo vsebovati male črke, številke in vezaje, z izbirnim `/` med segmenti — npr. `/media/golden-rice` ali `/media/biology/erik-portrait`.]",
       invalidAttrs: "[neznani atributi pri predstavnostni vsebini {{slug}}: {{tokens}}. Prepoznani ključi v `{...}`: `size=N`, `caption=\"...\"`. Nadomestno besedilo je na standardnem mestu slike: `![Alt](/media/{{slug}}){...}`.]",

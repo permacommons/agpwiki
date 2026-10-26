@@ -275,8 +275,9 @@ const buildFigureOptions = (
     alt,
     size,
     revId: entry.revId,
-    attribution: {
-      commonsLinkLabel: t('media.render.commonsLink', locale),
+    commonsLink: {
+      label: t('media.render.openOnCommons', locale),
+      badge: t('media.render.commonsBadge', locale),
     },
   };
 };

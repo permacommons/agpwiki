@@ -93,7 +93,8 @@
       invalidWidthShort: "Geçersiz genişlik.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Wikimedia Commons\'ta aç, yeni sekme',
+      commonsBadge: 'Commons',
       missing: "Eksik medya: {{slug}}",
       invalidSlug: "[geçersiz medya slug’ı: {{slug}}. Slug küçük harfler, rakamlar ve kısa çizgilerden oluşmalı, segmentler arasında isteğe bağlı `/` bulunabilir — ör. `/media/golden-rice` veya `/media/biology/erik-portrait`.]",
       invalidAttrs: "[{{slug}} medyasında bilinmeyen öznitelikler: {{tokens}}. `{...}` içinde tanınan anahtarlar: `size=N`, `caption=\"...\"`. Alternatif metin standart görsel konumuna yazılır: `![Alt](/media/{{slug}}){...}`.]",

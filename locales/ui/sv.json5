@@ -94,7 +94,8 @@
       invalidWidthShort: "Ogiltig bredd.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Öppna på Wikimedia Commons, ny flik',
+      commonsBadge: 'Commons',
       missing: "Saknat media: {{slug}}",
       invalidSlug: "[ogiltig mediaslug: {{slug}}. Sluggar måste bestå av små bokstäver, siffror och bindestreck, med valfritt `/` mellan segment — t.ex. `/media/golden-rice` eller `/media/biology/erik-portrait`.]",
       invalidAttrs: "[okända attribut på media {{slug}}: {{tokens}}. Kända nycklar i `{...}`: `size=N`, `caption=\"...\"`. Alternativtext placeras i standardpositionen för bilden: `![Alt](/media/{{slug}}){...}`.]",

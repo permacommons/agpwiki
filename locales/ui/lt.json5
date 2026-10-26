@@ -94,7 +94,8 @@
       invalidWidthShort: "Netinkamas plotis.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Atidaryti Vikiteka, naujame skirtuke',
+      commonsBadge: 'Commons',
       missing: "Trūkstama medija: {{slug}}",
       invalidSlug: "[netinkamas medijos slug: {{slug}}. Slug turi būti mažosios raidės, skaitmenys ir brūkšneliai, su pasirinktiniu `/` tarp segmentų — pvz. `/media/golden-rice` arba `/media/biology/erik-portrait`.]",
       invalidAttrs: "[nežinomi medijos {{slug}} atributai: {{tokens}}. Atpažįstami raktai `{...}` viduje: `size=N`, `caption=\"...\"`. Alternatyvus tekstas rašomas standartinėje vaizdo vietoje: `![Alt](/media/{{slug}}){...}`.]",
