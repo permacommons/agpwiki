@@ -191,7 +191,8 @@ test('Restoring a version brings back its exact text, is tagged and notifies the
     assert.ok(notification);
     assert.equal(notification.excerpt, 'No sources for the change.');
     assert.equal(notification.subject, 'Original');
-    assert.ok(notification.url.includes(`diffFrom=${first.currentRevId}`));
+    // The link shows what was undone: from the replaced version to the revert.
+    assert.ok(notification.url.includes(`diffFrom=${latest.currentRevId}&diffTo=${change.revId}`));
   } finally {
     await cleanup(prefix, userIds);
   }
