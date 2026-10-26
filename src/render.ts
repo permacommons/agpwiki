@@ -428,6 +428,8 @@ export type RenderMarkdownOptions = {
   };
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
+  // Show {{name}} slots without a value instead of dropping them.
+  showUnknownVariables?: boolean;
 };
 
 type RenderEnv = Record<string, unknown> & {
@@ -454,6 +456,7 @@ export const renderMarkdown = async (
     wikiLinks: options.wikiLinks,
     mediaRegistry: options.mediaRegistry,
     locale: options.locale,
+    showUnknownVariables: options.showUnknownVariables,
   };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);

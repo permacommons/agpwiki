@@ -15,6 +15,7 @@ import {
 import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
+import { isPromptPageSlug } from '../lib/prompt-registry.js';
 import {
   resolveSafeText,
   resolveSafeTextWithFallback,
@@ -1334,6 +1335,7 @@ export const registerPageRoutes = (app: Express) => {
           },
           mediaRegistry,
           locale: res.locals.locale as string | undefined,
+          showUnknownVariables: isPromptPageSlug(canonicalSlug),
         }
       );
 
