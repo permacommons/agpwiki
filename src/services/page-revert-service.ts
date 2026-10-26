@@ -55,6 +55,9 @@ export type PageRevertedPayload = {
   slug: string;
   revId: string;
   restoredRevId: string;
+  // The version that was current before the revert. Missing in jobs
+  // queued before it was added.
+  undoneRevId?: string;
   actorUserId: string;
   recipientUserIds: string[];
   reason: string;
@@ -270,6 +273,7 @@ const performRevert = async (
       slug: page.slug,
       revId: page.currentRevId,
       restoredRevId: target.revId,
+      undoneRevId: current.revId,
       actorUserId: userId,
       recipientUserIds: revertedUserIds,
       reason: reasonText(revSummary),

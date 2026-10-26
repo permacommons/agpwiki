@@ -32,9 +32,10 @@ export const processPageRevertedNotification = async (
   const page = await findCurrentPageById(payload.pageId);
   const slug = page?.slug ?? payload.slug;
   const pageTitle = Object.values(page?.title ?? {})[0] ?? slug;
-  const diffPath = `${slugPath(slug)}?diffFrom=${encodeURIComponent(payload.restoredRevId)}&diffTo=${encodeURIComponent(
-    payload.revId
-  )}`;
+  // The revert has the same text as the restored version, so the diff that
+  // shows what was undone starts from the version the revert replaced.
+  const diffFrom = payload.undoneRevId ?? payload.restoredRevId;
+  const diffPath = `${slugPath(slug)}?diffFrom=${encodeURIComponent(diffFrom)}&diffTo=${encodeURIComponent(payload.revId)}`;
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();
   const actorName = actor?.displayName ?? 'Someone';
 
