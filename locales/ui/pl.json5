@@ -272,7 +272,11 @@
     page: 'Strona',
     discuss: 'Dyskusja',
     edit: 'Edytuj',
-    history: 'Historia'
+    history: 'Historia',
+    "follow": "Obserwuj",
+    "following": "Obserwujesz",
+    "followHelp": "Otrzymuj powiadomienia o nowych komentarzach na tej stronie. Edycje nie wysyłają powiadomień.",
+    "followingHelp": "Otrzymujesz powiadomienia o nowych komentarzach na tej stronie. Edycje nie wysyłają powiadomień. Kliknij, aby przestać obserwować."
   },
   howToEdit: {
     title: 'Jak edytować tę stronę',
@@ -747,6 +751,10 @@
     "someone": "Ktoś",
     "kind": {
       "forumReply": "{{name}} odpowiada w wątku {{subject}}",
+      "pageThread": "{{name}} rozpoczął(-ęła) dyskusję o {{subject}}",
+      "pageComment": "{{name}} skomentował(a) {{subject}}",
+      "pagePosition": "{{name}} zajął(-ęła) stanowisko ({{stance}}) w sprawie {{subject}}",
+      "pagePositionChanged": "{{name}} zmienił(a) stanowisko w sprawie {{subject}} na {{stance}}",
       "other": "Nowa aktywność: {{subject}}"
     },
     "markRead": "Oznacz jako przeczytane",
@@ -759,6 +767,12 @@
     "unread": "nowe",
     "settings": "Ustawienia powiadomień",
     "empty": "Brak powiadomień. Dostaniesz je, gdy ktoś odpowie w obserwowanym wątku forum."
+  },
+  "following": {
+    "heading": "Obserwowane strony",
+    "intro": "Dowiadujesz się o nowych komentarzach na tych stronach. Przycisk Obserwuj obok Dyskusji pozwala obserwować dowolną stronę.",
+    "empty": "Nie obserwujesz jeszcze żadnej strony.",
+    "unfollow": "Przestań obserwować"
   },
   settings: {
     title: 'Ustawienia',
@@ -778,6 +792,10 @@
         "forumReply": {
           "label": "Odpowiedzi w obserwowanych wątkach forum",
           "help": "Obserwujesz wątek, gdy go zakładasz lub w nim odpowiadasz. Możesz też włączyć lub wyłączyć obserwowanie w samym wątku."
+        },
+        "pageComment": {
+          "label": "Komentarze na obserwowanych stronach",
+          "help": "Obserwujesz strony, które tworzysz, i każdą stronę, na której klikniesz Obserwuj. Dowiadujesz się o nowych dyskusjach, komentarzach i stanowiskach, nigdy o edycjach."
         }
       }
     }

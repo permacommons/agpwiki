@@ -1720,6 +1720,36 @@ pre.diff ins {
 .settings-links {
   margin: 0 0 1rem;
 }
+/* Pages you follow, in the settings. */
+.settings-following {
+  margin-top: 1.5rem;
+}
+.settings-followed {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.settings-followed li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #efe8de;
+}
+.settings-followed form {
+  margin: 0;
+}
+.settings-unfollow {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
 .form-inline {
   display: flex;
   gap: 1rem;
@@ -3472,6 +3502,57 @@ altcha-widget {
 }
 .page-tabs-spacer {
   flex: 1;
+}
+/* Follow the comments on a page: a small pill beside Discuss. */
+.page-follow-form {
+  display: flex;
+  align-items: center;
+  margin: 0 0 0.3rem 0.4rem;
+}
+.page-follow {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.page-follow::before {
+  margin-right: 0.3rem;
+  font-size: 0.75rem;
+  content: '\1F514';
+}
+.page-follow--on {
+  border-color: var(--accent);
+  background: #eef4f4;
+}
+.page-follow--on::before {
+  content: '\2713';
+}
+.page-follow:hover,
+.page-follow:focus-visible {
+  border-color: var(--accent);
+}
+/* On phones the tabs stay on one line: the pill keeps only its icon, and
+   its label stays available to screen readers. */
+@media (max-width: 480px) {
+  .page-tab {
+    padding: 0.4rem 0.55rem;
+    white-space: nowrap;
+  }
+  .page-follow::before {
+    margin-right: 0;
+  }
+  .page-follow-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 .how-to-edit-steps li {
   margin-bottom: 0.6rem;

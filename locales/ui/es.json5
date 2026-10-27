@@ -272,7 +272,11 @@
     page: 'Página',
     discuss: 'Discutir',
     edit: 'Editar',
-    history: 'Historial'
+    history: 'Historial',
+    "follow": "Seguir",
+    "following": "Siguiendo",
+    "followHelp": "Recibe avisos de los comentarios nuevos en esta página. Las ediciones no te avisan.",
+    "followingHelp": "Recibes avisos de los comentarios nuevos en esta página. Las ediciones no te avisan. Haz clic para dejar de seguirla."
   },
   howToEdit: {
     title: 'Cómo editar esta página',
@@ -747,6 +751,10 @@
     "someone": "Alguien",
     "kind": {
       "forumReply": "{{name}} respondió en {{subject}}",
+      "pageThread": "{{name}} abrió una discusión sobre {{subject}}",
+      "pageComment": "{{name}} comentó en {{subject}}",
+      "pagePosition": "{{name}} publicó una posición ({{stance}}) sobre {{subject}}",
+      "pagePositionChanged": "{{name}} cambió su posición sobre {{subject}} a {{stance}}",
       "other": "Nueva actividad en {{subject}}"
     },
     "markRead": "Marcar como leída",
@@ -759,6 +767,12 @@
     "unread": "nueva",
     "settings": "Ajustes de notificaciones",
     "empty": "Aún no hay notificaciones. Recibirás una cuando alguien responda en un hilo del foro que sigues."
+  },
+  "following": {
+    "heading": "Páginas que sigues",
+    "intro": "Te avisamos de los comentarios nuevos en estas páginas. Usa el botón Seguir junto a Discutir en cualquier página para seguirla.",
+    "empty": "Aún no sigues ninguna página.",
+    "unfollow": "Dejar de seguir"
   },
   settings: {
     title: 'Configuración',
@@ -778,6 +792,10 @@
         "forumReply": {
           "label": "Respuestas en hilos del foro que sigues",
           "help": "Sigues un hilo cuando lo inicias o respondes en él. También puedes seguirlo o dejar de seguirlo desde el hilo."
+        },
+        "pageComment": {
+          "label": "Comentarios en las páginas que sigues",
+          "help": "Sigues las páginas que creas y cualquier página en la que pulses Seguir. Te enteras de las discusiones, comentarios y posiciones nuevas, nunca de las ediciones."
         }
       }
     }

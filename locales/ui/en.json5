@@ -509,7 +509,11 @@
     "page": "Page",
     "discuss": "Discuss",
     "edit": "Edit",
-    "history": "History"
+    "history": "History",
+    "follow": "Follow",
+    "following": "Following",
+    "followHelp": "Get notified of new comments on this page. Edits don't notify you.",
+    "followingHelp": "You're notified of new comments on this page. Edits don't notify you. Click to stop following."
   },
   // Page for people who cannot edit a page directly yet.
   "howToEdit": {
@@ -1049,6 +1053,10 @@
     "someone": "Someone",
     "kind": {
       "forumReply": "{{name}} replied in {{subject}}",
+      "pageThread": "{{name}} started a discussion on {{subject}}",
+      "pageComment": "{{name}} commented on {{subject}}",
+      "pagePosition": "{{name}} posted a position ({{stance}}) on {{subject}}",
+      "pagePositionChanged": "{{name}} changed their position to {{stance}} on {{subject}}",
       "other": "New activity in {{subject}}"
     },
     "markRead": "Mark as read",
@@ -1061,6 +1069,13 @@
     "unread": "new",
     "settings": "Notification settings",
     "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."
+  },
+  // The list of pages someone follows, in the settings.
+  "following": {
+    "heading": "Pages you follow",
+    "intro": "You are told about new comments on these pages. Use the Follow button next to Discuss on any page to follow it.",
+    "empty": "You don't follow any pages yet.",
+    "unfollow": "Stop following"
   },
   "settings": {
     "title": "Settings",
@@ -1080,6 +1095,10 @@
         "forumReply": {
           "label": "Replies in forum threads you are subscribed to",
           "help": "You are subscribed to a thread when you start it or reply in it. You can also subscribe or unsubscribe on the thread."
+        },
+        "pageComment": {
+          "label": "Comments on pages you follow",
+          "help": "You follow the pages you create, and any page where you click Follow. You are told about new discussions, comments and positions there, never about edits."
         }
       }
     }
