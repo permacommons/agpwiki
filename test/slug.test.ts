@@ -40,6 +40,27 @@ test('isBlockedSlug blocks dot segments anywhere in a slug', () => {
   }
 });
 
+test('isBlockedSlug blocks page action paths', () => {
+  for (const action of [
+    'operator-edit',
+    'operator-edit/dismiss-banner',
+    'proposal-links',
+    'proposal-status',
+    'position-reply',
+    'sign-off',
+  ]) {
+    for (const slug of [action, `foo/${action}`, `foo/bar/${action}`]) {
+      assert.equal(isBlockedSlug(slug), true, slug);
+    }
+  }
+});
+
+test('isBlockedSlug blocks check-detail paths', () => {
+  assert.equal(isBlockedSlug('foo/checks/bar'), true);
+  assert.equal(isBlockedSlug('foo/bar/checks/check-id'), true);
+  assert.equal(isBlockedSlug('foo/checks/bar/checks/check-id'), true);
+});
+
 test('isBlockedSlug allows normal page slugs', () => {
   assert.equal(isBlockedSlug('barack-obama'), false);
   assert.equal(isBlockedSlug('meta/welcome'), false);
@@ -47,6 +68,9 @@ test('isBlockedSlug allows normal page slugs', () => {
   assert.equal(isBlockedSlug('foo/bar.baz'), false);
   assert.equal(isBlockedSlug('foo/.hidden'), false);
   assert.equal(isBlockedSlug('foo/.../bar'), false);
+  assert.equal(isBlockedSlug('foo/checks/bar/baz'), false);
+  assert.equal(isBlockedSlug('foo/operator-edit/guide'), false);
+  assert.equal(isBlockedSlug('foo/checks-and-balances'), false);
 });
 
 test('normalizeSlug trims leading and trailing slashes', () => {
