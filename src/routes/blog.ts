@@ -6,6 +6,7 @@ import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { resolveSafeText } from '../lib/safe-text.js';
+import { toAddressForm } from '../lib/slug.js';
 import {
   escapeHtml,
   formatDateUTC,
@@ -15,6 +16,7 @@ import {
 } from '../render.js';
 import {
   diffBlogPostRevisions,
+  findCurrentPostBySlugOrAlias,
   listBlogPostRevisions,
   listBlogPosts,
   readBlogPost,
@@ -137,6 +139,13 @@ export const registerBlogRoutes = (app: Express) => {
           return await readBlogPost(dalInstance, slug);
         } catch (error) {
           if (error instanceof NotFoundError) {
+            const addressForm = toAddressForm(slug);
+            const match =
+              addressForm !== slug ? await findCurrentPostBySlugOrAlias(dalInstance, addressForm) : null;
+            if (match) {
+              res.redirect(301, `/blog/${encodeURIComponent(match.slug)}${queryStringOf(req.originalUrl)}`);
+              return null;
+            }
             res.status(404).type('text').send(req.t('page.notFound'));
             return null;
           }
