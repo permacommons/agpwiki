@@ -265,6 +265,38 @@
     title: 'Historial de versiones',
     compare: 'Comparar revisiones seleccionadas',
   },
+  "revert": {
+    "tag": "reversión",
+    "restore": {
+      "link": "Restaurar",
+      "title": "Restaurar esta versión",
+      "submit": "Restaurar esta versión"
+    },
+    "rollback": {
+      "link": "Revertir",
+      "title": "Revertir",
+      "submit": "Revertir estas ediciones"
+    },
+    "summary": "Esto recupera la versión del {{date}} de {{name}}. Ediciones deshechas: {{count}}, de {{names}}.",
+    "seeChanges": "Ver los cambios",
+    "reason": "Motivo",
+    "reasonHelp": "Explica por qué, por ejemplo «sin fuentes para la nueva sección». Se convierte en el resumen de edición, y las personas cuyas ediciones se deshacen lo ven.",
+    "reasonRequired": "Escribe un motivo.",
+    "changed": "La página cambió mientras la mirabas. Revisa qué desharía esto ahora antes de continuar.",
+    "forbidden": "No puedes revertir esta página.",
+    "invalid": "No es posible aquí: puede que la versión ya sea la actual o que no haya nada que revertir.",
+    "guard": {
+      "title": "Tu reversión fue deshecha",
+      "body": "Alguien deshizo tu reversión de esta página. Según el código de conducta de operadores, el siguiente paso es una discusión, no otra reversión.",
+      "discuss": "Discutir esta página",
+      "conduct": "Leer el código de conducta"
+    },
+    "recent": {
+      "showReverts": "Mostrar solo reversiones",
+      "onlyReverts": "Se muestran solo reversiones",
+      "all": "Mostrar todos los cambios"
+    }
+  },
   operatorEdit: {
     title: 'Edición de operador',
     link: 'Edición de operador',
@@ -682,6 +714,7 @@
     "someone": "Alguien",
     "kind": {
       "forumReply": "{{name}} respondió en {{subject}}",
+      "pageRevert": "{{name}} revirtió tus ediciones en {{subject}}",
       "other": "Nueva actividad en {{subject}}"
     },
     "markRead": "Marcar como leída",
@@ -713,6 +746,10 @@
         "forumReply": {
           "label": "Respuestas en hilos del foro que sigues",
           "help": "Sigues un hilo cuando lo inicias o respondes en él. También puedes seguirlo o dejar de seguirlo desde el hilo."
+        },
+        "pageRevert": {
+          "label": "Reversiones de tus ediciones",
+          "help": "Cuando alguien restaura una versión anterior de una página o revierte tus ediciones. Ves su motivo."
         }
       }
     }

@@ -1560,6 +1560,14 @@ pre.diff ins {
 .rev-radio { width: 1.4rem; display: inline-flex; justify-content: center; }
 .rev-summary { margin-top: 0.25rem; color: #333; }
 .rev-actions { margin-top: 0.25rem; }
+.rev-tag-revert {
+  font-family: var(--sans, inherit);
+  font-size: 0.75em;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+.recent-filter { font-size: 0.9em; }
 .history-form { margin-top: 1rem; }
 .history-actions { margin-bottom: 0.75rem; }
 .form-card {

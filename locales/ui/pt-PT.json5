@@ -265,6 +265,38 @@
     title: 'Histórico de versões',
     compare: 'Comparar revisões selecionadas',
   },
+  "revert": {
+    "tag": "reversão",
+    "restore": {
+      "link": "Restaurar",
+      "title": "Restaurar esta versão",
+      "submit": "Restaurar esta versão"
+    },
+    "rollback": {
+      "link": "Reverter",
+      "title": "Reverter",
+      "submit": "Reverter estas edições"
+    },
+    "summary": "Isto repõe a versão de {{date}} de {{name}}. Edições anuladas: {{count}}, de {{names}}.",
+    "seeChanges": "Ver as alterações",
+    "reason": "Motivo",
+    "reasonHelp": "Diga porquê, por exemplo \"sem fontes para a nova secção\". Passa a ser o resumo da edição, e as pessoas cujas edições são anuladas veem-no.",
+    "reasonRequired": "Indique um motivo.",
+    "changed": "A página mudou enquanto a consultava. Verifique o que isto anularia agora antes de continuar.",
+    "forbidden": "Não pode reverter esta página.",
+    "invalid": "Não é possível aqui: a versão talvez já seja a atual, ou não há nada para reverter.",
+    "guard": {
+      "title": "A sua reversão foi anulada",
+      "body": "Alguém anulou a sua reversão desta página. Segundo a conduta dos operadores, o passo seguinte é uma discussão, não outra reversão.",
+      "discuss": "Discutir esta página",
+      "conduct": "Ler a conduta dos operadores"
+    },
+    "recent": {
+      "showReverts": "Mostrar só reversões",
+      "onlyReverts": "A mostrar só reversões",
+      "all": "Mostrar todas as alterações"
+    }
+  },
   operatorEdit: {
     title: 'Edição de operador',
     link: 'Edição de operador',
@@ -682,6 +714,7 @@
     "someone": "Alguém",
     "kind": {
       "forumReply": "{{name}} respondeu em {{subject}}",
+      "pageRevert": "{{name}} reverteu as suas edições em {{subject}}",
       "other": "Nova atividade em {{subject}}"
     },
     "markRead": "Marcar como lida",
@@ -713,6 +746,10 @@
         "forumReply": {
           "label": "Respostas em tópicos do fórum que segues",
           "help": "Segues um tópico quando o crias ou respondes nele. Também podes seguir ou deixar de seguir no próprio tópico."
+        },
+        "pageRevert": {
+          "label": "Reversões das suas edições",
+          "help": "Quando alguém restaura uma versão anterior de uma página ou reverte as suas edições. Vê o motivo."
         }
       }
     }
