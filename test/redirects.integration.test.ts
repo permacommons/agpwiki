@@ -82,7 +82,7 @@ const cleanup = async (prefix: string, userId: string | null) => {
   }
 };
 
-test('Renaming a page keeps its old address as a redirect unless asked not to', async () => {
+test('Renaming a page keeps its old address as an alias unless asked not to', async () => {
   const dal = await getDal();
   const prefix = `test-redirect-${Date.now()}`;
   let userId: string | null = null;
@@ -113,7 +113,7 @@ test('Renaming a page keeps its old address as a redirect unless asked not to', 
     const { canonicalUrl } = (await current.json()) as { canonicalUrl: string };
     assert.match(canonicalUrl, new RegExp(`/${prefix}-new$`));
 
-    // Moving the page back onto its own old address releases that redirect.
+    // Moving the page back onto its own old address releases that alias.
     await updateWikiPage(
       dal,
       { slug: `${prefix}-new`, newSlug: `${prefix}-old`, revSummary: { en: 'Rename back.' } },
@@ -123,11 +123,11 @@ test('Renaming a page keeps its old address as a redirect unless asked not to', 
 
     await updateWikiPage(
       dal,
-      { slug: `${prefix}-old`, newSlug: `${prefix}-third`, keepRedirect: false, revSummary: { en: 'Rename.' } },
+      { slug: `${prefix}-old`, newSlug: `${prefix}-third`, keepAlias: false, revSummary: { en: 'Rename.' } },
       user.id
     );
     await assert.rejects(() => readWikiPage(dal, `${prefix}-old`), NotFoundError);
-    // The address released without a redirect can be used for another page.
+    // The address released without an alias can be used for another page.
     const other = await createWikiPage(
       dal,
       { slug: `${prefix}-old`, title: { en: 'Other' }, body: { en: 'Text.' } },
@@ -138,12 +138,12 @@ test('Renaming a page keeps its old address as a redirect unless asked not to', 
       { slug: `${prefix}-old`, newSlug: `${prefix}-other`, revSummary: { en: 'Rename other.' } },
       user.id
     );
-    // `-old` is now a redirect of the other page, so this page can't take it.
+    // `-old` is now an alias of the other page, so this page can't take it.
     await assert.rejects(
       () =>
         updateWikiPage(
           dal,
-          { slug: `${prefix}-third`, newSlug: `${prefix}-old`, revSummary: { en: 'Onto a redirect of another page.' } },
+          { slug: `${prefix}-third`, newSlug: `${prefix}-old`, revSummary: { en: 'Onto an alias of another page.' } },
           user.id
         ),
       ConflictError
@@ -155,7 +155,7 @@ test('Renaming a page keeps its old address as a redirect unless asked not to', 
   }
 });
 
-test('Renaming a blog post keeps its old address as a redirect', async () => {
+test('Renaming a blog post keeps its old address as an alias', async () => {
   const dal = await getDal();
   const prefix = `test-post-redirect-${Date.now()}`;
   let userId: string | null = null;
@@ -193,7 +193,7 @@ test('Renaming a blog post keeps its old address as a redirect', async () => {
 
     await updateBlogPost(
       dal,
-      { slug: `${prefix}-new`, newSlug: `${prefix}-third`, keepRedirect: false, revSummary: { en: 'Rename.' } },
+      { slug: `${prefix}-new`, newSlug: `${prefix}-third`, keepAlias: false, revSummary: { en: 'Rename.' } },
       user.id
     );
     await assert.rejects(() => readBlogPost(dal, `${prefix}-new`), NotFoundError);
