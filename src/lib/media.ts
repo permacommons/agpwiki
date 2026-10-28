@@ -1,3 +1,5 @@
+import { encodeSlugPath } from './slug.js';
+
 export const MEDIA_SLUG_MAX_LENGTH = 200;
 export const MEDIA_TITLE_MAX_LENGTH = 300;
 export const MEDIA_COMMONS_TITLE_MAX_LENGTH = 255;
@@ -193,8 +195,7 @@ const formatFigcaptionContents = (
 };
 
 const buildLocalMediaUrl = (slug: string, size: number, revId?: string | null): string => {
-  const segments = slug.split('/').map(encodeURIComponent).join('/');
-  const base = `/media-files/${segments}/${size}`;
+  const base = `/media-files/${encodeSlugPath(slug)}/${size}`;
   return revId ? `${base}?v=${encodeURIComponent(revId)}` : base;
 };
 
