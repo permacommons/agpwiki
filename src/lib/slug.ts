@@ -22,7 +22,9 @@ export const normalizeSlug = (slug: string) =>
 
 export const isBlockedSlug = (slug: string) => {
   if (!slug) return true;
-  const [prefix] = slug.split('/');
+  const segments = slug.split('/');
+  if (segments.some(segment => segment === '.' || segment === '..')) return true;
+  const [prefix] = segments;
   if (prefix && RESERVED_SLUGS.has(prefix)) return true;
 
   for (const suffix of RESERVED_SUFFIXES) {

@@ -32,10 +32,21 @@ test('isBlockedSlug blocks reserved suffixes', () => {
   assert.equal(isBlockedSlug('foo/checks'), true);
 });
 
+test('isBlockedSlug blocks dot segments anywhere in a slug', () => {
+  for (const segment of ['.', '..']) {
+    for (const slug of [segment, `${segment}/foo`, `foo/${segment}`, `foo/${segment}/bar`]) {
+      assert.equal(isBlockedSlug(slug), true, slug);
+    }
+  }
+});
+
 test('isBlockedSlug allows normal page slugs', () => {
   assert.equal(isBlockedSlug('barack-obama'), false);
   assert.equal(isBlockedSlug('meta/welcome'), false);
   assert.equal(isBlockedSlug('foo/bar'), false);
+  assert.equal(isBlockedSlug('foo/bar.baz'), false);
+  assert.equal(isBlockedSlug('foo/.hidden'), false);
+  assert.equal(isBlockedSlug('foo/.../bar'), false);
 });
 
 test('normalizeSlug trims leading and trailing slashes', () => {
