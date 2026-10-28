@@ -84,8 +84,8 @@ export interface WikiPageWriteInput {
 
 export interface WikiPageUpdateInput extends WikiPageWriteInput {
   newSlug?: string;
-  // On a rename, keep the old address as a redirect to the new one.
-  keepRedirect?: boolean;
+  // On a rename, keep the old address as an alias of the new one.
+  keepAlias?: boolean;
   expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
@@ -708,7 +708,7 @@ export async function updateWikiPage(
   {
     slug,
     newSlug,
-    keepRedirect = true,
+    keepAlias = true,
     title,
     body,
     originalLanguage,
@@ -791,7 +791,7 @@ export async function updateWikiPage(
   }
   if (isRename) {
     if (aliasToRelease) await aliasToRelease.delete();
-    if (keepRedirect) {
+    if (keepAlias) {
       await PageAlias.create({ pageId: page.id, slug: previousSlug, createdBy: userId });
     }
   }

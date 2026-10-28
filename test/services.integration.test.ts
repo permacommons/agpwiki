@@ -2066,7 +2066,7 @@ test('Service proposal links record pull requests and main proposals', async () 
         slug: mainSlug,
         newSlug: renamedSlug,
         // Frees the old address for the replacement page below.
-        keepRedirect: false,
+        keepAlias: false,
         title: { en: 'Renamed main' },
         revSummary: { en: 'Rename main proposal.' },
       },

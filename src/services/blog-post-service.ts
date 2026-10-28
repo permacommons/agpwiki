@@ -96,8 +96,8 @@ export interface BlogPostWriteInput {
 
 export interface BlogPostUpdateInput extends BlogPostWriteInput {
   newSlug?: string;
-  // On a rename, keep the old address as a redirect to the new one.
-  keepRedirect?: boolean;
+  // On a rename, keep the old address as an alias of the new one.
+  keepAlias?: boolean;
   expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
@@ -317,7 +317,7 @@ export async function updateBlogPost(
   {
     slug,
     newSlug,
-    keepRedirect = true,
+    keepAlias = true,
     title,
     body,
     summary,
@@ -394,7 +394,7 @@ export async function updateBlogPost(
     if (aliasToRelease) {
       await dalInstance.query('DELETE FROM post_aliases WHERE id = $1', [aliasToRelease.id]);
     }
-    if (keepRedirect) {
+    if (keepAlias) {
       await dalInstance.query(
         'INSERT INTO post_aliases (post_id, slug, created_by) VALUES ($1, $2, $3)',
         [post.id, previousSlug, userId]
