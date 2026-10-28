@@ -660,6 +660,7 @@ const renderThreadPage = async (
   } = {}
 ) => {
   const dalInstance = await initializePostgreSQL();
+  const detail = await readForumThread(dalInstance, threadId);
   const session = await resolveSessionUser(req);
   const currentUser = session ? await User.filterWhere({ id: session.userId }).first() : null;
   const isModerator = session
@@ -668,7 +669,6 @@ const renderThreadPage = async (
   const isSubscribed = session
     ? await isUserSubscribedToForumThread(threadId, session.userId)
     : false;
-  const detail = await readForumThread(dalInstance, threadId);
   const quoteId = typeof req.query.quote === 'string' ? req.query.quote : '';
   let quotedBody = '';
   if (!req.body?.body && quoteId) {
