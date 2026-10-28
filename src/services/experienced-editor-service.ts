@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { NotFoundError, ValidationCollector } from '../lib/errors.js';
+import { forgetInRequest, memoizeInRequest } from '../lib/request-scope.js';
 import User from '../models/user.js';
 import { getAccountLifecycleState, userCanUseAgentFeatures } from './account-lifecycle.js';
 import { recordAdminEvent } from './admin-event-service.js';
@@ -76,12 +77,20 @@ const listLastingEditDates = async (dalInstance: DataAccessLayer, userId: string
 
 const addDays = (date: Date, days: number) => new Date(date.getTime() + days * 24 * 60 * 60 * 1000);
 
+const statusKey = (userId: string) => `experienced:${userId}`;
+
+// A page view can ask more than once (page protection, the Roll back
+// button), so the answer is worked out once per request.
 export const getExperiencedStatus = async (
   dalInstance: DataAccessLayer,
   userId: string | null | undefined
 ): Promise<ExperiencedStatus> => {
+  if (!userId) return { isExperienced: false, since: null, override: null, countedEdits: 0 };
+  return memoizeInRequest(statusKey(userId), () => computeExperiencedStatus(dalInstance, userId));
+};
+
+const computeExperiencedStatus = async (dalInstance: DataAccessLayer, userId: string): Promise<ExperiencedStatus> => {
   const none: ExperiencedStatus = { isExperienced: false, since: null, override: null, countedEdits: 0 };
-  if (!userId) return none;
   const [state, override] = await Promise.all([getAccountLifecycleState(userId), readOverride(dalInstance, userId)]);
   if (!state || state.isBlocked) return { ...none, override: override?.status ?? null };
   if (override?.status === 'revoked') return { ...none, override: 'revoked' };
@@ -155,5 +164,6 @@ export const setExperiencedOverride = async (
       nextOverride: override,
     },
   });
+  forgetInRequest(statusKey(userId));
   return { userName, status: await getExperiencedStatus(dalInstance, userId) };
 };
