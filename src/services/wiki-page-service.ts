@@ -15,10 +15,12 @@ import {
   NotFoundError,
   PreconditionFailedError,
   ValidationCollector,
+  ValidationError,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
+import { missingPromptSlots, requiredPromptSlots } from '../lib/prompt-registry.js';
 import {
   type ProposalStatusInfo,
   readProposalLinks,
@@ -262,6 +264,30 @@ const ensureOptionalWikidataId = (
   if (value === undefined || value === null) return;
   if (typeof value !== 'string' || !WIKIDATA_ID_PATTERN.test(value)) {
     errors.add(field, 'must be a Wikidata item ID such as "Q42", or null to remove it.', 'invalid');
+  }
+};
+
+/** A workflow page under meta/prompts/ must keep the slots its workflow fills in. */
+const assertPromptSlotsKept = (slug: string, body: Record<string, string | null> | null | undefined) => {
+  const required = requiredPromptSlots(slug);
+  if (!required) return;
+  const fieldErrors = Object.entries(body ?? {}).flatMap(([lang, text]) => {
+    if (typeof text !== 'string') return [];
+    const missing = missingPromptSlots(text, required);
+    return missing.length
+      ? [
+          {
+            field: `body.${lang}`,
+            message: `must keep the workflow slot${missing.length > 1 ? 's' : ''} ${missing
+              .map(name => `{{${name}}}`)
+              .join(', ')}.`,
+            code: 'invalid',
+          },
+        ]
+      : [];
+  });
+  if (fieldErrors.length) {
+    throw new ValidationError('A workflow page must keep the slots its workflow fills in.', fieldErrors);
   }
 };
 
@@ -680,6 +706,8 @@ export async function createWikiPage(
     });
   }
 
+  assertPromptSlotsKept(normalizedSlug, sanitizeLocalizedMapInput(body));
+
   const createdAt = new Date();
   const page = await WikiPage.createFirstRevision(
     { id: userId },
@@ -772,6 +800,7 @@ export async function updateWikiPage(
     }
     aliasToRelease = aliasMatch ?? null;
   }
+  assertPromptSlotsKept(normalizedNewSlug ?? previousSlug, mergeLocalizedMap(page.body ?? null, body) ?? page.body);
 
   await page.newRevision({ id: userId }, { tags: ['update', ...(isRename ? ['rename'] : []), ...tags] });
 
@@ -837,6 +866,7 @@ export async function applyWikiPagePatch(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptSlotsKept(page.slug, { ...currentBody, [lang]: patched });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
 
@@ -988,6 +1018,7 @@ export async function rewriteWikiPageSection(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptSlotsKept(page.slug, { ...currentBody, [lang]: updatedText });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
 
@@ -1065,6 +1096,7 @@ export async function replaceWikiPageExactText(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptSlotsKept(page.slug, { ...currentBody, [lang]: updatedText });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
 

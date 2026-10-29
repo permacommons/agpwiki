@@ -1,8 +1,20 @@
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+import dal from 'rev-dal';
 import { z } from 'zod';
+import { initializePostgreSQL } from '../db.js';
+import { NotFoundError } from '../lib/errors.js';
+import {
+  META_PAGES_SLOT,
+  missingPromptSlots,
+  PROMPT_SPECS,
+  type PromptSpec,
+  promptPageSlug,
+  requiredPromptSlots,
+} from '../lib/prompt-registry.js';
+import { readWikiPage } from '../services/wiki-page-service.js';
+
+const { mlString } = dal;
 
 /**
  * Common editorial guidelines that agents should read before wiki operations.
@@ -15,158 +27,62 @@ const META_PAGES_INSTRUCTION = `Before proceeding, ensure you're familiar with t
 
 If you haven't read these pages yet, retrieve them now using the wiki_readPage tool.`;
 
-const PROMPT_LIBRARY_ROOT = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  'prompt-library'
-);
-
-type PromptTemplateSpec = {
-  id: string;
-  title: string;
-  description: string;
-  templatePath: string;
-};
-
-const PAGE_CHECK_PROMPTS: PromptTemplateSpec[] = [
-  {
-    id: 'fact-check',
-    title: 'Fact-Check Article',
-    description: 'Verify factual accuracy, citation integrity, and internal consistency',
-    templatePath: 'page-checks/fact-check.md',
-  },
-  {
-    id: 'copy-edit',
-    title: 'Copy Edit Article',
-    description: 'Improve grammar, clarity, and style while preserving meaning',
-    templatePath: 'page-checks/copy-edit.md',
-  },
-  {
-    id: 'structure-review',
-    title: 'Structure Review',
-    description: 'Review organization, sectioning, and flow',
-    templatePath: 'page-checks/structure-review.md',
-  },
-  {
-    id: 'freshness-check',
-    title: 'Freshness Check',
-    description: 'Identify outdated claims, stats, and roles',
-    templatePath: 'page-checks/freshness-check.md',
-  },
-  {
-    id: 'link-integrity',
-    title: 'Link Integrity Check',
-    description: 'Verify links resolve and point to intended destinations',
-    templatePath: 'page-checks/link-integrity.md',
-  },
-  {
-    id: 'plagiarism-scan',
-    title: 'Plagiarism Scan',
-    description: 'Check for uncredited copying and attribution risks',
-    templatePath: 'page-checks/plagiarism-scan.md',
-  },
-  {
-    id: 'accessibility-check',
-    title: 'Accessibility Check',
-    description: 'Review readability and accessibility expectations',
-    templatePath: 'page-checks/accessibility-check.md',
-  },
-  {
-    id: 'translation-review',
-    title: 'Translation Review',
-    description: 'Verify correctness against the source language',
-    templatePath: 'page-checks/translation-review.md',
-  },
-  {
-    id: 'formatting-check',
-    title: 'Formatting Check',
-    description: 'Check Markdown correctness and rendering expectations',
-    templatePath: 'page-checks/formatting-check.md',
-  },
-];
-
-const promptTemplateCache = new Map<string, string>();
-
-function resolvePromptPath(libraryPath: string): string {
-  const resolved = path.resolve(PROMPT_LIBRARY_ROOT, libraryPath);
-  if (!resolved.startsWith(PROMPT_LIBRARY_ROOT + path.sep)) {
-    throw new Error(`Invalid prompt template path: ${libraryPath}`);
-  }
-  return resolved;
-}
-
-function loadPromptTemplate(libraryPath: string): string {
-  const cached = promptTemplateCache.get(libraryPath);
-  if (cached) {
-    return cached;
-  }
-  const resolvedPath = resolvePromptPath(libraryPath);
-  const contents = readFileSync(resolvedPath, 'utf8');
-  promptTemplateCache.set(libraryPath, contents);
-  return contents;
-}
-
-function renderPromptTemplate(template: string, vars: Record<string, string>): string {
-  return Object.entries({ metaPages: META_PAGES_INSTRUCTION, ...vars }).reduce(
-    (text, [key, value]) => text.replaceAll(`{{${key}}}`, value),
-    template
+const unavailable = (spec: PromptSpec, problem: string) =>
+  new McpError(
+    ErrorCode.InternalError,
+    `The "${spec.title}" workflow is unavailable: ${problem} An admin can restore the page from its history.`
   );
-}
+
+/** The workflow text from its wiki page, with the slots filled in. */
+export const loadPromptText = async (spec: PromptSpec, value: string) => {
+  const slug = promptPageSlug(spec.id);
+  const dalInstance = await initializePostgreSQL();
+  const page = await readWikiPage(dalInstance, slug).catch(error => {
+    if (error instanceof NotFoundError) throw unavailable(spec, `the page meta/prompts/${spec.id} is missing.`);
+    throw error;
+  });
+  const template = mlString.resolve(page.originalLanguage ?? 'en', page.body ?? null)?.str ?? '';
+  const missing = missingPromptSlots(template, requiredPromptSlots(slug) ?? []);
+  if (missing.length) {
+    throw unavailable(spec, `the page ${slug} lacks ${missing.map(name => `{{${name}}}`).join(', ')}.`);
+  }
+  const text = [
+    [META_PAGES_SLOT, META_PAGES_INSTRUCTION],
+    [spec.slot.name, value],
+  ].reduce((current, [name, replacement]) => current.replaceAll(`{{${name}}}`, replacement), template);
+  // Lets a strange result be traced to the exact text the agent got.
+  return `${text}\n\n(Workflow text from /${slug}, revision ${page.currentRevId}.)`;
+};
 
 /**
  * Registers MCP prompts that guide agents through common workflows.
  */
 export const registerPrompts = (server: McpServer) => {
-  server.registerPrompt(
-    'create-article',
-    {
-      title: 'Create Article',
-      description: 'Guided workflow for creating a well-sourced wiki article',
-      argsSchema: {
-        topic: z.string().describe('The topic for the new article'),
-      },
-    },
-    async ({ topic }) => {
-      const template = loadPromptTemplate('create-article.md');
-      return {
-        description: `Workflow for creating an article about: ${topic}`,
-        messages: [
-          {
-            role: 'user' as const,
-            content: {
-              type: 'text' as const,
-              text: renderPromptTemplate(template, { topic }),
-            },
-          },
-        ],
-      };
-    }
-  );
-
-  PAGE_CHECK_PROMPTS.forEach(spec => {
+  for (const spec of PROMPT_SPECS) {
     server.registerPrompt(
       spec.id,
       {
         title: spec.title,
         description: spec.description,
         argsSchema: {
-          slug: z.string().describe('The slug of the article to review'),
+          [spec.slot.name]: z.string().describe(spec.slot.description),
         },
       },
-      async ({ slug }) => {
-        const template = loadPromptTemplate(spec.templatePath);
+      async (args: Record<string, string>) => {
+        const value = args[spec.slot.name] ?? '';
         return {
-          description: `${spec.title}: ${slug}`,
+          description: spec.describe(value),
           messages: [
             {
               role: 'user' as const,
               content: {
                 type: 'text' as const,
-                text: renderPromptTemplate(template, { slug }),
+                text: await loadPromptText(spec, value),
               },
             },
           ],
         };
       }
     );
-  });
+  }
 };

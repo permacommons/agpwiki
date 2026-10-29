@@ -1568,6 +1568,11 @@ pre.diff ins {
   color: var(--muted);
 }
 .recent-filter { font-size: 0.9em; }
+.prompt-slot {
+  background: var(--rule);
+  padding: 0 0.25em;
+  border-radius: 3px;
+}
 .history-form { margin-top: 1rem; }
 .history-actions { margin-bottom: 0.75rem; }
 .form-card {
