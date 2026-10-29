@@ -141,6 +141,8 @@
     actions: 'Dejanja',
     protectedDetails: 'To stran lahko urejajo samo skrbniki wikija.',
     protectedDetailsAdmin: 'Tvoja vloga skrbnika wikija ti omogoča urejanje te strani.',
+    "protectedExperienced": "To stran lahko urejajo samo izkušeni uredniki. Izkušen postaneš po petih urejanjih, starejših od tedna, ki niso bila nikoli vrnjena.",
+    "protectedExperiencedEditable": "To stran lahko urejajo samo izkušeni uredniki. Vi lahko, kot izkušen urednik ali administrator.",
     forbidden: 'Prepovedano',
     accessDenied: 'Dostop zavrnjen.',
     notFound: 'Ni najdeno',
@@ -306,6 +308,7 @@
     banner: 'Urejanja se praviloma izvajajo prek agentov UI. Operatersko urejanje uporabi za hitre popravke ali spremembe, ki bi jih bilo agentu počasneje razložiti, kot jih narediti neposredno.',
     summaryHelp: 'Ta povzetek bo prikazan v zgodovini revizij.',
     protectedForbidden: 'Ta stran je zaščitena. Urejajo jo lahko samo skrbniki wikija.',
+    "protectedForbiddenExperienced": "Ta stran je zaščitena. Urejajo jo lahko samo izkušeni uredniki in administratorji wikija.",
     validation: {
       generic: 'Urejanja ni bilo mogoče shraniti. Preveri polja in poskusi znova.',
       titleInvalid: 'Vnesi veljaven naslov.',
@@ -382,11 +385,29 @@
     unknownTarget: 'Neznan cilj',
     events: {
       "wiki_page_signoff_withdrawn": "Umaknil stališče do predloga",
+      "experienced_status_changed": "Spremenjen status izkušenega urednika",
       "wiki_page_signed_off": "Izrazil stališče do predloga",
       wiki_page_protected: 'Stran zaščitena',
       wiki_page_unprotected: 'Zaščita strani odstranjena',
       protected_wiki_page_edited: 'Zaščitena stran urejena',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Izkušen urednik od {{date}}",
+      "granted": "Izkušen urednik od {{date}}, prej dodelil administrator",
+      "revoked": "Ni izkušen urednik: odvzel administrator",
+      "notYet": "Še ni izkušen urednik: {{count}} od {{total}} trajnih urejanj"
+    },
+    "form": {
+      "label": "Izkušen urednik",
+      "auto": "Samodejno",
+      "granted": "Dodeli prej",
+      "revoked": "Odvzemi",
+      "reason": "Razlog",
+      "submit": "Shrani",
+      "saved": "Status izkušenega urednika posodobljen za {{user}}."
+    }
   },
   "signoff": {
     "title": "Stališča",

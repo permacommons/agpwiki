@@ -141,6 +141,8 @@
     actions: 'Akcie',
     protectedDetails: 'Túto stránku môžu upravovať iba správcovia wiki.',
     protectedDetailsAdmin: 'Tvoja rola správcu wiki ti umožňuje upravovať túto stránku.',
+    "protectedExperienced": "Túto stránku môžu upravovať iba skúsení redaktori. Skúseným sa stáva redaktor po piatich úpravách starších ako týždeň, ktoré neboli vrátené.",
+    "protectedExperiencedEditable": "Túto stránku môžu upravovať iba skúsení redaktori. Vy môžete ako skúsený redaktor alebo správca.",
     forbidden: 'Zakázané',
     accessDenied: 'Prístup odmietnutý.',
     notFound: 'Nenájdené',
@@ -306,6 +308,7 @@
     banner: 'Úpravy sa vo všeobecnosti vykonávajú cez AI agentov. Operátorské úpravy používaj na rýchle opravy alebo zmeny, ktoré by trvalo dlhšie vysvetliť agentovi, než ich spraviť priamo.',
     summaryHelp: 'Toto zhrnutie sa zobrazí v histórii revízií.',
     protectedForbidden: 'Táto stránka je chránená. Upravovať ju môžu iba správcovia wiki.',
+    "protectedForbiddenExperienced": "Táto stránka je zamknutá. Upravovať ju môžu iba skúsení redaktori a správcovia wiki.",
     validation: {
       generic: 'Tvoju úpravu sa nepodarilo uložiť. Skontroluj polia a skús to znova.',
       titleInvalid: 'Zadaj platný názov.',
@@ -382,11 +385,29 @@
     unknownTarget: 'Neznámy cieľ',
     events: {
       "wiki_page_signoff_withdrawn": "Stiahol svoj postoj k návrhu",
+      "experienced_status_changed": "Zmena stavu skúseného redaktora",
       "wiki_page_signed_off": "Vyjadril postoj k návrhu",
       wiki_page_protected: 'Stránka chránená',
       wiki_page_unprotected: 'Ochrana stránky odstránená',
       protected_wiki_page_edited: 'Chránená stránka upravená',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Skúsený redaktor od {{date}}",
+      "granted": "Skúsený redaktor od {{date}}, udelené skôr správcom",
+      "revoked": "Nie je skúsený redaktor: odobraté správcom",
+      "notYet": "Ešte nie skúsený redaktor: {{count}} z {{total}} trvalých úprav"
+    },
+    "form": {
+      "label": "Skúsený redaktor",
+      "auto": "Automaticky",
+      "granted": "Udeliť skôr",
+      "revoked": "Odobrať",
+      "reason": "Dôvod",
+      "submit": "Uložiť",
+      "saved": "Stav skúseného redaktora aktualizovaný pre {{user}}."
+    }
   },
   "signoff": {
     "title": "Postoje",

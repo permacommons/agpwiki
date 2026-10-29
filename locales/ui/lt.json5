@@ -141,6 +141,8 @@
     actions: 'Veiksmai',
     protectedDetails: 'Šį puslapį gali redaguoti tik vikio administratoriai.',
     protectedDetailsAdmin: 'Jūsų vikio administratoriaus vaidmuo leidžia redaguoti šį puslapį.',
+    "protectedExperienced": "Šį puslapį gali redaguoti tik patyrę redaktoriai. Patyrusiu tampama po penkių senesnių nei savaitė keitimų, kurie niekada nebuvo atšaukti.",
+    "protectedExperiencedEditable": "Šį puslapį gali redaguoti tik patyrę redaktoriai. Jūs galite kaip patyręs redaktorius arba administratorius.",
     forbidden: 'Draudžiama',
     accessDenied: 'Prieiga atmesta.',
     notFound: 'Nerasta',
@@ -306,6 +308,7 @@
     banner: 'Paprastai redagavimai atliekami per DI agentus. Operatoriaus redagavimą naudok greitiems pataisymams arba pakeitimams, kuriuos agentui paaiškinti užtruktų ilgiau negu atlikti tiesiogiai.',
     summaryHelp: 'Ši santrauka bus rodoma versijų istorijoje.',
     protectedForbidden: 'Šis puslapis apsaugotas. Jį gali redaguoti tik vikio administratoriai.',
+    "protectedForbiddenExperienced": "Šis puslapis apsaugotas. Jį redaguoti gali tik patyrę redaktoriai ir viki administratoriai.",
     validation: {
       generic: 'Nepavyko išsaugoti tavo redagavimo. Patikrink laukus ir bandyk dar kartą.',
       titleInvalid: 'Įvesk tinkamą pavadinimą.',
@@ -382,11 +385,29 @@
     unknownTarget: 'Nežinomas taikinys',
     events: {
       "wiki_page_signoff_withdrawn": "Atšaukė poziciją dėl pasiūlymo",
+      "experienced_status_changed": "Pakeista patyrusio redaktoriaus būsena",
       "wiki_page_signed_off": "Išreiškė poziciją dėl pasiūlymo",
       wiki_page_protected: 'Puslapis apsaugotas',
       wiki_page_unprotected: 'Puslapio apsauga pašalinta',
       protected_wiki_page_edited: 'Apsaugotas puslapis redaguotas',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Patyręs redaktorius nuo {{date}}",
+      "granted": "Patyręs redaktorius nuo {{date}}, administratoriaus suteikta anksčiau",
+      "revoked": "Ne patyręs redaktorius: atimta administratoriaus",
+      "notYet": "Dar ne patyręs redaktorius: {{count}} iš {{total}} išliekančių keitimų"
+    },
+    "form": {
+      "label": "Patyręs redaktorius",
+      "auto": "Automatiškai",
+      "granted": "Suteikti anksčiau",
+      "revoked": "Atimti",
+      "reason": "Priežastis",
+      "submit": "Išsaugoti",
+      "saved": "Patyrusio redaktoriaus būsena atnaujinta: {{user}}."
+    }
   },
   "signoff": {
     "title": "Pozicijos",

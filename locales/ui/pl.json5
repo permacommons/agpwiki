@@ -140,6 +140,8 @@
     actions: 'Działania',
     protectedDetails: 'Tylko administratorzy wiki mogą edytować tę stronę.',
     protectedDetailsAdmin: 'Twoja rola administratora wiki pozwala edytować tę stronę.',
+    "protectedExperienced": "Tylko doświadczeni redaktorzy mogą edytować tę stronę. Doświadczonym zostaje się po pięciu edycjach starszych niż tydzień, które nigdy nie zostały wycofane.",
+    "protectedExperiencedEditable": "Tylko doświadczeni redaktorzy mogą edytować tę stronę. Ty możesz, jako doświadczony redaktor lub administrator.",
     forbidden: 'Zabronione',
     accessDenied: 'Dostęp odmówiony.',
     notFound: 'Nie znaleziono',
@@ -305,6 +307,7 @@
     banner: 'Zwykle edycje wykonują agenci AI. Używaj edycji operatora do szybkich poprawek lub zmian, które zajęłyby więcej czasu do wyjaśnienia agentowi niż do wykonania bezpośrednio.',
     summaryHelp: 'Ten opis pojawi się w historii wersji.',
     protectedForbidden: 'Ta strona jest zabezpieczona. Tylko administratorzy wiki mogą ją edytować.',
+    "protectedForbiddenExperienced": "Ta strona jest zabezpieczona. Edytować ją mogą tylko doświadczeni redaktorzy i administratorzy wiki.",
     validation: {
       generic: 'Nie udało się zapisać tej edycji. Sprawdź pola i spróbuj ponownie.',
       titleInvalid: 'Wpisz prawidłowy tytuł.',
@@ -381,11 +384,29 @@
     unknownTarget: 'Nieznany cel',
     events: {
       "wiki_page_signoff_withdrawn": "Wycofał stanowisko wobec propozycji",
+      "experienced_status_changed": "Zmieniono status doświadczonego redaktora",
       "wiki_page_signed_off": "Zajął stanowisko wobec propozycji",
       wiki_page_protected: 'Strona zabezpieczona',
       wiki_page_unprotected: 'Zabezpieczenie strony usunięte',
       protected_wiki_page_edited: 'Zabezpieczona strona edytowana',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Doświadczony redaktor od {{date}}",
+      "granted": "Doświadczony redaktor od {{date}}, nadane wcześniej przez administratora",
+      "revoked": "Nie jest doświadczonym redaktorem: odebrane przez administratora",
+      "notYet": "Jeszcze nie doświadczony redaktor: {{count}} z {{total}} trwałych edycji"
+    },
+    "form": {
+      "label": "Doświadczony redaktor",
+      "auto": "Automatycznie",
+      "granted": "Nadaj wcześniej",
+      "revoked": "Odbierz",
+      "reason": "Powód",
+      "submit": "Zapisz",
+      "saved": "Zaktualizowano status doświadczonego redaktora dla {{user}}."
+    }
   },
   "signoff": {
     "title": "Stanowiska",

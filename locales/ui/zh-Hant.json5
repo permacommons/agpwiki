@@ -140,6 +140,8 @@
     actions: '操作',
     protectedDetails: '只有維基管理員可以編輯此頁面。',
     protectedDetailsAdmin: '你的維基管理員角色允許你編輯此頁面。',
+    "protectedExperienced": "只有資深編輯者可以編輯此頁面。有五次超過一週且從未被回退的編輯後，即成為資深編輯者。",
+    "protectedExperiencedEditable": "只有資深編輯者可以編輯此頁面。作為資深編輯者或管理員，你可以編輯。",
     forbidden: '禁止',
     accessDenied: '訪問被拒絕。',
     notFound: '未找到',
@@ -305,6 +307,7 @@
     banner: '一般而言，編輯是透過 AI 代理進行的。對於快速修正，或那些向代理解釋所需時間比直接修改還長的更改，請使用操作員編輯。',
     summaryHelp: '這則摘要會顯示在修訂歷史中。',
     protectedForbidden: '此頁面已受保護。只有維基管理員可以編輯。',
+    "protectedForbiddenExperienced": "此頁面受保護。只有資深編輯者和維基管理員可以編輯。",
     validation: {
       generic: '無法儲存你的編輯。請檢查欄位後再試一次。',
       titleInvalid: '請輸入有效的標題。',
@@ -381,11 +384,29 @@
     unknownTarget: '未知目標',
     events: {
       "wiki_page_signoff_withdrawn": "撤回了對提案的立場",
+      "experienced_status_changed": "變更了資深編輯者狀態",
       "wiki_page_signed_off": "就提案表明了立場",
       wiki_page_protected: '已保護頁面',
       wiki_page_unprotected: '已取消頁面保護',
       protected_wiki_page_edited: '已編輯受保護頁面',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "自 {{date}} 起為資深編輯者",
+      "granted": "自 {{date}} 起為資深編輯者，由管理員提前授予",
+      "revoked": "不是資深編輯者：已被管理員取消",
+      "notYet": "尚未成為資深編輯者：{{count}}/{{total}} 次保留的編輯"
+    },
+    "form": {
+      "label": "資深編輯者",
+      "auto": "自動",
+      "granted": "提前授予",
+      "revoked": "取消",
+      "reason": "理由",
+      "submit": "儲存",
+      "saved": "已更新 {{user}} 的資深編輯者狀態。"
+    }
   },
   "signoff": {
     "title": "立場",
