@@ -40,36 +40,45 @@ const readOverride = async (dalInstance: DataAccessLayer, userId: string) => {
  * Dates of the user's oldest lasting edits, oldest first. An edit lasts if it
  * is old enough and, for pages, no later revert brought back a version from
  * before it.
+ *
+ * Each part takes its own oldest few in (author, date) index order, so the
+ * work stops after a handful of rows. The revert check only looks at
+ * revisions of the edited page: a restore always brings back a version of
+ * the same page.
  */
 const listLastingEditDates = async (dalInstance: DataAccessLayer, userId: string): Promise<Date[]> => {
   const result = await dalInstance.query(
-    `WITH edits AS (
-       SELECT e._rev_date AS rev_date
-         FROM pages e
-        WHERE e._rev_user = $1 AND e._rev_deleted = false
-          AND e._rev_date <= NOW() - make_interval(days => $2)
-          AND NOT EXISTS (
-            SELECT 1
-              FROM pages x
-              CROSS JOIN LATERAL unnest(x._rev_tags) AS tag
-              JOIN pages restored ON restored._rev_id::text = substring(tag FROM 10)
-             WHERE tag LIKE 'restored:%'
-               AND 'revert' = ANY(x._rev_tags)
-               AND COALESCE(x._old_rev_of, x.id) = COALESCE(e._old_rev_of, e.id)
-               AND x._rev_date > e._rev_date
-               AND restored._rev_date < e._rev_date
-          )
+    `SELECT rev_date FROM (
+       (SELECT e._rev_date AS rev_date
+          FROM pages e
+         WHERE e._rev_user = $1 AND e._rev_deleted = false
+           AND e._rev_date <= NOW() - make_interval(days => $2)
+           AND NOT EXISTS (
+             SELECT 1
+               FROM pages x
+               JOIN pages restored
+                 ON (restored._old_rev_of = COALESCE(e._old_rev_of, e.id) OR restored.id = COALESCE(e._old_rev_of, e.id))
+                AND restored._rev_date < e._rev_date
+                AND ('restored:' || restored._rev_id::text) = ANY(x._rev_tags)
+              WHERE (x._old_rev_of = COALESCE(e._old_rev_of, e.id) OR x.id = COALESCE(e._old_rev_of, e.id))
+                AND 'revert' = ANY(x._rev_tags)
+                AND x._rev_date > e._rev_date
+           )
+         ORDER BY e._rev_date LIMIT $3)
        UNION ALL
-       SELECT _rev_date FROM citations
-        WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
+       (SELECT _rev_date FROM citations
+         WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
+         ORDER BY _rev_date LIMIT $3)
        UNION ALL
-       SELECT _rev_date FROM citation_claims
-        WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
+       (SELECT _rev_date FROM citation_claims
+         WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
+         ORDER BY _rev_date LIMIT $3)
        UNION ALL
-       SELECT _rev_date FROM page_checks
-        WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
-     )
-     SELECT rev_date FROM edits ORDER BY rev_date ASC LIMIT $3`,
+       (SELECT _rev_date FROM page_checks
+         WHERE _rev_user = $1 AND _rev_deleted = false AND _rev_date <= NOW() - make_interval(days => $2)
+         ORDER BY _rev_date LIMIT $3)
+     ) edits
+     ORDER BY rev_date ASC LIMIT $3`,
     [userId, EXPERIENCED_EDIT_AGE_DAYS, EXPERIENCED_MIN_EDITS]
   );
   return (result.rows as Array<{ rev_date: Date }>).map(row => new Date(row.rev_date));
