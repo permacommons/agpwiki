@@ -761,11 +761,7 @@
     },
     "markRead": "Označi kot prebrano",
     "markAllRead": "Označi vse kot prebrano",
-    "bar": {
-      "more_one": "Še {{count}}",
-      "more_other": "Še {{count}}",
-      "all": "Vsa obvestila"
-    },
+    "all": "Vsa obvestila",
     "unread": "novo",
     "settings": "Nastavitve obvestil",
     "empty": "Še ni obvestil. Prejmeš ga, ko nekdo odgovori v niti foruma, ki ji slediš."

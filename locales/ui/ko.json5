@@ -759,11 +759,7 @@
     },
     "markRead": "읽음으로 표시",
     "markAllRead": "모두 읽음으로 표시",
-    "bar": {
-      "more_one": "{{count}}개 더",
-      "more_other": "{{count}}개 더",
-      "all": "모든 알림"
-    },
+    "all": "모든 알림",
     "unread": "새 알림",
     "settings": "알림 설정",
     "empty": "아직 알림이 없습니다. 팔로우하는 포럼 스레드에 누군가 답글을 달면 알림을 받습니다."

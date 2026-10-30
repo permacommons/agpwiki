@@ -759,11 +759,7 @@
     },
     "markRead": "標為已讀",
     "markAllRead": "全部標為已讀",
-    "bar": {
-      "more_one": "還有 {{count}} 則",
-      "more_other": "還有 {{count}} 則",
-      "all": "所有通知"
-    },
+    "all": "所有通知",
     "unread": "新",
     "settings": "通知設定",
     "empty": "還沒有通知。當有人在你關注的論壇討論串中回覆時，你會收到通知。"

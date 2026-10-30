@@ -761,11 +761,7 @@
     },
     "markRead": "Megjelölés olvasottként",
     "markAllRead": "Összes megjelölése olvasottként",
-    "bar": {
-      "more_one": "Még {{count}}",
-      "more_other": "Még {{count}}",
-      "all": "Összes értesítés"
-    },
+    "all": "Összes értesítés",
     "unread": "új",
     "settings": "Értesítési beállítások",
     "empty": "Még nincsenek értesítések. Akkor kapsz egyet, ha valaki válaszol egy általad követett fórumszálban."

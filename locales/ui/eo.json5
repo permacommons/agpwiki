@@ -759,11 +759,7 @@
     },
     "markRead": "Marki kiel legitan",
     "markAllRead": "Marki ĉiujn kiel legitajn",
-    "bar": {
-      "more_one": "{{count}} plia",
-      "more_other": "{{count}} pliaj",
-      "all": "Ĉiuj sciigoj"
-    },
+    "all": "Ĉiuj sciigoj",
     "unread": "nova",
     "settings": "Agordoj pri sciigoj",
     "empty": "Ankoraŭ neniuj sciigoj. Vi ricevos unu, kiam iu respondos en forumfadeno, kiun vi sekvas."

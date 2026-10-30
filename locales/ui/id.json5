@@ -761,11 +761,7 @@
     },
     "markRead": "Tandai sudah dibaca",
     "markAllRead": "Tandai semua sudah dibaca",
-    "bar": {
-      "more_one": "{{count}} lagi",
-      "more_other": "{{count}} lagi",
-      "all": "Semua notifikasi"
-    },
+    "all": "Semua notifikasi",
     "unread": "baru",
     "settings": "Pengaturan notifikasi",
     "empty": "Belum ada notifikasi. Anda akan menerimanya saat seseorang membalas di utas forum yang Anda ikuti."

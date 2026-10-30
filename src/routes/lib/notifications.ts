@@ -41,31 +41,6 @@ const markReadForm = (t: TFunction, returnTo: string, id?: string) => `<form cla
   <button type="submit">${escapeHtml(t(id ? 'notifications.markRead' : 'notifications.markAllRead'))}</button>
 </form>`;
 
-/** The bar under the header with the latest unread notification. */
-export const renderNotificationBar = ({
-  notification,
-  unreadCount,
-  returnTo,
-  t,
-}: {
-  notification: SiteNotification;
-  unreadCount: number;
-  returnTo: string;
-  t: TFunction;
-}) => {
-  const more =
-    unreadCount > 1
-      ? `<a class="notification-bar-more" href="${NOTIFICATIONS_PATH}">${escapeHtml(
-          t('notifications.bar.more', { count: unreadCount - 1 })
-        )}</a>`
-      : `<a class="notification-bar-more" href="${NOTIFICATIONS_PATH}">${escapeHtml(t('notifications.bar.all'))}</a>`;
-  return `<div class="notification-bar" role="status">
-  <span class="notification-bar-text">${renderNotificationText(notification, t)}</span>
-  ${more}
-  ${markReadForm(t, returnTo, notification.id)}
-</div>`;
-};
-
 export const renderNotificationList = ({
   notifications,
   unreadCount,
@@ -116,7 +91,9 @@ export const toNotificationPanelData = (notifications: SiteNotification[], unrea
     id: item.id,
     html: renderNotificationText(item, t),
     excerpt: item.excerpt,
+    url: notificationOpenPath(item.id),
     date: formatDateUTC(item.createdAt),
+    createdAt: item.createdAt.toISOString(),
     unread: !item.readAt,
   })),
 });
