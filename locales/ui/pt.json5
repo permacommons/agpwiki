@@ -751,11 +751,7 @@
     },
     "markRead": "Marcar como lida",
     "markAllRead": "Marcar todas como lidas",
-    "bar": {
-      "more_one": "Mais {{count}}",
-      "more_other": "Mais {{count}}",
-      "all": "Todas as notificações"
-    },
+    "all": "Todas as notificações",
     "unread": "nova",
     "settings": "Configurações de notificação",
     "empty": "Ainda não há notificações. Você recebe uma quando alguém responde num tópico do fórum que você segue."

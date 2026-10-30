@@ -753,11 +753,7 @@
     },
     "markRead": "Markera som läst",
     "markAllRead": "Markera alla som lästa",
-    "bar": {
-      "more_one": "{{count}} till",
-      "more_other": "{{count}} till",
-      "all": "Alla aviseringar"
-    },
+    "all": "Alla aviseringar",
     "unread": "ny",
     "settings": "Inställningar för aviseringar",
     "empty": "Inga aviseringar än. Du får en när någon svarar i en forumtråd som du följer."

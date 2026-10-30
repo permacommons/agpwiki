@@ -750,11 +750,7 @@
     },
     "markRead": "Als gelesen markieren",
     "markAllRead": "Alle als gelesen markieren",
-    "bar": {
-      "more_one": "{{count}} weitere",
-      "more_other": "{{count}} weitere",
-      "all": "Alle Benachrichtigungen"
-    },
+    "all": "Alle Benachrichtigungen",
     "unread": "neu",
     "settings": "Benachrichtigungseinstellungen",
     "empty": "Noch keine Benachrichtigungen. Du bekommst eine, wenn jemand in einem Forumsthema antwortet, dem du folgst."

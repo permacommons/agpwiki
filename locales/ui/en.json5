@@ -1053,11 +1053,7 @@
     },
     "markRead": "Mark as read",
     "markAllRead": "Mark all as read",
-    "bar": {
-      "more_one": "{{count}} more",
-      "more_other": "{{count}} more",
-      "all": "All notifications"
-    },
+    "all": "All notifications",
     "unread": "new",
     "settings": "Notification settings",
     "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."

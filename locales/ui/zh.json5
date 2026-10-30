@@ -751,11 +751,7 @@
     },
     "markRead": "标为已读",
     "markAllRead": "全部标为已读",
-    "bar": {
-      "more_one": "还有 {{count}} 条",
-      "more_other": "还有 {{count}} 条",
-      "all": "全部通知"
-    },
+    "all": "全部通知",
     "unread": "新",
     "settings": "通知设置",
     "empty": "还没有通知。当有人在你关注的论坛帖子中回复时，你会收到通知。"
