@@ -58,6 +58,7 @@ import {
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import { isFollowingPage } from '../services/page-subscription-service.js';
 import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
 import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
@@ -82,6 +83,7 @@ import {
   sectionFingerprint,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
+import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import {
   extractQueryParams,
@@ -1676,6 +1678,14 @@ export const registerPageRoutes = (app: Express) => {
         discussHref: forumPath || null,
         discussCount: forumPath ? await countForumCommentsForPage(dalInstance, canonicalSlug) : 0,
         editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+        follow: session
+          ? {
+              slug: canonicalSlug,
+              following: await isFollowingPage(dalInstance, page.id, session.userId),
+              returnTo: req.originalUrl || pageViewPath(canonicalSlug),
+              action: FOLLOW_PATH,
+            }
+          : undefined,
         t: req.t,
       });
       const forumLinkHtml = relatedLinks.length

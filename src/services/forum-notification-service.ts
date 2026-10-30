@@ -1,9 +1,6 @@
-import { decodeHTML } from 'entities';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
-import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { forumThreadPath } from '../lib/forum-paths.js';
-import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import {
   readNotificationChannel,
   wantsEmailNotification,
@@ -12,7 +9,6 @@ import {
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import User from '../models/user.js';
-import { renderMarkdown } from '../render.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds, subscribeUserToForumThread } from './forum-subscription-service.js';
 import {
@@ -20,6 +16,8 @@ import {
   type NotificationJobRecord,
   recordNotificationDelivery,
 } from './notification-queue.js';
+import { collapseWhitespace, EXCERPT_LENGTH, escapeHtml, markdownToPlainText, truncate } from './notification-text.js';
+import { PAGE_COMMENT_NOTIFICATION, processPageCommentNotification } from './page-comment-notification-service.js';
 import { getSiteBaseUrl } from './site-config.js';
 import { createSiteNotification } from './site-notification-service.js';
 
@@ -27,7 +25,6 @@ export const FORUM_REPLY_CREATED_NOTIFICATION = 'forum.reply.created';
 const FORUM_NOTIFICATION_KIND = 'forum.reply';
 const EMAIL_CHANNEL = 'email';
 const SITE_CHANNEL = 'site';
-const EXCERPT_LENGTH = 280;
 
 export type ForumReplyCreatedPayload = {
   threadId: string;
@@ -35,33 +32,6 @@ export type ForumReplyCreatedPayload = {
   actorUserId: string;
   recipientUserIds?: string[];
 };
-
-const collapseWhitespace = (value: string) => value.replace(/\s+/g, ' ').trim();
-
-const markdownToPlainText = async (dal: DataAccessLayer, markdown: string) => {
-  const [citationEntries, mediaRegistry] = await Promise.all([
-    loadCitationEntriesForSources(dal, [markdown]),
-    loadMediaEntriesForSources(dal, [markdown]),
-  ]);
-  const rendered = await renderMarkdown(markdown, citationEntries, {
-    backToCitationLabel: 'Back to citation',
-    mediaRegistry,
-  });
-  return collapseWhitespace(decodeHTML(striptags(rendered.html)));
-};
-
-const truncate = (value: string, maxLength: number) => {
-  if (value.length <= maxLength) return value;
-  return `${value.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
-};
-
-const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
 
 const buildCommentPath = (threadId: string, commentId: string) =>
   `${forumThreadPath(threadId)}#comment-${encodeURIComponent(commentId)}`;
@@ -233,4 +203,5 @@ export const processForumReplyCreatedNotification = async (
 
 export const notificationJobHandlers = {
   [FORUM_REPLY_CREATED_NOTIFICATION]: processForumReplyCreatedNotification,
+  [PAGE_COMMENT_NOTIFICATION]: processPageCommentNotification,
 } as const;

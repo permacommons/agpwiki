@@ -272,7 +272,11 @@
     page: 'Sayfa',
     discuss: 'Tartış',
     edit: 'Düzenle',
-    history: 'Geçmiş'
+    history: 'Geçmiş',
+    "follow": "Takip et",
+    "following": "Takip ediliyor",
+    "followHelp": "Bu sayfadaki yeni yorumlardan haberdar olun. Düzenlemeler bildirim göndermez.",
+    "followingHelp": "Bu sayfadaki yeni yorumlardan haberdar oluyorsunuz. Düzenlemeler bildirim göndermez. Takibi bırakmak için tıklayın."
   },
   howToEdit: {
     title: 'Bu sayfa nasıl düzenlenir',
@@ -747,6 +751,10 @@
     "someone": "Biri",
     "kind": {
       "forumReply": "{{name}}, {{subject}} konusunda yanıt verdi",
+      "pageThread": "{{name}}, {{subject}} hakkında bir tartışma başlattı",
+      "pageComment": "{{name}}, {{subject}} için yorum yaptı",
+      "pagePosition": "{{name}}, {{subject}} hakkında bir görüş ({{stance}}) bildirdi",
+      "pagePositionChanged": "{{name}}, {{subject}} hakkındaki görüşünü {{stance}} olarak değiştirdi",
       "other": "{{subject}} konusunda yeni etkinlik"
     },
     "markRead": "Okundu olarak işaretle",
@@ -755,6 +763,12 @@
     "unread": "yeni",
     "settings": "Bildirim ayarları",
     "empty": "Henüz bildirim yok. Takip ettiğiniz bir forum konusunda biri yanıt verdiğinde bildirim alırsınız."
+  },
+  "following": {
+    "heading": "Takip ettiğiniz sayfalar",
+    "intro": "Bu sayfalardaki yeni yorumlardan haberdar olursunuz. Herhangi bir sayfayı Tartış'ın yanındaki Takip et düğmesiyle takip edebilirsiniz.",
+    "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz.",
+    "unfollow": "Takibi bırak"
   },
   settings: {
     title: 'Ayarlar',
@@ -774,6 +788,10 @@
         "forumReply": {
           "label": "Takip ettiğiniz forum konularındaki yanıtlar",
           "help": "Bir konuyu başlattığınızda veya yanıt verdiğinizde takip edersiniz. Konunun kendisinden de takip edebilir veya bırakabilirsiniz."
+        },
+        "pageComment": {
+          "label": "Takip ettiğiniz sayfalardaki yorumlar",
+          "help": "Oluşturduğunuz sayfaları ve Takip et düğmesine bastığınız her sayfayı takip edersiniz. Oradaki yeni tartışmalardan, yorumlardan ve görüşlerden haberdar olursunuz, düzenlemelerden asla."
         }
       }
     }

@@ -273,7 +273,11 @@
     page: 'Pagina',
     discuss: 'Overleg',
     edit: 'Bewerken',
-    history: 'Geschiedenis'
+    history: 'Geschiedenis',
+    "follow": "Volgen",
+    "following": "Gevolgd",
+    "followHelp": "Krijg een melding bij nieuwe reacties op deze pagina. Bewerkingen geven geen melding.",
+    "followingHelp": "Je krijgt een melding bij nieuwe reacties op deze pagina. Bewerkingen geven geen melding. Klik om niet meer te volgen."
   },
   howToEdit: {
     title: 'Zo bewerk je deze pagina',
@@ -748,6 +752,10 @@
     "someone": "Iemand",
     "kind": {
       "forumReply": "{{name}} reageerde in {{subject}}",
+      "pageThread": "{{name}} begon een discussie over {{subject}}",
+      "pageComment": "{{name}} reageerde op {{subject}}",
+      "pagePosition": "{{name}} gaf een standpunt ({{stance}}) over {{subject}}",
+      "pagePositionChanged": "{{name}} veranderde het standpunt over {{subject}} in {{stance}}",
       "other": "Nieuwe activiteit in {{subject}}"
     },
     "markRead": "Markeren als gelezen",
@@ -756,6 +764,12 @@
     "unread": "nieuw",
     "settings": "Instellingen voor meldingen",
     "empty": "Nog geen meldingen. Je krijgt er een wanneer iemand reageert in een forumdraad die je volgt."
+  },
+  "following": {
+    "heading": "Pagina's die je volgt",
+    "intro": "Je krijgt bericht over nieuwe reacties op deze pagina's. Volg elke pagina met de knop Volgen naast Bespreken.",
+    "empty": "Je volgt nog geen pagina's.",
+    "unfollow": "Niet meer volgen"
   },
   settings: {
     title: 'Instellingen',
@@ -775,6 +789,10 @@
         "forumReply": {
           "label": "Reacties in forumdraden die je volgt",
           "help": "Je volgt een draad als je hem start of erin reageert. Je kunt hem ook in de draad zelf volgen of ontvolgen."
+        },
+        "pageComment": {
+          "label": "Reacties op pagina's die je volgt",
+          "help": "Je volgt de pagina's die je aanmaakt en elke pagina waar je op Volgen klikt. Je hoort van nieuwe discussies, reacties en standpunten, nooit van bewerkingen."
         }
       }
     }

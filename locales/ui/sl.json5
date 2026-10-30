@@ -273,7 +273,11 @@
     page: 'Stran',
     discuss: 'Pogovor',
     edit: 'Uredi',
-    history: 'Zgodovina'
+    history: 'Zgodovina',
+    "follow": "Spremljaj",
+    "following": "Spremljaš",
+    "followHelp": "Prejemaj obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil.",
+    "followingHelp": "Prejemaš obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil. Klikni, da prenehaš spremljati."
   },
   howToEdit: {
     title: 'Kako urediti to stran',
@@ -749,6 +753,10 @@
     "someone": "Nekdo",
     "kind": {
       "forumReply": "{{name}} je odgovoril(a) v niti {{subject}}",
+      "pageThread": "{{name}} je začel(a) razpravo o {{subject}}",
+      "pageComment": "{{name}} je komentiral(a) {{subject}}",
+      "pagePosition": "{{name}} je izrazil(a) stališče ({{stance}}) o {{subject}}",
+      "pagePositionChanged": "{{name}} je spremenil(a) stališče o {{subject}} v {{stance}}",
       "other": "Nova dejavnost: {{subject}}"
     },
     "markRead": "Označi kot prebrano",
@@ -757,6 +765,12 @@
     "unread": "novo",
     "settings": "Nastavitve obvestil",
     "empty": "Še ni obvestil. Prejmeš ga, ko nekdo odgovori v niti foruma, ki ji slediš."
+  },
+  "following": {
+    "heading": "Strani, ki jih spremljaš",
+    "intro": "Izveš za nove komentarje na teh straneh. Katerokoli stran lahko spremljaš z gumbom Spremljaj ob Razpravi.",
+    "empty": "Še ne spremljaš nobene strani.",
+    "unfollow": "Prenehaj spremljati"
   },
   settings: {
     title: 'Nastavitve',
@@ -776,6 +790,10 @@
         "forumReply": {
           "label": "Odgovori v nitih foruma, ki jim slediš",
           "help": "Niti slediš, ko jo začneš ali v njej odgovoriš. Sledenje lahko vklopiš ali izklopiš tudi v sami niti."
+        },
+        "pageComment": {
+          "label": "Komentarji na straneh, ki jih spremljaš",
+          "help": "Spremljaš strani, ki jih ustvariš, in vsako stran, kjer klikneš Spremljaj. Izveš za nove razprave, komentarje in stališča, nikoli za urejanja."
         }
       }
     }

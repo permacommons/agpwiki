@@ -272,7 +272,11 @@
     page: 'Página',
     discuss: 'Discutir',
     edit: 'Editar',
-    history: 'Histórico'
+    history: 'Histórico',
+    "follow": "Seguir",
+    "following": "A seguir",
+    "followHelp": "Recebe avisos de novos comentários nesta página. As edições não geram avisos.",
+    "followingHelp": "Recebes avisos de novos comentários nesta página. As edições não geram avisos. Clica para deixar de seguir."
   },
   howToEdit: {
     title: 'Como editar esta página',
@@ -747,6 +751,10 @@
     "someone": "Alguém",
     "kind": {
       "forumReply": "{{name}} respondeu em {{subject}}",
+      "pageThread": "{{name}} iniciou uma discussão sobre {{subject}}",
+      "pageComment": "{{name}} comentou em {{subject}}",
+      "pagePosition": "{{name}} indicou uma posição ({{stance}}) sobre {{subject}}",
+      "pagePositionChanged": "{{name}} mudou a posição sobre {{subject}} para {{stance}}",
       "other": "Nova atividade em {{subject}}"
     },
     "markRead": "Marcar como lida",
@@ -755,6 +763,12 @@
     "unread": "nova",
     "settings": "Definições de notificações",
     "empty": "Ainda não há notificações. Recebes uma quando alguém responde num tópico do fórum que segues."
+  },
+  "following": {
+    "heading": "Páginas que segues",
+    "intro": "És avisado de novos comentários nestas páginas. Usa o botão Seguir junto a Discutir em qualquer página para a seguires.",
+    "empty": "Ainda não segues nenhuma página.",
+    "unfollow": "Deixar de seguir"
   },
   settings: {
     title: 'Definições',
@@ -774,6 +788,10 @@
         "forumReply": {
           "label": "Respostas em tópicos do fórum que segues",
           "help": "Segues um tópico quando o crias ou respondes nele. Também podes seguir ou deixar de seguir no próprio tópico."
+        },
+        "pageComment": {
+          "label": "Comentários nas páginas que segues",
+          "help": "Segues as páginas que crias e qualquer página em que cliques em Seguir. És avisado de novas discussões, comentários e posições, nunca de edições."
         }
       }
     }

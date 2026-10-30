@@ -19,6 +19,7 @@ import {
   subscribeActorToForumThread,
 } from './forum-notification-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
+import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNonEmptyString,
@@ -510,6 +511,21 @@ export const createForumThread = async (
     debug.error(`Failed to auto-subscribe thread creator for thread ${thread.id}: ${message}`);
   }
 
+  // Attached threads hold replies to something on the page; whoever creates
+  // them notifies once the right people follow the thread.
+  if (normalizedPageSlug && !attachment) {
+    try {
+      await notifyPageFollowersOfForumPost(
+        ForumThread.dal as DataAccessLayer,
+        { threadId: thread.id, commentId: firstCommentId, actorUserId: userId, event: 'thread' },
+        enqueueNotificationJob
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug.error(`Failed to notify page followers of thread ${thread.id}: ${message}`);
+    }
+  }
+
   return {
     ...toForumThreadResult(thread),
     commentCount: 1,
@@ -572,6 +588,16 @@ export const createForumComment = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to enqueue forum reply notification for comment ${comment.id}: ${message}`);
+  }
+  try {
+    await notifyPageFollowersOfForumPost(
+      ForumThread.dal as DataAccessLayer,
+      { threadId: thread.id, commentId: comment.id, actorUserId: userId, event: 'comment' },
+      enqueueNotificationJob
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to notify page followers of comment ${comment.id}: ${message}`);
   }
 
   return toForumCommentResult(comment);

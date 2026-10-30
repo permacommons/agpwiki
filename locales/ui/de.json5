@@ -273,7 +273,11 @@
     page: 'Seite',
     discuss: 'Diskussion',
     edit: 'Bearbeiten',
-    history: 'Versionen'
+    history: 'Versionen',
+    "follow": "Folgen",
+    "following": "Folge ich",
+    "followHelp": "Bei neuen Kommentaren auf dieser Seite benachrichtigt werden. Bearbeitungen lösen keine Benachrichtigung aus.",
+    "followingHelp": "Du wirst bei neuen Kommentaren auf dieser Seite benachrichtigt. Bearbeitungen lösen keine Benachrichtigung aus. Klicke, um nicht mehr zu folgen."
   },
   howToEdit: {
     title: 'So bearbeitest du diese Seite',
@@ -746,6 +750,10 @@
     "someone": "Jemand",
     "kind": {
       "forumReply": "{{name}} hat in {{subject}} geantwortet",
+      "pageThread": "{{name}} hat eine Diskussion zu {{subject}} begonnen",
+      "pageComment": "{{name}} hat {{subject}} kommentiert",
+      "pagePosition": "{{name}} hat eine Position ({{stance}}) zu {{subject}} abgegeben",
+      "pagePositionChanged": "{{name}} hat die Position zu {{subject}} auf {{stance}} geändert",
       "other": "Neue Aktivität in {{subject}}"
     },
     "markRead": "Als gelesen markieren",
@@ -754,6 +762,12 @@
     "unread": "neu",
     "settings": "Benachrichtigungseinstellungen",
     "empty": "Noch keine Benachrichtigungen. Du bekommst eine, wenn jemand in einem Forumsthema antwortet, dem du folgst."
+  },
+  "following": {
+    "heading": "Seiten, denen du folgst",
+    "intro": "Du wirst über neue Kommentare auf diesen Seiten informiert. Mit dem Knopf Folgen neben Diskussion kannst du jeder Seite folgen.",
+    "empty": "Du folgst noch keiner Seite.",
+    "unfollow": "Nicht mehr folgen"
   },
   settings: {
     title: 'Einstellungen',
@@ -773,6 +787,10 @@
         "forumReply": {
           "label": "Antworten in Forumsthemen, denen du folgst",
           "help": "Du folgst einem Thema, wenn du es eröffnest oder darin antwortest. Du kannst ihm auch im Thema selbst folgen oder nicht mehr folgen."
+        },
+        "pageComment": {
+          "label": "Kommentare auf Seiten, denen du folgst",
+          "help": "Du folgst den Seiten, die du anlegst, und jeder Seite, auf der du auf Folgen klickst. Du erfährst von neuen Diskussionen, Kommentaren und Positionen dort, nie von Bearbeitungen."
         }
       }
     }

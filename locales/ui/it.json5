@@ -272,7 +272,11 @@
     page: 'Pagina',
     discuss: 'Discussione',
     edit: 'Modifica',
-    history: 'Cronologia'
+    history: 'Cronologia',
+    "follow": "Segui",
+    "following": "Segui già",
+    "followHelp": "Ricevi un avviso per i nuovi commenti su questa pagina. Le modifiche non generano avvisi.",
+    "followingHelp": "Ricevi un avviso per i nuovi commenti su questa pagina. Le modifiche non generano avvisi. Fai clic per smettere di seguirla."
   },
   howToEdit: {
     title: 'Come modificare questa pagina',
@@ -747,6 +751,10 @@
     "someone": "Qualcuno",
     "kind": {
       "forumReply": "{{name}} ha risposto in {{subject}}",
+      "pageThread": "{{name}} ha aperto una discussione su {{subject}}",
+      "pageComment": "{{name}} ha commentato {{subject}}",
+      "pagePosition": "{{name}} ha espresso una posizione ({{stance}}) su {{subject}}",
+      "pagePositionChanged": "{{name}} ha cambiato posizione su {{subject}} in {{stance}}",
       "other": "Nuova attività in {{subject}}"
     },
     "markRead": "Segna come letta",
@@ -755,6 +763,12 @@
     "unread": "nuova",
     "settings": "Impostazioni delle notifiche",
     "empty": "Ancora nessuna notifica. Ne riceverai una quando qualcuno risponde in una discussione del forum che segui."
+  },
+  "following": {
+    "heading": "Pagine che segui",
+    "intro": "Vieni informato dei nuovi commenti su queste pagine. Usa il pulsante Segui accanto a Discuti su qualsiasi pagina per seguirla.",
+    "empty": "Non segui ancora nessuna pagina.",
+    "unfollow": "Smetti di seguire"
   },
   settings: {
     title: 'Impostazioni',
@@ -774,6 +788,10 @@
         "forumReply": {
           "label": "Risposte nelle discussioni del forum che segui",
           "help": "Segui una discussione quando la apri o vi rispondi. Puoi anche seguirla o smettere di seguirla dalla discussione."
+        },
+        "pageComment": {
+          "label": "Commenti sulle pagine che segui",
+          "help": "Segui le pagine che crei e ogni pagina in cui fai clic su Segui. Vieni informato delle nuove discussioni, dei commenti e delle posizioni, mai delle modifiche."
         }
       }
     }

@@ -11,8 +11,22 @@ export interface PageTabsParams {
   discussHref: string | null;
   discussCount: number;
   editHref: string;
+  // Shown to signed-in readers: whether they follow the comments on the page.
+  follow?: { slug: string; following: boolean; returnTo: string; action: string };
   t: TFunction;
 }
+
+// A form, not a link: following changes something, and it must work
+// without JavaScript.
+const followButton = ({ slug, following, returnTo, action }: NonNullable<PageTabsParams['follow']>, t: TFunction) =>
+  `<form class="page-follow-form" method="post" action="${escapeHtml(action)}">
+  <input type="hidden" name="page" value="${escapeHtml(slug)}" />
+  <input type="hidden" name="return" value="${escapeHtml(returnTo)}" />
+  <input type="hidden" name="action" value="${following ? 'unfollow' : 'follow'}" />
+  <button type="submit" class="page-follow${following ? ' page-follow--on' : ''}" aria-pressed="${following ? 'true' : 'false'}" title="${escapeHtml(
+    t(following ? 'pageTabs.followingHelp' : 'pageTabs.followHelp')
+  )}"><span class="page-follow-label">${escapeHtml(t(following ? 'pageTabs.following' : 'pageTabs.follow'))}</span></button>
+</form>`;
 
 const tab = (href: string, label: string, options: { current?: boolean; className?: string; countHtml?: string } = {}) => {
   const classes = ['page-tab', options.className, options.current ? 'page-tab--current' : '']
@@ -29,6 +43,7 @@ export const renderPageTabs = ({
   discussHref,
   discussCount,
   editHref,
+  follow,
   t,
 }: PageTabsParams): string => {
   const left = [
@@ -38,6 +53,7 @@ export const renderPageTabs = ({
           countHtml: discussCount > 0 ? ` <span class="page-tab-count">${discussCount}</span>` : '',
         })
       : '',
+    follow ? followButton(follow, t) : '',
   ];
   const right = [
     isCurrentView ? tab(editHref, t('pageTabs.edit'), { className: 'page-tab--edit' }) : '',

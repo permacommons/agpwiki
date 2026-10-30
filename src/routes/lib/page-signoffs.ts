@@ -142,7 +142,7 @@ export const renderPageSignoffs = ({
       const commentHtml = signoff.comment
         ? `<blockquote class="page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment)}</blockquote>${languageLabel ? `<p class="page-signoff-language">${escapeHtml(languageLabel)}</p>` : ''}`
         : '';
-      return `<li class="page-signoff">
+      return `<li class="page-signoff" id="position-${escapeHtml(signoff.id)}">
   <div class="page-signoff-meta"><span class="page-signoff-stance page-signoff-stance--${signoff.stance}">${escapeHtml(
     stanceLabel(signoff.stance, t)
   )}</span> <strong>${escapeHtml(name)}</strong> · ${escapeHtml(

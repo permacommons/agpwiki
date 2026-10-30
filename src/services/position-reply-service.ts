@@ -12,6 +12,7 @@ import {
 } from './forum-service.js';
 import { subscribeUserToForumThread } from './forum-subscription-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
+import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
 import { canSignOffPages, isSignoffPageSlug } from './page-signoff-service.js';
 import { ensureNonEmptyString, ensureOptionalLanguage, normalizeSlugInput } from './validation.js';
 import { readWikiPage } from './wiki-page-service.js';
@@ -177,6 +178,16 @@ export const replyToPosition = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to enqueue the first position reply notification for ${thread.id}: ${message}`);
+  }
+  try {
+    await notifyPageFollowersOfForumPost(
+      dalInstance,
+      { threadId: thread.id, commentId, actorUserId: userId, event: 'comment' },
+      enqueueNotificationJob
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to notify page followers of the first position reply in ${thread.id}: ${message}`);
   }
   return { threadId: thread.id, commentId, createdThread: true };
 };
