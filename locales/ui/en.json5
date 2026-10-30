@@ -998,6 +998,8 @@
   },
   // On-site notifications: the bell in the header, the bar under it and the list page.
   "notifications": {
+    "loading": "Loading…",
+    "loadError": "Could not load notifications.",
     "title": "Notifications",
     "bellUnread_one": "Notifications: {{count}} unread",
     "bellUnread_other": "Notifications: {{count}} unread",
@@ -1008,11 +1010,7 @@
     },
     "markRead": "Mark as read",
     "markAllRead": "Mark all as read",
-    "bar": {
-      "more_one": "{{count}} more",
-      "more_other": "{{count}} more",
-      "all": "All notifications"
-    },
+    "all": "All notifications",
     "unread": "new",
     "settings": "Notification settings",
     "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."

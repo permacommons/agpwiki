@@ -24,4 +24,5 @@ export const layoutAssets = {
   proposalJs: versionedAssetUrl('scripts/proposal.js'),
   toolsMenuJs: versionedAssetUrl('scripts/tools-menu.js'),
   recentMediaGridJs: versionedAssetUrl('scripts/recent-media-grid.js'),
+  notificationPanelJs: versionedAssetUrl('scripts/notification-panel.js'),
 };

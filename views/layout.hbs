@@ -21,7 +21,6 @@
     {{/if}}
   >
     {{> header}}
-    {{{notificationBarHtml}}}
     {{{topHtml}}}
     <div class="page-layout{{#unless sidebarHtml}} single{{/unless}}">
       <main class="article">
@@ -48,5 +47,6 @@
     <script src="{{{assets.proposalJs}}}" defer></script>
     <script src="{{{assets.toolsMenuJs}}}" defer></script>
     <script src="{{{assets.recentMediaGridJs}}}" defer></script>
+    {{#if signedIn}}<script src="{{{assets.notificationPanelJs}}}" defer></script>{{/if}}
   </body>
 </html>

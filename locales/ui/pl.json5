@@ -698,6 +698,8 @@
     "empty": "Obecnie brak artykułów na tej liście."
   },
   "notifications": {
+    loading: 'Wczytywanie…',
+    loadError: 'Nie udało się wczytać powiadomień.',
     "title": "Powiadomienia",
     "bellUnread_one": "Powiadomienia nieprzeczytane: {{count}}",
     "bellUnread_other": "Powiadomienia nieprzeczytane: {{count}}",
@@ -708,11 +710,7 @@
     },
     "markRead": "Oznacz jako przeczytane",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
-    "bar": {
-      "more_one": "Jeszcze: {{count}}",
-      "more_other": "Jeszcze: {{count}}",
-      "all": "Wszystkie powiadomienia"
-    },
+    "all": "Wszystkie powiadomienia",
     "unread": "nowe",
     "settings": "Ustawienia powiadomień",
     "empty": "Brak powiadomień. Dostaniesz je, gdy ktoś odpowie w obserwowanym wątku forum."

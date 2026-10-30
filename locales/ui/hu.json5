@@ -700,6 +700,8 @@
     "empty": "Jelenleg nincs szócikk ebben a listában."
   },
   "notifications": {
+    loading: 'Betöltés…',
+    loadError: 'Az értesítéseket nem sikerült betölteni.',
     "title": "Értesítések",
     "bellUnread_one": "Értesítések: {{count}} olvasatlan",
     "bellUnread_other": "Értesítések: {{count}} olvasatlan",
@@ -710,11 +712,7 @@
     },
     "markRead": "Megjelölés olvasottként",
     "markAllRead": "Összes megjelölése olvasottként",
-    "bar": {
-      "more_one": "Még {{count}}",
-      "more_other": "Még {{count}}",
-      "all": "Összes értesítés"
-    },
+    "all": "Összes értesítés",
     "unread": "új",
     "settings": "Értesítési beállítások",
     "empty": "Még nincsenek értesítések. Akkor kapsz egyet, ha valaki válaszol egy általad követett fórumszálban."

@@ -698,6 +698,8 @@
     "empty": "目前此清單中沒有條目。"
   },
   "notifications": {
+    loading: '正在載入…',
+    loadError: '無法載入通知。',
     "title": "通知",
     "bellUnread_one": "通知：{{count}} 則未讀",
     "bellUnread_other": "通知：{{count}} 則未讀",
@@ -708,11 +710,7 @@
     },
     "markRead": "標為已讀",
     "markAllRead": "全部標為已讀",
-    "bar": {
-      "more_one": "還有 {{count}} 則",
-      "more_other": "還有 {{count}} 則",
-      "all": "所有通知"
-    },
+    "all": "所有通知",
     "unread": "新",
     "settings": "通知設定",
     "empty": "還沒有通知。當有人在你關注的論壇討論串中回覆時，你會收到通知。"

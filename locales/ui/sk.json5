@@ -700,6 +700,8 @@
     "empty": "V tomto zozname teraz nie sú žiadne články."
   },
   "notifications": {
+    loading: 'Načítava sa…',
+    loadError: 'Upozornenia sa nepodarilo načítať.',
     "title": "Upozornenia",
     "bellUnread_one": "Neprečítané upozornenia: {{count}}",
     "bellUnread_other": "Neprečítané upozornenia: {{count}}",
@@ -710,11 +712,7 @@
     },
     "markRead": "Označiť ako prečítané",
     "markAllRead": "Označiť všetko ako prečítané",
-    "bar": {
-      "more_one": "Ďalšie: {{count}}",
-      "more_other": "Ďalšie: {{count}}",
-      "all": "Všetky upozornenia"
-    },
+    "all": "Všetky upozornenia",
     "unread": "nové",
     "settings": "Nastavenia upozornení",
     "empty": "Zatiaľ žiadne upozornenia. Dostaneš ho, keď niekto odpovie vo vlákne fóra, ktoré sleduješ."

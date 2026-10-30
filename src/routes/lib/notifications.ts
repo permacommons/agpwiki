@@ -6,6 +6,8 @@ import type { SiteNotification } from '../../services/site-notification-service.
 export const NOTIFICATIONS_PATH = '/tool/notifications';
 export const notificationOpenPath = (id: string) => `${NOTIFICATIONS_PATH}/${encodeURIComponent(id)}/open`;
 export const NOTIFICATIONS_READ_PATH = `${NOTIFICATIONS_PATH}/read`;
+export const NOTIFICATIONS_PANEL_PATH = `${NOTIFICATIONS_PATH}/panel.json`;
+export const NOTIFICATIONS_PANEL_LIMIT = 8;
 
 /** One line describing a notification, e.g. "Erik replied in Values". */
 export const renderNotificationText = (notification: SiteNotification, t: TFunction) => {
@@ -24,31 +26,6 @@ const markReadForm = (t: TFunction, returnTo: string, id?: string) => `<form cla
   <input type="hidden" name="return" value="${escapeHtml(returnTo)}" />
   <button type="submit">${escapeHtml(t(id ? 'notifications.markRead' : 'notifications.markAllRead'))}</button>
 </form>`;
-
-/** The bar under the header with the latest unread notification. */
-export const renderNotificationBar = ({
-  notification,
-  unreadCount,
-  returnTo,
-  t,
-}: {
-  notification: SiteNotification;
-  unreadCount: number;
-  returnTo: string;
-  t: TFunction;
-}) => {
-  const more =
-    unreadCount > 1
-      ? `<a class="notification-bar-more" href="${NOTIFICATIONS_PATH}">${escapeHtml(
-          t('notifications.bar.more', { count: unreadCount - 1 })
-        )}</a>`
-      : `<a class="notification-bar-more" href="${NOTIFICATIONS_PATH}">${escapeHtml(t('notifications.bar.all'))}</a>`;
-  return `<div class="notification-bar" role="status">
-  <span class="notification-bar-text">${renderNotificationText(notification, t)}</span>
-  ${more}
-  ${markReadForm(t, returnTo, notification.id)}
-</div>`;
-};
 
 export const renderNotificationList = ({
   notifications,
@@ -92,6 +69,20 @@ export const renderNotificationList = ({
   ${pagination}
 </div>`;
 };
+
+/** What the bell's panel shows: the latest notifications, newest first. */
+export const toNotificationPanelData = (notifications: SiteNotification[], unreadCount: number, t: TFunction) => ({
+  unreadCount,
+  items: notifications.map(item => ({
+    id: item.id,
+    html: renderNotificationText(item, t),
+    excerpt: item.excerpt,
+    url: notificationOpenPath(item.id),
+    date: formatDateUTC(item.createdAt),
+    createdAt: item.createdAt.toISOString(),
+    unread: !item.readAt,
+  })),
+});
 
 /** Only local paths are accepted as a place to go back to. */
 export const safeReturnPath = (value: unknown) =>

@@ -698,6 +698,8 @@
     "empty": "現在この一覧に記事はありません。"
   },
   "notifications": {
+    loading: '読み込み中…',
+    loadError: '通知を読み込めませんでした。',
     "title": "通知",
     "bellUnread_one": "通知：未読 {{count}} 件",
     "bellUnread_other": "通知：未読 {{count}} 件",
@@ -708,11 +710,7 @@
     },
     "markRead": "既読にする",
     "markAllRead": "すべて既読にする",
-    "bar": {
-      "more_one": "ほか {{count}} 件",
-      "more_other": "ほか {{count}} 件",
-      "all": "すべての通知"
-    },
+    "all": "すべての通知",
     "unread": "新着",
     "settings": "通知の設定",
     "empty": "通知はまだありません。フォローしているフォーラムのスレッドで誰かが返信すると届きます。"
