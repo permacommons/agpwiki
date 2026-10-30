@@ -4,7 +4,7 @@
    {
      // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
-     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading", "pageTabs.article", "pageTabs.page"],
+     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading", "pageTabs.article", "pageTabs.page", "sectionEdit.lead"],
      "id": ["recentTabs.media"],
      "it": ["recentTabs.media"],
      "nl": ["recentTabs.media"],
@@ -524,6 +524,26 @@
     "quickFix": "Or make a quick fix by hand, for small corrections such as a typo.",
     "protected": "This page is protected: only admins can edit it. You can suggest a change in its discussion.",
     "backToPage": "Back to the page"
+  },
+  // Editing one section of a page, and the editor toolbar.
+  "sectionEdit": {
+    "link": "edit",
+    "linkLabel": "Edit section: {{section}}",
+    "lead": "Introduction",
+    "editLead": "edit the introduction",
+    "editing": "Editing section: {{section}}",
+    "wholePage": "Edit the whole page",
+    "changed": "This section changed while you were editing. Reload it and try again.",
+    "toolbarLabel": "Formatting",
+    "bold": "Bold",
+    "italic": "Italic",
+    "articleLink": "Link to an article",
+    "articleLinkPrompt": "Address of the article, for example belt-buckle",
+    "heading": "Heading",
+    "list": "List",
+    "citation": "Add a citation",
+    "citationSearch": "Search citations by title or author",
+    "citationNone": "No citations found."
   },
   "operatorEdit": {
     "title": "Operator edit",

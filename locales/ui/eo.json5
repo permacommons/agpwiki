@@ -288,6 +288,25 @@
     protected: 'Ĉi tiu paĝo estas protektita: nur administrantoj povas redakti ĝin. Vi povas proponi ŝanĝon en ĝia diskuto.',
     backToPage: 'Reen al la paĝo'
   },
+  sectionEdit: {
+    link: 'redakti',
+    linkLabel: 'Redakti sekcion: {{section}}',
+    lead: 'Enkonduko',
+    editLead: 'redakti la enkondukon',
+    editing: 'Redaktado de sekcio: {{section}}',
+    wholePage: 'Redakti la tutan paĝon',
+    changed: 'Ĉi tiu sekcio ŝanĝiĝis dum vi redaktis. Reŝargu ĝin kaj reprovu.',
+    toolbarLabel: 'Formatado',
+    bold: 'Grasa',
+    italic: 'Kursiva',
+    articleLink: 'Ligilo al artikolo',
+    articleLinkPrompt: 'Adreso de la artikolo, ekzemple belt-buckle',
+    heading: 'Titolo',
+    list: 'Listo',
+    citation: 'Aldoni fonton',
+    citationSearch: 'Serĉi fontojn laŭ titolo aŭ aŭtoro',
+    citationNone: 'Neniuj fontoj troviĝis.'
+  },
   operatorEdit: {
     title: 'Operaciista redakto',
     link: 'Operaciista redakto',

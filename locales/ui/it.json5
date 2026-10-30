@@ -287,6 +287,25 @@
     protected: 'Questa pagina è protetta: solo gli amministratori possono modificarla. Puoi proporre una modifica nella sua discussione.',
     backToPage: 'Torna alla pagina'
   },
+  sectionEdit: {
+    link: 'modifica',
+    linkLabel: 'Modifica la sezione: {{section}}',
+    lead: 'Introduzione',
+    editLead: 'modifica l’introduzione',
+    editing: 'Modifica della sezione: {{section}}',
+    wholePage: 'Modifica tutta la pagina',
+    changed: 'Questa sezione è cambiata mentre la modificavi. Ricaricala e riprova.',
+    toolbarLabel: 'Formattazione',
+    bold: 'Grassetto',
+    italic: 'Corsivo',
+    articleLink: 'Collegamento a una voce',
+    articleLinkPrompt: 'Indirizzo della voce, per esempio belt-buckle',
+    heading: 'Titolo',
+    list: 'Elenco',
+    citation: 'Aggiungi una fonte',
+    citationSearch: 'Cerca fonti per titolo o autore',
+    citationNone: 'Nessuna fonte trovata.'
+  },
   operatorEdit: {
     title: 'Modifica operatore',
     link: 'Modifica operatore',
