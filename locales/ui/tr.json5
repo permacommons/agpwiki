@@ -710,11 +710,7 @@
     },
     "markRead": "Okundu olarak işaretle",
     "markAllRead": "Tümünü okundu olarak işaretle",
-    "bar": {
-      "more_one": "{{count}} tane daha",
-      "more_other": "{{count}} tane daha",
-      "all": "Tüm bildirimler"
-    },
+    "all": "Tüm bildirimler",
     "unread": "yeni",
     "settings": "Bildirim ayarları",
     "empty": "Henüz bildirim yok. Takip ettiğiniz bir forum konusunda biri yanıt verdiğinde bildirim alırsınız."

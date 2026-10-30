@@ -711,11 +711,7 @@
     },
     "markRead": "Marquer comme lu",
     "markAllRead": "Tout marquer comme lu",
-    "bar": {
-      "more_one": "{{count}} autre",
-      "more_other": "{{count}} autres",
-      "all": "Toutes les notifications"
-    },
+    "all": "Toutes les notifications",
     "unread": "nouveau",
     "settings": "Paramètres des notifications",
     "empty": "Aucune notification pour l’instant. Tu en reçois une quand quelqu’un répond dans un fil du forum que tu suis."

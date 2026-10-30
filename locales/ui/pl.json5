@@ -710,11 +710,7 @@
     },
     "markRead": "Oznacz jako przeczytane",
     "markAllRead": "Oznacz wszystkie jako przeczytane",
-    "bar": {
-      "more_one": "Jeszcze: {{count}}",
-      "more_other": "Jeszcze: {{count}}",
-      "all": "Wszystkie powiadomienia"
-    },
+    "all": "Wszystkie powiadomienia",
     "unread": "nowe",
     "settings": "Ustawienia powiadomień",
     "empty": "Brak powiadomień. Dostaniesz je, gdy ktoś odpowie w obserwowanym wątku forum."

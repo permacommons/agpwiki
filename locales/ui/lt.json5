@@ -712,11 +712,7 @@
     },
     "markRead": "Pažymėti kaip perskaitytą",
     "markAllRead": "Pažymėti visus kaip perskaitytus",
-    "bar": {
-      "more_one": "Dar: {{count}}",
-      "more_other": "Dar: {{count}}",
-      "all": "Visi pranešimai"
-    },
+    "all": "Visi pranešimai",
     "unread": "naujas",
     "settings": "Pranešimų nustatymai",
     "empty": "Pranešimų dar nėra. Gausi pranešimą, kai kas nors atsakys tavo sekamoje forumo gijoje."

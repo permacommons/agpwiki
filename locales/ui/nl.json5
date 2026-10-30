@@ -711,11 +711,7 @@
     },
     "markRead": "Markeren als gelezen",
     "markAllRead": "Alles markeren als gelezen",
-    "bar": {
-      "more_one": "Nog {{count}}",
-      "more_other": "Nog {{count}}",
-      "all": "Alle meldingen"
-    },
+    "all": "Alle meldingen",
     "unread": "nieuw",
     "settings": "Instellingen voor meldingen",
     "empty": "Nog geen meldingen. Je krijgt er een wanneer iemand reageert in een forumdraad die je volgt."

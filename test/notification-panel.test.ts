@@ -93,13 +93,15 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const data = (await response.json()) as {
       unreadCount: number;
-      items: Array<{ id: string; html: string; excerpt: string | null; date: string; unread: boolean }>;
+      items: Array<{ id: string; url: string; html: string; excerpt: string | null; date: string; createdAt: string; unread: boolean }>;
     };
     assert.equal(data.unreadCount, 3);
     assert.equal(data.items.length, 8, 'the panel shows the latest eight');
     assert.ok(data.items.every(item => !item.html.includes('Not mine')));
     assert.match(data.items[0].html, /<strong>Panel Test<\/strong> replied in <a href="\/tool\/notifications\/[^"]+\/open">Mine 1<\/a>/);
     assert.equal(data.items[0].excerpt, 'A <b>reply</b>', 'excerpts are sent as text, the script escapes them');
+    assert.equal(data.items[0].url, `/tool/notifications/${data.items[0].id}/open`, 'the whole item opens what it is about');
+    assert.ok(!Number.isNaN(Date.parse(data.items[0].createdAt)), 'a machine date for the relative time');
     assert.deepEqual(
       data.items.map(item => item.unread),
       [true, true, true, false, false, false, false, false]
@@ -127,7 +129,7 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
   }
 });
 
-test('The header keeps the bell as a link and adds the panel, with your own links on the right', () => {
+test('The header keeps the bell as a link and adds the panel, with your own links on the right and no bar', () => {
   const handlebars = hbs.create().handlebars;
   handlebars.registerHelper('__', (key: string) => key);
   handlebars.registerHelper('urlencode', (value: string) => encodeURIComponent(value));
@@ -140,7 +142,9 @@ test('The header keeps the bell as a link and adds the panel, with your own link
   assert.match(signedIn, /<a class="notification-bell notification-bell--unread" href="\/tool\/notifications"[^>]*aria-controls="notification-panel"[^>]*data-notification-bell>/);
   assert.match(signedIn, /<div class="notification-panel" id="notification-panel" role="dialog"[^>]* hidden/);
   assert.match(signedIn, /data-endpoint="\/tool\/notifications\/panel\.json"/);
-  assert.match(signedIn, /<a class="notification-panel-all" href="\/tool\/notifications">notifications\.bar\.all<\/a>/);
+  assert.match(signedIn, /<div class="notification-panel-footer">\s*<a href="\/tool\/notifications">notifications\.all<\/a>\s*<a href="\/tool\/settings">notifications\.settings<\/a>/);
+  assert.match(signedIn, /<a class="user-menu-link" href="\/tool\/notifications">notifications\.title<\/a>/);
+  assert.doesNotMatch(signedIn, /notification-bar/);
 
   const signedOut = render({ signedIn: false, currentPath: '/belt-buckle' });
   assert.doesNotMatch(signedOut, /notification-panel/);
@@ -153,8 +157,9 @@ test('The header keeps the bell as a link and adds the panel, with your own link
     assert.ok(match, selector);
     return Number(match[1]);
   };
-  assert.ok(order('.search-form') < order('.notification-bell'));
-  assert.ok(order('.lang-menu') < order('.notification-bell'));
-  assert.ok(order('.notification-bell') < order('.user-menu'));
+  assert.ok(order('.search-form') < order('.notification-menu'));
+  assert.ok(order('.lang-menu') < order('.notification-menu'));
+  assert.ok(order('.notification-menu') < order('.user-menu'));
+  assert.doesNotMatch(css, /\.notification-bar[\s{,.:-]/);
   assert.equal(order('.nav-link--account'), order('.user-menu'));
 });

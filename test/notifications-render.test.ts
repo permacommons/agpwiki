@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
-import { renderNotificationBar, renderNotificationList, safeReturnPath } from '../src/routes/lib/notifications.js';
+import { renderNotificationList, safeReturnPath } from '../src/routes/lib/notifications.js';
 import type { SiteNotification } from '../src/services/site-notification-service.js';
 
 const notification: SiteNotification = {
@@ -17,15 +17,6 @@ const notification: SiteNotification = {
   readAt: null,
 };
 const t = i18next.t.bind(i18next);
-
-test('The notification bar names who replied where, escapes everything and offers mark as read', () => {
-  const html = renderNotificationBar({ notification, unreadCount: 3, returnTo: '/firefox', t });
-  assert.ok(html.includes('<strong>&lt;Erik&gt;</strong> replied in <a href="/tool/notifications/n1/open">Values &amp; &lt;b&gt;wording&lt;/b&gt;</a>'));
-  assert.ok(html.includes('2 more'));
-  assert.ok(html.includes('name="return" value="/firefox"'));
-  assert.ok(html.includes('name="id" value="n1"'));
-  assert.ok(!html.includes('<b>'));
-});
 
 test('The notification list marks unread items and links to the settings', () => {
   const html = renderNotificationList({ notifications: [notification, { ...notification, id: 'n2', readAt: new Date() }], unreadCount: 1, page: 1, totalPages: 1, t });
