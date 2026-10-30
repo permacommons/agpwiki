@@ -729,11 +729,7 @@
     },
     "markRead": "Marcar como leída",
     "markAllRead": "Marcar todas como leídas",
-    "bar": {
-      "more_one": "{{count}} más",
-      "more_other": "{{count}} más",
-      "all": "Todas las notificaciones"
-    },
+    "all": "Todas las notificaciones",
     "unread": "nueva",
     "settings": "Ajustes de notificaciones",
     "empty": "Aún no hay notificaciones. Recibirás una cuando alguien responda en un hilo del foro que sigues."

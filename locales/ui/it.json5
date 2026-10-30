@@ -729,11 +729,7 @@
     },
     "markRead": "Segna come letta",
     "markAllRead": "Segna tutte come lette",
-    "bar": {
-      "more_one": "Altre {{count}}",
-      "more_other": "Altre {{count}}",
-      "all": "Tutte le notifiche"
-    },
+    "all": "Tutte le notifiche",
     "unread": "nuova",
     "settings": "Impostazioni delle notifiche",
     "empty": "Ancora nessuna notifica. Ne riceverai una quando qualcuno risponde in una discussione del forum che segui."

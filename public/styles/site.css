@@ -198,15 +198,18 @@ header.site-header {
 .user-menu:not([open]) .user-menu-panel {
   display: none;
 }
-.notification-bell {
+.notification-menu {
   order: 4;
+  position: relative;
+  margin-left: 0.6rem;
+}
+.notification-bell {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.35rem;
   height: 2.35rem;
-  margin-left: 0.6rem;
   color: var(--accent);
   border-radius: 0.35rem;
 }
@@ -233,22 +236,6 @@ header.site-header {
   color: #fff;
   font: 600 0.7rem/1.1rem 'IBM Plex Sans', sans-serif;
   text-align: center;
-}
-.notification-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 1rem;
-  padding: 0.55rem 1.5rem;
-  background: #eef4f7;
-  border-bottom: 1px solid var(--rule);
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.9rem;
-}
-.notification-bar-text {
-  flex: 1 1 18rem;
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 .notification-read-form {
   margin: 0;
@@ -3476,90 +3463,155 @@ altcha-widget {
   order: 5;
 }
 
-/* The bell's panel with the latest notifications. */
+/* The bell's panel: a flyout under the bell, like Wikipedia's notifications. */
 .notification-panel {
   position: absolute;
-  top: 100%;
-  right: 1.5rem;
+  top: calc(100% + 0.65rem);
+  right: -0.5rem;
   z-index: 30;
-  width: 24rem;
+  width: 22rem;
   max-width: calc(100vw - 2rem);
-  max-height: 70vh;
-  overflow-y: auto;
   box-sizing: border-box;
-  margin-top: 0.25rem;
-  padding: 0.75rem 0 0.5rem;
   background: #fff;
-  border: 1px solid var(--rule);
-  box-shadow: 0 10px 24px rgba(31, 29, 26, 0.14);
+  border: 1px solid #c8ccd1;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.25);
   font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+}
+/* The pointer towards the bell. */
+.notification-panel::before,
+.notification-panel::after {
+  content: '';
+  position: absolute;
+  right: 1.15rem;
+  border: 0.55rem solid transparent;
+  border-top: none;
+}
+.notification-panel::before {
+  top: -0.6rem;
+  border-bottom: 0.6rem solid #c8ccd1;
+}
+.notification-panel::after {
+  top: -0.53rem;
+  border-bottom: 0.6rem solid #fff;
 }
 .notification-panel[hidden] {
   display: none;
 }
 .notification-panel-header {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0 1rem 0.5rem;
-  border-bottom: 1px solid var(--rule);
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid #eaecf0;
 }
 .notification-panel-read-all {
   flex-shrink: 0;
   white-space: nowrap;
-  font-size: 0.8rem;
-  padding: 0.2rem 0.5rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+.notification-panel-read-all:hover,
+.notification-panel-read-all:focus-visible {
+  text-decoration: underline;
 }
 .notification-panel-list {
   list-style: none;
   margin: 0;
   padding: 0;
+  max-height: min(26rem, 60vh);
+  overflow-y: auto;
 }
 .notification-panel-item {
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid #efe8de;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.15rem 0.6rem;
+  padding: 0.6rem 1.6rem 0.6rem 0.85rem;
+  border-bottom: 1px solid #eaecf0;
   overflow-wrap: anywhere;
+  cursor: pointer;
+}
+.notification-panel-item:hover {
+  background: #f8f9fa;
 }
 .notification-panel-item--unread {
   background: #eef4f7;
-  box-shadow: inset 3px 0 0 var(--accent);
+}
+.notification-panel-item--unread:hover {
+  background: #e3edf2;
+}
+/* The unread dot, at the right edge like Wikipedia's. */
+.notification-panel-item--unread::after {
+  content: '';
+  position: absolute;
+  top: 0.95rem;
+  right: 0.7rem;
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.notification-panel-text {
+  grid-column: 1 / -1;
+  color: var(--ink);
+  line-height: 1.35;
+}
+.notification-panel-text a {
+  color: inherit;
 }
 .notification-panel-excerpt {
-  margin: 0.25rem 0 0;
+  margin: 0;
   color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.notification-panel-meta {
-  margin-top: 0.2rem;
+.notification-panel-time {
   color: var(--muted);
   font-size: 0.8rem;
+  white-space: nowrap;
 }
 .notification-panel-status {
   margin: 0;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem;
   color: var(--muted);
 }
 .notification-panel-status[hidden] {
   display: none;
 }
-.notification-panel-all {
-  display: block;
-  padding: 0.6rem 1rem 0.2rem;
+.notification-panel-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.85rem;
+  border-top: 1px solid #eaecf0;
 }
 @media (max-width: 900px) {
-  .notification-bell {
+  .notification-menu {
     order: 1;
+    position: static;
   }
   /* A full-width sheet under the header. */
   .notification-panel {
+    top: 100%;
     left: 0;
     right: 0;
     width: auto;
     max-width: none;
-    margin-top: 0;
     border-left: none;
     border-right: none;
+    border-radius: 0;
+  }
+  .notification-panel::before,
+  .notification-panel::after {
+    display: none;
   }
 }
 
@@ -3636,4 +3688,15 @@ altcha-widget {
 .editor-citation-results li:hover,
 .editor-citation-results li[aria-selected='true'] {
   background: #eef4f7;
+/* Text for screen readers only. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
