@@ -436,6 +436,25 @@
       "openInForum": "Avaa nämä vastaukset foorumilla"
     }
   },
+  "home": {
+    "newArticles": "Uutta Agpediassa",
+    "seeMoreArticles": "Lisää uusia artikkeleita",
+    "fromBlog": "Blogista",
+    "seeAllPosts": "Kaikki blogikirjoitukset",
+    "inForum": "Keskustelupalstalla",
+    "goToForum": "Siirry keskustelupalstalle",
+    "waysToHelp": "Näin voit auttaa:",
+    "waitingForCheck_one": "{{count}} artikkeli odottaa tarkistusta",
+    "waitingForCheck_other": "{{count}} artikkelia odottaa tarkistusta",
+    "needWikidata_one": "{{count}} tarvitsee Wikidata-linkin",
+    "needWikidata_other": "{{count}} tarvitsee Wikidata-linkin",
+    "howToContribute": "Näin osallistut",
+    "newArticleLabel": "Uusi artikkeli",
+    "blogLabel": "Blogi",
+    "noArticles": "Ei vielä artikkeleita.",
+    "noPosts": "Ei vielä blogikirjoituksia.",
+    "noThreads": "Ei vielä keskusteluja."
+  },
   tool: {
     view: 'Näytä',
     diff: 'Erot',
@@ -451,6 +470,9 @@
     relatedLabel: 'Aiheeseen liittyvät',
     seeAlso: 'Katso myös: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Tietosanakirjasivut (yhteensä {{total}}).',
+    "pagesSort": "Järjestys:",
+    "pagesSortTitle": "A–Ö",
+    "pagesSortNew": "Uusimmat ensin",
     previous: 'Edellinen',
     next: 'Seuraava',
     pagination: 'Sivu {{page}} / {{totalPages}}',

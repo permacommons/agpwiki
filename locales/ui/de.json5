@@ -434,6 +434,25 @@
       "openInForum": "Diese Antworten im Forum öffnen"
     }
   },
+  "home": {
+    "newArticles": "Neu auf Agpedia",
+    "seeMoreArticles": "Weitere neue Artikel",
+    "fromBlog": "Aus dem Blog",
+    "seeAllPosts": "Alle Blogbeiträge",
+    "inForum": "Im Forum",
+    "goToForum": "Zum Forum",
+    "waysToHelp": "So kannst du helfen:",
+    "waitingForCheck_one": "{{count}} Artikel wartet auf eine Faktenprüfung",
+    "waitingForCheck_other": "{{count}} Artikel warten auf eine Faktenprüfung",
+    "needWikidata_one": "{{count}} braucht eine Wikidata-Verknüpfung",
+    "needWikidata_other": "{{count}} brauchen eine Wikidata-Verknüpfung",
+    "howToContribute": "Mitmachen",
+    "newArticleLabel": "Neuer Artikel",
+    "blogLabel": "Blog",
+    "noArticles": "Noch keine Artikel.",
+    "noPosts": "Noch keine Blogbeiträge.",
+    "noThreads": "Noch keine Diskussionen."
+  },
   tool: {
     view: 'Ansehen',
     diff: 'Unterschied',
@@ -449,6 +468,9 @@
     relatedLabel: 'Verwandt',
     seeAlso: 'Siehe auch: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Enzyklopädie-Seiten ({{total}} insgesamt).',
+    "pagesSort": "Sortieren:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Neueste zuerst",
     previous: 'Vorherige',
     next: 'Nächste',
     pagination: 'Seite {{page}} von {{totalPages}}',

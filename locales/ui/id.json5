@@ -436,6 +436,25 @@
       "openInForum": "Buka balasan ini di forum"
     }
   },
+  "home": {
+    "newArticles": "Baru di Agpedia",
+    "seeMoreArticles": "Lihat artikel baru lainnya",
+    "fromBlog": "Dari blog",
+    "seeAllPosts": "Lihat semua tulisan blog",
+    "inForum": "Di forum",
+    "goToForum": "Ke forum",
+    "waysToHelp": "Cara membantu:",
+    "waitingForCheck_one": "{{count}} artikel menunggu pemeriksaan fakta",
+    "waitingForCheck_other": "{{count}} artikel menunggu pemeriksaan fakta",
+    "needWikidata_one": "{{count}} perlu tautan Wikidata",
+    "needWikidata_other": "{{count}} perlu tautan Wikidata",
+    "howToContribute": "Cara berkontribusi",
+    "newArticleLabel": "Artikel baru",
+    "blogLabel": "Blog",
+    "noArticles": "Belum ada artikel.",
+    "noPosts": "Belum ada tulisan blog.",
+    "noThreads": "Belum ada diskusi."
+  },
   tool: {
     view: 'Lihat',
     diff: 'Perbedaan',
@@ -451,6 +470,9 @@
     relatedLabel: 'Terkait',
     seeAlso: 'Lihat juga: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Halaman ensiklopedia (total {{total}}).',
+    "pagesSort": "Urutkan:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Terbaru dulu",
     previous: 'Sebelumnya',
     next: 'Berikutnya',
     pagination: 'Halaman {{page}} dari {{totalPages}}',

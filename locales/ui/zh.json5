@@ -435,6 +435,25 @@
       "openInForum": "在论坛中打开这些回复"
     }
   },
+  "home": {
+    "newArticles": "Agpedia 新内容",
+    "seeMoreArticles": "查看更多新条目",
+    "fromBlog": "博客",
+    "seeAllPosts": "查看全部博客文章",
+    "inForum": "论坛",
+    "goToForum": "前往论坛",
+    "waysToHelp": "参与方式：",
+    "waitingForCheck_one": "等待事实核查的条目：{{count}}",
+    "waitingForCheck_other": "等待事实核查的条目：{{count}}",
+    "needWikidata_one": "需要维基数据链接：{{count}}",
+    "needWikidata_other": "需要维基数据链接：{{count}}",
+    "howToContribute": "如何贡献",
+    "newArticleLabel": "新条目",
+    "blogLabel": "博客",
+    "noArticles": "暂无条目。",
+    "noPosts": "暂无博客文章。",
+    "noThreads": "暂无讨论。"
+  },
   tool: {
     view: '查看',
     diff: '差异',
@@ -450,6 +469,9 @@
     relatedLabel: '相关',
     seeAlso: '另见：<a href="{{url}}">{{label}}</a>',
     pagesDescription: '百科全书页面（共 {{total}} 页）。',
+    "pagesSort": "排序：",
+    "pagesSortTitle": "按名称",
+    "pagesSortNew": "最新优先",
     previous: '上一页',
     next: '下一页',
     pagination: '第 {{page}} 页，共 {{totalPages}} 页',
