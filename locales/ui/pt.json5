@@ -698,6 +698,8 @@
     "empty": "Nenhum artigo nesta lista no momento."
   },
   "notifications": {
+    loading: 'Carregando…',
+    loadError: 'Não foi possível carregar as notificações.',
     "title": "Notificações",
     "bellUnread_one": "Notificações: {{count}} não lida",
     "bellUnread_other": "Notificações: {{count}} não lidas",
@@ -708,11 +710,7 @@
     },
     "markRead": "Marcar como lida",
     "markAllRead": "Marcar todas como lidas",
-    "bar": {
-      "more_one": "Mais {{count}}",
-      "more_other": "Mais {{count}}",
-      "all": "Todas as notificações"
-    },
+    "all": "Todas as notificações",
     "unread": "nova",
     "settings": "Configurações de notificação",
     "empty": "Ainda não há notificações. Você recebe uma quando alguém responde num tópico do fórum que você segue."

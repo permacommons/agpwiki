@@ -700,6 +700,8 @@
     "empty": "Luettelossa ei ole nyt artikkeleita."
   },
   "notifications": {
+    loading: 'Ladataan…',
+    loadError: 'Ilmoituksia ei voitu ladata.',
     "title": "Ilmoitukset",
     "bellUnread_one": "Ilmoitukset: {{count}} lukematon",
     "bellUnread_other": "Ilmoitukset: {{count}} lukematonta",
@@ -710,11 +712,7 @@
     },
     "markRead": "Merkitse luetuksi",
     "markAllRead": "Merkitse kaikki luetuiksi",
-    "bar": {
-      "more_one": "{{count}} lisää",
-      "more_other": "{{count}} lisää",
-      "all": "Kaikki ilmoitukset"
-    },
+    "all": "Kaikki ilmoitukset",
     "unread": "uusi",
     "settings": "Ilmoitusasetukset",
     "empty": "Ei vielä ilmoituksia. Saat ilmoituksen, kun joku vastaa seuraamassasi foorumiketjussa."

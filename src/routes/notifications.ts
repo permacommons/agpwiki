@@ -13,10 +13,13 @@ import {
 } from '../services/site-notification-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import {
+  NOTIFICATIONS_PANEL_LIMIT,
+  NOTIFICATIONS_PANEL_PATH,
   NOTIFICATIONS_PATH,
   NOTIFICATIONS_READ_PATH,
   renderNotificationList,
   safeReturnPath,
+  toNotificationPanelData,
 } from './lib/notifications.js';
 
 const requireSession = async (req: Request, res: Response) => {
@@ -28,7 +31,25 @@ const requireSession = async (req: Request, res: Response) => {
   return session;
 };
 
+const wantsJson = (req: Request) => (req.get('accept') ?? '').includes('application/json');
+
 export const registerNotificationRoutes = (app: Express) => {
+  // The bell's panel loads its contents from here when it is opened.
+  app.get(NOTIFICATIONS_PANEL_PATH, async (req, res) => {
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
+    const dal = await initializePostgreSQL();
+    const [unreadCount, notifications] = await Promise.all([
+      countUnreadNotifications(dal, session.userId),
+      listSiteNotifications(dal, session.userId, { limit: NOTIFICATIONS_PANEL_LIMIT }),
+    ]);
+    res.set('Cache-Control', 'no-store');
+    res.json(toNotificationPanelData(notifications, unreadCount, req.t));
+  });
+
   app.get(NOTIFICATIONS_PATH, async (req, res) => {
     const session = await requireSession(req, res);
     if (!session) return;
@@ -72,11 +93,19 @@ export const registerNotificationRoutes = (app: Express) => {
   });
 
   app.post(NOTIFICATIONS_READ_PATH, async (req, res) => {
+    if (wantsJson(req) && !(await resolveSessionUser(req))) {
+      res.status(401).json({ error: 'unauthorized' });
+      return;
+    }
     const session = await requireSession(req, res);
     if (!session) return;
     const id = typeof req.body?.id === 'string' && req.body.id ? req.body.id : undefined;
     const dal = await initializePostgreSQL();
     await markSiteNotificationsRead(dal, session.userId, id);
+    if (wantsJson(req)) {
+      res.json({ unreadCount: await countUnreadNotifications(dal, session.userId) });
+      return;
+    }
     res.redirect(303, safeReturnPath(req.body?.return));
   });
 };

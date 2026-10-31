@@ -698,6 +698,8 @@
     "empty": "지금은 이 목록에 문서가 없습니다."
   },
   "notifications": {
+    loading: '불러오는 중…',
+    loadError: '알림을 불러올 수 없습니다.',
     "title": "알림",
     "bellUnread_one": "알림: 읽지 않음 {{count}}개",
     "bellUnread_other": "알림: 읽지 않음 {{count}}개",
@@ -708,11 +710,7 @@
     },
     "markRead": "읽음으로 표시",
     "markAllRead": "모두 읽음으로 표시",
-    "bar": {
-      "more_one": "{{count}}개 더",
-      "more_other": "{{count}}개 더",
-      "all": "모든 알림"
-    },
+    "all": "모든 알림",
     "unread": "새 알림",
     "settings": "알림 설정",
     "empty": "아직 알림이 없습니다. 팔로우하는 포럼 스레드에 누군가 답글을 달면 알림을 받습니다."
