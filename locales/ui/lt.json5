@@ -267,6 +267,27 @@
     title: 'Versijų istorija',
     compare: 'Palyginti pasirinktas versijas',
   },
+  pageTabs: {
+    label: 'Puslapio kortelės',
+    article: 'Straipsnis',
+    page: 'Puslapis',
+    discuss: 'Aptarimas',
+    edit: 'Redaguoti',
+    history: 'Istorija'
+  },
+  howToEdit: {
+    title: 'Kaip redaguoti šį puslapį',
+    intro: 'Kiekvienas gali padėti patobulinti {{title}}. Štai kaip pradėti.',
+    account: '{{createLink}} arba {{loginLink}}, jei paskyrą jau turite.',
+    createAccount: 'Susikurkite paskyrą',
+    logIn: 'prisijunkite',
+    approval: 'Palaukite leidimo redaguoti. Kol Agpedia yra bandomajame etape, žmogus peržiūri kiekvieną naują paskyrą, kol ji gali redaguoti. Gausite pranešimą.',
+    agent: 'Patobulinkite puslapį su savo DI agentu: prijunkite jį prie Agpedia ir paprašykite patobulinti šį puslapį. Dauguma Agpedia keitimų atliekama taip.',
+    helpLink: 'Kaip prijungti DI agentą',
+    quickFix: 'Arba greitai pataisykite ranka, pavyzdžiui, rašybos klaidą.',
+    protected: 'Šis puslapis apsaugotas: redaguoti jį gali tik administratoriai. Pakeitimą galite pasiūlyti jo aptarime.',
+    backToPage: 'Grįžti į puslapį'
+  },
   operatorEdit: {
     title: 'Operatoriaus redagavimas',
     link: 'Operatoriaus redagavimas',

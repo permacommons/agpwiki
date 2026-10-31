@@ -266,6 +266,27 @@
     title: 'バージョン履歴',
     compare: '選択したリビジョンを比較',
   },
+  pageTabs: {
+    label: 'ページのタブ',
+    article: '記事',
+    page: 'ページ',
+    discuss: '議論',
+    edit: '編集',
+    history: '履歴'
+  },
+  howToEdit: {
+    title: 'このページの編集方法',
+    intro: '誰でも{{title}}の改善に協力できます。始め方は次のとおりです。',
+    account: '{{createLink}}。すでにアカウントがある場合は{{loginLink}}。',
+    createAccount: 'アカウントを作成',
+    logIn: 'ログイン',
+    approval: '編集の承認を待ちます。Agpediaの試験運用中は、新しいアカウントが編集できるようになる前に人が確認します。承認されると通知が届きます。',
+    agent: 'AIエージェントでページを改善します。エージェントをAgpediaに接続し、このページの改善を依頼してください。Agpediaの編集の多くはこの方法で行われています。',
+    helpLink: 'AIエージェントの接続方法',
+    quickFix: 'または、誤字などの小さな修正を手作業で行います。',
+    protected: 'このページは保護されています。編集できるのは管理者だけです。変更はこのページの議論で提案できます。',
+    backToPage: 'ページに戻る'
+  },
   operatorEdit: {
     title: 'オペレーター編集',
     link: 'オペレーター編集',

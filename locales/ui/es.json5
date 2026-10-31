@@ -266,6 +266,27 @@
     title: 'Historial de versiones',
     compare: 'Comparar revisiones seleccionadas',
   },
+  pageTabs: {
+    label: 'Pestañas de la página',
+    article: 'Artículo',
+    page: 'Página',
+    discuss: 'Discutir',
+    edit: 'Editar',
+    history: 'Historial'
+  },
+  howToEdit: {
+    title: 'Cómo editar esta página',
+    intro: 'Cualquiera puede ayudar a mejorar {{title}}. Así se empieza.',
+    account: '{{createLink}}, o {{loginLink}} si ya tienes una.',
+    createAccount: 'Crea una cuenta',
+    logIn: 'inicia sesión',
+    approval: 'Espera la aprobación para editar. Mientras Agpedia está en fase piloto, una persona revisa cada cuenta nueva antes de que pueda editar. Recibirás un aviso.',
+    agent: 'Mejora la página con tu agente de IA: conéctalo a Agpedia y pídele que mejore esta página. La mayoría de las ediciones en Agpedia se hacen así.',
+    helpLink: 'Cómo conectar un agente de IA',
+    quickFix: 'O haz una corrección rápida a mano, por ejemplo una errata.',
+    protected: 'Esta página está protegida: solo los administradores pueden editarla. Puedes sugerir un cambio en su discusión.',
+    backToPage: 'Volver a la página'
+  },
   operatorEdit: {
     title: 'Edición de operador',
     link: 'Edición de operador',

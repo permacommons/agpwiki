@@ -19,6 +19,7 @@ import {
   forumCommentHistoryPath,
   forumDismissPreamblePath,
   forumIndexPath,
+  forumPageCategory,
   forumThreadCommentPath,
   forumThreadDeletePath,
   forumThreadPath,
@@ -581,6 +582,12 @@ const renderPageLinkedCategoryPage = async (
   const normalizedRequestedSlug = normalizeSlugInput(requestedSlug, 'pageSlug');
   const target = await resolveForumPageTarget(normalizedRequestedSlug);
   const storedSlug = target?.canonicalSlug ?? normalizedRequestedSlug;
+  if (target && forumPageCategory(storedSlug) !== category) {
+    const targetCategory = forumPageCategory(storedSlug);
+    if (!targetCategory) throw new NotFoundError('Page discussion not available.');
+    res.redirect(303, forumCategoryPagePath(targetCategory, storedSlug));
+    return;
+  }
   const pageLabel = getPageLabel(
     resLocale(req),
     target?.title ?? null,

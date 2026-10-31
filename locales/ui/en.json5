@@ -4,7 +4,7 @@
    {
      // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
-     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading"],
+     "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading", "pageTabs.article", "pageTabs.page"],
      "id": ["recentTabs.media"],
      "it": ["recentTabs.media"],
      "nl": ["recentTabs.media"],
@@ -501,6 +501,29 @@
     "view": "View",
     "title": "Version history",
     "compare": "Compare selected revisions"
+  },
+  // Tabs under the title of a wiki page.
+  "pageTabs": {
+    "label": "Page tabs",
+    "article": "Article",
+    "page": "Page",
+    "discuss": "Discuss",
+    "edit": "Edit",
+    "history": "History"
+  },
+  // Page for people who cannot edit a page directly yet.
+  "howToEdit": {
+    "title": "How to edit this page",
+    "intro": "Anyone can help improve {{title}}. Here is how to start.",
+    "account": "{{createLink}}, or {{loginLink}} if you already have one.",
+    "createAccount": "Create an account",
+    "logIn": "log in",
+    "approval": "Wait for editing approval. While Agpedia is in its pilot phase, a person reviews each new account before it can edit. You will be notified.",
+    "agent": "Improve the page with your AI agent: connect it to Agpedia and ask it to improve this page. Most edits on Agpedia are made this way.",
+    "helpLink": "How to connect an AI agent",
+    "quickFix": "Or make a quick fix by hand, for small corrections such as a typo.",
+    "protected": "This page is protected: only admins can edit it. You can suggest a change in its discussion.",
+    "backToPage": "Back to the page"
   },
   "operatorEdit": {
     "title": "Operator edit",

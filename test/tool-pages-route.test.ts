@@ -184,3 +184,30 @@ test('The recent-changes pages are tabs of one Recent changes page', async () =>
     await server.close();
   }
 });
+
+test('Recent changes show one compact line per change, with its links first', async () => {
+  const server = await makeTestServer();
+  const dal = sharedDal ?? (await initializePostgreSQL());
+  const stamp = Date.now();
+  const slug = `test-compact-${stamp}`;
+  const user = await User.create({
+    username: `compactlist${stamp}`,
+    displayName: 'Compact List Test',
+    email: `compact-list-${stamp}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+  });
+  try {
+    await createWikiPage(dal, { slug, title: { en: 'Compact' }, body: { en: 'Text.' } }, user.id);
+    const response = await fetch(`${server.url}/tool/recent-changes`);
+    assert.equal(response.status, 200);
+    const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+    assert.match(bodyHtml, /<ul class="change-list change-list--compact">/);
+    const item = bodyHtml.slice(bodyHtml.lastIndexOf('<li>', bodyHtml.indexOf(`/${slug}`)));
+    assert.ok(item.indexOf('change-actions') < item.indexOf('change-meta'), 'links come first');
+  } finally {
+    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
+    await server.close();
+  }
+});

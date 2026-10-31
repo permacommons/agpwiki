@@ -12,7 +12,7 @@ import {
   toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
@@ -40,6 +40,7 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { countForumCommentsForPage } from '../services/forum-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,
@@ -93,7 +94,7 @@ import {
   renderMarkdownPreviewHtml,
   renderMarkdownPreviewPanel,
 } from './lib/markdown-preview.js';
-import { renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
+import { howToEditPath, renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
 import {
   formatCheckStatus,
   formatCheckType,
@@ -105,6 +106,7 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
+import { renderPageTabs } from './lib/page-tabs.js';
 import {
   renderProposalHeader,
   renderProposalLinks,
@@ -1479,11 +1481,10 @@ export const registerPageRoutes = (app: Express) => {
         path: req.path,
         queryParams,
       });
-      const forumPath = isArticle
-        ? forumCategoryPagePath('articles', canonicalSlug)
-        : canonicalSlug.startsWith('meta/')
-          ? forumCategoryPagePath('policy', canonicalSlug)
-          : '';
+      const discussionCategory = forumPageCategory(canonicalSlug);
+      const forumPath = discussionCategory
+        ? forumCategoryPagePath(discussionCategory, canonicalSlug)
+        : '';
       const signedIn = Boolean(session);
       const canShowOperatorEditLink =
         !revIdParam && !diffFrom && !diffTo && (!editability.isProtected || editability.isEditable);
@@ -1503,6 +1504,17 @@ export const registerPageRoutes = (app: Express) => {
           : '',
         operatorEditLinkHtml,
       ].filter(Boolean);
+      const isCurrentView = !revIdParam && !diffFrom && !diffTo;
+      const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
+      const tabsHtml = renderPageTabs({
+        isArticle,
+        pageHref: pageViewPath(canonicalSlug, langOverride),
+        isCurrentView,
+        discussHref: forumPath || null,
+        discussCount: discussionCategory ? await countForumCommentsForPage(dalInstance, canonicalSlug, discussionCategory) : 0,
+        editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+        t: req.t,
+      });
       const forumLinkHtml = relatedLinks.length
         ? `<div class="tool-related">
   <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
@@ -1587,6 +1599,7 @@ export const registerPageRoutes = (app: Express) => {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         labelHtml,
+        tabsHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
