@@ -16,6 +16,8 @@ export const renderNotificationText = (notification: SiteNotification, t: TFunct
   switch (notification.kind) {
     case 'forum.reply':
       return t('notifications.kind.forumReply', { name, subject });
+    case 'page.revert':
+      return t('notifications.kind.pageRevert', { name, subject });
     default:
       return t('notifications.kind.other', { subject });
   }

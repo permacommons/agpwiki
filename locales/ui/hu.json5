@@ -267,6 +267,38 @@
     title: 'Verzióelőzmények',
     compare: 'Kiválasztott verziók összehasonlítása',
   },
+  "revert": {
+    "tag": "visszaállítás",
+    "restore": {
+      "link": "Visszaállítás",
+      "title": "E változat visszaállítása",
+      "submit": "E változat visszaállítása"
+    },
+    "rollback": {
+      "link": "Visszavonás",
+      "title": "Visszavonás",
+      "submit": "Szerkesztések visszavonása"
+    },
+    "summary": "Ez visszahozza {{name}} {{date}} időpontú változatát. Visszavont szerkesztések: {{count}}, szerzők: {{names}}.",
+    "seeChanges": "Változások megtekintése",
+    "reason": "Indok",
+    "reasonHelp": "Írd le, miért, például „nincs forrás az új szakaszhoz”. Ez lesz a szerkesztési összefoglaló, és akiknek a szerkesztéseit visszavonod, látják.",
+    "reasonRequired": "Adj meg egy indokot.",
+    "changed": "Az oldal megváltozott, miközben nézted. Mielőtt folytatod, ellenőrizd, mit vonna vissza most.",
+    "forbidden": "Ezen az oldalon nem vonhatsz vissza szerkesztéseket.",
+    "invalid": "Ez itt nem lehetséges: lehet, hogy ez már a jelenlegi változat, vagy nincs mit visszavonni.",
+    "guard": {
+      "title": "A visszaállításodat visszavonták",
+      "body": "Valaki visszavonta ezen az oldalon a visszaállításodat. Az operátorok magatartási szabályai szerint a következő lépés a megbeszélés, nem egy újabb visszaállítás.",
+      "discuss": "Az oldal megbeszélése",
+      "conduct": "Magatartási szabályok"
+    },
+    "recent": {
+      "showReverts": "Csak a visszaállítások",
+      "onlyReverts": "Csak a visszaállítások látszanak",
+      "all": "Minden változás"
+    }
+  },
   pageTabs: {
     label: 'Lapfülek',
     article: 'Szócikk',
@@ -708,6 +740,7 @@
     "someone": "Valaki",
     "kind": {
       "forumReply": "{{name}} válaszolt itt: {{subject}}",
+      "pageRevert": "{{name}} visszavonta a(z) {{subject}} oldalon végzett szerkesztéseidet",
       "other": "Új tevékenység itt: {{subject}}"
     },
     "markRead": "Megjelölés olvasottként",
@@ -735,6 +768,10 @@
         "forumReply": {
           "label": "Válaszok az általad követett fórumszálakban",
           "help": "Egy szálat akkor követsz, ha elindítod vagy válaszolsz benne. A követést a szálban is be- vagy kikapcsolhatod."
+        },
+        "pageRevert": {
+          "label": "Szerkesztéseid visszavonásai",
+          "help": "Amikor valaki egy oldal korábbi változatát állítja vissza, vagy visszavonja a szerkesztéseidet. Látod az indokát."
         }
       }
     }

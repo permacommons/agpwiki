@@ -20,6 +20,8 @@ import {
   type NotificationJobRecord,
   recordNotificationDelivery,
 } from './notification-queue.js';
+import { PAGE_REVERTED_NOTIFICATION } from './page-revert-service.js';
+import { processPageRevertedNotification } from './revert-notification-service.js';
 import { getSiteBaseUrl } from './site-config.js';
 import { createSiteNotification } from './site-notification-service.js';
 
@@ -233,4 +235,5 @@ export const processForumReplyCreatedNotification = async (
 
 export const notificationJobHandlers = {
   [FORUM_REPLY_CREATED_NOTIFICATION]: processForumReplyCreatedNotification,
+  [PAGE_REVERTED_NOTIFICATION]: processPageRevertedNotification,
 } as const;

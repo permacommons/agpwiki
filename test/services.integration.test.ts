@@ -139,6 +139,16 @@ const getDal = async () => {
   return sharedDal;
 };
 
+// Test files run in parallel and share the notification queue, so clean up
+// only the forum reply jobs these tests create, never other kinds.
+const clearForumReplyJobs = async (dal: Awaited<ReturnType<typeof initializePostgreSQL>>) => {
+  await dal.query(
+    'DELETE FROM notification_deliveries WHERE job_id IN (SELECT id FROM notification_jobs WHERE type = $1)',
+    [FORUM_REPLY_CREATED_NOTIFICATION]
+  );
+  await dal.query('DELETE FROM notification_jobs WHERE type = $1', [FORUM_REPLY_CREATED_NOTIFICATION]);
+};
+
 test.after(async () => {
   if (sharedDal) {
     await sharedDal.disconnect();
@@ -1007,8 +1017,7 @@ test('Notification worker startup reset returns processing jobs to pending', asy
     assert.equal(jobs[0]?.lockedAt ?? null, null);
     assert.equal(jobs[0]?.lockToken ?? null, null);
   } finally {
-    await dal.query('DELETE FROM notification_deliveries');
-    await dal.query('DELETE FROM notification_jobs');
+    await clearForumReplyJobs(dal);
   }
 });
 
@@ -1181,8 +1190,7 @@ const cleanupNotificationScenario = async (
   forumThreadPrefix: string,
   userIds: Array<string | null>
 ) => {
-  await dal.query('DELETE FROM notification_deliveries');
-  await dal.query('DELETE FROM notification_jobs');
+  await clearForumReplyJobs(dal);
   let shouldDeleteThreads = true;
   for (const userId of userIds) {
     await cleanupTestArtifacts(dal, {

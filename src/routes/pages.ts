@@ -48,6 +48,7 @@ import {
   readPageCheckRevision,
 } from '../services/page-check-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
+import { canUseRevertAction } from '../services/page-revert-service.js';
 import {
   canSignOffPages,
   findRevisionsWithChangedText,
@@ -115,6 +116,7 @@ import {
   renderProposalStatusForm,
 } from './lib/proposal-status.js';
 import { resolveOperatorEditValidationMessage } from './lib/validation-messages.js';
+import { REVERT_PATH, registerRevertRoutes } from './revert.js';
 
 const { mlString } = dal;
 
@@ -332,6 +334,7 @@ const renderOperatorEditPage = async ({
 };
 
 export const registerPageRoutes = (app: Express) => {
+  registerRevertRoutes(app);
   app.use((req, res, next) => {
     if (!req.originalUrl || req.originalUrl === '/') {
       next();
@@ -1435,6 +1438,16 @@ export const registerPageRoutes = (app: Express) => {
       const historyAction = langOverride
         ? `/${canonicalSlug}?lang=${encodeURIComponent(langOverride)}`
         : `/${canonicalSlug}`;
+      const [canRestore, canRollback] = editability.isEditable
+        ? await Promise.all([
+            canUseRevertAction(dalInstance, session?.userId, 'restore'),
+            canUseRevertAction(dalInstance, session?.userId, 'rollback'),
+          ])
+        : [false, false];
+      const rollbackOffered =
+        canRollback &&
+        revisions[0]?.revUser !== session?.userId &&
+        revisions.some(rev => rev.revUser !== revisions[0]?.revUser);
       const historyHtml = renderRevisionHistory({
         revisions: historyRevisions,
         diffFrom,
@@ -1444,6 +1457,21 @@ export const registerPageRoutes = (app: Express) => {
           langOverride
             ? `/${canonicalSlug}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
             : `/${canonicalSlug}?rev=${revId}`,
+        extraActions: (rev, index) => {
+          if (index === 0) {
+            return rollbackOffered
+              ? [{ label: req.t('revert.rollback.link'), href: `${REVERT_PATH}?page=${canonicalSlug}&action=rollback` }]
+              : [];
+          }
+          return canRestore
+            ? [
+                {
+                  label: req.t('revert.restore.link'),
+                  href: `${REVERT_PATH}?page=${canonicalSlug}&rev=${encodeURIComponent(rev.revId)}`,
+                },
+              ]
+            : [];
+        },
         userMap,
         t: req.t,
       });

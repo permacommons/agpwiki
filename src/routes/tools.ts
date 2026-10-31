@@ -42,6 +42,7 @@ import {
   listArticlesWithIssues,
 } from '../services/article-issues-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
+import { REVERT_TAG } from '../services/page-revert-service.js';
 import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
 import {
   getUserRoles,
@@ -672,7 +673,8 @@ export const registerToolRoutes = (app: Express) => {
     const preferredLang = res.locals.locale;
 
     const dalInstance = await initializePostgreSQL();
-    const rawChanges = await getRecentWikiChanges(dalInstance, limit);
+    const onlyReverts = req.query.only === 'reverts';
+    const rawChanges = await getRecentWikiChanges(dalInstance, limit, { tag: onlyReverts ? REVERT_TAG : null });
     const changes = rawChanges.map(change => ({
       ...change,
       revSummary: resolvePreferredText(change.revSummary, preferredLang),
@@ -710,9 +712,15 @@ export const registerToolRoutes = (app: Express) => {
     const itemsHtml = renderRecentList(items, userMap, req.t);
 
     const relatedHtml = await renderRecentRelatedTools('changes', req, dalInstance);
+    const revertFilterHtml = `<p class="recent-filter">${
+      onlyReverts
+        ? `${escapeHtml(req.t('revert.recent.onlyReverts'))} · <a href="/tool/recent-changes">${escapeHtml(req.t('revert.recent.all'))}</a>`
+        : `<a href="/tool/recent-changes?only=reverts">${escapeHtml(req.t('revert.recent.showReverts'))}</a>`
+    }</p>`;
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChangesDescription')}</p>
   ${relatedHtml}
+  ${revertFilterHtml}
   <ul class="change-list change-list--compact">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
