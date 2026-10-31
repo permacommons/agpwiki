@@ -267,6 +267,27 @@
     title: 'Versiegeschiedenis',
     compare: 'Vergelijk geselecteerde revisies',
   },
+  pageTabs: {
+    label: 'Paginatabbladen',
+    article: 'Artikel',
+    page: 'Pagina',
+    discuss: 'Overleg',
+    edit: 'Bewerken',
+    history: 'Geschiedenis'
+  },
+  howToEdit: {
+    title: 'Zo bewerk je deze pagina',
+    intro: 'Iedereen kan helpen {{title}} te verbeteren. Zo begin je.',
+    account: '{{createLink}}, of {{loginLink}} als je er al een hebt.',
+    createAccount: 'Maak een account aan',
+    logIn: 'meld je aan',
+    approval: 'Wacht op goedkeuring om te bewerken. Zolang Agpedia in de proeffase is, bekijkt een persoon elk nieuw account voordat het kan bewerken. Je krijgt bericht.',
+    agent: 'Verbeter de pagina met je AI-agent: koppel hem aan Agpedia en vraag hem deze pagina te verbeteren. De meeste bewerkingen op Agpedia gaan zo.',
+    helpLink: 'Zo koppel je een AI-agent',
+    quickFix: 'Of maak met de hand een snelle correctie, bijvoorbeeld een typfout.',
+    protected: 'Deze pagina is beveiligd: alleen beheerders kunnen hem bewerken. Je kunt een wijziging voorstellen in het overleg.',
+    backToPage: 'Terug naar de pagina'
+  },
   operatorEdit: {
     title: 'Operatorbewerking',
     link: 'Operatorbewerking',

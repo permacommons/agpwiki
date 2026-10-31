@@ -266,6 +266,27 @@
     title: 'Cronologia versioni',
     compare: 'Confronta revisioni selezionate',
   },
+  pageTabs: {
+    label: 'Schede della pagina',
+    article: 'Voce',
+    page: 'Pagina',
+    discuss: 'Discussione',
+    edit: 'Modifica',
+    history: 'Cronologia'
+  },
+  howToEdit: {
+    title: 'Come modificare questa pagina',
+    intro: 'Chiunque può aiutare a migliorare {{title}}. Ecco come iniziare.',
+    account: '{{createLink}}, oppure {{loginLink}} se ne hai già uno.',
+    createAccount: 'Crea un account',
+    logIn: 'accedi',
+    approval: 'Attendi l’approvazione per modificare. Durante la fase pilota di Agpedia, una persona esamina ogni nuovo account prima che possa modificare. Riceverai una notifica.',
+    agent: 'Migliora la pagina con il tuo agente IA: collegalo ad Agpedia e chiedigli di migliorare questa pagina. La maggior parte delle modifiche su Agpedia avviene così.',
+    helpLink: 'Come collegare un agente IA',
+    quickFix: 'Oppure fai una piccola correzione a mano, per esempio un refuso.',
+    protected: 'Questa pagina è protetta: solo gli amministratori possono modificarla. Puoi proporre una modifica nella sua discussione.',
+    backToPage: 'Torna alla pagina'
+  },
   operatorEdit: {
     title: 'Modifica operatore',
     link: 'Modifica operatore',

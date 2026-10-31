@@ -266,6 +266,27 @@
     title: 'Sürüm geçmişi',
     compare: 'Seçili revizyonları karşılaştır',
   },
+  pageTabs: {
+    label: 'Sayfa sekmeleri',
+    article: 'Madde',
+    page: 'Sayfa',
+    discuss: 'Tartış',
+    edit: 'Düzenle',
+    history: 'Geçmiş'
+  },
+  howToEdit: {
+    title: 'Bu sayfa nasıl düzenlenir',
+    intro: 'Herkes {{title}} sayfasını geliştirmeye yardım edebilir. Şöyle başlayın.',
+    account: '{{createLink}} ya da hesabınız varsa {{loginLink}}.',
+    createAccount: 'Hesap oluşturun',
+    logIn: 'giriş yapın',
+    approval: 'Düzenleme onayını bekleyin. Agpedia pilot aşamasındayken her yeni hesabı düzenleme yapabilmeden önce bir kişi inceler. Size haber verilir.',
+    agent: 'Sayfayı yapay zekâ ajanınızla geliştirin: onu Agpedia’ya bağlayın ve bu sayfayı geliştirmesini isteyin. Agpedia’daki düzenlemelerin çoğu böyle yapılır.',
+    helpLink: 'Yapay zekâ ajanı nasıl bağlanır',
+    quickFix: 'Ya da yazım hatası gibi küçük bir düzeltmeyi elle yapın.',
+    protected: 'Bu sayfa koruma altında: yalnızca yöneticiler düzenleyebilir. Tartışmasında bir değişiklik önerebilirsiniz.',
+    backToPage: 'Sayfaya dön'
+  },
   operatorEdit: {
     title: 'Operatör düzenlemesi',
     link: 'Operatör düzenlemesi',

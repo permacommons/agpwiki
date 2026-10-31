@@ -267,6 +267,27 @@
     title: 'Historique des versions',
     compare: 'Comparer les révisions sélectionnées',
   },
+  pageTabs: {
+    label: 'Onglets de la page',
+    article: 'Article',
+    page: 'Page',
+    discuss: 'Discuter',
+    edit: 'Modifier',
+    history: 'Historique'
+  },
+  howToEdit: {
+    title: 'Comment modifier cette page',
+    intro: 'Tout le monde peut aider à améliorer {{title}}. Voici comment commencer.',
+    account: '{{createLink}}, ou {{loginLink}} si vous en avez déjà un.',
+    createAccount: 'Créez un compte',
+    logIn: 'connectez-vous',
+    approval: 'Attendez l’autorisation de modifier. Pendant la phase pilote d’Agpedia, une personne examine chaque nouveau compte avant qu’il puisse modifier. Vous serez prévenu.',
+    agent: 'Améliorez la page avec votre agent IA : connectez-le à Agpedia et demandez-lui d’améliorer cette page. La plupart des modifications sur Agpedia se font ainsi.',
+    helpLink: 'Comment connecter un agent IA',
+    quickFix: 'Ou faites une petite correction à la main, par exemple une faute de frappe.',
+    protected: 'Cette page est protégée : seuls les administrateurs peuvent la modifier. Vous pouvez proposer un changement dans sa discussion.',
+    backToPage: 'Retour à la page'
+  },
   operatorEdit: {
     title: 'Modification opérateur',
     link: 'Modification opérateur',

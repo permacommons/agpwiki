@@ -75,6 +75,10 @@
     {{#if unreadNotificationCount}}<span class="notification-bell-count">{{unreadNotificationCount}}</span>{{/if}}
   </a>
   {{/if}}
+  <input class="search-toggle-checkbox" type="checkbox" id="search-toggle" aria-label="{{__ "search.title"}}" />
+  <label class="search-toggle" for="search-toggle" title="{{__ "search.title"}}" aria-hidden="true">
+    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8.5" cy="8.5" r="6"/><path d="M13 13l5 5"/></svg>
+  </label>
   <form class="search-form" action="/search" method="get">
     <input class="search-input" type="search" name="q" placeholder="{{__ "search.placeholder"}}" autocomplete="off" />
     <ul class="search-suggestions" role="listbox"></ul>

@@ -267,6 +267,27 @@
     title: 'História verzií',
     compare: 'Porovnať vybrané revízie',
   },
+  pageTabs: {
+    label: 'Karty stránky',
+    article: 'Článok',
+    page: 'Stránka',
+    discuss: 'Diskusia',
+    edit: 'Upraviť',
+    history: 'História'
+  },
+  howToEdit: {
+    title: 'Ako upraviť túto stránku',
+    intro: 'Ktokoľvek môže pomôcť zlepšiť {{title}}. Takto začnete.',
+    account: '{{createLink}} alebo sa {{loginLink}}, ak už účet máte.',
+    createAccount: 'Vytvorte si účet',
+    logIn: 'prihláste',
+    approval: 'Počkajte na povolenie upravovať. Kým je Agpedia v pilotnej fáze, človek skontroluje každý nový účet, kým môže upravovať. Dostanete upozornenie.',
+    agent: 'Zlepšite stránku so svojím AI agentom: pripojte ho k Agpedii a požiadajte ho, aby túto stránku zlepšil. Väčšina úprav na Agpedii vzniká takto.',
+    helpLink: 'Ako pripojiť AI agenta',
+    quickFix: 'Alebo urobte rýchlu opravu ručne, napríklad preklep.',
+    protected: 'Táto stránka je zamknutá: upravovať ju môžu len správcovia. Zmenu môžete navrhnúť v jej diskusii.',
+    backToPage: 'Späť na stránku'
+  },
   operatorEdit: {
     title: 'Operátorská úprava',
     link: 'Operátorská úprava',

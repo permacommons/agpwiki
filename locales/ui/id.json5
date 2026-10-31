@@ -267,6 +267,27 @@
     title: 'Riwayat versi',
     compare: 'Bandingkan revisi yang dipilih',
   },
+  pageTabs: {
+    label: 'Tab halaman',
+    article: 'Artikel',
+    page: 'Halaman',
+    discuss: 'Diskusi',
+    edit: 'Sunting',
+    history: 'Riwayat'
+  },
+  howToEdit: {
+    title: 'Cara menyunting halaman ini',
+    intro: 'Siapa pun bisa membantu memperbaiki {{title}}. Begini cara memulainya.',
+    account: '{{createLink}}, atau {{loginLink}} jika sudah punya akun.',
+    createAccount: 'Buat akun',
+    logIn: 'masuk',
+    approval: 'Tunggu persetujuan untuk menyunting. Selama Agpedia dalam tahap uji coba, seseorang meninjau setiap akun baru sebelum bisa menyunting. Anda akan diberi tahu.',
+    agent: 'Perbaiki halaman dengan agen AI Anda: hubungkan ke Agpedia dan minta agen itu memperbaiki halaman ini. Sebagian besar suntingan di Agpedia dibuat dengan cara ini.',
+    helpLink: 'Cara menghubungkan agen AI',
+    quickFix: 'Atau buat perbaikan cepat secara manual, misalnya salah ketik.',
+    protected: 'Halaman ini dilindungi: hanya pengurus yang bisa menyuntingnya. Anda bisa mengusulkan perubahan di diskusinya.',
+    backToPage: 'Kembali ke halaman'
+  },
   operatorEdit: {
     title: 'Sunting operator',
     link: 'Sunting operator',

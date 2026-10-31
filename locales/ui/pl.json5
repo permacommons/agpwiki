@@ -266,6 +266,27 @@
     title: 'Historia wersji',
     compare: 'Porównaj wybrane wersje',
   },
+  pageTabs: {
+    label: 'Karty strony',
+    article: 'Artykuł',
+    page: 'Strona',
+    discuss: 'Dyskusja',
+    edit: 'Edytuj',
+    history: 'Historia'
+  },
+  howToEdit: {
+    title: 'Jak edytować tę stronę',
+    intro: 'Każdy może pomóc ulepszyć {{title}}. Oto jak zacząć.',
+    account: '{{createLink}} albo {{loginLink}}, jeśli już je masz.',
+    createAccount: 'Załóż konto',
+    logIn: 'zaloguj się',
+    approval: 'Poczekaj na zgodę na edytowanie. Dopóki Agpedia jest w fazie pilotażowej, człowiek sprawdza każde nowe konto, zanim będzie mogło edytować. Dostaniesz powiadomienie.',
+    agent: 'Ulepsz stronę ze swoim agentem AI: połącz go z Agpedią i poproś o ulepszenie tej strony. Większość zmian w Agpedii powstaje w ten sposób.',
+    helpLink: 'Jak połączyć agenta AI',
+    quickFix: 'Albo popraw coś szybko ręcznie, na przykład literówkę.',
+    protected: 'Ta strona jest zabezpieczona: mogą ją edytować tylko administratorzy. Możesz zaproponować zmianę w jej dyskusji.',
+    backToPage: 'Wróć do strony'
+  },
   operatorEdit: {
     title: 'Edycja operatora',
     link: 'Edycja operatora',

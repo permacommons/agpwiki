@@ -267,6 +267,27 @@
     title: 'Versiohistoria',
     compare: 'Vertaa valittuja versioita',
   },
+  pageTabs: {
+    label: 'Sivun välilehdet',
+    article: 'Artikkeli',
+    page: 'Sivu',
+    discuss: 'Keskustele',
+    edit: 'Muokkaa',
+    history: 'Historia'
+  },
+  howToEdit: {
+    title: 'Näin muokkaat tätä sivua',
+    intro: 'Kuka tahansa voi auttaa parantamaan sivua {{title}}. Näin aloitat.',
+    account: '{{createLink}} tai {{loginLink}}, jos sinulla on jo tili.',
+    createAccount: 'Luo tili',
+    logIn: 'kirjaudu sisään',
+    approval: 'Odota muokkauslupaa. Kun Agpedia on pilottivaiheessa, ihminen tarkistaa jokaisen uuden tilin ennen kuin se voi muokata. Saat ilmoituksen.',
+    agent: 'Paranna sivua tekoälyagentillasi: yhdistä se Agpediaan ja pyydä sitä parantamaan tätä sivua. Useimmat Agpedian muokkaukset tehdään näin.',
+    helpLink: 'Näin yhdistät tekoälyagentin',
+    quickFix: 'Tai tee pieni korjaus käsin, esimerkiksi kirjoitusvirhe.',
+    protected: 'Tämä sivu on suojattu: vain ylläpitäjät voivat muokata sitä. Voit ehdottaa muutosta sen keskustelussa.',
+    backToPage: 'Takaisin sivulle'
+  },
   operatorEdit: {
     title: 'Operaattorimuokkaus',
     link: 'Operaattorimuokkaus',

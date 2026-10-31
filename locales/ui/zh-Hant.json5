@@ -266,6 +266,27 @@
     title: '版本歷史',
     compare: '比較選定的版本',
   },
+  pageTabs: {
+    label: '頁面分頁',
+    article: '條目',
+    page: '頁面',
+    discuss: '討論',
+    edit: '編輯',
+    history: '歷史'
+  },
+  howToEdit: {
+    title: '如何編輯此頁面',
+    intro: '任何人都可以幫忙改進{{title}}。以下是入門方法。',
+    account: '{{createLink}}，如果已有帳號，請{{loginLink}}。',
+    createAccount: '建立帳號',
+    logIn: '登入',
+    approval: '等待編輯核准。在Agpedia試行階段，每個新帳號在能夠編輯之前都會由人工審核。核准後你會收到通知。',
+    agent: '用你的AI代理改進頁面：把它連接到Agpedia，請它改進此頁面。Agpedia上大多數的編輯都是這樣完成的。',
+    helpLink: '如何連接AI代理',
+    quickFix: '或者手動做個小修正，例如改正錯字。',
+    protected: '此頁面受保護：只有管理員可以編輯。你可以在它的討論中提出修改建議。',
+    backToPage: '返回頁面'
+  },
   operatorEdit: {
     title: '操作員編輯',
     link: '操作員編輯',
