@@ -93,7 +93,8 @@
       invalidWidthShort: "幅が無効です。",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'ウィキメディア・コモンズで開く（新しいタブ）',
+      commonsBadge: 'Commons',
       missing: "見つからないメディア: {{slug}}",
       invalidSlug: "[無効なメディアスラッグ: {{slug}}。スラッグは小文字、数字、ハイフンで構成し、任意で区切りに `/` を使えます — 例: `/media/golden-rice` または `/media/biology/erik-portrait`。]",
       invalidAttrs: "[メディア {{slug}} の不明な属性: {{tokens}}。`{...}` 内で使えるキー: `size=N`, `caption=\"...\"`。代替テキストは標準の画像位置に置きます: `![Alt](/media/{{slug}}){...}`。]",

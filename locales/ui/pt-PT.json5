@@ -93,7 +93,8 @@
       invalidWidthShort: "Largura inválida.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Abrir na Wikimedia Commons, novo separador',
+      commonsBadge: 'Commons',
       missing: "Multimédia em falta: {{slug}}",
       invalidSlug: "[slug de multimédia inválido: {{slug}}. Os slugs devem usar letras minúsculas, dígitos e hífenes, com `/` opcional entre segmentos — por exemplo `/media/golden-rice` ou `/media/biology/erik-portrait`.]",
       invalidAttrs: "[atributos desconhecidos na multimédia {{slug}}: {{tokens}}. Chaves reconhecidas dentro de `{...}`: `size=N`, `caption=\"...\"`. O texto alternativo fica na posição normal da imagem: `![Alt](/media/{{slug}}){...}`.]",

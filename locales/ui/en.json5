@@ -170,35 +170,35 @@
   /*
    i18n-identical-allowlist:
    {
-     // Proper-noun link label for the Wikimedia Commons site.
-     "ar": ["media.render.commonsLink"],
-     "bn": ["media.render.commonsLink"],
-     "de": ["media.render.commonsLink"],
-     "eo": ["media.render.commonsLink"],
-     "es": ["media.render.commonsLink"],
-     "fi": ["media.render.commonsLink"],
-     "fr": ["media.render.commonsLink"],
-     "hi": ["media.render.commonsLink"],
-     "hu": ["media.render.commonsLink"],
-     "id": ["media.render.commonsLink"],
-     "it": ["media.render.commonsLink"],
-     "ja": ["media.render.commonsLink"],
-     "ko": ["media.render.commonsLink"],
-     "lt": ["media.render.commonsLink"],
-     "mk": ["media.render.commonsLink"],
-     "nl": ["media.render.commonsLink"],
-     "pl": ["media.render.commonsLink"],
-     "pt": ["media.render.commonsLink"],
-     "pt-PT": ["media.render.commonsLink"],
-     "ru": ["media.render.commonsLink"],
-     "sk": ["media.render.commonsLink"],
-     "sl": ["media.render.commonsLink"],
-     "sv": ["media.render.commonsLink"],
-     "tr": ["media.render.commonsLink"],
-     "uk": ["media.render.commonsLink"],
-     "ur": ["media.render.commonsLink"],
-     "zh": ["media.render.commonsLink"],
-     "zh-Hant": ["media.render.commonsLink"]
+     // Proper-noun label for the Wikimedia Commons site.
+     "ar": ["media.render.commonsBadge"],
+     "bn": ["media.render.commonsBadge"],
+     "de": ["media.render.commonsBadge"],
+     "eo": ["media.render.commonsBadge"],
+     "es": ["media.render.commonsBadge"],
+     "fi": ["media.render.commonsBadge"],
+     "fr": ["media.render.commonsBadge"],
+     "hi": ["media.render.commonsBadge"],
+     "hu": ["media.render.commonsBadge"],
+     "id": ["media.render.commonsBadge"],
+     "it": ["media.render.commonsBadge"],
+     "ja": ["media.render.commonsBadge"],
+     "ko": ["media.render.commonsBadge"],
+     "lt": ["media.render.commonsBadge"],
+     "mk": ["media.render.commonsBadge"],
+     "nl": ["media.render.commonsBadge"],
+     "pl": ["media.render.commonsBadge"],
+     "pt": ["media.render.commonsBadge"],
+     "pt-PT": ["media.render.commonsBadge"],
+     "ru": ["media.render.commonsBadge"],
+     "sk": ["media.render.commonsBadge"],
+     "sl": ["media.render.commonsBadge"],
+     "sv": ["media.render.commonsBadge"],
+     "tr": ["media.render.commonsBadge"],
+     "uk": ["media.render.commonsBadge"],
+     "ur": ["media.render.commonsBadge"],
+     "zh": ["media.render.commonsBadge"],
+     "zh-Hant": ["media.render.commonsBadge"]
    }
   */
   "site": {
@@ -307,8 +307,10 @@
       "invalidWidthShort": "Invalid width."
     },
     "render": {
-      // Link label for the Wikimedia Commons page in figcaption attribution.
-      "commonsLink": "Wikimedia Commons",
+      // Accessible name of the link from an image to its Commons file page.
+      "openOnCommons": "Open on Wikimedia Commons, new tab",
+      // Corner label on linked images, marking the link as leaving the site.
+      "commonsBadge": "Commons",
       // Inline error rendered when a body references a slug that has
       // no matching media row. Reachable only with valid syntax — the
       // media was deleted (or renamed) after the embed was saved.

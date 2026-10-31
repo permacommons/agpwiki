@@ -93,7 +93,8 @@
       invalidWidthShort: "عرض غير صالح.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'فتح في ويكيميديا كومنز، في علامة تبويب جديدة',
+      commonsBadge: 'Commons',
       missing: "وسائط مفقودة: {{slug}}",
       invalidSlug: "[معرف وسائط غير صالح: {{slug}}. يجب أن يتكون المعرف من أحرف لاتينية صغيرة وأرقام وواصلات، مع إمكانية استخدام `/` بين المقاطع — مثل `/media/golden-rice` أو `/media/biology/erik-portrait`.]",
       invalidAttrs: "[سمات غير معروفة للوسائط {{slug}}: {{tokens}}. المفاتيح المعروفة داخل `{...}`: `size=N` و `caption=\"...\"`. يوضع النص البديل في موضع الصورة القياسي: `![Alt](/media/{{slug}}){...}`.]",

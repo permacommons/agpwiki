@@ -94,7 +94,8 @@
       invalidWidthShort: "Недійсна ширина.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Відкрити у Вікісховищі, нова вкладка',
+      commonsBadge: 'Commons',
       missing: "Відсутнє медіа: {{slug}}",
       invalidSlug: "[недійсний медіа-slug: {{slug}}. Slug має містити малі літери, цифри й дефіси, з необов’язковим `/` між сегментами — наприклад `/media/golden-rice` або `/media/biology/erik-portrait`.]",
       invalidAttrs: "[невідомі атрибути медіа {{slug}}: {{tokens}}. Розпізнані ключі в `{...}`: `size=N`, `caption=\"...\"`. Альтернативний текст ставиться у стандартну позицію зображення: `![Alt](/media/{{slug}}){...}`.]",

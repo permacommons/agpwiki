@@ -3174,6 +3174,40 @@ altcha-widget {
 .markdown-preview-body figure.media .media-attribution a:hover {
   text-decoration-color: currentColor;
 }
+.media-commons-link {
+  position: relative;
+  display: block;
+}
+.media-commons-link:focus-visible {
+  outline: 2px solid var(--accent, #1f6f78);
+  outline-offset: 2px;
+}
+.media-commons-badge {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  background: rgba(31, 29, 26, 0.72);
+  color: #fff;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.4;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+.media-commons-link:hover .media-commons-badge,
+.media-commons-link:focus-visible .media-commons-badge {
+  opacity: 1;
+}
+/* Touch screens have no hover, so the badge is the only cue that a tap leaves the site. */
+@media (hover: none) {
+  .media-commons-badge {
+    opacity: 1;
+  }
+}
 
 /* Inline thumbnail rendered for media embeds inside flowing text. Floats so text wraps. */
 .article img.media-inline,

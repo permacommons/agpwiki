@@ -94,7 +94,8 @@
       invalidWidthShort: "Nevalida larĝo.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Malfermi en Vikimedia Komunejo, nova langeto',
+      commonsBadge: 'Commons',
       missing: "Mankanta aŭdvidaĵo: {{slug}}",
       invalidSlug: "[nevalida aŭdvidaĵa identigilo: {{slug}}. Identigiloj devas esti minusklaj literoj, ciferoj kaj streketoj, kun laŭvola `/` inter segmentoj — ekz. `/media/golden-rice` aŭ `/media/biology/erik-portrait`.]",
       invalidAttrs: "[nekonataj atributoj ĉe aŭdvidaĵo {{slug}}: {{tokens}}. Rekonataj ŝlosiloj en `{...}`: `size=N`, `caption=\"...\"`. Alternativa teksto iras en la norma bilda loko: `![Alt](/media/{{slug}}){...}`.]",

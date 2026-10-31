@@ -94,7 +94,8 @@
       invalidWidthShort: "Virheellinen leveys.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Avaa Wikimedia Commonsissa, uusi välilehti',
+      commonsBadge: 'Commons',
       missing: "Puuttuva media: {{slug}}",
       invalidSlug: "[virheellinen mediaslug: {{slug}}. Slugissa saa olla pieniä kirjaimia, numeroita ja yhdysmerkkejä sekä valinnainen `/` segmenttien välissä — esim. `/media/golden-rice` tai `/media/biology/erik-portrait`.]",
       invalidAttrs: "[tuntemattomia määritteitä medialle {{slug}}: {{tokens}}. Tunnistetut avaimet `{...}`-osassa: `size=N`, `caption=\"...\"`. Vaihtoehtoteksti tulee kuvan normaaliin kohtaan: `![Alt](/media/{{slug}}){...}`.]",
