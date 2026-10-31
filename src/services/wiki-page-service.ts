@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import MarkdownIt from 'markdown-it';
+import type { PoolClient } from 'pg';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
@@ -84,6 +85,8 @@ export interface WikiPageWriteInput {
 
 export interface WikiPageUpdateInput extends WikiPageWriteInput {
   newSlug?: string;
+  // On a rename, keep the old address as an alias of the new one.
+  keepAlias?: boolean;
   expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
@@ -343,7 +346,8 @@ export const recordProtectedWikiPageEdit = async (
   dalInstance: DataAccessLayer,
   page: WikiPageInstance,
   userId: string,
-  operation: string
+  operation: string,
+  transaction?: PoolClient
 ) => {
   await recordAdminEvent(dalInstance, {
     eventType: ADMIN_EVENT_PROTECTED_WIKI_PAGE_EDITED,
@@ -352,7 +356,7 @@ export const recordProtectedWikiPageEdit = async (
     targetId: page.id,
     targetRevId: page._revID,
     details: { operation },
-  });
+  }, transaction);
 };
 
 const findCurrentPageBySlug = async (slug: string) =>
@@ -706,6 +710,7 @@ export async function updateWikiPage(
   {
     slug,
     newSlug,
+    keepAlias = true,
     title,
     body,
     originalLanguage,
@@ -748,7 +753,12 @@ export async function updateWikiPage(
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
   assertExpectedRevision(page._revID, expectedRevId);
 
-  if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
+  const previousSlug = page.slug;
+  const isRename = Boolean(normalizedNewSlug && normalizedNewSlug !== previousSlug);
+  // An alias of this same page may be renamed onto (moving a page back); it is
+  // removed rather than treated as a conflict.
+  let aliasToRelease: PageAliasInstance | null = null;
+  if (normalizedNewSlug && isRename) {
     const slugMatch = await findCurrentPageBySlug(normalizedNewSlug);
     if (slugMatch) {
       throw new ConflictError(`Wiki page already exists: ${normalizedNewSlug}`, {
@@ -756,14 +766,15 @@ export async function updateWikiPage(
       });
     }
     const aliasMatch = await PageAlias.filterWhere({ slug: normalizedNewSlug }).first();
-    if (aliasMatch) {
+    if (aliasMatch && aliasMatch.pageId !== page.id) {
       throw new ConflictError(`Wiki page alias already exists: ${normalizedNewSlug}`, {
         slug: normalizedNewSlug,
       });
     }
+    aliasToRelease = aliasMatch ?? null;
   }
 
-  await page.newRevision({ id: userId }, { tags: ['update', ...tags] });
+  await page.newRevision({ id: userId }, { tags: ['update', ...(isRename ? ['rename'] : []), ...tags] });
 
   if (normalizedNewSlug !== undefined) page.slug = normalizedNewSlug;
   const mergedTitle = mergeLocalizedMap(page.title ?? null, title);
@@ -776,10 +787,18 @@ export async function updateWikiPage(
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
 
-  await saveWithExpectedRevision(page, expectedRevId);
-  if (protection) {
-    await recordProtectedWikiPageEdit(dalInstance, page, userId, 'update');
-  }
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(page, expectedRevId, 'expectedRevId', { transaction });
+    if (protection) {
+      await recordProtectedWikiPageEdit(dalInstance, page, userId, 'update', transaction);
+    }
+    if (isRename) {
+      if (aliasToRelease) await aliasToRelease.delete({ transaction });
+      if (keepAlias) {
+        await PageAlias.create({ pageId: page.id, slug: previousSlug, createdBy: userId }, { transaction });
+      }
+    }
+  });
 
   return toWikiPageResult(page);
 }

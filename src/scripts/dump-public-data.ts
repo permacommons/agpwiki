@@ -103,6 +103,18 @@ const VIEW_CONFIGS: ViewConfig[] = [
     ],
   },
   {
+    name: 'current_post_aliases',
+    baseTable: 'post_aliases',
+    alias: 'pal',
+    joins: [
+      {
+        target: `${TEMP_SCHEMA}.current_posts`,
+        alias: 'po',
+        on: 'po.id = pal.post_id',
+      },
+    ],
+  },
+  {
     name: 'current_page_checks',
     baseTable: 'page_checks',
     alias: 'pc',
@@ -477,6 +489,7 @@ async function createDump(): Promise<void> {
     await copyFromView('citations', `${TEMP_SCHEMA}.current_citations`, outputStream, env);
     await copyFromView('posts', `${TEMP_SCHEMA}.current_posts`, outputStream, env);
     await copyFromView('page_aliases', `${TEMP_SCHEMA}.current_page_aliases`, outputStream, env);
+    await copyFromView('post_aliases', `${TEMP_SCHEMA}.current_post_aliases`, outputStream, env);
     await copyFromView('page_checks', `${TEMP_SCHEMA}.current_page_checks`, outputStream, env);
     await copyFromView(
       'citation_claims',

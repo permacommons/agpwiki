@@ -292,6 +292,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .string()
     .describe(`Citation claim ID. Max ${CITATION_CLAIM_ID_MAX_LENGTH} characters.`);
   const optionalSlugSchema = slugSchema.optional().describe(slugSchema.description ?? '');
+  const keepAliasSchema = z
+    .boolean()
+    .optional()
+    .describe(
+      'When renaming with newSlug, keep the old address as an alias of the new one, answering with a permanent (301) redirect (default true). Pass false only when nothing links to the old address or it should be freed for another page.'
+    );
   const optionalCitationKeySchema = citationKeySchema
     .optional()
     .describe(citationKeySchema.description ?? '');
@@ -782,6 +788,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
+        keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
@@ -1912,6 +1919,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
+        keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,

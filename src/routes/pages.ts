@@ -76,6 +76,7 @@ import {
   updateWikiPage,
 } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
+import { canonicalUrlFor, queryStringOf, slugPath } from './lib/canonical.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -1204,6 +1205,10 @@ export const registerPageRoutes = (app: Express) => {
       })();
       if (!pageResult) return;
       const { page, revisionsResult } = pageResult;
+      if (page.slug !== slug) {
+        res.redirect(301, `${slugPath(page.slug)}${queryStringOf(req.originalUrl)}`);
+        return;
+      }
       const session = await resolveSessionUser(req);
       const editability = await getWikiPageEditability(
         dalInstance,
@@ -1573,6 +1578,7 @@ export const registerPageRoutes = (app: Express) => {
       );
       res.render('layout', {
         title: prepareTitle(title),
+        canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         labelHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
