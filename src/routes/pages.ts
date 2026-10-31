@@ -19,7 +19,7 @@ import {
   resolveSafeText,
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
-import { encodeSlugPath, isBlockedSlug, normalizeSlug } from '../lib/slug.js';
+import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import {
   WIKI_LINK_PREVIEW_ENDPOINT,
@@ -70,6 +70,7 @@ import {
 import {
   diffWikiPageRevisions,
   findCurrentPageById,
+  findCurrentPageBySlugOrAlias,
   listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
@@ -1197,6 +1198,12 @@ export const registerPageRoutes = (app: Express) => {
           return { page, revisionsResult };
         } catch (error) {
           if (error instanceof NotFoundError) {
+            const addressForm = toAddressForm(slug);
+            const match = addressForm !== slug ? await findCurrentPageBySlugOrAlias(addressForm) : null;
+            if (match) {
+              res.redirect(301, `${slugPath(match.slug)}${queryStringOf(req.originalUrl)}`);
+              return null;
+            }
             res.status(404).type('text').send(req.t('page.notFound'));
             return null;
           }

@@ -25,7 +25,7 @@ import {
   readProposalLinks,
   readProposalStatus,
 } from '../lib/proposal-status.js';
-import { isBlockedSlug } from '../lib/slug.js';
+import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
@@ -649,7 +649,7 @@ export async function createWikiPage(
   userId: string
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
-  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
@@ -723,7 +723,8 @@ export async function updateWikiPage(
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page update input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
-  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const rawNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const normalizedNewSlug = rawNewSlug === undefined ? undefined : toAddressForm(rawNewSlug);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
@@ -1093,7 +1094,7 @@ export async function addWikiPageAlias(
   userId: string
 ): Promise<WikiPageAliasResult> {
   const errors = new ValidationCollector('Invalid wiki alias input.');
-  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   const normalizedPageSlug = normalizeSlugInput(pageSlug, 'pageSlug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(lang, 'lang', errors);
