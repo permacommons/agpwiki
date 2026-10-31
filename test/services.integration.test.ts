@@ -96,6 +96,7 @@ import {
 } from '../src/services/page-protection-service.js';
 import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
 import {
+  countForumCommentsForPage,
   createForumComment,
   createForumThread,
   deleteForumComment,
@@ -2752,6 +2753,11 @@ test('Forum article threads normalize aliases and reject invalid slugs', async (
       user.id
     );
 
+    await assert.rejects(
+      () => createForumThread({ category: 'policy', pageSlug: aliasSlug, title: `${threadBaseTitle}-wrong`, body: 'Wrong category.', language: 'en' }, user.id),
+      ValidationError
+    );
+
     assert.equal(thread.pageSlug, slug);
 
     const articleThreads = await listForumThreads(dal, 'articles', {
@@ -2784,7 +2790,7 @@ test('Forum article threads normalize aliases and reject invalid slugs', async (
 
 test('Forum policy threads may optionally link to a wiki page', async () => {
   const dal = await getDal();
-  const slug = `forum-policy-${Date.now()}`;
+  const slug = `meta/forum-policy-${Date.now()}`;
   const aliasSlug = `${slug}-alias`;
   const slugPrefix = `${slug}%`;
   const threadBaseTitle = `forum-policy-thread-${Date.now()}`;
@@ -2834,8 +2840,23 @@ test('Forum policy threads may optionally link to a wiki page', async () => {
       user.id
     );
 
+    await assert.rejects(
+      () => createForumThread({ category: 'articles', pageSlug: aliasSlug, title: `${threadBaseTitle}-wrong`, body: 'Wrong category.', language: 'en' }, user.id),
+      ValidationError
+    );
+
     assert.equal(linkedThread.pageSlug, slug);
     assert.equal(genericThread.pageSlug, null);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 0);
+
+    await dal.query(
+      `UPDATE forum_threads SET category = 'articles', page_slug = $1 WHERE id = $2`,
+      [slug, genericThread.id]
+    );
+    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 1);
+
 
     const linkedThreads = await listForumThreads(dal, 'policy', {
       pageSlug: slug,

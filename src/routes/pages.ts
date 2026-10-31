@@ -12,7 +12,7 @@ import {
   toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import {
@@ -1469,11 +1469,10 @@ export const registerPageRoutes = (app: Express) => {
         path: req.path,
         queryParams,
       });
-      const forumPath = isArticle
-        ? forumCategoryPagePath('articles', canonicalSlug)
-        : canonicalSlug.startsWith('meta/')
-          ? forumCategoryPagePath('policy', canonicalSlug)
-          : '';
+      const discussionCategory = forumPageCategory(canonicalSlug);
+      const forumPath = discussionCategory
+        ? forumCategoryPagePath(discussionCategory, canonicalSlug)
+        : '';
       const signedIn = Boolean(session);
       const canShowOperatorEditLink =
         !revIdParam && !diffFrom && !diffTo && (!editability.isProtected || editability.isEditable);
@@ -1500,7 +1499,7 @@ export const registerPageRoutes = (app: Express) => {
         pageHref: pageViewPath(canonicalSlug, langOverride),
         isCurrentView,
         discussHref: forumPath || null,
-        discussCount: forumPath ? await countForumCommentsForPage(dalInstance, canonicalSlug) : 0,
+        discussCount: discussionCategory ? await countForumCommentsForPage(dalInstance, canonicalSlug, discussionCategory) : 0,
         editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
         t: req.t,
       });
