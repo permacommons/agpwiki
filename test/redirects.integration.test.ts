@@ -7,6 +7,7 @@ import express from 'express';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { ConflictError, NotFoundError } from '../src/lib/errors.js';
+import PageAlias from '../src/models/page-alias.js';
 import User from '../src/models/user.js';
 import { registerBlogRoutes } from '../src/routes/blog.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -151,6 +152,88 @@ test('Renaming a page keeps its old address as an alias unless asked not to', as
     assert.equal((await readWikiPage(dal, `${prefix}-old`)).id, other.id);
   } finally {
     await server.close();
+    await cleanup(prefix, userId);
+  }
+});
+
+test('A failed alias creation rolls back the page rename', async t => {
+  const dal = await getDal();
+  const prefix = `test-redirect-rollback-${Date.now()}-${randomBytes(6).toString('hex')}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const originalSlug = `${prefix}-old`;
+    const page = await createWikiPage(
+      dal,
+      { slug: originalSlug, title: { en: 'Original' }, body: { en: 'Text.' } },
+      user.id
+    );
+    const before = await dal.query('SELECT slug, _rev_id FROM pages WHERE id = $1', [page.id]);
+    const failure = new Error('Injected alias creation failure');
+    const saveAlias = t.mock.method(PageAlias.prototype, 'save', async () => {
+      throw failure;
+    });
+
+    await assert.rejects(
+      () => updateWikiPage(
+        dal,
+        { slug: originalSlug, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+        user.id
+      ),
+      error => error === failure
+    );
+    assert.equal(saveAlias.mock.callCount(), 1);
+
+    const after = await dal.query('SELECT slug, _rev_id FROM pages WHERE id = $1', [page.id]);
+    assert.deepEqual(after.rows, before.rows, 'a failed rename must preserve the slug and revision');
+    const aliases = await dal.query('SELECT id FROM page_aliases WHERE page_id = $1', [page.id]);
+    assert.equal(aliases.rows.length, 0);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('A failed alias creation rolls back the blog post rename', async t => {
+  const dal = await getDal();
+  const prefix = `test-post-rollback-${Date.now()}-${randomBytes(6).toString('hex')}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+    const originalSlug = `${prefix}-old`;
+    const post = await createBlogPost(
+      dal,
+      { slug: originalSlug, title: { en: 'Original' }, body: { en: 'Text.' } },
+      user.id
+    );
+    const before = await dal.query('SELECT slug, _rev_id FROM posts WHERE id = $1', [post.id]);
+    const failure = new Error('Injected post alias creation failure');
+    const query = dal.query.bind(dal);
+    let aliasAttempts = 0;
+    t.mock.method(dal, 'query', async (...args) => {
+      if (args[0].includes('INSERT INTO post_aliases')) {
+        aliasAttempts++;
+        throw failure;
+      }
+      return query(...args);
+    });
+
+    await assert.rejects(
+      () => updateBlogPost(
+        dal,
+        { slug: originalSlug, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+        user.id
+      ),
+      error => error === failure
+    );
+    assert.equal(aliasAttempts, 1);
+    const after = await dal.query('SELECT slug, _rev_id FROM posts WHERE id = $1', [post.id]);
+    assert.deepEqual(after.rows, before.rows, 'a failed rename must preserve the slug and revision');
+    const aliases = await dal.query('SELECT id FROM post_aliases WHERE post_id = $1', [post.id]);
+    assert.equal(aliases.rows.length, 0);
+  } finally {
     await cleanup(prefix, userId);
   }
 });

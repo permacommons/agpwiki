@@ -389,18 +389,21 @@ export async function updateBlogPost(
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.updatedAt = new Date();
-  await saveWithExpectedRevision(post, expectedRevId);
-  if (isRename) {
-    if (aliasToRelease) {
-      await dalInstance.query('DELETE FROM post_aliases WHERE id = $1', [aliasToRelease.id]);
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(post, expectedRevId, 'expectedRevId', { transaction });
+    if (isRename) {
+      if (aliasToRelease) {
+        await dalInstance.query('DELETE FROM post_aliases WHERE id = $1', [aliasToRelease.id], transaction);
+      }
+      if (keepAlias) {
+        await dalInstance.query(
+          'INSERT INTO post_aliases (post_id, slug, created_by) VALUES ($1, $2, $3)',
+          [post.id, previousSlug, userId],
+          transaction
+        );
+      }
     }
-    if (keepAlias) {
-      await dalInstance.query(
-        'INSERT INTO post_aliases (post_id, slug, created_by) VALUES ($1, $2, $3)',
-        [post.id, previousSlug, userId]
-      );
-    }
-  }
+  });
 
   return toBlogPostResult(post);
 }
