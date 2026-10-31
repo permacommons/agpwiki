@@ -2,7 +2,7 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { isBlockedSlug, normalizeSlug } from '../lib/slug.js';
+import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { buildWikipediaTitleVariants } from '../lib/wiki-links.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
@@ -108,6 +108,7 @@ export const findExistingWikiLinkSlugs = async (
   if (normalized.length === 0) {
     return new Set();
   }
+  const candidates = [...new Set(normalized.flatMap(slug => [slug, toAddressForm(slug)]))];
 
   const result = await dal.query(
     `SELECT slug
@@ -122,14 +123,15 @@ export const findExistingWikiLinkSlugs = async (
      WHERE a.slug = ANY($1::text[])
        AND p._old_rev_of IS NULL
        AND p._rev_deleted = false`,
-    [normalized]
+    [candidates]
   );
 
-  return new Set(
+  const existing = new Set(
     result.rows
       .map(row => row.slug)
       .filter((slug): slug is string => typeof slug === 'string')
   );
+  return new Set(normalized.filter(slug => existing.has(slug) || existing.has(toAddressForm(slug))));
 };
 
 const normalizeWikipediaHref = (href: string): string | null => {
@@ -257,7 +259,11 @@ export const buildLocalWikiPreview = async (
     return null;
   }
 
-  const page = await readWikiPage(dalInstance, normalizedSlug).catch(() => null);
+  let page = await readWikiPage(dalInstance, normalizedSlug).catch(() => null);
+  const addressForm = toAddressForm(normalizedSlug);
+  if (!page && addressForm !== normalizedSlug) {
+    page = await readWikiPage(dalInstance, addressForm).catch(() => null);
+  }
   if (!page) {
     return null;
   }
@@ -278,7 +284,7 @@ export const buildLocalWikiPreview = async (
   const preview: LocalWikiPreview = {
     title,
     html,
-    url: `/${encodeURIComponent(page.slug)}`,
+    url: `/${encodeSlugPath(page.slug)}`,
   };
 
   localPreviewCache.set(cacheKey, preview, LOCAL_PREVIEW_CACHE_TTL_MS);

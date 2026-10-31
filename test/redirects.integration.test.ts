@@ -13,6 +13,7 @@ import { registerBlogRoutes } from '../src/routes/blog.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { createBlogPost, readBlogPost, updateBlogPost } from '../src/services/blog-post-service.js';
 import { BLOG_AUTHOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import { buildLocalWikiPreview, findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import { createWikiPage, readWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
@@ -283,6 +284,72 @@ test('Renaming a blog post keeps its old address as an alias', async () => {
     assert.equal((await readBlogPost(dal, `${prefix}-old`)).slug, `${prefix}-third`);
   } finally {
     await server.close();
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Wiki links and previews recognize address variants and renamed aliases', async () => {
+  const dal = await getDal();
+  const prefix = `test-link-variants-${Date.now()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const page = await createWikiPage(
+      dal,
+      { slug: `${prefix}/belt-buckle`, title: { en: 'Belt buckle' }, body: { en: 'A buckle.' } },
+      user.id
+    );
+    const renamed = await updateWikiPage(
+      dal,
+      { slug: page.slug, newSlug: `${prefix}/belt-clasp`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    const variants = [renamed.slug, `${prefix}/BELT_CLASP`, `${prefix}/Belt Clasp`, `${prefix}/Belt_Buckle`];
+    const missing = `${prefix}/NOT_HERE`;
+    assert.deepEqual(await findExistingWikiLinkSlugs(dal, [...variants, missing]), new Set(variants));
+    for (const slug of variants) {
+      const preview = await buildLocalWikiPreview(dal, slug, 'en');
+      assert.equal(preview?.title, 'Belt buckle');
+      assert.equal(preview?.url, `/${renamed.slug}`);
+      assert.match(preview?.html ?? '', /A buckle\./);
+    }
+    assert.equal(await buildLocalWikiPreview(dal, missing, 'en'), null);
+
+    await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [page.id]);
+    assert.deepEqual(await findExistingWikiLinkSlugs(dal, variants), new Set());
+    assert.equal(await buildLocalWikiPreview(dal, variants[3], 'en'), null);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Wiki previews prefer legacy exact addresses over normalized matches', async () => {
+  const dal = await getDal();
+  const prefix = `test-link-exact-${Date.now()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const legacy = await createWikiPage(
+      dal,
+      { slug: `${prefix}-legacy`, title: { en: 'Legacy page' }, body: { en: 'Legacy content.' } },
+      user.id
+    );
+    const legacySlug = `${prefix}-Belt_Buckle`;
+    await dal.query('UPDATE pages SET slug = $1 WHERE id = $2', [legacySlug, legacy.id]);
+    const canonical = await createWikiPage(
+      dal,
+      { slug: `${prefix}-belt-buckle`, title: { en: 'Canonical page' }, body: { en: 'Canonical content.' } },
+      user.id
+    );
+    assert.deepEqual(
+      await findExistingWikiLinkSlugs(dal, [legacySlug, canonical.slug]),
+      new Set([legacySlug, canonical.slug])
+    );
+    assert.equal((await buildLocalWikiPreview(dal, legacySlug, 'en'))?.title, 'Legacy page');
+    assert.equal((await buildLocalWikiPreview(dal, `${prefix}-BELT_BUCKLE`, 'en'))?.title, 'Canonical page');
+  } finally {
     await cleanup(prefix, userId);
   }
 });
