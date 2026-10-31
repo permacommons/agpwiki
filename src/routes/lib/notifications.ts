@@ -73,6 +73,7 @@ export const renderNotificationList = ({
 /** What the bell's panel shows: the latest notifications, newest first. */
 export const toNotificationPanelData = (notifications: SiteNotification[], unreadCount: number, t: TFunction) => ({
   unreadCount,
+  bellLabel: unreadCount ? t('notifications.bellUnread', { count: unreadCount }) : t('notifications.title'),
   items: notifications.map(item => ({
     id: item.id,
     html: renderNotificationText(item, t),
