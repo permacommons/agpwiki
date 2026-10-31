@@ -4,8 +4,8 @@ import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
-// The page tabs link here, so a page shows at most one revision history.
-export const HISTORY_ANCHOR = 'history';
+// Colons cannot occur in generated Markdown heading IDs.
+export const HISTORY_ANCHOR = 'wiki:revision-history';
 
 export type HistoryRevision = {
   revId: string;
