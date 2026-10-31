@@ -58,7 +58,7 @@ test('formatMediaFigureHtml renders an image figure with local URL and attributi
       alt: 'Portrait alt text',
       size: 500,
       revId: 'rev-abc-123',
-      attribution: { commonsLinkLabel: 'Wikimedia Commons' },
+      commonsLink: { label: 'Open on Wikimedia Commons, new tab', badge: 'Commons' },
     }
   );
   assert.match(html, /<figure class="media media-image media-image-hero"/);
@@ -70,20 +70,38 @@ test('formatMediaFigureHtml renders an image figure with local URL and attributi
   assert.match(html, /loading="lazy"/);
   assert.match(html, /<figcaption><span class="media-caption-text">A portrait<\/span>/);
   assert.match(html, /CC-BY-SA-4\.0/);
-  assert.match(html, /Wikimedia Commons<\/a>/);
 });
 
-test('formatMediaFigureHtml omits Commons backlink when no label is supplied', () => {
-  // Lib stays a pure HTML builder — no English baked in. Callers that
-  // want the Commons link must pass a translated label.
+test('formatMediaFigureHtml makes the image the link to its Commons page', () => {
+  const data = buildImageData();
+  const html = formatMediaFigureHtml(
+    { slug: 'erik-portrait', data },
+    {
+      caption: 'A portrait',
+      size: 250,
+      commonsLink: { label: 'Open on Wikimedia Commons, new tab', badge: 'Commons' },
+    }
+  );
+  const link = html.match(/<a class="media-commons-link"[^>]*>/)?.[0] ?? '';
+  assert.ok(link.includes(`href="${data.commonsPageUrl}"`));
+  assert.ok(link.includes('target="_blank"'));
+  assert.ok(link.includes('rel="noreferrer noopener"'));
+  assert.ok(link.includes('aria-label="Open on Wikimedia Commons, new tab"'));
+  // The image and the corner badge sit inside the link; the caption does not.
+  assert.match(html, /<a class="media-commons-link"[^>]*><img [^>]*><span class="media-commons-badge" aria-hidden="true">Commons ↗<\/span><\/a><figcaption>/);
+  // The image link replaces the old text backlink in the attribution line.
+  const caption = html.slice(html.indexOf('<figcaption>'));
+  assert.doesNotMatch(caption, /<a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
+  assert.match(caption, /CC-BY-SA-4\.0/);
+});
+
+test('formatMediaFigureHtml leaves the image unlinked without localized link strings', () => {
+  // Lib stays a pure HTML builder — no English baked in.
   const html = formatMediaFigureHtml(
     { slug: 'erik-portrait', data: buildImageData() },
     { caption: 'A portrait', size: 500 }
   );
-  assert.doesNotMatch(html, /Wikimedia Commons/);
-  // The link to the file's Commons page is what's suppressed; other
-  // commons.wikimedia.org URLs (attribution user pages, the figure's
-  // data-commons-page hook) still appear.
+  assert.doesNotMatch(html, /media-commons-link/);
   assert.doesNotMatch(html, /<a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:/);
 });
 

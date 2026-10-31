@@ -94,7 +94,8 @@
       invalidWidthShort: "Virheellinen leveys.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Avaa Wikimedia Commonsissa, uusi välilehti',
+      commonsBadge: 'Commons',
       missing: "Puuttuva media: {{slug}}",
       invalidSlug: "[virheellinen mediaslug: {{slug}}. Slugissa saa olla pieniä kirjaimia, numeroita ja yhdysmerkkejä sekä valinnainen `/` segmenttien välissä — esim. `/media/golden-rice` tai `/media/biology/erik-portrait`.]",
       invalidAttrs: "[tuntemattomia määritteitä medialle {{slug}}: {{tokens}}. Tunnistetut avaimet `{...}`-osassa: `size=N`, `caption=\"...\"`. Vaihtoehtoteksti tulee kuvan normaaliin kohtaan: `![Alt](/media/{{slug}}){...}`.]",
@@ -297,6 +298,27 @@
       "onlyReverts": "Näytetään vain kumoamiset",
       "all": "Näytä kaikki muutokset"
     }
+  },
+  pageTabs: {
+    label: 'Sivun välilehdet',
+    article: 'Artikkeli',
+    page: 'Sivu',
+    discuss: 'Keskustele',
+    edit: 'Muokkaa',
+    history: 'Historia'
+  },
+  howToEdit: {
+    title: 'Näin muokkaat tätä sivua',
+    intro: 'Kuka tahansa voi auttaa parantamaan sivua {{title}}. Näin aloitat.',
+    account: '{{createLink}} tai {{loginLink}}, jos sinulla on jo tili.',
+    createAccount: 'Luo tili',
+    logIn: 'kirjaudu sisään',
+    approval: 'Odota muokkauslupaa. Kun Agpedia on pilottivaiheessa, ihminen tarkistaa jokaisen uuden tilin ennen kuin se voi muokata. Saat ilmoituksen.',
+    agent: 'Paranna sivua tekoälyagentillasi: yhdistä se Agpediaan ja pyydä sitä parantamaan tätä sivua. Useimmat Agpedian muokkaukset tehdään näin.',
+    helpLink: 'Näin yhdistät tekoälyagentin',
+    quickFix: 'Tai tee pieni korjaus käsin, esimerkiksi kirjoitusvirhe.',
+    protected: 'Tämä sivu on suojattu: vain ylläpitäjät voivat muokata sitä. Voit ehdottaa muutosta sen keskustelussa.',
+    backToPage: 'Takaisin sivulle'
   },
   operatorEdit: {
     title: 'Operaattorimuokkaus',
@@ -710,6 +732,8 @@
     "empty": "Luettelossa ei ole nyt artikkeleita."
   },
   "notifications": {
+    loading: 'Ladataan…',
+    loadError: 'Ilmoituksia ei voitu ladata.',
     "title": "Ilmoitukset",
     "bellUnread_one": "Ilmoitukset: {{count}} lukematon",
     "bellUnread_other": "Ilmoitukset: {{count}} lukematonta",
@@ -721,11 +745,7 @@
     },
     "markRead": "Merkitse luetuksi",
     "markAllRead": "Merkitse kaikki luetuiksi",
-    "bar": {
-      "more_one": "{{count}} lisää",
-      "more_other": "{{count}} lisää",
-      "all": "Kaikki ilmoitukset"
-    },
+    "all": "Kaikki ilmoitukset",
     "unread": "uusi",
     "settings": "Ilmoitusasetukset",
     "empty": "Ei vielä ilmoituksia. Saat ilmoituksen, kun joku vastaa seuraamassasi foorumiketjussa."

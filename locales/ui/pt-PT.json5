@@ -93,7 +93,8 @@
       invalidWidthShort: "Largura inválida.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Abrir na Wikimedia Commons, novo separador',
+      commonsBadge: 'Commons',
       missing: "Multimédia em falta: {{slug}}",
       invalidSlug: "[slug de multimédia inválido: {{slug}}. Os slugs devem usar letras minúsculas, dígitos e hífenes, com `/` opcional entre segmentos — por exemplo `/media/golden-rice` ou `/media/biology/erik-portrait`.]",
       invalidAttrs: "[atributos desconhecidos na multimédia {{slug}}: {{tokens}}. Chaves reconhecidas dentro de `{...}`: `size=N`, `caption=\"...\"`. O texto alternativo fica na posição normal da imagem: `![Alt](/media/{{slug}}){...}`.]",
@@ -296,6 +297,27 @@
       "onlyReverts": "A mostrar só reversões",
       "all": "Mostrar todas as alterações"
     }
+  },
+  pageTabs: {
+    label: 'Separadores da página',
+    article: 'Artigo',
+    page: 'Página',
+    discuss: 'Discutir',
+    edit: 'Editar',
+    history: 'Histórico'
+  },
+  howToEdit: {
+    title: 'Como editar esta página',
+    intro: 'Qualquer pessoa pode ajudar a melhorar {{title}}. Veja como começar.',
+    account: '{{createLink}} ou {{loginLink}} se já tiver uma.',
+    createAccount: 'Crie uma conta',
+    logIn: 'inicie sessão',
+    approval: 'Aguarde a aprovação para editar. Enquanto a Agpedia está na fase piloto, uma pessoa analisa cada conta nova antes de poder editar. Será avisado.',
+    agent: 'Melhore a página com o seu agente de IA: ligue-o à Agpedia e peça-lhe que melhore esta página. A maioria das edições na Agpedia é feita assim.',
+    helpLink: 'Como ligar um agente de IA',
+    quickFix: 'Ou faça uma correção rápida à mão, por exemplo uma gralha.',
+    protected: 'Esta página está protegida: só os administradores a podem editar. Pode sugerir uma alteração na discussão dela.',
+    backToPage: 'Voltar à página'
   },
   operatorEdit: {
     title: 'Edição de operador',
@@ -708,6 +730,8 @@
     "empty": "De momento, nenhum artigo nesta lista."
   },
   "notifications": {
+    loading: 'A carregar…',
+    loadError: 'Não foi possível carregar as notificações.',
     "title": "Notificações",
     "bellUnread_one": "Notificações: {{count}} por ler",
     "bellUnread_other": "Notificações: {{count}} por ler",
@@ -719,11 +743,7 @@
     },
     "markRead": "Marcar como lida",
     "markAllRead": "Marcar todas como lidas",
-    "bar": {
-      "more_one": "Mais {{count}}",
-      "more_other": "Mais {{count}}",
-      "all": "Todas as notificações"
-    },
+    "all": "Todas as notificações",
     "unread": "nova",
     "settings": "Definições de notificações",
     "empty": "Ainda não há notificações. Recebes uma quando alguém responde num tópico do fórum que segues."

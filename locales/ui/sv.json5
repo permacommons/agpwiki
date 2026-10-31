@@ -94,7 +94,8 @@
       invalidWidthShort: "Ogiltig bredd.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Öppna på Wikimedia Commons, ny flik',
+      commonsBadge: 'Commons',
       missing: "Saknat media: {{slug}}",
       invalidSlug: "[ogiltig mediaslug: {{slug}}. Sluggar måste bestå av små bokstäver, siffror och bindestreck, med valfritt `/` mellan segment — t.ex. `/media/golden-rice` eller `/media/biology/erik-portrait`.]",
       invalidAttrs: "[okända attribut på media {{slug}}: {{tokens}}. Kända nycklar i `{...}`: `size=N`, `caption=\"...\"`. Alternativtext placeras i standardpositionen för bilden: `![Alt](/media/{{slug}}){...}`.]",
@@ -297,6 +298,27 @@
       "onlyReverts": "Visar bara återställningar",
       "all": "Visa alla ändringar"
     }
+  },
+  pageTabs: {
+    label: 'Sidflikar',
+    article: 'Artikel',
+    page: 'Sida',
+    discuss: 'Diskutera',
+    edit: 'Redigera',
+    history: 'Historik'
+  },
+  howToEdit: {
+    title: 'Så redigerar du den här sidan',
+    intro: 'Alla kan hjälpa till att förbättra {{title}}. Så här börjar du.',
+    account: '{{createLink}}, eller {{loginLink}} om du redan har ett.',
+    createAccount: 'Skapa ett konto',
+    logIn: 'logga in',
+    approval: 'Vänta på godkännande för att redigera. Medan Agpedia är i pilotfasen granskar en person varje nytt konto innan det kan redigera. Du får ett meddelande.',
+    agent: 'Förbättra sidan med din AI-agent: koppla den till Agpedia och be den förbättra den här sidan. De flesta ändringar på Agpedia görs så.',
+    helpLink: 'Så kopplar du en AI-agent',
+    quickFix: 'Eller gör en snabb rättelse för hand, till exempel ett stavfel.',
+    protected: 'Den här sidan är skyddad: bara administratörer kan redigera den. Du kan föreslå en ändring i dess diskussion.',
+    backToPage: 'Tillbaka till sidan'
   },
   operatorEdit: {
     title: 'Operatörsredigering',
@@ -710,6 +732,8 @@
     "empty": "Inga artiklar i listan just nu."
   },
   "notifications": {
+    loading: 'Laddar …',
+    loadError: 'Det gick inte att läsa in aviseringarna.',
     "title": "Aviseringar",
     "bellUnread_one": "Aviseringar: {{count}} olästa",
     "bellUnread_other": "Aviseringar: {{count}} olästa",
@@ -721,11 +745,7 @@
     },
     "markRead": "Markera som läst",
     "markAllRead": "Markera alla som lästa",
-    "bar": {
-      "more_one": "{{count}} till",
-      "more_other": "{{count}} till",
-      "all": "Alla aviseringar"
-    },
+    "all": "Alla aviseringar",
     "unread": "ny",
     "settings": "Inställningar för aviseringar",
     "empty": "Inga aviseringar än. Du får en när någon svarar i en forumtråd som du följer."

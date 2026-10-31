@@ -93,7 +93,8 @@
       invalidWidthShort: "幅が無効です。",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'ウィキメディア・コモンズで開く（新しいタブ）',
+      commonsBadge: 'Commons',
       missing: "見つからないメディア: {{slug}}",
       invalidSlug: "[無効なメディアスラッグ: {{slug}}。スラッグは小文字、数字、ハイフンで構成し、任意で区切りに `/` を使えます — 例: `/media/golden-rice` または `/media/biology/erik-portrait`。]",
       invalidAttrs: "[メディア {{slug}} の不明な属性: {{tokens}}。`{...}` 内で使えるキー: `size=N`, `caption=\"...\"`。代替テキストは標準の画像位置に置きます: `![Alt](/media/{{slug}}){...}`。]",
@@ -296,6 +297,27 @@
       "onlyReverts": "差し戻しのみ表示中",
       "all": "すべての変更を表示"
     }
+  },
+  pageTabs: {
+    label: 'ページのタブ',
+    article: '記事',
+    page: 'ページ',
+    discuss: '議論',
+    edit: '編集',
+    history: '履歴'
+  },
+  howToEdit: {
+    title: 'このページの編集方法',
+    intro: '誰でも{{title}}の改善に協力できます。始め方は次のとおりです。',
+    account: '{{createLink}}。すでにアカウントがある場合は{{loginLink}}。',
+    createAccount: 'アカウントを作成',
+    logIn: 'ログイン',
+    approval: '編集の承認を待ちます。Agpediaの試験運用中は、新しいアカウントが編集できるようになる前に人が確認します。承認されると通知が届きます。',
+    agent: 'AIエージェントでページを改善します。エージェントをAgpediaに接続し、このページの改善を依頼してください。Agpediaの編集の多くはこの方法で行われています。',
+    helpLink: 'AIエージェントの接続方法',
+    quickFix: 'または、誤字などの小さな修正を手作業で行います。',
+    protected: 'このページは保護されています。編集できるのは管理者だけです。変更はこのページの議論で提案できます。',
+    backToPage: 'ページに戻る'
   },
   operatorEdit: {
     title: 'オペレーター編集',
@@ -708,6 +730,8 @@
     "empty": "現在この一覧に記事はありません。"
   },
   "notifications": {
+    loading: '読み込み中…',
+    loadError: '通知を読み込めませんでした。',
     "title": "通知",
     "bellUnread_one": "通知：未読 {{count}} 件",
     "bellUnread_other": "通知：未読 {{count}} 件",
@@ -719,11 +743,7 @@
     },
     "markRead": "既読にする",
     "markAllRead": "すべて既読にする",
-    "bar": {
-      "more_one": "ほか {{count}} 件",
-      "more_other": "ほか {{count}} 件",
-      "all": "すべての通知"
-    },
+    "all": "すべての通知",
     "unread": "新着",
     "settings": "通知の設定",
     "empty": "通知はまだありません。フォローしているフォーラムのスレッドで誰かが返信すると届きます。"

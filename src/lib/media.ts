@@ -1,3 +1,5 @@
+import { encodeSlugPath } from './slug.js';
+
 export const MEDIA_SLUG_MAX_LENGTH = 200;
 export const MEDIA_TITLE_MAX_LENGTH = 300;
 export const MEDIA_COMMONS_TITLE_MAX_LENGTH = 255;
@@ -135,10 +137,9 @@ export interface MediaFigureOptions {
   alt?: string;
   size: number;
   revId?: string | null;
-  // Localized strings for parts of the figure that need translation
-  // (currently just the Commons backlink label). When omitted the
-  // Commons link is suppressed — see `MediaAttributionStrings`.
-  attribution?: MediaAttributionStrings;
+  // Localized strings for the link from the image to its Commons page.
+  // When omitted the image is not a link — see `MediaCommonsLinkStrings`.
+  commonsLink?: MediaCommonsLinkStrings;
 }
 
 export interface MediaFigureSource {
@@ -146,19 +147,17 @@ export interface MediaFigureSource {
   data: MediaData;
 }
 
-// Caller-supplied localized strings used when assembling the
-// attribution line. Routes/renderers translate via i18next and pass
-// these in; lib stays a pure HTML builder with no English baked in.
-// If `commonsLinkLabel` is not supplied the Commons backlink is
-// omitted — callers that want it must provide a translated label.
-export interface MediaAttributionStrings {
-  commonsLinkLabel?: string;
+// Caller-supplied localized strings for the image link. Routes and
+// renderers translate via i18next and pass these in; lib stays a pure
+// HTML builder with no English baked in.
+export interface MediaCommonsLinkStrings {
+  // Accessible name of the link, e.g. "Open on Wikimedia Commons, new tab".
+  label: string;
+  // Short text of the corner badge that marks the link as external.
+  badge: string;
 }
 
-const formatAttributionHtml = (
-  data: MediaData,
-  strings: MediaAttributionStrings = {}
-): string => {
+const formatAttributionHtml = (data: MediaData): string => {
   const parts: string[] = [];
   if (data.attributionHtml) {
     parts.push(data.attributionHtml);
@@ -170,11 +169,6 @@ const formatAttributionHtml = (
       ? `<a href="${escapeAttr(data.licenseUrl)}" target="_blank" rel="noreferrer noopener">${escapeHtml(data.license)}</a>`
       : escapeHtml(data.license);
     parts.push(licenseHtml);
-  }
-  if (data.commonsPageUrl && strings.commonsLinkLabel) {
-    parts.push(
-      `<a href="${escapeAttr(data.commonsPageUrl)}" target="_blank" rel="noreferrer noopener">${escapeHtml(strings.commonsLinkLabel)}</a>`
-    );
   }
   if (parts.length === 0) return '';
   return `<span class="media-attribution">${parts.join(' · ')}</span>`;
@@ -193,8 +187,7 @@ const formatFigcaptionContents = (
 };
 
 const buildLocalMediaUrl = (slug: string, size: number, revId?: string | null): string => {
-  const segments = slug.split('/').map(encodeURIComponent).join('/');
-  const base = `/media-files/${segments}/${size}`;
+  const base = `/media-files/${encodeSlugPath(slug)}/${size}`;
   return revId ? `${base}?v=${encodeURIComponent(revId)}` : base;
 };
 
@@ -219,7 +212,7 @@ export const formatMediaFigureHtml = (
     || undefined;
   const alt = options.alt?.trim() ?? '';
   const size = options.size;
-  const attributionHtml = formatAttributionHtml(data, options.attribution);
+  const attributionHtml = formatAttributionHtml(data);
   const figcaption = formatFigcaptionContents(captionInner, attributionHtml);
   const figcaptionTag = figcaption ? `<figcaption>${figcaption}</figcaption>` : '';
 
@@ -236,7 +229,12 @@ export const formatMediaFigureHtml = (
   // hero); custom sizes fall into whichever bucket the threshold
   // implies.
   const layoutClass = size <= MEDIA_HERO_THRESHOLD_PX ? 'media-image-flow' : 'media-image-hero';
-  return `<figure class="media media-image ${layoutClass}"${linkAttr}><img src="${escapeAttr(srcUrl)}" alt="${escapeAttr(alt)}"${widthAttr}${heightAttr} loading="lazy">${figcaptionTag}</figure>`;
+  const imgHtml = `<img src="${escapeAttr(srcUrl)}" alt="${escapeAttr(alt)}"${widthAttr}${heightAttr} loading="lazy">`;
+  const linkedImgHtml =
+    data.commonsPageUrl && options.commonsLink
+      ? `<a class="media-commons-link" href="${escapeAttr(data.commonsPageUrl)}" target="_blank" rel="noreferrer noopener" aria-label="${escapeAttr(options.commonsLink.label)}">${imgHtml}<span class="media-commons-badge" aria-hidden="true">${escapeHtml(options.commonsLink.badge)} ↗</span></a>`
+      : imgHtml;
+  return `<figure class="media media-image ${layoutClass}"${linkAttr}>${linkedImgHtml}${figcaptionTag}</figure>`;
 };
 
 export const formatMediaInlineHtml = (

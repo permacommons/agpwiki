@@ -93,7 +93,8 @@
       invalidWidthShort: "Geçersiz genişlik.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Wikimedia Commons\'ta aç, yeni sekme',
+      commonsBadge: 'Commons',
       missing: "Eksik medya: {{slug}}",
       invalidSlug: "[geçersiz medya slug’ı: {{slug}}. Slug küçük harfler, rakamlar ve kısa çizgilerden oluşmalı, segmentler arasında isteğe bağlı `/` bulunabilir — ör. `/media/golden-rice` veya `/media/biology/erik-portrait`.]",
       invalidAttrs: "[{{slug}} medyasında bilinmeyen öznitelikler: {{tokens}}. `{...}` içinde tanınan anahtarlar: `size=N`, `caption=\"...\"`. Alternatif metin standart görsel konumuna yazılır: `![Alt](/media/{{slug}}){...}`.]",
@@ -296,6 +297,27 @@
       "onlyReverts": "Yalnızca geri almalar gösteriliyor",
       "all": "Tüm değişiklikleri göster"
     }
+  },
+  pageTabs: {
+    label: 'Sayfa sekmeleri',
+    article: 'Madde',
+    page: 'Sayfa',
+    discuss: 'Tartış',
+    edit: 'Düzenle',
+    history: 'Geçmiş'
+  },
+  howToEdit: {
+    title: 'Bu sayfa nasıl düzenlenir',
+    intro: 'Herkes {{title}} sayfasını geliştirmeye yardım edebilir. Şöyle başlayın.',
+    account: '{{createLink}} ya da hesabınız varsa {{loginLink}}.',
+    createAccount: 'Hesap oluşturun',
+    logIn: 'giriş yapın',
+    approval: 'Düzenleme onayını bekleyin. Agpedia pilot aşamasındayken her yeni hesabı düzenleme yapabilmeden önce bir kişi inceler. Size haber verilir.',
+    agent: 'Sayfayı yapay zekâ ajanınızla geliştirin: onu Agpedia’ya bağlayın ve bu sayfayı geliştirmesini isteyin. Agpedia’daki düzenlemelerin çoğu böyle yapılır.',
+    helpLink: 'Yapay zekâ ajanı nasıl bağlanır',
+    quickFix: 'Ya da yazım hatası gibi küçük bir düzeltmeyi elle yapın.',
+    protected: 'Bu sayfa koruma altında: yalnızca yöneticiler düzenleyebilir. Tartışmasında bir değişiklik önerebilirsiniz.',
+    backToPage: 'Sayfaya dön'
   },
   operatorEdit: {
     title: 'Operatör düzenlemesi',
@@ -708,6 +730,8 @@
     "empty": "Şu anda bu listede madde yok."
   },
   "notifications": {
+    loading: 'Yükleniyor…',
+    loadError: 'Bildirimler yüklenemedi.',
     "title": "Bildirimler",
     "bellUnread_one": "Bildirimler: {{count}} okunmamış",
     "bellUnread_other": "Bildirimler: {{count}} okunmamış",
@@ -719,11 +743,7 @@
     },
     "markRead": "Okundu olarak işaretle",
     "markAllRead": "Tümünü okundu olarak işaretle",
-    "bar": {
-      "more_one": "{{count}} tane daha",
-      "more_other": "{{count}} tane daha",
-      "all": "Tüm bildirimler"
-    },
+    "all": "Tüm bildirimler",
     "unread": "yeni",
     "settings": "Bildirim ayarları",
     "empty": "Henüz bildirim yok. Takip ettiğiniz bir forum konusunda biri yanıt verdiğinde bildirim alırsınız."

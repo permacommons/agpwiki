@@ -94,7 +94,8 @@
       invalidWidthShort: "Nevalida larĝo.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Malfermi en Vikimedia Komunejo, nova langeto',
+      commonsBadge: 'Commons',
       missing: "Mankanta aŭdvidaĵo: {{slug}}",
       invalidSlug: "[nevalida aŭdvidaĵa identigilo: {{slug}}. Identigiloj devas esti minusklaj literoj, ciferoj kaj streketoj, kun laŭvola `/` inter segmentoj — ekz. `/media/golden-rice` aŭ `/media/biology/erik-portrait`.]",
       invalidAttrs: "[nekonataj atributoj ĉe aŭdvidaĵo {{slug}}: {{tokens}}. Rekonataj ŝlosiloj en `{...}`: `size=N`, `caption=\"...\"`. Alternativa teksto iras en la norma bilda loko: `![Alt](/media/{{slug}}){...}`.]",
@@ -297,6 +298,27 @@
       "onlyReverts": "Montriĝas nur malfaroj",
       "all": "Montri ĉiujn ŝanĝojn"
     }
+  },
+  pageTabs: {
+    label: 'Paĝaj langetoj',
+    article: 'Artikolo',
+    page: 'Paĝo',
+    discuss: 'Diskuti',
+    edit: 'Redakti',
+    history: 'Historio'
+  },
+  howToEdit: {
+    title: 'Kiel redakti ĉi tiun paĝon',
+    intro: 'Ĉiu povas helpi plibonigi {{title}}. Jen kiel komenci.',
+    account: '{{createLink}}, aŭ {{loginLink}} se vi jam havas konton.',
+    createAccount: 'Kreu konton',
+    logIn: 'ensalutu',
+    approval: 'Atendu permeson redakti. Dum Agpedia estas en sia prova fazo, homo kontrolas ĉiun novan konton antaŭ ol ĝi povas redakti. Vi ricevos sciigon.',
+    agent: 'Plibonigu la paĝon per via AI-agento: konektu ĝin al Agpedia kaj petu ĝin plibonigi ĉi tiun paĝon. Plej multaj redaktoj en Agpedia fariĝas tiel.',
+    helpLink: 'Kiel konekti AI-agenton',
+    quickFix: 'Aŭ faru rapidan korekton mane, ekzemple pri tajperaro.',
+    protected: 'Ĉi tiu paĝo estas protektita: nur administrantoj povas redakti ĝin. Vi povas proponi ŝanĝon en ĝia diskuto.',
+    backToPage: 'Reen al la paĝo'
   },
   operatorEdit: {
     title: 'Operaciista redakto',
@@ -708,6 +730,8 @@
     "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
   "notifications": {
+    loading: 'Ŝargante…',
+    loadError: 'Ne eblis ŝargi la sciigojn.',
     "title": "Sciigoj",
     "bellUnread_one": "Sciigoj: {{count}} nelegita",
     "bellUnread_other": "Sciigoj: {{count}} nelegitaj",
@@ -719,11 +743,7 @@
     },
     "markRead": "Marki kiel legitan",
     "markAllRead": "Marki ĉiujn kiel legitajn",
-    "bar": {
-      "more_one": "{{count}} plia",
-      "more_other": "{{count}} pliaj",
-      "all": "Ĉiuj sciigoj"
-    },
+    "all": "Ĉiuj sciigoj",
     "unread": "nova",
     "settings": "Agordoj pri sciigoj",
     "empty": "Ankoraŭ neniuj sciigoj. Vi ricevos unu, kiam iu respondos en forumfadeno, kiun vi sekvas."

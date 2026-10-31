@@ -94,7 +94,8 @@
       invalidWidthShort: "Érvénytelen szélesség.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Megnyitás a Wikimedia Commonsban, új lapon',
+      commonsBadge: 'Commons',
       missing: "Hiányzó média: {{slug}}",
       invalidSlug: "[érvénytelen médiaslug: {{slug}}. A slug kisbetűkből, számokból és kötőjelekből állhat, opcionális `/` jellel a szegmensek között — pl. `/media/golden-rice` vagy `/media/biology/erik-portrait`.]",
       invalidAttrs: "[ismeretlen attribútumok a(z) {{slug}} médián: {{tokens}}. Felismert kulcsok a `{...}` részben: `size=N`, `caption=\"...\"`. A helyettesítő szöveg a szabványos képpozícióba kerül: `![Alt](/media/{{slug}}){...}`.]",
@@ -297,6 +298,27 @@
       "onlyReverts": "Csak a visszaállítások látszanak",
       "all": "Minden változás"
     }
+  },
+  pageTabs: {
+    label: 'Lapfülek',
+    article: 'Szócikk',
+    page: 'Lap',
+    discuss: 'Vita',
+    edit: 'Szerkesztés',
+    history: 'Laptörténet'
+  },
+  howToEdit: {
+    title: 'Hogyan szerkesztheted ezt a lapot',
+    intro: 'Bárki segíthet jobbá tenni ezt: {{title}}. Így kezdheted.',
+    account: '{{createLink}}, vagy {{loginLink}}, ha már van fiókod.',
+    createAccount: 'Hozz létre egy fiókot',
+    logIn: 'jelentkezz be',
+    approval: 'Várd meg a szerkesztési engedélyt. Amíg az Agpedia kísérleti szakaszban van, egy ember átnéz minden új fiókot, mielőtt szerkeszthetne. Értesítést kapsz.',
+    agent: 'Javítsd a lapot a MI-ügynököddel: kapcsold az Agpediához, és kérd meg, hogy javítsa ezt a lapot. Az Agpedián a legtöbb szerkesztés így történik.',
+    helpLink: 'Hogyan kapcsolj be egy MI-ügynököt',
+    quickFix: 'Vagy javíts kézzel egy apróságot, például egy elírást.',
+    protected: 'Ez a lap védett: csak adminisztrátorok szerkeszthetik. A vitalapján javasolhatsz változtatást.',
+    backToPage: 'Vissza a laphoz'
   },
   operatorEdit: {
     title: 'Operátori szerkesztés',
@@ -710,6 +732,8 @@
     "empty": "Jelenleg nincs szócikk ebben a listában."
   },
   "notifications": {
+    loading: 'Betöltés…',
+    loadError: 'Az értesítéseket nem sikerült betölteni.',
     "title": "Értesítések",
     "bellUnread_one": "Értesítések: {{count}} olvasatlan",
     "bellUnread_other": "Értesítések: {{count}} olvasatlan",
@@ -721,11 +745,7 @@
     },
     "markRead": "Megjelölés olvasottként",
     "markAllRead": "Összes megjelölése olvasottként",
-    "bar": {
-      "more_one": "Még {{count}}",
-      "more_other": "Még {{count}}",
-      "all": "Összes értesítés"
-    },
+    "all": "Összes értesítés",
     "unread": "új",
     "settings": "Értesítési beállítások",
     "empty": "Még nincsenek értesítések. Akkor kapsz egyet, ha valaki válaszol egy általad követett fórumszálban."

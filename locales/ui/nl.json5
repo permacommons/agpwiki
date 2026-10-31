@@ -94,7 +94,8 @@
       invalidWidthShort: "Ongeldige breedte.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Openen op Wikimedia Commons, nieuw tabblad',
+      commonsBadge: 'Commons',
       missing: "Ontbrekende media: {{slug}}",
       invalidSlug: "[ongeldige mediaslug: {{slug}}. Slugs moeten kleine letters, cijfers en koppeltekens bevatten, met optioneel `/` tussen segmenten — bijv. `/media/golden-rice` of `/media/biology/erik-portrait`.]",
       invalidAttrs: "[onbekende attributen op media {{slug}}: {{tokens}}. Herkende sleutels binnen `{...}`: `size=N`, `caption=\"...\"`. Alternatieve tekst staat op de standaard afbeeldingspositie: `![Alt](/media/{{slug}}){...}`.]",
@@ -297,6 +298,27 @@
       "onlyReverts": "Alleen terugdraaiingen worden getoond",
       "all": "Alle wijzigingen tonen"
     }
+  },
+  pageTabs: {
+    label: 'Paginatabbladen',
+    article: 'Artikel',
+    page: 'Pagina',
+    discuss: 'Overleg',
+    edit: 'Bewerken',
+    history: 'Geschiedenis'
+  },
+  howToEdit: {
+    title: 'Zo bewerk je deze pagina',
+    intro: 'Iedereen kan helpen {{title}} te verbeteren. Zo begin je.',
+    account: '{{createLink}}, of {{loginLink}} als je er al een hebt.',
+    createAccount: 'Maak een account aan',
+    logIn: 'meld je aan',
+    approval: 'Wacht op goedkeuring om te bewerken. Zolang Agpedia in de proeffase is, bekijkt een persoon elk nieuw account voordat het kan bewerken. Je krijgt bericht.',
+    agent: 'Verbeter de pagina met je AI-agent: koppel hem aan Agpedia en vraag hem deze pagina te verbeteren. De meeste bewerkingen op Agpedia gaan zo.',
+    helpLink: 'Zo koppel je een AI-agent',
+    quickFix: 'Of maak met de hand een snelle correctie, bijvoorbeeld een typfout.',
+    protected: 'Deze pagina is beveiligd: alleen beheerders kunnen hem bewerken. Je kunt een wijziging voorstellen in het overleg.',
+    backToPage: 'Terug naar de pagina'
   },
   operatorEdit: {
     title: 'Operatorbewerking',
@@ -709,6 +731,8 @@
     "empty": "Op dit moment geen artikelen in deze lijst."
   },
   "notifications": {
+    loading: 'Laden…',
+    loadError: 'Meldingen konden niet worden geladen.',
     "title": "Meldingen",
     "bellUnread_one": "Meldingen: {{count}} ongelezen",
     "bellUnread_other": "Meldingen: {{count}} ongelezen",
@@ -720,11 +744,7 @@
     },
     "markRead": "Markeren als gelezen",
     "markAllRead": "Alles markeren als gelezen",
-    "bar": {
-      "more_one": "Nog {{count}}",
-      "more_other": "Nog {{count}}",
-      "all": "Alle meldingen"
-    },
+    "all": "Alle meldingen",
     "unread": "nieuw",
     "settings": "Instellingen voor meldingen",
     "empty": "Nog geen meldingen. Je krijgt er een wanneer iemand reageert in een forumdraad die je volgt."
