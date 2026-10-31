@@ -486,6 +486,11 @@ test('Site notifications can be counted, listed, opened and marked as read by th
     assert.equal(await openSiteNotification(dal, owner.id, first), '/tool/forum/thread/a#comment-1');
     assert.equal(await countUnreadNotifications(dal, owner.id), 1);
 
+    // Malformed IDs are unknown notifications: nothing opens, nothing is marked read.
+    await assert.rejects(() => openSiteNotification(dal, owner.id, 'x'), NotFoundError);
+    assert.equal(await markSiteNotificationsRead(dal, owner.id, 'x'), 0);
+    assert.equal(await countUnreadNotifications(dal, owner.id), 1);
+
     assert.equal(await markSiteNotificationsRead(dal, other.id), 0);
     assert.equal(await markSiteNotificationsRead(dal, owner.id), 1);
     assert.equal(await countUnreadNotifications(dal, owner.id), 0);

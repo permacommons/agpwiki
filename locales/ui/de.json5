@@ -94,7 +94,8 @@
       invalidWidthShort: "Ungültige Breite.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Auf Wikimedia Commons öffnen, neuer Tab',
+      commonsBadge: 'Commons',
       missing: "Fehlende Medien: {{slug}}",
       invalidSlug: "[ungültiger Medien-Slug: {{slug}}. Slugs müssen aus Kleinbuchstaben, Ziffern und Bindestrichen bestehen, optional mit `/` zwischen Segmenten — z. B. `/media/golden-rice` oder `/media/biology/erik-portrait`.]",
       invalidAttrs: "[unbekannte Attribute für Medium {{slug}}: {{tokens}}. Erkannte Schlüssel in `{...}`: `size=N`, `caption=\"...\"`. Alternativtext steht an der normalen Bildposition: `![Alt](/media/{{slug}}){...}`.]",

@@ -94,7 +94,8 @@
       invalidWidthShort: "Lebar tidak valid.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Buka di Wikimedia Commons, tab baru',
+      commonsBadge: 'Commons',
       missing: "Media hilang: {{slug}}",
       invalidSlug: "[slug media tidak valid: {{slug}}. Slug harus berupa huruf kecil, angka, dan tanda hubung, dengan `/` opsional di antara segmen — mis. `/media/golden-rice` atau `/media/biology/erik-portrait`.]",
       invalidAttrs: "[atribut tidak dikenal pada media {{slug}}: {{tokens}}. Kunci yang dikenali di dalam `{...}`: `size=N`, `caption=\"...\"`. Teks alternatif ditempatkan pada posisi gambar standar: `![Alt](/media/{{slug}}){...}`.]",

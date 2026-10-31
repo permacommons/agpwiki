@@ -94,7 +94,8 @@
       invalidWidthShort: "अमान्य चौड़ाई।",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'विकिमीडिया कॉमन्स पर खोलें, नए टैब में',
+      commonsBadge: 'Commons',
       missing: "मीडिया अनुपलब्ध: {{slug}}",
       invalidSlug: "[अमान्य मीडिया स्लग: {{slug}}। स्लग में छोटे अक्षर, अंक और हाइफ़न होने चाहिए, खंडों के बीच वैकल्पिक `/` के साथ — जैसे `/media/golden-rice` या `/media/biology/erik-portrait`।]",
       invalidAttrs: "[मीडिया {{slug}} पर अज्ञात विशेषताएँ: {{tokens}}। `{...}` में मान्य कुंजियाँ: `size=N`, `caption=\"...\"`। वैकल्पिक पाठ मानक छवि स्थान में जाता है: `![Alt](/media/{{slug}}){...}`।]",

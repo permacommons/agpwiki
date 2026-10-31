@@ -93,7 +93,8 @@
       invalidWidthShort: "寬度無效。",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: '在維基共享資源開啟（新分頁）',
+      commonsBadge: 'Commons',
       missing: "缺少媒體：{{slug}}",
       invalidSlug: "[無效的媒體 slug：{{slug}}。Slug 必須由小寫字母、數字和連字號組成，可在段落之間使用 `/` — 例如 `/media/golden-rice` 或 `/media/biology/erik-portrait`。]",
       invalidAttrs: "[媒體 {{slug}} 上有未知屬性：{{tokens}}。`{...}` 中可辨識的鍵：`size=N`、`caption=\"...\"`。備用文字放在標準圖片位置：`![Alt](/media/{{slug}}){...}`。]",

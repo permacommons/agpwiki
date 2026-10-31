@@ -222,6 +222,21 @@ test('fetchCommonsMetadata parses image response with thumbnail template', async
   });
 });
 
+test('fetchCommonsMetadata makes every request unique so shared caches cannot answer it', async () => {
+  const urls: string[] = [];
+  const fetchImpl = (async (url: string) => {
+    urls.push(url);
+    return new Response(JSON.stringify(buildImageResponse()), { status: 200 });
+  }) as unknown as typeof fetch;
+  const options = { apiBaseUrl: 'https://commons.example/w/api.php', userAgent: 'TestAgent/1.0', timeoutMs: 5000, fetchImpl };
+
+  await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', options);
+  await fetchCommonsMetadata('Green Sea Turtle grazing seagrass.jpg', options);
+
+  const requestIds = urls.map(url => new URL(url).searchParams.get('requestid'));
+  assert.ok(requestIds[0] && requestIds[1] && requestIds[0] !== requestIds[1]);
+});
+
 test('fetchCommonsMetadata throws NotFoundError on missing file', async () => {
   const missing = {
     query: {

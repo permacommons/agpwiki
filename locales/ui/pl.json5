@@ -93,7 +93,8 @@
       invalidWidthShort: "Nieprawidłowa szerokość.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Otwórz w Wikimedia Commons, nowa karta',
+      commonsBadge: 'Commons',
       missing: "Brakujące media: {{slug}}",
       invalidSlug: "[nieprawidłowy slug mediów: {{slug}}. Slugi muszą składać się z małych liter, cyfr i łączników, z opcjonalnym `/` między segmentami — np. `/media/golden-rice` lub `/media/biology/erik-portrait`.]",
       invalidAttrs: "[nieznane atrybuty mediów {{slug}}: {{tokens}}. Rozpoznawane klucze w `{...}`: `size=N`, `caption=\"...\"`. Tekst alternatywny umieszcza się w standardowym miejscu obrazu: `![Alt](/media/{{slug}}){...}`.]",

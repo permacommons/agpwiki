@@ -94,7 +94,8 @@
       invalidWidthShort: "Недопустимая ширина.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Открыть на Викискладе, в новой вкладке',
+      commonsBadge: 'Commons',
       missing: "Отсутствующее медиа: {{slug}}",
       invalidSlug: "[недопустимый медиа-slug: {{slug}}. Slug должен состоять из строчных букв, цифр и дефисов, с необязательным `/` между сегментами — например `/media/golden-rice` или `/media/biology/erik-portrait`.]",
       invalidAttrs: "[неизвестные атрибуты медиа {{slug}}: {{tokens}}. Допустимые ключи внутри `{...}`: `size=N`, `caption=\"...\"`. Альтернативный текст указывается в стандартной позиции изображения: `![Alt](/media/{{slug}}){...}`.]",

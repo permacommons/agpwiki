@@ -94,7 +94,8 @@
       invalidWidthShort: "Neplatná šírka.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Otvoriť na Wikimedia Commons, nová karta',
+      commonsBadge: 'Commons',
       missing: "Chýbajúce médium: {{slug}}",
       invalidSlug: "[neplatný mediálny slug: {{slug}}. Slug musí obsahovať malé písmená, číslice a spojovníky, s voliteľným `/` medzi segmentmi — napr. `/media/golden-rice` alebo `/media/biology/erik-portrait`.]",
       invalidAttrs: "[neznáme atribúty média {{slug}}: {{tokens}}. Rozpoznané kľúče v `{...}`: `size=N`, `caption=\"...\"`. Alternatívny text patrí do štandardnej pozície obrázka: `![Alt](/media/{{slug}}){...}`.]",
