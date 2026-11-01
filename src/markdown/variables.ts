@@ -35,6 +35,8 @@ export const variablesPlugin = () => (md: MarkdownIt) => {
     const name = tokens[idx].meta?.name as string | undefined;
     if (!name) return '';
     const vars = (env?.variables ?? {}) as Record<string, string>;
-    return vars[name] ?? '';
+    if (vars[name] !== undefined) return vars[name];
+    // Prompt pages show their placeholders, which agents fill in, as they are.
+    return env?.showUnknownVariables ? `<code class="prompt-placeholder">{{${md.utils.escapeHtml(name)}}}</code>` : '';
   };
 };

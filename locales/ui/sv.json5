@@ -489,6 +489,25 @@
       "openInForum": "Öppna svaren i forumet"
     }
   },
+  "home": {
+    "newArticles": "Nytt på Agpedia",
+    "seeMoreArticles": "Fler nya artiklar",
+    "fromBlog": "Från bloggen",
+    "seeAllPosts": "Alla blogginlägg",
+    "inForum": "I forumet",
+    "goToForum": "Till forumet",
+    "waysToHelp": "Så kan du hjälpa till:",
+    "waitingForCheck_one": "{{count}} artikel väntar på faktagranskning",
+    "waitingForCheck_other": "{{count}} artiklar väntar på faktagranskning",
+    "needWikidata_one": "{{count}} behöver en Wikidata-länk",
+    "needWikidata_other": "{{count}} behöver en Wikidata-länk",
+    "howToContribute": "Så bidrar du",
+    "newArticleLabel": "Ny artikel",
+    "blogLabel": "Blogg",
+    "noArticles": "Inga artiklar ännu.",
+    "noPosts": "Inga blogginlägg ännu.",
+    "noThreads": "Inga diskussioner ännu."
+  },
   tool: {
     view: 'Visa',
     diff: 'Skillnad',
@@ -504,6 +523,9 @@
     relatedLabel: 'Relaterat',
     seeAlso: 'Se även: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Encyklopedisidor (totalt {{total}}).',
+    "pagesSort": "Sortera:",
+    "pagesSortTitle": "A–Ö",
+    "pagesSortNew": "Nyaste först",
     previous: 'Föregående',
     next: 'Nästa',
     pagination: 'Sida {{page}} av {{totalPages}}',
