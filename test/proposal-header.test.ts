@@ -34,8 +34,8 @@ test('Proposal management has one disclosure and the published decision stays vi
   assert.ok(html.includes('&lt;script&gt;unsafe&lt;/script&gt;'));
   assert.ok(html.includes('Reviewer'));
   assert.ok(html.includes('Manage proposal'));
-  assert.ok(html.includes('/meta%2Fproposals%2Ftest/proposal-status'));
-  assert.ok(html.includes('/meta%2Fproposals%2Ftest/proposal-links'));
+  assert.ok(html.includes('/meta/proposals/test/proposal-status'));
+  assert.ok(html.includes('/meta/proposals/test/proposal-links'));
   assert.doesNotMatch(renderHeader(), /<details|<form/);
   assert.equal((renderHeader('', links).match(/<form\b/g) ?? []).length, 1);
 });

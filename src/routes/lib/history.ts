@@ -4,6 +4,9 @@ import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
+// Colons cannot occur in generated Markdown heading IDs.
+export const HISTORY_ANCHOR = 'wiki:revision-history';
+
 export type HistoryRevision = {
   revId: string;
   dateLabel: string;
@@ -96,7 +99,7 @@ export const renderRevisionHistory = ({
     })
     .join('\n');
 
-  return `<details class="page-history">
+  return `<details class="page-history" id="${HISTORY_ANCHOR}">
   <summary>${t('history.title')}</summary>
   <form class="history-form" method="get" action="${escapeHtml(action)}">
     <div class="history-actions">

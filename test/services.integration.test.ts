@@ -96,6 +96,7 @@ import {
 } from '../src/services/page-protection-service.js';
 import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
 import {
+  countForumCommentsForPage,
   createForumComment,
   createForumThread,
   deleteForumComment,
@@ -494,6 +495,11 @@ test('Site notifications can be counted, listed, opened and marked as read by th
 
     await assert.rejects(() => openSiteNotification(dal, other.id, first), NotFoundError);
     assert.equal(await openSiteNotification(dal, owner.id, first), '/tool/forum/thread/a#comment-1');
+    assert.equal(await countUnreadNotifications(dal, owner.id), 1);
+
+    // Malformed IDs are unknown notifications: nothing opens, nothing is marked read.
+    await assert.rejects(() => openSiteNotification(dal, owner.id, 'x'), NotFoundError);
+    assert.equal(await markSiteNotificationsRead(dal, owner.id, 'x'), 0);
     assert.equal(await countUnreadNotifications(dal, owner.id), 1);
 
     assert.equal(await markSiteNotificationsRead(dal, other.id), 0);
@@ -2762,6 +2768,11 @@ test('Forum article threads normalize aliases and reject invalid slugs', async (
       user.id
     );
 
+    await assert.rejects(
+      () => createForumThread({ category: 'policy', pageSlug: aliasSlug, title: `${threadBaseTitle}-wrong`, body: 'Wrong category.', language: 'en' }, user.id),
+      ValidationError
+    );
+
     assert.equal(thread.pageSlug, slug);
 
     const articleThreads = await listForumThreads(dal, 'articles', {
@@ -2794,7 +2805,7 @@ test('Forum article threads normalize aliases and reject invalid slugs', async (
 
 test('Forum policy threads may optionally link to a wiki page', async () => {
   const dal = await getDal();
-  const slug = `forum-policy-${Date.now()}`;
+  const slug = `meta/forum-policy-${Date.now()}`;
   const aliasSlug = `${slug}-alias`;
   const slugPrefix = `${slug}%`;
   const threadBaseTitle = `forum-policy-thread-${Date.now()}`;
@@ -2844,8 +2855,23 @@ test('Forum policy threads may optionally link to a wiki page', async () => {
       user.id
     );
 
+    await assert.rejects(
+      () => createForumThread({ category: 'articles', pageSlug: aliasSlug, title: `${threadBaseTitle}-wrong`, body: 'Wrong category.', language: 'en' }, user.id),
+      ValidationError
+    );
+
     assert.equal(linkedThread.pageSlug, slug);
     assert.equal(genericThread.pageSlug, null);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 0);
+
+    await dal.query(
+      `UPDATE forum_threads SET category = 'articles', page_slug = $1 WHERE id = $2`,
+      [slug, genericThread.id]
+    );
+    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
+    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 1);
+
 
     const linkedThreads = await listForumThreads(dal, 'policy', {
       pageSlug: slug,

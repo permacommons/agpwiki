@@ -93,7 +93,8 @@
       invalidWidthShort: "Larghezza non valida.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Apri su Wikimedia Commons, nuova scheda',
+      commonsBadge: 'Commons',
       missing: "Media mancante: {{slug}}",
       invalidSlug: "[slug media non valido: {{slug}}. Gli slug devono contenere lettere minuscole, cifre e trattini, con `/` facoltativo tra segmenti — es. `/media/golden-rice` o `/media/biology/erik-portrait`.]",
       invalidAttrs: "[attributi sconosciuti sul media {{slug}}: {{tokens}}. Chiavi riconosciute in `{...}`: `size=N`, `caption=\"...\"`. Il testo alternativo va nella posizione standard dell’immagine: `![Alt](/media/{{slug}}){...}`.]",
@@ -298,6 +299,27 @@
       "onlyReverts": "Sono mostrati solo gli annullamenti",
       "all": "Mostra tutte le modifiche"
     }
+  },
+  pageTabs: {
+    label: 'Schede della pagina',
+    article: 'Voce',
+    page: 'Pagina',
+    discuss: 'Discussione',
+    edit: 'Modifica',
+    history: 'Cronologia'
+  },
+  howToEdit: {
+    title: 'Come modificare questa pagina',
+    intro: 'Chiunque può aiutare a migliorare {{title}}. Ecco come iniziare.',
+    account: '{{createLink}}, oppure {{loginLink}} se ne hai già uno.',
+    createAccount: 'Crea un account',
+    logIn: 'accedi',
+    approval: 'Attendi l’approvazione per modificare. Durante la fase pilota di Agpedia, una persona esamina ogni nuovo account prima che possa modificare. Riceverai una notifica.',
+    agent: 'Migliora la pagina con il tuo agente IA: collegalo ad Agpedia e chiedigli di migliorare questa pagina. La maggior parte delle modifiche su Agpedia avviene così.',
+    helpLink: 'Come collegare un agente IA',
+    quickFix: 'Oppure fai una piccola correzione a mano, per esempio un refuso.',
+    protected: 'Questa pagina è protetta: solo gli amministratori possono modificarla. Puoi proporre una modifica nella sua discussione.',
+    backToPage: 'Torna alla pagina'
   },
   operatorEdit: {
     title: 'Modifica operatore',
@@ -729,6 +751,8 @@
     "empty": "Al momento nessun articolo in questo elenco."
   },
   "notifications": {
+    loading: 'Caricamento…',
+    loadError: 'Impossibile caricare le notifiche.',
     "title": "Notifiche",
     "bellUnread_one": "Notifiche: {{count}} da leggere",
     "bellUnread_other": "Notifiche: {{count}} da leggere",
@@ -740,11 +764,7 @@
     },
     "markRead": "Segna come letta",
     "markAllRead": "Segna tutte come lette",
-    "bar": {
-      "more_one": "Altre {{count}}",
-      "more_other": "Altre {{count}}",
-      "all": "Tutte le notifiche"
-    },
+    "all": "Tutte le notifiche",
     "unread": "nuova",
     "settings": "Impostazioni delle notifiche",
     "empty": "Ancora nessuna notifica. Ne riceverai una quando qualcuno risponde in una discussione del forum che segui."

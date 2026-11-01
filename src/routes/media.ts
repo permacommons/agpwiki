@@ -207,8 +207,9 @@ export const registerMediaRoutes = (app: Express) => {
                 alt: altStr || undefined,
                 size: METADATA_PAGE_SIZE,
                 revId: selectedRevision.revId,
-                attribution: {
-                  commonsLinkLabel: req.t('media.render.commonsLink'),
+                commonsLink: {
+                  label: req.t('media.render.openOnCommons'),
+                  badge: req.t('media.render.commonsBadge'),
                 },
               }
             )

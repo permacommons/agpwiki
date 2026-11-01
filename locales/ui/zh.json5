@@ -93,7 +93,8 @@
       invalidWidthShort: "宽度无效。",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: '在维基共享资源打开（新标签页）',
+      commonsBadge: 'Commons',
       missing: "缺少媒体：{{slug}}",
       invalidSlug: "[无效的媒体 slug：{{slug}}。Slug 必须由小写字母、数字和连字符组成，可在段之间使用 `/` — 例如 `/media/golden-rice` 或 `/media/biology/erik-portrait`。]",
       invalidAttrs: "[媒体 {{slug}} 上有未知属性：{{tokens}}。`{...}` 中可识别的键：`size=N`、`caption=\"...\"`。替代文本放在标准图片位置：`![Alt](/media/{{slug}}){...}`。]",
@@ -298,6 +299,27 @@
       "onlyReverts": "正在只显示回退",
       "all": "显示所有更改"
     }
+  },
+  pageTabs: {
+    label: '页面标签',
+    article: '条目',
+    page: '页面',
+    discuss: '讨论',
+    edit: '编辑',
+    history: '历史'
+  },
+  howToEdit: {
+    title: '如何编辑此页面',
+    intro: '任何人都可以帮助改进{{title}}。以下是入门方法。',
+    account: '{{createLink}}，如果已有账户，请{{loginLink}}。',
+    createAccount: '创建账户',
+    logIn: '登录',
+    approval: '等待编辑批准。在Agpedia试行阶段，每个新账户在可以编辑之前都会由人工审核。获批后你会收到通知。',
+    agent: '用你的AI代理改进页面：把它连接到Agpedia，请它改进此页面。Agpedia上的大多数编辑都是这样完成的。',
+    helpLink: '如何连接AI代理',
+    quickFix: '或者手动做个小修正，比如改正错别字。',
+    protected: '此页面受保护：只有管理员可以编辑。你可以在它的讨论中提出修改建议。',
+    backToPage: '返回页面'
   },
   operatorEdit: {
     title: '操作员编辑',
@@ -729,6 +751,8 @@
     "empty": "目前此列表中没有条目。"
   },
   "notifications": {
+    loading: '正在加载…',
+    loadError: '无法加载通知。',
     "title": "通知",
     "bellUnread_one": "通知：{{count}} 条未读",
     "bellUnread_other": "通知：{{count}} 条未读",
@@ -740,11 +764,7 @@
     },
     "markRead": "标为已读",
     "markAllRead": "全部标为已读",
-    "bar": {
-      "more_one": "还有 {{count}} 条",
-      "more_other": "还有 {{count}} 条",
-      "all": "全部通知"
-    },
+    "all": "全部通知",
     "unread": "新",
     "settings": "通知设置",
     "empty": "还没有通知。当有人在你关注的论坛帖子中回复时，你会收到通知。"

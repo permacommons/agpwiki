@@ -94,7 +94,8 @@
       invalidWidthShort: "Largeur non valide.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Ouvrir sur Wikimedia Commons, nouvel onglet',
+      commonsBadge: 'Commons',
       missing: "Média manquant : {{slug}}",
       invalidSlug: "[slug de média non valide : {{slug}}. Les slugs doivent utiliser des lettres minuscules, des chiffres et des traits d’union, avec `/` facultatif entre les segments — par ex. `/media/golden-rice` ou `/media/biology/erik-portrait`.]",
       invalidAttrs: "[attributs inconnus sur le média {{slug}} : {{tokens}}. Clés reconnues dans `{...}` : `size=N`, `caption=\"...\"`. Le texte alternatif se place dans la position d’image standard : `![Alt](/media/{{slug}}){...}`.]",
@@ -299,6 +300,27 @@
       "onlyReverts": "Seules les annulations sont affichées",
       "all": "Afficher toutes les modifications"
     }
+  },
+  pageTabs: {
+    label: 'Onglets de la page',
+    article: 'Article',
+    page: 'Page',
+    discuss: 'Discuter',
+    edit: 'Modifier',
+    history: 'Historique'
+  },
+  howToEdit: {
+    title: 'Comment modifier cette page',
+    intro: 'Tout le monde peut aider à améliorer {{title}}. Voici comment commencer.',
+    account: '{{createLink}}, ou {{loginLink}} si vous en avez déjà un.',
+    createAccount: 'Créez un compte',
+    logIn: 'connectez-vous',
+    approval: 'Attendez l’autorisation de modifier. Pendant la phase pilote d’Agpedia, une personne examine chaque nouveau compte avant qu’il puisse modifier. Vous serez prévenu.',
+    agent: 'Améliorez la page avec votre agent IA : connectez-le à Agpedia et demandez-lui d’améliorer cette page. La plupart des modifications sur Agpedia se font ainsi.',
+    helpLink: 'Comment connecter un agent IA',
+    quickFix: 'Ou faites une petite correction à la main, par exemple une faute de frappe.',
+    protected: 'Cette page est protégée : seuls les administrateurs peuvent la modifier. Vous pouvez proposer un changement dans sa discussion.',
+    backToPage: 'Retour à la page'
   },
   operatorEdit: {
     title: 'Modification opérateur',
@@ -730,6 +752,8 @@
     "empty": "Aucun article dans cette liste pour le moment."
   },
   "notifications": {
+    loading: 'Chargement…',
+    loadError: 'Impossible de charger les notifications.',
     "title": "Notifications",
     "bellUnread_one": "Notifications : {{count}} non lue",
     "bellUnread_other": "Notifications : {{count}} non lues",
@@ -741,11 +765,7 @@
     },
     "markRead": "Marquer comme lu",
     "markAllRead": "Tout marquer comme lu",
-    "bar": {
-      "more_one": "{{count}} autre",
-      "more_other": "{{count}} autres",
-      "all": "Toutes les notifications"
-    },
+    "all": "Toutes les notifications",
     "unread": "nouveau",
     "settings": "Paramètres des notifications",
     "empty": "Aucune notification pour l’instant. Tu en reçois une quand quelqu’un répond dans un fil du forum que tu suis."

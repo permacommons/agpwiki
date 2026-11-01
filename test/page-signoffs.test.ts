@@ -53,17 +53,17 @@ test('Replies to a position show as forum posts, with editing for their author o
   assert.ok(html.includes('id="reply-c1"'));
   assert.ok(html.includes('href="/tool/forum/thread/thread-1"'));
   assert.ok(html.includes('Open these replies in the forum'));
-  assert.ok(html.includes('action="/meta%2Fproposals%2Ftest/position-reply"'));
+  assert.ok(html.includes('action="/meta/proposals/test/position-reply"'));
   assert.ok(html.includes('name="signoffId" value="position"'));
   // Only the viewer's own reply can be edited, through the forum.
   assert.equal((html.match(/action="\/tool\/forum\/comment\/[^"]+\/edit"/g) ?? []).length, 1);
   assert.ok(html.includes('action="/tool/forum/comment/c2/edit"'));
-  assert.ok(html.includes('href="/tool/forum/comment/c2/edit?return=%2Fmeta%252Fproposals%252Ftest%23reply-c2" data-comment-edit-link'));
+  assert.ok(html.includes('href="/tool/forum/comment/c2/edit?return=%2Fmeta%2Fproposals%2Ftest%23reply-c2" data-comment-edit-link'));
   assert.ok(html.includes('data-comment-editor hidden'));
   assert.ok(html.includes('data-comment-content'));
   assert.ok(html.includes('data-comment-edit-cancel>Cancel</a>'));
   assert.ok(!html.includes('page-signoff-reply-edit'));
-  assert.ok(html.includes('name="return" value="/meta%2Fproposals%2Ftest#reply-c2"'));
+  assert.ok(html.includes('name="return" value="/meta/proposals/test#reply-c2"'));
   // An edited reply links to its history.
   assert.ok(html.includes('href="/tool/forum/comment/c2/history">edited</a>'));
   assert.ok(!html.includes('/tool/forum/comment/c1/history'));

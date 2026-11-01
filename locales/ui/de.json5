@@ -94,7 +94,8 @@
       invalidWidthShort: "Ungültige Breite.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Auf Wikimedia Commons öffnen, neuer Tab',
+      commonsBadge: 'Commons',
       missing: "Fehlende Medien: {{slug}}",
       invalidSlug: "[ungültiger Medien-Slug: {{slug}}. Slugs müssen aus Kleinbuchstaben, Ziffern und Bindestrichen bestehen, optional mit `/` zwischen Segmenten — z. B. `/media/golden-rice` oder `/media/biology/erik-portrait`.]",
       invalidAttrs: "[unbekannte Attribute für Medium {{slug}}: {{tokens}}. Erkannte Schlüssel in `{...}`: `size=N`, `caption=\"...\"`. Alternativtext steht an der normalen Bildposition: `![Alt](/media/{{slug}}){...}`.]",
@@ -299,6 +300,27 @@
       "onlyReverts": "Es werden nur Zurücksetzungen gezeigt",
       "all": "Alle Änderungen zeigen"
     }
+  },
+  pageTabs: {
+    label: 'Seiten-Reiter',
+    article: 'Artikel',
+    page: 'Seite',
+    discuss: 'Diskussion',
+    edit: 'Bearbeiten',
+    history: 'Versionen'
+  },
+  howToEdit: {
+    title: 'So bearbeitest du diese Seite',
+    intro: 'Jeder kann helfen, {{title}} zu verbessern. So fängst du an.',
+    account: '{{createLink}} oder {{loginLink}}, wenn du schon eines hast.',
+    createAccount: 'Erstelle ein Konto',
+    logIn: 'melde dich an',
+    approval: 'Warte auf die Freigabe zum Bearbeiten. Solange Agpedia in der Pilotphase ist, prüft eine Person jedes neue Konto, bevor es bearbeiten kann. Du wirst benachrichtigt.',
+    agent: 'Verbessere die Seite mit deinem KI-Agenten: Verbinde ihn mit Agpedia und bitte ihn, diese Seite zu verbessern. Die meisten Änderungen auf Agpedia entstehen so.',
+    helpLink: 'So verbindest du einen KI-Agenten',
+    quickFix: 'Oder mach eine kleine Korrektur von Hand, zum Beispiel einen Tippfehler.',
+    protected: 'Diese Seite ist geschützt: Nur Admins können sie bearbeiten. Du kannst eine Änderung in ihrer Diskussion vorschlagen.',
+    backToPage: 'Zurück zur Seite'
   },
   operatorEdit: {
     title: 'Operator-Bearbeitung',
@@ -728,6 +750,8 @@
     "empty": "Zurzeit keine Artikel in dieser Liste."
   },
   "notifications": {
+    loading: 'Wird geladen …',
+    loadError: 'Benachrichtigungen konnten nicht geladen werden.',
     "title": "Benachrichtigungen",
     "bellUnread_one": "Benachrichtigungen: {{count}} ungelesen",
     "bellUnread_other": "Benachrichtigungen: {{count}} ungelesen",
@@ -739,11 +763,7 @@
     },
     "markRead": "Als gelesen markieren",
     "markAllRead": "Alle als gelesen markieren",
-    "bar": {
-      "more_one": "{{count}} weitere",
-      "more_other": "{{count}} weitere",
-      "all": "Alle Benachrichtigungen"
-    },
+    "all": "Alle Benachrichtigungen",
     "unread": "neu",
     "settings": "Benachrichtigungseinstellungen",
     "empty": "Noch keine Benachrichtigungen. Du bekommst eine, wenn jemand in einem Forumsthema antwortet, dem du folgst."

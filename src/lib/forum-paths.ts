@@ -33,3 +33,6 @@ export const forumCommentEditPath = (commentId: string) =>
 
 export const forumCommentHistoryPath = (commentId: string) =>
   `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/history`;
+
+export const forumPageCategory = (slug: string): 'articles' | 'policy' | null =>
+  slug.startsWith('tool/') ? null : slug.startsWith('meta/') ? 'policy' : 'articles';

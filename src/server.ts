@@ -15,7 +15,6 @@ import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
 import { registerForumRoutes } from './routes/forum.js';
 import { renderAccountBanner } from './routes/lib/account-banner.js';
-import { NOTIFICATIONS_PATH, renderNotificationBar } from './routes/lib/notifications.js';
 import { registerLocaleRoutes } from './routes/locale.js';
 import { registerMediaRoutes } from './routes/media.js';
 import { registerNotificationRoutes } from './routes/notifications.js';
@@ -28,7 +27,6 @@ import { getAccountLifecycleState } from './services/account-lifecycle.js';
 import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from './services/roles.js';
 import {
   countUnreadNotifications,
-  findLatestUnreadNotification,
 } from './services/site-notification-service.js';
 import { getStaticCacheControl } from './static-cache.js';
 
@@ -70,7 +68,6 @@ app.use(async (req, res, next) => {
   res.locals.isSiteAdmin = false;
   res.locals.unreadNotificationCount = 0;
   res.locals.notificationBellLabel = req.t('notifications.title');
-  res.locals.notificationBarHtml = '';
 
   if (session) {
     const dal = await initializePostgreSQL();
@@ -83,22 +80,11 @@ app.use(async (req, res, next) => {
     res.locals.accountState = await getAccountLifecycleState(session.userId);
     res.locals.isSiteAdmin = hasRole(roles, SITE_ADMIN_ROLE);
 
-    const [unreadCount, latest] = await Promise.all([
-      countUnreadNotifications(dal, session.userId),
-      findLatestUnreadNotification(dal, session.userId),
-    ]);
+    const unreadCount = await countUnreadNotifications(dal, session.userId);
     res.locals.unreadNotificationCount = unreadCount;
     res.locals.notificationBellLabel = unreadCount
       ? req.t('notifications.bellUnread', { count: unreadCount })
       : req.t('notifications.title');
-    if (latest && req.method === 'GET' && !req.path.startsWith(NOTIFICATIONS_PATH)) {
-      res.locals.notificationBarHtml = renderNotificationBar({
-        notification: latest,
-        unreadCount,
-        returnTo: req.originalUrl || '/',
-        t: req.t,
-      });
-    }
   }
 
   res.locals.accountBannerHtml = renderAccountBanner(req, res);

@@ -2,6 +2,7 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { ConstraintError } from 'rev-dal/lib/errors';
 import debug from '../../util/debug.js';
 import { ForbiddenError, NotFoundError, ValidationCollector } from '../lib/errors.js';
+import { isUuid } from '../lib/uuid.js';
 import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import { enqueueForumReplyNotification } from './forum-notification-service.js';
@@ -125,11 +126,13 @@ export const replyToPosition = async (
   if (!isSignoffPageSlug(page.slug)) {
     throw new NotFoundError('Positions only exist on proposals.', { slug: page.slug });
   }
-  const signoff = await PageSignoff.filterWhere({
-    id: signoffId,
-    pageId: page.id,
-    withdrawnAt: null,
-  } as Record<string, unknown>).first();
+  const signoff = isUuid(signoffId)
+    ? await PageSignoff.filterWhere({
+        id: signoffId,
+        pageId: page.id,
+        withdrawnAt: null,
+      } as Record<string, unknown>).first()
+    : null;
   if (!signoff) {
     throw new NotFoundError('Position not found on this proposal.', { slug: page.slug, signoffId });
   }
