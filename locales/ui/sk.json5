@@ -94,7 +94,8 @@
       invalidWidthShort: "Neplatná šírka.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Otvoriť na Wikimedia Commons, nová karta',
+      commonsBadge: 'Commons',
       missing: "Chýbajúce médium: {{slug}}",
       invalidSlug: "[neplatný mediálny slug: {{slug}}. Slug musí obsahovať malé písmená, číslice a spojovníky, s voliteľným `/` medzi segmentmi — napr. `/media/golden-rice` alebo `/media/biology/erik-portrait`.]",
       invalidAttrs: "[neznáme atribúty média {{slug}}: {{tokens}}. Rozpoznané kľúče v `{...}`: `size=N`, `caption=\"...\"`. Alternatívny text patrí do štandardnej pozície obrázka: `![Alt](/media/{{slug}}){...}`.]",
@@ -299,6 +300,27 @@
       "onlyReverts": "Zobrazujú sa iba vrátenia",
       "all": "Zobraziť všetky zmeny"
     }
+  },
+  pageTabs: {
+    label: 'Karty stránky',
+    article: 'Článok',
+    page: 'Stránka',
+    discuss: 'Diskusia',
+    edit: 'Upraviť',
+    history: 'História'
+  },
+  howToEdit: {
+    title: 'Ako upraviť túto stránku',
+    intro: 'Ktokoľvek môže pomôcť zlepšiť {{title}}. Takto začnete.',
+    account: '{{createLink}} alebo sa {{loginLink}}, ak už účet máte.',
+    createAccount: 'Vytvorte si účet',
+    logIn: 'prihláste',
+    approval: 'Počkajte na povolenie upravovať. Kým je Agpedia v pilotnej fáze, človek skontroluje každý nový účet, kým môže upravovať. Dostanete upozornenie.',
+    agent: 'Zlepšite stránku so svojím AI agentom: pripojte ho k Agpedii a požiadajte ho, aby túto stránku zlepšil. Väčšina úprav na Agpedii vzniká takto.',
+    helpLink: 'Ako pripojiť AI agenta',
+    quickFix: 'Alebo urobte rýchlu opravu ručne, napríklad preklep.',
+    protected: 'Táto stránka je zamknutá: upravovať ju môžu len správcovia. Zmenu môžete navrhnúť v jej diskusii.',
+    backToPage: 'Späť na stránku'
   },
   operatorEdit: {
     title: 'Operátorská úprava',
@@ -731,6 +753,8 @@
     "empty": "V tomto zozname teraz nie sú žiadne články."
   },
   "notifications": {
+    loading: 'Načítava sa…',
+    loadError: 'Upozornenia sa nepodarilo načítať.',
     "title": "Upozornenia",
     "bellUnread_one": "Neprečítané upozornenia: {{count}}",
     "bellUnread_other": "Neprečítané upozornenia: {{count}}",
@@ -742,11 +766,7 @@
     },
     "markRead": "Označiť ako prečítané",
     "markAllRead": "Označiť všetko ako prečítané",
-    "bar": {
-      "more_one": "Ďalšie: {{count}}",
-      "more_other": "Ďalšie: {{count}}",
-      "all": "Všetky upozornenia"
-    },
+    "all": "Všetky upozornenia",
     "unread": "nové",
     "settings": "Nastavenia upozornení",
     "empty": "Zatiaľ žiadne upozornenia. Dostaneš ho, keď niekto odpovie vo vlákne fóra, ktoré sleduješ."

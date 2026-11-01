@@ -94,7 +94,8 @@
       invalidWidthShort: "Neveljavna širina.",
     },
     render: {
-      commonsLink: 'Wikimedia Commons',
+      openOnCommons: 'Odpri v Wikimedijini zbirki, nov zavihek',
+      commonsBadge: 'Commons',
       missing: "Manjkajoča predstavnostna vsebina: {{slug}}",
       invalidSlug: "[neveljaven predstavnostni slug: {{slug}}. Slugi morajo vsebovati male črke, številke in vezaje, z izbirnim `/` med segmenti — npr. `/media/golden-rice` ali `/media/biology/erik-portrait`.]",
       invalidAttrs: "[neznani atributi pri predstavnostni vsebini {{slug}}: {{tokens}}. Prepoznani ključi v `{...}`: `size=N`, `caption=\"...\"`. Nadomestno besedilo je na standardnem mestu slike: `![Alt](/media/{{slug}}){...}`.]",
@@ -299,6 +300,27 @@
       "onlyReverts": "Prikazane so samo vrnitve",
       "all": "Pokaži vse spremembe"
     }
+  },
+  pageTabs: {
+    label: 'Zavihki strani',
+    article: 'Članek',
+    page: 'Stran',
+    discuss: 'Pogovor',
+    edit: 'Uredi',
+    history: 'Zgodovina'
+  },
+  howToEdit: {
+    title: 'Kako urediti to stran',
+    intro: 'Vsak lahko pomaga izboljšati {{title}}. Takole začnete.',
+    account: '{{createLink}} ali se {{loginLink}}, če račun že imate.',
+    createAccount: 'Ustvarite račun',
+    logIn: 'prijavite',
+    approval: 'Počakajte na dovoljenje za urejanje. Dokler je Agpedia v pilotni fazi, človek pregleda vsak nov račun, preden lahko ureja. Prejeli boste obvestilo.',
+    agent: 'Izboljšajte stran s svojim agentom UI: povežite ga z Agpedio in ga prosite, naj izboljša to stran. Večina urejanj na Agpedii poteka tako.',
+    helpLink: 'Kako povezati agenta UI',
+    quickFix: 'Ali pa naredite hiter popravek ročno, na primer tipkarsko napako.',
+    protected: 'Ta stran je zaščitena: urejajo jo lahko le skrbniki. Spremembo lahko predlagate v njenem pogovoru.',
+    backToPage: 'Nazaj na stran'
   },
   operatorEdit: {
     title: 'Operatersko urejanje',
@@ -731,6 +753,8 @@
     "empty": "Na tem seznamu trenutno ni člankov."
   },
   "notifications": {
+    loading: 'Nalaganje …',
+    loadError: 'Obvestil ni bilo mogoče naložiti.',
     "title": "Obvestila",
     "bellUnread_one": "Neprebrana obvestila: {{count}}",
     "bellUnread_other": "Neprebrana obvestila: {{count}}",
@@ -742,11 +766,7 @@
     },
     "markRead": "Označi kot prebrano",
     "markAllRead": "Označi vse kot prebrano",
-    "bar": {
-      "more_one": "Še {{count}}",
-      "more_other": "Še {{count}}",
-      "all": "Vsa obvestila"
-    },
+    "all": "Vsa obvestila",
     "unread": "novo",
     "settings": "Nastavitve obvestil",
     "empty": "Še ni obvestil. Prejmeš ga, ko nekdo odgovori v niti foruma, ki ji slediš."

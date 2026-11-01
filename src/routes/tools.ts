@@ -4,6 +4,8 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
+import { NotFoundError } from '../lib/errors.js';
+import { forumCategoryPagePath } from '../lib/forum-paths.js';
 import { formatMediaLabel } from '../lib/media.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
 import {
@@ -46,6 +48,7 @@ import {
   getExperiencedStatus,
   setExperiencedOverride,
 } from '../services/experienced-editor-service.js';
+import { getWikiPageEditability } from '../services/page-protection-service.js';
 import { REVERT_TAG } from '../services/page-revert-service.js';
 import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
 import {
@@ -62,8 +65,10 @@ import {
   type UserRightsSummary,
   updateUserRightsBelowSiteAdmin,
 } from '../services/user-rights-service.js';
+import { readWikiPage } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap } from './lib/history.js';
+import { HOW_TO_EDIT_PATH } from './lib/operator-edit-link.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 
 const { mlString } = dal;
@@ -141,13 +146,13 @@ const renderRecentList = (
               .join(' ')}</div>`
           : '';
       return `<li>
+  ${actionsHtml}
   <div class="change-meta">
     ${primaryHtml}
     <span${metaAttrs}>${escapeHtml(item.dateLabel)}</span>
     ${tags ? `<span>${tags}</span>` : ''}
   </div>
   ${summary}
-  ${actionsHtml}
 </li>`;
     })
     .join('');
@@ -412,7 +417,7 @@ const renderAdminEventList = (
     };
   });
 
-  return `<ul class="change-list">${renderRecentList(items, userMap, t)}</ul>`;
+  return `<ul class="change-list change-list--compact">${renderRecentList(items, userMap, t)}</ul>`;
 };
 
 const roleLabelKey = (role: ValidRole) => `userRights.roles.${role}.label`;
@@ -804,7 +809,7 @@ export const registerToolRoutes = (app: Express) => {
   <p>${req.t('tool.recentChangesDescription')}</p>
   ${relatedHtml}
   ${revertFilterHtml}
-  <ul class="change-list">${itemsHtml}</ul>
+  <ul class="change-list change-list--compact">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
@@ -858,7 +863,7 @@ export const registerToolRoutes = (app: Express) => {
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentCitationsDescription')}</p>
   ${relatedHtml}
-  <ul class="change-list">${itemsHtml}</ul>
+  <ul class="change-list change-list--compact">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
@@ -921,7 +926,7 @@ export const registerToolRoutes = (app: Express) => {
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentClaimsDescription')}</p>
   ${relatedHtml}
-  <ul class="change-list">${itemsHtml}</ul>
+  <ul class="change-list change-list--compact">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
@@ -975,7 +980,7 @@ export const registerToolRoutes = (app: Express) => {
           actions,
         };
       });
-      listingHtml = `<ul class="change-list">${renderRecentList(items, userMap, req.t)}</ul>`;
+      listingHtml = `<ul class="change-list change-list--compact">${renderRecentList(items, userMap, req.t)}</ul>`;
     }
 
     const relatedHtml = await renderRecentRelatedTools('media', req, dalInstance);
@@ -1047,7 +1052,7 @@ export const registerToolRoutes = (app: Express) => {
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentChecksDescription')}</p>
   ${relatedHtml}
-  <ul class="change-list">${itemsHtml}</ul>
+  <ul class="change-list change-list--compact">${itemsHtml}</ul>
 </div>`;
     const labelHtml = `<div class="page-label">${req.t('label.tool')}</div>`;
     res.render('layout', {
@@ -1164,6 +1169,69 @@ export const registerToolRoutes = (app: Express) => {
   // The Wikidata list became one kind of the Articles with issues page.
   app.get('/tool/missing-wikidata', (_req, res) => {
     res.redirect(301, `${ISSUES_PATH}?kind=no-wikidata`);
+  });
+
+  // Where the Edit tab leads people who cannot edit the page directly yet.
+  app.get(HOW_TO_EDIT_PATH, async (req, res) => {
+    const slug = typeof req.query.page === 'string' ? req.query.page : '';
+    const dalInstance = await initializePostgreSQL();
+    const page = slug
+      ? await readWikiPage(dalInstance, slug).catch(error => {
+          if (error instanceof NotFoundError) return null;
+          throw error;
+        })
+      : null;
+    if (!page) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    const editability = await getWikiPageEditability(dalInstance, { id: page.id }, session?.userId ?? null);
+    const pageHref = `/${encodeURIComponent(page.slug)}`;
+    const editHref = `${pageHref}/operator-edit`;
+    const title = resolveSafeTextWithFallback(mlString.resolve, res.locals.locale ?? 'en', page.title, page.slug);
+    const titleLinkHtml = `<a href="${escapeHtml(pageHref)}">${renderText(title)}</a>`;
+    const discussHref = page.slug.startsWith('meta/')
+      ? forumCategoryPagePath('policy', page.slug)
+      : page.slug.startsWith('tool/')
+        ? ''
+        : forumCategoryPagePath('articles', page.slug);
+    const accountState = res.locals.accountState as { agentAccessStatus?: string } | null | undefined;
+
+    const stepsHtml = (() => {
+      if (editability.isProtected && !editability.isEditable) {
+        const discussHtml = discussHref
+          ? ` <a href="${escapeHtml(discussHref)}">${escapeHtml(req.t('pageTabs.discuss'))}</a>`
+          : '';
+        return `<p class="how-to-edit-protected">${escapeHtml(req.t('howToEdit.protected'))}${discussHtml}</p>`;
+      }
+      const loginHref = `/tool/login?redirect=${encodeURIComponent(editHref)}`;
+      const steps = [
+        session
+          ? ''
+          : req.t('howToEdit.account', {
+              createLink: `<a href="/tool/create-account">${escapeHtml(req.t('howToEdit.createAccount'))}</a>`,
+              loginLink: `<a href="${escapeHtml(loginHref)}">${escapeHtml(req.t('howToEdit.logIn'))}</a>`,
+            }),
+        accountState?.agentAccessStatus === 'approved' ? '' : escapeHtml(req.t('howToEdit.approval')),
+        `${escapeHtml(req.t('howToEdit.agent'))} <a href="/meta/help">${escapeHtml(req.t('howToEdit.helpLink'))}</a>`,
+        `${escapeHtml(req.t('howToEdit.quickFix'))} <a href="${escapeHtml(session ? editHref : loginHref)}">${escapeHtml(
+          req.t('pageTabs.edit')
+        )}</a>`,
+      ].filter(Boolean);
+      return `<ol class="how-to-edit-steps">${steps.map(step => `<li>${step}</li>`).join('')}</ol>`;
+    })();
+
+    res.render('layout', {
+      title: prepareTitle(req.t('howToEdit.title')),
+      labelHtml: `<div class="page-label">${req.t('label.tool')}</div>`,
+      bodyHtml: `<div class="tool-page how-to-edit">
+  <p>${req.t('howToEdit.intro', { title: titleLinkHtml })}</p>
+  ${stepsHtml}
+  <p><a href="${escapeHtml(pageHref)}">${escapeHtml(req.t('howToEdit.backToPage'))}</a></p>
+</div>`,
+      topHtml: prependAccountBanner(res),
+    });
   });
 
   app.get(ISSUES_PATH, async (req, res) => {

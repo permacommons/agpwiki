@@ -12,7 +12,7 @@ import {
   toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { isPromptPageSlug } from '../lib/prompt-registry.js';
@@ -20,7 +20,7 @@ import {
   resolveSafeText,
   resolveSafeTextWithFallback,
 } from '../lib/safe-text.js';
-import { isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
+import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import {
   WIKI_LINK_PREVIEW_ENDPOINT,
@@ -41,6 +41,7 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { countForumCommentsForPage } from '../services/forum-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,
@@ -95,7 +96,7 @@ import {
   renderMarkdownPreviewHtml,
   renderMarkdownPreviewPanel,
 } from './lib/markdown-preview.js';
-import { renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
+import { howToEditPath, renderOperatorEditRelatedLink } from './lib/operator-edit-link.js';
 import {
   formatCheckStatus,
   formatCheckType,
@@ -107,6 +108,7 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
+import { renderPageTabs } from './lib/page-tabs.js';
 import {
   renderProposalHeader,
   renderProposalLinks,
@@ -128,13 +130,13 @@ const resolveCheckMetrics = (metrics: PageCheckMetrics | null | undefined) => {
 };
 
 const operatorEditPath = (slug: string, lang: string) =>
-  `/${encodeURIComponent(slug)}/operator-edit?lang=${encodeURIComponent(lang)}`;
+  `/${encodeSlugPath(slug)}/operator-edit?lang=${encodeURIComponent(lang)}`;
 const operatorEditDismissBannerPath = (slug: string, lang: string) =>
-  `/${encodeURIComponent(slug)}/operator-edit/dismiss-banner?lang=${encodeURIComponent(lang)}`;
+  `/${encodeSlugPath(slug)}/operator-edit/dismiss-banner?lang=${encodeURIComponent(lang)}`;
 const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
 
 const pageViewPath = (slug: string, lang?: string) =>
-  lang ? `/${encodeURIComponent(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeURIComponent(slug)}`;
+  lang ? `/${encodeSlugPath(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeSlugPath(slug)}`;
 
 const iconLock =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M256 160L256 224L384 224L384 160C384 124.7 355.3 96 320 96C284.7 96 256 124.7 256 160zM192 224L192 160C192 89.3 249.3 32 320 32C390.7 32 448 89.3 448 160L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 288C128 252.7 156.7 224 192 224z"/></svg>';
@@ -678,7 +680,7 @@ export const registerPageRoutes = (app: Express) => {
           label: req.t('checks.fields.targetRevision'),
           value: targetRevId,
           href: targetRevId
-            ? `/${encodeURIComponent(page.slug)}?rev=${targetRevId}${
+            ? `/${encodeSlugPath(page.slug)}?rev=${targetRevId}${
                 langOverride ? `&lang=${encodeURIComponent(langOverride)}` : ''
               }`
             : '',
@@ -795,7 +797,7 @@ export const registerPageRoutes = (app: Express) => {
           const fromLabel = `${diff.fromRevId} (${formatDateUTC(diff.from.revDate)})`;
           const toLabel = `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`;
           const diffLabels = getDiffLabels(req.t);
-          const baseHref = `/${encodeURIComponent(page.slug)}/checks/${encodeURIComponent(
+          const baseHref = `/${encodeSlugPath(page.slug)}/checks/${encodeURIComponent(
             check.id
           )}`;
           const fromHref = langOverride
@@ -1356,7 +1358,7 @@ export const registerPageRoutes = (app: Express) => {
             ? `${diff.toRevId} (${formatDateUTC(diff.to.revDate)})`
             : diff.toRevId;
           const diffLabels = getDiffLabels(req.t);
-          const baseHref = `/${encodeURIComponent(canonicalSlug)}`;
+          const baseHref = `/${encodeSlugPath(canonicalSlug)}`;
           const fromHref = langOverride
             ? `${baseHref}?rev=${diffFrom}&lang=${encodeURIComponent(langOverride)}`
             : `${baseHref}?rev=${diffFrom}`;
@@ -1411,7 +1413,7 @@ export const registerPageRoutes = (app: Express) => {
         : [];
       const issuesNoticeHtml =
         highSeverityRows.length > 0
-          ? `<aside class="article-issues-notice" role="note"><span class="article-issues-notice-icon" aria-hidden="true">${iconWarningTriangle}</span><div class="article-issues-notice-body"><span>${req.t('warning.highSeverityIssues', { checksHref: `/${encodeURIComponent(canonicalSlug)}/checks` })}</span><div class="article-issues-rows">${highSeverityRows.map(row => `<div class="article-issues-row"><a href="/${encodeURIComponent(canonicalSlug)}/checks/${encodeURIComponent(row.id)}">${escapeHtml(row.typeLabel)}</a><span>${escapeHtml(req.t('warning.unresolvedIssues', { count: row.unresolved }))}</span></div>`).join('')}</div></div></aside>`
+          ? `<aside class="article-issues-notice" role="note"><span class="article-issues-notice-icon" aria-hidden="true">${iconWarningTriangle}</span><div class="article-issues-notice-body"><span>${req.t('warning.highSeverityIssues', { checksHref: `/${encodeSlugPath(canonicalSlug)}/checks` })}</span><div class="article-issues-rows">${highSeverityRows.map(row => `<div class="article-issues-row"><a href="/${encodeSlugPath(canonicalSlug)}/checks/${encodeURIComponent(row.id)}">${escapeHtml(row.typeLabel)}</a><span>${escapeHtml(req.t('warning.unresolvedIssues', { count: row.unresolved }))}</span></div>`).join('')}</div></div></aside>`
           : '';
 
       const userIds = new Set<string>();
@@ -1541,11 +1543,10 @@ export const registerPageRoutes = (app: Express) => {
         path: req.path,
         queryParams,
       });
-      const forumPath = isArticle
-        ? forumCategoryPagePath('articles', canonicalSlug)
-        : canonicalSlug.startsWith('meta/')
-          ? forumCategoryPagePath('policy', canonicalSlug)
-          : '';
+      const discussionCategory = forumPageCategory(canonicalSlug);
+      const forumPath = discussionCategory
+        ? forumCategoryPagePath(discussionCategory, canonicalSlug)
+        : '';
       const signedIn = Boolean(session);
       const canShowOperatorEditLink =
         !revIdParam && !diffFrom && !diffTo && (!editability.isProtected || editability.isEditable);
@@ -1565,6 +1566,17 @@ export const registerPageRoutes = (app: Express) => {
           : '',
         operatorEditLinkHtml,
       ].filter(Boolean);
+      const isCurrentView = !revIdParam && !diffFrom && !diffTo;
+      const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
+      const tabsHtml = renderPageTabs({
+        isArticle,
+        pageHref: pageViewPath(canonicalSlug, langOverride),
+        isCurrentView,
+        discussHref: forumPath || null,
+        discussCount: discussionCategory ? await countForumCommentsForPage(dalInstance, canonicalSlug, discussionCategory) : 0,
+        editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+        t: req.t,
+      });
       const forumLinkHtml = relatedLinks.length
         ? `<div class="tool-related">
   <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
@@ -1651,6 +1663,7 @@ export const registerPageRoutes = (app: Express) => {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         labelHtml,
+        tabsHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
