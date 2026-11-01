@@ -260,6 +260,7 @@ const performRevert = async (
       body: exactLocalizedMap(target.body, current.body),
       originalLanguage: target.originalLanguage ?? null,
       wikidata: target.wikidata ?? null,
+      restoreTranslatedFrom: target.translatedFrom ?? null,
       expectedRevId: current.revId,
       tags: [REVERT_TAG, ...(action === 'rollback' ? [ROLLBACK_TAG] : []), `${RESTORED_TAG_PREFIX}${target.revId}`],
       revSummary,

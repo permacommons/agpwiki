@@ -27,6 +27,7 @@ Once I've signed off on your proposed citations:
 
 ## Step 5: Create the article
 - Use the wiki_createPage tool to create the article
+- Set `originalLanguage` to the language you write in: it becomes the article's canonical language, the version every translation is made from
 - Use `[@citation-key]` syntax for inline citations, optionally with `:claim-id`
 - The bibliography will be auto-generated from your citations
 - The create response omits the full body; use wiki_readPage if you need to inspect the saved content
