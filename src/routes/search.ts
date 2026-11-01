@@ -1,7 +1,9 @@
 import type { Express } from 'express';
 
 import { initializePostgreSQL } from '../db.js';
+import { formatCitationLabel } from '../lib/citation.js';
 import { escapeHtml, prepareTitle } from '../render.js';
+import { queryCitations } from '../services/citation-service.js';
 import { searchWikiPages } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 
@@ -52,6 +54,26 @@ export const registerSearchRoutes = (app: Express) => {
     const dalInstance = await initializePostgreSQL();
     const results = await searchWikiPages(dalInstance, { query, limit: 10, scope });
 
+    res.json({ results });
+  });
+
+  // The editor toolbar's citation picker: citations whose title or author matches.
+  app.get('/api/citation-search', async (req, res) => {
+    const query = typeof req.query.q === 'string' ? req.query.q.trim().slice(0, 100) : '';
+    if (query.length < 2) {
+      res.json({ results: [] });
+      return;
+    }
+    const dalInstance = await initializePostgreSQL();
+    const [byTitle, byAuthor] = await Promise.all([
+      queryCitations(dalInstance, { title: query, limit: 10 }),
+      queryCitations(dalInstance, { author: query, limit: 10 }),
+    ]);
+    const seen = new Set<string>();
+    const results = [...byTitle.citations, ...byAuthor.citations]
+      .filter(citation => !seen.has(citation.key) && seen.add(citation.key))
+      .slice(0, 10)
+      .map(citation => ({ key: citation.key, label: formatCitationLabel(citation.key, citation.data ?? {}) }));
     res.json({ results });
   });
 };

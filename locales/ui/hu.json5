@@ -322,6 +322,25 @@
     protected: 'Ez a lap védett: csak adminisztrátorok szerkeszthetik. A vitalapján javasolhatsz változtatást.',
     backToPage: 'Vissza a laphoz'
   },
+  sectionEdit: {
+    link: 'szerkesztés',
+    linkLabel: 'Szakasz szerkesztése: {{section}}',
+    lead: 'Bevezető',
+    editLead: 'Bevezető szerkesztése',
+    editing: 'Szakasz szerkesztése: {{section}}',
+    wholePage: 'Az egész lap szerkesztése',
+    changed: 'Ez a szakasz megváltozott, amíg szerkesztetted. Töltsd be újra, és próbáld meg ismét.',
+    toolbarLabel: 'Formázás',
+    bold: 'Félkövér',
+    italic: 'Dőlt',
+    articleLink: 'Hivatkozás szócikkre',
+    articleLinkPrompt: 'A szócikk címe, például belt-buckle',
+    heading: 'Fejléc',
+    list: 'Lista',
+    citation: 'Forrás hozzáadása',
+    citationSearch: 'Források keresése cím vagy szerző szerint',
+    citationNone: 'Nincs találat a források között.'
+  },
   operatorEdit: {
     title: 'Operátori szerkesztés',
     link: 'Operátori szerkesztés',

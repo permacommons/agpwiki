@@ -322,6 +322,25 @@
     protected: 'Ta stran je zaščitena: urejajo jo lahko le skrbniki. Spremembo lahko predlagate v njenem pogovoru.',
     backToPage: 'Nazaj na stran'
   },
+  sectionEdit: {
+    link: 'uredi',
+    linkLabel: 'Uredi razdelek: {{section}}',
+    lead: 'Uvod',
+    editLead: 'Uredi uvod',
+    editing: 'Urejanje razdelka: {{section}}',
+    wholePage: 'Uredi celo stran',
+    changed: 'Ta razdelek se je spremenil med vašim urejanjem. Znova ga naložite in poskusite ponovno.',
+    toolbarLabel: 'Oblikovanje',
+    bold: 'Krepko',
+    italic: 'Ležeče',
+    articleLink: 'Povezava na članek',
+    articleLinkPrompt: 'Naslov članka, na primer belt-buckle',
+    heading: 'Naslov razdelka',
+    list: 'Seznam',
+    citation: 'Dodaj vir',
+    citationSearch: 'Iskanje virov po naslovu ali avtorju',
+    citationNone: 'Ni najdenih virov.'
+  },
   operatorEdit: {
     title: 'Operatersko urejanje',
     link: 'Operatersko urejanje',

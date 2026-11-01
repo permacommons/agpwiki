@@ -160,6 +160,9 @@ export interface WikiPageRewriteSectionInput {
   content: string;
   lang?: string;
   expectedRevId?: string;
+  // Guards one section instead of the whole page: the save is refused
+  // only if this section changed since it was loaded.
+  expectedSectionFingerprint?: string;
   tags?: string[];
   revSummary: Record<string, string>;
 }
@@ -464,6 +467,43 @@ const listHeadingSections = (text: string): HeadingSection[] => {
     return { ...heading, contentEndLine };
   });
 };
+
+export interface EditableSection {
+  // 0 is the lead; headings are numbered from 1 in the order they appear.
+  index: number;
+  target: 'lead' | 'heading';
+  heading?: string;
+  level?: number;
+  occurrence?: number;
+  content: string;
+}
+
+/** The lead and every heading's section, with what rewriteWikiPageSection needs to find it again. */
+export const listEditableSections = (text: string): EditableSection[] => {
+  const lines = text.split('\n');
+  const sections = listHeadingSections(text);
+  const result: EditableSection[] = [
+    { index: 0, target: 'lead', content: lines.slice(0, sections[0]?.line ?? lines.length).join('\n') },
+  ];
+  const counts = new Map<string, number>();
+  sections.forEach((section, i) => {
+    const key = `${section.text}::${section.level}`;
+    const occurrence = (counts.get(key) ?? 0) + 1;
+    counts.set(key, occurrence);
+    result.push({
+      index: i + 1,
+      target: 'heading',
+      heading: section.text,
+      level: section.level,
+      occurrence,
+      content: lines.slice(section.contentStartLine, section.contentEndLine).join('\n'),
+    });
+  });
+  return result;
+};
+
+export const sectionFingerprint = (content: string) =>
+  createHash('sha256').update(content).digest('hex').slice(0, 16);
 
 const buildHeadingDetails = (sections: HeadingSection[], limit = 25) => {
   const counts = new Map<string, number>();
@@ -907,6 +947,7 @@ export async function rewriteWikiPageSection(
     content,
     lang = 'en',
     expectedRevId,
+    expectedSectionFingerprint,
     tags = [],
     revSummary,
   }: WikiPageRewriteSectionInput,
@@ -934,6 +975,7 @@ export async function rewriteWikiPageSection(
   ensureString(content, 'content', errors);
   ensureOptionalLanguage(lang, 'lang', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
+  ensureOptionalString(expectedSectionFingerprint, 'expectedSectionFingerprint', errors);
   if (headingLevel !== undefined) {
     if (!Number.isInteger(headingLevel) || headingLevel < 1 || headingLevel > 6) {
       errors.add('headingLevel', 'must be an integer between 1 and 6.', 'invalid');
@@ -1010,6 +1052,19 @@ export async function rewriteWikiPageSection(
         });
       }
       selected = matches[index];
+    }
+  }
+
+  if (expectedSectionFingerprint !== undefined) {
+    const currentSection = currentText
+      .split('\n')
+      .slice(selected.contentStartLine, selected.contentEndLine)
+      .join('\n');
+    if (sectionFingerprint(currentSection) !== expectedSectionFingerprint) {
+      throw new ConflictError('Section changed since it was loaded.', {
+        slug: normalizedSlug,
+        heading,
+      });
     }
   }
 

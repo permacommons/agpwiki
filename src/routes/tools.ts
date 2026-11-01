@@ -45,7 +45,7 @@ import {
   ADMIN_EVENT_TARGET_USER,
   EXPERIENCED_MIN_EDITS,
   type ExperiencedStatus,
-  getExperiencedStatus,
+  getExperiencedStatuses,
   setExperiencedOverride,
 } from '../services/experienced-editor-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
@@ -638,11 +638,7 @@ export const registerToolRoutes = (app: Express) => {
     const users = await searchVerifiedUsersWithRights(adminContext.dalInstance, query, {
       includeBlocked,
     });
-    const statuses = new Map(
-      await Promise.all(
-        users.map(async user => [user.id, await getExperiencedStatus(adminContext.dalInstance, user.id)] as const)
-      )
-    );
+    const statuses = await getExperiencedStatuses(adminContext.dalInstance, users.map(user => user.id));
     const rows = renderUserRightsRows(users, statuses, req);
     const includeBlockedChecked = includeBlocked ? ' checked' : '';
     const hasActiveFilter = Boolean(query || includeBlocked);

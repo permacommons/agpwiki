@@ -322,6 +322,25 @@
     protected: 'Halaman ini dilindungi: hanya pengurus yang bisa menyuntingnya. Anda bisa mengusulkan perubahan di diskusinya.',
     backToPage: 'Kembali ke halaman'
   },
+  sectionEdit: {
+    link: 'sunting',
+    linkLabel: 'Sunting bagian: {{section}}',
+    lead: 'Pengantar',
+    editLead: 'Sunting pengantar',
+    editing: 'Menyunting bagian: {{section}}',
+    wholePage: 'Sunting seluruh halaman',
+    changed: 'Bagian ini berubah saat Anda menyunting. Muat ulang lalu coba lagi.',
+    toolbarLabel: 'Format',
+    bold: 'Tebal',
+    italic: 'Miring',
+    articleLink: 'Tautan ke artikel',
+    articleLinkPrompt: 'Alamat artikel, misalnya belt-buckle',
+    heading: 'Judul bagian',
+    list: 'Daftar',
+    citation: 'Tambah rujukan',
+    citationSearch: 'Cari rujukan menurut judul atau penulis',
+    citationNone: 'Rujukan tidak ditemukan.'
+  },
   operatorEdit: {
     title: 'Sunting operator',
     link: 'Sunting operator',

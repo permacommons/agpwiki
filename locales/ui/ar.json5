@@ -321,6 +321,25 @@
     protected: 'هذه الصفحة محمية: لا يحررها إلا المشرفون. يمكنك اقتراح تغيير في نقاشها.',
     backToPage: 'العودة إلى الصفحة'
   },
+  sectionEdit: {
+    link: 'تحرير',
+    linkLabel: 'تحرير القسم: {{section}}',
+    lead: 'المقدمة',
+    editLead: 'تحرير المقدمة',
+    editing: 'تحرير القسم: {{section}}',
+    wholePage: 'تحرير الصفحة كلها',
+    changed: 'تغيّر هذا القسم أثناء تحريرك. أعد تحميله وحاول مرة أخرى.',
+    toolbarLabel: 'التنسيق',
+    bold: 'عريض',
+    italic: 'مائل',
+    articleLink: 'رابط إلى مقالة',
+    articleLinkPrompt: 'عنوان المقالة، مثل belt-buckle',
+    heading: 'عنوان',
+    list: 'قائمة',
+    citation: 'إضافة مصدر',
+    citationSearch: 'ابحث عن المصادر بالعنوان أو المؤلف',
+    citationNone: 'لم يُعثر على مصادر.'
+  },
   operatorEdit: {
     title: 'تعديل المشغّل',
     link: 'تعديل المشغّل',

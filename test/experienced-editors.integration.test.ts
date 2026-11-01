@@ -15,6 +15,7 @@ import { registerToolRoutes } from '../src/routes/tools.js';
 import {
   ADMIN_EVENT_EXPERIENCED_STATUS_CHANGED,
   getExperiencedStatus,
+  getExperiencedStatuses,
   setExperiencedOverride,
 } from '../src/services/experienced-editor-service.js';
 import { getWikiPageEditability, protectWikiPage } from '../src/services/page-protection-service.js';
@@ -290,6 +291,113 @@ test('The lock shows the level, and site admins manage the status in the user ri
     assert.equal((await getExperiencedStatus(dal, editor.id)).override, 'granted');
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
+    await cleanup(prefix, userIds);
+  }
+});
+
+test('Batch status lookup isolates users and uses one query regardless of batch size', async () => {
+  const prefix = `test-experienced-batch-${Date.now()}`;
+  const userIds: string[] = [];
+  try {
+    const { dal, author, editor } = await setupEdits(prefix);
+    userIds.push(author.id, editor.id);
+    const unapproved = await createTestUser({ approved: false });
+    const blocked = await createTestUser();
+    userIds.push(unapproved.id, blocked.id);
+    await ageEdits(prefix);
+    await dal.query('UPDATE users SET blocked_at = NOW() WHERE id = $1', [blocked.id]);
+    await dal.query(
+      `INSERT INTO experienced_editor_overrides (user_id, status)
+       VALUES ($1, 'granted'), ($2, 'granted'), ($3, 'revoked')`,
+      [unapproved.id, blocked.id, author.id]
+    );
+    let queries = 0;
+    const countedDal = new Proxy(dal, {
+      get(target, key) {
+        if (key === 'query') {
+          queries++;
+          return target.query.bind(target);
+        }
+        return Reflect.get(target, key);
+      },
+    });
+    assert.equal((await getExperiencedStatuses(countedDal, [])).size, 0);
+    assert.equal(queries, 0);
+    const missingId = '00000000-0000-4000-8000-000000000000';
+    const statuses = await getExperiencedStatuses(countedDal, [...userIds, editor.id, missingId]);
+    assert.equal(queries, 1);
+    assert.equal(statuses.size, 5);
+    assert.equal(statuses.get(editor.id)?.isExperienced, true);
+    assert.equal(statuses.get(editor.id)?.countedEdits, 5);
+    assert.equal(statuses.get(author.id)?.override, 'revoked');
+    assert.equal(statuses.get(author.id)?.isExperienced, false);
+    assert.equal(statuses.get(unapproved.id)?.isExperienced, true);
+    assert.equal(statuses.get(unapproved.id)?.countedEdits, 0);
+    assert.equal(statuses.get(blocked.id)?.isExperienced, false);
+    assert.equal(statuses.get(blocked.id)?.countedEdits, 0);
+    assert.equal(statuses.get(missingId)?.isExperienced, false);
+    for (const id of userIds) {
+      assert.deepEqual(statuses.get(id), await getExperiencedStatus(dal, id));
+    }
+    assert.equal(await canUseRevertAction(dal, unapproved.id, 'restore'), false);
+    assert.equal(await canUseRevertAction(dal, blocked.id, 'rollback'), false);
+  } finally {
+    await cleanup(prefix, userIds);
+  }
+});
+
+test('Override inserts, updates and resets roll back together with failed audit entries', async t => {
+  const dal = await getDal();
+  const prefix = `test-experienced-audit-${Date.now()}`;
+  const userIds: string[] = [];
+  try {
+    const admin = await createTestUser();
+    const user = await createTestUser();
+    userIds.push(admin.id, user.id);
+    await grantRoleUpsert(dal, admin.id, SITE_ADMIN_ROLE);
+    const eventModel = dal.getModel('admin_events');
+    const createEvent = eventModel.create.bind(eventModel);
+    const auditFailure = () => t.mock.method(eventModel, 'create', async (...args: Parameters<typeof eventModel.create>) => {
+      await createEvent(...args);
+      throw new Error('Audit persistence failed');
+    });
+    const readOverrideRows = async () => (await dal.query(
+      'SELECT * FROM experienced_editor_overrides WHERE user_id = $1', [user.id]
+    )).rows;
+    const readEvents = async () => (await dal.query(
+      'SELECT * FROM admin_events WHERE target_id = $1', [user.id]
+    )).rows;
+
+    const failedInsert = auditFailure();
+    try {
+      await assert.rejects(
+        setExperiencedOverride(dal, { userId: user.id, override: 'granted', reason: 'Grant.' }, admin.id),
+        /Audit persistence failed/
+      );
+      assert.deepEqual(await readOverrideRows(), []);
+      assert.deepEqual(await readEvents(), []);
+    } finally {
+      failedInsert.mock.restore();
+    }
+
+    await setExperiencedOverride(dal, { userId: user.id, override: 'granted', reason: 'Grant.' }, admin.id);
+    const originalOverride = await readOverrideRows();
+    const originalEvents = await readEvents();
+    const failedChanges = auditFailure();
+    try {
+      for (const override of ['revoked', null] as const) {
+        await assert.rejects(
+          setExperiencedOverride(dal, { userId: user.id, override, reason: 'Change.' }, admin.id),
+          /Audit persistence failed/
+        );
+        assert.deepEqual(await readOverrideRows(), originalOverride);
+        assert.deepEqual(await readEvents(), originalEvents);
+        assert.equal((await getExperiencedStatus(dal, user.id)).override, 'granted');
+      }
+    } finally {
+      failedChanges.mock.restore();
+    }
+  } finally {
     await cleanup(prefix, userIds);
   }
 });

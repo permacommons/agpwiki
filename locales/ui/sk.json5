@@ -322,6 +322,25 @@
     protected: 'Táto stránka je zamknutá: upravovať ju môžu len správcovia. Zmenu môžete navrhnúť v jej diskusii.',
     backToPage: 'Späť na stránku'
   },
+  sectionEdit: {
+    link: 'upraviť',
+    linkLabel: 'Upraviť sekciu: {{section}}',
+    lead: 'Úvod',
+    editLead: 'Upraviť úvod',
+    editing: 'Úprava sekcie: {{section}}',
+    wholePage: 'Upraviť celú stránku',
+    changed: 'Táto sekcia sa zmenila, kým ste ju upravovali. Načítajte ju znova a skúste to ešte raz.',
+    toolbarLabel: 'Formátovanie',
+    bold: 'Tučné',
+    italic: 'Kurzíva',
+    articleLink: 'Odkaz na článok',
+    articleLinkPrompt: 'Adresa článku, napríklad belt-buckle',
+    heading: 'Nadpis',
+    list: 'Zoznam',
+    citation: 'Pridať zdroj',
+    citationSearch: 'Hľadať zdroje podľa názvu alebo autora',
+    citationNone: 'Nenašli sa žiadne zdroje.'
+  },
   operatorEdit: {
     title: 'Operátorská úprava',
     link: 'Operátorská úprava',

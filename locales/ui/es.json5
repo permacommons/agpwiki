@@ -321,6 +321,25 @@
     protected: 'Esta página está protegida: solo los administradores pueden editarla. Puedes sugerir un cambio en su discusión.',
     backToPage: 'Volver a la página'
   },
+  sectionEdit: {
+    link: 'editar',
+    linkLabel: 'Editar sección: {{section}}',
+    lead: 'Introducción',
+    editLead: 'Editar la introducción',
+    editing: 'Editando la sección: {{section}}',
+    wholePage: 'Editar toda la página',
+    changed: 'Esta sección cambió mientras editabas. Vuelve a cargarla e inténtalo de nuevo.',
+    toolbarLabel: 'Formato',
+    bold: 'Negrita',
+    italic: 'Cursiva',
+    articleLink: 'Enlace a un artículo',
+    articleLinkPrompt: 'Dirección del artículo, por ejemplo belt-buckle',
+    heading: 'Título',
+    list: 'Lista',
+    citation: 'Añadir una referencia',
+    citationSearch: 'Buscar referencias por título o autor',
+    citationNone: 'No se encontraron referencias.'
+  },
   operatorEdit: {
     title: 'Edición de operador',
     link: 'Edición de operador',

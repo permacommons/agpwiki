@@ -321,6 +321,25 @@
     protected: 'このページは保護されています。編集できるのは管理者だけです。変更はこのページの議論で提案できます。',
     backToPage: 'ページに戻る'
   },
+  sectionEdit: {
+    link: '編集',
+    linkLabel: '節を編集: {{section}}',
+    lead: '導入部',
+    editLead: '導入部を編集',
+    editing: '節を編集中: {{section}}',
+    wholePage: 'ページ全体を編集',
+    changed: '編集中にこの節が変更されました。読み込み直してもう一度お試しください。',
+    toolbarLabel: '書式',
+    bold: '太字',
+    italic: '斜体',
+    articleLink: '記事へのリンク',
+    articleLinkPrompt: '記事のアドレス（例: belt-buckle）',
+    heading: '見出し',
+    list: '箇条書き',
+    citation: '出典を追加',
+    citationSearch: 'タイトルまたは著者で出典を検索',
+    citationNone: '出典が見つかりません。'
+  },
   operatorEdit: {
     title: 'オペレーター編集',
     link: 'オペレーター編集',

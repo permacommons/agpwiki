@@ -321,6 +321,25 @@
     protected: '此页面受保护：只有管理员可以编辑。你可以在它的讨论中提出修改建议。',
     backToPage: '返回页面'
   },
+  sectionEdit: {
+    link: '编辑',
+    linkLabel: '编辑章节：{{section}}',
+    lead: '导言',
+    editLead: '编辑导言',
+    editing: '正在编辑章节：{{section}}',
+    wholePage: '编辑整个页面',
+    changed: '你编辑期间此章节已被更改。请重新加载后再试。',
+    toolbarLabel: '格式',
+    bold: '粗体',
+    italic: '斜体',
+    articleLink: '链接到条目',
+    articleLinkPrompt: '条目地址，例如 belt-buckle',
+    heading: '标题',
+    list: '列表',
+    citation: '添加来源',
+    citationSearch: '按标题或作者搜索来源',
+    citationNone: '未找到来源。'
+  },
   operatorEdit: {
     title: '操作员编辑',
     link: '操作员编辑',
