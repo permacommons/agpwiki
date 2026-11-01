@@ -267,6 +267,38 @@
     title: 'Versiegeschiedenis',
     compare: 'Vergelijk geselecteerde revisies',
   },
+  "revert": {
+    "tag": "terugdraaiing",
+    "restore": {
+      "link": "Herstellen",
+      "title": "Deze versie herstellen",
+      "submit": "Deze versie herstellen"
+    },
+    "rollback": {
+      "link": "Terugdraaien",
+      "title": "Terugdraaien",
+      "submit": "Deze bewerkingen terugdraaien"
+    },
+    "summary": "Dit zet de versie van {{date}} door {{name}} terug. Ongedaan gemaakte bewerkingen: {{count}}, door {{names}}.",
+    "seeChanges": "Bekijk de wijzigingen",
+    "reason": "Reden",
+    "reasonHelp": "Zeg waarom, bijvoorbeeld 'geen bronnen voor het nieuwe kopje'. Het wordt de bewerkingssamenvatting, en wie zijn bewerkingen ongedaan ziet gaan, ziet het.",
+    "reasonRequired": "Geef een reden op.",
+    "changed": "De pagina is veranderd terwijl je keek. Controleer wat dit nu ongedaan zou maken voordat je verdergaat.",
+    "forbidden": "Je kunt deze pagina niet terugdraaien.",
+    "invalid": "Dit kan hier niet: de versie is misschien al de huidige, of er valt niets terug te draaien.",
+    "guard": {
+      "title": "Je terugdraaiing is ongedaan gemaakt",
+      "body": "Iemand heeft je terugdraaiing van deze pagina ongedaan gemaakt. Volgens de gedragsregels voor operators is de volgende stap een discussie, geen nieuwe terugdraaiing.",
+      "discuss": "Deze pagina bespreken",
+      "conduct": "Gedragsregels lezen"
+    },
+    "recent": {
+      "showReverts": "Alleen terugdraaiingen tonen",
+      "onlyReverts": "Alleen terugdraaiingen worden getoond",
+      "all": "Alle wijzigingen tonen"
+    }
+  },
   pageTabs: {
     label: 'Paginatabbladen',
     article: 'Artikel',
@@ -726,6 +758,7 @@
     "someone": "Iemand",
     "kind": {
       "forumReply": "{{name}} reageerde in {{subject}}",
+      "pageRevert": "{{name}} heeft je bewerkingen aan {{subject}} teruggedraaid",
       "other": "Nieuwe activiteit in {{subject}}"
     },
     "markRead": "Markeren als gelezen",
@@ -753,6 +786,10 @@
         "forumReply": {
           "label": "Reacties in forumdraden die je volgt",
           "help": "Je volgt een draad als je hem start of erin reageert. Je kunt hem ook in de draad zelf volgen of ontvolgen."
+        },
+        "pageRevert": {
+          "label": "Terugdraaiingen van je bewerkingen",
+          "help": "Als iemand een eerdere versie van een pagina herstelt of je bewerkingen terugdraait. Je ziet de reden."
         }
       }
     }

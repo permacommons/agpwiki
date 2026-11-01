@@ -4,8 +4,8 @@ import { escapeHtml, renderText, type SafeText } from '../../render.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
-// The page tabs link here, so a page shows at most one revision history.
-export const HISTORY_ANCHOR = 'history';
+// Colons cannot occur in generated Markdown heading IDs.
+export const HISTORY_ANCHOR = 'wiki:revision-history';
 
 export type HistoryRevision = {
   revId: string;
@@ -22,6 +22,8 @@ type HistoryOptions = {
   diffTo?: string;
   action: string;
   viewHref: (revId: string) => string;
+  // Further links after "View", such as restoring that version.
+  extraActions?: (revision: HistoryRevision, index: number) => Array<{ label: string; href: string }>;
   userMap: Map<string, string>;
   t: TFunction;
 };
@@ -46,6 +48,7 @@ export const renderRevisionHistory = ({
   diffTo,
   action,
   viewHref,
+  extraActions,
   userMap,
   t,
 }: HistoryOptions) => {
@@ -86,7 +89,11 @@ export const renderRevisionHistory = ({
   </div>
   ${summaryHtml}
   <div class="rev-actions">
-    <a href="${escapeHtml(viewHref(rev.revId))}">${t('history.view')}</a>
+    ${(rev.revTags ?? []).includes('revert') ? `<span class="rev-tag-revert">${escapeHtml(t('revert.tag'))}</span> ` : ''}<a href="${escapeHtml(viewHref(rev.revId))}">${t('history.view')}</a>${(
+      extraActions?.(rev, index) ?? []
+    )
+      .map(item => ` · <a href="${escapeHtml(item.href)}">${escapeHtml(item.label)}</a>`)
+      .join('')}
   </div>
 </li>`;
     })

@@ -9,6 +9,8 @@ import type { TFunction } from 'i18next';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import User from '../src/models/user.js';
+import { renderMarkdown } from '../src/render.js';
+import { HISTORY_ANCHOR, renderRevisionHistory } from '../src/routes/lib/history.js';
 import { renderPageTabs } from '../src/routes/lib/page-tabs.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
@@ -35,10 +37,20 @@ test('renderPageTabs shows Article, Discuss with its count, Edit and History', (
   assert.match(html, /<a class="page-tab page-tab--current" href="\/belt-buckle" aria-current="page">pageTabs\.article<\/a>/);
   assert.match(html, /href="\/tool\/forum\/articles\/page\/belt-buckle">pageTabs\.discuss <span class="page-tab-count">3<\/span><\/a>/);
   assert.match(html, /<a class="page-tab page-tab--edit" href="\/belt-buckle\/operator-edit\?lang=en">pageTabs\.edit<\/a>/);
-  assert.match(html, /href="#history">pageTabs\.history<\/a>/);
+  assert.match(html, /href="#wiki:revision-history">pageTabs\.history<\/a>/);
   // Article and Discuss come before the spacer, Edit and History after it.
   assert.ok(html.indexOf('pageTabs.discuss') < html.indexOf('page-tabs-spacer'));
   assert.ok(html.indexOf('page-tabs-spacer') < html.indexOf('pageTabs.edit'));
+});
+
+test('revision history has an anchor distinct from Markdown headings', async () => {
+  const { html, toc } = await renderMarkdown('## History\n\nText.\n\n## wiki:revision-history', []);
+  const historyHtml = renderRevisionHistory({
+    revisions: [], action: '/test', viewHref: () => '/test', userMap: new Map(), t,
+  });
+  assert.match(html, /id="history"/);
+  assert.ok(toc.every(item => item.slug !== HISTORY_ANCHOR));
+  assert.ok(historyHtml.includes(`<details class="page-history" id="${HISTORY_ANCHOR}">`));
 });
 
 test('renderPageTabs on an old revision links back to the page and leaves out Edit', () => {

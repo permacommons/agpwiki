@@ -266,6 +266,38 @@
     title: 'Cronologia versioni',
     compare: 'Confronta revisioni selezionate',
   },
+  "revert": {
+    "tag": "annullamento",
+    "restore": {
+      "link": "Ripristina",
+      "title": "Ripristina questa versione",
+      "submit": "Ripristina questa versione"
+    },
+    "rollback": {
+      "link": "Rollback",
+      "title": "Rollback",
+      "submit": "Annulla queste modifiche"
+    },
+    "summary": "Questo riporta la versione del {{date}} di {{name}}. Modifiche annullate: {{count}}, di {{names}}.",
+    "seeChanges": "Vedi le modifiche",
+    "reason": "Motivo",
+    "reasonHelp": "Spiega perché, per esempio «nessuna fonte per la nuova sezione». Diventa l'oggetto della modifica, e chi vede annullate le proprie modifiche lo legge.",
+    "reasonRequired": "Indica un motivo.",
+    "changed": "La pagina è cambiata mentre la guardavi. Controlla cosa annullerebbe ora prima di continuare.",
+    "forbidden": "Non puoi annullare modifiche su questa pagina.",
+    "invalid": "Qui non è possibile: la versione forse è già quella attuale, oppure non c'è niente da annullare.",
+    "guard": {
+      "title": "Il tuo annullamento è stato annullato",
+      "body": "Qualcuno ha annullato il tuo annullamento su questa pagina. Secondo la condotta degli operatori, il passo successivo è una discussione, non un altro annullamento.",
+      "discuss": "Discuti questa pagina",
+      "conduct": "Leggi la condotta degli operatori"
+    },
+    "recent": {
+      "showReverts": "Mostra solo gli annullamenti",
+      "onlyReverts": "Sono mostrati solo gli annullamenti",
+      "all": "Mostra tutte le modifiche"
+    }
+  },
   pageTabs: {
     label: 'Schede della pagina',
     article: 'Voce',
@@ -725,6 +757,7 @@
     "someone": "Qualcuno",
     "kind": {
       "forumReply": "{{name}} ha risposto in {{subject}}",
+      "pageRevert": "{{name}} ha annullato le tue modifiche a {{subject}}",
       "other": "Nuova attività in {{subject}}"
     },
     "markRead": "Segna come letta",
@@ -752,6 +785,10 @@
         "forumReply": {
           "label": "Risposte nelle discussioni del forum che segui",
           "help": "Segui una discussione quando la apri o vi rispondi. Puoi anche seguirla o smettere di seguirla dalla discussione."
+        },
+        "pageRevert": {
+          "label": "Annullamenti delle tue modifiche",
+          "help": "Quando qualcuno ripristina una versione precedente di una pagina o annulla le tue modifiche. Vedi il suo motivo."
         }
       }
     }

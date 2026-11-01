@@ -4,6 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{title}}</title>
+    {{#if canonicalUrl}}<link rel="canonical" href="{{canonicalUrl}}" />{{/if}}
     <link rel="stylesheet" href="{{{assets.siteCss}}}" />
     {{!-- Progressive enhancement hooks: .js-enabled hides no-js-only fallbacks, noscript hides requires-js controls. --}}
     <script>document.documentElement.classList.add('js-enabled');</script>

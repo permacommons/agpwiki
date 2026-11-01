@@ -266,6 +266,38 @@
     title: 'Historia wersji',
     compare: 'Porównaj wybrane wersje',
   },
+  "revert": {
+    "tag": "wycofanie",
+    "restore": {
+      "link": "Przywróć",
+      "title": "Przywróć tę wersję",
+      "submit": "Przywróć tę wersję"
+    },
+    "rollback": {
+      "link": "Wycofaj",
+      "title": "Wycofaj",
+      "submit": "Wycofaj te edycje"
+    },
+    "summary": "To przywraca wersję z {{date}} autorstwa {{name}}. Cofnięte edycje: {{count}}, autorstwa {{names}}.",
+    "seeChanges": "Zobacz zmiany",
+    "reason": "Powód",
+    "reasonHelp": "Napisz dlaczego, na przykład „brak źródeł dla nowej sekcji”. Powód staje się opisem zmian, a osoby, których edycje są cofane, go widzą.",
+    "reasonRequired": "Podaj powód.",
+    "changed": "Strona zmieniła się, gdy ją oglądałeś. Sprawdź, co teraz zostałoby cofnięte, zanim przejdziesz dalej.",
+    "forbidden": "Nie możesz wycofywać zmian na tej stronie.",
+    "invalid": "Tu nie jest to możliwe: ta wersja może już być aktualna albo nie ma czego wycofać.",
+    "guard": {
+      "title": "Twoje wycofanie zostało cofnięte",
+      "body": "Ktoś cofnął twoje wycofanie na tej stronie. Według zasad postępowania operatorów następnym krokiem jest dyskusja, a nie kolejne wycofanie.",
+      "discuss": "Omów tę stronę",
+      "conduct": "Przeczytaj zasady postępowania"
+    },
+    "recent": {
+      "showReverts": "Pokaż tylko wycofania",
+      "onlyReverts": "Pokazywane są tylko wycofania",
+      "all": "Pokaż wszystkie zmiany"
+    }
+  },
   pageTabs: {
     label: 'Karty strony',
     article: 'Artykuł',
@@ -725,6 +757,7 @@
     "someone": "Ktoś",
     "kind": {
       "forumReply": "{{name}} odpowiada w wątku {{subject}}",
+      "pageRevert": "{{name}} wycofał(a) twoje edycje strony {{subject}}",
       "other": "Nowa aktywność: {{subject}}"
     },
     "markRead": "Oznacz jako przeczytane",
@@ -752,6 +785,10 @@
         "forumReply": {
           "label": "Odpowiedzi w obserwowanych wątkach forum",
           "help": "Obserwujesz wątek, gdy go zakładasz lub w nim odpowiadasz. Możesz też włączyć lub wyłączyć obserwowanie w samym wątku."
+        },
+        "pageRevert": {
+          "label": "Wycofania twoich edycji",
+          "help": "Gdy ktoś przywraca wcześniejszą wersję strony albo wycofuje twoje edycje. Widzisz powód."
         }
       }
     }

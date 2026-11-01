@@ -123,6 +123,13 @@ import {
   protectWikiPage,
   unprotectWikiPage,
 } from '../services/page-protection-service.js';
+import {
+  type PageRestoreInput,
+  type PageRevertInput,
+  type PageRevertResult,
+  restoreWikiPageRevision,
+  rollbackWikiPage,
+} from '../services/page-revert-service.js';
 import { isSignoffPageSlug, listActivePageSignoffs } from '../services/page-signoff-service.js';
 import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
 import { setProposalLinks } from '../services/proposal-links-service.js';
@@ -292,6 +299,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .string()
     .describe(`Citation claim ID. Max ${CITATION_CLAIM_ID_MAX_LENGTH} characters.`);
   const optionalSlugSchema = slugSchema.optional().describe(slugSchema.description ?? '');
+  const keepAliasSchema = z
+    .boolean()
+    .optional()
+    .describe(
+      'When renaming with newSlug, keep the old address as an alias of the new one, answering with a permanent (301) redirect (default true). Pass false only when nothing links to the old address or it should be freed for another page.'
+    );
   const optionalCitationKeySchema = citationKeySchema
     .optional()
     .describe(citationKeySchema.description ?? '');
@@ -782,6 +795,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
+        keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
@@ -1912,6 +1926,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       inputSchema: {
         slug: slugSchema,
         newSlug: optionalSlugSchema,
+        keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
@@ -1933,6 +1948,59 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return toWikiWriteResponse(payload);
+    })
+  );
+
+  const toRevertResponse = (result: PageRevertResult) => ({
+    ...toWikiWriteResponse(result.page),
+    restoredRevId: result.restoredRevId,
+    revertedRevIds: result.revertedRevIds,
+  });
+  const revertRulesDescription =
+    'The reason (revSummary) is required and becomes the edit summary. Nothing is deleted: the revert is a new revision tagged "revert", so it can itself be reverted, and the contributors whose edits are undone are notified. Under Operator Conduct, once your own revert of a page has been undone you must not revert again: such a call fails with a conflict error (details.reason "edit_war_guard"); discuss on the page discussion instead.';
+
+  server.registerTool(
+    'wiki_restoreRevision',
+    {
+      title: 'Restore Page Version',
+      description: `Bring a wiki page back to exactly the title, body, original language and Wikidata ID of an earlier revision (revId from wiki_listRevisions). Any account approved for editing may do this; protected pages need a wiki admin. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        revId: uuidSchema.describe('The revision to bring back, from wiki_listRevisions.'),
+        expectedRevId: expectedRevIdSchema,
+        policyHash: policyHashSchema,
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: PageRestoreInput & { policyHash?: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...input } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      return toRevertResponse(await restoreWikiPageRevision(dal, input, userId));
+    })
+  );
+
+  server.registerTool(
+    'wiki_rollbackPage',
+    {
+      title: 'Roll Back Page',
+      description: `Undo the latest run of edits to a wiki page by one contributor (someone other than you), bringing back the last version before them. Limited to wiki admins. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: slugSchema,
+        expectedRevId: expectedRevIdSchema,
+        policyHash: policyHashSchema,
+        revSummary: localizedRevisionSummarySchema.required,
+      },
+    },
+    withToolErrorHandling(async (args: PageRevertInput & { policyHash?: string }, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const { policyHash, ...input } = args;
+      await requireCurrentPolicyHash(dal, policyHash);
+      return toRevertResponse(await rollbackWikiPage(dal, input, userId));
     })
   );
 

@@ -6,6 +6,7 @@ import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { resolveSafeText } from '../lib/safe-text.js';
+import { toAddressForm } from '../lib/slug.js';
 import {
   escapeHtml,
   formatDateUTC,
@@ -15,12 +16,14 @@ import {
 } from '../render.js';
 import {
   diffBlogPostRevisions,
+  findCurrentPostBySlugOrAlias,
   listBlogPostRevisions,
   listBlogPosts,
   readBlogPost,
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
+import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
   extractQueryParams,
   getAvailableLanguages,
@@ -136,6 +139,13 @@ export const registerBlogRoutes = (app: Express) => {
           return await readBlogPost(dalInstance, slug);
         } catch (error) {
           if (error instanceof NotFoundError) {
+            const addressForm = toAddressForm(slug);
+            const match =
+              addressForm !== slug ? await findCurrentPostBySlugOrAlias(dalInstance, addressForm) : null;
+            if (match) {
+              res.redirect(301, `/blog/${encodeURIComponent(match.slug)}${queryStringOf(req.originalUrl)}`);
+              return null;
+            }
             res.status(404).type('text').send(req.t('page.notFound'));
             return null;
           }
@@ -143,6 +153,10 @@ export const registerBlogRoutes = (app: Express) => {
         }
       })();
       if (!post) return;
+      if (post.slug !== slug) {
+        res.redirect(301, `/blog/${encodeURIComponent(post.slug)}${queryStringOf(req.originalUrl)}`);
+        return;
+      }
 
       const revisionsResult = await listBlogPostRevisions(dalInstance, slug);
       const revisions = revisionsResult.revisions;
@@ -312,6 +326,7 @@ export const registerBlogRoutes = (app: Express) => {
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
       res.render('layout', {
         title: prepareTitle(title),
+        canonicalUrl: canonicalUrlFor(`/blog/${encodeURIComponent(post.slug)}`),
         labelHtml,
         bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
         topHtml: prependAccountBanner(res, topHtml),

@@ -1,3 +1,4 @@
+import type { PoolClient } from 'pg';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import AdminEvent from '../models/admin-event.js';
 
@@ -31,7 +32,8 @@ export interface AdminEventResult {
 
 export const recordAdminEvent = async (
   _dalInstance: DataAccessLayer,
-  input: AdminEventInput
+  input: AdminEventInput,
+  transaction?: PoolClient
 ): Promise<AdminEventResult> => {
   const event = await AdminEvent.create({
     eventType: input.eventType,
@@ -41,7 +43,7 @@ export const recordAdminEvent = async (
     targetRevId: input.targetRevId ?? null,
     details: input.details ?? null,
     createdAt: new Date(),
-  });
+  }, { transaction });
 
   return {
     id: event.id,

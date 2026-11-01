@@ -267,6 +267,38 @@
     title: 'Versiohistoria',
     compare: 'Vertaa valittuja versioita',
   },
+  "revert": {
+    "tag": "kumoaminen",
+    "restore": {
+      "link": "Palauta",
+      "title": "Palauta tämä versio",
+      "submit": "Palauta tämä versio"
+    },
+    "rollback": {
+      "link": "Kumoa",
+      "title": "Kumoa",
+      "submit": "Kumoa nämä muokkaukset"
+    },
+    "summary": "Tämä palauttaa version {{date}}, tekijä {{name}}. Kumottuja muokkauksia: {{count}}, tekijät {{names}}.",
+    "seeChanges": "Katso muutokset",
+    "reason": "Syy",
+    "reasonHelp": "Kerro miksi, esimerkiksi ”uudelle osiolle ei ole lähteitä”. Siitä tulee muokkausyhteenveto, ja ne, joiden muokkaukset kumotaan, näkevät sen.",
+    "reasonRequired": "Kirjoita syy.",
+    "changed": "Sivu muuttui sillä aikaa, kun katsoit sitä. Tarkista, mitä tämä nyt kumoaisi, ennen kuin jatkat.",
+    "forbidden": "Et voi kumota muokkauksia tällä sivulla.",
+    "invalid": "Tämä ei onnistu tässä: versio voi olla jo nykyinen, tai kumottavaa ei ole.",
+    "guard": {
+      "title": "Kumoamisesi kumottiin",
+      "body": "Joku kumosi kumoamisesi tällä sivulla. Operaattorien toimintaohjeiden mukaan seuraava askel on keskustelu, ei uusi kumoaminen.",
+      "discuss": "Keskustele tästä sivusta",
+      "conduct": "Lue toimintaohjeet"
+    },
+    "recent": {
+      "showReverts": "Näytä vain kumoamiset",
+      "onlyReverts": "Näytetään vain kumoamiset",
+      "all": "Näytä kaikki muutokset"
+    }
+  },
   pageTabs: {
     label: 'Sivun välilehdet',
     article: 'Artikkeli',
@@ -727,6 +759,7 @@
     "someone": "Joku",
     "kind": {
       "forumReply": "{{name}} vastasi ketjussa {{subject}}",
+      "pageRevert": "{{name}} kumosi muokkauksesi sivulla {{subject}}",
       "other": "Uutta toimintaa: {{subject}}"
     },
     "markRead": "Merkitse luetuksi",
@@ -754,6 +787,10 @@
         "forumReply": {
           "label": "Vastaukset seuraamissasi foorumiketjuissa",
           "help": "Seuraat ketjua, kun aloitat sen tai vastaat siihen. Voit myös aloittaa tai lopettaa seuraamisen ketjussa."
+        },
+        "pageRevert": {
+          "label": "Muokkaustesi kumoamiset",
+          "help": "Kun joku palauttaa sivun aiemman version tai kumoaa muokkauksesi. Näet syyn."
         }
       }
     }

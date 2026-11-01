@@ -502,6 +502,39 @@
     "title": "Version history",
     "compare": "Compare selected revisions"
   },
+  // Restoring an earlier version and rolling back edits from the version history.
+  "revert": {
+    "tag": "revert",
+    "restore": {
+      "link": "Restore",
+      "title": "Restore this version",
+      "submit": "Restore this version"
+    },
+    "rollback": {
+      "link": "Roll back",
+      "title": "Roll back",
+      "submit": "Roll back these edits"
+    },
+    "summary": "This brings back the version of {{date}} by {{name}}. Edits undone: {{count}}, by {{names}}.",
+    "seeChanges": "See the changes",
+    "reason": "Reason",
+    "reasonHelp": "Say why, for example \"no sources for the new section\". It becomes the edit summary, and the people whose edits are undone see it.",
+    "reasonRequired": "Enter a reason.",
+    "changed": "The page changed while you were looking at it. Check what this would undo now before you continue.",
+    "forbidden": "You can't revert this page.",
+    "invalid": "This isn't possible here: the version may already be the current one, or there is nothing to roll back to.",
+    "guard": {
+      "title": "Your revert was undone",
+      "body": "Someone undid your revert of this page. Under Operator Conduct, the next step is a discussion, not another revert.",
+      "discuss": "Discuss this page",
+      "conduct": "Read Operator Conduct"
+    },
+    "recent": {
+      "showReverts": "Show only reverts",
+      "onlyReverts": "Showing only reverts",
+      "all": "Show all changes"
+    }
+  },
   // Tabs under the title of a wiki page.
   "pageTabs": {
     "label": "Page tabs",
@@ -1026,6 +1059,7 @@
     "someone": "Someone",
     "kind": {
       "forumReply": "{{name}} replied in {{subject}}",
+      "pageRevert": "{{name}} reverted your edits to {{subject}}",
       "other": "New activity in {{subject}}"
     },
     "markRead": "Mark as read",
@@ -1053,6 +1087,10 @@
         "forumReply": {
           "label": "Replies in forum threads you are subscribed to",
           "help": "You are subscribed to a thread when you start it or reply in it. You can also subscribe or unsubscribe on the thread."
+        },
+        "pageRevert": {
+          "label": "Reverts of your edits",
+          "help": "When someone restores an earlier version of a page or rolls back your edits. You see their reason."
         }
       }
     }

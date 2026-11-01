@@ -13,7 +13,9 @@
     status.hidden = !text;
   }
 
-  function setUnread(count) {
+  function setUnread(count, label) {
+    bell.setAttribute('aria-label', label);
+    bell.setAttribute('title', label);
     var badge = bell.querySelector('.notification-bell-count');
     if (count > 0) {
       if (!badge) {
@@ -84,7 +86,7 @@
       list.appendChild(li);
     });
     setStatus(data.items.length ? '' : panel.dataset.empty);
-    setUnread(data.unreadCount);
+    setUnread(data.unreadCount, data.bellLabel);
   }
 
   function load() {
