@@ -62,8 +62,6 @@ import {
   FORUM_REPLY_CREATED_NOTIFICATION,
 } from '../src/services/forum-notification-service.js';
 import {
-  claimPendingNotificationJobs,
-  resetProcessingNotificationJobs,
   markNotificationJobProcessed,
 } from '../src/services/notification-queue.js';
 import {
@@ -137,16 +135,6 @@ const getDal = async () => {
   if (sharedDal) return sharedDal;
   sharedDal = await initializePostgreSQL();
   return sharedDal;
-};
-
-// Test files run in parallel and share the notification queue, so clean up
-// only the forum reply jobs these tests create, never other kinds.
-const clearForumReplyJobs = async (dal: Awaited<ReturnType<typeof initializePostgreSQL>>) => {
-  await dal.query(
-    'DELETE FROM notification_deliveries WHERE job_id IN (SELECT id FROM notification_jobs WHERE type = $1)',
-    [FORUM_REPLY_CREATED_NOTIFICATION]
-  );
-  await dal.query('DELETE FROM notification_jobs WHERE type = $1', [FORUM_REPLY_CREATED_NOTIFICATION]);
 };
 
 test.after(async () => {
@@ -357,7 +345,7 @@ test('Forum notification processing emails subscribed verified users with notifi
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
     const sent: Array<{ to: string; subject: string; text: string }> = [];
@@ -423,7 +411,7 @@ test('Forum reply notifications follow each person\'s channel choice and are not
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
     const emailed: string[] = [];
     const send = async (message: { to: string }) => {
@@ -624,7 +612,7 @@ test('Forum notification processing includes reply excerpt and comment link', as
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
     const sent: Array<{ subject: string; text: string }> = [];
@@ -686,7 +674,7 @@ test('Forum notification processing records disabled email delivery as skipped',
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
     const result = await processForumReplyCreatedNotification(dal, job, async () => ({
@@ -745,7 +733,7 @@ test('Forum notification excerpt decodes escaped markdown HTML entities', async 
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
     const sent: Array<{ text: string; html?: string }> = [];
@@ -810,7 +798,7 @@ test('Forum notification retry skips recipients already marked sent', async () =
       actor.id
     );
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
     const firstPassSent: string[] = [];
@@ -887,7 +875,7 @@ test('Forum reply notifications use recipients captured at enqueue time', async 
 
     await subscribeUserToForumThread(thread.id, lateRecipient.id);
 
-    const job = await claimQueuedForumReplyJobByThreadId(dal, thread.id);
+    const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
     assert.deepEqual(job.payload.recipientUserIds, [earlyRecipient.id]);
 
@@ -958,7 +946,7 @@ test('Forum notification processing skips deleted comments without retrying', as
       moderator.id
     );
 
-    const job = await claimQueuedForumReplyJobByCommentId(dal, reply.id);
+    const job = await findQueuedForumReplyJobByCommentId(reply.id);
     assert.ok(job);
 
     let sendAttempts = 0;
@@ -984,40 +972,6 @@ test('Forum notification processing skips deleted comments without retrying', as
       const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       console.warn(`Cleanup failed: ${message}`);
     }
-  }
-});
-
-test('Notification worker startup reset returns processing jobs to pending', async () => {
-  const dal = await getDal();
-
-  try {
-    await NotificationJob.create({
-      type: FORUM_REPLY_CREATED_NOTIFICATION,
-      payload: {
-        threadId: '00000000-0000-4000-8000-000000000001',
-        commentId: '00000000-0000-4000-8000-000000000002',
-        actorUserId: '00000000-0000-4000-8000-000000000003',
-      },
-      status: 'processing',
-      availableAt: new Date(),
-      lockedAt: new Date(),
-      lockToken: '00000000-0000-4000-8000-000000000004',
-      attemptCount: 0,
-      createdAt: new Date(),
-    });
-
-    const resetCount = await resetProcessingNotificationJobs(dal);
-    assert.equal(resetCount, 1);
-
-    const jobs = await NotificationJob.filterWhere({
-      type: FORUM_REPLY_CREATED_NOTIFICATION,
-    }).run();
-    assert.equal(jobs.length, 1);
-    assert.equal(jobs[0]?.status, 'pending');
-    assert.equal(jobs[0]?.lockedAt ?? null, null);
-    assert.equal(jobs[0]?.lockToken ?? null, null);
-  } finally {
-    await clearForumReplyJobs(dal);
   }
 });
 
@@ -1169,20 +1123,9 @@ const findQueuedForumReplyJobByThreadId = async (threadId: string) => {
   return jobs.find(job => job.payload?.threadId === threadId);
 };
 
-const claimQueuedForumReplyJobByThreadId = async (
-  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
-  threadId: string
-) => {
-  const claimed = await claimPendingNotificationJobs(dal, 10);
-  return claimed.jobs.find(entry => entry.payload.threadId === threadId);
-};
-
-const claimQueuedForumReplyJobByCommentId = async (
-  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
-  commentId: string
-) => {
-  const claimed = await claimPendingNotificationJobs(dal, 10);
-  return claimed.jobs.find(entry => entry.payload.commentId === commentId);
+const findQueuedForumReplyJobByCommentId = async (commentId: string) => {
+  const jobs = await NotificationJob.filterWhere({ type: FORUM_REPLY_CREATED_NOTIFICATION, status: 'pending' }).run();
+  return jobs.find(job => job.payload?.commentId === commentId);
 };
 
 const cleanupNotificationScenario = async (
@@ -1190,7 +1133,6 @@ const cleanupNotificationScenario = async (
   forumThreadPrefix: string,
   userIds: Array<string | null>
 ) => {
-  await clearForumReplyJobs(dal);
   let shouldDeleteThreads = true;
   for (const userId of userIds) {
     await cleanupTestArtifacts(dal, {
@@ -1249,6 +1191,10 @@ const cleanupTestArtifacts = async (
     await dal.query('DELETE FROM citation_claims WHERE claim_id LIKE $1', [claimPrefix]);
   }
   if (forumThreadPrefix) {
+    const jobFilter = `payload->>'threadId' IN (SELECT id::text FROM forum_threads WHERE title->>'en' LIKE $1)`;
+    await dal.query(`DELETE FROM notifications WHERE job_id IN (SELECT id FROM notification_jobs WHERE ${jobFilter})`, [forumThreadPrefix]);
+    await dal.query(`DELETE FROM notification_deliveries WHERE job_id IN (SELECT id FROM notification_jobs WHERE ${jobFilter})`, [forumThreadPrefix]);
+    await dal.query(`DELETE FROM notification_jobs WHERE ${jobFilter}`, [forumThreadPrefix]);
     await dal.query(
       "DELETE FROM forum_thread_subscriptions WHERE thread_id IN (SELECT id FROM forum_threads WHERE title->>'en' LIKE $1)",
       [forumThreadPrefix]

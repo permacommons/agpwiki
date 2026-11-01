@@ -39,6 +39,7 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
@@ -393,30 +394,6 @@ export const recordProtectedWikiPageEdit = async (
     targetRevId: page._revID,
     details: { operation },
   }, transaction);
-};
-
-const findCurrentPageBySlug = async (slug: string) =>
-  WikiPage.filterWhere({
-    slug,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-export const findCurrentPageById = async (id: string) =>
-  WikiPage.filterWhere({
-    id,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-export const findCurrentPageBySlugOrAlias = async (slug: string) => {
-  const direct = await findCurrentPageBySlug(slug);
-  if (direct) return direct;
-
-  const alias = await PageAlias.filterWhere({ slug }).first();
-  if (!alias) return null;
-
-  return findCurrentPageById(alias.pageId);
 };
 
 export const fetchPageRevisionByRevId = async (
@@ -1409,3 +1386,5 @@ export async function deleteWikiPage(
     deleted: true,
   };
 }
+
+export { findCurrentPageById, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';

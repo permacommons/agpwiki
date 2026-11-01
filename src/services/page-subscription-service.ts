@@ -46,20 +46,3 @@ export const listFollowedPages = async (dalInstance: DataAccessLayer, userId: st
     result.rows as Array<{ page_id: string; slug: string; title: Record<string, string> | null; subscribed_at: Date }>
   ).map(row => ({ pageId: row.page_id, slug: row.slug, title: row.title, subscribedAt: row.subscribed_at }));
 };
-
-/** The current page at an address, for following it from a link or a thread. */
-export const findCurrentPageIdBySlug = async (dalInstance: DataAccessLayer, slug: string) => {
-  const result = await dalInstance.query(
-    'SELECT id FROM pages WHERE slug = $1 AND _old_rev_of IS NULL AND _rev_deleted = false',
-    [slug]
-  );
-  const directPageId = (result.rows[0] as { id: string } | undefined)?.id;
-  if (directPageId) return directPageId;
-  const aliasResult = await dalInstance.query(
-    `SELECT p.id FROM page_aliases a
-       JOIN pages p ON p.id = a.page_id AND p._old_rev_of IS NULL AND p._rev_deleted = false
-      WHERE a.slug = $1`,
-    [slug]
-  );
-  return (aliasResult.rows[0] as { id: string } | undefined)?.id ?? null;
-};

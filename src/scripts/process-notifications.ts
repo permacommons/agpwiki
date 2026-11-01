@@ -3,7 +3,7 @@ import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
 import {
   notificationJobHandlers,
-} from '../services/forum-notification-service.js';
+} from '../services/notification-handlers.js';
 import {
   claimPendingNotificationJobs,
   markNotificationJobFailed,

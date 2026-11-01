@@ -1,32 +1,20 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
 import { forumThreadPath } from '../lib/forum-paths.js';
-import {
-  readNotificationChannel,
-  wantsEmailNotification,
-  wantsSiteNotification,
-} from '../lib/notification-preferences.js';
+import { escapeHtml } from '../lib/html.js';
+import { collapseWhitespace, EXCERPT_LENGTH, truncate } from '../lib/notification-text.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds, subscribeUserToForumThread } from './forum-subscription-service.js';
-import {
-  listDeliveredUserIds,
-  type NotificationJobRecord,
-  recordNotificationDelivery,
-} from './notification-queue.js';
-import { collapseWhitespace, EXCERPT_LENGTH, escapeHtml, markdownToPlainText, truncate } from './notification-text.js';
-import { PAGE_COMMENT_NOTIFICATION, processPageCommentNotification } from './page-comment-notification-service.js';
-import { PAGE_REVERTED_NOTIFICATION } from './page-revert-service.js';
-import { processPageRevertedNotification } from './revert-notification-service.js';
+import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
+import type { NotificationJobRecord } from './notification-queue.js';
+import { markdownToPlainText } from './notification-text.js';
 import { getSiteBaseUrl } from './site-config.js';
-import { createSiteNotification } from './site-notification-service.js';
 
 export const FORUM_REPLY_CREATED_NOTIFICATION = 'forum.reply.created';
 const FORUM_NOTIFICATION_KIND = 'forum.reply';
-const EMAIL_CHANNEL = 'email';
-const SITE_CHANNEL = 'site';
 
 export type ForumReplyCreatedPayload = {
   threadId: string;
@@ -66,26 +54,8 @@ export const listForumReplyRecipientUserIds = async (
   return [...new Set(subscriberIds)].filter(userId => userId !== actorUserId);
 };
 
-export const listForumReplyNotificationRecipients = async (
-  recipientUserIds: string[]
-) => {
-  const uniqueIds = [...new Set(recipientUserIds)];
-  if (uniqueIds.length === 0) return [];
-
-  const users = await Promise.all(uniqueIds.map(userId => User.filterWhere({ id: userId }).first()));
-  return users
-    .filter((user): user is NonNullable<typeof user> => Boolean(user && !user.blockedAt))
-    .map(user => {
-      const channel = readNotificationChannel(user.notificationPreferences, FORUM_NOTIFICATION_KIND);
-      return {
-        user,
-        site: wantsSiteNotification(channel),
-        // Email also needs a verified address.
-        email: wantsEmailNotification(channel) && Boolean(user.emailVerifiedAt),
-      };
-    })
-    .filter(recipient => recipient.site || recipient.email);
-};
+export const listForumReplyNotificationRecipients = (recipientUserIds: string[]) =>
+  loadNotificationRecipients(recipientUserIds, FORUM_NOTIFICATION_KIND);
 
 export const processForumReplyCreatedNotification = async (
   dal: DataAccessLayer,
@@ -118,16 +88,6 @@ export const processForumReplyCreatedNotification = async (
     : await listForumReplyRecipientUserIds(payload.threadId, payload.actorUserId);
   const recipients = await listForumReplyNotificationRecipients(recipientUserIds);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
-  const [emailedUserIds, notifiedUserIds] = await Promise.all([
-    listDeliveredUserIds(job.id, EMAIL_CHANNEL),
-    listDeliveredUserIds(job.id, SITE_CHANNEL),
-  ]);
-  const siteRecipients = recipients.filter(item => item.site && !notifiedUserIds.has(item.user.id));
-  const pendingRecipients = recipients
-    .filter(item => item.email && !emailedUserIds.has(item.user.id))
-    .map(item => item.user);
-  if (pendingRecipients.length === 0 && siteRecipients.length === 0) return { sentCount: 0, siteCount: 0 };
-
   const bodySource =
     comment.body?.[comment.originalLanguage ?? 'en']
     ?? Object.values(comment.body ?? {})[0]
@@ -140,71 +100,26 @@ export const processForumReplyCreatedNotification = async (
   const commentUrl = buildCommentUrl(payload.threadId, payload.commentId);
   const settingsUrl = `${getSiteBaseUrl()}/tool/settings`;
   const subject = `New reply in: ${threadTitle}`;
-  let sentCount = 0;
-  let siteCount = 0;
-
-  for (const { user } of siteRecipients) {
-    await createSiteNotification(dal, {
-      userId: user.id,
-      kind: FORUM_NOTIFICATION_KIND,
-      actorUserId: payload.actorUserId,
-      url: buildCommentPath(payload.threadId, payload.commentId),
-      subject: threadTitle,
+  return deliverNotification(dal, job.id, recipients, {
+    kind: FORUM_NOTIFICATION_KIND,
+    actorUserId: payload.actorUserId,
+    url: buildCommentPath(payload.threadId, payload.commentId),
+    subject: threadTitle,
+    excerpt,
+  }, user => ({
+    to: user.email,
+    subject,
+    text: [
+      `${actorName} posted a new reply in "${threadTitle}".`,
+      '',
       excerpt,
-      jobId: job.id,
-    });
-    await recordNotificationDelivery({
-      jobId: job.id,
-      userId: user.id,
-      channel: SITE_CHANNEL,
-      status: 'sent',
-    });
-    siteCount += 1;
-  }
-
-  for (const recipient of pendingRecipients) {
-    try {
-      const delivery = await sendMailFn({
-        to: recipient.email,
-        subject,
-        text: [
-          `${actorName} posted a new reply in "${threadTitle}".`,
-          '',
-          excerpt,
-          '',
-          `Open the thread: ${commentUrl}`,
-          `Notification settings: ${settingsUrl}`,
-        ].join('\n'),
-        html: `<p>${escapeHtml(actorName)} posted a new reply in "${escapeHtml(threadTitle)}".</p>
+      '',
+      `Open the thread: ${commentUrl}`,
+      `Notification settings: ${settingsUrl}`,
+    ].join('\n'),
+    html: `<p>${escapeHtml(actorName)} posted a new reply in "${escapeHtml(threadTitle)}".</p>
 <blockquote>${escapeHtml(excerpt)}</blockquote>
 <p><a href="${escapeHtml(commentUrl)}">Open the thread</a></p>
 <p><a href="${escapeHtml(settingsUrl)}">Notification settings</a></p>`,
-      });
-      await recordNotificationDelivery({
-        jobId: job.id,
-        userId: recipient.id,
-        channel: EMAIL_CHANNEL,
-        status: delivery.skipped ? 'skipped' : 'sent',
-      });
-      if (!delivery.skipped) sentCount += 1;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await recordNotificationDelivery({
-        jobId: job.id,
-        userId: recipient.id,
-        channel: EMAIL_CHANNEL,
-        status: 'failed',
-        error: message,
-      });
-      throw error;
-    }
-  }
-
-  return { sentCount, siteCount };
+  }), sendMailFn);
 };
-
-export const notificationJobHandlers = {
-  [FORUM_REPLY_CREATED_NOTIFICATION]: processForumReplyCreatedNotification,
-  [PAGE_COMMENT_NOTIFICATION]: processPageCommentNotification,
-  [PAGE_REVERTED_NOTIFICATION]: processPageRevertedNotification,
-} as const;

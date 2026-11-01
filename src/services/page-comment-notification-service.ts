@@ -1,33 +1,27 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { forumThreadPath } from '../lib/forum-paths.js';
+import { escapeHtml } from '../lib/html.js';
 import {
-  readNotificationChannel,
-  wantsEmailNotification,
-  wantsSiteNotification,
-} from '../lib/notification-preferences.js';
+  collapseWhitespace,
+  EXCERPT_LENGTH,
+  pickLocalizedText,
+  truncate,
+} from '../lib/notification-text.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds } from './forum-subscription-service.js';
-import { listDeliveredUserIds, type NotificationJobRecord, recordNotificationDelivery } from './notification-queue.js';
-import {
-  collapseWhitespace,
-  EXCERPT_LENGTH,
-  escapeHtml,
-  markdownToPlainText,
-  pickLocalizedText,
-  truncate,
-} from './notification-text.js';
-import { findCurrentPageIdBySlug, listPageFollowerUserIds } from './page-subscription-service.js';
+import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
+import type { NotificationJobRecord } from './notification-queue.js';
+import { markdownToPlainText } from './notification-text.js';
+import { findCurrentPageById, findCurrentPageIdBySlug } from './page-lookup-service.js';
+import { listPageFollowerUserIds } from './page-subscription-service.js';
 import { getSiteBaseUrl } from './site-config.js';
-import { createSiteNotification } from './site-notification-service.js';
 
 export const PAGE_COMMENT_NOTIFICATION = 'page.comment.created';
 const PAGE_COMMENT_KIND = 'page.comment';
-const EMAIL_CHANNEL = 'email';
-const SITE_CHANNEL = 'site';
 
 export type PageCommentEvent = 'thread' | 'comment' | 'position';
 
@@ -47,27 +41,23 @@ export type PageCommentPayload = {
 type EnqueueJob = (type: string, payload: PageCommentPayload) => Promise<unknown>;
 
 /**
- * Who hears about a comment on a page: the page's followers, minus its author
- * and minus anyone listed in `excludeUserIds`.
+ * Who hears about a comment on a page: its followers, excluding the actor.
  */
 export const listPageCommentRecipientUserIds = async (
   dal: DataAccessLayer,
   pageId: string,
-  actorUserId: string,
-  excludeUserIds: string[] = []
+  actorUserId: string
 ) => {
-  const excluded = new Set([actorUserId, ...excludeUserIds]);
   const followers = await listPageFollowerUserIds(dal, pageId);
-  return [...new Set(followers)].filter(userId => !excluded.has(userId));
+  return [...new Set(followers)].filter(userId => userId !== actorUserId);
 };
 
 const enqueue = async (
   dal: DataAccessLayer,
   payload: Omit<PageCommentPayload, 'recipientUserIds'>,
-  excludeUserIds: string[],
   enqueueJob: EnqueueJob
 ) => {
-  const recipientUserIds = await listPageCommentRecipientUserIds(dal, payload.pageId, payload.actorUserId, excludeUserIds);
+  const recipientUserIds = await listPageCommentRecipientUserIds(dal, payload.pageId, payload.actorUserId);
   if (recipientUserIds.length === 0) return null;
   return enqueueJob(PAGE_COMMENT_NOTIFICATION, { ...payload, recipientUserIds });
 };
@@ -91,36 +81,17 @@ export const notifyPageFollowersOfForumPost = async (
     unknown
   >).first();
   if (!thread?.pageSlug) return null;
-  const pageId = await findCurrentPageIdBySlug(dal, thread.pageSlug);
+  const pageId = await findCurrentPageIdBySlug(thread.pageSlug);
   if (!pageId) return null;
   const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];
-  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, [], enqueueJob);
+  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, enqueueJob);
 };
 
 export const notifyPageFollowersOfPosition = async (
   dal: DataAccessLayer,
   { pageId, signoffId, actorUserId, changed }: { pageId: string; signoffId: string; actorUserId: string; changed: boolean },
   enqueueJob: EnqueueJob
-) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, [], enqueueJob);
-
-const loadRecipients = async (recipientUserIds: string[], forumRecipientUserIds: string[]) => {
-  const forumRecipients = new Set(forumRecipientUserIds);
-  const users = await Promise.all([...new Set(recipientUserIds)].map(userId => User.filterWhere({ id: userId }).first()));
-  return users
-    .filter((user): user is NonNullable<typeof user> => Boolean(user && !user.blockedAt))
-    .map(user => {
-      const channel = readNotificationChannel(user.notificationPreferences, PAGE_COMMENT_KIND);
-      const forumChannel = forumRecipients.has(user.id)
-        ? readNotificationChannel(user.notificationPreferences, 'forum.reply')
-        : 'none';
-      return {
-        user,
-        site: wantsSiteNotification(channel) && !wantsSiteNotification(forumChannel),
-        email: wantsEmailNotification(channel) && Boolean(user.emailVerifiedAt) && !wantsEmailNotification(forumChannel),
-      };
-    })
-    .filter(recipient => recipient.site || recipient.email);
-};
+) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, enqueueJob);
 
 const pagePath = (slug: string) => `/${slug.split('/').map(encodeURIComponent).join('/')}`;
 
@@ -199,77 +170,42 @@ export const processPageCommentNotification = async (
   sendMailFn: typeof sendMail = sendMail
 ) => {
   const payload = job.payload;
-  const pageResult = await dal.query(
-    'SELECT slug, title, original_language FROM pages WHERE id = $1 AND _old_rev_of IS NULL AND _rev_deleted = false',
-    [payload.pageId]
-  );
-  const pageRow = pageResult.rows[0] as
-    | { slug: string; title: Record<string, string> | null; original_language: string | null }
-    | undefined;
-  if (!pageRow) return { sentCount: 0, skipped: 'page_not_found' as const };
+  const currentPage = await findCurrentPageById(payload.pageId);
+  if (!currentPage) return { sentCount: 0, skipped: 'page_not_found' as const };
   const page = {
-    slug: pageRow.slug,
-    title: collapseWhitespace(pickLocalizedText(pageRow.title, pageRow.original_language)) || pageRow.slug,
+    slug: currentPage.slug,
+    title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.originalLanguage)) || currentPage.slug,
   };
 
-  const recipients = await loadRecipients(payload.recipientUserIds ?? [], payload.forumRecipientUserIds ?? []);
+  const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, {
+    kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [],
+  });
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();
   const rendered = await describe(dal, payload, page, actor?.displayName ?? 'Someone');
   if ('skipped' in rendered) return { sentCount: 0, siteCount: 0, skipped: rendered.skipped };
 
-  const [emailedUserIds, notifiedUserIds] = await Promise.all([
-    listDeliveredUserIds(job.id, EMAIL_CHANNEL),
-    listDeliveredUserIds(job.id, SITE_CHANNEL),
-  ]);
-  let siteCount = 0;
-  for (const { user } of recipients.filter(item => item.site && !notifiedUserIds.has(item.user.id))) {
-    await createSiteNotification(dal, {
-      userId: user.id,
-      kind: rendered.siteKind,
-      actorUserId: payload.actorUserId,
-      url: rendered.url,
-      subject: page.title,
-      excerpt: rendered.excerpt || null,
-      jobId: job.id,
-    });
-    await recordNotificationDelivery({ jobId: job.id, userId: user.id, channel: SITE_CHANNEL, status: 'sent' });
-    siteCount += 1;
-  }
-
   const baseUrl = getSiteBaseUrl();
   const link = `${baseUrl}${rendered.url}`;
   const settingsUrl = `${baseUrl}/tool/settings`;
-  let sentCount = 0;
-  for (const { user } of recipients.filter(item => item.email && !emailedUserIds.has(item.user.id))) {
-    try {
-      const delivery = await sendMailFn({
-        to: user.email,
-        subject: rendered.emailSubject,
-        text: [
-          rendered.emailLead,
-          ...(rendered.excerpt ? ['', rendered.excerpt] : []),
-          '',
-          `Open it: ${link}`,
-          `You follow the comments on this page. To stop, or to change how you are told: ${settingsUrl}`,
-        ].join('\n'),
-        html: `<p>${escapeHtml(rendered.emailLead)}</p>
+  return deliverNotification(dal, job.id, recipients, {
+    kind: rendered.siteKind,
+    actorUserId: payload.actorUserId,
+    url: rendered.url,
+    subject: page.title,
+    excerpt: rendered.excerpt || null,
+  }, user => ({
+    to: user.email,
+    subject: rendered.emailSubject,
+    text: [
+      rendered.emailLead,
+      ...(rendered.excerpt ? ['', rendered.excerpt] : []),
+      '',
+      `Open it: ${link}`,
+      `You follow the comments on this page. To stop, or to change how you are told: ${settingsUrl}`,
+    ].join('\n'),
+    html: `<p>${escapeHtml(rendered.emailLead)}</p>
 ${rendered.excerpt ? `<blockquote>${escapeHtml(rendered.excerpt)}</blockquote>\n` : ''}<p><a href="${escapeHtml(link)}">Open it</a></p>
 <p>You follow the comments on this page. <a href="${escapeHtml(settingsUrl)}">Stop following, or change how you are told</a></p>`,
-      });
-      await recordNotificationDelivery({
-        jobId: job.id,
-        userId: user.id,
-        channel: EMAIL_CHANNEL,
-        status: delivery.skipped ? 'skipped' : 'sent',
-      });
-      if (!delivery.skipped) sentCount += 1;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      await recordNotificationDelivery({ jobId: job.id, userId: user.id, channel: EMAIL_CHANNEL, status: 'failed', error: message });
-      throw error;
-    }
-  }
-
-  return { sentCount, siteCount };
+  }), sendMailFn);
 };
