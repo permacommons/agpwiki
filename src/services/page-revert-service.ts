@@ -6,7 +6,8 @@ import {
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
-import { getAccountLifecycleState, userCanUseAgentFeatures } from './account-lifecycle.js';
+import { canUseAgentFeatures } from './account-lifecycle.js';
+import { isExperiencedEditor } from './experienced-editor-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { assertExpectedRevision } from './revision-precondition.js';
@@ -93,10 +94,9 @@ export const canUseRevertAction = async (
   action: RevertAction
 ): Promise<boolean> => {
   if (!userId) return false;
-  const state = await getAccountLifecycleState(userId);
-  if (!state || !userCanUseAgentFeatures(state)) return false;
+  if (!(await canUseAgentFeatures(dalInstance, userId))) return false;
   if (action === 'restore') return true;
-  return userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE);
+  return (await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE)) || isExperiencedEditor(dalInstance, userId);
 };
 
 const assertCanUseRevertAction = async (
@@ -108,7 +108,7 @@ const assertCanUseRevertAction = async (
   throw new ForbiddenError(
     action === 'restore'
       ? 'Restoring a version needs an account approved for editing.'
-      : 'Rolling back edits is limited to wiki admins.'
+      : 'Rolling back edits is limited to experienced editors and wiki admins.'
   );
 };
 

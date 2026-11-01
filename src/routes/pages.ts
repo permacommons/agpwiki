@@ -48,7 +48,7 @@ import {
   listPageChecks,
   readPageCheckRevision,
 } from '../services/page-check-service.js';
-import { getWikiPageEditability } from '../services/page-protection-service.js';
+import { getWikiPageEditability, type ProtectionLevel } from '../services/page-protection-service.js';
 import { canUseRevertAction } from '../services/page-revert-service.js';
 import {
   canSignOffPages,
@@ -145,13 +145,27 @@ const pageViewPath = (slug: string, lang?: string) =>
 const iconLock =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M256 160L256 224L384 224L384 160C384 124.7 355.3 96 320 96C284.7 96 256 124.7 256 160zM192 224L192 160C192 89.3 249.3 32 320 32C390.7 32 448 89.3 448 160L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512L128 288C128 252.7 156.7 224 192 224z"/></svg>';
 
-const renderPageTypeLabel = (req: Request, label: string, protectedEditable?: boolean) => {
-  const protectedHtml =
-    protectedEditable === undefined
-      ? ''
-      : `<span class="page-protection-icon" data-meta="true" title="${escapeHtml(
-          req.t(protectedEditable ? 'page.protectedDetailsAdmin' : 'page.protectedDetails')
-        )}">${iconLock}</span>`;
+// The shackle is lifted to the side: a half-open lock for the middle level.
+const iconLockHalfOpen =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M128 288C128 252.7 156.7 224 192 224L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512z"/><path d="M352 200L352 136C352 100.7 380.7 72 416 72C451.3 72 480 100.7 480 136L480 152" fill="none" stroke="currentColor" stroke-width="64" stroke-linecap="round"/></svg>';
+
+const protectionTooltipKey = (level: ProtectionLevel, editable: boolean) => {
+  if (level === 'experienced') {
+    return editable ? 'page.protectedExperiencedEditable' : 'page.protectedExperienced';
+  }
+  return editable ? 'page.protectedDetailsAdmin' : 'page.protectedDetails';
+};
+
+const renderPageTypeLabel = (
+  req: Request,
+  label: string,
+  protection?: { editable: boolean; level: ProtectionLevel }
+) => {
+  const protectedHtml = !protection
+    ? ''
+    : `<span class="page-protection-icon page-protection-icon--${protection.level}" data-meta="true" title="${escapeHtml(
+        req.t(protectionTooltipKey(protection.level, protection.editable))
+      )}">${protection.level === 'experienced' ? iconLockHalfOpen : iconLock}</span>`;
   return `<div class="page-label-row">
   <div class="page-label">${escapeHtml(label)}</div>
   ${protectedHtml}
@@ -960,7 +974,16 @@ export const registerPageRoutes = (app: Express) => {
       const page = await readWikiPage(dalInstance, slug);
       const editability = await getWikiPageEditability(dalInstance, { id: page.id }, session.userId);
       if (editability.isProtected && !editability.isEditable) {
-        res.status(403).type('text').send(req.t('operatorEdit.protectedForbidden'));
+        res
+          .status(403)
+          .type('text')
+          .send(
+            req.t(
+              editability.protection?.level === 'experienced'
+                ? 'operatorEdit.protectedForbiddenExperienced'
+                : 'operatorEdit.protectedForbidden'
+            )
+          );
         return;
       }
       const availableLangs = getAvailableLanguages(page.body, page.title);
@@ -1101,7 +1124,16 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
       if (error instanceof ForbiddenError) {
-        res.status(403).type('text').send(req.t('operatorEdit.protectedForbidden'));
+        res
+          .status(403)
+          .type('text')
+          .send(
+            req.t(
+              error.details?.level === 'experienced'
+                ? 'operatorEdit.protectedForbiddenExperienced'
+                : 'operatorEdit.protectedForbidden'
+            )
+          );
         return;
       }
       // Saving a section without changes: nothing to do.
@@ -1795,7 +1827,9 @@ export const registerPageRoutes = (app: Express) => {
       const labelHtml = renderPageTypeLabel(
         req,
         pageTypeLabel,
-        editability.isProtected ? editability.isEditable : undefined
+        editability.isProtected
+          ? { editable: editability.isEditable, level: editability.protection?.level ?? 'admins' }
+          : undefined
       );
       res.render('layout', {
         title: prepareTitle(title),

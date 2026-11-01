@@ -12,8 +12,16 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanProtectWikiPage } from './authorization.js';
+import { isExperiencedEditor } from './experienced-editor-service.js';
 import { userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
 import { ensureNonEmptyString, ensureOptionalString, normalizeSlugInput } from './validation.js';
+
+// Who may edit a protected page: admins only, or experienced editors too.
+export const PROTECTION_LEVELS = ['admins', 'experienced'] as const;
+export type ProtectionLevel = (typeof PROTECTION_LEVELS)[number];
+
+export const isProtectionLevel = (value: unknown): value is ProtectionLevel =>
+  typeof value === 'string' && (PROTECTION_LEVELS as readonly string[]).includes(value);
 
 export interface PageProtectionResult {
   id: string;
@@ -21,6 +29,7 @@ export interface PageProtectionResult {
   protectedAt: Date | null | undefined;
   protectedBy: string | null | undefined;
   reason: string | null | undefined;
+  level: ProtectionLevel;
 }
 
 export interface PageEditabilityResult {
@@ -32,6 +41,7 @@ export interface PageEditabilityResult {
 export interface PageProtectionInput {
   slug: string;
   reason?: string | null;
+  level?: ProtectionLevel;
 }
 
 const toPageProtectionResult = (protection: PageProtectionInstance): PageProtectionResult => ({
@@ -40,6 +50,7 @@ const toPageProtectionResult = (protection: PageProtectionInstance): PageProtect
   protectedAt: protection.protectedAt ?? null,
   protectedBy: protection.protectedBy ?? null,
   reason: protection.reason ?? null,
+  level: isProtectionLevel(protection.level) ? protection.level : 'admins',
 });
 
 export const getPageProtectionForPage = async (
@@ -64,7 +75,10 @@ export const getWikiPageEditability = async (
     };
   }
 
-  const isEditable = userId ? await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE) : false;
+  const isEditable = userId
+    ? (await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE)) ||
+      (protection.level === 'experienced' && (await isExperiencedEditor(dalInstance, userId)))
+    : false;
   return {
     isProtected: true,
     isEditable,
@@ -82,10 +96,16 @@ export const assertCanEditWikiPage = async (
   if (!editability.isProtected) return null;
   if (editability.isEditable) return editability.protection;
 
-  throw new ForbiddenError('Wiki page is protected and can only be edited by wiki admins.', {
-    slug: page.slug,
-    pageId: page.id,
-  });
+  throw new ForbiddenError(
+    editability.protection?.level === 'experienced'
+      ? 'Wiki page is protected and can only be edited by experienced editors and wiki admins.'
+      : 'Wiki page is protected and can only be edited by wiki admins.',
+    {
+      slug: page.slug,
+      pageId: page.id,
+      level: editability.protection?.level ?? 'admins',
+    }
+  );
 };
 
 const findCurrentPageBySlug = async (slug: string) =>
@@ -118,13 +138,14 @@ const findPageForProtection = async (slug: string) => {
 
 export const protectWikiPage = async (
   dalInstance: DataAccessLayer,
-  { slug, reason }: PageProtectionInput,
+  { slug, reason, level = 'admins' }: PageProtectionInput,
   userId: string
 ): Promise<PageProtectionResult> => {
   const errors = new ValidationCollector('Invalid page protection input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalString(reason, 'reason', errors);
+  if (!isProtectionLevel(level)) errors.add('level', 'must be "admins" or "experienced".', 'invalid');
   errors.throwIfAny();
 
   await assertCanProtectWikiPage(dalInstance, userId);
@@ -133,10 +154,22 @@ export const protectWikiPage = async (
   const normalizedReason = reason?.trim() ? reason.trim() : null;
 
   if (existing) {
+    const previousLevel = isProtectionLevel(existing.level) ? existing.level : 'admins';
     existing.protectedBy = userId;
     existing.protectedAt = new Date();
     existing.reason = normalizedReason;
+    existing.level = level;
     await existing.save();
+    if (previousLevel !== level) {
+      await recordAdminEvent(dalInstance, {
+        eventType: ADMIN_EVENT_WIKI_PAGE_PROTECTED,
+        actorUserId: userId,
+        targetType: ADMIN_EVENT_TARGET_WIKI_PAGE,
+        targetId: page.id,
+        targetRevId: page._revID,
+        details: { reason: normalizedReason, previousLevel, nextLevel: level },
+      });
+    }
     return toPageProtectionResult(existing);
   }
 
@@ -145,6 +178,7 @@ export const protectWikiPage = async (
     protectedAt: new Date(),
     protectedBy: userId,
     reason: normalizedReason,
+    level,
   });
 
   await recordAdminEvent(dalInstance, {
@@ -157,6 +191,7 @@ export const protectWikiPage = async (
       reason: normalizedReason,
       previousProtection: false,
       nextProtection: true,
+      nextLevel: level,
     },
   });
 

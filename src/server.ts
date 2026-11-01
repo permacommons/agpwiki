@@ -7,6 +7,7 @@ import { layoutAssets } from './asset-urls.js';
 import { resolveSessionUser } from './auth/session.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
+import { runInRequestScope } from './lib/request-scope.js';
 import User from './models/user.js';
 import { registerAccountRequestRoutes } from './routes/account-requests.js';
 import { registerAuthRoutes } from './routes/auth.js';
@@ -34,6 +35,7 @@ app.set('trust proxy', config.get<boolean | string | number | string[]>('server.
 app.set('view engine', 'hbs');
 app.set('views', path.resolve(process.cwd(), 'views'));
 
+app.use((_req, _res, next) => runInRequestScope(next));
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

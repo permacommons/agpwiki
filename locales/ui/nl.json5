@@ -142,6 +142,8 @@
     actions: 'Acties',
     protectedDetails: 'Alleen wiki-beheerders kunnen deze pagina bewerken.',
     protectedDetailsAdmin: 'Je wiki-beheerdersrol staat je toe deze pagina te bewerken.',
+    "protectedExperienced": "Alleen ervaren bewerkers kunnen deze pagina bewerken. Je wordt ervaren na vijf bewerkingen die ouder zijn dan een week en nooit zijn teruggedraaid.",
+    "protectedExperiencedEditable": "Alleen ervaren bewerkers kunnen deze pagina bewerken. Jij kunt dat, als ervaren bewerker of beheerder.",
     forbidden: 'Verboden',
     accessDenied: 'Toegang geweigerd.',
     notFound: 'Niet gevonden',
@@ -347,6 +349,7 @@
     banner: 'Gewoonlijk worden bewerkingen uitgevoerd via AI-agenten. Gebruik operatorbewerkingen voor snelle correcties of wijzigingen die langer zouden duren om aan een agent uit te leggen dan om ze direct zelf te doen.',
     summaryHelp: 'Deze samenvatting verschijnt in de revisiegeschiedenis.',
     protectedForbidden: 'Deze pagina is beveiligd. Alleen wiki-beheerders kunnen haar bewerken.',
+    "protectedForbiddenExperienced": "Deze pagina is beveiligd. Alleen ervaren bewerkers en wikibeheerders kunnen haar bewerken.",
     validation: {
       generic: 'Je bewerking kon niet worden opgeslagen. Controleer de velden en probeer het opnieuw.',
       titleInvalid: 'Voer een geldige titel in.',
@@ -423,11 +426,29 @@
     unknownTarget: 'Onbekend doel',
     events: {
       "wiki_page_signoff_withdrawn": "Heeft een standpunt over een voorstel ingetrokken",
+      "experienced_status_changed": "Status als ervaren bewerker gewijzigd",
       "wiki_page_signed_off": "Heeft een standpunt over een voorstel ingenomen",
       wiki_page_protected: 'Pagina beveiligd',
       wiki_page_unprotected: 'Paginabeveiliging opgeheven',
       protected_wiki_page_edited: 'Beveiligde pagina bewerkt',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Ervaren bewerker sinds {{date}}",
+      "granted": "Ervaren bewerker sinds {{date}}, eerder toegekend door een beheerder",
+      "revoked": "Geen ervaren bewerker: afgenomen door een beheerder",
+      "notYet": "Nog geen ervaren bewerker: {{count}} van {{total}} blijvende bewerkingen"
+    },
+    "form": {
+      "label": "Ervaren bewerker",
+      "auto": "Automatisch",
+      "granted": "Eerder toekennen",
+      "revoked": "Afnemen",
+      "reason": "Reden",
+      "submit": "Opslaan",
+      "saved": "Status als ervaren bewerker bijgewerkt voor {{user}}."
+    }
   },
   "signoff": {
     "title": "Standpunten",

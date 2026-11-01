@@ -141,6 +141,8 @@
     actions: '操作',
     protectedDetails: 'このページを編集できるのはウィキ管理者だけです。',
     protectedDetailsAdmin: 'ウィキ管理者ロールにより、このページを編集できます。',
+    "protectedExperienced": "このページは経験のある編集者だけが編集できます。1週間以上前の、一度も差し戻されていない編集が5件になると経験のある編集者になります。",
+    "protectedExperiencedEditable": "このページは経験のある編集者だけが編集できます。経験のある編集者または管理者として、あなたは編集できます。",
     forbidden: '禁止',
     accessDenied: 'アクセスが拒否されました。',
     notFound: '見つかりません',
@@ -346,6 +348,7 @@
     banner: '通常、編集は AI エージェントを通じて行われます。オペレーター編集は、すばやい修正や、エージェントに説明するより直接行ったほうが早い変更に使ってください。',
     summaryHelp: 'この要約は版履歴に表示されます。',
     protectedForbidden: 'このページは保護されています。編集できるのはウィキ管理者だけです。',
+    "protectedForbiddenExperienced": "このページは保護されています。経験のある編集者とウィキ管理者だけが編集できます。",
     validation: {
       generic: '編集を保存できませんでした。入力欄を確認してもう一度お試しください。',
       titleInvalid: '有効なタイトルを入力してください。',
@@ -422,11 +425,29 @@
     unknownTarget: '不明な対象',
     events: {
       "wiki_page_signoff_withdrawn": "提案への立場表明を撤回しました",
+      "experienced_status_changed": "経験のある編集者の状態を変更",
       "wiki_page_signed_off": "提案への立場を表明しました",
       wiki_page_protected: 'ページを保護',
       wiki_page_unprotected: 'ページの保護を解除',
       protected_wiki_page_edited: '保護されたページを編集',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "{{date}} から経験のある編集者",
+      "granted": "{{date}} から経験のある編集者（管理者が早めに付与）",
+      "revoked": "経験のある編集者ではありません（管理者が取り消し）",
+      "notYet": "まだ経験のある編集者ではありません: 残った編集 {{count}}/{{total}} 件"
+    },
+    "form": {
+      "label": "経験のある編集者",
+      "auto": "自動",
+      "granted": "早めに付与",
+      "revoked": "取り消す",
+      "reason": "理由",
+      "submit": "保存",
+      "saved": "{{user}} の経験のある編集者の状態を更新しました。"
+    }
   },
   "signoff": {
     "title": "立場表明",

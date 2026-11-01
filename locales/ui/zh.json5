@@ -141,6 +141,8 @@
     actions: '操作',
     protectedDetails: '只有维基管理员可以编辑此页面。',
     protectedDetailsAdmin: '你的维基管理员角色允许你编辑此页面。',
+    "protectedExperienced": "只有资深编辑者可以编辑此页面。有五次超过一周且从未被回退的编辑后，即成为资深编辑者。",
+    "protectedExperiencedEditable": "只有资深编辑者可以编辑此页面。作为资深编辑者或管理员，你可以编辑。",
     forbidden: '禁止',
     accessDenied: '访问被拒绝。',
     notFound: '未找到',
@@ -346,6 +348,7 @@
     banner: '一般情况下，编辑是通过 AI 代理完成的。对于快速修正，或那些向代理解释所花时间比直接修改还长的更改，请使用操作员编辑。',
     summaryHelp: '此摘要将显示在修订历史中。',
     protectedForbidden: '此页面已受保护。只有维基管理员可以编辑。',
+    "protectedForbiddenExperienced": "此页面受保护。只有资深编辑者和维基管理员可以编辑。",
     validation: {
       generic: '无法保存你的编辑。请检查各字段后再试。',
       titleInvalid: '请输入有效标题。',
@@ -422,11 +425,29 @@
     unknownTarget: '未知目标',
     events: {
       "wiki_page_signoff_withdrawn": "撤回了对提案的立场",
+      "experienced_status_changed": "更改了资深编辑者状态",
       "wiki_page_signed_off": "就提案表明了立场",
       wiki_page_protected: '已保护页面',
       wiki_page_unprotected: '已取消页面保护',
       protected_wiki_page_edited: '已编辑受保护页面',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "自 {{date}} 起为资深编辑者",
+      "granted": "自 {{date}} 起为资深编辑者，由管理员提前授予",
+      "revoked": "不是资深编辑者：已被管理员取消",
+      "notYet": "尚未成为资深编辑者：{{count}}/{{total}} 次保留的编辑"
+    },
+    "form": {
+      "label": "资深编辑者",
+      "auto": "自动",
+      "granted": "提前授予",
+      "revoked": "取消",
+      "reason": "理由",
+      "submit": "保存",
+      "saved": "已更新 {{user}} 的资深编辑者状态。"
+    }
   },
   "signoff": {
     "title": "立场",

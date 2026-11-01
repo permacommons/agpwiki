@@ -14,6 +14,7 @@ const pageProtectionManifest = {
     protectedAt: types.date().default(() => new Date()),
     protectedBy: types.string().uuid(4),
     reason: types.string(),
+    level: types.string().max(16).default('admins'),
   },
   camelToSnake: {
     pageId: 'page_id',

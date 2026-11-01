@@ -381,6 +381,8 @@
     "actions": "Actions",
     "protectedDetails": "Only wiki admins can edit this page.",
     "protectedDetailsAdmin": "Your wiki admin role allows you to edit this page.",
+    "protectedExperienced": "Only experienced editors can edit this page. Editors become experienced after five edits that are more than a week old and were never reverted.",
+    "protectedExperiencedEditable": "Only experienced editors can edit this page. You can, as an experienced editor or admin.",
     "forbidden": "Forbidden",
     "accessDenied": "Access denied.",
     "notFound": "Not found",
@@ -587,6 +589,7 @@
     "wikidataHelp": "Optional but recommended for articles: the ID of the matching Wikidata item, such as Q42. Leave empty to remove it.",
     "summaryHelp": "This summary will appear in the revision history.",
     "protectedForbidden": "This page is protected. Only wiki admins can edit it.",
+    "protectedForbiddenExperienced": "This page is protected. Only experienced editors and wiki admins can edit it.",
     "validation": {
       "generic": "Couldn't save your edit. Check the fields and try again.",
       "titleInvalid": "Enter a valid title.",
@@ -667,7 +670,26 @@
       "wiki_page_unprotected": "Unprotected page",
       "protected_wiki_page_edited": "Edited protected page",
       "wiki_page_signed_off": "Stated a position on a proposal",
-      "wiki_page_signoff_withdrawn": "Withdrew a position on a proposal"
+      "wiki_page_signoff_withdrawn": "Withdrew a position on a proposal",
+      "experienced_status_changed": "Changed experienced editor status"
+    }
+  },
+  // Experienced editors: status shown in the user rights tool, and the admin override.
+  "experienced": {
+    "status": {
+      "automatic": "Experienced editor since {{date}}",
+      "granted": "Experienced editor since {{date}}, given early by an admin",
+      "revoked": "Not an experienced editor: taken away by an admin",
+      "notYet": "Not an experienced editor yet: {{count}} of {{total}} lasting edits"
+    },
+    "form": {
+      "label": "Experienced editor",
+      "auto": "Automatic",
+      "granted": "Give early",
+      "revoked": "Take away",
+      "reason": "Reason",
+      "submit": "Save",
+      "saved": "Experienced editor status updated for {{user}}."
     }
   },
   "proposalStatus": {

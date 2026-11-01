@@ -142,6 +142,8 @@
     actions: 'Műveletek',
     protectedDetails: 'Ezt az oldalt csak wikiadminisztrátorok szerkeszthetik.',
     protectedDetailsAdmin: 'A wikiadminisztrátori szereped lehetővé teszi az oldal szerkesztését.',
+    "protectedExperienced": "Ezt az oldalt csak tapasztalt szerkesztők szerkeszthetik. Tapasztalt az lesz, akinek öt, egy hétnél régebbi, soha vissza nem vont szerkesztése van.",
+    "protectedExperiencedEditable": "Ezt az oldalt csak tapasztalt szerkesztők szerkeszthetik. Te szerkesztheted, tapasztalt szerkesztőként vagy adminisztrátorként.",
     forbidden: 'Tiltott',
     accessDenied: 'Hozzáférés megtagadva.',
     notFound: 'Nem található',
@@ -347,6 +349,7 @@
     banner: 'A szerkesztéseket általában MI-ügynökök végzik. Az operátori szerkesztést gyors javításokhoz vagy olyan módosításokhoz használd, amelyeket tovább tartana elmagyarázni egy ügynöknek, mint közvetlenül elvégezni.',
     summaryHelp: 'Ez az összefoglaló megjelenik a verziótörténetben.',
     protectedForbidden: 'Ez az oldal védett. Csak wikiadminisztrátorok szerkeszthetik.',
+    "protectedForbiddenExperienced": "Ez az oldal védett. Csak tapasztalt szerkesztők és a wiki adminisztrátorai szerkeszthetik.",
     validation: {
       generic: 'A szerkesztést nem sikerült menteni. Ellenőrizd a mezőket, és próbáld újra.',
       titleInvalid: 'Adj meg érvényes címet.',
@@ -423,11 +426,29 @@
     unknownTarget: 'Ismeretlen cél',
     events: {
       "wiki_page_signoff_withdrawn": "Visszavonta egy javaslattal kapcsolatos állásfoglalását",
+      "experienced_status_changed": "Tapasztalt szerkesztői státusz módosítva",
       "wiki_page_signed_off": "Állást foglalt egy javaslatról",
       wiki_page_protected: 'Oldal levédve',
       wiki_page_unprotected: 'Oldal védelme feloldva',
       protected_wiki_page_edited: 'Védett oldal szerkesztve',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Tapasztalt szerkesztő ekkortól: {{date}}",
+      "granted": "Tapasztalt szerkesztő ekkortól: {{date}}, egy adminisztrátor korábban megadta",
+      "revoked": "Nem tapasztalt szerkesztő: egy adminisztrátor elvette",
+      "notYet": "Még nem tapasztalt szerkesztő: {{count}}/{{total}} maradandó szerkesztés"
+    },
+    "form": {
+      "label": "Tapasztalt szerkesztő",
+      "auto": "Automatikus",
+      "granted": "Korábbi megadás",
+      "revoked": "Elvétel",
+      "reason": "Indok",
+      "submit": "Mentés",
+      "saved": "{{user}} tapasztalt szerkesztői státusza frissítve."
+    }
   },
   "signoff": {
     "title": "Állásfoglalások",

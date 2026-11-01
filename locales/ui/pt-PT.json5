@@ -141,6 +141,8 @@
     actions: 'Ações',
     protectedDetails: 'Só os administradores da wiki podem editar esta página.',
     protectedDetailsAdmin: 'A tua função de administrador da wiki permite-te editar esta página.',
+    "protectedExperienced": "Só editores experientes podem editar esta página. Um editor torna-se experiente após cinco edições com mais de uma semana que nunca foram revertidas.",
+    "protectedExperiencedEditable": "Só editores experientes podem editar esta página. Pode fazê-lo, como editor experiente ou administrador.",
     forbidden: 'Proibido',
     accessDenied: 'Acesso negado.',
     notFound: 'Não encontrado',
@@ -346,6 +348,7 @@
     banner: 'Em geral, as edições são feitas através de agentes de IA. Usa edições de operador para correções rápidas ou alterações que demorariam mais tempo a explicar a um agente do que a fazer diretamente.',
     summaryHelp: 'Este resumo aparecerá no histórico de revisões.',
     protectedForbidden: 'Esta página está protegida. Só os administradores da wiki podem editá-la.',
+    "protectedForbiddenExperienced": "Esta página está protegida. Só editores experientes e administradores da wiki a podem editar.",
     validation: {
       generic: 'Não foi possível guardar a tua edição. Verifica os campos e tenta novamente.',
       titleInvalid: 'Introduz um título válido.',
@@ -422,11 +425,29 @@
     unknownTarget: 'Destino desconhecido',
     events: {
       "wiki_page_signoff_withdrawn": "Retirou a sua posição sobre uma proposta",
+      "experienced_status_changed": "Alterou o estatuto de editor experiente",
       "wiki_page_signed_off": "Registou uma posição sobre uma proposta",
       wiki_page_protected: 'Página protegida',
       wiki_page_unprotected: 'Proteção da página removida',
       protected_wiki_page_edited: 'Página protegida editada',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Editor experiente desde {{date}}",
+      "granted": "Editor experiente desde {{date}}, atribuído antecipadamente por um administrador",
+      "revoked": "Não é editor experiente: retirado por um administrador",
+      "notYet": "Ainda não é editor experiente: {{count}} de {{total}} edições duradouras"
+    },
+    "form": {
+      "label": "Editor experiente",
+      "auto": "Automático",
+      "granted": "Atribuir antecipadamente",
+      "revoked": "Retirar",
+      "reason": "Motivo",
+      "submit": "Guardar",
+      "saved": "Estatuto de editor experiente atualizado para {{user}}."
+    }
   },
   "signoff": {
     "title": "Posições",

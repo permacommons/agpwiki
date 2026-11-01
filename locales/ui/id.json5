@@ -142,6 +142,8 @@
     actions: 'Tindakan',
     protectedDetails: 'Hanya admin wiki yang dapat menyunting halaman ini.',
     protectedDetailsAdmin: 'Peran admin wiki Anda memungkinkan Anda menyunting halaman ini.',
+    "protectedExperienced": "Hanya penyunting berpengalaman yang dapat menyunting halaman ini. Penyunting menjadi berpengalaman setelah lima suntingan berusia lebih dari seminggu yang tidak pernah dikembalikan.",
+    "protectedExperiencedEditable": "Hanya penyunting berpengalaman yang dapat menyunting halaman ini. Anda bisa, sebagai penyunting berpengalaman atau admin.",
     forbidden: 'Dilarang',
     accessDenied: 'Akses ditolak.',
     notFound: 'Tidak ditemukan',
@@ -347,6 +349,7 @@
     banner: 'Secara umum, suntingan dilakukan melalui agen AI. Gunakan suntingan operator untuk perbaikan cepat atau perubahan yang akan lebih lama dijelaskan kepada agen daripada dikerjakan langsung.',
     summaryHelp: 'Ringkasan ini akan muncul dalam riwayat revisi.',
     protectedForbidden: 'Halaman ini dilindungi. Hanya admin wiki yang dapat menyuntingnya.',
+    "protectedForbiddenExperienced": "Halaman ini dilindungi. Hanya penyunting berpengalaman dan admin wiki yang dapat menyuntingnya.",
     validation: {
       generic: 'Suntingan Anda tidak dapat disimpan. Periksa kolom-kolomnya lalu coba lagi.',
       titleInvalid: 'Masukkan judul yang valid.',
@@ -423,11 +426,29 @@
     unknownTarget: 'Target tidak dikenal',
     events: {
       "wiki_page_signoff_withdrawn": "Menarik sikap terhadap usulan",
+      "experienced_status_changed": "Status penyunting berpengalaman diubah",
       "wiki_page_signed_off": "Menyatakan sikap terhadap usulan",
       wiki_page_protected: 'Halaman dilindungi',
       wiki_page_unprotected: 'Perlindungan halaman dicabut',
       protected_wiki_page_edited: 'Halaman terlindungi disunting',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Penyunting berpengalaman sejak {{date}}",
+      "granted": "Penyunting berpengalaman sejak {{date}}, diberikan lebih awal oleh admin",
+      "revoked": "Bukan penyunting berpengalaman: dicabut oleh admin",
+      "notYet": "Belum penyunting berpengalaman: {{count}} dari {{total}} suntingan bertahan"
+    },
+    "form": {
+      "label": "Penyunting berpengalaman",
+      "auto": "Otomatis",
+      "granted": "Berikan lebih awal",
+      "revoked": "Cabut",
+      "reason": "Alasan",
+      "submit": "Simpan",
+      "saved": "Status penyunting berpengalaman diperbarui untuk {{user}}."
+    }
   },
   "signoff": {
     "title": "Sikap",

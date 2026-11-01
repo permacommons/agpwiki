@@ -41,6 +41,13 @@ import {
   isPageCheckType,
   listArticlesWithIssues,
 } from '../services/article-issues-service.js';
+import {
+  ADMIN_EVENT_TARGET_USER,
+  EXPERIENCED_MIN_EDITS,
+  type ExperiencedStatus,
+  getExperiencedStatuses,
+  setExperiencedOverride,
+} from '../services/experienced-editor-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import { REVERT_TAG } from '../services/page-revert-service.js';
 import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
@@ -378,9 +385,13 @@ const renderAdminEventList = (
 
   const items: RecentListItem[] = events.map(event => {
     const target = event.targetRevId ? pageTargets.get(event.targetRevId) : undefined;
+    const userName =
+      event.targetType === ADMIN_EVENT_TARGET_USER && typeof event.details?.userName === 'string'
+        ? event.details.userName
+        : null;
     const targetTitle = target
       ? resolveSafeTextWithFallback(mlString.resolve, preferredLang, target.title, target.slug)
-      : t('adminActions.unknownTarget');
+      : (userName ?? t('adminActions.unknownTarget'));
     const primaryLabel = concatSafeText(formatAdminEventLabel(event.eventType, t), ' · ', targetTitle);
     const actions =
       target && event.targetRevId
@@ -424,9 +435,12 @@ const renderRightsBadges = (roles: ValidRole[], t: TFunction) => {
 
 const renderUserRightsStatus = (req: Request) => {
   const status = typeof req.query.status === 'string' ? req.query.status : '';
-  if (status !== 'updated' && status !== 'unchanged' && status !== 'error') return '';
+  if (status !== 'updated' && status !== 'unchanged' && status !== 'error' && status !== 'experienced') return '';
 
   const user = typeof req.query.user === 'string' ? req.query.user : '';
+  if (status === 'experienced') {
+    return `<div class="account-review-notice" role="status">${escapeHtml(req.t('experienced.form.saved', { user }))}</div>`;
+  }
   if (status === 'unchanged') {
     return `<div class="account-review-notice" role="status">${escapeHtml(
       req.t('userRights.notice.unchanged', { user })
@@ -512,30 +526,76 @@ const renderUserRightsForm = (user: UserRightsSummary, req: Request) => {
   </form>`;
 };
 
-const renderUserRightsRows = (users: UserRightsSummary[], req: Request) => {
+const renderExperiencedStatus = (status: ExperiencedStatus, t: TFunction) => {
+  if (status.override === 'revoked') {
+    return `<div class="user-rights-experienced">${escapeHtml(t('experienced.status.revoked'))}</div>`;
+  }
+  if (status.isExperienced && status.since) {
+    return `<div class="user-rights-experienced">${escapeHtml(
+      t(status.override === 'granted' ? 'experienced.status.granted' : 'experienced.status.automatic', {
+        date: formatDateUTC(status.since),
+      })
+    )}</div>`;
+  }
+  return `<div class="user-rights-experienced">${escapeHtml(
+    t('experienced.status.notYet', { count: status.countedEdits, total: EXPERIENCED_MIN_EDITS })
+  )}</div>`;
+};
+
+const renderExperiencedForm = (user: UserRightsSummary, status: ExperiencedStatus, req: Request) => {
+  const option = (value: string, labelKey: string) =>
+    `<option value="${value}"${(status.override ?? 'auto') === value ? ' selected' : ''}>${escapeHtml(req.t(labelKey))}</option>`;
+  return `<form method="post" action="${USER_RIGHTS_PATH}/${encodeURIComponent(user.id)}/experienced" class="user-rights-experienced-form">
+    <input type="hidden" name="redirectTo" value="${escapeHtml(req.originalUrl || USER_RIGHTS_PATH)}" />
+    <label>
+      <span>${escapeHtml(req.t('experienced.form.label'))}</span>
+      <select name="override">
+        ${option('auto', 'experienced.form.auto')}
+        ${option('granted', 'experienced.form.granted')}
+        ${option('revoked', 'experienced.form.revoked')}
+      </select>
+    </label>
+    <label>
+      <span>${escapeHtml(req.t('experienced.form.reason'))}</span>
+      <input type="text" name="reason" required maxlength="300" />
+    </label>
+    <button type="submit">${escapeHtml(req.t('experienced.form.submit'))}</button>
+  </form>`;
+};
+
+const renderUserRightsRows = (
+  users: UserRightsSummary[],
+  statuses: Map<string, ExperiencedStatus>,
+  req: Request
+) => {
   if (!users.length) {
     return `<tr><td colspan="4">${escapeHtml(req.t('userRights.empty'))}</td></tr>`;
   }
 
   return users
-    .map(
-      user => `<tr>
+    .map(user => {
+      const status = statuses.get(user.id);
+      return `<tr>
         <td data-label="${escapeHtml(req.t('userRights.headers.user'))}">
           <div>${escapeHtml(user.displayName)}</div>
           <div class="form-hint">${escapeHtml(user.username)}</div>
         </td>
         <td data-label="${escapeHtml(req.t('userRights.headers.email'))}">${escapeHtml(user.email)}</td>
-        <td data-label="${escapeHtml(req.t('userRights.headers.currentRights'))}">${renderRightsBadges(user.roles, req.t)}</td>
-        <td data-label="${escapeHtml(req.t('userRights.headers.edit'))}">${renderUserRightsForm(user, req)}</td>
-      </tr>`
-    )
+        <td data-label="${escapeHtml(req.t('userRights.headers.currentRights'))}">${renderRightsBadges(user.roles, req.t)}${
+          status ? renderExperiencedStatus(status, req.t) : ''
+        }</td>
+        <td data-label="${escapeHtml(req.t('userRights.headers.edit'))}">${renderUserRightsForm(user, req)}${
+          status ? renderExperiencedForm(user, status, req) : ''
+        }</td>
+      </tr>`;
+    })
     .join('');
 };
 
 const appendUserRightsStatus = (
   redirectTo: string,
   result: {
-    status: 'updated' | 'unchanged' | 'error';
+    status: 'updated' | 'unchanged' | 'error' | 'experienced';
     user?: string;
     granted?: string[];
     revoked?: string[];
@@ -578,7 +638,8 @@ export const registerToolRoutes = (app: Express) => {
     const users = await searchVerifiedUsersWithRights(adminContext.dalInstance, query, {
       includeBlocked,
     });
-    const rows = renderUserRightsRows(users, req);
+    const statuses = await getExperiencedStatuses(adminContext.dalInstance, users.map(user => user.id));
+    const rows = renderUserRightsRows(users, statuses, req);
     const includeBlockedChecked = includeBlocked ? ' checked' : '';
     const hasActiveFilter = Boolean(query || includeBlocked);
     const bodyHtml = `<div class="tool-page">
@@ -641,6 +702,29 @@ export const registerToolRoutes = (app: Express) => {
     } catch (error) {
       if (error instanceof Error) {
         console.error('Failed to update user rights:', error.message);
+      }
+      res.redirect(302, appendUserRightsStatus(redirectTo, { status: 'error' }));
+    }
+  });
+
+  app.post(`${USER_RIGHTS_PATH}/:userId/experienced`, async (req, res) => {
+    const adminContext = await requireSiteAdmin(req, res);
+    if (!adminContext) return;
+
+    const redirectTo = getUserRightsRedirect(req.body.redirectTo);
+    const submitted = req.body.override;
+    const override = submitted === 'granted' || submitted === 'revoked' ? submitted : null;
+    const reason = typeof req.body.reason === 'string' ? req.body.reason : '';
+    try {
+      const { userName } = await setExperiencedOverride(
+        adminContext.dalInstance,
+        { userId: req.params.userId, override, reason },
+        adminContext.session.userId
+      );
+      res.redirect(302, appendUserRightsStatus(redirectTo, { status: 'experienced', user: userName }));
+    } catch (error) {
+      if (error instanceof Error) {
+        console.error('Failed to update experienced status:', error.message);
       }
       res.redirect(302, appendUserRightsStatus(redirectTo, { status: 'error' }));
     }

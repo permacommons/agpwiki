@@ -141,6 +141,8 @@
     actions: 'Acciones',
     protectedDetails: 'Solo los administradores del wiki pueden editar esta página.',
     protectedDetailsAdmin: 'Tu rol de administrador del wiki te permite editar esta página.',
+    "protectedExperienced": "Solo los editores con experiencia pueden editar esta página. Se adquiere experiencia tras cinco ediciones de más de una semana que nunca se revirtieron.",
+    "protectedExperiencedEditable": "Solo los editores con experiencia pueden editar esta página. Tú puedes, como editor con experiencia o administrador.",
     forbidden: 'Prohibido',
     accessDenied: 'Acceso denegado.',
     notFound: 'No encontrado',
@@ -346,6 +348,7 @@
     banner: 'En general, las ediciones se realizan mediante agentes de IA. Usa las ediciones de operador para correcciones rápidas o cambios que llevarían más tiempo explicar a un agente que hacer directamente.',
     summaryHelp: 'Este resumen aparecerá en el historial de revisiones.',
     protectedForbidden: 'Esta página está protegida. Solo los administradores del wiki pueden editarla.',
+    "protectedForbiddenExperienced": "Esta página está protegida. Solo los editores con experiencia y los administradores del wiki pueden editarla.",
     validation: {
       generic: 'No se pudo guardar tu edición. Revisa los campos e inténtalo de nuevo.',
       titleInvalid: 'Introduce un título válido.',
@@ -422,11 +425,29 @@
     unknownTarget: 'Destino desconocido',
     events: {
       "wiki_page_signoff_withdrawn": "Retiró su postura sobre una propuesta",
+      "experienced_status_changed": "Cambió el estado de editor con experiencia",
       "wiki_page_signed_off": "Expresó su postura sobre una propuesta",
       wiki_page_protected: 'Página protegida',
       wiki_page_unprotected: 'Página desprotegida',
       protected_wiki_page_edited: 'Página protegida editada',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Editor con experiencia desde el {{date}}",
+      "granted": "Editor con experiencia desde el {{date}}, concedido antes por un administrador",
+      "revoked": "No es editor con experiencia: retirado por un administrador",
+      "notYet": "Aún no es editor con experiencia: {{count}} de {{total}} ediciones duraderas"
+    },
+    "form": {
+      "label": "Editor con experiencia",
+      "auto": "Automático",
+      "granted": "Conceder antes",
+      "revoked": "Retirar",
+      "reason": "Motivo",
+      "submit": "Guardar",
+      "saved": "Estado de editor con experiencia actualizado para {{user}}."
+    }
   },
   "signoff": {
     "title": "Posturas",

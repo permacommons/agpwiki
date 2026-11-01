@@ -142,6 +142,8 @@
     actions: 'Actions',
     protectedDetails: 'Seuls les administrateurs du wiki peuvent modifier cette page.',
     protectedDetailsAdmin: 'Ton rôle d’administrateur du wiki te permet de modifier cette page.',
+    "protectedExperienced": "Seuls les contributeurs expérimentés peuvent modifier cette page. On devient expérimenté après cinq modifications de plus d'une semaine qui n'ont jamais été annulées.",
+    "protectedExperiencedEditable": "Seuls les contributeurs expérimentés peuvent modifier cette page. Vous le pouvez, en tant que contributeur expérimenté ou administrateur.",
     forbidden: 'Interdit',
     accessDenied: 'Accès refusé.',
     notFound: 'Non trouvé',
@@ -347,6 +349,7 @@
     banner: 'En général, les modifications sont effectuées via des agents IA. Utilise les modifications opérateur pour les corrections rapides ou les changements qui prendraient plus de temps à expliquer à un agent qu’à faire directement.',
     summaryHelp: 'Ce résumé apparaîtra dans l’historique des révisions.',
     protectedForbidden: 'Cette page est protégée. Seuls les administrateurs du wiki peuvent la modifier.',
+    "protectedForbiddenExperienced": "Cette page est protégée. Seuls les contributeurs expérimentés et les administrateurs du wiki peuvent la modifier.",
     validation: {
       generic: 'Impossible d’enregistrer ta modification. Vérifie les champs et réessaie.',
       titleInvalid: 'Saisis un titre valide.',
@@ -423,11 +426,29 @@
     unknownTarget: 'Cible inconnue',
     events: {
       "wiki_page_signoff_withdrawn": "A retiré sa prise de position sur une proposition",
+      "experienced_status_changed": "Statut de contributeur expérimenté modifié",
       "wiki_page_signed_off": "A pris position sur une proposition",
       wiki_page_protected: 'Page protégée',
       wiki_page_unprotected: 'Protection de page retirée',
       protected_wiki_page_edited: 'Page protégée modifiée',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Contributeur expérimenté depuis le {{date}}",
+      "granted": "Contributeur expérimenté depuis le {{date}}, accordé en avance par un administrateur",
+      "revoked": "Pas contributeur expérimenté : retiré par un administrateur",
+      "notYet": "Pas encore contributeur expérimenté : {{count}} modifications durables sur {{total}}"
+    },
+    "form": {
+      "label": "Contributeur expérimenté",
+      "auto": "Automatique",
+      "granted": "Accorder en avance",
+      "revoked": "Retirer",
+      "reason": "Motif",
+      "submit": "Enregistrer",
+      "saved": "Statut de contributeur expérimenté mis à jour pour {{user}}."
+    }
   },
   "signoff": {
     "title": "Prises de position",

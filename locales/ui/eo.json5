@@ -142,6 +142,8 @@
     actions: 'Agoj',
     protectedDetails: 'Nur vikiaj administrantoj povas redakti ĉi tiun paĝon.',
     protectedDetailsAdmin: 'Via vikia administra rolo permesas al vi redakti ĉi tiun paĝon.',
+    "protectedExperienced": "Nur spertaj redaktantoj povas redakti ĉi tiun paĝon. Oni fariĝas sperta post kvin redaktoj pli aĝaj ol semajno, kiuj neniam estis malfaritaj.",
+    "protectedExperiencedEditable": "Nur spertaj redaktantoj povas redakti ĉi tiun paĝon. Vi povas, kiel sperta redaktanto aŭ administranto.",
     forbidden: 'Malpermesite',
     accessDenied: 'Aliro rifuzita.',
     notFound: 'Ne trovita',
@@ -347,6 +349,7 @@
     banner: 'Ĝenerale, redaktoj estas farataj per AI-agentoj. Uzu operaciantajn redaktojn por rapidaj korektoj aŭ ŝanĝoj, kies klarigo al agento daŭrus pli longe ol fari ilin rekte.',
     summaryHelp: 'Ĉi tiu resumo aperos en la revizia historio.',
     protectedForbidden: 'Ĉi tiu paĝo estas protektita. Nur vikiaj administrantoj povas ĝin redakti.',
+    "protectedForbiddenExperienced": "Ĉi tiu paĝo estas protektita. Nur spertaj redaktantoj kaj vikiaj administrantoj povas redakti ĝin.",
     validation: {
       generic: 'Via redakto ne povis esti konservita. Kontrolu la kampojn kaj reprovu.',
       titleInvalid: 'Enigu validan titolon.',
@@ -421,11 +424,29 @@
     unknownTarget: 'Nekonata celo',
     events: {
       "wiki_page_signoff_withdrawn": "Retiris starpunkton pri propono",
+      "experienced_status_changed": "Ŝanĝis la staton de sperta redaktanto",
       "wiki_page_signed_off": "Esprimis starpunkton pri propono",
       wiki_page_protected: 'Protektis paĝon',
       wiki_page_unprotected: 'Malprotektis paĝon',
       protected_wiki_page_edited: 'Redaktis protektitan paĝon',
     },
+  },
+  "experienced": {
+    "status": {
+      "automatic": "Sperta redaktanto ekde {{date}}",
+      "granted": "Sperta redaktanto ekde {{date}}, donita frue de administranto",
+      "revoked": "Ne sperta redaktanto: forprenita de administranto",
+      "notYet": "Ankoraŭ ne sperta redaktanto: {{count}} el {{total}} daŭraj redaktoj"
+    },
+    "form": {
+      "label": "Sperta redaktanto",
+      "auto": "Aŭtomata",
+      "granted": "Doni frue",
+      "revoked": "Forpreni",
+      "reason": "Kialo",
+      "submit": "Konservi",
+      "saved": "Stato de sperta redaktanto ĝisdatigita por {{user}}."
+    }
   },
   "signoff": {
     "title": "Starpunktoj",
