@@ -26,6 +26,10 @@
   site: {
     baseUrl: 'http://127.0.0.1:3000',
   },
+  wikidata: {
+    // Tests never reach Wikidata; they stub the fetch or seed the cache.
+    fetchEnabled: false,
+  },
   email: {
     enabled: false,
     provider: null,

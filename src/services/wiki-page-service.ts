@@ -9,7 +9,7 @@ import {
   validateMarkdownContent,
 } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
-import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
+import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
 import {
   ConflictError,
   InvalidRequestError,
@@ -18,6 +18,8 @@ import {
   ValidationCollector,
   ValidationError,
 } from '../lib/errors.js';
+import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
+import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-render.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
@@ -28,6 +30,7 @@ import {
   readProposalStatus,
 } from '../lib/proposal-status.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
+import Citation from '../models/citation.js';
 import type { PageAliasInstance } from '../models/manifests/page-alias.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
@@ -78,6 +81,9 @@ const computeWikiPageContentHash = (page: {
 export interface WikiPageWriteInput {
   slug: string;
   wikidata?: string | null;
+  // Infobox values added on Agpedia, by Wikidata property. A property set to
+  // null is removed; properties left out are kept.
+  infoboxValues?: Record<string, InfoboxLocalValue | null> | null;
   title?: LocalizedMapInput;
   body?: LocalizedMapInput;
   originalLanguage?: string | null;
@@ -106,6 +112,7 @@ export interface WikiPageResult {
   body: Record<string, string> | null | undefined;
   originalLanguage: string | null | undefined;
   wikidata: string | null;
+  infoboxValues: InfoboxLocalValues | null;
   proposal: ProposalStatusInfo | null;
   proposalLinks: ProposalLinksResult | null;
   contentHash: string;
@@ -253,11 +260,79 @@ export interface WikiPageSearchItem {
 
 export const WIKIDATA_ID_PATTERN = /^Q[1-9][0-9]{0,11}$/;
 
-type PageProperties = { wikidata?: string };
+type PageProperties = { wikidata?: string; infoboxValues?: InfoboxLocalValues };
 
 const readWikidataId = (page: WikiPageInstance): string | null => {
   const value = (page.properties as PageProperties | null | undefined)?.wikidata;
   return typeof value === 'string' ? value : null;
+};
+
+export const readInfoboxValues = (page: { properties?: unknown }): InfoboxLocalValues | null => {
+  const value = (page.properties as PageProperties | null | undefined)?.infoboxValues;
+  return value && typeof value === 'object' && Object.keys(value).length ? value : null;
+};
+
+const INFOBOX_VALUE_MAX_LENGTH = 300;
+
+const validateInfoboxValues = async (value: unknown, field: string, errors: ValidationCollector) => {
+  if (value === undefined || value === null) return;
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    errors.add(field, 'must be an object keyed by Wikidata property, such as {"P569": {...}}.', 'invalid');
+    return;
+  }
+  const entries = Object.entries(value as Record<string, unknown>);
+  const citationKeys = new Map<string, string>();
+  for (const [property, entry] of entries) {
+    const entryField = `${field}.${property}`;
+    if (!LOCAL_VALUE_PROPERTIES.has(property)) {
+      errors.add(
+        entryField,
+        `is not a property an infobox shows as text. Use one of: ${[...LOCAL_VALUE_PROPERTIES].join(', ')}.`,
+        'invalid'
+      );
+      continue;
+    }
+    if (entry === null) continue;
+    if (typeof entry !== 'object' || Array.isArray(entry)) {
+      errors.add(entryField, 'must be {"value": "...", "citation": "<citation key>"}, or null to remove it.', 'invalid');
+      continue;
+    }
+    const record = entry as Record<string, unknown>;
+    const text = typeof record.value === 'string' ? record.value.trim() : '';
+    if (!text || text.length > INFOBOX_VALUE_MAX_LENGTH || /[\p{Cc}]/u.test(text)) {
+      errors.add(`${entryField}.value`, `must be text of 1 to ${INFOBOX_VALUE_MAX_LENGTH} characters on one line.`, 'invalid');
+    }
+    const key = typeof record.citation === 'string' ? record.citation.trim() : '';
+    if (!key) errors.add(`${entryField}.citation`, 'must be the key of the citation supporting the value.', 'required');
+    else citationKeys.set(entryField, key);
+  }
+  if (!citationKeys.size) return;
+  const found = await Citation.filterWhere({
+    key: Citation.ops.in([...new Set(citationKeys.values())] as [string, ...string[]]),
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).run();
+  const existing = new Set(found.map(citation => citation.key));
+  for (const [entryField, key] of citationKeys) {
+    if (!existing.has(key)) errors.add(`${entryField}.citation`, `refers to a citation that does not exist: ${key}.`, 'invalid');
+  }
+};
+
+// Null for a property removes it; null for the whole map removes them all.
+const applyInfoboxValues = (
+  page: WikiPageInstance,
+  values: Record<string, InfoboxLocalValue | null> | null | undefined
+) => {
+  if (values === undefined) return;
+  const properties: PageProperties = { ...((page.properties as PageProperties | null) ?? {}) };
+  const merged: InfoboxLocalValues = values === null ? {} : { ...(properties.infoboxValues ?? {}) };
+  for (const [property, entry] of Object.entries(values ?? {})) {
+    if (entry === null) delete merged[property];
+    else merged[property] = { value: entry.value.trim(), citation: entry.citation.trim() };
+  }
+  if (Object.keys(merged).length) properties.infoboxValues = merged;
+  else delete properties.infoboxValues;
+  page.properties = Object.keys(properties).length ? properties : null;
 };
 
 const ensureOptionalWikidataId = (
@@ -340,6 +415,7 @@ const toWikiPageResult = async (
   body: page.body ?? null,
   originalLanguage: page.originalLanguage ?? null,
   wikidata: readWikidataId(page),
+  infoboxValues: readInfoboxValues(page),
   proposal: readProposalStatus(page.properties),
   proposalLinks: await resolveProposalLinks(page.properties, parents),
   contentHash: computeWikiPageContentHash({
@@ -716,7 +792,7 @@ export async function readWikiPage(
 
 export async function createWikiPage(
   _dalInstance: DataAccessLayer,
-  { slug, title, body, originalLanguage, wikidata, tags = [], revSummary }: WikiPageWriteInput,
+  { slug, title, body, originalLanguage, wikidata, infoboxValues, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
@@ -724,6 +800,7 @@ export async function createWikiPage(
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
+  await validateInfoboxValues(infoboxValues, 'infoboxValues', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   validateRevSummary(revSummary, errors);
@@ -768,6 +845,7 @@ export async function createWikiPage(
   if (normalizedBody !== undefined) page.body = normalizedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
   applyWikidataId(page, wikidata);
+  applyInfoboxValues(page, infoboxValues);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.createdAt = createdAt;
@@ -788,6 +866,7 @@ export async function updateWikiPage(
     body,
     originalLanguage,
     wikidata,
+    infoboxValues,
     expectedRevId,
     tags = [],
     revSummary,
@@ -801,6 +880,7 @@ export async function updateWikiPage(
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
+  await validateInfoboxValues(infoboxValues, 'infoboxValues', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
@@ -858,6 +938,7 @@ export async function updateWikiPage(
   if (mergedBody !== undefined) page.body = mergedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
   applyWikidataId(page, wikidata);
+  applyInfoboxValues(page, infoboxValues);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -1361,6 +1442,8 @@ export async function diffWikiPageRevisions(
   if (originalLangDiff) fields.originalLanguage = originalLangDiff;
   const wikidataDiff = diffScalarField('wikidata', readWikidataId(fromRev), readWikidataId(toRev));
   if (wikidataDiff) fields.wikidata = wikidataDiff;
+  const infoboxDiff = diffStructuredField('infoboxValues', readInfoboxValues(fromRev), readInfoboxValues(toRev));
+  if (infoboxDiff) fields.infoboxValues = infoboxDiff;
 
   return {
     pageId: page.id,

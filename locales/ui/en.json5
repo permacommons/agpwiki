@@ -1159,5 +1159,75 @@
         }
       }
     }
+  },
+  /*
+   i18n-identical-allowlist:
+   {
+     // Also the local words in these languages.
+     "de": ["infobox.rows.genres"],
+     "fr": ["infobox.rows.instruments", "infobox.rows.labels", "infobox.rows.classification"],
+     "it": ["infobox.ranks.phylum"]
+   }
+  */
+  "infobox": {
+    "ariaLabel": "Key facts",
+    "factsOnWikidata": "Facts and sources on Wikidata",
+    "imageCredit": "Image:",
+    "addedOnAgpedia": "added on Agpedia",
+    "addedOnAgpediaTitle": "Wikidata has no value for this fact. It was added on Agpedia: open its source.",
+    "oldRevisionNote": "You are viewing an older version of this article. The facts in this box are today's values from Wikidata.",
+    "age": "(age {{count}})",
+    "agedAtDeath": "(aged {{count}})",
+    "yearBce": "{{year}} BC",
+    "decade": "{{year}}s",
+    "present": "present",
+    "more": "{{count}} more",
+    "andMore": "{{list}} and {{more}}",
+    "groups": {
+      "personal": "Personal details",
+      "musical": "Musical career",
+      "political": "Political career"
+    },
+    "rows": {
+      "birthName": "Birth name",
+      "born": "Born",
+      "died": "Died",
+      "nationality": "Nationality",
+      "education": "Education",
+      "occupation": "Occupation",
+      "alsoKnownAs": "Also known as",
+      "spouse": "Spouse",
+      "awards": "Awards",
+      "website": "Website",
+      "yearsActive": "Years active",
+      "genres": "Genres",
+      "instruments": "Instruments",
+      "labels": "Labels",
+      "memberOf": "Member of",
+      "positionsHeld": "Positions held",
+      "party": "Party",
+      "founded": "Founded",
+      "founders": "Founders",
+      "headquarters": "Headquarters",
+      "type": "Type",
+      "industry": "Industry",
+      "keyPeople": "Key people",
+      "employees": "Employees",
+      "parentOrganisation": "Parent organisation",
+      "scientificName": "Scientific name",
+      "commonName": "Common name",
+      "rank": "Rank",
+      "classification": "Classification",
+      "conservationStatus": "Conservation status",
+      "rangeMap": "Range map"
+    },
+    "ranks": {
+      "kingdom": "Kingdom",
+      "phylum": "Phylum",
+      "class": "Class",
+      "order": "Order",
+      "family": "Family",
+      "genus": "Genus"
+    }
   }
 }

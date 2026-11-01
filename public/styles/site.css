@@ -1004,6 +1004,92 @@ pre.diff ins {
   }
   .proposal-management-forms { padding: 1rem; }
 }
+/* Infobox: key facts from Wikidata, floated right like a Wikipedia infobox. */
+.infobox {
+  float: right;
+  clear: right;
+  width: 19rem;
+  max-width: 100%;
+  margin: 0.25rem 0 1rem 1.5rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #fffaf0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.infobox-title {
+  padding: 0.45rem 0.75rem;
+  background: var(--panel);
+  font-weight: 600;
+  font-size: 1rem;
+  text-align: center;
+}
+.infobox-image {
+  margin: 0;
+  padding: 0.5rem 0.5rem 0;
+  text-align: center;
+}
+.infobox-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.infobox-image figcaption {
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.infobox-facts {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.25rem 0;
+}
+.infobox-facts th,
+.infobox-facts td {
+  padding: 0.25rem 0.75rem;
+  vertical-align: top;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.infobox-facts th[scope='row'] {
+  width: 38%;
+  font-weight: 600;
+  padding-right: 0.25rem;
+}
+.infobox-facts .infobox-heading {
+  padding-top: 0.5rem;
+  background: var(--panel);
+  text-align: center;
+  font-weight: 600;
+}
+.infobox-media {
+  text-align: center;
+  color: var(--muted);
+}
+.infobox-age,
+.infobox-local {
+  color: var(--muted);
+  white-space: nowrap;
+}
+.infobox-note,
+.infobox-credit,
+.infobox-source {
+  margin: 0;
+  padding: 0.3rem 0.75rem;
+  border-top: 1px solid var(--rule);
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.infobox-source { text-align: center; }
+@media (max-width: 640px) {
+  .infobox {
+    float: none;
+    width: auto;
+    margin: 0 0 1rem;
+  }
+}
 .page-wikidata {
   clear: both;
   margin: 1.5rem 0 0.5rem;
