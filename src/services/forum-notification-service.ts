@@ -1,3 +1,4 @@
+import { decodeHTML } from 'entities';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
 import { forumThreadPath } from '../lib/forum-paths.js';
@@ -94,7 +95,7 @@ export const processForumReplyCreatedNotification = async (
     ?? '';
   const excerpt = truncate(await markdownToPlainText(dal, bodySource), EXCERPT_LENGTH);
   const threadTitle = collapseWhitespace(
-    striptags(Object.values(thread.title ?? {})[0] ?? thread.id)
+    decodeHTML(striptags(Object.values(thread.title ?? {})[0] ?? thread.id))
   );
   const actorName = actor?.displayName ?? 'Someone';
   const commentUrl = buildCommentUrl(payload.threadId, payload.commentId);

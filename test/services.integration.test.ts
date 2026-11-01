@@ -700,9 +700,10 @@ test('Forum notification processing records disabled email delivery as skipped',
   }
 });
 
-test('Forum notification excerpt decodes escaped markdown HTML entities', async () => {
+test('Forum notification titles and excerpts decode HTML entities once', async () => {
   const dal = await getDal();
   const baseTitle = `forum-entities-${Date.now()}`;
+  const title = `${baseTitle} Here's ": & <b>wording</b> &amp;`;
   const forumThreadPrefix = `${baseTitle}%`;
   let actorIdForCleanup: string | null = null;
   let recipientIdForCleanup: string | null = null;
@@ -716,7 +717,7 @@ test('Forum notification excerpt decodes escaped markdown HTML entities', async 
     const thread = await createForumThread(
       {
         category: 'general',
-        title: baseTitle,
+        title,
         body: 'Opening post.',
         language: 'en',
       },
@@ -736,9 +737,10 @@ test('Forum notification excerpt decodes escaped markdown HTML entities', async 
     const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
-    const sent: Array<{ text: string; html?: string }> = [];
+    const sent: Array<{ subject: string; text: string; html?: string }> = [];
     await processForumReplyCreatedNotification(dal, job, async message => {
       sent.push({
+        subject: message.subject,
         text: message.text,
         html: message.html,
       });
@@ -746,6 +748,12 @@ test('Forum notification excerpt decodes escaped markdown HTML entities', async 
     });
 
     assert.equal(sent.length, 1);
+    assert.equal(sent[0]?.subject, `New reply in: ${title}`);
+    assert.ok(sent[0]?.text.includes(`in "${title}"`));
+    assert.ok(sent[0]?.html?.includes(`${baseTitle} Here&#39;s &quot;: &amp; &lt;b&gt;wording&lt;/b&gt; &amp;amp;`));
+    const notifications = await listSiteNotifications(dal, recipient.id);
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].subject, title);
     assert.match(sent[0]?.text ?? '', /\n\n<b>boo<\/b> boo\n\n/);
     assert.match(sent[0]?.html ?? '', /&lt;b&gt;boo&lt;\/b&gt; boo/);
   } finally {
