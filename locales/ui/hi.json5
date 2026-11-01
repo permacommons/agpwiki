@@ -490,6 +490,25 @@
       "openInForum": "ये जवाब फ़ोरम में खोलें"
     }
   },
+  "home": {
+    "newArticles": "Agpedia पर नया",
+    "seeMoreArticles": "और नए लेख देखें",
+    "fromBlog": "ब्लॉग से",
+    "seeAllPosts": "सभी ब्लॉग पोस्ट देखें",
+    "inForum": "फ़ोरम में",
+    "goToForum": "फ़ोरम पर जाएँ",
+    "waysToHelp": "मदद के तरीके:",
+    "waitingForCheck_one": "तथ्य-जाँच की प्रतीक्षा में लेख: {{count}}",
+    "waitingForCheck_other": "तथ्य-जाँच की प्रतीक्षा में लेख: {{count}}",
+    "needWikidata_one": "विकिडेटा लिंक चाहिए: {{count}}",
+    "needWikidata_other": "विकिडेटा लिंक चाहिए: {{count}}",
+    "howToContribute": "योगदान कैसे करें",
+    "newArticleLabel": "नया लेख",
+    "blogLabel": "ब्लॉग",
+    "noArticles": "अभी कोई लेख नहीं।",
+    "noPosts": "अभी कोई ब्लॉग पोस्ट नहीं।",
+    "noThreads": "अभी कोई चर्चा नहीं।"
+  },
   tool: {
     view: 'देखें',
     diff: 'अंतर',
@@ -505,6 +524,9 @@
     relatedLabel: 'संबंधित',
     seeAlso: 'यह भी देखें: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'विश्वकोश पेज (कुल {{total}})।',
+    "pagesSort": "क्रम:",
+    "pagesSortTitle": "वर्णानुक्रम",
+    "pagesSortNew": "नए पहले",
     previous: 'पिछला',
     next: 'अगला',
     pagination: 'पेज {{page}} / {{totalPages}}',

@@ -16,6 +16,7 @@ import {
 import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
+import { isPromptPageSlug } from '../lib/prompt-registry.js';
 import {
   resolveSafeText,
   resolveSafeTextWithFallback,
@@ -42,6 +43,7 @@ import {
   renderToc,
 } from '../render.js';
 import { countForumCommentsForPage } from '../services/forum-service.js';
+import { HOME_PAGE_SLUG, loadHomeSections } from '../services/home-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,
@@ -95,6 +97,7 @@ import {
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
+import { renderHomeSections } from './lib/home-sections.js';
 import {
   createPreviewHandler,
   renderMarkdownPreviewHtml,
@@ -1510,6 +1513,7 @@ export const registerPageRoutes = (app: Express) => {
           },
           mediaRegistry,
           locale: res.locals.locale as string | undefined,
+          showUnknownVariables: isPromptPageSlug(canonicalSlug),
         }
       );
 
@@ -1818,6 +1822,11 @@ export const registerPageRoutes = (app: Express) => {
         isArticle && selectedRevision.wikidata
           ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
           : '';
+      // The home page shows what is new below its own text, on the current version only.
+      const homeHtml =
+        canonicalSlug === HOME_PAGE_SLUG && !selectedRevId && !diffHtml
+          ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
+          : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')
         ? req.t('label.meta')
@@ -1836,7 +1845,7 @@ export const registerPageRoutes = (app: Express) => {
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

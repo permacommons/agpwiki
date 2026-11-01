@@ -488,6 +488,25 @@
       "openInForum": "Malfermi ĉi tiujn respondojn en la forumo"
     }
   },
+  "home": {
+    "newArticles": "Nove en Agpedia",
+    "seeMoreArticles": "Pliaj novaj artikoloj",
+    "fromBlog": "El la blogo",
+    "seeAllPosts": "Ĉiuj blogaĵoj",
+    "inForum": "En la forumo",
+    "goToForum": "Al la forumo",
+    "waysToHelp": "Kiel helpi:",
+    "waitingForCheck_one": "{{count}} artikolo atendas kontrolon de faktoj",
+    "waitingForCheck_other": "{{count}} artikoloj atendas kontrolon de faktoj",
+    "needWikidata_one": "{{count}} bezonas ligilon al Vikidatumoj",
+    "needWikidata_other": "{{count}} bezonas ligilon al Vikidatumoj",
+    "howToContribute": "Kiel kontribui",
+    "newArticleLabel": "Nova artikolo",
+    "blogLabel": "Blogo",
+    "noArticles": "Ankoraŭ neniuj artikoloj.",
+    "noPosts": "Ankoraŭ neniuj blogaĵoj.",
+    "noThreads": "Ankoraŭ neniuj diskutoj."
+  },
   tool: {
     view: 'Vidi',
     diff: 'Diferenco',
@@ -503,6 +522,9 @@
     relatedLabel: 'Rilataj',
     seeAlso: 'Vidu ankaŭ: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Enciklopediaj paĝoj (entute {{total}}).',
+    "pagesSort": "Ordigi:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Plej novaj unue",
     previous: 'Antaŭa',
     next: 'Sekva',
     pagination: 'Paĝo {{page}} el {{totalPages}}',

@@ -489,6 +489,25 @@
       "openInForum": "Bu yanıtları forumda aç"
     }
   },
+  "home": {
+    "newArticles": "Agpedia'da yeni",
+    "seeMoreArticles": "Daha fazla yeni madde",
+    "fromBlog": "Blogdan",
+    "seeAllPosts": "Tüm blog yazıları",
+    "inForum": "Forumda",
+    "goToForum": "Foruma git",
+    "waysToHelp": "Nasıl yardım edebilirsiniz:",
+    "waitingForCheck_one": "Doğrulama bekleyen madde: {{count}}",
+    "waitingForCheck_other": "Doğrulama bekleyen madde: {{count}}",
+    "needWikidata_one": "Wikidata bağlantısı olmayan: {{count}}",
+    "needWikidata_other": "Wikidata bağlantısı olmayan: {{count}}",
+    "howToContribute": "Nasıl katkıda bulunulur",
+    "newArticleLabel": "Yeni madde",
+    "blogLabel": "Blog",
+    "noArticles": "Henüz madde yok.",
+    "noPosts": "Henüz blog yazısı yok.",
+    "noThreads": "Henüz tartışma yok."
+  },
   tool: {
     view: 'Görüntüle',
     diff: 'Fark',
@@ -504,6 +523,9 @@
     relatedLabel: 'İlgili',
     seeAlso: 'Ayrıca bakınız: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Ansiklopedi sayfaları (toplam {{total}}).',
+    "pagesSort": "Sırala:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Önce en yeni",
     previous: 'Önceki',
     next: 'Sonraki',
     pagination: 'Sayfa {{page}} / {{totalPages}}',

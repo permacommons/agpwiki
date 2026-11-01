@@ -490,6 +490,25 @@
       "openInForum": "Отвори ги овие одговори на форумот"
     }
   },
+  "home": {
+    "newArticles": "Ново на Agpedia",
+    "seeMoreArticles": "Повеќе нови статии",
+    "fromBlog": "Од блогот",
+    "seeAllPosts": "Сите записи на блогот",
+    "inForum": "На форумот",
+    "goToForum": "Оди на форумот",
+    "waysToHelp": "Како да помогнете:",
+    "waitingForCheck_one": "Статии што чекаат проверка на фактите: {{count}}",
+    "waitingForCheck_other": "Статии што чекаат проверка на фактите: {{count}}",
+    "needWikidata_one": "Без врска до Википодатоци: {{count}}",
+    "needWikidata_other": "Без врска до Википодатоци: {{count}}",
+    "howToContribute": "Како да придонесете",
+    "newArticleLabel": "Нова статија",
+    "blogLabel": "Блог",
+    "noArticles": "Сè уште нема статии.",
+    "noPosts": "Сè уште нема записи.",
+    "noThreads": "Сè уште нема разговори."
+  },
   tool: {
     view: 'Прикажи',
     diff: 'Разлики',
@@ -505,6 +524,9 @@
     relatedLabel: 'Поврзано',
     seeAlso: 'Види и: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Енциклопедиски страници (вкупно {{total}}).',
+    "pagesSort": "Подреди:",
+    "pagesSortTitle": "А–Ш",
+    "pagesSortNew": "Најнови прво",
     previous: 'Претходна',
     next: 'Следна',
     pagination: 'Страница {{page}} од {{totalPages}}',

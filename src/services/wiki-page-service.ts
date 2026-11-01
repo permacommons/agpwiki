@@ -16,10 +16,12 @@ import {
   NotFoundError,
   PreconditionFailedError,
   ValidationCollector,
+  ValidationError,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
+import { missingPromptPlaceholders, requiredPromptPlaceholders } from '../lib/prompt-registry.js';
 import {
   type ProposalStatusInfo,
   readProposalLinks,
@@ -268,6 +270,35 @@ const ensureOptionalWikidataId = (
   if (value === undefined || value === null) return;
   if (typeof value !== 'string' || !WIKIDATA_ID_PATTERN.test(value)) {
     errors.add(field, 'must be a Wikidata item ID such as "Q42", or null to remove it.', 'invalid');
+  }
+};
+
+/** A prompt page under meta/prompts/ must keep the placeholders its prompt fills in. */
+const assertPromptPlaceholdersKept = (slug: string, body: Record<string, string | null> | null | undefined) => {
+  const required = requiredPromptPlaceholders(slug);
+  if (!required) return;
+  if (!body || !Object.values(body).some(text => typeof text === 'string')) {
+    throw new ValidationError('A prompt page must keep the placeholders its prompt fills in.', [
+      { field: 'body', message: 'must contain prompt text with the required placeholders.', code: 'invalid' },
+    ]);
+  }
+  const fieldErrors = Object.entries(body ?? {}).flatMap(([lang, text]) => {
+    if (typeof text !== 'string') return [];
+    const missing = missingPromptPlaceholders(text, required);
+    return missing.length
+      ? [
+          {
+            field: `body.${lang}`,
+            message: `must keep the prompt placeholder${missing.length > 1 ? 's' : ''} ${missing
+              .map(name => `{{${name}}}`)
+              .join(', ')}.`,
+            code: 'invalid',
+          },
+        ]
+      : [];
+  });
+  if (fieldErrors.length) {
+    throw new ValidationError('A prompt page must keep the placeholders its prompt fills in.', fieldErrors);
   }
 };
 
@@ -741,6 +772,8 @@ export async function createWikiPage(
     });
   }
 
+  assertPromptPlaceholdersKept(normalizedSlug, sanitizeLocalizedMapInput(body));
+
   const createdAt = new Date();
   const page = await WikiPage.createFirstRevision(
     { id: userId },
@@ -833,12 +866,13 @@ export async function updateWikiPage(
     }
     aliasToRelease = aliasMatch ?? null;
   }
+  const mergedBody = mergeLocalizedMap(page.body ?? null, body);
+  assertPromptPlaceholdersKept(normalizedNewSlug ?? previousSlug, mergedBody === undefined ? page.body : mergedBody);
 
   await page.newRevision({ id: userId }, { tags: ['update', ...(isRename ? ['rename'] : []), ...tags] });
 
   if (normalizedNewSlug !== undefined) page.slug = normalizedNewSlug;
   const mergedTitle = mergeLocalizedMap(page.title ?? null, title);
-  const mergedBody = mergeLocalizedMap(page.body ?? null, body);
   if (mergedTitle !== undefined) page.title = mergedTitle;
   if (mergedBody !== undefined) page.body = mergedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
@@ -900,6 +934,7 @@ export async function applyWikiPagePatch(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: patched });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
 
@@ -1066,6 +1101,7 @@ export async function rewriteWikiPageSection(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
 
@@ -1143,6 +1179,7 @@ export async function replaceWikiPageExactText(
     validateNoStandardMarkdownImages,
   ]);
   errors.throwIfAny();
+  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
 
   await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
 

@@ -490,6 +490,25 @@
       "openInForum": "Deze reacties openen op het forum"
     }
   },
+  "home": {
+    "newArticles": "Nieuw op Agpedia",
+    "seeMoreArticles": "Meer nieuwe artikelen",
+    "fromBlog": "Van de blog",
+    "seeAllPosts": "Alle blogberichten",
+    "inForum": "Op het forum",
+    "goToForum": "Naar het forum",
+    "waysToHelp": "Zo kun je helpen:",
+    "waitingForCheck_one": "{{count}} artikel wacht op een feitencontrole",
+    "waitingForCheck_other": "{{count}} artikelen wachten op een feitencontrole",
+    "needWikidata_one": "{{count}} heeft een Wikidata-koppeling nodig",
+    "needWikidata_other": "{{count}} hebben een Wikidata-koppeling nodig",
+    "howToContribute": "Bijdragen",
+    "newArticleLabel": "Nieuw artikel",
+    "blogLabel": "Blog",
+    "noArticles": "Nog geen artikelen.",
+    "noPosts": "Nog geen blogberichten.",
+    "noThreads": "Nog geen discussies."
+  },
   tool: {
     view: 'Bekijk',
     diff: 'Verschil',
@@ -505,6 +524,9 @@
     relatedLabel: 'Gerelateerd',
     seeAlso: 'Zie ook: <a href="{{url}}">{{label}}</a>',
     pagesDescription: "Encyclopediepagina's ({{total}} totaal).",
+    "pagesSort": "Sorteren:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Nieuwste eerst",
     previous: 'Vorige',
     next: 'Volgende',
     pagination: 'Pagina {{page}} van {{totalPages}}',

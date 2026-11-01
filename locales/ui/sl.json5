@@ -490,6 +490,25 @@
       "openInForum": "Odpri te odgovore na forumu"
     }
   },
+  "home": {
+    "newArticles": "Novo na Agpediji",
+    "seeMoreArticles": "Več novih člankov",
+    "fromBlog": "Iz bloga",
+    "seeAllPosts": "Vse objave na blogu",
+    "inForum": "Na forumu",
+    "goToForum": "Na forum",
+    "waysToHelp": "Kako pomagati:",
+    "waitingForCheck_one": "Članki, ki čakajo na preverjanje dejstev: {{count}}",
+    "waitingForCheck_other": "Članki, ki čakajo na preverjanje dejstev: {{count}}",
+    "needWikidata_one": "Brez povezave na Wikipodatke: {{count}}",
+    "needWikidata_other": "Brez povezave na Wikipodatke: {{count}}",
+    "howToContribute": "Kako prispevati",
+    "newArticleLabel": "Nov članek",
+    "blogLabel": "Blog",
+    "noArticles": "Še ni člankov.",
+    "noPosts": "Še ni objav.",
+    "noThreads": "Še ni razprav."
+  },
   tool: {
     view: 'Prikaži',
     diff: 'Razlika',
@@ -505,6 +524,9 @@
     relatedLabel: 'Povezano',
     seeAlso: 'Glej tudi: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Enciklopedične strani (skupaj {{total}}).',
+    "pagesSort": "Razvrsti:",
+    "pagesSortTitle": "A–Ž",
+    "pagesSortNew": "Najnovejši najprej",
     previous: 'Prejšnja',
     next: 'Naslednja',
     pagination: 'Stran {{page}} od {{totalPages}}',
