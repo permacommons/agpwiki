@@ -272,6 +272,11 @@ const ensureOptionalWikidataId = (
 const assertPromptPlaceholdersKept = (slug: string, body: Record<string, string | null> | null | undefined) => {
   const required = requiredPromptPlaceholders(slug);
   if (!required) return;
+  if (!body || !Object.values(body).some(text => typeof text === 'string')) {
+    throw new ValidationError('A prompt page must keep the placeholders its prompt fills in.', [
+      { field: 'body', message: 'must contain prompt text with the required placeholders.', code: 'invalid' },
+    ]);
+  }
   const fieldErrors = Object.entries(body ?? {}).flatMap(([lang, text]) => {
     if (typeof text !== 'string') return [];
     const missing = missingPromptPlaceholders(text, required);
@@ -802,13 +807,13 @@ export async function updateWikiPage(
     }
     aliasToRelease = aliasMatch ?? null;
   }
-  assertPromptPlaceholdersKept(normalizedNewSlug ?? previousSlug, mergeLocalizedMap(page.body ?? null, body) ?? page.body);
+  const mergedBody = mergeLocalizedMap(page.body ?? null, body);
+  assertPromptPlaceholdersKept(normalizedNewSlug ?? previousSlug, mergedBody === undefined ? page.body : mergedBody);
 
   await page.newRevision({ id: userId }, { tags: ['update', ...(isRename ? ['rename'] : []), ...tags] });
 
   if (normalizedNewSlug !== undefined) page.slug = normalizedNewSlug;
   const mergedTitle = mergeLocalizedMap(page.title ?? null, title);
-  const mergedBody = mergeLocalizedMap(page.body ?? null, body);
   if (mergedTitle !== undefined) page.title = mergedTitle;
   if (mergedBody !== undefined) page.body = mergedBody;
   if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;

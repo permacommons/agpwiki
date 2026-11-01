@@ -110,6 +110,13 @@ test('A save that would remove a prompt placeholder is refused, and only admins 
       (error: unknown) =>
         error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.message.includes('{{slug}}'))
     );
+    for (const body of [null, Object.fromEntries(Object.keys(before.body ?? {}).map(lang => [lang, null]))]) {
+      await assert.rejects(
+        () => updateWikiPage(dal, { slug, body, revSummary: { en: 'Try clearing prompt text.' } }, admin.id),
+        (error: unknown) =>
+          error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.field === 'body')
+      );
+    }
     await assert.rejects(
       () =>
         replaceWikiPageExactText(
