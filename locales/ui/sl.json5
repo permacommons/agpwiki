@@ -268,6 +268,7 @@
     view: 'Prikaži',
     title: 'Zgodovina različic',
     compare: 'Primerjaj izbrane revizije',
+    notDuplicateOf: 'Ni dvojnik: {{pages}}',
   },
   "revert": {
     "tag": "vrnitev",

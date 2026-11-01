@@ -88,6 +88,7 @@ import {
   readCitationRevision,
   updateCitation,
 } from '../services/citation-service.js';
+import { checkNewArticle, findPossibleDuplicates } from '../services/duplicate-check-service.js';
 import {
   createMedia,
   deleteMedia,
@@ -207,6 +208,9 @@ const READ_REVISION_DESCRIPTION =
   'The result includes currentRevId; pass it as expectedRevId (baseRevId for wiki_applyPatch) when you edit.';
 const CONCURRENCY_DESCRIPTION =
   'Pass expectedRevId (the currentRevId from your last read or write of this document) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the document again, reapply your change to the current version, and retry.';
+
+const RELATED_ARTICLES_HINT =
+  'These articles overlap with the new one. Link to them where it helps, and keep a short summary with a link in any broader article.';
 
 const toWikiWriteResponse = ({
   id,
@@ -342,6 +346,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .optional()
     .describe(
       'Wikidata item ID for this article, such as "Q42". Optional but strongly recommended for articles; null removes it. Shown at the bottom of the article and recorded in its history.'
+    );
+  const notDuplicateOfSchema = z
+    .array(z.string().min(1).max(SLUG_MAX_LENGTH))
+    .max(20)
+    .optional()
+    .describe(
+      'Slugs of existing articles you checked and found to be a different topic. Needed only after a possible_duplicate error; list every page it named.'
     );
   const contentLanguageMessage =
     'Expected a supported locale code (see agpwiki://locales) or "*" for all languages.';
@@ -677,7 +688,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy. A new article is refused with a possible_duplicate error when it may already exist in any language (see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related articles are returned as relatedArticles, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -688,19 +699,54 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
+        notDuplicateOf: notDuplicateOfSchema,
       },
     },
-    withToolErrorHandling(async (args: WikiPageWriteInput & { policyHash?: string }, extra) => {
+    withToolErrorHandling(
+      async (
+        args: WikiPageWriteInput & { policyHash?: string; notDuplicateOf?: string[] },
+        extra
+      ) => {
+        const dal = await initializePostgreSQL();
+        const userId = await requireAuthUserId(extra);
+        const { policyHash, notDuplicateOf, ...writeArgs } = args;
+        await requireCurrentPolicyHash(dal, policyHash);
+        const check = await checkNewArticle(dal, { ...writeArgs, notDuplicateOf });
+        const payload = await createWikiPage(
+          dal,
+          { ...writeArgs, tags: mergeTags([...check.tags, ...(writeArgs.tags ?? [])]) },
+          userId
+        );
+        return {
+          ...toWikiWriteResponse(payload),
+          ...(check.related.length
+            ? { relatedArticles: check.related, relatedArticlesHint: RELATED_ARTICLES_HINT }
+            : {}),
+        };
+      }
+    )
+  );
+
+  server.registerTool(
+    'wiki_findPossibleDuplicates',
+    {
+      title: 'Find Possible Duplicates',
+      description:
+        'Before writing a new article, check whether its topic already exists in any language. duplicates are articles with the same Wikidata item, a title matching yours in any language (ignoring capitals, accents and punctuation) or a similar address; wiki_createPage refuses to create a page while any of them is not listed in notDuplicateOf. If one is the same topic, improve or translate it instead. related are articles whose titles share the main words of yours: they never block creation; read them, and ask your operator before creating an article that overlaps with one.',
+      annotations: readOnlyToolAnnotations,
+      inputSchema: {
+        title: z.string().min(1).max(TITLE_MAX_LENGTH).describe('The planned title, in any language.'),
+        slug: optionalSlugSchema,
+        wikidata: wikidataIdSchema,
+      },
+    },
+    withToolErrorHandling(async args => {
       const dal = await initializePostgreSQL();
-      const userId = await requireAuthUserId(extra);
-      const { policyHash, ...writeArgs } = args;
-      await requireCurrentPolicyHash(dal, policyHash);
-      const payload = await createWikiPage(
-        dal,
-        { ...writeArgs, tags: mergeTags(writeArgs.tags) },
-        userId
-      );
-      return toWikiWriteResponse(payload);
+      return findPossibleDuplicates(dal, {
+        titles: [args.title],
+        slug: args.slug ?? null,
+        wikidata: args.wikidata ?? null,
+      });
     })
   );
 

@@ -267,6 +267,7 @@
     view: 'Vedi',
     title: 'Cronologia versioni',
     compare: 'Confronta revisioni selezionate',
+    notDuplicateOf: 'Non è un duplicato di {{pages}}',
   },
   "revert": {
     "tag": "annullamento",

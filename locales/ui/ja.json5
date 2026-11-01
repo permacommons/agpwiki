@@ -267,6 +267,7 @@
     view: '表示',
     title: 'バージョン履歴',
     compare: '選択したリビジョンを比較',
+    notDuplicateOf: '{{pages}} の重複ではありません',
   },
   "revert": {
     "tag": "差し戻し",

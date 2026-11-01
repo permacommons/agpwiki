@@ -93,7 +93,7 @@ write a comment, explain *why* and only why:
 
 - Tool errors must return a `CallToolResult` with `isError: true` and a structured payload.
 - Expected structured payload shape:
-  - `error.code`: `validation_error`, `not_found`, `conflict`, `forbidden`, `unauthorized`, `invalid_request`, `precondition_failed`, `unsupported`, `internal_error`
+  - `error.code`: `validation_error`, `not_found`, `conflict`, `forbidden`, `unauthorized`, `invalid_request`, `precondition_failed`, `unsupported`, `possible_duplicate`, `internal_error`
   - `error.message`: human-readable summary
   - `error.fieldErrors`: optional list of `{ field, message, code }` entries for validation failures
   - `error.details`: optional metadata (e.g., `{ slug, revId }`)

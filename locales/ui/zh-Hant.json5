@@ -267,6 +267,7 @@
     view: '檢視',
     title: '版本歷史',
     compare: '比較選定的版本',
+    notDuplicateOf: '不是 {{pages}} 的重複',
   },
   "revert": {
     "tag": "回退",

@@ -267,6 +267,7 @@
     view: 'Görüntüle',
     title: 'Sürüm geçmişi',
     compare: 'Seçili revizyonları karşılaştır',
+    notDuplicateOf: '{{pages}} sayfasının kopyası değil',
   },
   "revert": {
     "tag": "geri alma",

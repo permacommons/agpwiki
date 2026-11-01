@@ -267,6 +267,7 @@
     view: '보기',
     title: '버전 기록',
     compare: '선택한 버전 비교',
+    notDuplicateOf: '{{pages}}의 중복이 아님',
   },
   "revert": {
     "tag": "되돌리기",
