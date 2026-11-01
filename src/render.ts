@@ -430,6 +430,8 @@ export type RenderMarkdownOptions = {
   };
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
+  // Show {{name}} placeholders without a value instead of dropping them.
+  showUnknownVariables?: boolean;
   // Adds an edit link inside each heading of the source text.
   sectionEditLink?: SectionEditLinkRenderer;
 };
@@ -459,6 +461,7 @@ export const renderMarkdown = async (
     wikiLinks: options.wikiLinks,
     mediaRegistry: options.mediaRegistry,
     locale: options.locale,
+    showUnknownVariables: options.showUnknownVariables,
     sectionEditLink: options.sectionEditLink,
   };
   if (citationEntries.length > 0) {

@@ -8,6 +8,7 @@ research/
 CLAUDE.md
 .claude/
 .gemini/
+.codex/config.toml
 .browser-data/
 public/downloads/dumps/
 config/development.json5
