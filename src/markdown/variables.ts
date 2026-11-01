@@ -36,7 +36,7 @@ export const variablesPlugin = () => (md: MarkdownIt) => {
     if (!name) return '';
     const vars = (env?.variables ?? {}) as Record<string, string>;
     if (vars[name] !== undefined) return vars[name];
-    // Workflow pages show their slots, which agents fill in, as they are.
-    return env?.showUnknownVariables ? `<code class="prompt-slot">{{${md.utils.escapeHtml(name)}}}</code>` : '';
+    // Prompt pages show their placeholders, which agents fill in, as they are.
+    return env?.showUnknownVariables ? `<code class="prompt-placeholder">{{${md.utils.escapeHtml(name)}}}</code>` : '';
   };
 };

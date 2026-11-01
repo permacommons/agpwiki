@@ -1,4 +1,4 @@
--- The guided workflows agents offer move from src/mcp/prompt-library to wiki
+-- The guided prompts agents offer move from src/mcp/prompt-library to wiki
 -- pages under meta/prompts/, protected so only admins can edit them. Pages
 -- that already exist are left alone, so this is safe to run anywhere.
 
@@ -6,7 +6,7 @@ WITH created AS (
   INSERT INTO pages (slug, title, body, original_language, _rev_id, _rev_user, _rev_date, _rev_tags, _rev_summary)
   SELECT 'meta/prompts/create-article', '{"en": "Create Article"}'::jsonb, jsonb_build_object('en', $prompt$I want to create a wiki article about "{{topic}}".
 
-Please follow this workflow:
+Please follow these instructions:
 
 ## Step 1: Understand the wiki's values and scope
 {{metaPages}}

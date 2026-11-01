@@ -5,12 +5,12 @@ import { z } from 'zod';
 import { initializePostgreSQL } from '../db.js';
 import { NotFoundError } from '../lib/errors.js';
 import {
-  META_PAGES_SLOT,
-  missingPromptSlots,
+  META_PAGES_PLACEHOLDER,
+  missingPromptPlaceholders,
   PROMPT_SPECS,
   type PromptSpec,
   promptPageSlug,
-  requiredPromptSlots,
+  requiredPromptPlaceholders,
 } from '../lib/prompt-registry.js';
 import { readWikiPage } from '../services/wiki-page-service.js';
 
@@ -30,10 +30,10 @@ If you haven't read these pages yet, retrieve them now using the wiki_readPage t
 const unavailable = (spec: PromptSpec, problem: string) =>
   new McpError(
     ErrorCode.InternalError,
-    `The "${spec.title}" workflow is unavailable: ${problem} An admin can restore the page from its history.`
+    `The "${spec.title}" prompt is unavailable: ${problem} An admin can restore the page from its history.`
   );
 
-/** The workflow text from its wiki page, with the slots filled in. */
+/** The prompt text from its wiki page, with the placeholders filled in. */
 export const loadPromptText = async (spec: PromptSpec, value: string) => {
   const slug = promptPageSlug(spec.id);
   const dalInstance = await initializePostgreSQL();
@@ -42,20 +42,20 @@ export const loadPromptText = async (spec: PromptSpec, value: string) => {
     throw error;
   });
   const template = mlString.resolve(page.originalLanguage ?? 'en', page.body ?? null)?.str ?? '';
-  const missing = missingPromptSlots(template, requiredPromptSlots(slug) ?? []);
+  const missing = missingPromptPlaceholders(template, requiredPromptPlaceholders(slug) ?? []);
   if (missing.length) {
     throw unavailable(spec, `the page ${slug} lacks ${missing.map(name => `{{${name}}}`).join(', ')}.`);
   }
   const text = [
-    [META_PAGES_SLOT, META_PAGES_INSTRUCTION],
-    [spec.slot.name, value],
+    [META_PAGES_PLACEHOLDER, META_PAGES_INSTRUCTION],
+    [spec.placeholder.name, value],
   ].reduce((current, [name, replacement]) => current.replaceAll(`{{${name}}}`, replacement), template);
   // Lets a strange result be traced to the exact text the agent got.
-  return `${text}\n\n(Workflow text from /${slug}, revision ${page.currentRevId}.)`;
+  return `${text}\n\n(Prompt text from /${slug}, revision ${page.currentRevId}.)`;
 };
 
 /**
- * Registers MCP prompts that guide agents through common workflows.
+ * Registers MCP prompts that guide agents through common editing tasks.
  */
 export const registerPrompts = (server: McpServer) => {
   for (const spec of PROMPT_SPECS) {
@@ -65,11 +65,11 @@ export const registerPrompts = (server: McpServer) => {
         title: spec.title,
         description: spec.description,
         argsSchema: {
-          [spec.slot.name]: z.string().describe(spec.slot.description),
+          [spec.placeholder.name]: z.string().describe(spec.placeholder.description),
         },
       },
       async (args: Record<string, string>) => {
-        const value = args[spec.slot.name] ?? '';
+        const value = args[spec.placeholder.name] ?? '';
         return {
           description: spec.describe(value),
           messages: [

@@ -41,12 +41,12 @@ const createTestUser = async () => {
   });
 };
 
-test('Every workflow has an admin-protected page with its slots, imported by the migration', async () => {
+test('Every prompt has an admin-protected page with its placeholders, imported by the migration', async () => {
   const dal = await getDal();
   for (const spec of PROMPT_SPECS) {
     const page = await readWikiPage(dal, promptPageSlug(spec.id));
     const text = page.body?.en ?? '';
-    assert.ok(text.includes(`{{${spec.slot.name}}}`), `${spec.id} keeps {{${spec.slot.name}}}`);
+    assert.ok(text.includes(`{{${spec.placeholder.name}}}`), `${spec.id} keeps {{${spec.placeholder.name}}}`);
     assert.ok(text.includes('{{metaPages}}'), `${spec.id} keeps {{metaPages}}`);
     const editability = await getWikiPageEditability(dal, { id: page.id }, null);
     assert.equal(editability.isProtected, true);
@@ -54,7 +54,7 @@ test('Every workflow has an admin-protected page with its slots, imported by the
   }
 });
 
-test('Agents get the workflow text from the wiki, filled in and naming its revision', async () => {
+test('Agents get the prompt text from the wiki, filled in and naming its revision', async () => {
   const dal = await getDal();
   const { server } = createMcpServer();
   const prompts = (server as unknown as {
@@ -71,24 +71,24 @@ test('Agents get the workflow text from the wiki, filled in and naming its revis
   assert.ok(text.includes('belt-buckle'));
   assert.ok(!text.includes('{{slug}}') && !text.includes('{{metaPages}}'));
   assert.ok(text.includes('/meta/values'));
-  assert.ok(text.endsWith(`(Workflow text from /meta/prompts/fact-check, revision ${page.currentRevId}.)`));
+  assert.ok(text.endsWith(`(Prompt text from /meta/prompts/fact-check, revision ${page.currentRevId}.)`));
 
   const created = await prompts['create-article'].callback({ topic: 'Belt buckle' });
   assert.ok(created.messages[0].content.text.includes('"Belt buckle"'));
 });
 
-test('A missing workflow page gives a clear message', async () => {
+test('A missing prompt page gives a clear message', async () => {
   await assert.rejects(
     () =>
       loadPromptText(
         { ...PROMPT_SPECS[1], id: `missing-${Date.now()}`, title: 'Missing Check' },
         'belt-buckle'
       ),
-    (error: unknown) => error instanceof Error && /"Missing Check" workflow is unavailable: the page meta\/prompts\/missing-/.test(error.message)
+    (error: unknown) => error instanceof Error && /"Missing Check" prompt is unavailable: the page meta\/prompts\/missing-/.test(error.message)
   );
 });
 
-test('A save that would remove a workflow slot is refused, and only admins can edit', async () => {
+test('A save that would remove a prompt placeholder is refused, and only admins can edit', async () => {
   const dal = await getDal();
   let adminId: string | null = null;
   let editorId: string | null = null;
@@ -102,7 +102,7 @@ test('A save that would remove a workflow slot is refused, and only admins can e
     const before = await readWikiPage(dal, slug);
 
     await assert.rejects(
-      () => updateWikiPage(dal, { slug, body: { en: 'No slots.' }, revSummary: { en: 'Try.' } }, editor.id),
+      () => updateWikiPage(dal, { slug, body: { en: 'No placeholders.' }, revSummary: { en: 'Try.' } }, editor.id),
       ForbiddenError
     );
     await assert.rejects(
@@ -128,7 +128,7 @@ test('A save that would remove a workflow slot is refused, and only admins can e
   }
 });
 
-test('A workflow page shows its slots to readers', async () => {
+test('A prompt page shows its placeholders to readers', async () => {
   const app = express();
   app.use((req, res, next) => {
     req.t = ((key: string) => key) as typeof req.t;
@@ -151,8 +151,8 @@ test('A workflow page shows its slots to readers', async () => {
     assert.ok(address && typeof address !== 'string');
     const response = await fetch(`http://127.0.0.1:${address.port}/meta/prompts/fact-check`);
     const { bodyHtml } = (await response.json()) as { bodyHtml: string };
-    assert.match(bodyHtml, /<code class="prompt-slot">\{\{slug\}\}<\/code>/);
-    assert.match(bodyHtml, /<code class="prompt-slot">\{\{metaPages\}\}<\/code>/);
+    assert.match(bodyHtml, /<code class="prompt-placeholder">\{\{slug\}\}<\/code>/);
+    assert.match(bodyHtml, /<code class="prompt-placeholder">\{\{metaPages\}\}<\/code>/);
   } finally {
     await new Promise<void>(resolve => server.close(() => resolve()));
   }

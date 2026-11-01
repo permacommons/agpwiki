@@ -428,7 +428,7 @@ export type RenderMarkdownOptions = {
   };
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
-  // Show {{name}} slots without a value instead of dropping them.
+  // Show {{name}} placeholders without a value instead of dropping them.
   showUnknownVariables?: boolean;
 };
 

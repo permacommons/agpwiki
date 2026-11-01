@@ -1,17 +1,17 @@
-// The guided workflows agents offer. Their text lives on the wiki, at
-// meta/prompts/<id>; the list of workflows and the slots each takes stay here.
+// The guided prompts agents offer. Their text lives on the wiki, at
+// meta/prompts/<id>; the list of prompts and the placeholders each takes stay here.
 
 export const PROMPT_PAGE_PREFIX = 'meta/prompts/';
 
 // Filled in by the server; it tells agents to read the editorial policies.
-export const META_PAGES_SLOT = 'metaPages';
+export const META_PAGES_PLACEHOLDER = 'metaPages';
 
 export interface PromptSpec {
   id: string;
   title: string;
   description: string;
-  // The argument the agent passes, filled into the text as {{slot}}.
-  slot: { name: 'topic' | 'slug'; description: string };
+  // The argument the agent passes, filled into the text as {{placeholder}}.
+  placeholder: { name: 'topic' | 'slug'; description: string };
   describe: (value: string) => string;
 }
 
@@ -19,7 +19,7 @@ const pageCheck = (id: string, title: string, description: string): PromptSpec =
   id,
   title,
   description,
-  slot: { name: 'slug', description: 'The slug of the article to review' },
+  placeholder: { name: 'slug', description: 'The slug of the article to review' },
   describe: slug => `${title}: ${slug}`,
 });
 
@@ -27,9 +27,9 @@ export const PROMPT_SPECS: PromptSpec[] = [
   {
     id: 'create-article',
     title: 'Create Article',
-    description: 'Guided workflow for creating a well-sourced wiki article',
-    slot: { name: 'topic', description: 'The topic for the new article' },
-    describe: topic => `Workflow for creating an article about: ${topic}`,
+    description: 'Guided prompt for creating a well-sourced wiki article',
+    placeholder: { name: 'topic', description: 'The topic for the new article' },
+    describe: topic => `Prompt for creating an article about: ${topic}`,
   },
   pageCheck('fact-check', 'Fact-Check Article', 'Verify factual accuracy, citation integrity, and internal consistency'),
   pageCheck('copy-edit', 'Copy Edit Article', 'Improve grammar, clarity, and style while preserving meaning'),
@@ -46,12 +46,12 @@ export const promptPageSlug = (id: string) => `${PROMPT_PAGE_PREFIX}${id}`;
 
 export const isPromptPageSlug = (slug: string) => slug.startsWith(PROMPT_PAGE_PREFIX);
 
-/** The slots a prompt page must keep, or null if the page is not a registered prompt. */
-export const requiredPromptSlots = (slug: string): string[] | null => {
+/** The placeholders a prompt page must keep, or null if the page is not a registered prompt. */
+export const requiredPromptPlaceholders = (slug: string): string[] | null => {
   const spec = PROMPT_SPECS.find(item => promptPageSlug(item.id) === slug);
-  return spec ? [spec.slot.name, META_PAGES_SLOT] : null;
+  return spec ? [spec.placeholder.name, META_PAGES_PLACEHOLDER] : null;
 };
 
-/** Slots missing from a prompt text, e.g. ['slug']. */
-export const missingPromptSlots = (text: string, required: string[]) =>
+/** Placeholders missing from a prompt text, e.g. ['slug']. */
+export const missingPromptPlaceholders = (text: string, required: string[]) =>
   required.filter(name => !text.includes(`{{${name}}}`));
