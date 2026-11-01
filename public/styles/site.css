@@ -3622,6 +3622,81 @@ altcha-widget {
     display: none;
   }
 }
+
+/* Edit links next to headings, as on Wikipedia. */
+.section-edit {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.section-edit a {
+  text-decoration: none;
+}
+.section-edit--lead {
+  margin: -0.5rem 0 1rem;
+  text-align: right;
+}
+.section-edit-heading {
+  margin: 0 0 0.75rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-weight: 600;
+}
+
+/* The editor toolbar. */
+.editor-toolbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0.35rem 0;
+}
+.editor-toolbar-button {
+  min-width: 2.2rem;
+  min-height: 2.2rem;
+  padding: 0.2rem 0.5rem;
+  border-color: var(--rule);
+  color: var(--ink);
+}
+.editor-toolbar-button:hover,
+.editor-toolbar-button:focus-visible {
+  border-color: var(--accent);
+}
+.editor-citation-search {
+  flex-basis: 100%;
+}
+.editor-citation-search[hidden] {
+  display: none;
+}
+.editor-citation-search input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  border: 1px solid var(--rule);
+}
+.editor-citation-results {
+  list-style: none;
+  margin: 0.25rem 0 0;
+  padding: 0;
+  max-height: 14rem;
+  overflow-y: auto;
+  border: 1px solid var(--rule);
+  background: #fff;
+}
+.editor-citation-results:empty {
+  display: none;
+}
+.editor-citation-results li {
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
+  border-bottom: 1px solid #efe8de;
+}
+.editor-citation-results li:hover,
+.editor-citation-results li[aria-selected='true'] {
+  background: #eef4f7;
+}
 /* Text for screen readers only. */
 .visually-hidden {
   position: absolute;

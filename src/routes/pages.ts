@@ -9,6 +9,7 @@ import {
   ForbiddenError,
   isRevisionConflictError,
   NotFoundError,
+  PreconditionFailedError,
   toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
@@ -71,11 +72,15 @@ import {
 } from '../services/wiki-link-preview-service.js';
 import {
   diffWikiPageRevisions,
+  type EditableSection,
   findCurrentPageById,
   findCurrentPageBySlugOrAlias,
+  listEditableSections,
   listWikiPageRevisions,
   readWikiPage,
   readWikiPageRevision,
+  rewriteWikiPageSection,
+  sectionFingerprint,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
@@ -184,6 +189,78 @@ const renderOperatorEditPreviewHtml = async ({
 </article>`;
 };
 
+// What the edit form carries to find a section again when it is saved.
+type SectionFormState = {
+  target: 'lead' | 'heading';
+  heading: string;
+  level: string;
+  occurrence: string;
+  fingerprint: string;
+  name: string;
+};
+
+const trimBlankLines = (text: string) => text.replace(/^\n+/, '').replace(/\n+$/, '');
+
+const toSectionFormState = (section: EditableSection, t: Request['t']): SectionFormState => ({
+  target: section.target,
+  heading: section.heading ?? '',
+  level: section.level ? String(section.level) : '',
+  occurrence: section.occurrence ? String(section.occurrence) : '',
+  fingerprint: sectionFingerprint(section.content),
+  name: section.target === 'lead' ? t('sectionEdit.lead') : (section.heading ?? ''),
+});
+
+const readSectionFormState = (body: Record<string, unknown> | undefined, t: Request['t']) => {
+  const field = (name: string) => (typeof body?.[name] === 'string' ? (body[name] as string) : '');
+  const target = field('sectionTarget');
+  if (target !== 'lead' && target !== 'heading') return undefined;
+  const state: SectionFormState = {
+    target,
+    heading: field('sectionHeading'),
+    level: field('sectionLevel'),
+    occurrence: field('sectionOccurrence'),
+    fingerprint: field('sectionFingerprint'),
+    name: target === 'lead' ? t('sectionEdit.lead') : field('sectionHeading'),
+  };
+  return state;
+};
+
+const findSection = (text: string, state: SectionFormState) =>
+  listEditableSections(text).find(section =>
+    state.target === 'lead'
+      ? section.target === 'lead'
+      : section.target === 'heading' &&
+        section.heading === state.heading &&
+        String(section.level) === state.level &&
+        String(section.occurrence) === state.occurrence
+  );
+
+const renderEditorToolbar = (req: Request) => {
+  const button = (action: string, labelKey: string, text: string) =>
+    `<button type="button" class="editor-toolbar-button" data-action="${action}" title="${escapeHtml(
+      req.t(labelKey)
+    )}" aria-label="${escapeHtml(req.t(labelKey))}">${text}</button>`;
+  return `<div class="editor-toolbar requires-js" role="toolbar" aria-label="${escapeHtml(req.t('sectionEdit.toolbarLabel'))}"
+    data-editor-toolbar
+    data-target="operator-edit-body"
+    data-link-prompt="${escapeHtml(req.t('sectionEdit.articleLinkPrompt'))}"
+    data-citation-endpoint="/api/citation-search"
+    data-citation-none="${escapeHtml(req.t('sectionEdit.citationNone'))}">
+    ${button('bold', 'sectionEdit.bold', '<b>B</b>')}
+    ${button('italic', 'sectionEdit.italic', '<i>I</i>')}
+    ${button('link', 'sectionEdit.articleLink', '&#128279;')}
+    ${button('heading', 'sectionEdit.heading', 'H')}
+    ${button('list', 'sectionEdit.list', '&#8226;')}
+    ${button('citation', 'sectionEdit.citation', '[@]')}
+    <div class="editor-citation-search" hidden data-citation-search>
+      <input type="search" placeholder="${escapeHtml(req.t('sectionEdit.citationSearch'))}" aria-label="${escapeHtml(
+        req.t('sectionEdit.citationSearch')
+      )}" />
+      <ul class="editor-citation-results"></ul>
+    </div>
+  </div>`;
+};
+
 const renderOperatorEditForm = ({
   req,
   slug,
@@ -195,6 +272,7 @@ const renderOperatorEditForm = ({
   wikidataValue,
   previewHtml,
   errorMessage,
+  section,
 }: {
   req: Request;
   slug: string;
@@ -206,16 +284,22 @@ const renderOperatorEditForm = ({
   wikidataValue: string;
   previewHtml?: string;
   errorMessage?: string;
+  section?: SectionFormState;
 }) => {
   const action = operatorEditPath(slug, lang);
-  return `<section class="form-card operator-edit-card">
-  <p class="form-help">${escapeHtml(
-    req.t('operatorEdit.intro', { language: languageLabel })
-  )}</p>
-  ${errorMessage ? `<div class="form-error">${escapeHtml(errorMessage)}</div>` : ''}
-  <form method="post" action="${action}" id="operator-edit-form">
-    <input type="hidden" name="lang" value="${escapeHtml(lang)}" />
-    <label class="form-field">
+  const sectionHtml = section
+    ? `<p class="section-edit-heading">${escapeHtml(req.t('sectionEdit.editing', { section: section.name }))} · <a href="${escapeHtml(
+        action
+      )}">${escapeHtml(req.t('sectionEdit.wholePage'))}</a></p>
+    <input type="hidden" name="sectionTarget" value="${escapeHtml(section.target)}" />
+    <input type="hidden" name="sectionHeading" value="${escapeHtml(section.heading)}" />
+    <input type="hidden" name="sectionLevel" value="${escapeHtml(section.level)}" />
+    <input type="hidden" name="sectionOccurrence" value="${escapeHtml(section.occurrence)}" />
+    <input type="hidden" name="sectionFingerprint" value="${escapeHtml(section.fingerprint)}" />`
+    : '';
+  const titleFieldHtml = section
+    ? ''
+    : `<label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.title'))}</span>
       <input
         type="text"
@@ -224,17 +308,10 @@ const renderOperatorEditForm = ({
         maxlength="200"
         data-markdown-preview-field
       />
-    </label>
-    <label class="form-field">
-      <span>${escapeHtml(req.t('operatorEdit.fields.body'))}</span>
-      <textarea
-        id="operator-edit-body"
-        name="body"
-        rows="18"
-        data-markdown-preview-field
-      >${escapeHtml(bodyValue)}</textarea>
-    </label>
-    <label class="form-field">
+    </label>`;
+  const wikidataFieldHtml = section
+    ? ''
+    : `<label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.wikidata'))}</span>
       <input
         type="text"
@@ -245,7 +322,27 @@ const renderOperatorEditForm = ({
         placeholder="Q42"
       />
     </label>
-    <p class="form-help">${escapeHtml(req.t('operatorEdit.wikidataHelp'))}</p>
+    <p class="form-help">${escapeHtml(req.t('operatorEdit.wikidataHelp'))}</p>`;
+  return `<section class="form-card operator-edit-card">
+  <p class="form-help">${escapeHtml(
+    req.t('operatorEdit.intro', { language: languageLabel })
+  )}</p>
+  ${errorMessage ? `<div class="form-error">${escapeHtml(errorMessage)}</div>` : ''}
+  <form method="post" action="${action}" id="operator-edit-form">
+    <input type="hidden" name="lang" value="${escapeHtml(lang)}" />
+    ${sectionHtml}
+    ${titleFieldHtml}
+    <label class="form-field">
+      <span>${escapeHtml(req.t('operatorEdit.fields.body'))}</span>
+      ${renderEditorToolbar(req)}
+      <textarea
+        id="operator-edit-body"
+        name="body"
+        rows="18"
+        data-markdown-preview-field
+      >${escapeHtml(bodyValue)}</textarea>
+    </label>
+    ${wikidataFieldHtml}
     <label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.summary'))}</span>
       <input type="text" name="summary" value="${escapeHtml(summaryValue)}" maxlength="300" />
@@ -288,6 +385,7 @@ const renderOperatorEditPage = async ({
   wikidataValue,
   errorMessage,
   previewHtml,
+  section,
 }: {
   req: Request;
   res: Response;
@@ -299,6 +397,7 @@ const renderOperatorEditPage = async ({
   wikidataValue?: string;
   errorMessage?: string;
   previewHtml?: string;
+  section?: SectionFormState;
 }) => {
   const dalInstance = await initializePostgreSQL();
   const page = await readWikiPage(dalInstance, slug);
@@ -328,6 +427,7 @@ const renderOperatorEditPage = async ({
       wikidataValue: wikidataValue ?? page.wikidata ?? '',
       errorMessage,
       previewHtml,
+      section,
     }),
     topHtml: prependAccountBanner(res, bannerHtml),
   });
@@ -870,14 +970,21 @@ export const registerPageRoutes = (app: Express) => {
         availableLangs,
       });
 
+      const bodyText = mlString.resolve(contentLang, page.body)?.str ?? '';
+      const sectionParam =
+        typeof req.query.section === 'string' && /^\d+$/.test(req.query.section)
+          ? Number(req.query.section)
+          : undefined;
+      const section = sectionParam === undefined ? undefined : listEditableSections(bodyText)[sectionParam];
       await renderOperatorEditPage({
         req,
         res,
         slug,
         lang: contentLang,
         titleValue: mlString.resolve(contentLang, page.title)?.str ?? '',
-        bodyValue: mlString.resolve(contentLang, page.body)?.str ?? '',
+        bodyValue: section ? trimBlankLines(section.content) : bodyText,
         summaryValue: '',
+        section: section ? toSectionFormState(section, req.t) : undefined,
       });
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -914,6 +1021,7 @@ export const registerPageRoutes = (app: Express) => {
     );
     const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'save';
     const wikidataValue = typeof req.body?.wikidata === 'string' ? req.body.wikidata.trim() : '';
+    const section = readSectionFormState(req.body, req.t);
 
     try {
       const dalInstance = await initializePostgreSQL();
@@ -935,7 +1043,41 @@ export const registerPageRoutes = (app: Express) => {
           summaryValue,
           wikidataValue,
           previewHtml,
+          section,
         });
+        return;
+      }
+
+      if (section) {
+        const current = await readWikiPage(dalInstance, slug);
+        const currentSection = findSection(mlString.resolve(lang, current.body)?.str ?? '', section);
+        if (!currentSection) {
+          throw new ConflictError('Section not found.', { slug, heading: section.heading });
+        }
+        // Keep the blank lines around the section as they were; the form shows it without them.
+        const edges = trimBlankLines(currentSection.content)
+          ? {
+              before: currentSection.content.match(/^\n*/)?.[0] ?? '',
+              after: currentSection.content.match(/\n*$/)?.[0] ?? '',
+            }
+          : { before: '', after: currentSection.content };
+        await rewriteWikiPageSection(
+          dalInstance,
+          {
+            slug,
+            target: section.target,
+            heading: section.target === 'heading' ? section.heading : undefined,
+            headingLevel: section.target === 'heading' ? Number(section.level) : undefined,
+            occurrence: section.target === 'heading' ? Number(section.occurrence) : undefined,
+            mode: 'replace',
+            content: `${edges.before}${trimBlankLines(bodyValue)}${edges.after}`,
+            lang,
+            expectedSectionFingerprint: section.fingerprint,
+            revSummary: { [lang]: summaryValue.trim() ? `${section.name}: ${summaryValue}` : '' },
+          },
+          session.userId
+        );
+        res.redirect(303, pageViewPath(slug, lang));
         return;
       }
 
@@ -962,6 +1104,11 @@ export const registerPageRoutes = (app: Express) => {
         res.status(403).type('text').send(req.t('operatorEdit.protectedForbidden'));
         return;
       }
+      // Saving a section without changes: nothing to do.
+      if (section && error instanceof PreconditionFailedError) {
+        res.redirect(303, pageViewPath(slug, lang));
+        return;
+      }
       if (error instanceof ValidationError || error instanceof ConflictError) {
         const previewHtml =
           titleValue.trim() || bodyValue.trim()
@@ -981,8 +1128,12 @@ export const registerPageRoutes = (app: Express) => {
           bodyValue,
           summaryValue,
           wikidataValue,
-          errorMessage: resolveOperatorEditValidationMessage(req.t, error),
+          errorMessage:
+            section && error instanceof ConflictError
+              ? req.t('sectionEdit.changed')
+              : resolveOperatorEditValidationMessage(req.t, error),
           previewHtml,
+          section,
         });
         return;
       }
@@ -1293,12 +1444,35 @@ export const registerPageRoutes = (app: Express) => {
         parts: proposalParts.map(part => ({ ...part, title: titleOfProposal(part.title, part.slug) })),
         t: req.t,
       });
+      const canEditSections =
+        Boolean(session) &&
+        (!editability.isProtected || editability.isEditable) &&
+        !revIdParam &&
+        !diffFrom &&
+        !diffTo;
+      const editableSections = canEditSections ? listEditableSections(bodySource) : [];
+      const sectionEditHref = (index: number) => `${operatorEditPath(canonicalSlug, contentLang)}&section=${index}`;
+      const sectionEditLink = canEditSections
+        ? (index: number) =>
+            ` <span class="section-edit">[<a href="${escapeHtml(sectionEditHref(index))}" aria-label="${escapeHtml(
+              req.t('sectionEdit.linkLabel', { section: editableSections[index]?.heading ?? '' })
+            )}">${escapeHtml(req.t('sectionEdit.link'))}</a>]</span>`
+        : undefined;
+      const leadEditHtml =
+        canEditSections && trimBlankLines(editableSections[0]?.content ?? '').trim()
+          ? `<p class="section-edit section-edit--lead">[<a href="${escapeHtml(sectionEditHref(0))}" aria-label="${escapeHtml(
+              req.t('sectionEdit.editLead')
+            )}" title="${escapeHtml(req.t('sectionEdit.editLead'))}"><span aria-hidden="true">↑ </span>${escapeHtml(
+              req.t('sectionEdit.link')
+            )}</a>]</p>`
+          : '';
       const { html: bodyHtml, toc } = await renderMarkdown(
         bodySource,
         citationEntries,
         {
           ...markdownOptions,
-          afterLeadHtml: partsHtml,
+          afterLeadHtml: `${leadEditHtml}${partsHtml}`,
+          sectionEditLink,
           wikiLinks: {
             missingSlugs: missingLinkSlugs,
           },

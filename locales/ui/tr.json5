@@ -319,6 +319,25 @@
     protected: 'Bu sayfa koruma altında: yalnızca yöneticiler düzenleyebilir. Tartışmasında bir değişiklik önerebilirsiniz.',
     backToPage: 'Sayfaya dön'
   },
+  sectionEdit: {
+    link: 'düzenle',
+    linkLabel: 'Bölümü düzenle: {{section}}',
+    lead: 'Giriş',
+    editLead: 'Girişi düzenle',
+    editing: 'Bölüm düzenleniyor: {{section}}',
+    wholePage: 'Tüm sayfayı düzenle',
+    changed: 'Siz düzenlerken bu bölüm değişti. Yeniden yükleyip tekrar deneyin.',
+    toolbarLabel: 'Biçimlendirme',
+    bold: 'Kalın',
+    italic: 'İtalik',
+    articleLink: 'Bir maddeye bağlantı',
+    articleLinkPrompt: 'Maddenin adresi, örneğin belt-buckle',
+    heading: 'Başlık',
+    list: 'Liste',
+    citation: 'Kaynak ekle',
+    citationSearch: 'Kaynakları başlık veya yazara göre ara',
+    citationNone: 'Kaynak bulunamadı.'
+  },
   operatorEdit: {
     title: 'Operatör düzenlemesi',
     link: 'Operatör düzenlemesi',

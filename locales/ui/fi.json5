@@ -320,6 +320,25 @@
     protected: 'Tämä sivu on suojattu: vain ylläpitäjät voivat muokata sitä. Voit ehdottaa muutosta sen keskustelussa.',
     backToPage: 'Takaisin sivulle'
   },
+  sectionEdit: {
+    link: 'muokkaa',
+    linkLabel: 'Muokkaa osiota: {{section}}',
+    lead: 'Johdanto',
+    editLead: 'Muokkaa johdantoa',
+    editing: 'Muokataan osiota: {{section}}',
+    wholePage: 'Muokkaa koko sivua',
+    changed: 'Osio muuttui muokkauksesi aikana. Lataa se uudelleen ja yritä uudestaan.',
+    toolbarLabel: 'Muotoilu',
+    bold: 'Lihavointi',
+    italic: 'Kursiivi',
+    articleLink: 'Linkki artikkeliin',
+    articleLinkPrompt: 'Artikkelin osoite, esimerkiksi belt-buckle',
+    heading: 'Otsikko',
+    list: 'Luettelo',
+    citation: 'Lisää lähde',
+    citationSearch: 'Hae lähteitä otsikolla tai tekijällä',
+    citationNone: 'Lähteitä ei löytynyt.'
+  },
   operatorEdit: {
     title: 'Operaattorimuokkaus',
     link: 'Operaattorimuokkaus',

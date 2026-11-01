@@ -320,6 +320,25 @@
     protected: 'یہ صفحہ محفوظ ہے: صرف منتظمین اس میں ترمیم کر سکتے ہیں۔ آپ اس کے تبادلۂ خیال میں تبدیلی تجویز کر سکتے ہیں۔',
     backToPage: 'صفحے پر واپس'
   },
+  sectionEdit: {
+    link: 'ترمیم',
+    linkLabel: 'قطعہ میں ترمیم: {{section}}',
+    lead: 'تعارف',
+    editLead: 'تعارف میں ترمیم',
+    editing: 'قطعہ میں ترمیم جاری: {{section}}',
+    wholePage: 'پورے صفحے میں ترمیم',
+    changed: 'آپ کی ترمیم کے دوران یہ قطعہ بدل گیا۔ اسے دوبارہ لوڈ کر کے پھر کوشش کریں۔',
+    toolbarLabel: 'فارمیٹنگ',
+    bold: 'جلی',
+    italic: 'ترچھا',
+    articleLink: 'مضمون کا ربط',
+    articleLinkPrompt: 'مضمون کا پتہ، مثلاً belt-buckle',
+    heading: 'سرخی',
+    list: 'فہرست',
+    citation: 'حوالہ شامل کریں',
+    citationSearch: 'عنوان یا مصنف سے حوالے تلاش کریں',
+    citationNone: 'کوئی حوالہ نہیں ملا۔'
+  },
   operatorEdit: {
     title: 'آپریٹر تدوین',
     link: 'آپریٹر تدوین',

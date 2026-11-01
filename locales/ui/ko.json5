@@ -319,6 +319,25 @@
     protected: '이 페이지는 보호되어 있어 관리자만 편집할 수 있습니다. 토론에서 변경을 제안할 수 있습니다.',
     backToPage: '페이지로 돌아가기'
   },
+  sectionEdit: {
+    link: '편집',
+    linkLabel: '단락 편집: {{section}}',
+    lead: '머리말',
+    editLead: '머리말 편집',
+    editing: '단락 편집 중: {{section}}',
+    wholePage: '문서 전체 편집',
+    changed: '편집하는 동안 이 단락이 바뀌었습니다. 다시 불러온 뒤 다시 시도하세요.',
+    toolbarLabel: '서식',
+    bold: '굵게',
+    italic: '기울임꼴',
+    articleLink: '문서 링크',
+    articleLinkPrompt: '문서 주소 (예: belt-buckle)',
+    heading: '제목',
+    list: '목록',
+    citation: '출처 추가',
+    citationSearch: '제목이나 저자로 출처 검색',
+    citationNone: '출처를 찾을 수 없습니다.'
+  },
   operatorEdit: {
     title: '운영자 편집',
     link: '운영자 편집',

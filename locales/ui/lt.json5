@@ -320,6 +320,25 @@
     protected: 'Šis puslapis apsaugotas: redaguoti jį gali tik administratoriai. Pakeitimą galite pasiūlyti jo aptarime.',
     backToPage: 'Grįžti į puslapį'
   },
+  sectionEdit: {
+    link: 'redaguoti',
+    linkLabel: 'Redaguoti skyrių: {{section}}',
+    lead: 'Įvadas',
+    editLead: 'Redaguoti įvadą',
+    editing: 'Redaguojamas skyrius: {{section}}',
+    wholePage: 'Redaguoti visą puslapį',
+    changed: 'Šis skyrius pasikeitė, kol redagavote. Įkelkite jį iš naujo ir bandykite dar kartą.',
+    toolbarLabel: 'Formatavimas',
+    bold: 'Paryškinta',
+    italic: 'Kursyvas',
+    articleLink: 'Nuoroda į straipsnį',
+    articleLinkPrompt: 'Straipsnio adresas, pavyzdžiui, belt-buckle',
+    heading: 'Antraštė',
+    list: 'Sąrašas',
+    citation: 'Pridėti šaltinį',
+    citationSearch: 'Ieškoti šaltinių pagal pavadinimą ar autorių',
+    citationNone: 'Šaltinių nerasta.'
+  },
   operatorEdit: {
     title: 'Operatoriaus redagavimas',
     link: 'Operatoriaus redagavimas',

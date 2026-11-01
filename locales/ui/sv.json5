@@ -320,6 +320,25 @@
     protected: 'Den här sidan är skyddad: bara administratörer kan redigera den. Du kan föreslå en ändring i dess diskussion.',
     backToPage: 'Tillbaka till sidan'
   },
+  sectionEdit: {
+    link: 'redigera',
+    linkLabel: 'Redigera avsnitt: {{section}}',
+    lead: 'Inledning',
+    editLead: 'Redigera inledningen',
+    editing: 'Redigerar avsnitt: {{section}}',
+    wholePage: 'Redigera hela sidan',
+    changed: 'Avsnittet ändrades medan du redigerade. Läs in det igen och försök på nytt.',
+    toolbarLabel: 'Formatering',
+    bold: 'Fet',
+    italic: 'Kursiv',
+    articleLink: 'Länk till en artikel',
+    articleLinkPrompt: 'Artikelns adress, till exempel belt-buckle',
+    heading: 'Rubrik',
+    list: 'Lista',
+    citation: 'Lägg till en källa',
+    citationSearch: 'Sök källor efter titel eller författare',
+    citationNone: 'Inga källor hittades.'
+  },
   operatorEdit: {
     title: 'Operatörsredigering',
     link: 'Operatörsredigering',
