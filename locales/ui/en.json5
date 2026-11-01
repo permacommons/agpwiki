@@ -2,6 +2,26 @@
   /*
    i18n-identical-allowlist:
    {
+     // Blog is also the local word; A–Z is a shared alphabetical-sort label.
+     "de": ["home.blogLabel", "tool.pagesSortTitle"],
+     "eo": ["tool.pagesSortTitle"],
+     "es": ["home.blogLabel", "tool.pagesSortTitle"],
+     "fr": ["home.blogLabel", "tool.pagesSortTitle"],
+     "hu": ["home.blogLabel", "tool.pagesSortTitle"],
+     "id": ["home.blogLabel", "tool.pagesSortTitle"],
+     "it": ["home.blogLabel", "tool.pagesSortTitle"],
+     "nl": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pl": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pt": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pt-PT": ["tool.pagesSortTitle"],
+     "sk": ["home.blogLabel", "tool.pagesSortTitle"],
+     "sl": ["home.blogLabel"],
+     "tr": ["home.blogLabel", "tool.pagesSortTitle"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
      "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading", "pageTabs.article", "pageTabs.page", "sectionEdit.lead"],
@@ -788,6 +808,26 @@
       "openInForum": "Open these replies in the forum"
     }
   },
+  // The sections below the welcome text on the home page.
+  "home": {
+    "newArticles": "New on Agpedia",
+    "seeMoreArticles": "See more new articles",
+    "fromBlog": "From the blog",
+    "seeAllPosts": "See all blog posts",
+    "inForum": "In the forum",
+    "goToForum": "Go to the forum",
+    "waysToHelp": "Ways to help:",
+    "waitingForCheck_one": "{{count}} article is waiting for a fact check",
+    "waitingForCheck_other": "{{count}} articles are waiting for a fact check",
+    "needWikidata_one": "{{count}} needs a Wikidata link",
+    "needWikidata_other": "{{count}} need a Wikidata link",
+    "howToContribute": "How to contribute",
+    "newArticleLabel": "New article",
+    "blogLabel": "Blog",
+    "noArticles": "No articles yet.",
+    "noPosts": "No blog posts yet.",
+    "noThreads": "No discussions yet."
+  },
   "tool": {
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
@@ -807,6 +847,9 @@
     "relatedLabel": "Related",
     "seeAlso": "See also: <a href=\"{{url}}\">{{label}}</a>",
     "pagesDescription": "Encyclopedia pages ({{total}} total).",
+    "pagesSort": "Sort:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Newest first",
     "previous": "Previous",
     "next": "Next",
     "pagination": "Page {{page}} of {{totalPages}}"

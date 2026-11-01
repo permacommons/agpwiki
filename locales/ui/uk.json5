@@ -489,6 +489,25 @@
       "openInForum": "Відкрити ці відповіді на форумі"
     }
   },
+  "home": {
+    "newArticles": "Нове в Agpedia",
+    "seeMoreArticles": "Більше нових статей",
+    "fromBlog": "З блогу",
+    "seeAllPosts": "Усі записи блогу",
+    "inForum": "На форумі",
+    "goToForum": "Перейти на форум",
+    "waysToHelp": "Як допомогти:",
+    "waitingForCheck_one": "Статей чекають на перевірку фактів: {{count}}",
+    "waitingForCheck_other": "Статей чекають на перевірку фактів: {{count}}",
+    "needWikidata_one": "Без посилання на Вікідані: {{count}}",
+    "needWikidata_other": "Без посилання на Вікідані: {{count}}",
+    "howToContribute": "Як долучитися",
+    "newArticleLabel": "Нова стаття",
+    "blogLabel": "Блог",
+    "noArticles": "Статей ще немає.",
+    "noPosts": "Записів ще немає.",
+    "noThreads": "Обговорень ще немає."
+  },
   tool: {
     view: 'Переглянути',
     diff: 'Різниця',
@@ -504,6 +523,9 @@
     relatedLabel: 'Пов’язане',
     seeAlso: 'Див. також: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Сторінки енциклопедії (усього {{total}}).',
+    "pagesSort": "Сортування:",
+    "pagesSortTitle": "А–Я",
+    "pagesSortNew": "Спочатку нові",
     previous: 'Попередня',
     next: 'Наступна',
     pagination: 'Сторінка {{page}} з {{totalPages}}',

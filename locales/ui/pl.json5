@@ -488,6 +488,25 @@
       "openInForum": "Otwórz te odpowiedzi na forum"
     }
   },
+  "home": {
+    "newArticles": "Nowości w Agpedii",
+    "seeMoreArticles": "Więcej nowych artykułów",
+    "fromBlog": "Z bloga",
+    "seeAllPosts": "Wszystkie wpisy na blogu",
+    "inForum": "Na forum",
+    "goToForum": "Przejdź do forum",
+    "waysToHelp": "Jak pomóc:",
+    "waitingForCheck_one": "Artykuły czekające na sprawdzenie faktów: {{count}}",
+    "waitingForCheck_other": "Artykuły czekające na sprawdzenie faktów: {{count}}",
+    "needWikidata_one": "Bez powiązania z Wikidanymi: {{count}}",
+    "needWikidata_other": "Bez powiązania z Wikidanymi: {{count}}",
+    "howToContribute": "Jak współtworzyć",
+    "newArticleLabel": "Nowy artykuł",
+    "blogLabel": "Blog",
+    "noArticles": "Brak artykułów.",
+    "noPosts": "Brak wpisów.",
+    "noThreads": "Brak dyskusji."
+  },
   tool: {
     view: 'Widok',
     diff: 'Różnica',
@@ -503,6 +522,9 @@
     relatedLabel: 'Powiązane',
     seeAlso: 'Zobacz też: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Strony encyklopedii (łącznie {{total}}).',
+    "pagesSort": "Sortuj:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Najnowsze najpierw",
     previous: 'Poprzednia',
     next: 'Następna',
     pagination: 'Strona {{page}} z {{totalPages}}',

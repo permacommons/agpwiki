@@ -489,6 +489,25 @@
       "openInForum": "Открыть эти ответы на форуме"
     }
   },
+  "home": {
+    "newArticles": "Новое в Agpedia",
+    "seeMoreArticles": "Больше новых статей",
+    "fromBlog": "Из блога",
+    "seeAllPosts": "Все записи блога",
+    "inForum": "На форуме",
+    "goToForum": "Перейти на форум",
+    "waysToHelp": "Как помочь:",
+    "waitingForCheck_one": "Статей ждут проверки фактов: {{count}}",
+    "waitingForCheck_other": "Статей ждут проверки фактов: {{count}}",
+    "needWikidata_one": "Без ссылки на Викиданные: {{count}}",
+    "needWikidata_other": "Без ссылки на Викиданные: {{count}}",
+    "howToContribute": "Как участвовать",
+    "newArticleLabel": "Новая статья",
+    "blogLabel": "Блог",
+    "noArticles": "Статей пока нет.",
+    "noPosts": "Записей пока нет.",
+    "noThreads": "Обсуждений пока нет."
+  },
   tool: {
     view: 'Просмотр',
     diff: 'Различия',
@@ -504,6 +523,9 @@
     relatedLabel: 'Связанные',
     seeAlso: 'См. также: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Страницы энциклопедии (всего {{total}}).',
+    "pagesSort": "Сортировка:",
+    "pagesSortTitle": "А–Я",
+    "pagesSortNew": "Сначала новые",
     previous: 'Назад',
     next: 'Вперед',
     pagination: 'Страница {{page}} из {{totalPages}}',

@@ -487,6 +487,25 @@
       "openInForum": "এই উত্তরগুলো ফোরামে খুলুন"
     }
   },
+  "home": {
+    "newArticles": "Agpedia-য় নতুন",
+    "seeMoreArticles": "আরও নতুন নিবন্ধ",
+    "fromBlog": "ব্লগ থেকে",
+    "seeAllPosts": "সব ব্লগ পোস্ট",
+    "inForum": "ফোরামে",
+    "goToForum": "ফোরামে যান",
+    "waysToHelp": "যেভাবে সাহায্য করবেন:",
+    "waitingForCheck_one": "তথ্য যাচাইয়ের অপেক্ষায় নিবন্ধ: {{count}}",
+    "waitingForCheck_other": "তথ্য যাচাইয়ের অপেক্ষায় নিবন্ধ: {{count}}",
+    "needWikidata_one": "উইকিউপাত্ত লিংক প্রয়োজন: {{count}}",
+    "needWikidata_other": "উইকিউপাত্ত লিংক প্রয়োজন: {{count}}",
+    "howToContribute": "কীভাবে অবদান রাখবেন",
+    "newArticleLabel": "নতুন নিবন্ধ",
+    "blogLabel": "ব্লগ",
+    "noArticles": "এখনও কোনো নিবন্ধ নেই।",
+    "noPosts": "এখনও কোনো ব্লগ পোস্ট নেই।",
+    "noThreads": "এখনও কোনো আলোচনা নেই।"
+  },
   tool: {
     view: 'দেখুন',
     diff: 'পার্থক্য',
@@ -502,6 +521,9 @@
     relatedLabel: 'সম্পর্কিত',
     seeAlso: 'আরও দেখুন: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'এনসাইক্লোপিডিয়া পৃষ্ঠা (মোট {{total}})।',
+    "pagesSort": "সাজান:",
+    "pagesSortTitle": "বর্ণানুক্রমে",
+    "pagesSortNew": "নতুন আগে",
     previous: 'পূর্ববর্তী',
     next: 'পরবর্তী',
     pagination: 'পৃষ্ঠা {{page}} / {{totalPages}}',

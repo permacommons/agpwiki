@@ -489,6 +489,25 @@
       "openInForum": "Atverti šiuos atsakymus forume"
     }
   },
+  "home": {
+    "newArticles": "Naujienos Agpedia",
+    "seeMoreArticles": "Daugiau naujų straipsnių",
+    "fromBlog": "Iš tinklaraščio",
+    "seeAllPosts": "Visi tinklaraščio įrašai",
+    "inForum": "Forume",
+    "goToForum": "Į forumą",
+    "waysToHelp": "Kaip padėti:",
+    "waitingForCheck_one": "Straipsniai, laukiantys faktų patikrinimo: {{count}}",
+    "waitingForCheck_other": "Straipsniai, laukiantys faktų patikrinimo: {{count}}",
+    "needWikidata_one": "Be Vikiduomenų nuorodos: {{count}}",
+    "needWikidata_other": "Be Vikiduomenų nuorodos: {{count}}",
+    "howToContribute": "Kaip prisidėti",
+    "newArticleLabel": "Naujas straipsnis",
+    "blogLabel": "Tinklaraštis",
+    "noArticles": "Straipsnių dar nėra.",
+    "noPosts": "Įrašų dar nėra.",
+    "noThreads": "Diskusijų dar nėra."
+  },
   tool: {
     view: 'Peržiūrėti',
     diff: 'Skirtumas',
@@ -504,6 +523,9 @@
     relatedLabel: 'Susiję',
     seeAlso: 'Taip pat žr.: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Enciklopedijos puslapiai (iš viso {{total}}).',
+    "pagesSort": "Rikiuoti:",
+    "pagesSortTitle": "A–Ž",
+    "pagesSortNew": "Naujausi pirmiau",
     previous: 'Ankstesnis',
     next: 'Kitas',
     pagination: 'Puslapis {{page}} iš {{totalPages}}',

@@ -489,6 +489,25 @@
       "openInForum": "Válaszok megnyitása a fórumon"
     }
   },
+  "home": {
+    "newArticles": "Újdonságok az Agpedián",
+    "seeMoreArticles": "További új cikkek",
+    "fromBlog": "A blogból",
+    "seeAllPosts": "Az összes blogbejegyzés",
+    "inForum": "A fórumon",
+    "goToForum": "Tovább a fórumra",
+    "waysToHelp": "Így segíthetsz:",
+    "waitingForCheck_one": "{{count}} cikk tényellenőrzésre vár",
+    "waitingForCheck_other": "{{count}} cikk tényellenőrzésre vár",
+    "needWikidata_one": "{{count}} cikknek kell Wikidata-hivatkozás",
+    "needWikidata_other": "{{count}} cikknek kell Wikidata-hivatkozás",
+    "howToContribute": "Hogyan járulhatsz hozzá",
+    "newArticleLabel": "Új cikk",
+    "blogLabel": "Blog",
+    "noArticles": "Még nincsenek cikkek.",
+    "noPosts": "Még nincsenek blogbejegyzések.",
+    "noThreads": "Még nincsenek beszélgetések."
+  },
   tool: {
     view: 'Megtekintés',
     diff: 'Eltérés',
@@ -504,6 +523,9 @@
     relatedLabel: 'Kapcsolódó',
     seeAlso: 'Lásd még: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'Enciklopédiaoldalak (összesen {{total}}).',
+    "pagesSort": "Rendezés:",
+    "pagesSortTitle": "A–Z",
+    "pagesSortNew": "Legújabb elöl",
     previous: 'Előző',
     next: 'Következő',
     pagination: '{{page}} / {{totalPages}} oldal',
