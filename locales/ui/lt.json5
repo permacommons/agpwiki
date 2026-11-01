@@ -222,8 +222,6 @@
       pin: 'Prisegti giją',
       unpin: 'Atsegti giją',
       delete: 'Ištrinti giją',
-      subscribe: 'Prenumeruoti',
-      unsubscribe: 'Atsisakyti prenumeratos',
       notificationsDisabled: "Pranešimai apie forumo atsakymus išjungti tavo <a href=\"{{settingsHref}}\">nustatymuose</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Rodyti visus pakeitimus"
     }
   },
+  "followControl": {
+    "follow": "Sekti",
+    "unfollow": "Nebesekti"
+  },
   pageTabs: {
     label: 'Puslapio kortelės',
     article: 'Straipsnis',
@@ -308,8 +310,6 @@
     discuss: 'Aptarimas',
     edit: 'Redaguoti',
     history: 'Istorija',
-    "follow": "Sekti",
-    "following": "Seki",
     "followHelp": "Gauk pranešimus apie naujus komentarus šiame puslapyje. Apie keitimus nepranešama.",
     "followingHelp": "Gauni pranešimus apie naujus komentarus šiame puslapyje. Apie keitimus nepranešama. Spustelėk, kad nebesektum."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Sekami puslapiai",
-    "intro": "Tau pranešama apie naujus komentarus šiuose puslapiuose. Bet kurį puslapį gali sekti mygtuku Sekti šalia Aptarti.",
+    "intro": "Tau pranešama apie naujus komentarus šiuose puslapiuose.",
     "empty": "Dar neseki nė vieno puslapio.",
     "unfollow": "Nebesekti"
   },

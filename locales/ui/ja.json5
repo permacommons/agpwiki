@@ -221,8 +221,6 @@
       pin: 'スレッドを固定',
       unpin: 'スレッドの固定を解除',
       delete: 'スレッドを削除',
-      subscribe: '購読する',
-      unsubscribe: '購読をやめる',
       notificationsDisabled: "フォーラムの返信通知は<a href=\"{{settingsHref}}\">設定</a>でオフになっています。",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "すべての変更を表示"
     }
   },
+  "followControl": {
+    "follow": "フォロー",
+    "unfollow": "フォローをやめる"
+  },
   pageTabs: {
     label: 'ページのタブ',
     article: '記事',
@@ -307,8 +309,6 @@
     discuss: '議論',
     edit: '編集',
     history: '履歴',
-    "follow": "フォロー",
-    "following": "フォロー中",
     "followHelp": "このページへの新しいコメントを通知します。編集は通知されません。",
     "followingHelp": "このページへの新しいコメントが通知されます。編集は通知されません。クリックするとフォローをやめます。"
   },

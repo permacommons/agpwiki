@@ -1740,16 +1740,6 @@ pre.diff ins {
 .settings-followed form {
   margin: 0;
 }
-.settings-unfollow {
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--accent);
-  font: inherit;
-  font-size: 0.85rem;
-  text-decoration: underline;
-  cursor: pointer;
-}
 .form-inline {
   display: flex;
   gap: 1rem;
@@ -2463,37 +2453,6 @@ button {
   color: var(--accent);
   font: inherit;
   text-decoration: underline;
-}
-.forum-inline-form .forum-subscription-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: #fff;
-  font-family: 'IBM Plex Sans', sans-serif;
-  font-size: 0.85rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-decoration: none;
-}
-.forum-inline-form .forum-subscription-button:hover,
-.forum-inline-form .forum-subscription-button:focus-visible {
-  background: #245f7e;
-  border-color: #245f7e;
-  outline: none;
-}
-.forum-subscription-button-icon {
-  display: inline-flex;
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: none;
-}
-.forum-subscription-button-icon svg {
-  width: 100%;
-  height: 100%;
-  fill: currentColor;
 }
 .form-language-control {
   display: inline-flex;
@@ -3519,49 +3478,53 @@ altcha-widget {
 .page-tabs-spacer {
   flex: 1;
 }
-/* Follow the comments on a page: a small pill beside Discuss. */
-.page-follow-form {
+.follow-control-form {
   display: flex;
-  align-items: center;
-  margin: 0 0 0.3rem 0.4rem;
+  margin: 0;
 }
-.page-follow {
-  padding: 0.15rem 0.6rem;
+.follow-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.8rem;
   border: 1px solid var(--rule);
-  border-radius: 999px;
   background: transparent;
   color: var(--accent);
   font: inherit;
-  font-size: 0.8rem;
   cursor: pointer;
 }
-.page-follow::before {
-  margin-right: 0.3rem;
-  font-size: 0.75rem;
-  content: '\1F514';
-}
-.page-follow--on {
-  border-color: var(--accent);
-  background: #eef4f4;
-}
-.page-follow--on::before {
-  content: '\2713';
-}
-.page-follow:hover,
-.page-follow:focus-visible {
+.follow-control:hover,
+.follow-control:focus-visible {
   border-color: var(--accent);
 }
-/* On phones the tabs stay on one line: the pill keeps only its icon, and
-   its label stays available to screen readers. */
+.follow-control.page-tab {
+  border: 0;
+  border-bottom: 2px solid transparent;
+}
+.follow-control.page-tab:hover,
+.follow-control.page-tab:focus-visible {
+  border-bottom-color: var(--rule);
+}
+.follow-control-icon {
+  display: inline-flex;
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: none;
+}
+.follow-control-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
 @media (max-width: 480px) {
   .page-tab {
     padding: 0.4rem 0.55rem;
     white-space: nowrap;
   }
-  .page-follow::before {
-    margin-right: 0;
+  .follow-control.page-tab {
+    gap: 0;
   }
-  .page-follow-label {
+  .page-tab .follow-control-label {
     position: absolute;
     width: 1px;
     height: 1px;

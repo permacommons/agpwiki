@@ -222,8 +222,6 @@
       pin: 'Épingler le fil',
       unpin: 'Désépingler le fil',
       delete: 'Supprimer le fil',
-      subscribe: 'S’abonner',
-      unsubscribe: 'Se désabonner',
       notificationsDisabled: "Les notifications de réponses du forum sont désactivées dans tes <a href=\"{{settingsHref}}\">paramètres</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Afficher toutes les modifications"
     }
   },
+  "followControl": {
+    "follow": "Suivre",
+    "unfollow": "Ne plus suivre"
+  },
   pageTabs: {
     label: 'Onglets de la page',
     article: 'Article',
@@ -308,8 +310,6 @@
     discuss: 'Discuter',
     edit: 'Modifier',
     history: 'Historique',
-    "follow": "Suivre",
-    "following": "Suivi",
     "followHelp": "Être averti des nouveaux commentaires sur cette page. Les modifications ne déclenchent pas d'avertissement.",
     "followingHelp": "Tu es averti des nouveaux commentaires sur cette page. Les modifications ne déclenchent pas d'avertissement. Clique pour ne plus suivre."
   },
@@ -821,7 +821,7 @@
   },
   "following": {
     "heading": "Pages que tu suis",
-    "intro": "Tu es informé des nouveaux commentaires sur ces pages. Le bouton Suivre, à côté de Discuter, permet de suivre n'importe quelle page.",
+    "intro": "Tu es informé des nouveaux commentaires sur ces pages.",
     "empty": "Tu ne suis encore aucune page.",
     "unfollow": "Ne plus suivre"
   },

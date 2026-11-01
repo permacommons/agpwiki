@@ -17,6 +17,7 @@ import { escapeHtml, prepareTitle, renderText } from '../render.js';
 import { type FollowedPage, listFollowedPages } from '../services/page-subscription-service.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
+import { renderFollowControl } from './lib/follow-control.js';
 
 const { mlString } = dal;
 
@@ -67,12 +68,12 @@ const renderSettingsPage = (
         .map(page => {
           const title = resolveSafeTextWithFallback(mlString.resolve, locale, page.title, page.slug);
           return `<li><a href="/${page.slug.split('/').map(encodeURIComponent).join('/')}">${renderText(title)}</a>
-        <form method="post" action="${FOLLOW_PATH}">
-          <input type="hidden" name="page" value="${escapeHtml(page.slug)}" />
-          <input type="hidden" name="action" value="unfollow" />
-          <input type="hidden" name="return" value="${SETTINGS_PATH}#following" />
-          <button type="submit" class="settings-unfollow">${escapeHtml(req.t('following.unfollow'))}</button>
-        </form></li>`;
+        ${renderFollowControl({
+          action: FOLLOW_PATH,
+          following: true,
+          fields: { page: page.slug, action: 'unfollow', return: `${SETTINGS_PATH}#following` },
+          t: req.t,
+        })}</li>`;
         })
         .join('')}</ul>`
     : `<p class="form-help">${escapeHtml(req.t('following.empty'))}</p>`;

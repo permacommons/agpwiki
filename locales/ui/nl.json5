@@ -222,8 +222,6 @@
       pin: 'Thread vastzetten',
       unpin: 'Thread losmaken',
       delete: 'Thread verwijderen',
-      subscribe: 'Abonneren',
-      unsubscribe: 'Abonnement opzeggen',
       notificationsDisabled: "Meldingen over forumreacties staan uit in je <a href=\"{{settingsHref}}\">instellingen</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Alle wijzigingen tonen"
     }
   },
+  "followControl": {
+    "follow": "Volgen",
+    "unfollow": "Niet meer volgen"
+  },
   pageTabs: {
     label: 'Paginatabbladen',
     article: 'Artikel',
@@ -308,8 +310,6 @@
     discuss: 'Overleg',
     edit: 'Bewerken',
     history: 'Geschiedenis',
-    "follow": "Volgen",
-    "following": "Gevolgd",
     "followHelp": "Krijg een melding bij nieuwe reacties op deze pagina. Bewerkingen geven geen melding.",
     "followingHelp": "Je krijgt een melding bij nieuwe reacties op deze pagina. Bewerkingen geven geen melding. Klik om niet meer te volgen."
   },
@@ -821,7 +821,7 @@
   },
   "following": {
     "heading": "Pagina's die je volgt",
-    "intro": "Je krijgt bericht over nieuwe reacties op deze pagina's. Volg elke pagina met de knop Volgen naast Bespreken.",
+    "intro": "Je krijgt bericht over nieuwe reacties op deze pagina's.",
     "empty": "Je volgt nog geen pagina's.",
     "unfollow": "Niet meer volgen"
   },

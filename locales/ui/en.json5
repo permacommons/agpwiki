@@ -477,8 +477,6 @@
       "pin": "Pin thread",
       "unpin": "Unpin thread",
       "delete": "Delete thread",
-      "subscribe": "Subscribe",
-      "unsubscribe": "Unsubscribe",
       "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
@@ -557,6 +555,10 @@
       "all": "Show all changes"
     }
   },
+  "followControl": {
+    "follow": "Follow",
+    "unfollow": "Unfollow"
+  },
   // Tabs under the title of a wiki page.
   "pageTabs": {
     "label": "Page tabs",
@@ -565,10 +567,8 @@
     "discuss": "Discuss",
     "edit": "Edit",
     "history": "History",
-    "follow": "Follow",
-    "following": "Following",
     "followHelp": "Get notified of new comments on this page. Edits don't notify you.",
-    "followingHelp": "You're notified of new comments on this page. Edits don't notify you. Click to stop following."
+    "followingHelp": "You're notified of new comments on this page. Edits don't notify you. Click to unfollow."
   },
   // Page for people who cannot edit a page directly yet.
   "howToEdit": {
@@ -1140,14 +1140,13 @@
     "all": "All notifications",
     "unread": "new",
     "settings": "Notification settings",
-    "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."
+    "empty": "No notifications yet. Follow pages or discussion threads to hear about new comments and replies."
   },
   // The list of pages someone follows, in the settings.
   "following": {
     "heading": "Pages you follow",
-    "intro": "You are told about new comments on these pages. Use the Follow button next to Discuss on any page to follow it.",
+    "intro": "You are told about new comments on these pages.",
     "empty": "You don't follow any pages yet.",
-    "unfollow": "Stop following"
   },
   "settings": {
     "title": "Settings",
@@ -1165,8 +1164,8 @@
       },
       "kind": {
         "forumReply": {
-          "label": "Replies in forum threads you are subscribed to",
-          "help": "You are subscribed to a thread when you start it or reply in it. You can also subscribe or unsubscribe on the thread."
+          "label": "Replies in threads you follow",
+          "help": "You follow a thread when you start it or reply in it. You can also follow or unfollow it on the thread."
         },
         "pageComment": {
           "label": "Comments on pages you follow",

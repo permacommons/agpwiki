@@ -222,8 +222,6 @@
       pin: 'Pripni nit',
       unpin: 'Odpni nit',
       delete: 'Izbriši nit',
-      subscribe: 'Naroči se',
-      unsubscribe: 'Odjavi naročnino',
       notificationsDisabled: "Obvestila o odgovorih na forumu so izklopljena v tvojih <a href=\"{{settingsHref}}\">nastavitvah</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Pokaži vse spremembe"
     }
   },
+  "followControl": {
+    "follow": "Spremljaj",
+    "unfollow": "Prenehaj spremljati"
+  },
   pageTabs: {
     label: 'Zavihki strani',
     article: 'Članek',
@@ -308,8 +310,6 @@
     discuss: 'Pogovor',
     edit: 'Uredi',
     history: 'Zgodovina',
-    "follow": "Spremljaj",
-    "following": "Spremljaš",
     "followHelp": "Prejemaj obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil.",
     "followingHelp": "Prejemaš obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil. Klikni, da prenehaš spremljati."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Strani, ki jih spremljaš",
-    "intro": "Izveš za nove komentarje na teh straneh. Katerokoli stran lahko spremljaš z gumbom Spremljaj ob Razpravi.",
+    "intro": "Izveš za nove komentarje na teh straneh.",
     "empty": "Še ne spremljaš nobene strani.",
     "unfollow": "Prenehaj spremljati"
   },

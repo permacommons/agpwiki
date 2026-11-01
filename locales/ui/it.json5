@@ -221,8 +221,6 @@
       pin: 'Metti in evidenza il thread',
       unpin: 'Rimuovi evidenza dal thread',
       delete: 'Elimina thread',
-      subscribe: 'Iscriviti',
-      unsubscribe: 'Annulla iscrizione',
       notificationsDisabled: "Le notifiche delle risposte nel forum sono disattivate nelle tue <a href=\"{{settingsHref}}\">impostazioni</a>.",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "Mostra tutte le modifiche"
     }
   },
+  "followControl": {
+    "follow": "Segui",
+    "unfollow": "Smetti di seguire"
+  },
   pageTabs: {
     label: 'Schede della pagina',
     article: 'Voce',
@@ -307,8 +309,6 @@
     discuss: 'Discussione',
     edit: 'Modifica',
     history: 'Cronologia',
-    "follow": "Segui",
-    "following": "Segui già",
     "followHelp": "Ricevi un avviso per i nuovi commenti su questa pagina. Le modifiche non generano avvisi.",
     "followingHelp": "Ricevi un avviso per i nuovi commenti su questa pagina. Le modifiche non generano avvisi. Fai clic per smettere di seguirla."
   },
@@ -820,7 +820,7 @@
   },
   "following": {
     "heading": "Pagine che segui",
-    "intro": "Vieni informato dei nuovi commenti su queste pagine. Usa il pulsante Segui accanto a Discuti su qualsiasi pagina per seguirla.",
+    "intro": "Vieni informato dei nuovi commenti su queste pagine.",
     "empty": "Non segui ancora nessuna pagina.",
     "unfollow": "Smetti di seguire"
   },

@@ -222,8 +222,6 @@
       pin: 'Sematkan topik',
       unpin: 'Lepas sematan topik',
       delete: 'Hapus topik',
-      subscribe: 'Berlangganan',
-      unsubscribe: 'Berhenti berlangganan',
       notificationsDisabled: "Notifikasi balasan forum dimatikan di <a href=\"{{settingsHref}}\">pengaturan</a> Anda.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Tampilkan semua perubahan"
     }
   },
+  "followControl": {
+    "follow": "Ikuti",
+    "unfollow": "Berhenti mengikuti"
+  },
   pageTabs: {
     label: 'Tab halaman',
     article: 'Artikel',
@@ -308,8 +310,6 @@
     discuss: 'Diskusi',
     edit: 'Sunting',
     history: 'Riwayat',
-    "follow": "Ikuti",
-    "following": "Mengikuti",
     "followHelp": "Dapatkan pemberitahuan komentar baru di halaman ini. Suntingan tidak memberi pemberitahuan.",
     "followingHelp": "Anda mendapat pemberitahuan komentar baru di halaman ini. Suntingan tidak memberi pemberitahuan. Klik untuk berhenti mengikuti."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Halaman yang Anda ikuti",
-    "intro": "Anda diberi tahu tentang komentar baru di halaman-halaman ini. Gunakan tombol Ikuti di samping Diskusi di halaman mana pun untuk mengikutinya.",
+    "intro": "Anda diberi tahu tentang komentar baru di halaman-halaman ini.",
     "empty": "Anda belum mengikuti halaman apa pun.",
     "unfollow": "Berhenti mengikuti"
   },

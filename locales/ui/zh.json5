@@ -221,8 +221,6 @@
       pin: '置顶主题',
       unpin: '取消置顶',
       delete: '删除主题',
-      subscribe: '订阅',
-      unsubscribe: '取消订阅',
       notificationsDisabled: "论坛回复通知已在你的<a href=\"{{settingsHref}}\">设置</a>中关闭。",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "显示所有更改"
     }
   },
+  "followControl": {
+    "follow": "关注",
+    "unfollow": "取消关注"
+  },
   pageTabs: {
     label: '页面标签',
     article: '条目',
@@ -307,8 +309,6 @@
     discuss: '讨论',
     edit: '编辑',
     history: '历史',
-    "follow": "关注",
-    "following": "已关注",
     "followHelp": "在此页面有新评论时通知你。编辑不会发出通知。",
     "followingHelp": "此页面有新评论时你会收到通知。编辑不会发出通知。点击以取消关注。"
   },

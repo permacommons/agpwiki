@@ -221,8 +221,6 @@
       pin: 'Başlığı sabitle',
       unpin: 'Sabitliği kaldır',
       delete: 'Başlığı sil',
-      subscribe: 'Abone ol',
-      unsubscribe: 'Abonelikten çık',
       notificationsDisabled: "Forum yanıtı bildirimleri <a href=\"{{settingsHref}}\">ayarlarınızda</a> kapalı.",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "Tüm değişiklikleri göster"
     }
   },
+  "followControl": {
+    "follow": "Takip et",
+    "unfollow": "Takibi bırak"
+  },
   pageTabs: {
     label: 'Sayfa sekmeleri',
     article: 'Madde',
@@ -307,8 +309,6 @@
     discuss: 'Tartış',
     edit: 'Düzenle',
     history: 'Geçmiş',
-    "follow": "Takip et",
-    "following": "Takip ediliyor",
     "followHelp": "Bu sayfadaki yeni yorumlardan haberdar olun. Düzenlemeler bildirim göndermez.",
     "followingHelp": "Bu sayfadaki yeni yorumlardan haberdar oluyorsunuz. Düzenlemeler bildirim göndermez. Takibi bırakmak için tıklayın."
   },
@@ -820,7 +820,7 @@
   },
   "following": {
     "heading": "Takip ettiğiniz sayfalar",
-    "intro": "Bu sayfalardaki yeni yorumlardan haberdar olursunuz. Herhangi bir sayfayı Tartış'ın yanındaki Takip et düğmesiyle takip edebilirsiniz.",
+    "intro": "Bu sayfalardaki yeni yorumlardan haberdar olursunuz.",
     "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz.",
     "unfollow": "Takibi bırak"
   },

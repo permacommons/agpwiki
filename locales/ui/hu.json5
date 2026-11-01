@@ -222,8 +222,6 @@
       pin: 'Téma rögzítése',
       unpin: 'Téma rögzítésének feloldása',
       delete: 'Téma törlése',
-      subscribe: 'Feliratkozás',
-      unsubscribe: 'Leiratkozás',
       notificationsDisabled: "A fórumválaszokról szóló értesítések ki vannak kapcsolva a <a href=\"{{settingsHref}}\">beállításaidban</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Minden változás"
     }
   },
+  "followControl": {
+    "follow": "Követés",
+    "unfollow": "Követés leállítása"
+  },
   pageTabs: {
     label: 'Lapfülek',
     article: 'Szócikk',
@@ -308,8 +310,6 @@
     discuss: 'Vita',
     edit: 'Szerkesztés',
     history: 'Laptörténet',
-    "follow": "Követés",
-    "following": "Követed",
     "followHelp": "Értesítést kapsz az oldal új hozzászólásairól. A szerkesztésekről nem kapsz értesítést.",
     "followingHelp": "Értesítést kapsz az oldal új hozzászólásairól. A szerkesztésekről nem kapsz értesítést. Kattints a követés leállításához."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Követett oldalak",
-    "intro": "Ezeknek az oldalaknak az új hozzászólásairól értesülsz. Bármely oldalt követhetsz a Vita melletti Követés gombbal.",
+    "intro": "Ezeknek az oldalaknak az új hozzászólásairól értesülsz.",
     "empty": "Még nem követsz egy oldalt sem.",
     "unfollow": "Követés leállítása"
   },

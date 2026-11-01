@@ -222,8 +222,6 @@
       pin: 'Kiinnitä ketju',
       unpin: 'Poista ketjun kiinnitys',
       delete: 'Poista ketju',
-      subscribe: 'Tilaa',
-      unsubscribe: 'Peru tilaus',
       notificationsDisabled: "Foorumivastausten ilmoitukset on poistettu käytöstä <a href=\"{{settingsHref}}\">asetuksissasi</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Näytä kaikki muutokset"
     }
   },
+  "followControl": {
+    "follow": "Seuraa",
+    "unfollow": "Lopeta seuraaminen"
+  },
   pageTabs: {
     label: 'Sivun välilehdet',
     article: 'Artikkeli',
@@ -308,8 +310,6 @@
     discuss: 'Keskustele',
     edit: 'Muokkaa',
     history: 'Historia',
-    "follow": "Seuraa",
-    "following": "Seuraat",
     "followHelp": "Saat ilmoituksen tämän sivun uusista kommenteista. Muokkauksista ei ilmoiteta.",
     "followingHelp": "Saat ilmoituksen tämän sivun uusista kommenteista. Muokkauksista ei ilmoiteta. Lopeta seuraaminen napsauttamalla."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Seuraamasi sivut",
-    "intro": "Saat tiedon näiden sivujen uusista kommenteista. Seuraa mitä tahansa sivua Keskustele-kohdan vieressä olevalla Seuraa-painikkeella.",
+    "intro": "Saat tiedon näiden sivujen uusista kommenteista.",
     "empty": "Et seuraa vielä yhtään sivua.",
     "unfollow": "Lopeta seuraaminen"
   },

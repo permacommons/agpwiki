@@ -222,8 +222,6 @@
       pin: 'Alpingli fadenon',
       unpin: 'Malfiksi fadenon',
       delete: 'Forigi fadenon',
-      subscribe: 'Aboni',
-      unsubscribe: 'Malaboni',
       notificationsDisabled: "Sciigoj pri forumaj respondoj estas malŝaltitaj en viaj <a href=\"{{settingsHref}}\">agordoj</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Montri ĉiujn ŝanĝojn"
     }
   },
+  "followControl": {
+    "follow": "Sekvi",
+    "unfollow": "Ĉesi sekvi"
+  },
   pageTabs: {
     label: 'Paĝaj langetoj',
     article: 'Artikolo',
@@ -308,8 +310,6 @@
     discuss: 'Diskuti',
     edit: 'Redakti',
     history: 'Historio',
-    "follow": "Sekvi",
-    "following": "Sekvata",
     "followHelp": "Ricevu sciigon pri novaj komentoj ĉe ĉi tiu paĝo. Redaktoj ne sciigas vin.",
     "followingHelp": "Vi ricevas sciigojn pri novaj komentoj ĉe ĉi tiu paĝo. Redaktoj ne sciigas vin. Alklaku por ĉesi sekvi."
   },
@@ -820,7 +820,7 @@
   },
   "following": {
     "heading": "Paĝoj, kiujn vi sekvas",
-    "intro": "Vi ekscias pri novaj komentoj ĉe ĉi tiuj paĝoj. Uzu la butonon Sekvi apud Diskuti ĉe iu ajn paĝo por sekvi ĝin.",
+    "intro": "Vi ekscias pri novaj komentoj ĉe ĉi tiuj paĝoj.",
     "empty": "Vi ankoraŭ sekvas neniun paĝon.",
     "unfollow": "Ĉesi sekvi"
   },
