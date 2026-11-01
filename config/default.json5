@@ -80,6 +80,16 @@
     // downscaled by the browser.
     recommendedDisplayWidths: [250, 800],
   },
+  wikidata: {
+    // Infoboxes: facts read from Wikidata and cached in the database.
+    apiBaseUrl: 'https://www.wikidata.org/w/api.php',
+    sparqlUrl: 'https://query.wikidata.org/sparql',
+    userAgent: 'AgpWiki/1.0 (infoboxes; https://github.com/permacommons/agpwiki/issues)',
+    fetchTimeoutMs: 8000,
+    // Cached items older than this are refreshed in the background.
+    refreshAfterHours: 24,
+    fetchEnabled: true,
+  },
   email: {
     // Set to true only after configuring a provider and sender address.
     enabled: false,

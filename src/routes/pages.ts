@@ -42,6 +42,7 @@ import {
   renderToc,
 } from '../render.js';
 import { countForumCommentsForPage } from '../services/forum-service.js';
+import { renderArticleInfobox } from '../services/infobox-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,
@@ -1818,6 +1819,18 @@ export const registerPageRoutes = (app: Express) => {
         isArticle && selectedRevision.wikidata
           ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
           : '';
+      const infoboxHtml =
+        isArticle && selectedRevision.wikidata && !diffFrom && !diffTo
+          ? await renderArticleInfobox(dalInstance, {
+              pageId: page.id,
+              qid: selectedRevision.wikidata,
+              localValues: selectedRevision.infoboxValues,
+              titleHtml: typeof title === 'string' ? escapeHtml(title) : title.value,
+              locale: (res.locals.locale as string | undefined) ?? 'en',
+              t: req.t,
+              isOldRevision: Boolean(revIdParam),
+            })
+          : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const pageTypeLabel = canonicalSlug.startsWith('meta/')
         ? req.t('label.meta')
@@ -1836,7 +1849,7 @@ export const registerPageRoutes = (app: Express) => {
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

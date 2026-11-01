@@ -26,6 +26,7 @@ import {
   PreconditionFailedError,
   UnsupportedError,
 } from '../lib/errors.js';
+import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
 import {
   ALL_LANGUAGES,
   listAvailableLanguages,
@@ -342,6 +343,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .optional()
     .describe(
       'Wikidata item ID for this article, such as "Q42". Optional but strongly recommended for articles; null removes it. Shown at the bottom of the article and recorded in its history.'
+    );
+  const infoboxValuesSchema = z
+    .record(
+      z.string().regex(/^P[1-9][0-9]*$/, { error: 'Expected a Wikidata property ID such as "P569".' }),
+      z
+        .object({
+          value: z.string().min(1).max(300),
+          citation: z.string().min(1),
+        })
+        .nullable()
+    )
+    .nullable()
+    .optional()
+    .describe(
+      `Infobox facts added on Agpedia where Wikidata has no value, keyed by Wikidata property, e.g. {"P569": {"value": "1964-05-30", "citation": "smith2020"}}. Each needs the key of an existing citation. Dates are written YYYY, YYYY-MM or YYYY-MM-DD. Shown in the infobox, marked as added on Agpedia, only while Wikidata has no value for the property; they are kept when Wikidata gains one. Properties: ${[...LOCAL_VALUE_PROPERTIES].join(', ')}. A property set to null is removed; properties left out are kept; null removes all.`
     );
   const contentLanguageMessage =
     'Expected a supported locale code (see agpwiki://locales) or "*" for all languages.';
@@ -685,6 +701,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
         wikidata: wikidataIdSchema,
+        infoboxValues: infoboxValuesSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
@@ -1932,6 +1949,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         body: localizedBodySchema.optional,
         originalLanguage: languageTagSchema.optionalNullable,
         wikidata: wikidataIdSchema,
+        infoboxValues: infoboxValuesSchema,
         expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),

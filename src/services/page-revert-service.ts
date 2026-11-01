@@ -6,6 +6,7 @@ import {
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
+import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-render.js';
 import { canUseAgentFeatures } from './account-lifecycle.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
@@ -144,6 +145,20 @@ const reasonText = (revSummary: Record<string, string | null>) =>
 
 // mergeLocalizedMap only adds and replaces, so languages the restored version
 // lacks are removed explicitly.
+// Infobox values are merged on update, so values the target lacks are
+// removed explicitly.
+const exactInfoboxValues = (
+  target: InfoboxLocalValues | null,
+  current: InfoboxLocalValues | null
+): Record<string, InfoboxLocalValue | null> | null => {
+  if (!target) return null;
+  const values: Record<string, InfoboxLocalValue | null> = { ...target };
+  for (const property of Object.keys(current ?? {})) {
+    if (!(property in target)) values[property] = null;
+  }
+  return values;
+};
+
 const exactLocalizedMap = (
   target: Record<string, string> | null | undefined,
   current: Record<string, string> | null | undefined
@@ -260,6 +275,7 @@ const performRevert = async (
       body: exactLocalizedMap(target.body, current.body),
       originalLanguage: target.originalLanguage ?? null,
       wikidata: target.wikidata ?? null,
+      infoboxValues: exactInfoboxValues(target.infoboxValues, current.infoboxValues),
       expectedRevId: current.revId,
       tags: [REVERT_TAG, ...(action === 'rollback' ? [ROLLBACK_TAG] : []), `${RESTORED_TAG_PREFIX}${target.revId}`],
       revSummary,
