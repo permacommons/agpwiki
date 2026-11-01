@@ -306,11 +306,7 @@
     page: '頁面',
     discuss: '討論',
     edit: '編輯',
-    history: '歷史',
-    "follow": "關注",
-    "following": "已關注",
-    "followHelp": "在此頁面有新留言時通知您。編輯不會發出通知。",
-    "followingHelp": "此頁面有新留言時您會收到通知。編輯不會發出通知。點擊以取消關注。"
+    history: '歷史'
   },
   howToEdit: {
     title: '如何編輯此頁面',
@@ -804,10 +800,6 @@
     "someone": "有人",
     "kind": {
       "forumReply": "{{name}} 在 {{subject}} 中回覆了",
-      "pageThread": "{{name}} 發起了關於 {{subject}} 的討論",
-      "pageComment": "{{name}} 在 {{subject}} 留言",
-      "pagePosition": "{{name}} 對 {{subject}} 表明了立場（{{stance}}）",
-      "pagePositionChanged": "{{name}} 將對 {{subject}} 的立場改為 {{stance}}",
       "pageRevert": "{{name}} 回退了你對 {{subject}} 的編輯",
       "other": "{{subject}} 有新動態"
     },
@@ -817,12 +809,6 @@
     "unread": "新",
     "settings": "通知設定",
     "empty": "還沒有通知。當有人在你關注的論壇討論串中回覆時，你會收到通知。"
-  },
-  "following": {
-    "heading": "您關注的頁面",
-    "intro": "這些頁面有新留言時您會收到通知。在任何頁面使用「討論」旁的「關注」按鈕即可關注。",
-    "empty": "您尚未關注任何頁面。",
-    "unfollow": "取消關注"
   },
   settings: {
     title: '設定',
@@ -842,10 +828,6 @@
         "forumReply": {
           "label": "你關注的論壇討論串中的回覆",
           "help": "你發起或回覆討論串時就會關注它。你也可以在討論串頁面關注或取消關注。"
-        },
-        "pageComment": {
-          "label": "您關注頁面上的留言",
-          "help": "您會關注自己建立的頁面，以及點擊「關注」的頁面。您會收到新討論、留言和立場的通知，但不會收到編輯的通知。"
         },
         "pageRevert": {
           "label": "你的編輯被回退",

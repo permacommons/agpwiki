@@ -1,5 +1,4 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import debug from '../../util/debug.js';
 import { ForbiddenError, NotFoundError, ValidationCollector } from '../lib/errors.js';
 import type { PageSignoffInstance } from '../models/manifests/page-signoff.js';
 import PageSignoff from '../models/page-signoff.js';
@@ -11,8 +10,6 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { reattachForumThread } from './forum-service.js';
-import { enqueueNotificationJob } from './notification-queue.js';
-import { notifyPageFollowersOfPosition } from './page-comment-notification-service.js';
 import { ensureNonEmptyString, ensureOptionalLanguage, ensureOptionalString, normalizeSlugInput } from './validation.js';
 import { readWikiPage } from './wiki-page-service.js';
 
@@ -129,8 +126,7 @@ const resolveSignoffPage = async (
 export const signOffPage = async (
   dalInstance: DataAccessLayer,
   { slug, stance, comment, commentLanguage }: PageSignoffInput,
-  userId: string,
-  { enqueueJob = enqueueNotificationJob }: { enqueueJob?: typeof enqueueNotificationJob } = {}
+  userId: string
 ): Promise<PageSignoffResult> => {
   const errors = new ValidationCollector('Invalid sign-off input.');
   if (!isSignoffStance(stance)) {
@@ -179,17 +175,6 @@ export const signOffPage = async (
       previousStance: previous?.stance ?? null,
     },
   });
-
-  try {
-    await notifyPageFollowersOfPosition(
-      dalInstance,
-      { pageId: page.id, signoffId: signoff.id, actorUserId: userId, changed: Boolean(previous) },
-      enqueueJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to notify page followers of position ${signoff.id}: ${message}`);
-  }
 
   return toPageSignoffResult(signoff);
 };

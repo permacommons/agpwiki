@@ -1,8 +1,6 @@
 import type { Express, Request, Response } from 'express';
-import dal from 'rev-dal';
 
 import { resolveSessionUser } from '../auth/session.js';
-import { initializePostgreSQL } from '../db.js';
 import {
   isNotificationChannel,
   NOTIFICATION_CHANNELS,
@@ -11,14 +9,9 @@ import {
   type NotificationKind,
   readNotificationChannel,
 } from '../lib/notification-preferences.js';
-import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import User from '../models/user.js';
-import { escapeHtml, prepareTitle, renderText } from '../render.js';
-import { type FollowedPage, listFollowedPages } from '../services/page-subscription-service.js';
-import { FOLLOW_PATH } from './follow.js';
+import { escapeHtml, prepareTitle } from '../render.js';
 import { prependAccountBanner } from './lib/account-banner.js';
-
-const { mlString } = dal;
 
 const SETTINGS_PATH = '/tool/settings';
 
@@ -41,7 +34,6 @@ const renderSettingsPage = (
     saved?: boolean;
     channels: Record<NotificationKind, NotificationChannel>;
     emailVerified: boolean;
-    followedPages: FollowedPage[];
   }
 ) => {
   const savedHtml = options.saved
@@ -61,21 +53,6 @@ const renderSettingsPage = (
       <div class="settings-radio-group">${choices}</div>
     </fieldset>`;
   }).join('');
-  const locale = (res.locals.locale as string | undefined) ?? 'en';
-  const followedHtml = options.followedPages.length
-    ? `<ul class="settings-followed">${options.followedPages
-        .map(page => {
-          const title = resolveSafeTextWithFallback(mlString.resolve, locale, page.title, page.slug);
-          return `<li><a href="/${page.slug.split('/').map(encodeURIComponent).join('/')}">${renderText(title)}</a>
-        <form method="post" action="${FOLLOW_PATH}">
-          <input type="hidden" name="page" value="${escapeHtml(page.slug)}" />
-          <input type="hidden" name="action" value="unfollow" />
-          <input type="hidden" name="return" value="${SETTINGS_PATH}#following" />
-          <button type="submit" class="settings-unfollow">${escapeHtml(req.t('following.unfollow'))}</button>
-        </form></li>`;
-        })
-        .join('')}</ul>`
-    : `<p class="form-help">${escapeHtml(req.t('following.empty'))}</p>`;
   const unverifiedHtml = options.emailVerified
     ? ''
     : `<p class="form-help">${escapeHtml(req.t('settings.notifications.emailUnverified'))}</p>`;
@@ -91,11 +68,6 @@ const renderSettingsPage = (
       <button type="submit">${req.t('settings.save')}</button>
     </div>
   </form>
-  <section class="form-card settings-following" id="following">
-    <h2 class="settings-heading">${escapeHtml(req.t('following.heading'))}</h2>
-    <p class="form-help">${escapeHtml(req.t('following.intro'))}</p>
-    ${followedHtml}
-  </section>
 </div>`;
   renderSettingsLayout(res, req.t('settings.title'), bodyHtml);
 };
@@ -127,7 +99,6 @@ export const registerSettingsRoutes = (app: Express) => {
       saved: req.query.saved === '1',
       channels,
       emailVerified: Boolean(user.emailVerifiedAt),
-      followedPages: await listFollowedPages(await initializePostgreSQL(), user.id),
     });
   });
 

@@ -306,11 +306,7 @@
     page: '페이지',
     discuss: '토론',
     edit: '편집',
-    history: '역사',
-    "follow": "팔로우",
-    "following": "팔로우 중",
-    "followHelp": "이 문서의 새 댓글을 알림으로 받습니다. 편집은 알림을 보내지 않습니다.",
-    "followingHelp": "이 문서의 새 댓글을 알림으로 받고 있습니다. 편집은 알림을 보내지 않습니다. 클릭하면 팔로우를 그만둡니다."
+    history: '역사'
   },
   howToEdit: {
     title: '이 페이지를 편집하는 방법',
@@ -804,10 +800,6 @@
     "someone": "누군가",
     "kind": {
       "forumReply": "{{name}} 님이 {{subject}}에 답글을 남겼습니다",
-      "pageThread": "{{name}} 님이 {{subject}}에 대한 토론을 시작했습니다",
-      "pageComment": "{{name}} 님이 {{subject}}에 댓글을 달았습니다",
-      "pagePosition": "{{name}} 님이 {{subject}}에 입장({{stance}})을 밝혔습니다",
-      "pagePositionChanged": "{{name}} 님이 {{subject}}에 대한 입장을 {{stance}}(으)로 바꿨습니다",
       "pageRevert": "{{name}} 님이 {{subject}}에 대한 내 편집을 되돌렸습니다",
       "other": "{{subject}}에 새 활동이 있습니다"
     },
@@ -817,12 +809,6 @@
     "unread": "새 알림",
     "settings": "알림 설정",
     "empty": "아직 알림이 없습니다. 팔로우하는 포럼 스레드에 누군가 답글을 달면 알림을 받습니다."
-  },
-  "following": {
-    "heading": "팔로우하는 문서",
-    "intro": "이 문서들의 새 댓글을 알려 드립니다. 어느 문서에서든 토론 옆의 팔로우 버튼으로 팔로우할 수 있습니다.",
-    "empty": "아직 팔로우하는 문서가 없습니다.",
-    "unfollow": "팔로우 그만하기"
   },
   settings: {
     title: '설정',
@@ -842,10 +828,6 @@
         "forumReply": {
           "label": "팔로우하는 포럼 스레드의 답글",
           "help": "스레드를 시작하거나 답글을 달면 팔로우하게 됩니다. 스레드에서 팔로우하거나 해제할 수도 있습니다."
-        },
-        "pageComment": {
-          "label": "팔로우하는 문서의 댓글",
-          "help": "직접 만든 문서와 팔로우를 누른 문서를 팔로우합니다. 새 토론, 댓글, 입장은 알려 드리지만 편집은 알리지 않습니다."
         },
         "pageRevert": {
           "label": "내 편집 되돌리기",

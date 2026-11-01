@@ -307,11 +307,7 @@
     page: 'Puslapis',
     discuss: 'Aptarimas',
     edit: 'Redaguoti',
-    history: 'Istorija',
-    "follow": "Sekti",
-    "following": "Seki",
-    "followHelp": "Gauk pranešimus apie naujus komentarus šiame puslapyje. Apie keitimus nepranešama.",
-    "followingHelp": "Gauni pranešimus apie naujus komentarus šiame puslapyje. Apie keitimus nepranešama. Spustelėk, kad nebesektum."
+    history: 'Istorija'
   },
   howToEdit: {
     title: 'Kaip redaguoti šį puslapį',
@@ -806,10 +802,6 @@
     "someone": "Kažkas",
     "kind": {
       "forumReply": "{{name}} atsakė gijoje {{subject}}",
-      "pageThread": "{{name}} pradėjo diskusiją apie {{subject}}",
-      "pageComment": "{{name}} pakomentavo {{subject}}",
-      "pagePosition": "{{name}} išsakė poziciją ({{stance}}) dėl {{subject}}",
-      "pagePositionChanged": "{{name}} pakeitė poziciją dėl {{subject}} į {{stance}}",
       "pageRevert": "{{name}} atšaukė jūsų keitimus puslapyje {{subject}}",
       "other": "Nauja veikla: {{subject}}"
     },
@@ -819,12 +811,6 @@
     "unread": "naujas",
     "settings": "Pranešimų nustatymai",
     "empty": "Pranešimų dar nėra. Gausi pranešimą, kai kas nors atsakys tavo sekamoje forumo gijoje."
-  },
-  "following": {
-    "heading": "Sekami puslapiai",
-    "intro": "Tau pranešama apie naujus komentarus šiuose puslapiuose. Bet kurį puslapį gali sekti mygtuku Sekti šalia Aptarti.",
-    "empty": "Dar neseki nė vieno puslapio.",
-    "unfollow": "Nebesekti"
   },
   settings: {
     title: 'Nustatymai',
@@ -844,10 +830,6 @@
         "forumReply": {
           "label": "Atsakymai tavo sekamose forumo gijose",
           "help": "Giją seki, kai ją pradedi arba joje atsakai. Sekti arba nebesekti gali ir pačioje gijoje."
-        },
-        "pageComment": {
-          "label": "Komentarai sekamuose puslapiuose",
-          "help": "Seki savo sukurtus puslapius ir kiekvieną puslapį, kuriame spusteli Sekti. Tau pranešama apie naujas diskusijas, komentarus ir pozicijas, niekada apie keitimus."
         },
         "pageRevert": {
           "label": "Jūsų keitimų atšaukimai",

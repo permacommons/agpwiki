@@ -307,11 +307,7 @@
     page: 'Sida',
     discuss: 'Diskutera',
     edit: 'Redigera',
-    history: 'Historik',
-    "follow": "Följ",
-    "following": "Följer",
-    "followHelp": "Få en avisering om nya kommentarer på den här sidan. Redigeringar ger ingen avisering.",
-    "followingHelp": "Du får en avisering om nya kommentarer på den här sidan. Redigeringar ger ingen avisering. Klicka för att sluta följa."
+    history: 'Historik'
   },
   howToEdit: {
     title: 'Så redigerar du den här sidan',
@@ -806,10 +802,6 @@
     "someone": "Någon",
     "kind": {
       "forumReply": "{{name}} svarade i {{subject}}",
-      "pageThread": "{{name}} startade en diskussion om {{subject}}",
-      "pageComment": "{{name}} kommenterade {{subject}}",
-      "pagePosition": "{{name}} angav en hållning ({{stance}}) om {{subject}}",
-      "pagePositionChanged": "{{name}} ändrade sin hållning om {{subject}} till {{stance}}",
       "pageRevert": "{{name}} återställde dina redigeringar av {{subject}}",
       "other": "Ny aktivitet i {{subject}}"
     },
@@ -819,12 +811,6 @@
     "unread": "ny",
     "settings": "Inställningar för aviseringar",
     "empty": "Inga aviseringar än. Du får en när någon svarar i en forumtråd som du följer."
-  },
-  "following": {
-    "heading": "Sidor du följer",
-    "intro": "Du får veta om nya kommentarer på de här sidorna. Följ vilken sida som helst med knappen Följ bredvid Diskutera.",
-    "empty": "Du följer inga sidor ännu.",
-    "unfollow": "Sluta följa"
   },
   settings: {
     title: 'Inställningar',
@@ -844,10 +830,6 @@
         "forumReply": {
           "label": "Svar i forumtrådar som du följer",
           "help": "Du följer en tråd när du startar den eller svarar i den. Du kan också följa eller sluta följa den i tråden."
-        },
-        "pageComment": {
-          "label": "Kommentarer på sidor du följer",
-          "help": "Du följer sidorna du skapar och varje sida där du klickar på Följ. Du får veta om nya diskussioner, kommentarer och hållningar där, aldrig om redigeringar."
         },
         "pageRevert": {
           "label": "Återställningar av dina redigeringar",
