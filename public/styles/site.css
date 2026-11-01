@@ -3696,6 +3696,7 @@ altcha-widget {
 .editor-citation-results li:hover,
 .editor-citation-results li[aria-selected='true'] {
   background: #eef4f7;
+}
 /* Text for screen readers only. */
 .visually-hidden {
   position: absolute;
