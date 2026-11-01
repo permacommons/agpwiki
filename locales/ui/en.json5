@@ -2,6 +2,26 @@
   /*
    i18n-identical-allowlist:
    {
+     // Blog is also the local word; A–Z is a shared alphabetical-sort label.
+     "de": ["home.blogLabel", "tool.pagesSortTitle"],
+     "eo": ["tool.pagesSortTitle"],
+     "es": ["home.blogLabel", "tool.pagesSortTitle"],
+     "fr": ["home.blogLabel", "tool.pagesSortTitle"],
+     "hu": ["home.blogLabel", "tool.pagesSortTitle"],
+     "id": ["home.blogLabel", "tool.pagesSortTitle"],
+     "it": ["home.blogLabel", "tool.pagesSortTitle"],
+     "nl": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pl": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pt": ["home.blogLabel", "tool.pagesSortTitle"],
+     "pt-PT": ["tool.pagesSortTitle"],
+     "sk": ["home.blogLabel", "tool.pagesSortTitle"],
+     "sl": ["home.blogLabel"],
+     "tr": ["home.blogLabel", "tool.pagesSortTitle"]
+   }
+  */
+  /*
+   i18n-identical-allowlist:
+   {
      // These labels are also the local words in these languages.
      "fi": ["recentTabs.media"],
      "fr": ["recentTabs.pages", "recentTabs.citations", "notifications.title", "settings.notifications.heading", "pageTabs.article", "pageTabs.page", "sectionEdit.lead"],
