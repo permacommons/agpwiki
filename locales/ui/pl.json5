@@ -221,8 +221,6 @@
       pin: 'Przypnij wątek',
       unpin: 'Odepnij wątek',
       delete: 'Usuń wątek',
-      subscribe: 'Subskrybuj',
-      unsubscribe: 'Anuluj subskrypcję',
       notificationsDisabled: "Powiadomienia o odpowiedziach na forum są wyłączone w twoich <a href=\"{{settingsHref}}\">ustawieniach</a>.",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "Pokaż wszystkie zmiany"
     }
   },
+  "followControl": {
+    "follow": "Obserwuj",
+    "unfollow": "Przestań obserwować"
+  },
   pageTabs: {
     label: 'Karty strony',
     article: 'Artykuł',
@@ -307,8 +309,6 @@
     discuss: 'Dyskusja',
     edit: 'Edytuj',
     history: 'Historia',
-    "follow": "Obserwuj",
-    "following": "Obserwujesz",
     "followHelp": "Otrzymuj powiadomienia o nowych komentarzach na tej stronie. Edycje nie wysyłają powiadomień.",
     "followingHelp": "Otrzymujesz powiadomienia o nowych komentarzach na tej stronie. Edycje nie wysyłają powiadomień. Kliknij, aby przestać obserwować."
   },
@@ -820,7 +820,7 @@
   },
   "following": {
     "heading": "Obserwowane strony",
-    "intro": "Dowiadujesz się o nowych komentarzach na tych stronach. Przycisk Obserwuj obok Dyskusji pozwala obserwować dowolną stronę.",
+    "intro": "Dowiadujesz się o nowych komentarzach na tych stronach.",
     "empty": "Nie obserwujesz jeszcze żadnej strony.",
     "unfollow": "Przestań obserwować"
   },

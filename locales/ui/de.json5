@@ -222,8 +222,6 @@
       pin: 'Thema anpinnen',
       unpin: 'Thema lösen',
       delete: 'Thema löschen',
-      subscribe: 'Abonnieren',
-      unsubscribe: 'Abo beenden',
       notificationsDisabled: "Benachrichtigungen zu Forumsantworten sind in deinen <a href=\"{{settingsHref}}\">Einstellungen</a> ausgeschaltet.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Alle Änderungen zeigen"
     }
   },
+  "followControl": {
+    "follow": "Folgen",
+    "unfollow": "Nicht mehr folgen"
+  },
   pageTabs: {
     label: 'Seiten-Reiter',
     article: 'Artikel',
@@ -308,8 +310,6 @@
     discuss: 'Diskussion',
     edit: 'Bearbeiten',
     history: 'Versionen',
-    "follow": "Folgen",
-    "following": "Folge ich",
     "followHelp": "Bei neuen Kommentaren auf dieser Seite benachrichtigt werden. Bearbeitungen lösen keine Benachrichtigung aus.",
     "followingHelp": "Du wirst bei neuen Kommentaren auf dieser Seite benachrichtigt. Bearbeitungen lösen keine Benachrichtigung aus. Klicke, um nicht mehr zu folgen."
   },
@@ -819,7 +819,7 @@
   },
   "following": {
     "heading": "Seiten, denen du folgst",
-    "intro": "Du wirst über neue Kommentare auf diesen Seiten informiert. Mit dem Knopf Folgen neben Diskussion kannst du jeder Seite folgen.",
+    "intro": "Du wirst über neue Kommentare auf diesen Seiten informiert.",
     "empty": "Du folgst noch keiner Seite.",
     "unfollow": "Nicht mehr folgen"
   },

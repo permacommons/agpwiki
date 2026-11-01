@@ -221,8 +221,6 @@
       pin: 'Fixar tópico',
       unpin: 'Desafixar tópico',
       delete: 'Excluir tópico',
-      subscribe: 'Inscrever-se',
-      unsubscribe: 'Cancelar inscrição',
       notificationsDisabled: "As notificações de respostas do fórum estão desativadas nas suas <a href=\"{{settingsHref}}\">configurações</a>.",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "Mostrar todas as mudanças"
     }
   },
+  "followControl": {
+    "follow": "Seguir",
+    "unfollow": "Deixar de seguir"
+  },
   pageTabs: {
     label: 'Abas da página',
     article: 'Artigo',
@@ -307,8 +309,6 @@
     discuss: 'Discutir',
     edit: 'Editar',
     history: 'Histórico',
-    "follow": "Seguir",
-    "following": "Seguindo",
     "followHelp": "Receba avisos de novos comentários nesta página. Edições não geram avisos.",
     "followingHelp": "Você recebe avisos de novos comentários nesta página. Edições não geram avisos. Clique para deixar de seguir."
   },
@@ -820,7 +820,7 @@
   },
   "following": {
     "heading": "Páginas que você segue",
-    "intro": "Você é avisado de novos comentários nestas páginas. Use o botão Seguir ao lado de Discutir em qualquer página para segui-la.",
+    "intro": "Você é avisado de novos comentários nestas páginas.",
     "empty": "Você ainda não segue nenhuma página.",
     "unfollow": "Deixar de seguir"
   },

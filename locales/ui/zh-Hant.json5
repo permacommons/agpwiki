@@ -221,8 +221,6 @@
       pin: '置頂主題',
       unpin: '取消置頂',
       delete: '刪除主題',
-      subscribe: '訂閱',
-      unsubscribe: '取消訂閱',
       notificationsDisabled: "論壇回覆通知已在你的<a href=\"{{settingsHref}}\">設定</a>中關閉。",
     },
     pageLink: {
@@ -300,6 +298,10 @@
       "all": "顯示所有變更"
     }
   },
+  "followControl": {
+    "follow": "關注",
+    "unfollow": "取消關注"
+  },
   pageTabs: {
     label: '頁面分頁',
     article: '條目',
@@ -307,8 +309,6 @@
     discuss: '討論',
     edit: '編輯',
     history: '歷史',
-    "follow": "關注",
-    "following": "已關注",
     "followHelp": "在此頁面有新留言時通知您。編輯不會發出通知。",
     "followingHelp": "此頁面有新留言時您會收到通知。編輯不會發出通知。點擊以取消關注。"
   },

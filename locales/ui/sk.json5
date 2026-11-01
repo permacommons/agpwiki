@@ -222,8 +222,6 @@
       pin: 'Pripnúť vlákno',
       unpin: 'Odopnúť vlákno',
       delete: 'Odstrániť vlákno',
-      subscribe: 'Prihlásiť sa na odber',
-      unsubscribe: 'Zrušiť odber',
       notificationsDisabled: "Upozornenia na odpovede vo fóre sú vypnuté v tvojich <a href=\"{{settingsHref}}\">nastaveniach</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Zobraziť všetky zmeny"
     }
   },
+  "followControl": {
+    "follow": "Sledovať",
+    "unfollow": "Prestať sledovať"
+  },
   pageTabs: {
     label: 'Karty stránky',
     article: 'Článok',
@@ -308,8 +310,6 @@
     discuss: 'Diskusia',
     edit: 'Upraviť',
     history: 'História',
-    "follow": "Sledovať",
-    "following": "Sleduješ",
     "followHelp": "Dostávaj upozornenia na nové komentáre na tejto stránke. Úpravy upozornenia neposielajú.",
     "followingHelp": "Dostávaš upozornenia na nové komentáre na tejto stránke. Úpravy upozornenia neposielajú. Kliknutím prestaneš sledovať."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Sledované stránky",
-    "intro": "Dozvieš sa o nových komentároch na týchto stránkach. Ktorúkoľvek stránku môžeš sledovať tlačidlom Sledovať vedľa Diskutovať.",
+    "intro": "Dozvieš sa o nových komentároch na týchto stránkach.",
     "empty": "Zatiaľ nesleduješ žiadnu stránku.",
     "unfollow": "Prestať sledovať"
   },

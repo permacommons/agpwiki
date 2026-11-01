@@ -222,8 +222,6 @@
       pin: 'Fäst tråd',
       unpin: 'Ta bort fästning',
       delete: 'Ta bort tråd',
-      subscribe: 'Prenumerera',
-      unsubscribe: 'Avsluta prenumeration',
       notificationsDisabled: "Aviseringar om forumsvar är avstängda i dina <a href=\"{{settingsHref}}\">inställningar</a>.",
     },
     pageLink: {
@@ -301,6 +299,10 @@
       "all": "Visa alla ändringar"
     }
   },
+  "followControl": {
+    "follow": "Följ",
+    "unfollow": "Sluta följa"
+  },
   pageTabs: {
     label: 'Sidflikar',
     article: 'Artikel',
@@ -308,8 +310,6 @@
     discuss: 'Diskutera',
     edit: 'Redigera',
     history: 'Historik',
-    "follow": "Följ",
-    "following": "Följer",
     "followHelp": "Få en avisering om nya kommentarer på den här sidan. Redigeringar ger ingen avisering.",
     "followingHelp": "Du får en avisering om nya kommentarer på den här sidan. Redigeringar ger ingen avisering. Klicka för att sluta följa."
   },
@@ -822,7 +822,7 @@
   },
   "following": {
     "heading": "Sidor du följer",
-    "intro": "Du får veta om nya kommentarer på de här sidorna. Följ vilken sida som helst med knappen Följ bredvid Diskutera.",
+    "intro": "Du får veta om nya kommentarer på de här sidorna.",
     "empty": "Du följer inga sidor ännu.",
     "unfollow": "Sluta följa"
   },

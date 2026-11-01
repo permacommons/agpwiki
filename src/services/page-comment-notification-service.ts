@@ -41,14 +41,14 @@ export type PageCommentPayload = {
   // A position that replaces the same person's earlier one.
   changed?: boolean;
   recipientUserIds?: string[];
+  forumRecipientUserIds?: string[];
 };
 
 type EnqueueJob = (type: string, payload: PageCommentPayload) => Promise<unknown>;
 
 /**
  * Who hears about a comment on a page: the page's followers, minus its author
- * and minus anyone listed in `excludeUserIds` (the thread's own followers,
- * who already get a forum reply notification for the same comment).
+ * and minus anyone listed in `excludeUserIds`.
  */
 export const listPageCommentRecipientUserIds = async (
   dal: DataAccessLayer,
@@ -93,8 +93,8 @@ export const notifyPageFollowersOfForumPost = async (
   if (!thread?.pageSlug) return null;
   const pageId = await findCurrentPageIdBySlug(dal, thread.pageSlug);
   if (!pageId) return null;
-  const threadFollowers = await listActiveForumThreadSubscriberUserIds(threadId);
-  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId }, threadFollowers, enqueueJob);
+  const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];
+  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, [], enqueueJob);
 };
 
 export const notifyPageFollowersOfPosition = async (
@@ -103,16 +103,20 @@ export const notifyPageFollowersOfPosition = async (
   enqueueJob: EnqueueJob
 ) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, [], enqueueJob);
 
-const loadRecipients = async (recipientUserIds: string[]) => {
+const loadRecipients = async (recipientUserIds: string[], forumRecipientUserIds: string[]) => {
+  const forumRecipients = new Set(forumRecipientUserIds);
   const users = await Promise.all([...new Set(recipientUserIds)].map(userId => User.filterWhere({ id: userId }).first()));
   return users
     .filter((user): user is NonNullable<typeof user> => Boolean(user && !user.blockedAt))
     .map(user => {
       const channel = readNotificationChannel(user.notificationPreferences, PAGE_COMMENT_KIND);
+      const forumChannel = forumRecipients.has(user.id)
+        ? readNotificationChannel(user.notificationPreferences, 'forum.reply')
+        : 'none';
       return {
         user,
-        site: wantsSiteNotification(channel),
-        email: wantsEmailNotification(channel) && Boolean(user.emailVerifiedAt),
+        site: wantsSiteNotification(channel) && !wantsSiteNotification(forumChannel),
+        email: wantsEmailNotification(channel) && Boolean(user.emailVerifiedAt) && !wantsEmailNotification(forumChannel),
       };
     })
     .filter(recipient => recipient.site || recipient.email);
@@ -208,7 +212,7 @@ export const processPageCommentNotification = async (
     title: collapseWhitespace(pickLocalizedText(pageRow.title, pageRow.original_language)) || pageRow.slug,
   };
 
-  const recipients = await loadRecipients(payload.recipientUserIds ?? []);
+  const recipients = await loadRecipients(payload.recipientUserIds ?? [], payload.forumRecipientUserIds ?? []);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();
   const rendered = await describe(dal, payload, page, actor?.displayName ?? 'Someone');

@@ -11,6 +11,7 @@ import { initializePostgreSQL } from '../src/db.js';
 import { readNotificationChannel } from '../src/lib/notification-preferences.js';
 import User from '../src/models/user.js';
 import { FOLLOW_PATH, registerFollowRoutes } from '../src/routes/follow.js';
+import { renderFollowControl } from '../src/routes/lib/follow-control.js';
 import { renderNotificationText } from '../src/routes/lib/notifications.js';
 import { renderPageTabs } from '../src/routes/lib/page-tabs.js';
 import { createForumComment, createForumThread } from '../src/services/forum-service.js';
@@ -31,7 +32,7 @@ import {
   unfollowPage,
 } from '../src/services/page-subscription-service.js';
 import type { SiteNotification } from '../src/services/site-notification-service.js';
-import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -97,6 +98,7 @@ const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
   await dal.query('DELETE FROM page_signoffs WHERE page_id = ANY($1)', [pageIds]);
   await dal.query('DELETE FROM admin_events WHERE target_id = ANY($1)', [pageIds]);
   await dal.query('DELETE FROM page_subscriptions WHERE page_id = ANY($1) OR user_id = ANY($2)', [pageIds, userIds]);
+  await dal.query('DELETE FROM page_aliases WHERE page_id = ANY($1)', [pageIds]);
   await dal.query('DELETE FROM pages WHERE id = ANY($1) OR _old_rev_of = ANY($1)', [pageIds]);
   await dal.query('DELETE FROM auth_sessions WHERE user_id = ANY($1)', [userIds]);
   await dal.query('DELETE FROM users WHERE id = ANY($1)', [userIds]);
@@ -158,8 +160,7 @@ test('Page followers hear about new threads and comments, once, never about thei
     assert.equal(started.jobs[0].event, 'thread');
     assert.deepEqual([...(started.jobs[0].recipientUserIds ?? [])].sort(), [creator.id, follower.id].sort());
 
-    // The follower now follows the thread too: they get its forum reply
-    // notification, so the page notification leaves them out.
+    // Delivery channels are deduplicated when the queued job is processed.
     await subscribeUserToForumThread(thread.id, follower.id);
     const comment = await createForumComment({ threadId: thread.id, body: 'Second.', language: 'en' }, creator.id);
     const commented = captureJobs();
@@ -168,7 +169,12 @@ test('Page followers hear about new threads and comments, once, never about thei
       { threadId: thread.id, commentId: comment.id, actorUserId: creator.id, event: 'comment' },
       commented.enqueueJob
     );
-    assert.equal(commented.jobs.length, 0);
+    assert.equal(commented.jobs.length, 1);
+    assert.deepEqual(commented.jobs[0].recipientUserIds, [follower.id]);
+    const commentJob = await enqueueNotificationJob(PAGE_COMMENT_NOTIFICATION, commented.jobs[0]);
+    const delivered = await processPageCommentNotification(dal, { id: commentJob.id, payload: commented.jobs[0] } as never);
+    assert.equal(delivered.siteCount, 0);
+    assert.equal(delivered.sentCount, 0);
 
     // A thread that is not about a page notifies no page followers.
     const general = await createForumThread(
@@ -182,6 +188,103 @@ test('Page followers hear about new threads and comments, once, never about thei
       none.enqueueJob
     );
     assert.equal(none.jobs.length, 0);
+  } finally {
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+for (const [forumChannel, pageChannel, expectedSiteCount, expectedEmailCount] of [
+  ['none', 'site', 1, 0],
+  ['email', 'site', 1, 0],
+  ['site', 'both', 0, 1],
+  ['email', 'both', 1, 0],
+  ['both', 'both', 0, 0],
+] as const) {
+  test(`Page notifications via ${pageChannel} deduplicate channels covered by forum ${forumChannel}`, async () => {
+    const dal = await getDal();
+    const prefix = `follow-channel-${forumChannel}-${Date.now()}`;
+    const userIds: string[] = [];
+    try {
+      const creator = await createTestUser('creator');
+      const follower = await createTestUser('follower');
+      userIds.push(creator.id, follower.id);
+      await dal.query('UPDATE users SET notification_preferences = $1 WHERE id = $2', [
+        JSON.stringify({ 'forum.reply': forumChannel, 'page.comment': pageChannel }),
+        follower.id,
+      ]);
+      const page = await createPage(dal, prefix, creator.id);
+      await followPage(dal, page.id, follower.id);
+      const thread = await createForumThread(
+        { category: 'articles', pageSlug: prefix, title: `${prefix} thread`, body: 'First.', language: 'en' },
+        creator.id
+      );
+      await subscribeUserToForumThread(thread.id, follower.id);
+      const comment = await createForumComment({ threadId: thread.id, body: 'Second.', language: 'en' }, creator.id);
+      const captured = captureJobs();
+      await notifyPageFollowersOfForumPost(
+        dal,
+        { threadId: thread.id, commentId: comment.id, actorUserId: creator.id, event: 'comment' },
+        captured.enqueueJob
+      );
+      assert.equal(captured.jobs.length, 1, 'The page notification must retain the recipient for channel selection');
+      assert.deepEqual(captured.jobs[0].recipientUserIds, [follower.id]);
+      const job = await enqueueNotificationJob(PAGE_COMMENT_NOTIFICATION, captured.jobs[0]);
+      const sent: string[] = [];
+      const result = await processPageCommentNotification(dal, { id: job.id, payload: captured.jobs[0] } as never, async message => {
+        sent.push(message.to);
+        return { delivered: true, skipped: false } as never;
+      });
+      assert.equal(result.siteCount, expectedSiteCount);
+      assert.equal(result.sentCount, expectedEmailCount);
+      assert.deepEqual(sent, expectedEmailCount ? [follower.email] : []);
+      const notifications = await dal.query('SELECT kind FROM notifications WHERE user_id = $1', [follower.id]);
+      assert.deepEqual(notifications.rows, expectedSiteCount ? [{ kind: 'page.comment' }] : []);
+    } finally {
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}
+
+test('Page followers receive replies in existing discussions after a page rename', async () => {
+  const dal = await getDal();
+  const prefix = `follow-rename-${Date.now()}`;
+  const userIds: string[] = [];
+  try {
+    const creator = await createTestUser('creator');
+    const follower = await createTestUser('follower');
+    userIds.push(creator.id, follower.id);
+    const page = await createPage(dal, prefix, creator.id);
+    await followPage(dal, page.id, follower.id);
+    const thread = await createForumThread(
+      { category: 'articles', pageSlug: prefix, title: `${prefix} thread`, body: 'First.', language: 'en' },
+      creator.id
+    );
+    const renamed = await updateWikiPage(
+      dal,
+      { slug: prefix, newSlug: `${prefix}-renamed`, revSummary: { en: 'Rename.' } },
+      creator.id
+    );
+    assert.equal(renamed.id, page.id);
+    assert.equal(await isFollowingPage(dal, page.id, follower.id), true);
+    const aliases = await dal.query('SELECT page_id FROM page_aliases WHERE slug = $1', [prefix]);
+    assert.deepEqual(aliases.rows, [{ page_id: page.id }]);
+    const threads = await dal.query('SELECT page_slug FROM forum_threads WHERE id = $1', [thread.id]);
+    assert.deepEqual(threads.rows, [{ page_slug: prefix }]);
+    const comment = await createForumComment({ threadId: thread.id, body: 'After rename.', language: 'en' }, creator.id);
+    const captured = captureJobs();
+    await notifyPageFollowersOfForumPost(
+      dal,
+      { threadId: thread.id, commentId: comment.id, actorUserId: creator.id, event: 'comment' },
+      captured.enqueueJob
+    );
+    assert.equal(captured.jobs.length, 1, 'Replies through the old page alias must notify page followers');
+    assert.equal(captured.jobs[0].pageId, page.id);
+    assert.deepEqual(captured.jobs[0].recipientUserIds, [follower.id]);
+    const job = await enqueueNotificationJob(PAGE_COMMENT_NOTIFICATION, captured.jobs[0]);
+    const delivered = await processPageCommentNotification(dal, { id: job.id, payload: captured.jobs[0] } as never);
+    assert.equal(delivered.siteCount, 1);
+    const notifications = await dal.query('SELECT kind FROM notifications WHERE user_id = $1', [follower.id]);
+    assert.deepEqual(notifications.rows, [{ kind: 'page.comment' }]);
   } finally {
     await cleanup(dal, prefix, userIds);
   }
@@ -249,7 +352,7 @@ test('Comments on followed pages default to on-site notifications', () => {
   assert.equal(readNotificationChannel({}, 'forum.reply'), 'both');
 });
 
-test('The tab row shows Follow or Following as a form button next to Discuss', () => {
+test('The tab row groups the shared follow control with Edit and History', () => {
   const base = {
     isArticle: true,
     pageHref: '/tea',
@@ -259,15 +362,33 @@ test('The tab row shows Follow or Following as a form button next to Discuss', (
     editHref: '/tea/operator-edit?lang=en',
     t,
   };
-  assert.doesNotMatch(renderPageTabs(base), /page-follow/);
+  assert.doesNotMatch(renderPageTabs(base), /follow-control/);
   const off = renderPageTabs({ ...base, follow: { slug: 'tea', following: false, returnTo: '/tea', action: FOLLOW_PATH } });
-  assert.match(off, /<form class="page-follow-form" method="post" action="\/tool\/follow">/);
+  assert.match(off, /<form class="follow-control-form" method="post" action="\/tool\/follow">/);
   assert.match(off, /name="action" value="follow"/);
-  assert.match(off, /aria-pressed="false" title="pageTabs\.followHelp"><span class="page-follow-label">pageTabs\.follow</);
-  assert.ok(off.indexOf('pageTabs.discuss') < off.indexOf('page-follow-form'));
+  assert.match(off, /aria-pressed="false" title="pageTabs\.followHelp">/);
+  assert.ok(off.indexOf('page-tabs-spacer') < off.indexOf('follow-control-form'));
+  assert.ok(off.indexOf('follow-control-form') < off.indexOf('pageTabs.edit'));
+  assert.match(off, /followControl\.follow/);
   const on = renderPageTabs({ ...base, follow: { slug: 'tea', following: true, returnTo: '/tea', action: FOLLOW_PATH } });
   assert.match(on, /name="action" value="unfollow"/);
-  assert.match(on, /class="page-follow page-follow--on" aria-pressed="true"/);
+  assert.match(on, /class="follow-control page-tab" aria-pressed="true"/);
+  assert.match(on, /followControl\.unfollow/);
+});
+
+test('The shared follow control preserves thread submission fields and escapes values', () => {
+  const html = renderFollowControl({
+    action: '/tool/forum/thread/example/subscription',
+    following: true,
+    fields: { subscribed: 'false', return: '/tea?title="Tea"&lang=en' },
+    t,
+  });
+  assert.match(html, /method="post" action="\/tool\/forum\/thread\/example\/subscription"/);
+  assert.match(html, /name="subscribed" value="false"/);
+  assert.match(html, /value="\/tea\?title=&quot;Tea&quot;&amp;lang=en"/);
+  assert.match(html, /aria-pressed="true"/);
+  assert.match(html, /followControl\.unfollow/);
+  assert.doesNotMatch(html, /class="follow-control page-tab"/);
 });
 
 test('Notification text names the kind of comment and the stance', () => {

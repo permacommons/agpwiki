@@ -53,5 +53,13 @@ export const findCurrentPageIdBySlug = async (dalInstance: DataAccessLayer, slug
     'SELECT id FROM pages WHERE slug = $1 AND _old_rev_of IS NULL AND _rev_deleted = false',
     [slug]
   );
-  return (result.rows[0] as { id: string } | undefined)?.id ?? null;
+  const directPageId = (result.rows[0] as { id: string } | undefined)?.id;
+  if (directPageId) return directPageId;
+  const aliasResult = await dalInstance.query(
+    `SELECT p.id FROM page_aliases a
+       JOIN pages p ON p.id = a.page_id AND p._old_rev_of IS NULL AND p._rev_deleted = false
+      WHERE a.slug = $1`,
+    [slug]
+  );
+  return (aliasResult.rows[0] as { id: string } | undefined)?.id ?? null;
 };
