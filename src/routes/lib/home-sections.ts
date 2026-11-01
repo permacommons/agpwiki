@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import dal from 'rev-dal';
 import { forumThreadPath } from '../../lib/forum-paths.js';
+import { markdownToPlainText } from '../../lib/markdown-to-text.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, renderText } from '../../render.js';
 import { FORUM_CATEGORY_KEYS, type ForumCategorySlug } from '../../services/forum-service.js';
@@ -61,7 +62,7 @@ export const renderHomeSections = (sections: HomeSections, t: TFunction, locale:
     }
     <span class="home-kicker">${escapeHtml(t('home.blogLabel'))} · ${escapeHtml(formatDay(post.createdAt, locale))}</span>
     <span class="home-card-title">${title(post.title, post.slug)}</span>
-    ${post.summary ? `<span class="home-card-text home-card-text--short">${escapeHtml(post.summary)}</span>` : ''}
+    ${post.summary ? `<span class="home-card-text home-card-text--short">${escapeHtml(markdownToPlainText(post.summary))}</span>` : ''}
   </a>`
         )
         .join('')}</div>`

@@ -7,7 +7,6 @@ import express from 'express';
 import type { TFunction } from 'i18next';
 
 import { initializePostgreSQL } from '../src/db.js';
-import { firstSentence } from '../src/lib/excerpt.js';
 import User from '../src/models/user.js';
 import { renderHomeSections } from '../src/routes/lib/home-sections.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -32,30 +31,6 @@ test.after(async () => {
     await sharedDal.disconnect();
     sharedDal = null;
   }
-});
-
-test('firstSentence takes the first sentence of the lead as plain text', () => {
-  assert.equal(
-    firstSentence('A **belt buckle** is a [fastener](/fastener) for a belt.[@smith-2020] It can also be decorative.'),
-    'A belt buckle is a fastener for a belt.'
-  );
-  // Abbreviations followed by a number are not the end of a sentence.
-  assert.equal(
-    firstSentence('The Piano Trio No. 2 in C major, Op. 87 is a chamber work. It has four movements.'),
-    'The Piano Trio No. 2 in C major, Op. 87 is a chamber work.'
-  );
-  // Images and citations are left out, and the lead stops at the first heading.
-  assert.equal(
-    firstSentence('![A buckle](/media/buckle){size=250 caption="A buckle"}\nOnly one sentence here\n\n## History\n\nMore. Text.'),
-    'Only one sentence here'
-  );
-  assert.equal(firstSentence('茶是一种饮料。它很受欢迎。'), '茶是一种饮料。');
-  assert.equal(firstSentence(''), '');
-  assert.equal(firstSentence(null), '');
-  assert.equal(firstSentence('## Only a heading'), '');
-  const long = `${'word '.repeat(100)}end.`;
-  assert.ok(firstSentence(long).endsWith('…'));
-  assert.ok(firstSentence(long).length <= 280);
 });
 
 const sections = (overrides: Partial<HomeSections> = {}): HomeSections => ({
@@ -114,6 +89,26 @@ test('renderHomeSections shows cards, posts, discussions and ways to help, each 
     // Each button appears twice: beside the heading and under the section, for phones.
     assert.equal(html.split(`class="home-button" href="${href}"`).length - 1, 2, href);
   }
+});
+
+test('blog previews show escaped plain text without Markdown or nested links', () => {
+  const data = sections();
+  data.posts[0].summary =
+    'A **bell** with [notifications](/notifications) & `updates`.[@source] ![Bell](/media/bell){size=250} Second sentence.';
+  const html = renderHomeSections(data, t, 'en');
+  assert.match(
+    html,
+    /<span class="home-card-text home-card-text--short">A bell with notifications &amp; updates\. Second sentence\.<\/span>/
+  );
+  assert.doesNotMatch(html, /href="\/notifications"|\*\*|\[@source\]|!\[Bell\]/);
+});
+
+test('blog previews decode entities once and preserve raw HTML as literal text', () => {
+  const data = sections();
+  data.posts[0].summary = 'Fish &amp; chips &quot;quoted&quot; caf&eacute; &#169; &#x1F41F; &amp;amp; <strong>literal</strong>';
+  const html = renderHomeSections(data, t, 'en');
+  assert.ok(html.includes('Fish &amp; chips &quot;quoted&quot; café © 🐟 &amp;amp; &lt;strong&gt;literal&lt;/strong&gt;'));
+  assert.ok(!html.includes('<strong>literal</strong>'));
 });
 
 test('renderHomeSections says so when a section has nothing to show', () => {
