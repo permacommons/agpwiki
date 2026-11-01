@@ -19,6 +19,7 @@ import {
   forumCommentHistoryPath,
   forumDismissPreamblePath,
   forumIndexPath,
+  forumPageCategory,
   forumThreadCommentPath,
   forumThreadDeletePath,
   forumThreadPath,
@@ -581,6 +582,12 @@ const renderPageLinkedCategoryPage = async (
   const normalizedRequestedSlug = normalizeSlugInput(requestedSlug, 'pageSlug');
   const target = await resolveForumPageTarget(normalizedRequestedSlug);
   const storedSlug = target?.canonicalSlug ?? normalizedRequestedSlug;
+  if (target && forumPageCategory(storedSlug) !== category) {
+    const targetCategory = forumPageCategory(storedSlug);
+    if (!targetCategory) throw new NotFoundError('Page discussion not available.');
+    res.redirect(303, forumCategoryPagePath(targetCategory, storedSlug));
+    return;
+  }
   const pageLabel = getPageLabel(
     resLocale(req),
     target?.title ?? null,
@@ -660,6 +667,7 @@ const renderThreadPage = async (
   } = {}
 ) => {
   const dalInstance = await initializePostgreSQL();
+  const detail = await readForumThread(dalInstance, threadId);
   const session = await resolveSessionUser(req);
   const currentUser = session ? await User.filterWhere({ id: session.userId }).first() : null;
   const isModerator = session
@@ -668,7 +676,6 @@ const renderThreadPage = async (
   const isSubscribed = session
     ? await isUserSubscribedToForumThread(threadId, session.userId)
     : false;
-  const detail = await readForumThread(dalInstance, threadId);
   const quoteId = typeof req.query.quote === 'string' ? req.query.quote : '';
   let quotedBody = '';
   if (!req.body?.body && quoteId) {

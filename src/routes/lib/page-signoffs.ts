@@ -5,6 +5,7 @@ import {
   forumCommentHistoryPath,
   forumThreadPath,
 } from '../../lib/forum-paths.js';
+import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
 import {
   type PageSignoffResult,
@@ -34,8 +35,8 @@ type PageSignoffsParams = {
 /** A reply to a position, with its Markdown already rendered by the route. */
 export type RenderedPositionReply = PositionReply & { bodyHtml: string };
 
-export const pageSignoffPath = (slug: string) => `/${encodeURIComponent(slug)}/sign-off`;
-export const positionReplyPath = (slug: string) => `/${encodeURIComponent(slug)}/position-reply`;
+export const pageSignoffPath = (slug: string) => `/${encodeSlugPath(slug)}/sign-off`;
+export const positionReplyPath = (slug: string) => `/${encodeSlugPath(slug)}/position-reply`;
 
 // Plain text with clickable web links. The text is escaped first, so the
 // links can only come from http(s) URLs written in it.
@@ -62,7 +63,7 @@ export const renderPageSignoffs = ({
   languageOptions,
   replies,
 }: PageSignoffsParams): string => {
-  const pagePath = `/${encodeURIComponent(slug)}`;
+  const pagePath = `/${encodeSlugPath(slug)}`;
   const replyAction = escapeHtml(positionReplyPath(slug));
   const languageLabelFor = (code: string | null) =>
     code ? (languageOptions.find(option => option.code === code)?.label ?? code) : null;

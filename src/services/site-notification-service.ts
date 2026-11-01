@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { NotFoundError } from '../lib/errors.js';
+import { isUuid } from '../lib/uuid.js';
 
 export interface SiteNotification {
   id: string;
@@ -99,6 +100,7 @@ export const listSiteNotifications = async (
 
 /** Mark one notification as read and return where it points. */
 export const openSiteNotification = async (dal: DataAccessLayer, userId: string, id: string) => {
+  if (!isUuid(id)) throw new NotFoundError('Notification not found.', { id });
   const result = await dal.query(
     `UPDATE notifications SET read_at = COALESCE(read_at, NOW())
       WHERE id = $1 AND user_id = $2
@@ -115,6 +117,9 @@ export const markSiteNotificationsRead = async (
   userId: string,
   id?: string
 ) => {
+  // A malformed ID matches no notification. It must not fall through to
+  // "mark all as read", which is what a missing ID means.
+  if (id !== undefined && !isUuid(id)) return 0;
   const result = id
     ? await dal.query(
         'UPDATE notifications SET read_at = NOW() WHERE id = $1 AND user_id = $2 AND read_at IS NULL',

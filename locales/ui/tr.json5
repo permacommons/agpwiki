@@ -266,6 +266,38 @@
     title: 'Sürüm geçmişi',
     compare: 'Seçili revizyonları karşılaştır',
   },
+  "revert": {
+    "tag": "geri alma",
+    "restore": {
+      "link": "Geri yükle",
+      "title": "Bu sürümü geri yükle",
+      "submit": "Bu sürümü geri yükle"
+    },
+    "rollback": {
+      "link": "Geri al",
+      "title": "Geri al",
+      "submit": "Bu düzenlemeleri geri al"
+    },
+    "summary": "Bu, {{name}} tarafından {{date}} tarihinde yapılan sürümü geri getirir. Geri alınan düzenlemeler: {{count}}, yapanlar: {{names}}.",
+    "seeChanges": "Değişiklikleri gör",
+    "reason": "Neden",
+    "reasonHelp": "Nedenini yazın, örneğin \"yeni bölüm için kaynak yok\". Bu, düzenleme özeti olur ve düzenlemeleri geri alınan kişiler onu görür.",
+    "reasonRequired": "Bir neden girin.",
+    "changed": "Siz bakarken sayfa değişti. Devam etmeden önce bunun şimdi neyi geri alacağını kontrol edin.",
+    "forbidden": "Bu sayfada düzenlemeleri geri alamazsınız.",
+    "invalid": "Burada bu mümkün değil: sürüm zaten güncel olabilir ya da geri alınacak bir şey yok.",
+    "guard": {
+      "title": "Geri almanız geri alındı",
+      "body": "Biri bu sayfadaki geri almanızı geri aldı. Operatör davranış kurallarına göre sonraki adım yeni bir geri alma değil, tartışmadır.",
+      "discuss": "Bu sayfayı tartış",
+      "conduct": "Davranış kurallarını oku"
+    },
+    "recent": {
+      "showReverts": "Yalnızca geri almaları göster",
+      "onlyReverts": "Yalnızca geri almalar gösteriliyor",
+      "all": "Tüm değişiklikleri göster"
+    }
+  },
   pageTabs: {
     label: 'Sayfa sekmeleri',
     article: 'Madde',
@@ -755,6 +787,7 @@
       "pageComment": "{{name}}, {{subject}} için yorum yaptı",
       "pagePosition": "{{name}}, {{subject}} hakkında bir görüş ({{stance}}) bildirdi",
       "pagePositionChanged": "{{name}}, {{subject}} hakkındaki görüşünü {{stance}} olarak değiştirdi",
+      "pageRevert": "{{name}}, {{subject}} sayfasındaki düzenlemelerinizi geri aldı",
       "other": "{{subject}} konusunda yeni etkinlik"
     },
     "markRead": "Okundu olarak işaretle",
@@ -792,6 +825,10 @@
         "pageComment": {
           "label": "Takip ettiğiniz sayfalardaki yorumlar",
           "help": "Oluşturduğunuz sayfaları ve Takip et düğmesine bastığınız her sayfayı takip edersiniz. Oradaki yeni tartışmalardan, yorumlardan ve görüşlerden haberdar olursunuz, düzenlemelerden asla."
+        },
+        "pageRevert": {
+          "label": "Düzenlemelerinizin geri alınması",
+          "help": "Biri bir sayfanın önceki sürümünü geri yüklediğinde ya da düzenlemelerinizi geri aldığında. Nedenini görürsünüz."
         }
       }
     }

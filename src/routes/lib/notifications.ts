@@ -30,6 +30,8 @@ export const renderNotificationText = (notification: SiteNotification, t: TFunct
       return t('notifications.kind.pageThread', { name, subject });
     case 'page.comment':
       return t('notifications.kind.pageComment', { name, subject });
+    case 'page.revert':
+      return t('notifications.kind.pageRevert', { name, subject });
     default:
       return t('notifications.kind.other', { subject });
   }
@@ -87,6 +89,7 @@ export const renderNotificationList = ({
 /** What the bell's panel shows: the latest notifications, newest first. */
 export const toNotificationPanelData = (notifications: SiteNotification[], unreadCount: number, t: TFunction) => ({
   unreadCount,
+  bellLabel: unreadCount ? t('notifications.bellUnread', { count: unreadCount }) : t('notifications.title'),
   items: notifications.map(item => ({
     id: item.id,
     html: renderNotificationText(item, t),

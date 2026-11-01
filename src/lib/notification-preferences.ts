@@ -1,6 +1,6 @@
 // Kinds of notifications people can choose a channel for. Each kind gets its
 // own row in the settings.
-export const NOTIFICATION_KINDS = ['forum.reply', 'page.comment'] as const;
+export const NOTIFICATION_KINDS = ['forum.reply', 'page.revert', 'page.comment'] as const;
 export type NotificationKind = (typeof NOTIFICATION_KINDS)[number];
 
 export const NOTIFICATION_CHANNELS = ['both', 'site', 'email', 'none'] as const;

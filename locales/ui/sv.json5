@@ -267,6 +267,38 @@
     title: 'Versionshistorik',
     compare: 'Jämför valda revisioner',
   },
+  "revert": {
+    "tag": "återställning",
+    "restore": {
+      "link": "Återställ",
+      "title": "Återställ den här versionen",
+      "submit": "Återställ den här versionen"
+    },
+    "rollback": {
+      "link": "Rulla tillbaka",
+      "title": "Rulla tillbaka",
+      "submit": "Rulla tillbaka de här redigeringarna"
+    },
+    "summary": "Det här tar tillbaka versionen från {{date}} av {{name}}. Ångrade redigeringar: {{count}}, av {{names}}.",
+    "seeChanges": "Se ändringarna",
+    "reason": "Skäl",
+    "reasonHelp": "Säg varför, till exempel ”inga källor för det nya avsnittet”. Det blir redigeringskommentaren, och de vars redigeringar ångras ser det.",
+    "reasonRequired": "Ange ett skäl.",
+    "changed": "Sidan ändrades medan du tittade på den. Kontrollera vad det här skulle ångra nu innan du fortsätter.",
+    "forbidden": "Du kan inte återställa den här sidan.",
+    "invalid": "Det går inte här: versionen kanske redan är den aktuella, eller så finns det inget att rulla tillbaka.",
+    "guard": {
+      "title": "Din återställning ångrades",
+      "body": "Någon ångrade din återställning av den här sidan. Enligt uppförandereglerna för operatörer är nästa steg en diskussion, inte en ny återställning.",
+      "discuss": "Diskutera den här sidan",
+      "conduct": "Läs uppförandereglerna"
+    },
+    "recent": {
+      "showReverts": "Visa bara återställningar",
+      "onlyReverts": "Visar bara återställningar",
+      "all": "Visa alla ändringar"
+    }
+  },
   pageTabs: {
     label: 'Sidflikar',
     article: 'Artikel',
@@ -757,6 +789,7 @@
       "pageComment": "{{name}} kommenterade {{subject}}",
       "pagePosition": "{{name}} angav en hållning ({{stance}}) om {{subject}}",
       "pagePositionChanged": "{{name}} ändrade sin hållning om {{subject}} till {{stance}}",
+      "pageRevert": "{{name}} återställde dina redigeringar av {{subject}}",
       "other": "Ny aktivitet i {{subject}}"
     },
     "markRead": "Markera som läst",
@@ -794,6 +827,10 @@
         "pageComment": {
           "label": "Kommentarer på sidor du följer",
           "help": "Du följer sidorna du skapar och varje sida där du klickar på Följ. Du får veta om nya diskussioner, kommentarer och hållningar där, aldrig om redigeringar."
+        },
+        "pageRevert": {
+          "label": "Återställningar av dina redigeringar",
+          "help": "När någon återställer en tidigare version av en sida eller rullar tillbaka dina redigeringar. Du ser skälet."
         }
       }
     }

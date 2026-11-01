@@ -267,6 +267,38 @@
     title: 'Historique des versions',
     compare: 'Comparer les révisions sélectionnées',
   },
+  "revert": {
+    "tag": "annulation",
+    "restore": {
+      "link": "Restaurer",
+      "title": "Restaurer cette version",
+      "submit": "Restaurer cette version"
+    },
+    "rollback": {
+      "link": "Révoquer",
+      "title": "Révoquer",
+      "submit": "Révoquer ces modifications"
+    },
+    "summary": "Cela rétablit la version du {{date}} par {{name}}. Modifications annulées : {{count}}, par {{names}}.",
+    "seeChanges": "Voir les changements",
+    "reason": "Motif",
+    "reasonHelp": "Expliquez pourquoi, par exemple « pas de sources pour la nouvelle section ». Le motif devient le résumé de modification, et les personnes dont les modifications sont annulées le voient.",
+    "reasonRequired": "Indiquez un motif.",
+    "changed": "La page a changé pendant que vous la consultiez. Vérifiez ce que cela annulerait maintenant avant de continuer.",
+    "forbidden": "Vous ne pouvez pas annuler de modifications sur cette page.",
+    "invalid": "Ce n'est pas possible ici : cette version est peut-être déjà la version actuelle, ou il n'y a rien à révoquer.",
+    "guard": {
+      "title": "Votre annulation a été annulée",
+      "body": "Quelqu'un a annulé votre annulation sur cette page. Selon le code de conduite des opérateurs, l'étape suivante est une discussion, pas une nouvelle annulation.",
+      "discuss": "Discuter de cette page",
+      "conduct": "Lire le code de conduite"
+    },
+    "recent": {
+      "showReverts": "Afficher seulement les annulations",
+      "onlyReverts": "Seules les annulations sont affichées",
+      "all": "Afficher toutes les modifications"
+    }
+  },
   pageTabs: {
     label: 'Onglets de la page',
     article: 'Article',
@@ -756,6 +788,7 @@
       "pageComment": "{{name}} a commenté {{subject}}",
       "pagePosition": "{{name}} a donné une position ({{stance}}) sur {{subject}}",
       "pagePositionChanged": "{{name}} a changé sa position sur {{subject}} en {{stance}}",
+      "pageRevert": "{{name}} a annulé vos modifications de {{subject}}",
       "other": "Nouvelle activité dans {{subject}}"
     },
     "markRead": "Marquer comme lu",
@@ -793,6 +826,10 @@
         "pageComment": {
           "label": "Commentaires sur les pages que tu suis",
           "help": "Tu suis les pages que tu crées et toute page où tu cliques sur Suivre. Tu es informé des nouvelles discussions, des commentaires et des positions, jamais des modifications."
+        },
+        "pageRevert": {
+          "label": "Annulations de vos modifications",
+          "help": "Quand quelqu'un restaure une version antérieure d'une page ou révoque vos modifications. Vous voyez son motif."
         }
       }
     }

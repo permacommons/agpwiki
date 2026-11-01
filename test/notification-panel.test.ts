@@ -45,6 +45,7 @@ const startServer = async () => {
   app.use((req, _res, next) => {
     req.t = ((key: string, options?: Record<string, unknown>) => {
       if (key === 'notifications.kind.forumReply') return `${options?.name} replied in ${options?.subject}`;
+      if (key === 'notifications.bellUnread') return `Notifications: ${options?.count} unread`;
       return key;
     }) as typeof req.t;
     next();
@@ -93,9 +94,11 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
     assert.equal(response.headers.get('cache-control'), 'no-store');
     const data = (await response.json()) as {
       unreadCount: number;
+      bellLabel: string;
       items: Array<{ id: string; url: string; html: string; excerpt: string | null; date: string; createdAt: string; unread: boolean }>;
     };
     assert.equal(data.unreadCount, 3);
+    assert.equal(data.bellLabel, 'Notifications: 3 unread');
     assert.equal(data.items.length, 8, 'the panel shows the latest eight');
     assert.ok(data.items.every(item => !item.html.includes('Not mine')));
     assert.match(data.items[0].html, /<strong>Panel Test<\/strong> replied in <a href="\/tool\/notifications\/[^"]+\/open">Mine 1<\/a>/);
@@ -117,6 +120,10 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
     const read = await fetch(`${server.url}/read`, { method: 'POST', headers, body: new URLSearchParams({}) });
     assert.equal(read.status, 200);
     assert.deepEqual(await read.json(), { unreadCount: 0 });
+    const refreshed = await fetch(`${server.url}/panel.json`, { headers });
+    const refreshedData = (await refreshed.json()) as { unreadCount: number; bellLabel: string };
+    assert.equal(refreshedData.unreadCount, 0);
+    assert.equal(refreshedData.bellLabel, 'notifications.title');
     assert.equal(await countUnreadNotifications(dal, me.id), 0);
     assert.equal(await countUnreadNotifications(dal, other.id), 1, "someone else's notifications stay unread");
   } finally {

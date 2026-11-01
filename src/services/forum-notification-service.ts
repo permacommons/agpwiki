@@ -18,6 +18,8 @@ import {
 } from './notification-queue.js';
 import { collapseWhitespace, EXCERPT_LENGTH, escapeHtml, markdownToPlainText, truncate } from './notification-text.js';
 import { PAGE_COMMENT_NOTIFICATION, processPageCommentNotification } from './page-comment-notification-service.js';
+import { PAGE_REVERTED_NOTIFICATION } from './page-revert-service.js';
+import { processPageRevertedNotification } from './revert-notification-service.js';
 import { getSiteBaseUrl } from './site-config.js';
 import { createSiteNotification } from './site-notification-service.js';
 
@@ -204,4 +206,5 @@ export const processForumReplyCreatedNotification = async (
 export const notificationJobHandlers = {
   [FORUM_REPLY_CREATED_NOTIFICATION]: processForumReplyCreatedNotification,
   [PAGE_COMMENT_NOTIFICATION]: processPageCommentNotification,
+  [PAGE_REVERTED_NOTIFICATION]: processPageRevertedNotification,
 } as const;

@@ -24,6 +24,7 @@ import {
   readForumThread,
   updateForumComment,
 } from '../src/services/forum-service.js';
+import { replyToPosition } from '../src/services/position-reply-service.js';
 import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -413,6 +414,45 @@ test('Comment history is inaccessible after its parent thread is deleted', async
   } finally {
     await server.close();
     await cleanupForumThread(dal, threadId);
+    await cleanupUser(dal, userId);
+  }
+});
+
+test('Malformed forum and position IDs are not found rather than server errors', async () => {
+  const dal = await getDal();
+  const server = await makeTestServer(registerForumRoutes);
+  const slug = `meta/proposals/bad-id-${uniqueSuffix()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    user.emailVerifiedAt = new Date();
+    await user.save();
+    const { token } = await createSession(user.id);
+    const headers = { cookie: `agpwiki_session=${token}` };
+
+    for (const path of ['/tool/forum/thread/x', '/tool/forum/comment/x/history', '/tool/forum/comment/x/edit']) {
+      const response = await fetch(`${server.url}${path}`, { headers });
+      assert.equal(response.status, 404, path);
+    }
+    for (const path of [
+      '/tool/forum/comment/x/edit',
+      '/tool/forum/comment/x/delete',
+      '/tool/forum/thread/x/comment',
+      '/tool/forum/thread/x/subscription',
+    ]) {
+      const response = await postForm(`${server.url}${path}`, token, { body: 'Text.', language: 'en' });
+      assert.equal(response.status, 404, path);
+    }
+
+    await createWikiPage(dal, { slug, title: { en: 'Bad IDs' }, body: { en: 'Proposal.' } }, user.id);
+    await assert.rejects(
+      () => replyToPosition(dal, { slug, signoffId: 'x', body: 'Reply.', language: 'en' }, user.id),
+      NotFoundError
+    );
+  } finally {
+    await server.close();
+    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
     await cleanupUser(dal, userId);
   }
 });

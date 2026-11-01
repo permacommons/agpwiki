@@ -232,6 +232,10 @@ export const fetchCommonsMetadata = async (
     iiurlwidth: String(sampleWidth),
     format: 'json',
     formatversion: '2',
+    // Commons lets shared caches keep API answers for an hour, so a
+    // refresh right after a new upload could get the old file's details.
+    // A unique request ID makes every fetch a cache miss.
+    requestid: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
   });
 
   const controller = new AbortController();

@@ -267,6 +267,38 @@
     title: 'Zgodovina različic',
     compare: 'Primerjaj izbrane revizije',
   },
+  "revert": {
+    "tag": "vrnitev",
+    "restore": {
+      "link": "Obnovi",
+      "title": "Obnovi to različico",
+      "submit": "Obnovi to različico"
+    },
+    "rollback": {
+      "link": "Vrni",
+      "title": "Vrni",
+      "submit": "Vrni ta urejanja"
+    },
+    "summary": "S tem se vrne različica z dne {{date}}, avtor {{name}}. Razveljavljena urejanja: {{count}}, avtorji {{names}}.",
+    "seeChanges": "Poglej spremembe",
+    "reason": "Razlog",
+    "reasonHelp": "Povejte zakaj, na primer »ni virov za novo razdelek«. Postane povzetek urejanja in ljudje, katerih urejanja se razveljavijo, ga vidijo.",
+    "reasonRequired": "Vpišite razlog.",
+    "changed": "Stran se je spremenila, medtem ko ste jo gledali. Preverite, kaj bi to zdaj razveljavilo, preden nadaljujete.",
+    "forbidden": "Na tej strani ne morete vračati urejanj.",
+    "invalid": "Tukaj to ni mogoče: različica je morda že trenutna ali pa ni ničesar za vrnitev.",
+    "guard": {
+      "title": "Vaša vrnitev je bila razveljavljena",
+      "body": "Nekdo je razveljavil vašo vrnitev te strani. Po pravilih ravnanja operaterjev je naslednji korak razprava, ne nova vrnitev.",
+      "discuss": "Razpravljaj o tej strani",
+      "conduct": "Preberi pravila ravnanja"
+    },
+    "recent": {
+      "showReverts": "Pokaži samo vrnitve",
+      "onlyReverts": "Prikazane so samo vrnitve",
+      "all": "Pokaži vse spremembe"
+    }
+  },
   pageTabs: {
     label: 'Zavihki strani',
     article: 'Članek',
@@ -757,6 +789,7 @@
       "pageComment": "{{name}} je komentiral(a) {{subject}}",
       "pagePosition": "{{name}} je izrazil(a) stališče ({{stance}}) o {{subject}}",
       "pagePositionChanged": "{{name}} je spremenil(a) stališče o {{subject}} v {{stance}}",
+      "pageRevert": "{{name}} je vrnil(a) vaša urejanja strani {{subject}}",
       "other": "Nova dejavnost: {{subject}}"
     },
     "markRead": "Označi kot prebrano",
@@ -794,6 +827,10 @@
         "pageComment": {
           "label": "Komentarji na straneh, ki jih spremljaš",
           "help": "Spremljaš strani, ki jih ustvariš, in vsako stran, kjer klikneš Spremljaj. Izveš za nove razprave, komentarje in stališča, nikoli za urejanja."
+        },
+        "pageRevert": {
+          "label": "Vrnitve vaših urejanj",
+          "help": "Ko nekdo obnovi starejšo različico strani ali vrne vaša urejanja. Vidite razlog."
         }
       }
     }
