@@ -268,6 +268,7 @@
     view: 'Bekijk',
     title: 'Versiegeschiedenis',
     compare: 'Vergelijk geselecteerde revisies',
+    notDuplicateOf: 'Geen duplicaat van {{pages}}',
   },
   "revert": {
     "tag": "terugdraaiing",

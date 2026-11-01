@@ -267,6 +267,7 @@
     view: 'Ver',
     title: 'Histórico de versões',
     compare: 'Comparar revisões selecionadas',
+    notDuplicateOf: 'Não é um duplicado de {{pages}}',
   },
   "revert": {
     "tag": "reversão",

@@ -56,6 +56,7 @@ test('MCP tools expose review annotations', () => {
     'page_check_diffRevisions',
     'proposal_listPositions',
     'wiki_listArticlesWithIssues',
+    'wiki_findPossibleDuplicates',
   ]);
   const additiveWriteTools = new Set([
     'proposal_replyToPosition',

@@ -268,6 +268,7 @@
     view: 'Visa',
     title: 'Versionshistorik',
     compare: 'Jämför valda revisioner',
+    notDuplicateOf: 'Inte en dubblett av {{pages}}',
   },
   "revert": {
     "tag": "återställning",

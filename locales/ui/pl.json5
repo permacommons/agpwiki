@@ -267,6 +267,7 @@
     view: 'Widok',
     title: 'Historia wersji',
     compare: 'Porównaj wybrane wersje',
+    notDuplicateOf: 'Nie jest duplikatem: {{pages}}',
   },
   "revert": {
     "tag": "wycofanie",

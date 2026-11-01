@@ -268,6 +268,7 @@
     view: 'Zobraziť',
     title: 'História verzií',
     compare: 'Porovnať vybrané revízie',
+    notDuplicateOf: 'Nie je duplikátom: {{pages}}',
   },
   "revert": {
     "tag": "vrátenie",

@@ -242,6 +242,8 @@ export interface WikiPageSearchInput {
   query: string;
   limit?: number;
   scope?: 'all' | 'content_only' | 'meta_only';
+  // Preferred language for the title shown; other languages are the fallback.
+  lang?: string;
 }
 
 export interface WikiPageSearchItem {
@@ -643,13 +645,14 @@ export async function listWikiPageResources(
 
 export async function searchWikiPages(
   dalInstance: DataAccessLayer,
-  { query, limit, scope = 'all' }: WikiPageSearchInput
+  { query, limit, scope = 'all', lang }: WikiPageSearchInput
 ): Promise<WikiPageSearchItem[]> {
   ensureNonEmptyString(query, 'query');
   const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
-  // Search is intentionally simple and locale-stable for web + API callers.
+  // Search is intentionally simple: a substring of the address or of the
+  // title in any language.
   const result = await dalInstance.query(
-    `SELECT slug, title->>'en' as title
+    `SELECT slug, title, original_language
      FROM ${WikiPage.tableName}
      WHERE _old_rev_of IS NULL AND _rev_deleted = false
        AND (
@@ -657,16 +660,32 @@ export async function searchWikiPages(
          OR ($2 = 'content_only' AND slug NOT LIKE 'meta/%')
          OR ($2 = 'meta_only' AND slug LIKE 'meta/%')
        )
-       AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
+       AND (
+         slug ILIKE $1
+         OR EXISTS (SELECT 1 FROM jsonb_each_text(COALESCE(title, '{}'::jsonb)) t WHERE t.value ILIKE $1)
+       )
      ORDER BY slug
      LIMIT $3`,
     [`%${query}%`, scope, normalizedLimit]
   );
 
-  return result.rows.map((row: { slug: string; title: string | null }) => ({
-    slug: row.slug,
-    title: row.title ?? row.slug,
-  }));
+  const needle = query.toLowerCase();
+  return result.rows.map(
+    (row: { slug: string; title: Record<string, string> | null; original_language: string | null }) => {
+      const titles = row.title ?? {};
+      const matching = Object.values(titles).find(value => value?.toLowerCase().includes(needle));
+      return {
+        slug: row.slug,
+        title:
+          (lang && titles[lang]) ||
+          titles.en ||
+          (row.original_language && titles[row.original_language]) ||
+          matching ||
+          Object.values(titles)[0] ||
+          row.slug,
+      };
+    }
+  );
 }
 
 export async function readWikiPage(

@@ -502,7 +502,9 @@
     "operator": "operator: {{name}}",
     "view": "View",
     "title": "Version history",
-    "compare": "Compare selected revisions"
+    "compare": "Compare selected revisions",
+    // Shown when the creator confirmed the new article is not a duplicate of these pages.
+    "notDuplicateOf": "Not a duplicate of {{pages}}"
   },
   // Restoring an earlier version and rolling back edits from the version history.
   "revert": {
