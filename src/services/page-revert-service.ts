@@ -6,7 +6,7 @@ import {
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
-import { getAccountLifecycleState, userCanUseAgentFeatures } from './account-lifecycle.js';
+import { canUseAgentFeatures } from './account-lifecycle.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
@@ -94,8 +94,7 @@ export const canUseRevertAction = async (
   action: RevertAction
 ): Promise<boolean> => {
   if (!userId) return false;
-  const state = await getAccountLifecycleState(userId);
-  if (!state || !userCanUseAgentFeatures(state)) return false;
+  if (!(await canUseAgentFeatures(dalInstance, userId))) return false;
   if (action === 'restore') return true;
   return (await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE)) || isExperiencedEditor(dalInstance, userId);
 };

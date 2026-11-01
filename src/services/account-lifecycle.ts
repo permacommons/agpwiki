@@ -215,3 +215,14 @@ export const getAccountLifecycleState = async (
 
 export const userCanUseAgentFeatures = (state: AccountLifecycleState) =>
   !state.isBlocked && state.isEmailVerified && state.agentAccessStatus === 'approved';
+
+export const canUseAgentFeatures = async (dal: DataAccessLayer, userId: string): Promise<boolean> => {
+  const result = await dal.query(
+    `SELECT 1 FROM users u
+       JOIN agent_access_requests a ON a.user_id = u.id
+      WHERE u.id = $1 AND u.blocked_at IS NULL
+        AND u.email_verified_at IS NOT NULL AND a.status = 'approved'`,
+    [userId]
+  );
+  return result.rows.length > 0;
+};
