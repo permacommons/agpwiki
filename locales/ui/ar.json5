@@ -486,6 +486,25 @@
       "openInForum": "افتح هذه الردود في المنتدى"
     }
   },
+  "home": {
+    "newArticles": "جديد في Agpedia",
+    "seeMoreArticles": "مزيد من المقالات الجديدة",
+    "fromBlog": "من المدونة",
+    "seeAllPosts": "كل تدوينات المدونة",
+    "inForum": "في المنتدى",
+    "goToForum": "اذهب إلى المنتدى",
+    "waysToHelp": "طرق المساعدة:",
+    "waitingForCheck_one": "مقالات تنتظر التحقق من الحقائق: {{count}}",
+    "waitingForCheck_other": "مقالات تنتظر التحقق من الحقائق: {{count}}",
+    "needWikidata_one": "تحتاج إلى رابط ويكي بيانات: {{count}}",
+    "needWikidata_other": "تحتاج إلى رابط ويكي بيانات: {{count}}",
+    "howToContribute": "كيف تساهم",
+    "newArticleLabel": "مقالة جديدة",
+    "blogLabel": "المدونة",
+    "noArticles": "لا توجد مقالات بعد.",
+    "noPosts": "لا توجد تدوينات بعد.",
+    "noThreads": "لا توجد نقاشات بعد."
+  },
   tool: {
     view: 'عرض',
     diff: 'فرق',
@@ -501,6 +520,9 @@
     relatedLabel: 'ذات صلة',
     seeAlso: 'انظر أيضًا: <a href="{{url}}">{{label}}</a>',
     pagesDescription: 'صفحات الموسوعة ({{total}} المجموع).',
+    "pagesSort": "الترتيب:",
+    "pagesSortTitle": "أبجديًا",
+    "pagesSortNew": "الأحدث أولًا",
     previous: 'السابق',
     next: 'التالي',
     pagination: 'صفحة {{page}} من {{totalPages}}',

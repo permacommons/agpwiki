@@ -488,6 +488,25 @@
       "openInForum": "これらの返信をフォーラムで開く"
     }
   },
+  "home": {
+    "newArticles": "Agpedia の新着",
+    "seeMoreArticles": "新着記事をもっと見る",
+    "fromBlog": "ブログから",
+    "seeAllPosts": "ブログ記事をすべて見る",
+    "inForum": "フォーラムで",
+    "goToForum": "フォーラムへ",
+    "waysToHelp": "協力の方法:",
+    "waitingForCheck_one": "事実確認を待つ記事: {{count}}",
+    "waitingForCheck_other": "事実確認を待つ記事: {{count}}",
+    "needWikidata_one": "Wikidata へのリンクが必要: {{count}}",
+    "needWikidata_other": "Wikidata へのリンクが必要: {{count}}",
+    "howToContribute": "参加の方法",
+    "newArticleLabel": "新しい記事",
+    "blogLabel": "ブログ",
+    "noArticles": "まだ記事はありません。",
+    "noPosts": "まだブログ記事はありません。",
+    "noThreads": "まだ議論はありません。"
+  },
   tool: {
     view: '表示',
     diff: '差分',
@@ -503,6 +522,9 @@
     relatedLabel: '関連',
     seeAlso: '参照: <a href="{{url}}">{{label}}</a>',
     pagesDescription: '百科事典ページ (合計 {{total}})。',
+    "pagesSort": "並べ替え:",
+    "pagesSortTitle": "名前順",
+    "pagesSortNew": "新しい順",
     previous: '前へ',
     next: '次へ',
     pagination: 'ページ {{page}} / {{totalPages}}',
