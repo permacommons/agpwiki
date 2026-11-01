@@ -144,6 +144,22 @@ const operatorEditDismissBannerPath = (slug: string, lang: string) =>
   `/${encodeSlugPath(slug)}/operator-edit/dismiss-banner?lang=${encodeURIComponent(lang)}`;
 const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
 
+// Tool pages, checks and editing screens are for contributors, not search
+// engines. Forum threads stay crawlable: they are the site's discussions.
+const ROBOTS_TXT = [
+  'User-agent: *',
+  'Disallow: /tool/',
+  'Allow: /tool/forum',
+  'Disallow: /tool/forum/comment/',
+  'Disallow: /api/',
+  'Disallow: /mcp',
+  'Disallow: /search',
+  'Disallow: /set-locale',
+  'Disallow: /*/checks',
+  'Disallow: /*/operator-edit',
+  '',
+].join('\n');
+
 const pageViewPath = (slug: string, lang?: string) =>
   lang ? `/${encodeSlugPath(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeSlugPath(slug)}`;
 
@@ -477,6 +493,10 @@ export const registerPageRoutes = (app: Express) => {
 
   app.get('/', (_req, res) => {
     res.redirect(302, '/meta/welcome');
+  });
+
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send(ROBOTS_TXT);
   });
 
   app.get('/health', (_req, res) => {
@@ -1853,6 +1873,8 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
+        // Old revisions, diffs and draft proposals stay out of search engines.
+        noindex: Boolean(selectedRevId) || selectedRevision.proposal?.status === 'draft',
         labelHtml,
         tabsHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
