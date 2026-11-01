@@ -324,7 +324,7 @@
     link: 'redigera',
     linkLabel: 'Redigera avsnitt: {{section}}',
     lead: 'Inledning',
-    editLead: 'redigera inledningen',
+    editLead: 'Redigera inledningen',
     editing: 'Redigerar avsnitt: {{section}}',
     wholePage: 'Redigera hela sidan',
     changed: 'Avsnittet ändrades medan du redigerade. Läs in det igen och försök på nytt.',

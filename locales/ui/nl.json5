@@ -324,7 +324,7 @@
     link: 'bewerken',
     linkLabel: 'Sectie bewerken: {{section}}',
     lead: 'Inleiding',
-    editLead: 'inleiding bewerken',
+    editLead: 'Inleiding bewerken',
     editing: 'Sectie bewerken: {{section}}',
     wholePage: 'Hele pagina bewerken',
     changed: 'Deze sectie is gewijzigd terwijl je bewerkte. Laad haar opnieuw en probeer het nog eens.',

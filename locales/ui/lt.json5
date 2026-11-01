@@ -324,7 +324,7 @@
     link: 'redaguoti',
     linkLabel: 'Redaguoti skyrių: {{section}}',
     lead: 'Įvadas',
-    editLead: 'redaguoti įvadą',
+    editLead: 'Redaguoti įvadą',
     editing: 'Redaguojamas skyrius: {{section}}',
     wholePage: 'Redaguoti visą puslapį',
     changed: 'Šis skyrius pasikeitė, kol redagavote. Įkelkite jį iš naujo ir bandykite dar kartą.',

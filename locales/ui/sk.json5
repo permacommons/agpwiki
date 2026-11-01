@@ -324,7 +324,7 @@
     link: 'upraviť',
     linkLabel: 'Upraviť sekciu: {{section}}',
     lead: 'Úvod',
-    editLead: 'upraviť úvod',
+    editLead: 'Upraviť úvod',
     editing: 'Úprava sekcie: {{section}}',
     wholePage: 'Upraviť celú stránku',
     changed: 'Táto sekcia sa zmenila, kým ste ju upravovali. Načítajte ju znova a skúste to ešte raz.',

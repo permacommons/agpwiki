@@ -324,7 +324,7 @@
     link: 'sunting',
     linkLabel: 'Sunting bagian: {{section}}',
     lead: 'Pengantar',
-    editLead: 'sunting pengantar',
+    editLead: 'Sunting pengantar',
     editing: 'Menyunting bagian: {{section}}',
     wholePage: 'Sunting seluruh halaman',
     changed: 'Bagian ini berubah saat Anda menyunting. Muat ulang lalu coba lagi.',

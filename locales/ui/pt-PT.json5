@@ -323,7 +323,7 @@
     link: 'editar',
     linkLabel: 'Editar secção: {{section}}',
     lead: 'Introdução',
-    editLead: 'editar a introdução',
+    editLead: 'Editar a introdução',
     editing: 'A editar a secção: {{section}}',
     wholePage: 'Editar a página inteira',
     changed: 'Esta secção mudou enquanto editava. Recarregue-a e tente novamente.',

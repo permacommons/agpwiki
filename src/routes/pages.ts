@@ -1460,8 +1460,10 @@ export const registerPageRoutes = (app: Express) => {
         : undefined;
       const leadEditHtml =
         canEditSections && trimBlankLines(editableSections[0]?.content ?? '').trim()
-          ? `<p class="section-edit section-edit--lead">[<a href="${escapeHtml(sectionEditHref(0))}">${escapeHtml(
+          ? `<p class="section-edit section-edit--lead">[<a href="${escapeHtml(sectionEditHref(0))}" aria-label="${escapeHtml(
               req.t('sectionEdit.editLead')
+            )}" title="${escapeHtml(req.t('sectionEdit.editLead'))}"><span aria-hidden="true">↑ </span>${escapeHtml(
+              req.t('sectionEdit.link')
             )}</a>]</p>`
           : '';
       const { html: bodyHtml, toc } = await renderMarkdown(

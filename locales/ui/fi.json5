@@ -324,7 +324,7 @@
     link: 'muokkaa',
     linkLabel: 'Muokkaa osiota: {{section}}',
     lead: 'Johdanto',
-    editLead: 'muokkaa johdantoa',
+    editLead: 'Muokkaa johdantoa',
     editing: 'Muokataan osiota: {{section}}',
     wholePage: 'Muokkaa koko sivua',
     changed: 'Osio muuttui muokkauksesi aikana. Lataa se uudelleen ja yritä uudestaan.',

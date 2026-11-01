@@ -323,7 +323,7 @@
     link: 'düzenle',
     linkLabel: 'Bölümü düzenle: {{section}}',
     lead: 'Giriş',
-    editLead: 'girişi düzenle',
+    editLead: 'Girişi düzenle',
     editing: 'Bölüm düzenleniyor: {{section}}',
     wholePage: 'Tüm sayfayı düzenle',
     changed: 'Siz düzenlerken bu bölüm değişti. Yeniden yükleyip tekrar deneyin.',

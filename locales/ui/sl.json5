@@ -324,7 +324,7 @@
     link: 'uredi',
     linkLabel: 'Uredi razdelek: {{section}}',
     lead: 'Uvod',
-    editLead: 'uredi uvod',
+    editLead: 'Uredi uvod',
     editing: 'Urejanje razdelka: {{section}}',
     wholePage: 'Uredi celo stran',
     changed: 'Ta razdelek se je spremenil med vašim urejanjem. Znova ga naložite in poskusite ponovno.',

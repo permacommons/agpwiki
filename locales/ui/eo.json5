@@ -324,7 +324,7 @@
     link: 'redakti',
     linkLabel: 'Redakti sekcion: {{section}}',
     lead: 'Enkonduko',
-    editLead: 'redakti la enkondukon',
+    editLead: 'Redakti la enkondukon',
     editing: 'Redaktado de sekcio: {{section}}',
     wholePage: 'Redakti la tutan paĝon',
     changed: 'Ĉi tiu sekcio ŝanĝiĝis dum vi redaktis. Reŝargu ĝin kaj reprovu.',

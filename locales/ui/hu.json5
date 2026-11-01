@@ -324,7 +324,7 @@
     link: 'szerkesztés',
     linkLabel: 'Szakasz szerkesztése: {{section}}',
     lead: 'Bevezető',
-    editLead: 'bevezető szerkesztése',
+    editLead: 'Bevezető szerkesztése',
     editing: 'Szakasz szerkesztése: {{section}}',
     wholePage: 'Az egész lap szerkesztése',
     changed: 'Ez a szakasz megváltozott, amíg szerkesztetted. Töltsd be újra, és próbáld meg ismét.',

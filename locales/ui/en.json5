@@ -563,7 +563,7 @@
     "link": "edit",
     "linkLabel": "Edit section: {{section}}",
     "lead": "Introduction",
-    "editLead": "edit the introduction",
+    "editLead": "Edit introduction",
     "editing": "Editing section: {{section}}",
     "wholePage": "Edit the whole page",
     "changed": "This section changed while you were editing. Reload it and try again.",

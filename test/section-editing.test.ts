@@ -234,7 +234,7 @@ test('Editors see section edit links; the section form edits and saves only that
     assert.doesNotMatch(signedOut, /section-edit/);
     const view = await getBody(`/${slug}`);
     assert.ok(view.includes(`href="/${slug}/operator-edit?lang=en&amp;section=3" aria-label="sectionEdit.linkLabel{&quot;section&quot;:&quot;Uses&quot;}"`));
-    assert.ok(view.includes(`class="section-edit section-edit--lead">[<a href="/${slug}/operator-edit?lang=en&amp;section=0">`));
+    assert.ok(view.includes(`class="section-edit section-edit--lead">[<a href="/${slug}/operator-edit?lang=en&amp;section=0" aria-label="sectionEdit.editLead" title="sectionEdit.editLead"><span aria-hidden="true">↑ </span>sectionEdit.link</a>]`));
     const revId = (await dal.query('SELECT _rev_id FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [slug])).rows[0]
       ._rev_id as string;
     assert.doesNotMatch(await getBody(`/${slug}?rev=${revId}`), /section-edit/, 'no links on an old revision');
