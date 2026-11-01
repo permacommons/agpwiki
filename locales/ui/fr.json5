@@ -307,7 +307,11 @@
     page: 'Page',
     discuss: 'Discuter',
     edit: 'Modifier',
-    history: 'Historique'
+    history: 'Historique',
+    "follow": "Suivre",
+    "following": "Suivi",
+    "followHelp": "Être averti des nouveaux commentaires sur cette page. Les modifications ne déclenchent pas d'avertissement.",
+    "followingHelp": "Tu es averti des nouveaux commentaires sur cette page. Les modifications ne déclenchent pas d'avertissement. Clique pour ne plus suivre."
   },
   howToEdit: {
     title: 'Comment modifier cette page',
@@ -801,6 +805,10 @@
     "someone": "Quelqu’un",
     "kind": {
       "forumReply": "{{name}} a répondu dans {{subject}}",
+      "pageThread": "{{name}} a ouvert une discussion sur {{subject}}",
+      "pageComment": "{{name}} a commenté {{subject}}",
+      "pagePosition": "{{name}} a donné une position ({{stance}}) sur {{subject}}",
+      "pagePositionChanged": "{{name}} a changé sa position sur {{subject}} en {{stance}}",
       "pageRevert": "{{name}} a annulé vos modifications de {{subject}}",
       "other": "Nouvelle activité dans {{subject}}"
     },
@@ -810,6 +818,12 @@
     "unread": "nouveau",
     "settings": "Paramètres des notifications",
     "empty": "Aucune notification pour l’instant. Tu en reçois une quand quelqu’un répond dans un fil du forum que tu suis."
+  },
+  "following": {
+    "heading": "Pages que tu suis",
+    "intro": "Tu es informé des nouveaux commentaires sur ces pages. Le bouton Suivre, à côté de Discuter, permet de suivre n'importe quelle page.",
+    "empty": "Tu ne suis encore aucune page.",
+    "unfollow": "Ne plus suivre"
   },
   settings: {
     title: 'Paramètres',
@@ -829,6 +843,10 @@
         "forumReply": {
           "label": "Réponses dans les fils du forum que tu suis",
           "help": "Tu suis un fil quand tu le crées ou que tu y réponds. Tu peux aussi le suivre ou ne plus le suivre depuis le fil."
+        },
+        "pageComment": {
+          "label": "Commentaires sur les pages que tu suis",
+          "help": "Tu suis les pages que tu crées et toute page où tu cliques sur Suivre. Tu es informé des nouvelles discussions, des commentaires et des positions, jamais des modifications."
         },
         "pageRevert": {
           "label": "Annulations de vos modifications",

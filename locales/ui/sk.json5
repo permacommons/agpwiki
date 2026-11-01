@@ -307,7 +307,11 @@
     page: 'Stránka',
     discuss: 'Diskusia',
     edit: 'Upraviť',
-    history: 'História'
+    history: 'História',
+    "follow": "Sledovať",
+    "following": "Sleduješ",
+    "followHelp": "Dostávaj upozornenia na nové komentáre na tejto stránke. Úpravy upozornenia neposielajú.",
+    "followingHelp": "Dostávaš upozornenia na nové komentáre na tejto stránke. Úpravy upozornenia neposielajú. Kliknutím prestaneš sledovať."
   },
   howToEdit: {
     title: 'Ako upraviť túto stránku',
@@ -802,6 +806,10 @@
     "someone": "Niekto",
     "kind": {
       "forumReply": "{{name}} odpovedal(a) vo vlákne {{subject}}",
+      "pageThread": "{{name}} začal(a) diskusiu o {{subject}}",
+      "pageComment": "{{name}} komentoval(a) {{subject}}",
+      "pagePosition": "{{name}} vyjadril(a) postoj ({{stance}}) k {{subject}}",
+      "pagePositionChanged": "{{name}} zmenil(a) postoj k {{subject}} na {{stance}}",
       "pageRevert": "{{name}} vrátil(a) vaše úpravy stránky {{subject}}",
       "other": "Nová aktivita: {{subject}}"
     },
@@ -811,6 +819,12 @@
     "unread": "nové",
     "settings": "Nastavenia upozornení",
     "empty": "Zatiaľ žiadne upozornenia. Dostaneš ho, keď niekto odpovie vo vlákne fóra, ktoré sleduješ."
+  },
+  "following": {
+    "heading": "Sledované stránky",
+    "intro": "Dozvieš sa o nových komentároch na týchto stránkach. Ktorúkoľvek stránku môžeš sledovať tlačidlom Sledovať vedľa Diskutovať.",
+    "empty": "Zatiaľ nesleduješ žiadnu stránku.",
+    "unfollow": "Prestať sledovať"
   },
   settings: {
     title: 'Nastavenia',
@@ -830,6 +844,10 @@
         "forumReply": {
           "label": "Odpovede vo vláknach fóra, ktoré sleduješ",
           "help": "Vlákno sleduješ, keď ho založíš alebo v ňom odpovieš. Sledovanie môžeš zapnúť alebo vypnúť aj priamo vo vlákne."
+        },
+        "pageComment": {
+          "label": "Komentáre na sledovaných stránkach",
+          "help": "Sleduješ stránky, ktoré vytvoríš, a každú stránku, kde klikneš na Sledovať. Dozvieš sa o nových diskusiách, komentároch a postojoch, nikdy o úpravách."
         },
         "pageRevert": {
           "label": "Vrátenia vašich úprav",

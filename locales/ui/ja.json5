@@ -306,7 +306,11 @@
     page: 'ページ',
     discuss: '議論',
     edit: '編集',
-    history: '履歴'
+    history: '履歴',
+    "follow": "フォロー",
+    "following": "フォロー中",
+    "followHelp": "このページへの新しいコメントを通知します。編集は通知されません。",
+    "followingHelp": "このページへの新しいコメントが通知されます。編集は通知されません。クリックするとフォローをやめます。"
   },
   howToEdit: {
     title: 'このページの編集方法',
@@ -800,6 +804,10 @@
     "someone": "誰か",
     "kind": {
       "forumReply": "{{name}} さんが {{subject}} に返信しました",
+      "pageThread": "{{name}}さんが{{subject}}で議論を始めました",
+      "pageComment": "{{name}}さんが{{subject}}にコメントしました",
+      "pagePosition": "{{name}}さんが{{subject}}に立場（{{stance}}）を表明しました",
+      "pagePositionChanged": "{{name}}さんが{{subject}}への立場を{{stance}}に変更しました",
       "pageRevert": "{{name}} が {{subject}} へのあなたの編集を差し戻しました",
       "other": "{{subject}} に新しい動きがあります"
     },
@@ -809,6 +817,12 @@
     "unread": "新着",
     "settings": "通知の設定",
     "empty": "通知はまだありません。フォローしているフォーラムのスレッドで誰かが返信すると届きます。"
+  },
+  "following": {
+    "heading": "フォロー中のページ",
+    "intro": "これらのページへの新しいコメントが通知されます。どのページでも「議論」の隣の「フォロー」ボタンでフォローできます。",
+    "empty": "まだフォローしているページはありません。",
+    "unfollow": "フォローをやめる"
   },
   settings: {
     title: '設定',
@@ -828,6 +842,10 @@
         "forumReply": {
           "label": "フォローしているフォーラムのスレッドへの返信",
           "help": "スレッドを作成するか返信すると、そのスレッドをフォローします。スレッド上でフォローの開始や解除もできます。"
+        },
+        "pageComment": {
+          "label": "フォロー中のページへのコメント",
+          "help": "自分で作成したページと、「フォロー」を押したページをフォローします。新しい議論・コメント・立場の表明が通知され、編集は通知されません。"
         },
         "pageRevert": {
           "label": "あなたの編集の差し戻し",

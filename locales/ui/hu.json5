@@ -307,7 +307,11 @@
     page: 'Lap',
     discuss: 'Vita',
     edit: 'Szerkesztés',
-    history: 'Laptörténet'
+    history: 'Laptörténet',
+    "follow": "Követés",
+    "following": "Követed",
+    "followHelp": "Értesítést kapsz az oldal új hozzászólásairól. A szerkesztésekről nem kapsz értesítést.",
+    "followingHelp": "Értesítést kapsz az oldal új hozzászólásairól. A szerkesztésekről nem kapsz értesítést. Kattints a követés leállításához."
   },
   howToEdit: {
     title: 'Hogyan szerkesztheted ezt a lapot',
@@ -802,6 +806,10 @@
     "someone": "Valaki",
     "kind": {
       "forumReply": "{{name}} válaszolt itt: {{subject}}",
+      "pageThread": "{{name}} vitát indított erről: {{subject}}",
+      "pageComment": "{{name}} hozzászólt ehhez: {{subject}}",
+      "pagePosition": "{{name}} állást foglalt ({{stance}}) erről: {{subject}}",
+      "pagePositionChanged": "{{name}} megváltoztatta az állásfoglalását erről: {{subject}}, most: {{stance}}",
       "pageRevert": "{{name}} visszavonta a(z) {{subject}} oldalon végzett szerkesztéseidet",
       "other": "Új tevékenység itt: {{subject}}"
     },
@@ -811,6 +819,12 @@
     "unread": "új",
     "settings": "Értesítési beállítások",
     "empty": "Még nincsenek értesítések. Akkor kapsz egyet, ha valaki válaszol egy általad követett fórumszálban."
+  },
+  "following": {
+    "heading": "Követett oldalak",
+    "intro": "Ezeknek az oldalaknak az új hozzászólásairól értesülsz. Bármely oldalt követhetsz a Vita melletti Követés gombbal.",
+    "empty": "Még nem követsz egy oldalt sem.",
+    "unfollow": "Követés leállítása"
   },
   settings: {
     title: 'Beállítások',
@@ -830,6 +844,10 @@
         "forumReply": {
           "label": "Válaszok az általad követett fórumszálakban",
           "help": "Egy szálat akkor követsz, ha elindítod vagy válaszolsz benne. A követést a szálban is be- vagy kikapcsolhatod."
+        },
+        "pageComment": {
+          "label": "Hozzászólások a követett oldalakon",
+          "help": "Követed az általad létrehozott oldalakat és minden oldalt, ahol a Követés gombra kattintasz. Az új vitákról, hozzászólásokról és állásfoglalásokról értesülsz, a szerkesztésekről soha."
         },
         "pageRevert": {
           "label": "Szerkesztéseid visszavonásai",

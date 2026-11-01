@@ -13,9 +13,23 @@ export const NOTIFICATIONS_PANEL_LIMIT = 8;
 export const renderNotificationText = (notification: SiteNotification, t: TFunction) => {
   const name = `<strong>${escapeHtml(notification.actorName ?? t('notifications.someone'))}</strong>`;
   const subject = `<a href="${escapeHtml(notificationOpenPath(notification.id))}">${escapeHtml(notification.subject)}</a>`;
+  // Positions carry their stance in the kind, e.g. page.position.oppose.
+  const position = /^page\.(position|position-changed)\.(support|neutral|oppose)$/.exec(notification.kind);
+  if (position) {
+    const stance = escapeHtml(t(`signoff.stance.${position[2]}`));
+    return t(position[1] === 'position' ? 'notifications.kind.pagePosition' : 'notifications.kind.pagePositionChanged', {
+      name,
+      subject,
+      stance,
+    });
+  }
   switch (notification.kind) {
     case 'forum.reply':
       return t('notifications.kind.forumReply', { name, subject });
+    case 'page.thread':
+      return t('notifications.kind.pageThread', { name, subject });
+    case 'page.comment':
+      return t('notifications.kind.pageComment', { name, subject });
     case 'page.revert':
       return t('notifications.kind.pageRevert', { name, subject });
     default:

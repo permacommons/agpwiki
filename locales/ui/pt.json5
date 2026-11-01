@@ -306,7 +306,11 @@
     page: 'Página',
     discuss: 'Discutir',
     edit: 'Editar',
-    history: 'Histórico'
+    history: 'Histórico',
+    "follow": "Seguir",
+    "following": "Seguindo",
+    "followHelp": "Receba avisos de novos comentários nesta página. Edições não geram avisos.",
+    "followingHelp": "Você recebe avisos de novos comentários nesta página. Edições não geram avisos. Clique para deixar de seguir."
   },
   howToEdit: {
     title: 'Como editar esta página',
@@ -800,6 +804,10 @@
     "someone": "Alguém",
     "kind": {
       "forumReply": "{{name}} respondeu em {{subject}}",
+      "pageThread": "{{name}} iniciou uma discussão sobre {{subject}}",
+      "pageComment": "{{name}} comentou em {{subject}}",
+      "pagePosition": "{{name}} registrou uma posição ({{stance}}) sobre {{subject}}",
+      "pagePositionChanged": "{{name}} mudou a posição sobre {{subject}} para {{stance}}",
       "pageRevert": "{{name}} reverteu suas edições em {{subject}}",
       "other": "Nova atividade em {{subject}}"
     },
@@ -809,6 +817,12 @@
     "unread": "nova",
     "settings": "Configurações de notificação",
     "empty": "Ainda não há notificações. Você recebe uma quando alguém responde num tópico do fórum que você segue."
+  },
+  "following": {
+    "heading": "Páginas que você segue",
+    "intro": "Você é avisado de novos comentários nestas páginas. Use o botão Seguir ao lado de Discutir em qualquer página para segui-la.",
+    "empty": "Você ainda não segue nenhuma página.",
+    "unfollow": "Deixar de seguir"
   },
   settings: {
     title: 'Configurações',
@@ -828,6 +842,10 @@
         "forumReply": {
           "label": "Respostas em tópicos do fórum que você segue",
           "help": "Você segue um tópico quando o inicia ou responde nele. Também pode seguir ou deixar de seguir pelo próprio tópico."
+        },
+        "pageComment": {
+          "label": "Comentários nas páginas que você segue",
+          "help": "Você segue as páginas que cria e qualquer página em que clicar em Seguir. É avisado de novas discussões, comentários e posições, nunca de edições."
         },
         "pageRevert": {
           "label": "Reversões das suas edições",

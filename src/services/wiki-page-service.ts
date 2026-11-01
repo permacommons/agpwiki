@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import type { PoolClient } from 'pg';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import debug from '../../util/debug.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import {
   validateLocalizedMarkdownContent,
@@ -39,6 +40,7 @@ import {
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
+import { followPage } from './page-subscription-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
@@ -715,7 +717,7 @@ export async function readWikiPage(
 }
 
 export async function createWikiPage(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   { slug, title, body, originalLanguage, wikidata, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
@@ -774,6 +776,12 @@ export async function createWikiPage(
   page.updatedAt = createdAt;
 
   await page.save();
+  try {
+    await followPage(dalInstance, page.id, userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to make ${userId} follow new page ${page.id}: ${message}`);
+  }
 
   return toWikiPageResult(page);
 }

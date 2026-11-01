@@ -307,7 +307,11 @@
     page: 'Paĝo',
     discuss: 'Diskuti',
     edit: 'Redakti',
-    history: 'Historio'
+    history: 'Historio',
+    "follow": "Sekvi",
+    "following": "Sekvata",
+    "followHelp": "Ricevu sciigon pri novaj komentoj ĉe ĉi tiu paĝo. Redaktoj ne sciigas vin.",
+    "followingHelp": "Vi ricevas sciigojn pri novaj komentoj ĉe ĉi tiu paĝo. Redaktoj ne sciigas vin. Alklaku por ĉesi sekvi."
   },
   howToEdit: {
     title: 'Kiel redakti ĉi tiun paĝon',
@@ -800,6 +804,10 @@
     "someone": "Iu",
     "kind": {
       "forumReply": "{{name}} respondis en {{subject}}",
+      "pageThread": "{{name}} komencis diskuton pri {{subject}}",
+      "pageComment": "{{name}} komentis pri {{subject}}",
+      "pagePosition": "{{name}} afiŝis pozicion ({{stance}}) pri {{subject}}",
+      "pagePositionChanged": "{{name}} ŝanĝis sian pozicion pri {{subject}} al {{stance}}",
       "pageRevert": "{{name}} malfaris viajn redaktojn de {{subject}}",
       "other": "Nova aktiveco en {{subject}}"
     },
@@ -809,6 +817,12 @@
     "unread": "nova",
     "settings": "Agordoj pri sciigoj",
     "empty": "Ankoraŭ neniuj sciigoj. Vi ricevos unu, kiam iu respondos en forumfadeno, kiun vi sekvas."
+  },
+  "following": {
+    "heading": "Paĝoj, kiujn vi sekvas",
+    "intro": "Vi ekscias pri novaj komentoj ĉe ĉi tiuj paĝoj. Uzu la butonon Sekvi apud Diskuti ĉe iu ajn paĝo por sekvi ĝin.",
+    "empty": "Vi ankoraŭ sekvas neniun paĝon.",
+    "unfollow": "Ĉesi sekvi"
   },
   settings: {
     title: 'Agordoj',
@@ -828,6 +842,10 @@
         "forumReply": {
           "label": "Respondoj en forumfadenoj, kiujn vi sekvas",
           "help": "Vi sekvas fadenon, kiam vi komencas ĝin aŭ respondas en ĝi. Vi ankaŭ povas eksekvi aŭ malsekvi ĝin en la fadeno."
+        },
+        "pageComment": {
+          "label": "Komentoj ĉe paĝoj, kiujn vi sekvas",
+          "help": "Vi sekvas la paĝojn, kiujn vi kreas, kaj ĉiun paĝon, kie vi alklakas Sekvi. Vi ekscias pri novaj diskutoj, komentoj kaj pozicioj tie, neniam pri redaktoj."
         },
         "pageRevert": {
           "label": "Malfaroj de viaj redaktoj",

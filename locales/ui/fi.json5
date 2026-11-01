@@ -307,7 +307,11 @@
     page: 'Sivu',
     discuss: 'Keskustele',
     edit: 'Muokkaa',
-    history: 'Historia'
+    history: 'Historia',
+    "follow": "Seuraa",
+    "following": "Seuraat",
+    "followHelp": "Saat ilmoituksen tämän sivun uusista kommenteista. Muokkauksista ei ilmoiteta.",
+    "followingHelp": "Saat ilmoituksen tämän sivun uusista kommenteista. Muokkauksista ei ilmoiteta. Lopeta seuraaminen napsauttamalla."
   },
   howToEdit: {
     title: 'Näin muokkaat tätä sivua',
@@ -802,6 +806,10 @@
     "someone": "Joku",
     "kind": {
       "forumReply": "{{name}} vastasi ketjussa {{subject}}",
+      "pageThread": "{{name}} aloitti keskustelun sivusta {{subject}}",
+      "pageComment": "{{name}} kommentoi sivua {{subject}}",
+      "pagePosition": "{{name}} kertoi kantansa ({{stance}}) sivuun {{subject}}",
+      "pagePositionChanged": "{{name}} muutti kantansa sivuun {{subject}}: {{stance}}",
       "pageRevert": "{{name}} kumosi muokkauksesi sivulla {{subject}}",
       "other": "Uutta toimintaa: {{subject}}"
     },
@@ -811,6 +819,12 @@
     "unread": "uusi",
     "settings": "Ilmoitusasetukset",
     "empty": "Ei vielä ilmoituksia. Saat ilmoituksen, kun joku vastaa seuraamassasi foorumiketjussa."
+  },
+  "following": {
+    "heading": "Seuraamasi sivut",
+    "intro": "Saat tiedon näiden sivujen uusista kommenteista. Seuraa mitä tahansa sivua Keskustele-kohdan vieressä olevalla Seuraa-painikkeella.",
+    "empty": "Et seuraa vielä yhtään sivua.",
+    "unfollow": "Lopeta seuraaminen"
   },
   settings: {
     title: 'Asetukset',
@@ -830,6 +844,10 @@
         "forumReply": {
           "label": "Vastaukset seuraamissasi foorumiketjuissa",
           "help": "Seuraat ketjua, kun aloitat sen tai vastaat siihen. Voit myös aloittaa tai lopettaa seuraamisen ketjussa."
+        },
+        "pageComment": {
+          "label": "Kommentit seuraamillasi sivuilla",
+          "help": "Seuraat luomiasi sivuja ja jokaista sivua, jolla napsautat Seuraa. Saat tiedon niiden uusista keskusteluista, kommenteista ja kannoista, et koskaan muokkauksista."
         },
         "pageRevert": {
           "label": "Muokkaustesi kumoamiset",

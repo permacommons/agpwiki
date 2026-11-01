@@ -307,7 +307,11 @@
     page: 'Halaman',
     discuss: 'Diskusi',
     edit: 'Sunting',
-    history: 'Riwayat'
+    history: 'Riwayat',
+    "follow": "Ikuti",
+    "following": "Mengikuti",
+    "followHelp": "Dapatkan pemberitahuan komentar baru di halaman ini. Suntingan tidak memberi pemberitahuan.",
+    "followingHelp": "Anda mendapat pemberitahuan komentar baru di halaman ini. Suntingan tidak memberi pemberitahuan. Klik untuk berhenti mengikuti."
   },
   howToEdit: {
     title: 'Cara menyunting halaman ini',
@@ -802,6 +806,10 @@
     "someone": "Seseorang",
     "kind": {
       "forumReply": "{{name}} membalas di {{subject}}",
+      "pageThread": "{{name}} memulai diskusi tentang {{subject}}",
+      "pageComment": "{{name}} berkomentar di {{subject}}",
+      "pagePosition": "{{name}} menyatakan sikap ({{stance}}) tentang {{subject}}",
+      "pagePositionChanged": "{{name}} mengubah sikapnya tentang {{subject}} menjadi {{stance}}",
       "pageRevert": "{{name}} membatalkan suntingan Anda di {{subject}}",
       "other": "Aktivitas baru di {{subject}}"
     },
@@ -811,6 +819,12 @@
     "unread": "baru",
     "settings": "Pengaturan notifikasi",
     "empty": "Belum ada notifikasi. Anda akan menerimanya saat seseorang membalas di utas forum yang Anda ikuti."
+  },
+  "following": {
+    "heading": "Halaman yang Anda ikuti",
+    "intro": "Anda diberi tahu tentang komentar baru di halaman-halaman ini. Gunakan tombol Ikuti di samping Diskusi di halaman mana pun untuk mengikutinya.",
+    "empty": "Anda belum mengikuti halaman apa pun.",
+    "unfollow": "Berhenti mengikuti"
   },
   settings: {
     title: 'Pengaturan',
@@ -830,6 +844,10 @@
         "forumReply": {
           "label": "Balasan di utas forum yang Anda ikuti",
           "help": "Anda mengikuti utas saat memulainya atau membalas di sana. Anda juga bisa mengikuti atau berhenti mengikuti dari utas itu."
+        },
+        "pageComment": {
+          "label": "Komentar di halaman yang Anda ikuti",
+          "help": "Anda mengikuti halaman yang Anda buat dan setiap halaman tempat Anda mengeklik Ikuti. Anda diberi tahu tentang diskusi, komentar, dan sikap baru di sana, tidak pernah tentang suntingan."
         },
         "pageRevert": {
           "label": "Pembatalan suntingan Anda",

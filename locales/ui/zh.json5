@@ -306,7 +306,11 @@
     page: '页面',
     discuss: '讨论',
     edit: '编辑',
-    history: '历史'
+    history: '历史',
+    "follow": "关注",
+    "following": "已关注",
+    "followHelp": "在此页面有新评论时通知你。编辑不会发出通知。",
+    "followingHelp": "此页面有新评论时你会收到通知。编辑不会发出通知。点击以取消关注。"
   },
   howToEdit: {
     title: '如何编辑此页面',
@@ -800,6 +804,10 @@
     "someone": "有人",
     "kind": {
       "forumReply": "{{name}} 在 {{subject}} 中回复了",
+      "pageThread": "{{name}} 发起了关于 {{subject}} 的讨论",
+      "pageComment": "{{name}} 评论了 {{subject}}",
+      "pagePosition": "{{name}} 对 {{subject}} 表明了立场（{{stance}}）",
+      "pagePositionChanged": "{{name}} 将对 {{subject}} 的立场改为 {{stance}}",
       "pageRevert": "{{name}} 回退了你对 {{subject}} 的编辑",
       "other": "{{subject}} 有新动态"
     },
@@ -809,6 +817,12 @@
     "unread": "新",
     "settings": "通知设置",
     "empty": "还没有通知。当有人在你关注的论坛帖子中回复时，你会收到通知。"
+  },
+  "following": {
+    "heading": "你关注的页面",
+    "intro": "这些页面有新评论时你会收到通知。在任何页面使用“讨论”旁的“关注”按钮即可关注。",
+    "empty": "你还没有关注任何页面。",
+    "unfollow": "取消关注"
   },
   settings: {
     title: '设置',
@@ -828,6 +842,10 @@
         "forumReply": {
           "label": "你关注的论坛帖子中的回复",
           "help": "你发起或回复帖子时就会关注它。你也可以在帖子页面关注或取消关注。"
+        },
+        "pageComment": {
+          "label": "你关注页面上的评论",
+          "help": "你会关注自己创建的页面，以及点击“关注”的页面。你会收到新讨论、评论和立场的通知，但不会收到编辑的通知。"
         },
         "pageRevert": {
           "label": "你的编辑被回退",
