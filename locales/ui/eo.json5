@@ -267,6 +267,38 @@
     title: 'Historio de versioj',
     compare: 'Komparu elektitajn reviziojn',
   },
+  "revert": {
+    "tag": "malfaro",
+    "restore": {
+      "link": "Restarigi",
+      "title": "Restarigi ĉi tiun version",
+      "submit": "Restarigi ĉi tiun version"
+    },
+    "rollback": {
+      "link": "Malfari",
+      "title": "Malfari",
+      "submit": "Malfari ĉi tiujn redaktojn"
+    },
+    "summary": "Tio revenigas la version de {{date}} de {{name}}. Malfaritaj redaktoj: {{count}}, de {{names}}.",
+    "seeChanges": "Vidi la ŝanĝojn",
+    "reason": "Kialo",
+    "reasonHelp": "Diru kial, ekzemple «neniuj fontoj por la nova sekcio». Ĝi fariĝas la resumo de la redakto, kaj tiuj, kies redaktoj estas malfaritaj, vidas ĝin.",
+    "reasonRequired": "Skribu kialon.",
+    "changed": "La paĝo ŝanĝiĝis dum vi rigardis ĝin. Kontrolu, kion tio nun malfarus, antaŭ ol daŭrigi.",
+    "forbidden": "Vi ne povas malfari redaktojn en ĉi tiu paĝo.",
+    "invalid": "Tio ne eblas ĉi tie: la versio eble jam estas la nuna, aŭ estas nenio por malfari.",
+    "guard": {
+      "title": "Via malfaro estis malfarita",
+      "body": "Iu malfaris vian malfaron de ĉi tiu paĝo. Laŭ la kondutreguloj por operatoroj, la sekva paŝo estas diskuto, ne nova malfaro.",
+      "discuss": "Diskuti ĉi tiun paĝon",
+      "conduct": "Legi la kondutregulojn"
+    },
+    "recent": {
+      "showReverts": "Montri nur malfarojn",
+      "onlyReverts": "Montriĝas nur malfaroj",
+      "all": "Montri ĉiujn ŝanĝojn"
+    }
+  },
   pageTabs: {
     label: 'Paĝaj langetoj',
     article: 'Artikolo',
@@ -747,6 +779,7 @@
     "someone": "Iu",
     "kind": {
       "forumReply": "{{name}} respondis en {{subject}}",
+      "pageRevert": "{{name}} malfaris viajn redaktojn de {{subject}}",
       "other": "Nova aktiveco en {{subject}}"
     },
     "markRead": "Marki kiel legitan",
@@ -774,6 +807,10 @@
         "forumReply": {
           "label": "Respondoj en forumfadenoj, kiujn vi sekvas",
           "help": "Vi sekvas fadenon, kiam vi komencas ĝin aŭ respondas en ĝi. Vi ankaŭ povas eksekvi aŭ malsekvi ĝin en la fadeno."
+        },
+        "pageRevert": {
+          "label": "Malfaroj de viaj redaktoj",
+          "help": "Kiam iu restarigas pli fruan version de paĝo aŭ malfaras viajn redaktojn. Vi vidas la kialon."
         }
       }
     }

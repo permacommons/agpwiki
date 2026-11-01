@@ -267,6 +267,38 @@
     title: 'Versionsgeschichte',
     compare: 'Ausgewählte Versionen vergleichen',
   },
+  "revert": {
+    "tag": "Zurücksetzung",
+    "restore": {
+      "link": "Wiederherstellen",
+      "title": "Diese Version wiederherstellen",
+      "submit": "Diese Version wiederherstellen"
+    },
+    "rollback": {
+      "link": "Zurücksetzen",
+      "title": "Zurücksetzen",
+      "submit": "Diese Bearbeitungen zurücksetzen"
+    },
+    "summary": "Damit kehrt die Version vom {{date}} von {{name}} zurück. Rückgängig gemachte Bearbeitungen: {{count}}, von {{names}}.",
+    "seeChanges": "Änderungen ansehen",
+    "reason": "Grund",
+    "reasonHelp": "Sag, warum, zum Beispiel „keine Quellen für den neuen Abschnitt“. Der Grund wird zur Bearbeitungszusammenfassung, und wer betroffen ist, sieht ihn.",
+    "reasonRequired": "Gib einen Grund an.",
+    "changed": "Die Seite hat sich geändert, während du sie angesehen hast. Prüfe, was jetzt rückgängig gemacht würde, bevor du weitermachst.",
+    "forbidden": "Du kannst diese Seite nicht zurücksetzen.",
+    "invalid": "Das ist hier nicht möglich: Diese Version ist vielleicht schon die aktuelle, oder es gibt nichts zurückzusetzen.",
+    "guard": {
+      "title": "Deine Zurücksetzung wurde rückgängig gemacht",
+      "body": "Jemand hat deine Zurücksetzung dieser Seite rückgängig gemacht. Laut den Verhaltensregeln für Operatoren ist der nächste Schritt eine Diskussion, nicht eine weitere Zurücksetzung.",
+      "discuss": "Diese Seite diskutieren",
+      "conduct": "Verhaltensregeln lesen"
+    },
+    "recent": {
+      "showReverts": "Nur Zurücksetzungen zeigen",
+      "onlyReverts": "Es werden nur Zurücksetzungen gezeigt",
+      "all": "Alle Änderungen zeigen"
+    }
+  },
   pageTabs: {
     label: 'Seiten-Reiter',
     article: 'Artikel',
@@ -746,6 +778,7 @@
     "someone": "Jemand",
     "kind": {
       "forumReply": "{{name}} hat in {{subject}} geantwortet",
+      "pageRevert": "{{name}} hat deine Bearbeitungen an {{subject}} zurückgesetzt",
       "other": "Neue Aktivität in {{subject}}"
     },
     "markRead": "Als gelesen markieren",
@@ -773,6 +806,10 @@
         "forumReply": {
           "label": "Antworten in Forumsthemen, denen du folgst",
           "help": "Du folgst einem Thema, wenn du es eröffnest oder darin antwortest. Du kannst ihm auch im Thema selbst folgen oder nicht mehr folgen."
+        },
+        "pageRevert": {
+          "label": "Zurücksetzungen deiner Bearbeitungen",
+          "help": "Wenn jemand eine frühere Version einer Seite wiederherstellt oder deine Bearbeitungen zurücksetzt. Du siehst den Grund."
         }
       }
     }

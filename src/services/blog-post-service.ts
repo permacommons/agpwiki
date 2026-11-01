@@ -13,6 +13,7 @@ import {
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { toAddressForm } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
@@ -54,6 +55,24 @@ const validateSummary = (value: LocalizedMapInput, errors?: ValidationCollector)
 const findCurrentPostBySlug = async (slug: string) =>
   BlogPost.filterWhere({ slug, _oldRevOf: null, _revDeleted: false } as Record<string, unknown>).first();
 
+const findPostAlias = async (dalInstance: DataAccessLayer, slug: string) => {
+  const result = await dalInstance.query('SELECT id, post_id FROM post_aliases WHERE slug = $1', [slug]);
+  return (result.rows[0] as { id: string; post_id: string } | undefined) ?? null;
+};
+
+/** The current post at this address, or at an old address it was renamed from. */
+export const findCurrentPostBySlugOrAlias = async (dalInstance: DataAccessLayer, slug: string) => {
+  const direct = await findCurrentPostBySlug(slug);
+  if (direct) return direct;
+  const alias = await findPostAlias(dalInstance, slug);
+  if (!alias) return null;
+  return BlogPost.filterWhere({
+    id: alias.post_id,
+    _oldRevOf: null,
+    _revDeleted: false,
+  } as Record<string, unknown>).first();
+};
+
 const toBlogPostResult = (post: BlogPostInstance): BlogPostResult => ({
   id: post.id,
   slug: post.slug,
@@ -78,6 +97,8 @@ export interface BlogPostWriteInput {
 
 export interface BlogPostUpdateInput extends BlogPostWriteInput {
   newSlug?: string;
+  // On a rename, keep the old address as an alias of the new one.
+  keepAlias?: boolean;
   expectedRevId?: string;
   revSummary: Record<string, string | null>;
 }
@@ -219,11 +240,11 @@ export async function listBlogPosts(
 }
 
 export async function readBlogPost(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   slug: string
 ): Promise<BlogPostResult> {
   const normalizedSlug = ensureNonEmptySlug(slug);
-  const post = await findCurrentPostBySlug(normalizedSlug);
+  const post = await findCurrentPostBySlugOrAlias(dalInstance, normalizedSlug);
   if (!post) {
     throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
       slug: normalizedSlug,
@@ -238,7 +259,7 @@ export async function createBlogPost(
   userId: string
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post input.');
-  const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
+  const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   validateTitle(title, errors);
@@ -261,6 +282,11 @@ export async function createBlogPost(
   const existing = await findCurrentPostBySlug(normalizedSlug);
   if (existing) {
     throw new ConflictError(`Blog post already exists: ${normalizedSlug}`, {
+      slug: normalizedSlug,
+    });
+  }
+  if (await findPostAlias(dalInstance, normalizedSlug)) {
+    throw new ConflictError(`Blog post alias already exists: ${normalizedSlug}`, {
       slug: normalizedSlug,
     });
   }
@@ -292,6 +318,7 @@ export async function updateBlogPost(
   {
     slug,
     newSlug,
+    keepAlias = true,
     title,
     body,
     summary,
@@ -304,7 +331,8 @@ export async function updateBlogPost(
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post update input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
-  const normalizedNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const rawNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
+  const normalizedNewSlug = rawNewSlug === undefined ? undefined : toAddressForm(rawNewSlug);
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
@@ -325,23 +353,33 @@ export async function updateBlogPost(
   errors.throwIfAny();
   await requireBlogAuthor(dalInstance, userId);
 
-  const post = await findCurrentPostBySlug(normalizedSlug);
+  const post = await findCurrentPostBySlugOrAlias(dalInstance, normalizedSlug);
   if (!post) {
     throw new NotFoundError(`Blog post not found: ${normalizedSlug}`, {
       slug: normalizedSlug,
     });
   }
   assertExpectedRevision(post._revID, expectedRevId);
-  if (normalizedNewSlug && normalizedNewSlug !== normalizedSlug) {
+  const previousSlug = post.slug;
+  const isRename = Boolean(normalizedNewSlug && normalizedNewSlug !== previousSlug);
+  let aliasToRelease: { id: string; post_id: string } | null = null;
+  if (normalizedNewSlug && isRename) {
     const slugMatch = await findCurrentPostBySlug(normalizedNewSlug);
     if (slugMatch) {
       throw new ConflictError(`Blog post already exists: ${normalizedNewSlug}`, {
         slug: normalizedNewSlug,
       });
     }
+    const aliasMatch = await findPostAlias(dalInstance, normalizedNewSlug);
+    if (aliasMatch && aliasMatch.post_id !== post.id) {
+      throw new ConflictError(`Blog post alias already exists: ${normalizedNewSlug}`, {
+        slug: normalizedNewSlug,
+      });
+    }
+    aliasToRelease = aliasMatch;
   }
 
-  await post.newRevision({ id: userId }, { tags: ['update', ...tags] });
+  await post.newRevision({ id: userId }, { tags: ['update', ...(isRename ? ['rename'] : []), ...tags] });
   if (normalizedNewSlug !== undefined) post.slug = normalizedNewSlug;
   const mergedTitle = mergeLocalizedMap(post.title ?? null, title);
   const mergedBody = mergeLocalizedMap(post.body ?? null, body);
@@ -353,7 +391,21 @@ export async function updateBlogPost(
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.updatedAt = new Date();
-  await saveWithExpectedRevision(post, expectedRevId);
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(post, expectedRevId, 'expectedRevId', { transaction });
+    if (isRename) {
+      if (aliasToRelease) {
+        await dalInstance.query('DELETE FROM post_aliases WHERE id = $1', [aliasToRelease.id], transaction);
+      }
+      if (keepAlias) {
+        await dalInstance.query(
+          'INSERT INTO post_aliases (post_id, slug, created_by) VALUES ($1, $2, $3)',
+          [post.id, previousSlug, userId],
+          transaction
+        );
+      }
+    }
+  });
 
   return toBlogPostResult(post);
 }

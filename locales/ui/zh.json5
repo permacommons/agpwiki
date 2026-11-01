@@ -266,6 +266,38 @@
     title: '版本历史',
     compare: '比较选定的版本',
   },
+  "revert": {
+    "tag": "回退",
+    "restore": {
+      "link": "恢复",
+      "title": "恢复此版本",
+      "submit": "恢复此版本"
+    },
+    "rollback": {
+      "link": "回滚",
+      "title": "回滚",
+      "submit": "回滚这些编辑"
+    },
+    "summary": "这会恢复 {{name}} 于 {{date}} 的版本。撤销的编辑：{{count}} 次，作者：{{names}}。",
+    "seeChanges": "查看更改",
+    "reason": "理由",
+    "reasonHelp": "说明原因，例如“新章节没有来源”。理由会成为编辑摘要，编辑被撤销的人也会看到。",
+    "reasonRequired": "请填写理由。",
+    "changed": "你查看期间页面已更改。继续之前，请检查现在会撤销哪些内容。",
+    "forbidden": "你不能在此页面回退。",
+    "invalid": "此处无法执行：该版本可能已是当前版本，或没有可回滚的内容。",
+    "guard": {
+      "title": "你的回退已被撤销",
+      "body": "有人撤销了你在此页面的回退。根据操作者行为准则，下一步应是讨论，而不是再次回退。",
+      "discuss": "讨论此页面",
+      "conduct": "阅读行为准则"
+    },
+    "recent": {
+      "showReverts": "只显示回退",
+      "onlyReverts": "正在只显示回退",
+      "all": "显示所有更改"
+    }
+  },
   pageTabs: {
     label: '页面标签',
     article: '条目',
@@ -747,6 +779,7 @@
     "someone": "有人",
     "kind": {
       "forumReply": "{{name}} 在 {{subject}} 中回复了",
+      "pageRevert": "{{name}} 回退了你对 {{subject}} 的编辑",
       "other": "{{subject}} 有新动态"
     },
     "markRead": "标为已读",
@@ -774,6 +807,10 @@
         "forumReply": {
           "label": "你关注的论坛帖子中的回复",
           "help": "你发起或回复帖子时就会关注它。你也可以在帖子页面关注或取消关注。"
+        },
+        "pageRevert": {
+          "label": "你的编辑被回退",
+          "help": "当有人恢复页面的较早版本或回滚你的编辑时。你会看到其理由。"
         }
       }
     }

@@ -267,6 +267,38 @@
     title: 'Riwayat versi',
     compare: 'Bandingkan revisi yang dipilih',
   },
+  "revert": {
+    "tag": "pembatalan",
+    "restore": {
+      "link": "Pulihkan",
+      "title": "Pulihkan versi ini",
+      "submit": "Pulihkan versi ini"
+    },
+    "rollback": {
+      "link": "Kembalikan",
+      "title": "Kembalikan",
+      "submit": "Kembalikan suntingan ini"
+    },
+    "summary": "Ini mengembalikan versi tanggal {{date}} oleh {{name}}. Suntingan yang dibatalkan: {{count}}, oleh {{names}}.",
+    "seeChanges": "Lihat perubahannya",
+    "reason": "Alasan",
+    "reasonHelp": "Jelaskan alasannya, misalnya \"tidak ada sumber untuk bagian baru\". Alasan ini menjadi ringkasan suntingan, dan orang yang suntingannya dibatalkan akan melihatnya.",
+    "reasonRequired": "Isi alasan.",
+    "changed": "Halaman berubah saat Anda melihatnya. Periksa apa yang sekarang akan dibatalkan sebelum melanjutkan.",
+    "forbidden": "Anda tidak dapat membatalkan suntingan di halaman ini.",
+    "invalid": "Tidak bisa di sini: versi ini mungkin sudah yang terbaru, atau tidak ada yang bisa dikembalikan.",
+    "guard": {
+      "title": "Pembatalan Anda dibatalkan",
+      "body": "Seseorang membatalkan pembatalan Anda di halaman ini. Menurut aturan perilaku operator, langkah berikutnya adalah diskusi, bukan pembatalan lagi.",
+      "discuss": "Diskusikan halaman ini",
+      "conduct": "Baca aturan perilaku"
+    },
+    "recent": {
+      "showReverts": "Tampilkan hanya pembatalan",
+      "onlyReverts": "Hanya pembatalan yang ditampilkan",
+      "all": "Tampilkan semua perubahan"
+    }
+  },
   pageTabs: {
     label: 'Tab halaman',
     article: 'Artikel',
@@ -749,6 +781,7 @@
     "someone": "Seseorang",
     "kind": {
       "forumReply": "{{name}} membalas di {{subject}}",
+      "pageRevert": "{{name}} membatalkan suntingan Anda di {{subject}}",
       "other": "Aktivitas baru di {{subject}}"
     },
     "markRead": "Tandai sudah dibaca",
@@ -776,6 +809,10 @@
         "forumReply": {
           "label": "Balasan di utas forum yang Anda ikuti",
           "help": "Anda mengikuti utas saat memulainya atau membalas di sana. Anda juga bisa mengikuti atau berhenti mengikuti dari utas itu."
+        },
+        "pageRevert": {
+          "label": "Pembatalan suntingan Anda",
+          "help": "Saat seseorang memulihkan versi lama sebuah halaman atau mengembalikan suntingan Anda. Anda melihat alasannya."
         }
       }
     }

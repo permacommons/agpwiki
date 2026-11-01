@@ -1,0 +1,403 @@
+import assert from 'node:assert/strict';
+import { randomBytes } from 'node:crypto';
+import http from 'node:http';
+import test from 'node:test';
+
+import express from 'express';
+
+import { initializePostgreSQL } from '../src/db.js';
+import { ConflictError, NotFoundError } from '../src/lib/errors.js';
+import PageAlias from '../src/models/page-alias.js';
+import User from '../src/models/user.js';
+import { registerBlogRoutes } from '../src/routes/blog.js';
+import { registerPageRoutes } from '../src/routes/pages.js';
+import { createBlogPost, readBlogPost, updateBlogPost } from '../src/services/blog-post-service.js';
+import { BLOG_AUTHOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import { buildLocalWikiPreview, findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
+import { createWikiPage, readWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+
+let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
+
+test.after(async () => {
+  if (sharedDal) {
+    await sharedDal.disconnect();
+    sharedDal = null;
+  }
+});
+
+const getDal = async () => {
+  sharedDal ??= await initializePostgreSQL();
+  return sharedDal;
+};
+
+const createTestUser = async () => {
+  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
+  return User.create({
+    username: `redirecttest${suffix}`,
+    displayName: 'Redirect Test',
+    email: `redirect-test-${suffix}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+  });
+};
+
+const startServer = async () => {
+  const app = express();
+  app.use((req, res, next) => {
+    req.t = ((key: string) => key) as typeof req.t;
+    res.locals.locale = 'en';
+    res.locals.languageOptions = [];
+    res.locals.accountBannerHtml = '';
+    res.render = ((_view: string, options?: Record<string, unknown>) => {
+      res.json({ canonicalUrl: options?.canonicalUrl ?? null });
+    }) as express.Response['render'];
+    next();
+  });
+  registerBlogRoutes(app);
+  registerPageRoutes(app);
+  const server = http.createServer(app);
+  await new Promise<void>((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  const address = server.address();
+  assert.ok(address && typeof address !== 'string');
+  return {
+    url: `http://127.0.0.1:${address.port}`,
+    close: () => new Promise<void>(resolve => server.close(() => resolve())),
+  };
+};
+
+const cleanup = async (prefix: string, userId: string | null) => {
+  const dal = await getDal();
+  await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1 OR page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
+    `${prefix}%`,
+  ]);
+  await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+  await dal.query('DELETE FROM post_aliases WHERE slug LIKE $1 OR post_id IN (SELECT id FROM posts WHERE slug LIKE $1)', [
+    `${prefix}%`,
+  ]);
+  await dal.query('DELETE FROM posts WHERE slug LIKE $1', [`${prefix}%`]);
+  if (userId) {
+    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
+    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
+  }
+};
+
+test('Renaming a page keeps its old address as an alias unless asked not to', async () => {
+  const dal = await getDal();
+  const prefix = `test-redirect-${Date.now()}`;
+  let userId: string | null = null;
+  const server = await startServer();
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const page = await createWikiPage(
+      dal,
+      { slug: `${prefix}-old`, title: { en: 'Old' }, body: { en: 'Text.' } },
+      user.id
+    );
+    await updateWikiPage(
+      dal,
+      { slug: `${prefix}-old`, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+
+    const viaOld = await readWikiPage(dal, `${prefix}-old`);
+    assert.equal(viaOld.id, page.id);
+    assert.equal(viaOld.slug, `${prefix}-new`);
+
+    const redirect = await fetch(`${server.url}/${prefix}-old?lang=en`, { redirect: 'manual' });
+    assert.equal(redirect.status, 301);
+    assert.equal(redirect.headers.get('location'), `/${prefix}-new?lang=en`);
+    const current = await fetch(`${server.url}/${prefix}-new`);
+    assert.equal(current.status, 200);
+    const { canonicalUrl } = (await current.json()) as { canonicalUrl: string };
+    assert.match(canonicalUrl, new RegExp(`/${prefix}-new$`));
+
+    // Moving the page back onto its own old address releases that alias.
+    await updateWikiPage(
+      dal,
+      { slug: `${prefix}-new`, newSlug: `${prefix}-old`, revSummary: { en: 'Rename back.' } },
+      user.id
+    );
+    assert.equal((await readWikiPage(dal, `${prefix}-new`)).slug, `${prefix}-old`);
+
+    await updateWikiPage(
+      dal,
+      { slug: `${prefix}-old`, newSlug: `${prefix}-third`, keepAlias: false, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    await assert.rejects(() => readWikiPage(dal, `${prefix}-old`), NotFoundError);
+    // The address released without an alias can be used for another page.
+    const other = await createWikiPage(
+      dal,
+      { slug: `${prefix}-old`, title: { en: 'Other' }, body: { en: 'Text.' } },
+      user.id
+    );
+    await updateWikiPage(
+      dal,
+      { slug: `${prefix}-old`, newSlug: `${prefix}-other`, revSummary: { en: 'Rename other.' } },
+      user.id
+    );
+    // `-old` is now an alias of the other page, so this page can't take it.
+    await assert.rejects(
+      () =>
+        updateWikiPage(
+          dal,
+          { slug: `${prefix}-third`, newSlug: `${prefix}-old`, revSummary: { en: 'Onto an alias of another page.' } },
+          user.id
+        ),
+      ConflictError
+    );
+    assert.equal((await readWikiPage(dal, `${prefix}-old`)).id, other.id);
+  } finally {
+    await server.close();
+    await cleanup(prefix, userId);
+  }
+});
+
+test('A failed alias creation rolls back the page rename', async t => {
+  const dal = await getDal();
+  const prefix = `test-redirect-rollback-${Date.now()}-${randomBytes(6).toString('hex')}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const originalSlug = `${prefix}-old`;
+    const page = await createWikiPage(
+      dal,
+      { slug: originalSlug, title: { en: 'Original' }, body: { en: 'Text.' } },
+      user.id
+    );
+    const before = await dal.query('SELECT slug, _rev_id FROM pages WHERE id = $1', [page.id]);
+    const failure = new Error('Injected alias creation failure');
+    const saveAlias = t.mock.method(PageAlias.prototype, 'save', async () => {
+      throw failure;
+    });
+
+    await assert.rejects(
+      () => updateWikiPage(
+        dal,
+        { slug: originalSlug, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+        user.id
+      ),
+      error => error === failure
+    );
+    assert.equal(saveAlias.mock.callCount(), 1);
+
+    const after = await dal.query('SELECT slug, _rev_id FROM pages WHERE id = $1', [page.id]);
+    assert.deepEqual(after.rows, before.rows, 'a failed rename must preserve the slug and revision');
+    const aliases = await dal.query('SELECT id FROM page_aliases WHERE page_id = $1', [page.id]);
+    assert.equal(aliases.rows.length, 0);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('A failed alias creation rolls back the blog post rename', async t => {
+  const dal = await getDal();
+  const prefix = `test-post-rollback-${Date.now()}-${randomBytes(6).toString('hex')}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+    const originalSlug = `${prefix}-old`;
+    const post = await createBlogPost(
+      dal,
+      { slug: originalSlug, title: { en: 'Original' }, body: { en: 'Text.' } },
+      user.id
+    );
+    const before = await dal.query('SELECT slug, _rev_id FROM posts WHERE id = $1', [post.id]);
+    const failure = new Error('Injected post alias creation failure');
+    const query = dal.query.bind(dal);
+    let aliasAttempts = 0;
+    t.mock.method(dal, 'query', async (...args) => {
+      if (args[0].includes('INSERT INTO post_aliases')) {
+        aliasAttempts++;
+        throw failure;
+      }
+      return query(...args);
+    });
+
+    await assert.rejects(
+      () => updateBlogPost(
+        dal,
+        { slug: originalSlug, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+        user.id
+      ),
+      error => error === failure
+    );
+    assert.equal(aliasAttempts, 1);
+    const after = await dal.query('SELECT slug, _rev_id FROM posts WHERE id = $1', [post.id]);
+    assert.deepEqual(after.rows, before.rows, 'a failed rename must preserve the slug and revision');
+    const aliases = await dal.query('SELECT id FROM post_aliases WHERE post_id = $1', [post.id]);
+    assert.equal(aliases.rows.length, 0);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Renaming a blog post keeps its old address as an alias', async () => {
+  const dal = await getDal();
+  const prefix = `test-post-redirect-${Date.now()}`;
+  let userId: string | null = null;
+  const server = await startServer();
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+    const post = await createBlogPost(
+      dal,
+      { slug: `${prefix}-old`, title: { en: 'Old' }, body: { en: 'Text.' } },
+      user.id
+    );
+    await updateBlogPost(
+      dal,
+      { slug: `${prefix}-old`, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+
+    const viaOld = await readBlogPost(dal, `${prefix}-old`);
+    assert.equal(viaOld.id, post.id);
+    assert.equal(viaOld.slug, `${prefix}-new`);
+    await assert.rejects(
+      () => createBlogPost(dal, { slug: `${prefix}-old`, title: { en: 'Taken' }, body: { en: 'Text.' } }, user.id),
+      ConflictError
+    );
+
+    const redirect = await fetch(`${server.url}/blog/${prefix}-old`, { redirect: 'manual' });
+    assert.equal(redirect.status, 301);
+    assert.equal(redirect.headers.get('location'), `/blog/${prefix}-new`);
+    const current = await fetch(`${server.url}/blog/${prefix}-new`);
+    assert.equal(current.status, 200);
+    const { canonicalUrl } = (await current.json()) as { canonicalUrl: string };
+    assert.match(canonicalUrl, new RegExp(`/blog/${prefix}-new$`));
+
+    await updateBlogPost(
+      dal,
+      { slug: `${prefix}-new`, newSlug: `${prefix}-third`, keepAlias: false, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    await assert.rejects(() => readBlogPost(dal, `${prefix}-new`), NotFoundError);
+    assert.equal((await readBlogPost(dal, `${prefix}-old`)).slug, `${prefix}-third`);
+  } finally {
+    await server.close();
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Wiki links and previews recognize address variants and renamed aliases', async () => {
+  const dal = await getDal();
+  const prefix = `test-link-variants-${Date.now()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const page = await createWikiPage(
+      dal,
+      { slug: `${prefix}/belt-buckle`, title: { en: 'Belt buckle' }, body: { en: 'A buckle.' } },
+      user.id
+    );
+    const renamed = await updateWikiPage(
+      dal,
+      { slug: page.slug, newSlug: `${prefix}/belt-clasp`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    const variants = [renamed.slug, `${prefix}/BELT_CLASP`, `${prefix}/Belt Clasp`, `${prefix}/Belt_Buckle`];
+    const missing = `${prefix}/NOT_HERE`;
+    assert.deepEqual(await findExistingWikiLinkSlugs(dal, [...variants, missing]), new Set(variants));
+    for (const slug of variants) {
+      const preview = await buildLocalWikiPreview(dal, slug, 'en');
+      assert.equal(preview?.title, 'Belt buckle');
+      assert.equal(preview?.url, `/${renamed.slug}`);
+      assert.match(preview?.html ?? '', /A buckle\./);
+    }
+    assert.equal(await buildLocalWikiPreview(dal, missing, 'en'), null);
+
+    await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [page.id]);
+    assert.deepEqual(await findExistingWikiLinkSlugs(dal, variants), new Set());
+    assert.equal(await buildLocalWikiPreview(dal, variants[3], 'en'), null);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Wiki previews prefer legacy exact addresses over normalized matches', async () => {
+  const dal = await getDal();
+  const prefix = `test-link-exact-${Date.now()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const legacy = await createWikiPage(
+      dal,
+      { slug: `${prefix}-legacy`, title: { en: 'Legacy page' }, body: { en: 'Legacy content.' } },
+      user.id
+    );
+    const legacySlug = `${prefix}-Belt_Buckle`;
+    await dal.query('UPDATE pages SET slug = $1 WHERE id = $2', [legacySlug, legacy.id]);
+    const canonical = await createWikiPage(
+      dal,
+      { slug: `${prefix}-belt-buckle`, title: { en: 'Canonical page' }, body: { en: 'Canonical content.' } },
+      user.id
+    );
+    assert.deepEqual(
+      await findExistingWikiLinkSlugs(dal, [legacySlug, canonical.slug]),
+      new Set([legacySlug, canonical.slug])
+    );
+    assert.equal((await buildLocalWikiPreview(dal, legacySlug, 'en'))?.title, 'Legacy page');
+    assert.equal((await buildLocalWikiPreview(dal, `${prefix}-BELT_BUCKLE`, 'en'))?.title, 'Canonical page');
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Addresses are stored in lowercase, and typed variants lead to the real address', async () => {
+  const dal = await getDal();
+  const prefix = `test-lowercase-${Date.now()}`;
+  let userId: string | null = null;
+  const server = await startServer();
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+    const page = await createWikiPage(
+      dal,
+      { slug: `${prefix.toUpperCase()}_Belt Buckle`, title: { en: 'Belt buckle' }, body: { en: 'Text.' } },
+      user.id
+    );
+    assert.equal(page.slug, `${prefix}-belt-buckle`);
+    const renamed = await updateWikiPage(
+      dal,
+      { slug: page.slug, newSlug: `${prefix}-Belt_Clasp`, revSummary: { en: 'Rename.' } },
+      user.id
+    );
+    assert.equal(renamed.slug, `${prefix}-belt-clasp`);
+
+    const typed = await fetch(`${server.url}/${prefix.toUpperCase()}_BELT_CLASP?lang=en`, { redirect: 'manual' });
+    assert.equal(typed.status, 301);
+    assert.equal(typed.headers.get('location'), `/${prefix}-belt-clasp?lang=en`);
+    // A typed variant of an old address goes straight to the main address.
+    const typedOld = await fetch(`${server.url}/${prefix}-Belt%20Buckle`, { redirect: 'manual' });
+    assert.equal(typedOld.status, 301);
+    assert.equal(typedOld.headers.get('location'), `/${prefix}-belt-clasp`);
+    const missing = await fetch(`${server.url}/${prefix.toUpperCase()}_NOTHING`, { redirect: 'manual' });
+    assert.equal(missing.status, 404);
+
+    const post = await createBlogPost(
+      dal,
+      { slug: `${prefix}-My_Post`, title: { en: 'Post' }, body: { en: 'Text.' } },
+      user.id
+    );
+    assert.equal(post.slug, `${prefix}-my-post`);
+    const typedPost = await fetch(`${server.url}/blog/${prefix}-MY_POST`, { redirect: 'manual' });
+    assert.equal(typedPost.status, 301);
+    assert.equal(typedPost.headers.get('location'), `/blog/${prefix}-my-post`);
+  } finally {
+    await server.close();
+    await cleanup(prefix, userId);
+  }
+});

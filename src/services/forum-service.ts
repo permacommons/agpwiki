@@ -7,7 +7,9 @@ import {
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
+import { forumPageCategory } from '../lib/forum-paths.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { isUuid } from '../lib/uuid.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import type { ForumCommentInstance } from '../models/manifests/forum-comment.js';
@@ -182,19 +184,23 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   ),
 });
 
-const findCurrentThreadById = async (threadId: string) =>
-  ForumThread.filterWhere({
+const findCurrentThreadById = async (threadId: string) => {
+  if (!isUuid(threadId)) return null;
+  return ForumThread.filterWhere({
     id: threadId,
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>).first();
+};
 
-const findCurrentCommentById = async (commentId: string) =>
-  ForumComment.filterWhere({
+const findCurrentCommentById = async (commentId: string) => {
+  if (!isUuid(commentId)) return null;
+  return ForumComment.filterWhere({
     id: commentId,
     _oldRevOf: null,
     _revDeleted: false,
   } as Record<string, unknown>).first();
+};
 
 const requireThread = async (threadId: string) => {
   const thread = await findCurrentThreadById(threadId);
@@ -380,10 +386,11 @@ export const listForumThreads = async (
   }));
 };
 
-/** Comments in all current threads about one page, for the Discuss tab. */
+/** Comments in the category linked by the page’s Discuss tab. */
 export const countForumCommentsForPage = async (
   dalInstance: DataAccessLayer,
-  pageSlug: string
+  pageSlug: string,
+  category: 'articles' | 'policy'
 ): Promise<number> => {
   const result = await dalInstance.query(
     `SELECT COUNT(c.id)::int AS comment_count
@@ -394,8 +401,9 @@ export const countForumCommentsForPage = async (
       AND c._rev_deleted = false
      WHERE t._old_rev_of IS NULL
        AND t._rev_deleted = false
-       AND t.page_slug = $1`,
-    [normalizeSlugInput(pageSlug, 'pageSlug')]
+       AND t.page_slug = $1
+       AND t.category = $2`,
+    [normalizeSlugInput(pageSlug, 'pageSlug'), category]
   );
   return Number(result.rows[0]?.comment_count) || 0;
 };
@@ -470,6 +478,9 @@ export const createForumThread = async (
     }
   } else if (rawPageSlug) {
     errors.add('pageSlug', 'is only allowed for page discussion threads.', 'invalid');
+  }
+  if (normalizedPageSlug && forumPageCategory(normalizedPageSlug) !== normalizedCategory) {
+    errors.add('pageSlug', 'must belong to the selected discussion category.', 'invalid');
   }
   errors.throwIfAny();
 
