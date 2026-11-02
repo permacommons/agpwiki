@@ -410,9 +410,9 @@ const renderCommentForm = ({
 
 const getCommentBodyForDisplay = (
   body: Record<string, string> | null | undefined,
-  originalLanguage: string | null | undefined
+  canonicalLanguage: string | null | undefined
 ) => {
-  const source = mlString.resolve(originalLanguage ?? 'en', body ?? null);
+  const source = mlString.resolve(canonicalLanguage ?? 'en', body ?? null);
   return source?.str ?? '';
 };
 
@@ -498,8 +498,8 @@ const renderCommentEditPage = (
   const returnPath = commentReturnPath(req.body?.return ?? req.query.return, comment);
   const editor = renderForumCommentEditor({
     commentId: comment.id,
-    body: options.body ?? getCommentBodyForDisplay(comment.body, comment.originalLanguage),
-    language: options.language ?? comment.originalLanguage ?? 'en',
+    body: options.body ?? getCommentBodyForDisplay(comment.body, comment.canonicalLanguage),
+    language: options.language ?? comment.canonicalLanguage ?? 'en',
     languageOptions: res.locals.languageOptions,
     returnPath,
     t: req.t,
@@ -683,7 +683,7 @@ const renderThreadPage = async (
     try {
       const quotedComment = await readForumComment(quoteId);
       quotedBody = buildForumQuote(
-        getCommentBodyForDisplay(quotedComment.body, quotedComment.originalLanguage)
+        getCommentBodyForDisplay(quotedComment.body, quotedComment.canonicalLanguage)
       );
     } catch (_error) {
       quotedBody = '';
@@ -691,7 +691,7 @@ const renderThreadPage = async (
   }
 
   const sources = detail.comments.map(comment =>
-    getCommentBodyForDisplay(comment.body, comment.originalLanguage)
+    getCommentBodyForDisplay(comment.body, comment.canonicalLanguage)
   );
   const previewSource =
     typeof req.body?.body === 'string' ? req.body.body : quotedBody;
@@ -721,7 +721,7 @@ const renderThreadPage = async (
   const commentsHtml = (
     await Promise.all(
       detail.comments.map(async comment => {
-        const bodySource = getCommentBodyForDisplay(comment.body, comment.originalLanguage);
+        const bodySource = getCommentBodyForDisplay(comment.body, comment.canonicalLanguage);
         const bodyHtml = (
           await renderMarkdown(bodySource, citationEntries, {
             backToCitationLabel: req.t('citation.backToCitationAria'),
@@ -741,7 +741,7 @@ const renderThreadPage = async (
         const returnPath = `${forumThreadPath(threadId)}#comment-${comment.id}`;
         const editHtml = isOwn
           ? renderForumCommentEditor({
-              commentId: comment.id, body: bodySource, language: comment.originalLanguage ?? 'en',
+              commentId: comment.id, body: bodySource, language: comment.canonicalLanguage ?? 'en',
               languageOptions: res.locals.languageOptions, returnPath, t: req.t, hidden: true,
             })
           : '';
@@ -755,7 +755,7 @@ const renderThreadPage = async (
     ${authorHtml}
     <span>${req.t('forum.comment.postedAt', { date: escapeHtml(formatDateUTC(comment.createdAt)) })}</span>
     <span>${req.t('forum.comment.languageLabel', {
-      language: escapeHtml(comment.originalLanguage ?? 'en'),
+      language: escapeHtml(comment.canonicalLanguage ?? 'en'),
     })}</span>
     ${editedHtml}
   </div>
@@ -1301,7 +1301,7 @@ export const registerForumRoutes = (app: Express) => {
           });
           const previous = versions[index - 1];
           const diff = previous ? diffLocalizedField('body', previous.body, version.body) : null;
-          const bodyText = getCommentBodyForDisplay(version.body, version.originalLanguage);
+          const bodyText = getCommentBodyForDisplay(version.body, version.canonicalLanguage);
           return `<li class="forum-comment-version">
   <h2>${heading}</h2>
   ${

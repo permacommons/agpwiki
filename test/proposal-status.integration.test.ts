@@ -35,7 +35,7 @@ const setup = async () => {
   await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
   const slug = `meta/proposals/regression-${suffix}`;
   const page = await createWikiPage(dal, {
-    slug, title: { en: 'Proposal regression' }, body: { en: 'Proposal text.' }, originalLanguage: 'en',
+    slug, title: { en: 'Proposal regression' }, body: { en: 'Proposal text.' }, canonicalLanguage: 'en',
   }, author.id);
   const cleanup = async () => {
     await dal.query('DELETE FROM admin_events WHERE target_id = $1', [page.id]);

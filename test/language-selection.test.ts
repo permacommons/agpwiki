@@ -16,14 +16,14 @@ test('listAvailableLanguages uses body languages in a stable order, else title l
   assert.deepEqual(listAvailableLanguages(null, null), []);
 });
 
-test('selectContentLanguage prefers the original language, then English, then the first one', () => {
+test('selectContentLanguage prefers the canonical language, then English, then the first one', () => {
   const availableLanguages = ['de', 'en', 'fr'];
-  assert.equal(selectContentLanguage({ originalLanguage: 'fr', availableLanguages }), 'fr');
-  assert.equal(selectContentLanguage({ originalLanguage: 'it', availableLanguages }), 'en');
+  assert.equal(selectContentLanguage({ canonicalLanguage: 'fr', availableLanguages }), 'fr');
+  assert.equal(selectContentLanguage({ canonicalLanguage: 'it', availableLanguages }), 'en');
   assert.equal(selectContentLanguage({ availableLanguages: ['fr', 'de'].sort() }), 'de');
   assert.equal(selectContentLanguage({ availableLanguages: [] }), null);
   assert.equal(selectContentLanguage({ requested: '*', availableLanguages }), '*');
-  assert.equal(selectContentLanguage({ requested: 'de', originalLanguage: 'fr', availableLanguages }), 'de');
+  assert.equal(selectContentLanguage({ requested: 'de', canonicalLanguage: 'fr', availableLanguages }), 'de');
 });
 
 test('selectContentLanguage rejects a missing language and lists the available ones', () => {
@@ -39,7 +39,7 @@ test('selectPayloadLanguage keeps the map shape and reports the selection', () =
   const page = {
     title: { en: 'Title', fr: 'Titre' },
     body: { en: 'Body', fr: 'Corps' },
-    originalLanguage: 'fr',
+    canonicalLanguage: 'fr',
     contentHash: 'abc',
   };
   const selected = selectPayloadLanguage(page);

@@ -107,7 +107,7 @@ const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
 const createPage = (dal: Dal, slug: string, userId: string) =>
   createWikiPage(
     dal,
-    { slug, title: { en: `Page ${slug}` }, body: { en: 'Text.' }, originalLanguage: 'en', revSummary: { en: 'Create.' } },
+    { slug, title: { en: `Page ${slug}` }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
     userId
   );
 

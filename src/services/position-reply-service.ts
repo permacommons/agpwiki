@@ -61,7 +61,7 @@ export const listPositionReplies = async (
   const grouped = new Map<string, PositionReplyThread>();
   if (!signoffIds.length) return grouped;
   const result = await dalInstance.query(
-    `SELECT t.id AS thread_id, t.attached_id, c.id, c.body, c.original_language, c.created_at, c.updated_at,
+    `SELECT t.id AS thread_id, t.attached_id, c.id, c.body, c.canonical_language, c.created_at, c.updated_at,
             (SELECT f._rev_user FROM forum_comments f
               WHERE f.id = c.id OR f._old_rev_of = c.id
               ORDER BY f._rev_date ASC LIMIT 1) AS author_id
@@ -76,7 +76,7 @@ export const listPositionReplies = async (
   for (const row of result.rows as Array<Record<string, unknown>>) {
     const signoffId = row.attached_id as string;
     const body = (row.body as Record<string, string> | null) ?? {};
-    const language = (row.original_language as string | null) ?? null;
+    const language = (row.canonical_language as string | null) ?? null;
     const createdAt = (row.created_at as Date | null) ?? null;
     const updatedAt = (row.updated_at as Date | null) ?? null;
     const entry = grouped.get(signoffId) ?? { threadId: row.thread_id as string, replies: [] };

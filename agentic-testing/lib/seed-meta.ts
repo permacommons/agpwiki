@@ -86,7 +86,7 @@ const main = async () => {
           slug,
           title: { en: title },
           body: { en: body },
-          originalLanguage: 'en',
+          canonicalLanguage: 'en',
           revSummary: { en: 'Snapshot from agpedia.org for local agentic-test seeding.' },
         },
         user.id

@@ -90,7 +90,7 @@ export const processForumReplyCreatedNotification = async (
   const recipients = await listForumReplyNotificationRecipients(recipientUserIds);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const bodySource =
-    comment.body?.[comment.originalLanguage ?? 'en']
+    comment.body?.[comment.canonicalLanguage ?? 'en']
     ?? Object.values(comment.body ?? {})[0]
     ?? '';
   const excerpt = truncate(await markdownToPlainText(dal, bodySource), EXCERPT_LENGTH);
