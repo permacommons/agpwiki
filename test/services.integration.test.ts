@@ -1252,7 +1252,7 @@ test('Service page protection blocks non-admin wiki edits', async () => {
         slug,
         title: { en: 'Protected Page' },
         body: { en: 'Original text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       editor.id
     );
@@ -1351,12 +1351,12 @@ test('Service page positions let any signed-in user support, oppose or stay neut
 
     const page = await createWikiPage(
       dal,
-      { slug, title: { en: 'Test proposal' }, body: { en: 'Proposed text.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Test proposal' }, body: { en: 'Proposed text.' }, canonicalLanguage: 'en' },
       author.id
     );
     await createWikiPage(
       dal,
-      { slug: otherSlug, title: { en: 'Article' }, body: { en: 'Text.' }, originalLanguage: 'en' },
+      { slug: otherSlug, title: { en: 'Article' }, body: { en: 'Text.' }, canonicalLanguage: 'en' },
       author.id
     );
 
@@ -1455,7 +1455,7 @@ test('Service position replies are forum posts in a thread attached to the posit
 
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Replies test' }, body: { en: 'Proposed text.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Replies test' }, body: { en: 'Proposed text.' }, canonicalLanguage: 'en' },
       author.id
     );
 
@@ -1666,7 +1666,7 @@ test('Concurrent first replies to a position share one forum thread', async t =>
     userIds.push(author.id, firstReplier.id, secondReplier.id);
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Concurrent replies' }, body: { en: 'Proposal.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Concurrent replies' }, body: { en: 'Proposal.' }, canonicalLanguage: 'en' },
       author.id
     );
     const position = await signOffPage(
@@ -1770,7 +1770,7 @@ test('Service site admins hold every role without separate grants', async () => 
 
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Protected' }, body: { en: 'Original.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Protected' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
       siteAdmin.id
     );
     await protectWikiPage(dal, { slug, reason: 'Policy page.' }, siteAdmin.id);
@@ -2212,7 +2212,7 @@ test('Service auth + wiki create/update writes revisions', async () => {
         slug,
         title: { en: 'MCP Test' },
         body: { en: 'Initial content.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId,
     );
@@ -2261,7 +2261,7 @@ test('Service readWikiPage returns a stable content hash that changes on update'
         slug,
         title: { en: 'Hash Test' },
         body: { en: 'Initial content.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -2316,7 +2316,7 @@ test('Service updateWikiPage preserves other localized entries', async () => {
         slug,
         title: { en: 'Original English title', fr: 'Titre francais original' },
         body: { en: 'English body.', fr: 'Corps francais original.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -2367,7 +2367,7 @@ test('Service apply patch updates wiki page body', async () => {
         slug,
         title: { en: 'Patch Test' },
         body: { en: 'Hello old world' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -2423,7 +2423,7 @@ test('Service rejects malformed unified patch hunks', async () => {
         slug,
         title: { en: 'Patch Invalid Test' },
         body: { en: 'Hello old world' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -2501,7 +2501,7 @@ test('Forum services create threads/comments and list categories', async () => {
     assert.ok(general);
     assert.ok((general?.threadCount ?? 0) >= 1);
     assert.deepEqual(detail.thread.title, { en: `${baseTitle} &lt;b&gt;thread&lt;/b&gt;` });
-    assert.equal(detail.thread.originalLanguage, 'en');
+    assert.equal(detail.thread.canonicalLanguage, 'en');
     assert.equal(detail.comments.length, 2);
     assert.equal(threadList.some(item => item.id === thread.id), true);
   } finally {
@@ -2698,7 +2698,7 @@ test('Forum article threads normalize aliases and reject invalid slugs', async (
         slug,
         title: { en: 'Forum Article Test' },
         body: { en: 'Body.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -2776,7 +2776,7 @@ test('Forum policy threads may optionally link to a wiki page', async () => {
         slug,
         title: { en: 'Forum Policy Test' },
         body: { en: 'Body.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -2898,7 +2898,7 @@ test('Service rejects malformed codex patch hunks', async () => {
         slug,
         title: { en: 'Patch Codex Invalid Test' },
         body: { en: 'Hello old world' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -2961,7 +2961,7 @@ test('Service accepts codex patch targets with a leading slash', async () => {
         slug,
         title: { en: 'Patch Codex Slash Test' },
         body: { en: 'Hello old world' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -3028,7 +3028,7 @@ test('Service rewrite section updates wiki page body', async () => {
         slug,
         title: { en: 'Rewrite Test' },
         body: { en: originalBody },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -3088,7 +3088,7 @@ test('Service rewrite section supports lead target', async () => {
         slug,
         title: { en: 'Rewrite Lead Test' },
         body: { en: originalBody },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -3137,7 +3137,7 @@ test('Service replace exact text applies multiple unique replacements atomically
         slug,
         title: { en: 'Replace Exact Test' },
         body: { en: 'foo and bla' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -3187,7 +3187,7 @@ test('Service replace exact text rejects ambiguous replacements without partial 
         slug,
         title: { en: 'Replace Exact Ambiguous Test' },
         body: { en: 'foo and bla and bla' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -3933,13 +3933,13 @@ test('Service rejects invalid language codes', async () => {
             slug: `test-lang-${Date.now()}`,
             title: { en: 'Invalid lang' },
             body: { en: 'Body' },
-            originalLanguage: 'xx',
+            canonicalLanguage: 'xx',
           },
           userId
         ),
       error => {
         assert.ok(error instanceof ValidationError);
-        assert.ok(error.fieldErrors?.some(entry => entry.field === 'originalLanguage'));
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'canonicalLanguage'));
         return true;
       }
     );
@@ -3972,13 +3972,13 @@ test('Service rejects invalid language codes', async () => {
             slug: `test-blog-lang-${Date.now()}`,
             title: { en: 'Invalid blog lang' },
             body: { en: 'Body' },
-            originalLanguage: 'xx',
+            canonicalLanguage: 'xx',
           },
           userId
         ),
       error => {
         assert.ok(error instanceof ValidationError);
-        assert.ok(error.fieldErrors?.some(entry => entry.field === 'originalLanguage'));
+        assert.ok(error.fieldErrors?.some(entry => entry.field === 'canonicalLanguage'));
         return true;
       }
     );
@@ -4080,7 +4080,7 @@ test('Service rejects control characters in wiki content', async () => {
         slug,
         title: { en: 'Control char test' },
         body: { en: 'Safe body.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -4536,7 +4536,7 @@ test('Service deleteWikiPage soft-deletes a page', async () => {
         slug,
         title: { en: 'Page to Delete' },
         body: { en: 'Content to delete.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -4601,7 +4601,7 @@ test('findExistingWikiLinkSlugs ignores aliases of deleted pages', async () => {
         slug,
         title: { en: 'Page with Alias' },
         body: { en: 'Content to delete.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -4724,7 +4724,7 @@ test('Service deleteWikiPage requires wiki_admin role', async () => {
         slug,
         title: { en: 'Page to Delete (Forbidden)' },
         body: { en: 'Content to delete.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       userId
     );
@@ -5238,7 +5238,7 @@ test('Service rejects unknown media slugs in wiki page body', async () => {
             slug,
             title: { en: 'Page with bad media ref' },
             body: { en: 'See ![A view](/media/nonexistent-media-slug){size=500}.' },
-            originalLanguage: 'en',
+            canonicalLanguage: 'en',
           },
           user.id
         ),
@@ -5293,7 +5293,7 @@ test('Service rejects standard markdown image syntax in wiki page body', async (
             body: {
               en: '![A photo of an orchid](agpedia-media:my-orchid?size=500)',
             },
-            originalLanguage: 'en',
+            canonicalLanguage: 'en',
           },
           user.id
         ),
@@ -5323,7 +5323,7 @@ test('Service rejects standard markdown image syntax in wiki page body', async (
             slug: `${slug}-http`,
             title: { en: 'Page with an external image URL' },
             body: { en: '![banner](https://example.com/banner.png)' },
-            originalLanguage: 'en',
+            canonicalLanguage: 'en',
           },
           user.id
         ),

@@ -148,10 +148,10 @@ test('Wiki pages show the tab row; Edit leads editors to the form and everyone e
     const admin = await createTestUser();
     userIds.push(editor.id, admin.id);
     await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
-    await createWikiPage(dal, { slug, title: { en: 'Tabs' }, body: { en: 'Text.' }, originalLanguage: 'en' }, editor.id);
+    await createWikiPage(dal, { slug, title: { en: 'Tabs' }, body: { en: 'Text.' }, canonicalLanguage: 'en' }, editor.id);
     await createWikiPage(
       dal,
-      { slug: protectedSlug, title: { en: 'Locked' }, body: { en: 'Text.' }, originalLanguage: 'en' },
+      { slug: protectedSlug, title: { en: 'Locked' }, body: { en: 'Text.' }, canonicalLanguage: 'en' },
       admin.id
     );
     await protectWikiPage(dal, { slug: protectedSlug, reason: 'Test.' }, admin.id);
@@ -218,10 +218,10 @@ test('The how-to-edit page explains the steps, or says who can edit a protected 
     const admin = await createTestUser();
     userIds.push(admin.id);
     await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
-    await createWikiPage(dal, { slug, title: { en: 'Open & shut' }, body: { en: 'Text.' }, originalLanguage: 'en' }, admin.id);
+    await createWikiPage(dal, { slug, title: { en: 'Open & shut' }, body: { en: 'Text.' }, canonicalLanguage: 'en' }, admin.id);
     await createWikiPage(
       dal,
-      { slug: protectedSlug, title: { en: 'Locked' }, body: { en: 'Text.' }, originalLanguage: 'en' },
+      { slug: protectedSlug, title: { en: 'Locked' }, body: { en: 'Text.' }, canonicalLanguage: 'en' },
       admin.id
     );
     await protectWikiPage(dal, { slug: protectedSlug, reason: 'Test.' }, admin.id);

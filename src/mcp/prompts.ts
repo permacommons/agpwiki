@@ -41,7 +41,7 @@ export const loadPromptText = async (spec: PromptSpec, value: string) => {
     if (error instanceof NotFoundError) throw unavailable(spec, `the page meta/prompts/${spec.id} is missing.`);
     throw error;
   });
-  const template = mlString.resolve(page.originalLanguage ?? 'en', page.body ?? null)?.str ?? '';
+  const template = mlString.resolve(page.canonicalLanguage ?? 'en', page.body ?? null)?.str ?? '';
   const missing = missingPromptPlaceholders(template, requiredPromptPlaceholders(slug) ?? []);
   if (missing.length) {
     throw unavailable(spec, `the page ${slug} lacks ${missing.map(name => `{{${name}}}`).join(', ')}.`);

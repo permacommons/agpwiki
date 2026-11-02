@@ -141,9 +141,9 @@ const describe = async (
     unknown
   >).first();
   if (!comment || !thread) return { skipped: 'comment_not_found' };
-  const threadTitle = collapseWhitespace(pickLocalizedText(thread.title, thread.originalLanguage));
+  const threadTitle = collapseWhitespace(pickLocalizedText(thread.title, thread.canonicalLanguage));
   const excerpt = truncate(
-    await markdownToPlainText(dal, pickLocalizedText(comment.body, comment.originalLanguage)),
+    await markdownToPlainText(dal, pickLocalizedText(comment.body, comment.canonicalLanguage)),
     EXCERPT_LENGTH
   );
   const url = `${forumThreadPath(thread.id)}#comment-${encodeURIComponent(comment.id)}`;
@@ -174,7 +174,7 @@ export const processPageCommentNotification = async (
   if (!currentPage) return { sentCount: 0, skipped: 'page_not_found' as const };
   const page = {
     slug: currentPage.slug,
-    title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.originalLanguage)) || currentPage.slug,
+    title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.canonicalLanguage)) || currentPage.slug,
   };
 
   const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, {

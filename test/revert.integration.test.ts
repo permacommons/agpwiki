@@ -89,7 +89,7 @@ const setupPage = async (prefix: string) => {
   const slug = `${prefix}-page`;
   const first = await createWikiPage(
     dal,
-    { slug, title: { en: 'Original' }, body: { en: 'Original text.' }, originalLanguage: 'en' },
+    { slug, title: { en: 'Original' }, body: { en: 'Original text.' }, canonicalLanguage: 'en' },
     author.id
   );
   await pause();

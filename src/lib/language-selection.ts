@@ -22,17 +22,17 @@ export const listAvailableLanguages = (title: LocalizedMap, body: LocalizedMap):
 
 /**
  * Pick the language a read returns. An explicit request must exist (no
- * silent fallback); otherwise the original language when it has a body,
+ * silent fallback); otherwise the canonical language when it has a body,
  * then English, then the first available language.
  */
 export const selectContentLanguage = ({
   requested,
-  originalLanguage,
+  canonicalLanguage,
   availableLanguages,
   slug,
 }: {
   requested?: string | null;
-  originalLanguage?: string | null;
+  canonicalLanguage?: string | null;
   availableLanguages: string[];
   slug?: string;
 }): string | null => {
@@ -48,7 +48,7 @@ export const selectContentLanguage = ({
     }
     return requested;
   }
-  if (originalLanguage && availableLanguages.includes(originalLanguage)) return originalLanguage;
+  if (canonicalLanguage && availableLanguages.includes(canonicalLanguage)) return canonicalLanguage;
   if (availableLanguages.includes('en')) return 'en';
   return availableLanguages[0] ?? null;
 };
@@ -62,7 +62,7 @@ export const filterLocalizedMap = <T extends LocalizedMap>(map: T, language: str
 interface LocalizedContent {
   title?: LocalizedMap;
   body?: LocalizedMap;
-  originalLanguage?: string | null;
+  canonicalLanguage?: string | null;
 }
 
 /**
@@ -77,7 +77,7 @@ export const selectPayloadLanguage = <T extends LocalizedContent>(
   const availableLanguages = listAvailableLanguages(payload.title, payload.body);
   const selectedLanguage = selectContentLanguage({
     requested,
-    originalLanguage: payload.originalLanguage,
+    canonicalLanguage: payload.canonicalLanguage,
     availableLanguages,
     slug,
   });
