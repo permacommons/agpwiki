@@ -251,7 +251,7 @@ const createWikiFixture = async (dal: Dal, userId: string) => {
   const slug = `test-expected-rev-${uniqueSuffix()}`;
   const page = await createWikiPage(
     dal,
-    { slug, title: { en: 'Expected Revision' }, body: { en: 'Body 0' }, originalLanguage: 'en' },
+    { slug, title: { en: 'Expected Revision' }, body: { en: 'Body 0' }, canonicalLanguage: 'en' },
     userId
   );
   return {

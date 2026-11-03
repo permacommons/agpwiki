@@ -162,7 +162,7 @@ test('Saving a stale copy of a wiki page maps to a retryable MCP conflict', asyn
     userId = user.id;
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
       user.id
     );
 
@@ -211,7 +211,7 @@ test('Operator edit shows an edit-conflict message when the page changes mid-sav
     userId = user.id;
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, originalLanguage: 'en' },
+      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
       user.id
     );
     const { token } = await createSession(user.id);

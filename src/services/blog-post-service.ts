@@ -80,7 +80,7 @@ const toBlogPostResult = (post: BlogPostInstance): BlogPostResult => ({
   title: post.title ?? null,
   body: post.body ?? null,
   summary: post.summary ?? null,
-  originalLanguage: post.originalLanguage ?? null,
+  canonicalLanguage: post.canonicalLanguage ?? null,
   createdAt: post.createdAt ?? null,
   updatedAt: post.updatedAt ?? null,
 });
@@ -90,7 +90,7 @@ export interface BlogPostWriteInput {
   title?: LocalizedMapInput;
   body?: LocalizedMapInput;
   summary?: LocalizedMapInput;
-  originalLanguage?: string | null;
+  canonicalLanguage?: string | null;
   tags?: string[];
   revSummary?: LocalizedMapInput;
 }
@@ -110,7 +110,7 @@ export interface BlogPostResult {
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
   summary: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
 }
@@ -255,13 +255,13 @@ export async function readBlogPost(
 
 export async function createBlogPost(
   dalInstance: DataAccessLayer,
-  { slug, title, body, summary, originalLanguage, tags = [], revSummary }: BlogPostWriteInput,
+  { slug, title, body, summary, canonicalLanguage, tags = [], revSummary }: BlogPostWriteInput,
   userId: string
 ): Promise<BlogPostResult> {
   const errors = new ValidationCollector('Invalid blog post input.');
   const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalLanguage(canonicalLanguage, 'canonicalLanguage', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   validateSummary(summary, errors);
@@ -303,7 +303,7 @@ export async function createBlogPost(
   if (normalizedTitle !== undefined) post.title = normalizedTitle;
   if (normalizedBody !== undefined) post.body = normalizedBody;
   if (normalizedSummary !== undefined) post.summary = normalizedSummary;
-  if (originalLanguage !== undefined) post.originalLanguage = originalLanguage;
+  if (canonicalLanguage !== undefined) post.canonicalLanguage = canonicalLanguage;
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.createdAt = createdAt;
@@ -322,7 +322,7 @@ export async function updateBlogPost(
     title,
     body,
     summary,
-    originalLanguage,
+    canonicalLanguage,
     expectedRevId,
     tags = [],
     revSummary,
@@ -334,7 +334,7 @@ export async function updateBlogPost(
   const rawNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
   const normalizedNewSlug = rawNewSlug === undefined ? undefined : toAddressForm(rawNewSlug);
   ensureNonEmptyString(userId, 'userId', errors);
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalLanguage(canonicalLanguage, 'canonicalLanguage', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
@@ -387,7 +387,7 @@ export async function updateBlogPost(
   if (mergedTitle !== undefined) post.title = mergedTitle;
   if (mergedBody !== undefined) post.body = mergedBody;
   if (mergedSummary !== undefined) post.summary = mergedSummary;
-  if (originalLanguage !== undefined) post.originalLanguage = originalLanguage;
+  if (canonicalLanguage !== undefined) post.canonicalLanguage = canonicalLanguage;
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) post._revSummary = normalizedRevSummary;
   post.updatedAt = new Date();
@@ -508,12 +508,12 @@ export async function diffBlogPostRevisions(
   if (summaryDiff) fields.summary = summaryDiff;
   const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
   if (slugDiff) fields.slug = slugDiff;
-  const originalLangDiff = diffScalarField(
-    'originalLanguage',
-    fromRev.originalLanguage ?? null,
-    toRev.originalLanguage ?? null
+  const canonicalLangDiff = diffScalarField(
+    'canonicalLanguage',
+    fromRev.canonicalLanguage ?? null,
+    toRev.canonicalLanguage ?? null
   );
-  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
+  if (canonicalLangDiff) fields.canonicalLanguage = canonicalLangDiff;
   return {
     postId: post.id,
     fromRevId: fromRev._revID,

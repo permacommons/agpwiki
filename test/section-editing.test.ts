@@ -124,7 +124,7 @@ test('Saving a section is refused only when that same section changed since it w
   try {
     const user = await createTestUser();
     userId = user.id;
-    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, originalLanguage: 'en' }, user.id);
+    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
     const loaded = listEditableSections(BODY);
     const usesFingerprint = sectionFingerprint(loaded[3].content);
     const historyFingerprint = sectionFingerprint(loaded[1].content);
@@ -221,7 +221,7 @@ test('Editors see section edit links; the section form edits and saves only that
   try {
     const user = await createTestUser();
     userId = user.id;
-    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, originalLanguage: 'en' }, user.id);
+    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
     const { token } = await createSession(user.id);
     const cookie = `agpwiki_session=${token}`;
     const getBody = async (path: string, withSession = true) => {

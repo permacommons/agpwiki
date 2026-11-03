@@ -68,6 +68,7 @@ import { normalizeSlugInput } from '../services/validation.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
+import { renderFollowControl } from './lib/follow-control.js';
 import { renderFormLanguageSelector } from './lib/form-language-selector.js';
 import { renderForumCommentEditLink, renderForumCommentEditor } from './lib/forum-comment-editor.js';
 import { fetchUserMap } from './lib/history.js';
@@ -409,9 +410,9 @@ const renderCommentForm = ({
 
 const getCommentBodyForDisplay = (
   body: Record<string, string> | null | undefined,
-  originalLanguage: string | null | undefined
+  canonicalLanguage: string | null | undefined
 ) => {
-  const source = mlString.resolve(originalLanguage ?? 'en', body ?? null);
+  const source = mlString.resolve(canonicalLanguage ?? 'en', body ?? null);
   return source?.str ?? '';
 };
 
@@ -497,8 +498,8 @@ const renderCommentEditPage = (
   const returnPath = commentReturnPath(req.body?.return ?? req.query.return, comment);
   const editor = renderForumCommentEditor({
     commentId: comment.id,
-    body: options.body ?? getCommentBodyForDisplay(comment.body, comment.originalLanguage),
-    language: options.language ?? comment.originalLanguage ?? 'en',
+    body: options.body ?? getCommentBodyForDisplay(comment.body, comment.canonicalLanguage),
+    language: options.language ?? comment.canonicalLanguage ?? 'en',
     languageOptions: res.locals.languageOptions,
     returnPath,
     t: req.t,
@@ -682,7 +683,7 @@ const renderThreadPage = async (
     try {
       const quotedComment = await readForumComment(quoteId);
       quotedBody = buildForumQuote(
-        getCommentBodyForDisplay(quotedComment.body, quotedComment.originalLanguage)
+        getCommentBodyForDisplay(quotedComment.body, quotedComment.canonicalLanguage)
       );
     } catch (_error) {
       quotedBody = '';
@@ -690,7 +691,7 @@ const renderThreadPage = async (
   }
 
   const sources = detail.comments.map(comment =>
-    getCommentBodyForDisplay(comment.body, comment.originalLanguage)
+    getCommentBodyForDisplay(comment.body, comment.canonicalLanguage)
   );
   const previewSource =
     typeof req.body?.body === 'string' ? req.body.body : quotedBody;
@@ -720,7 +721,7 @@ const renderThreadPage = async (
   const commentsHtml = (
     await Promise.all(
       detail.comments.map(async comment => {
-        const bodySource = getCommentBodyForDisplay(comment.body, comment.originalLanguage);
+        const bodySource = getCommentBodyForDisplay(comment.body, comment.canonicalLanguage);
         const bodyHtml = (
           await renderMarkdown(bodySource, citationEntries, {
             backToCitationLabel: req.t('citation.backToCitationAria'),
@@ -740,7 +741,7 @@ const renderThreadPage = async (
         const returnPath = `${forumThreadPath(threadId)}#comment-${comment.id}`;
         const editHtml = isOwn
           ? renderForumCommentEditor({
-              commentId: comment.id, body: bodySource, language: comment.originalLanguage ?? 'en',
+              commentId: comment.id, body: bodySource, language: comment.canonicalLanguage ?? 'en',
               languageOptions: res.locals.languageOptions, returnPath, t: req.t, hidden: true,
             })
           : '';
@@ -754,7 +755,7 @@ const renderThreadPage = async (
     ${authorHtml}
     <span>${req.t('forum.comment.postedAt', { date: escapeHtml(formatDateUTC(comment.createdAt)) })}</span>
     <span>${req.t('forum.comment.languageLabel', {
-      language: escapeHtml(comment.originalLanguage ?? 'en'),
+      language: escapeHtml(comment.canonicalLanguage ?? 'en'),
     })}</span>
     ${editedHtml}
   </div>
@@ -791,21 +792,12 @@ const renderThreadPage = async (
 </div>`
     : '';
   const subscriptionControls = session
-    ? `<div class="forum-thread-controls">
-  <form method="post" action="${forumThreadPath(threadId)}/subscription" class="forum-inline-form">
-    <input type="hidden" name="subscribed" value="${isSubscribed ? 'false' : 'true'}" />
-    <button type="submit" class="forum-subscription-button">
-      <span class="forum-subscription-button-icon" aria-hidden="true">
-        ${
-          isSubscribed
-            ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M73 39.1C63.6 29.7 48.4 29.7 39.1 39.1C29.8 48.5 29.7 63.7 39 73.1L567 601.1C576.4 610.5 591.6 610.5 600.9 601.1C610.2 591.7 610.3 576.5 600.9 567.2L513.4 479.7C530.6 477.3 543.9 462.4 543.9 444.5C543.9 436.4 541.2 428.6 536.1 422.3L526.3 410.1C496.4 372.5 480 325.8 480 277.7L480 256C480 178.6 425 114 352 99.2L352 96C352 78.3 337.7 64 320 64C302.3 64 288 78.3 288 96L288 99.2C249.4 107 215.8 128.8 192.8 158.9L73 39.1zM160 277.6C160 325.7 143.6 372.4 113.6 410L103.8 422.2C98.8 428.5 96 436.3 96 444.4C96 464 111.9 479.9 131.5 479.9L366.8 479.9L159.9 273L159.9 277.5zM320 576C349.8 576 374.9 555.6 382 528L258 528C265.1 555.6 290.2 576 320 576z"/></svg>'
-            : '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M320 64C302.3 64 288 78.3 288 96L288 99.2C215 114 160 178.6 160 256L160 277.7C160 325.8 143.6 372.5 113.6 410.1L103.8 422.3C98.7 428.6 96 436.4 96 444.5C96 464.1 111.9 480 131.5 480L508.4 480C528 480 543.9 464.1 543.9 444.5C543.9 436.4 541.2 428.6 536.1 422.3L526.3 410.1C496.4 372.5 480 325.8 480 277.7L480 256C480 178.6 425 114 352 99.2L352 96C352 78.3 337.7 64 320 64zM258 528C265.1 555.6 290.2 576 320 576C349.8 576 374.9 555.6 382 528L258 528z"/></svg>'
-        }
-      </span>
-      <span>${req.t(isSubscribed ? 'forum.thread.unsubscribe' : 'forum.thread.subscribe')}</span>
-    </button>
-  </form>
-</div>`
+    ? `<div class="forum-thread-controls">${renderFollowControl({
+        action: `${forumThreadPath(threadId)}/subscription`,
+        following: isSubscribed,
+        fields: { subscribed: isSubscribed ? 'false' : 'true' },
+        t: req.t,
+      })}</div>`
     : '';
   const subscriptionHelp =
     session && readNotificationChannel(currentUser?.notificationPreferences, 'forum.reply') === 'none'
@@ -1309,7 +1301,7 @@ export const registerForumRoutes = (app: Express) => {
           });
           const previous = versions[index - 1];
           const diff = previous ? diffLocalizedField('body', previous.body, version.body) : null;
-          const bodyText = getCommentBodyForDisplay(version.body, version.originalLanguage);
+          const bodyText = getCommentBodyForDisplay(version.body, version.canonicalLanguage);
           return `<li class="forum-comment-version">
   <h2>${heading}</h2>
   ${

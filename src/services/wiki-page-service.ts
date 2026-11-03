@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import type { PoolClient } from 'pg';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import debug from '../../util/debug.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import {
   validateLocalizedMarkdownContent,
@@ -41,7 +42,9 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
+import { followPage } from './page-subscription-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
@@ -65,7 +68,7 @@ const computeWikiPageContentHash = (page: {
   slug: string;
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
 }) =>
   createHash('sha256')
     .update(
@@ -73,7 +76,7 @@ const computeWikiPageContentHash = (page: {
         slug: page.slug,
         title: page.title ?? null,
         body: page.body ?? null,
-        originalLanguage: page.originalLanguage ?? null,
+        canonicalLanguage: page.canonicalLanguage ?? null,
       })
     )
     .digest('hex');
@@ -86,9 +89,24 @@ export interface WikiPageWriteInput {
   infoboxValues?: Record<string, InfoboxLocalValue | null> | null;
   title?: LocalizedMapInput;
   body?: LocalizedMapInput;
-  originalLanguage?: string | null;
+  canonicalLanguage?: string | null;
   tags?: string[];
   revSummary?: LocalizedMapInput;
+}
+
+/** The canonical version a translation was made from. */
+export interface TranslationSource {
+  language: string;
+  revId: string;
+}
+
+/** Translation sources keyed by the translation's language. */
+export type TranslatedFromMap = Record<string, TranslationSource>;
+
+export interface TranslationStatus extends TranslationSource {
+  // Edits that changed the source text since revId; null if revId is no
+  // longer in the page history.
+  editsBehind: number | null;
 }
 
 export interface WikiPageUpdateInput extends WikiPageWriteInput {
@@ -96,6 +114,10 @@ export interface WikiPageUpdateInput extends WikiPageWriteInput {
   // On a rename, keep the old address as an alias of the new one.
   keepAlias?: boolean;
   expectedRevId?: string;
+  // Applies to every body language written other than the source language.
+  translatedFrom?: TranslationSource;
+  // Replaces all translation sources as they are; used by reverts.
+  restoreTranslatedFrom?: TranslatedFromMap | null;
   revSummary: Record<string, string | null>;
 }
 
@@ -110,9 +132,11 @@ export interface WikiPageResult {
   currentRevId: string;
   title: Record<string, string> | null | undefined;
   body: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
   wikidata: string | null;
   infoboxValues: InfoboxLocalValues | null;
+  // readWikiPage reports each entry as a TranslationStatus.
+  translatedFrom: TranslatedFromMap | null;
   proposal: ProposalStatusInfo | null;
   proposalLinks: ProposalLinksResult | null;
   contentHash: string;
@@ -153,6 +177,7 @@ export interface WikiPagePatchInput {
   format: PatchFormat;
   lang?: string;
   baseRevId?: string;
+  translatedFrom?: TranslationSource;
   tags?: string[];
   revSummary: Record<string, string>;
 }
@@ -170,6 +195,7 @@ export interface WikiPageRewriteSectionInput {
   // Guards one section instead of the whole page: the save is refused
   // only if this section changed since it was loaded.
   expectedSectionFingerprint?: string;
+  translatedFrom?: TranslationSource;
   tags?: string[];
   revSummary: Record<string, string>;
 }
@@ -184,6 +210,7 @@ export interface WikiPageReplaceExactTextInput {
   replacements: WikiPageExactReplacement[];
   lang?: string;
   expectedRevId?: string;
+  translatedFrom?: TranslationSource;
   tags?: string[];
   revSummary: Record<string, string>;
 }
@@ -260,7 +287,12 @@ export interface WikiPageSearchItem {
 
 export const WIKIDATA_ID_PATTERN = /^Q[1-9][0-9]{0,11}$/;
 
-type PageProperties = { wikidata?: string; infoboxValues?: InfoboxLocalValues };
+type PageProperties = {
+  wikidata?: string;
+  infoboxValues?: InfoboxLocalValues;
+  translatedFrom?: TranslatedFromMap;
+  [key: string]: unknown;
+};
 
 const readWikidataId = (page: WikiPageInstance): string | null => {
   const value = (page.properties as PageProperties | null | undefined)?.wikidata;
@@ -375,12 +407,161 @@ const assertPromptPlaceholdersKept = (slug: string, body: Record<string, string 
   }
 };
 
+const updatePageProperties = (page: WikiPageInstance, change: (properties: PageProperties) => void) => {
+  const properties: PageProperties = { ...((page.properties as PageProperties | null) ?? {}) };
+  change(properties);
+  page.properties = Object.keys(properties).length ? properties : null;
+};
+
 const applyWikidataId = (page: WikiPageInstance, wikidata: string | null | undefined) => {
   if (wikidata === undefined) return;
-  const properties: PageProperties = { ...((page.properties as PageProperties | null) ?? {}) };
-  if (wikidata === null) delete properties.wikidata;
-  else properties.wikidata = wikidata;
-  page.properties = Object.keys(properties).length ? properties : null;
+  updatePageProperties(page, properties => {
+    if (wikidata === null) delete properties.wikidata;
+    else properties.wikidata = wikidata;
+  });
+};
+
+const isTranslationSource = (value: unknown): value is TranslationSource =>
+  Boolean(value) &&
+  typeof value === 'object' &&
+  typeof (value as TranslationSource).language === 'string' &&
+  typeof (value as TranslationSource).revId === 'string';
+
+const readTranslatedFrom = (page: WikiPageInstance): TranslatedFromMap | null => {
+  const value = (page.properties as PageProperties | null | undefined)?.translatedFrom;
+  if (!value || typeof value !== 'object') return null;
+  const entries = Object.entries(value).filter(([, source]) => isTranslationSource(source));
+  if (!entries.length) return null;
+  return Object.fromEntries(
+    entries.map(([lang, source]) => [lang, { language: source.language, revId: source.revId }])
+  );
+};
+
+const writeTranslatedFrom = (page: WikiPageInstance, translatedFrom: TranslatedFromMap | null) => {
+  updatePageProperties(page, properties => {
+    if (translatedFrom && Object.keys(translatedFrom).length) properties.translatedFrom = translatedFrom;
+    else delete properties.translatedFrom;
+  });
+};
+
+const ensureOptionalTranslationSource = (
+  value: unknown,
+  field: string,
+  errors: ValidationCollector
+) => {
+  if (value === undefined) return;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    errors.add(field, 'must be an object with language and revId.', 'type');
+    return;
+  }
+  const { language, revId } = value as Partial<TranslationSource>;
+  ensureNonEmptyString(language, `${field}.language`, errors);
+  ensureOptionalLanguage(language, `${field}.language`, errors);
+  ensureNonEmptyString(revId, `${field}.revId`, errors);
+};
+
+/**
+ * Check a translatedFrom source against the page and work out which
+ * languages it applies to. Translations are made from the canonical
+ * version, so the source must be the canonical language
+ * at a revision of this page that has text in it.
+ */
+const resolveTranslationSource = async (
+  page: WikiPageInstance,
+  source: TranslationSource,
+  {
+    canonicalLanguage,
+    languages,
+  }: { canonicalLanguage: string | null | undefined; languages: string[] }
+): Promise<{ source: TranslationSource; languages: string[] }> => {
+  const errors = new ValidationCollector('Invalid translatedFrom input.');
+  if (!canonicalLanguage) {
+    errors.add(
+      'translatedFrom.language',
+      'this page has no canonical language; set canonicalLanguage first.',
+      'invalid'
+    );
+  } else if (source.language !== canonicalLanguage) {
+    errors.add(
+      'translatedFrom.language',
+      `must be the canonical language of the page ("${canonicalLanguage}"): translations are made from the canonical version.`,
+      'invalid'
+    );
+  }
+  const targets = languages.filter(lang => lang !== source.language);
+  if (!targets.length) {
+    errors.add(
+      'translatedFrom',
+      'needs body text written in a language other than the source language.',
+      'invalid'
+    );
+  }
+  errors.throwIfAny();
+
+  const revision = await WikiPage.filterWhere({}).getRevisionByRevId(source.revId, page.id).first();
+  if (!revision) {
+    errors.add('translatedFrom.revId', 'must be a revision of this page.', 'invalid');
+  } else if (typeof revision.body?.[source.language] !== 'string') {
+    errors.add(
+      'translatedFrom.revId',
+      `this revision has no body text in "${source.language}".`,
+      'invalid'
+    );
+  }
+  errors.throwIfAny();
+  return { source: { language: source.language, revId: source.revId }, languages: targets };
+};
+
+const recordTranslationSource = (
+  page: WikiPageInstance,
+  resolved: { source: TranslationSource; languages: string[] } | null
+) => {
+  if (!resolved) return;
+  const translatedFrom = { ...(readTranslatedFrom(page) ?? {}) };
+  for (const lang of resolved.languages) translatedFrom[lang] = resolved.source;
+  writeTranslatedFrom(page, translatedFrom);
+};
+
+// A record only makes sense while its translation exists.
+const pruneTranslatedFrom = (page: WikiPageInstance) => {
+  const translatedFrom = readTranslatedFrom(page);
+  if (!translatedFrom) return;
+  const kept = Object.entries(translatedFrom).filter(
+    ([lang]) => typeof page.body?.[lang] === 'string'
+  );
+  if (kept.length !== Object.keys(translatedFrom).length) {
+    writeTranslatedFrom(page, Object.fromEntries(kept));
+  }
+};
+
+const countTranslationEditsBehind = async (
+  dalInstance: DataAccessLayer,
+  pageId: string,
+  currentRevId: string,
+  translatedFrom: TranslatedFromMap
+): Promise<Record<string, TranslationStatus>> => {
+  const revisionIds = [...new Set([currentRevId, ...Object.values(translatedFrom).map(source => source.revId)])];
+  const result = await dalInstance.query(
+    `SELECT _rev_id AS "revId", body_edit_counts AS counts
+       FROM ${WikiPage.tableName}
+      WHERE COALESCE(_old_rev_of, id) = $1 AND _rev_id = ANY($2::uuid[])`,
+    [pageId, revisionIds]
+  );
+  const countsByRevision = new Map(
+    (result.rows as Array<{ revId: string; counts: Record<string, number> }>).map(
+      row => [row.revId, row.counts]
+    )
+  );
+  const current = countsByRevision.get(currentRevId);
+  return Object.fromEntries(
+    Object.entries(translatedFrom).map(([lang, source]) => {
+      const counts = countsByRevision.get(source.revId);
+      const editsBehind = current && counts
+        ? (current[source.language] ?? 0) - (counts[source.language] ?? 0)
+        : null;
+      return [lang, { ...source, editsBehind }];
+    })
+  );
 };
 
 type ParentPageCache = Map<string, Promise<WikiPageInstance | null>>;
@@ -413,16 +594,17 @@ const toWikiPageResult = async (
   currentRevId: page._revID,
   title: page.title ?? null,
   body: page.body ?? null,
-  originalLanguage: page.originalLanguage ?? null,
+  canonicalLanguage: page.canonicalLanguage ?? null,
   wikidata: readWikidataId(page),
   infoboxValues: readInfoboxValues(page),
+  translatedFrom: readTranslatedFrom(page),
   proposal: readProposalStatus(page.properties),
   proposalLinks: await resolveProposalLinks(page.properties, parents),
   contentHash: computeWikiPageContentHash({
     slug: page.slug,
     title: page.title ?? null,
     body: page.body ?? null,
-    originalLanguage: page.originalLanguage ?? null,
+    canonicalLanguage: page.canonicalLanguage ?? null,
   }),
   createdAt: page.createdAt ?? null,
   updatedAt: page.updatedAt ?? null,
@@ -467,30 +649,6 @@ export const recordProtectedWikiPageEdit = async (
     targetRevId: page._revID,
     details: { operation },
   }, transaction);
-};
-
-const findCurrentPageBySlug = async (slug: string) =>
-  WikiPage.filterWhere({
-    slug,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-export const findCurrentPageById = async (id: string) =>
-  WikiPage.filterWhere({
-    id,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
-
-export const findCurrentPageBySlugOrAlias = async (slug: string) => {
-  const direct = await findCurrentPageBySlug(slug);
-  if (direct) return direct;
-
-  const alias = await PageAlias.filterWhere({ slug }).first();
-  if (!alias) return null;
-
-  return findCurrentPageById(alias.pageId);
 };
 
 export const fetchPageRevisionByRevId = async (
@@ -777,7 +935,7 @@ export async function searchWikiPages(
 }
 
 export async function readWikiPage(
-  _dalInstance: DataAccessLayer,
+  dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageResult> {
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
@@ -787,18 +945,23 @@ export async function readWikiPage(
       slug: normalizedSlug,
     });
   }
-  return toWikiPageResult(page);
+  const result = await toWikiPageResult(page);
+  const translatedFrom = readTranslatedFrom(page);
+  if (translatedFrom) {
+    result.translatedFrom = await countTranslationEditsBehind(dalInstance, page.id, page._revID, translatedFrom);
+  }
+  return result;
 }
 
 export async function createWikiPage(
-  _dalInstance: DataAccessLayer,
-  { slug, title, body, originalLanguage, wikidata, infoboxValues, tags = [], revSummary }: WikiPageWriteInput,
+  dalInstance: DataAccessLayer,
+  { slug, title, body, canonicalLanguage, wikidata, infoboxValues, tags = [], revSummary }: WikiPageWriteInput,
   userId: string
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalLanguage(canonicalLanguage, 'canonicalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
   await validateInfoboxValues(infoboxValues, 'infoboxValues', errors);
   validateTitle(title, errors);
@@ -843,7 +1006,7 @@ export async function createWikiPage(
   const normalizedBody = sanitizeLocalizedMapInput(body);
   if (normalizedTitle !== undefined) page.title = normalizedTitle;
   if (normalizedBody !== undefined) page.body = normalizedBody;
-  if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
+  if (canonicalLanguage !== undefined) page.canonicalLanguage = canonicalLanguage;
   applyWikidataId(page, wikidata);
   applyInfoboxValues(page, infoboxValues);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
@@ -852,6 +1015,12 @@ export async function createWikiPage(
   page.updatedAt = createdAt;
 
   await page.save();
+  try {
+    await followPage(dalInstance, page.id, userId);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to make ${userId} follow new page ${page.id}: ${message}`);
+  }
 
   return toWikiPageResult(page);
 }
@@ -864,10 +1033,12 @@ export async function updateWikiPage(
     keepAlias = true,
     title,
     body,
-    originalLanguage,
+    canonicalLanguage,
     wikidata,
     infoboxValues,
     expectedRevId,
+    translatedFrom,
+    restoreTranslatedFrom,
     tags = [],
     revSummary,
   }: WikiPageUpdateInput,
@@ -878,10 +1049,11 @@ export async function updateWikiPage(
   const rawNewSlug = normalizeOptionalSlug(newSlug, 'newSlug', errors);
   const normalizedNewSlug = rawNewSlug === undefined ? undefined : toAddressForm(rawNewSlug);
   ensureNonEmptyString(userId, 'userId', errors);
-  ensureOptionalLanguage(originalLanguage, 'originalLanguage', errors);
+  ensureOptionalLanguage(canonicalLanguage, 'canonicalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
   await validateInfoboxValues(infoboxValues, 'infoboxValues', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
+  ensureOptionalTranslationSource(translatedFrom, 'translatedFrom', errors);
   validateTitle(title, errors);
   validateBody(body, errors);
   requireRevSummary(revSummary, errors);
@@ -906,6 +1078,14 @@ export async function updateWikiPage(
   }
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
   assertExpectedRevision(page._revID, expectedRevId);
+  const translation = translatedFrom
+    ? await resolveTranslationSource(page, translatedFrom, {
+        canonicalLanguage: canonicalLanguage !== undefined ? canonicalLanguage : page.canonicalLanguage,
+        languages: Object.entries(body ?? {})
+          .filter(([, text]) => typeof text === 'string')
+          .map(([lang]) => lang),
+      })
+    : null;
 
   const previousSlug = page.slug;
   const isRename = Boolean(normalizedNewSlug && normalizedNewSlug !== previousSlug);
@@ -936,9 +1116,12 @@ export async function updateWikiPage(
   const mergedTitle = mergeLocalizedMap(page.title ?? null, title);
   if (mergedTitle !== undefined) page.title = mergedTitle;
   if (mergedBody !== undefined) page.body = mergedBody;
-  if (originalLanguage !== undefined) page.originalLanguage = originalLanguage;
+  if (canonicalLanguage !== undefined) page.canonicalLanguage = canonicalLanguage;
   applyWikidataId(page, wikidata);
   applyInfoboxValues(page, infoboxValues);
+  if (restoreTranslatedFrom !== undefined) writeTranslatedFrom(page, restoreTranslatedFrom);
+  recordTranslationSource(page, translation);
+  pruneTranslatedFrom(page);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -961,7 +1144,16 @@ export async function updateWikiPage(
 
 export async function applyWikiPagePatch(
   dalInstance: DataAccessLayer,
-  { slug, patch, format, lang = 'en', baseRevId, tags = [], revSummary }: WikiPagePatchInput,
+  {
+    slug,
+    patch,
+    format,
+    lang = 'en',
+    baseRevId,
+    translatedFrom,
+    tags = [],
+    revSummary,
+  }: WikiPagePatchInput,
   userId: string
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki patch input.');
@@ -973,6 +1165,7 @@ export async function applyWikiPagePatch(
   }
   ensureOptionalLanguage(lang, 'lang', errors);
   ensureOptionalString(baseRevId, 'baseRevId', errors);
+  ensureOptionalTranslationSource(translatedFrom, 'translatedFrom', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
 
@@ -985,6 +1178,12 @@ export async function applyWikiPagePatch(
   const protection = await assertCanEditWikiPage(dalInstance, page, userId);
 
   assertExpectedRevision(page._revID, baseRevId, 'baseRevId');
+  const translation = translatedFrom
+    ? await resolveTranslationSource(page, translatedFrom, {
+        canonicalLanguage: page.canonicalLanguage,
+        languages: [lang],
+      })
+    : null;
 
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
@@ -1004,6 +1203,7 @@ export async function applyWikiPagePatch(
     ...currentBody,
     [lang]: patched,
   };
+  recordTranslationSource(page, translation);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -1029,6 +1229,7 @@ export async function rewriteWikiPageSection(
     lang = 'en',
     expectedRevId,
     expectedSectionFingerprint,
+    translatedFrom,
     tags = [],
     revSummary,
   }: WikiPageRewriteSectionInput,
@@ -1057,6 +1258,7 @@ export async function rewriteWikiPageSection(
   ensureOptionalLanguage(lang, 'lang', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
   ensureOptionalString(expectedSectionFingerprint, 'expectedSectionFingerprint', errors);
+  ensureOptionalTranslationSource(translatedFrom, 'translatedFrom', errors);
   if (headingLevel !== undefined) {
     if (!Number.isInteger(headingLevel) || headingLevel < 1 || headingLevel > 6) {
       errors.add('headingLevel', 'must be an integer between 1 and 6.', 'invalid');
@@ -1165,12 +1367,20 @@ export async function rewriteWikiPageSection(
   errors.throwIfAny();
   assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
 
+  const translation = translatedFrom
+    ? await resolveTranslationSource(page, translatedFrom, {
+        canonicalLanguage: page.canonicalLanguage,
+        languages: [lang],
+      })
+    : null;
+
   await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
 
   page.body = {
     ...currentBody,
     [lang]: updatedText,
   };
+  recordTranslationSource(page, translation);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -1190,6 +1400,7 @@ export async function replaceWikiPageExactText(
     replacements,
     lang = 'en',
     expectedRevId,
+    translatedFrom,
     tags = [],
     revSummary,
   }: WikiPageReplaceExactTextInput,
@@ -1212,6 +1423,7 @@ export async function replaceWikiPageExactText(
   }
   ensureOptionalLanguage(lang, 'lang', errors);
   ensureOptionalString(expectedRevId, 'expectedRevId', errors);
+  ensureOptionalTranslationSource(translatedFrom, 'translatedFrom', errors);
   requireRevSummary(revSummary, errors);
   errors.throwIfAny();
 
@@ -1243,12 +1455,20 @@ export async function replaceWikiPageExactText(
   errors.throwIfAny();
   assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
 
+  const translation = translatedFrom
+    ? await resolveTranslationSource(page, translatedFrom, {
+        canonicalLanguage: page.canonicalLanguage,
+        languages: [lang],
+      })
+    : null;
+
   await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
 
   page.body = {
     ...currentBody,
     [lang]: updatedText,
   };
+  recordTranslationSource(page, translation);
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.updatedAt = new Date();
@@ -1434,16 +1654,22 @@ export async function diffWikiPageRevisions(
   if (bodyDiff) fields.body = bodyDiff;
   const slugDiff = diffScalarField('slug', fromRev.slug ?? null, toRev.slug ?? null);
   if (slugDiff) fields.slug = slugDiff;
-  const originalLangDiff = diffScalarField(
-    'originalLanguage',
-    fromRev.originalLanguage ?? null,
-    toRev.originalLanguage ?? null
+  const canonicalLangDiff = diffScalarField(
+    'canonicalLanguage',
+    fromRev.canonicalLanguage ?? null,
+    toRev.canonicalLanguage ?? null
   );
-  if (originalLangDiff) fields.originalLanguage = originalLangDiff;
+  if (canonicalLangDiff) fields.canonicalLanguage = canonicalLangDiff;
   const wikidataDiff = diffScalarField('wikidata', readWikidataId(fromRev), readWikidataId(toRev));
   if (wikidataDiff) fields.wikidata = wikidataDiff;
   const infoboxDiff = diffStructuredField('infoboxValues', readInfoboxValues(fromRev), readInfoboxValues(toRev));
   if (infoboxDiff) fields.infoboxValues = infoboxDiff;
+  const translatedFromDiff = diffStructuredField(
+    'translatedFrom',
+    readTranslatedFrom(fromRev),
+    readTranslatedFrom(toRev)
+  );
+  if (translatedFromDiff) fields.translatedFrom = translatedFromDiff;
 
   return {
     pageId: page.id,
@@ -1484,3 +1710,5 @@ export async function deleteWikiPage(
     deleted: true,
   };
 }
+
+export { findCurrentPageById, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';

@@ -4,6 +4,7 @@ import { Driver } from '@citeproc-rs/wasm';
 import { diffWordsWithSpace } from 'diff';
 import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
+import { escapeHtml } from './lib/html.js';
 import type { MediaRegistryEntry } from './lib/media-render.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
@@ -14,15 +15,9 @@ import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
 import { getArticleCount } from './metrics.js';
 
-export { renderToc, type TocItem } from './markdown/toc.js';
 
-export const escapeHtml = (value: string) =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+export { escapeHtml } from './lib/html.js';
+export { renderToc, type TocItem } from './markdown/toc.js';
 
 /**
  * SafeText represents HTML-safe text. It may include HTML entities or special

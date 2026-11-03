@@ -61,6 +61,7 @@ import {
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
+import { isFollowingPage } from '../services/page-subscription-service.js';
 import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
 import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
@@ -86,6 +87,7 @@ import {
   sectionFingerprint,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
+import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf, slugPath } from './lib/canonical.js';
 import {
@@ -142,6 +144,22 @@ const operatorEditPath = (slug: string, lang: string) =>
 const operatorEditDismissBannerPath = (slug: string, lang: string) =>
   `/${encodeSlugPath(slug)}/operator-edit/dismiss-banner?lang=${encodeURIComponent(lang)}`;
 const OPERATOR_EDIT_BANNER_COOKIE = 'agpwiki_operator_edit_banner_dismissed';
+
+// Tool pages, checks and editing screens are for contributors, not search
+// engines. Forum threads stay crawlable: they are the site's discussions.
+const ROBOTS_TXT = [
+  'User-agent: *',
+  'Disallow: /tool/',
+  'Allow: /tool/forum',
+  'Disallow: /tool/forum/comment/',
+  'Disallow: /api/',
+  'Disallow: /mcp',
+  'Disallow: /search',
+  'Disallow: /set-locale',
+  'Disallow: /*/checks',
+  'Disallow: /*/operator-edit',
+  '',
+].join('\n');
 
 const pageViewPath = (slug: string, lang?: string) =>
   lang ? `/${encodeSlugPath(slug)}?lang=${encodeURIComponent(lang)}` : `/${encodeSlugPath(slug)}`;
@@ -476,6 +494,10 @@ export const registerPageRoutes = (app: Express) => {
 
   app.get('/', (_req, res) => {
     res.redirect(302, '/meta/welcome');
+  });
+
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send(ROBOTS_TXT);
   });
 
   app.get('/health', (_req, res) => {
@@ -1752,6 +1774,14 @@ export const registerPageRoutes = (app: Express) => {
         discussHref: forumPath || null,
         discussCount: discussionCategory ? await countForumCommentsForPage(dalInstance, canonicalSlug, discussionCategory) : 0,
         editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+        follow: session
+          ? {
+              slug: canonicalSlug,
+              following: await isFollowingPage(dalInstance, page.id, session.userId),
+              returnTo: req.originalUrl || pageViewPath(canonicalSlug),
+              action: FOLLOW_PATH,
+            }
+          : undefined,
         t: req.t,
       });
       const forumLinkHtml = relatedLinks.length
@@ -1856,6 +1886,8 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
+        // Old revisions, diffs and draft proposals stay out of search engines.
+        noindex: Boolean(selectedRevId) || selectedRevision.proposal?.status === 'draft',
         labelHtml,
         tabsHtml,
         bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,

@@ -154,7 +154,7 @@ test('MCP wiki_readPage returns content hash and current revision id', async () 
         slug,
         title: { en: 'Read Hash Test' },
         body: { en: 'Hashable content.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -166,8 +166,11 @@ test('MCP wiki_readPage returns content hash and current revision id', async () 
       contentHash?: string;
       currentRevId?: string;
       slug?: string;
+      canonicalLanguage?: string;
     };
 
+    assert.equal(payload.canonicalLanguage, 'en');
+    assert.equal('originalLanguage' in payload, false);
     assert.equal(result.isError, undefined);
     assert.equal(payload.slug, slug);
     assert.equal(typeof payload.contentHash, 'string');
@@ -202,7 +205,7 @@ test('MCP wiki protection tools update read editability hints', async () => {
         slug: 'meta/policy',
         title: { en: 'Policy' },
         body: { en: 'Current policy text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       admin.id
     );
@@ -212,7 +215,7 @@ test('MCP wiki protection tools update read editability hints', async () => {
         slug,
         title: { en: 'Protect Test' },
         body: { en: 'Editable content.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       editor.id
     );
@@ -285,7 +288,7 @@ test('MCP reads return one language by default and compact history', async () =>
         slug,
         title: { en: 'Language test', de: 'Sprachtest' },
         body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
-        originalLanguage: 'de',
+        canonicalLanguage: 'de',
       },
       user.id
     );
@@ -386,7 +389,7 @@ test('MCP diffs allow an explicit language removed from the target revision', as
         slug,
         title: { en: 'Language test', de: 'Sprachtest' },
         body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
-        originalLanguage: 'de',
+        canonicalLanguage: 'de',
       },
       user.id
     );
@@ -442,7 +445,7 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
         slug: 'meta/policy',
         title: { en: 'Policy' },
         body: { en: 'Current policy text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -453,7 +456,7 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
         slug,
         title: { en: 'Expected Rev Test' },
         body: { en: 'Hello world' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -518,7 +521,7 @@ test('MCP wiki write tools require the latest policy hash', async () => {
         slug: 'meta/policy',
         title: { en: 'Policy' },
         body: { en: 'Current policy text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -728,7 +731,7 @@ test('MCP citation_create rejects a stale or wrong policy hash', async () => {
         slug: 'meta/policy',
         title: { en: 'Policy' },
         body: { en: 'Current policy text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
@@ -886,7 +889,7 @@ for (const { tool, args } of wikiHistoryCases) {
           slug,
           title: HISTORY_TITLE,
           body: { en: HISTORY_ORIGINAL_BODY_EN, de: HISTORY_BODY_DE },
-          originalLanguage: 'en',
+          canonicalLanguage: 'en',
         },
         user.id
       );
@@ -1153,7 +1156,7 @@ test('MCP page_check_update leaves the previous page check revision intact', asy
         slug,
         title: { en: 'Page Check History' },
         body: { en: 'Checked text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );
