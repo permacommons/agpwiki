@@ -1,4 +1,4 @@
-import WikiPage from './models/wiki-page.js';
+import { articlePages } from './models/page-scope.js';
 
 type CacheEntry = {
   value: number;
@@ -14,10 +14,7 @@ export const getArticleCount = async () => {
     return articleCountCache.value;
   }
 
-  const { notLike } = WikiPage.ops;
-  const count = await WikiPage.filterWhere({ slug: notLike('meta/%') })
-    .and({ slug: notLike('tool/%') })
-    .count();
+  const count = await articlePages().count();
 
   articleCountCache = { value: count, expiresAt: now + ARTICLE_COUNT_TTL_MS };
   return count;

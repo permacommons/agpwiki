@@ -88,7 +88,7 @@ import {
   readCitationRevision,
   updateCitation,
 } from '../services/citation-service.js';
-import { checkNewArticle, findPossibleDuplicates } from '../services/duplicate-check-service.js';
+import { findPossibleDuplicates } from '../services/duplicate-check-service.js';
 import {
   createMedia,
   deleteMedia,
@@ -152,13 +152,13 @@ import {
   rewriteWikiPageSection,
   updateWikiPage,
   type WikiPageAliasInput,
+  type WikiPageCreateInput,
   type WikiPageDeleteInput,
   type WikiPagePatchInput,
   type WikiPageReplaceExactTextInput,
   type WikiPageResult,
   type WikiPageRewriteSectionInput,
   type WikiPageUpdateInput,
-  type WikiPageWriteInput,
 } from '../services/wiki-page-service.js';
 import { resolveAuthUserId } from './auth.js';
 import { toToolErrorPayload, toValidationErrorFromZod } from './errors.js';
@@ -211,8 +211,8 @@ const TRANSLATION_RULES_DESCRIPTION =
 const CONCURRENCY_DESCRIPTION =
   'Pass expectedRevId (the currentRevId from your last read or write of this document) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the document again, reapply your change to the current version, and retry.';
 
-const RELATED_ARTICLES_HINT =
-  'These articles overlap with the new one. Link to them where it helps, and keep a short summary with a link in any broader article.';
+const RELATED_PAGES_HINT =
+  'These pages overlap with the new one. Link to them where it helps, and keep a short summary with a link in any broader page.';
 
 const toWikiWriteResponse = ({
   id,
@@ -351,10 +351,9 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     );
   const notDuplicateOfSchema = z
     .array(z.string().min(1).max(SLUG_MAX_LENGTH))
-    .max(20)
     .optional()
     .describe(
-      'Slugs of existing articles you checked and found to be a different topic. Needed only after a possible_duplicate error; list every page it named.'
+      'Slugs of existing pages you checked and found to be a different topic. Needed only after a possible_duplicate error; list every page it named.'
     );
   const contentLanguageMessage =
     'Expected a supported locale code (see agpwiki://locales) or "*" for all languages.';
@@ -699,7 +698,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. A new article is refused with a possible_duplicate error when it may already exist in any language (see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related articles are returned as relatedArticles, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. A new page is refused with a possible_duplicate error when it may already exist in any language within its namespace (articles or meta pages; see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related pages are returned as relatedPages, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -715,23 +714,22 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     },
     withToolErrorHandling(
       async (
-        args: WikiPageWriteInput & { policyHash?: string; notDuplicateOf?: string[] },
+        args: WikiPageCreateInput & { policyHash?: string },
         extra
       ) => {
         const dal = await initializePostgreSQL();
         const userId = await requireAuthUserId(extra);
         const { policyHash, notDuplicateOf, ...writeArgs } = args;
         await requireCurrentPolicyHash(dal, policyHash);
-        const check = await checkNewArticle(dal, { ...writeArgs, notDuplicateOf });
         const payload = await createWikiPage(
           dal,
-          { ...writeArgs, tags: mergeTags([...check.tags, ...(writeArgs.tags ?? [])]) },
+          { ...writeArgs, notDuplicateOf, tags: mergeTags(writeArgs.tags) },
           userId
         );
         return {
           ...toWikiWriteResponse(payload),
-          ...(check.related.length
-            ? { relatedArticles: check.related, relatedArticlesHint: RELATED_ARTICLES_HINT }
+          ...(payload.relatedPages.length
+            ? { relatedPages: payload.relatedPages, relatedPagesHint: RELATED_PAGES_HINT }
             : {}),
         };
       }
@@ -743,7 +741,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Find Possible Duplicates',
       description:
-        'Before writing a new article, check whether its topic already exists in any language. duplicates are articles with the same Wikidata item, a title matching yours in any language (ignoring capitals, accents and punctuation) or a similar address; wiki_createPage refuses to create a page while any of them is not listed in notDuplicateOf. If one is the same topic, improve or translate it instead. related are articles whose titles share the main words of yours: they never block creation; read them, and ask your operator before creating an article that overlaps with one.',
+        'Before writing a new page, check whether its topic already exists in any language within its namespace. Pass the planned slug to select its namespace: meta/ pages are compared with meta/ pages, and articles with articles. Without a slug, searches articles. duplicates are pages with the same Wikidata item, a title matching yours in any language (ignoring capitals, accents and punctuation) or a similar address; wiki_createPage refuses to create a page while any of them is not listed in notDuplicateOf. If one is the same topic, improve or translate it instead. related are pages whose titles share the main words of yours: they never block creation; read them, and ask your operator before creating a page that overlaps with one.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         title: z.string().min(1).max(TITLE_MAX_LENGTH).describe('The planned title, in any language.'),

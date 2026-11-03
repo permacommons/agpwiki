@@ -5,7 +5,7 @@ import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
 import { NotFoundError } from '../lib/errors.js';
-import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { formatMediaLabel } from '../lib/media.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
 import {
@@ -19,6 +19,7 @@ import { getRecentPageChecks } from '../lib/recent-checks.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { WIKI_LINK_PREVIEW_ENDPOINT } from '../lib/wiki-link-preview.js';
 import { createWikiLinkPreviewToken } from '../lib/wiki-link-preview-token.js';
+import { articlePages } from '../models/page-scope.js';
 import WikiPage from '../models/wiki-page.js';
 import {
   concatSafeText,
@@ -1072,14 +1073,9 @@ export const registerToolRoutes = (app: Express) => {
     const sortNew = req.query.sort === 'new';
     const sortParam = sortNew ? '&sort=new' : '';
 
-    const { notLike } = WikiPage.ops;
+    const total = await articlePages().count();
 
-    const total = await WikiPage.filterWhere({ slug: notLike('meta/%') })
-      .and({ slug: notLike('tool/%') })
-      .count();
-
-    const pageResults = await WikiPage.filterWhere({ slug: notLike('meta/%') })
-      .and({ slug: notLike('tool/%') })
+    const pageResults = await articlePages()
       .orderBy(sortNew ? 'createdAt' : 'slug', sortNew ? 'DESC' : 'ASC')
       .limit(per)
       .offset(offset)
@@ -1207,11 +1203,8 @@ export const registerToolRoutes = (app: Express) => {
     const editHref = `${pageHref}/operator-edit`;
     const title = resolveSafeTextWithFallback(mlString.resolve, res.locals.locale ?? 'en', page.title, page.slug);
     const titleLinkHtml = `<a href="${escapeHtml(pageHref)}">${renderText(title)}</a>`;
-    const discussHref = page.slug.startsWith('meta/')
-      ? forumCategoryPagePath('policy', page.slug)
-      : page.slug.startsWith('tool/')
-        ? ''
-        : forumCategoryPagePath('articles', page.slug);
+    const category = forumPageCategory(page.slug);
+    const discussHref = category ? forumCategoryPagePath(category, page.slug) : '';
     const accountState = res.locals.accountState as { agentAccessStatus?: string } | null | undefined;
 
     const stepsHtml = (() => {

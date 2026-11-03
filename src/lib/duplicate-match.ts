@@ -50,7 +50,9 @@ const foldPlural = (word: string) =>
  * "worldwar" give the same key.
  */
 export const normalizeAddressForMatch = (slug: string) =>
-  normalizeTitleForMatch(slug).split(' ').filter(Boolean).map(foldPlural).join('');
+  slug.split('/').map(segment =>
+    normalizeTitleForMatch(segment).split(' ').filter(Boolean).map(foldPlural).join('')
+  ).join('/');
 
 /**
  * The words that carry a title's topic, for spotting related articles.
@@ -75,6 +77,3 @@ export const countSharedWords = (a: Set<string>, b: Set<string>) => {
  */
 export const sharesMainWords = (newWords: Set<string>, otherWords: Set<string>) =>
   newWords.size > 0 && countSharedWords(newWords, otherWords) >= Math.min(2, newWords.size);
-
-// Pages outside articles (policies, proposals, tools) are never checked.
-export const isArticleSlug = (slug: string) => !slug.startsWith('meta/') && !slug.startsWith('tool/');

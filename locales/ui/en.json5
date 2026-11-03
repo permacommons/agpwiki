@@ -521,7 +521,7 @@
     "view": "View",
     "title": "Version history",
     "compare": "Compare selected revisions",
-    // Shown when the creator confirmed the new article is not a duplicate of these pages.
+    // Shown when the creator confirmed the new page is not a duplicate of these pages.
     "notDuplicateOf": "Not a duplicate of {{pages}}"
   },
   // Restoring an earlier version and rolling back edits from the version history.

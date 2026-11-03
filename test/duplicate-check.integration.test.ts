@@ -1,8 +1,11 @@
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import assert from 'node:assert/strict';
 import { randomBytes, randomInt } from 'node:crypto';
 import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
+import { pageNamespaceSql, resolvePageAddress } from '../src/lib/page-address.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import User from '../src/models/user.js';
 import { findPossibleDuplicates } from '../src/services/duplicate-check-service.js';
@@ -11,6 +14,7 @@ import {
   createWikiPage,
   listWikiPageRevisions,
   searchWikiPages,
+  updateWikiPage,
 } from '../src/services/wiki-page-service.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
@@ -56,10 +60,10 @@ const getToolHandlers = (server: object) =>
 const cleanup = async (prefix: string, userId: string | null) => {
   const dal = await getDal();
   await dal.query(
-    'DELETE FROM page_aliases WHERE slug LIKE $1 OR page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-    [`${prefix}%`]
+    'DELETE FROM page_aliases WHERE slug LIKE $1 OR slug LIKE $2 OR page_id IN (SELECT id FROM pages WHERE slug LIKE $1 OR slug LIKE $2)',
+    [`${prefix}%`, `meta/${prefix}%`]
   );
-  await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+  await dal.query('DELETE FROM pages WHERE slug LIKE $1 OR slug LIKE $2', [`${prefix}%`, `meta/${prefix}%`]);
   if (userId) await dal.query('DELETE FROM users WHERE id = $1', [userId]);
 };
 
@@ -245,10 +249,10 @@ test('wiki_createPage refuses a possible duplicate unless every match is set asi
     assert.equal(accepted.isError, undefined);
     const payload = accepted.structuredContent as {
       slug: string;
-      relatedArticles?: Array<{ slug: string }>;
+      relatedPages?: Array<{ slug: string }>;
     };
     assert.equal(payload.slug, newSlug);
-    assert.ok(payload.relatedArticles?.some(item => item.slug === related));
+    assert.ok(payload.relatedPages?.some(item => item.slug === related));
 
     const history = await listWikiPageRevisions(dal, newSlug);
     const tags = history.revisions[0]?.revTags ?? [];
@@ -294,6 +298,134 @@ test('Search finds titles in every language', async () => {
     const results = await searchWikiPages(dal, { query: `château ${word}` });
     assert.deepEqual(results, [{ slug, title: `Château ${word}` }]);
   } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+
+test('Meta duplicates are enforced in the service and stay separate from articles', async () => {
+  const dal = await getDal();
+  const prefix = `test-namespace-${Date.now()}`;
+  const word = randomWord();
+  const title = { en: `Values ${word}` };
+  const wikidata = randomWikidataId();
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const article = await createWikiPage(dal, { slug: prefix, title, wikidata }, user.id);
+    const meta = await createWikiPage(dal, { slug: `meta/${prefix}`, title, wikidata }, user.id);
+    const matches = await findPossibleDuplicates(dal, {
+      titles: Object.values(title), slug: `meta/${prefix}-new`, wikidata,
+    });
+    assert.deepEqual(matches.duplicates.map(page => page.slug), [meta.slug]);
+    assert.deepEqual((await findPossibleDuplicates(dal, {
+      titles: Object.values(title), wikidata,
+    })).duplicates.map(page => page.slug), [article.slug]);
+
+    await assert.rejects(createWikiPage(dal, {
+      slug: `meta/${prefix}-new`, title, wikidata,
+    }, user.id), { code: 'possible_duplicate' });
+    const missing = await dal.query('SELECT id FROM pages WHERE slug = $1', [`meta/${prefix}-new`]);
+    assert.equal(missing.rows.length, 0);
+    await assert.rejects(createWikiPage(dal, {
+      slug: `tool/${prefix}`, title, wikidata,
+    }, user.id), { code: 'invalid_request' });
+    await assert.rejects(findPossibleDuplicates(dal, {
+      titles: Object.values(title), slug: `tool/${prefix}`,
+    }), { code: 'invalid_request' });
+
+    const accepted = await createWikiPage(dal, {
+      slug: `meta/${prefix}-new`, title, wikidata, notDuplicateOf: [meta.slug],
+    }, user.id);
+    const history = await listWikiPageRevisions(dal, accepted.slug);
+    assert.ok(history.revisions[0]?.revTags?.includes(`not-duplicate-of:${meta.slug}`));
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('Aliases keep their own namespace when a page moves between namespaces', async () => {
+  const dal = await getDal();
+  const prefix = `test-namespace-alias-${Date.now()}`;
+  const word = randomWord();
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await createWikiPage(dal, { slug: prefix, title: { en: word } }, user.id);
+    const moved = await updateWikiPage(dal, {
+      slug: prefix, newSlug: `meta/${prefix}`, revSummary: { en: 'Move test page' },
+    }, user.id);
+    const titles = await findPossibleDuplicates(dal, { titles: [word] });
+    assert.equal(titles.duplicates.some(page => page.slug === moved.slug), false);
+    const aliases = await findPossibleDuplicates(dal, { titles: [prefix] });
+    assert.deepEqual(aliases.duplicates.map(page => [page.slug, page.matchedBy]), [
+      [moved.slug, ['alias']],
+    ]);
+    const addresses = await findPossibleDuplicates(dal, { titles: [], slug: prefix });
+    assert.deepEqual(addresses.duplicates.map(page => page.slug), [moved.slug]);
+    await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [moved.id]);
+    const deleted = await findPossibleDuplicates(dal, { titles: [prefix], slug: prefix });
+    assert.deepEqual(deleted, { duplicates: [], related: [] });
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+
+test('Database namespace scoping agrees with address classification', async () => {
+  const dal = await getDal();
+  const slugs = ['values', 'meta/values', 'meta/proposals/x', 'foo/bar', 'metadata/x',
+    'tool/x', 'api/x', 'blog/x', 'mcp', '.well-known/x'];
+  const result = await dal.query(
+    `SELECT slug, ${pageNamespaceSql()} AS namespace FROM unnest($1::text[]) AS slug`, [slugs]
+  );
+  for (const row of result.rows) {
+    assert.equal(row.namespace, resolvePageAddress(row.slug)?.namespace ?? null);
+  }
+});
+
+test('MCP transport supports meta duplicate discovery, refusal and override', async () => {
+  const dal = await getDal();
+  const prefix = `test-namespace-mcp-${Date.now()}`;
+  const title = `Scope ${randomWord()}`;
+  const { server } = createMcpServer({ skipPolicyCheck: true });
+  const client = new Client({ name: 'namespace-flow-test', version: '1' });
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const send = clientTransport.send.bind(clientTransport);
+    clientTransport.send = (message, options) => send(message, {
+      ...options, authInfo: { token: 'test', clientId: 'test', scopes: [], extra: { userId: user.id } },
+    });
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+    const call = (name: string, args: Record<string, unknown>) => client.callTool({ name, arguments: args });
+    const input = { slug: `meta/${prefix}`, title: { en: title }, canonicalLanguage: 'en', policyHash: 'test' };
+    const created = await call('wiki_createPage', input);
+    assert.equal(created.isError, undefined);
+    const article = await call('wiki_createPage', { ...input, slug: prefix });
+    assert.equal(article.isError, undefined);
+    const discovered = await call('wiki_findPossibleDuplicates', { title, slug: input.slug });
+    assert.deepEqual((discovered.structuredContent as { duplicates: Array<{ slug: string }> }).duplicates.map(page => page.slug), [input.slug]);
+    const duplicate = { ...input, slug: `meta/${prefix}-second` };
+    const refused = await call('wiki_createPage', duplicate);
+    assert.equal(refused.isError, true);
+    assert.equal((refused.structuredContent as { error: { code: string } }).error.code, 'possible_duplicate');
+    const accepted = await call('wiki_createPage', { ...duplicate, notDuplicateOf: [input.slug] });
+    assert.equal(accepted.isError, undefined);
+    const history = await call('wiki_listRevisions', { slug: duplicate.slug });
+    const tags = (history.structuredContent as { revisions: Array<{ revTags: string[] }> }).revisions[0].revTags;
+    assert.ok(tags.includes(`not-duplicate-of:${input.slug}`));
+    assert.ok(tags.includes('agent:namespace-flow-test'));
+    const reserved = await call('wiki_findPossibleDuplicates', { title, slug: `tool/${prefix}` });
+    assert.equal(reserved.isError, true);
+  } finally {
+    await client.close();
+    await server.close();
     await cleanup(prefix, userId);
   }
 });

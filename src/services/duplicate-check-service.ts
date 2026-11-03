@@ -1,15 +1,15 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import {
   countSharedWords,
-  isArticleSlug,
   mainTitleWords,
   normalizeAddressForMatch,
   normalizeTitleForMatch,
   sharesMainWords,
 } from '../lib/duplicate-match.js';
-import { PossibleDuplicateError, ValidationCollector } from '../lib/errors.js';
+import { InvalidRequestError, PossibleDuplicateError, ValidationCollector } from '../lib/errors.js';
 import type { LocalizedMapInput } from '../lib/localized.js';
-import { toAddressForm } from '../lib/slug.js';
+import { pageNamespaceSql, resolvePageAddress } from '../lib/page-address.js';
+import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeSlugInput } from './validation.js';
 
 export const NOT_DUPLICATE_TAG_PREFIX = 'not-duplicate-of:';
@@ -26,7 +26,7 @@ export interface PossibleDuplicate {
   matchedBy: DuplicateMatch[];
 }
 
-export interface RelatedArticle {
+export interface RelatedPage {
   slug: string;
   title: Record<string, string> | null;
   languages: string[];
@@ -40,10 +40,10 @@ export interface DuplicateCheckInput {
 
 export interface DuplicateCheckResult {
   duplicates: PossibleDuplicate[];
-  related: RelatedArticle[];
+  related: RelatedPage[];
 }
 
-export interface NewArticleCheckInput {
+export interface NewPageCheckInput {
   slug: string;
   title?: LocalizedMapInput;
   canonicalLanguage?: string | null;
@@ -51,13 +51,13 @@ export interface NewArticleCheckInput {
   notDuplicateOf?: string[];
 }
 
-export interface NewArticleCheckResult {
-  related: RelatedArticle[];
+export interface NewPageCheckResult {
+  related: RelatedPage[];
   // Revision tags recording the pages the creator checked and set aside.
   tags: string[];
 }
 
-type ArticleRow = {
+type PageRow = {
   slug: string;
   title: Record<string, string> | null;
   canonical_language: string | null;
@@ -66,8 +66,7 @@ type ArticleRow = {
 
 type AliasRow = { slug: string; page_slug: string };
 
-const CURRENT_ARTICLE = `_old_rev_of IS NULL AND _rev_deleted = false
-  AND slug NOT LIKE 'meta/%' AND slug NOT LIKE 'tool/%'`;
+const CURRENT_PAGE = '_old_rev_of IS NULL AND _rev_deleted = false';
 
 const titleValues = (title: Record<string, string> | null) =>
   Object.values(title ?? {}).filter((value): value is string => typeof value === 'string');
@@ -78,7 +77,7 @@ const titleLanguages = (title: Record<string, string> | null) =>
     .map(([lang]) => lang);
 
 /**
- * Existing articles that may be the same topic as a new one, and articles
+ * Existing pages that may be the same topic as a new one, and pages
  * that overlap with it. Titles and addresses are compared in code because
  * PostgreSQL cannot set accents aside without an extra extension.
  */
@@ -86,25 +85,37 @@ export async function findPossibleDuplicates(
   dalInstance: DataAccessLayer,
   { titles, slug, wikidata }: DuplicateCheckInput
 ): Promise<DuplicateCheckResult> {
-  const newSlug = slug ? toAddressForm(slug) : null;
-  if (newSlug && !isArticleSlug(newSlug)) return { duplicates: [], related: [] };
+  const normalizedSlug = slug == null ? null : toAddressForm(normalizeSlugInput(slug, 'slug'));
+  if (normalizedSlug && isBlockedSlug(normalizedSlug)) {
+    throw new InvalidRequestError(`Wiki page slug is reserved: ${normalizedSlug}`, { slug: normalizedSlug });
+  }
+  const address = resolvePageAddress(normalizedSlug ?? '');
+  const namespace = address?.namespace ?? 'article';
+  const newSlug = address?.slug ?? null;
 
   const titleKeys = new Set(titles.map(normalizeTitleForMatch).filter(Boolean));
-  const addressKey = newSlug ? normalizeAddressForMatch(newSlug) : '';
+  const addressKey = newSlug ? normalizeAddressForMatch(address?.localName ?? newSlug) : '';
 
-  const [articleResult, aliasResult] = await Promise.all([
+  const [pageResult, aliasResult] = await Promise.all([
     dalInstance.query(
       `SELECT slug, title, canonical_language, properties->>'wikidata' AS wikidata
-         FROM pages WHERE ${CURRENT_ARTICLE}`
+         FROM pages WHERE ${CURRENT_PAGE}
+          AND ${pageNamespaceSql()} IS NOT NULL
+          AND (${pageNamespaceSql()} = $1 OR id IN (
+            SELECT page_id FROM page_aliases WHERE ${pageNamespaceSql()} = $1
+          ))`,
+      [namespace]
     ),
     dalInstance.query(
       `SELECT a.slug, p.slug AS page_slug
          FROM page_aliases a JOIN pages p ON p.id = a.page_id
         WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
-          AND p.slug NOT LIKE 'meta/%' AND p.slug NOT LIKE 'tool/%'`
+          AND ${pageNamespaceSql('p.slug')} IS NOT NULL
+          AND ${pageNamespaceSql('a.slug')} = $1`,
+      [namespace]
     ),
   ]);
-  const articles = articleResult.rows as ArticleRow[];
+  const pages = pageResult.rows as PageRow[];
   const aliases = aliasResult.rows as AliasRow[];
 
   const matches = new Map<string, Set<DuplicateMatch>>();
@@ -114,51 +125,55 @@ export async function findPossibleDuplicates(
     matches.set(pageSlug, set);
   };
 
-  for (const article of articles) {
-    if (wikidata && article.wikidata === wikidata) addMatch(article.slug, 'wikidata');
-    if (titleValues(article.title).some(value => titleKeys.has(normalizeTitleForMatch(value)))) {
-      addMatch(article.slug, 'title');
+  for (const page of pages) {
+    const otherAddress = resolvePageAddress(page.slug);
+    if (otherAddress?.namespace !== namespace) continue;
+    if (wikidata && page.wikidata === wikidata) addMatch(page.slug, 'wikidata');
+    if (titleValues(page.title).some(value => titleKeys.has(normalizeTitleForMatch(value)))) {
+      addMatch(page.slug, 'title');
     }
-    if (addressKey && normalizeAddressForMatch(article.slug) === addressKey) {
-      addMatch(article.slug, 'address');
+    if (addressKey && normalizeAddressForMatch(otherAddress.localName) === addressKey) {
+      addMatch(page.slug, 'address');
     }
   }
   for (const alias of aliases) {
-    if (titleKeys.has(normalizeTitleForMatch(alias.slug))) addMatch(alias.page_slug, 'alias');
-    if (addressKey && normalizeAddressForMatch(alias.slug) === addressKey) {
+    const aliasName = resolvePageAddress(alias.slug)?.localName ?? alias.slug;
+    if (titleKeys.has(normalizeTitleForMatch(aliasName))) addMatch(alias.page_slug, 'alias');
+    if (addressKey && normalizeAddressForMatch(aliasName) === addressKey) {
       addMatch(alias.page_slug, 'address');
     }
   }
 
-  const duplicates: PossibleDuplicate[] = articles
-    .filter(article => matches.has(article.slug))
-    .map(article => ({
-      slug: article.slug,
-      title: article.title,
-      languages: titleLanguages(article.title),
-      wikidata: article.wikidata,
-      matchedBy: [...(matches.get(article.slug) ?? [])],
+  const duplicates: PossibleDuplicate[] = pages
+    .filter(page => matches.has(page.slug))
+    .map(page => ({
+      slug: page.slug,
+      title: page.title,
+      languages: titleLanguages(page.title),
+      wikidata: page.wikidata,
+      matchedBy: [...(matches.get(page.slug) ?? [])],
     }))
     .sort((a, b) => a.slug.localeCompare(b.slug));
 
   const newWords = new Set(titles.flatMap(title => [...mainTitleWords(title)]));
-  const related = articles
-    .filter(article => !matches.has(article.slug) && article.slug !== newSlug)
-    .map(article => {
+  const related = pages
+    .filter(page => resolvePageAddress(page.slug)?.namespace === namespace
+      && !matches.has(page.slug) && page.slug !== newSlug)
+    .map(page => {
       let score = 0;
-      for (const value of titleValues(article.title)) {
+      for (const value of titleValues(page.title)) {
         const words = mainTitleWords(value);
         if (sharesMainWords(newWords, words)) score = Math.max(score, countSharedWords(newWords, words));
       }
-      return { article, score };
+      return { page, score };
     })
     .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score || a.article.slug.localeCompare(b.article.slug))
+    .sort((a, b) => b.score - a.score || a.page.slug.localeCompare(b.page.slug))
     .slice(0, RELATED_LIMIT)
-    .map(({ article }) => ({
-      slug: article.slug,
-      title: article.title,
-      languages: titleLanguages(article.title),
+    .map(({ page }) => ({
+      slug: page.slug,
+      title: page.title,
+      languages: titleLanguages(page.title),
     }));
 
   return { duplicates, related };
@@ -205,24 +220,24 @@ const describeDuplicates = (
       return `${displayTitle(duplicate.title, newLanguage, duplicate.slug)} (${parts.join(', ')})`;
     })
     .join('; ');
-  const target = duplicates.length === 1 ? 'that article' : 'one of those articles';
+  const target = duplicates.length === 1 ? 'that page' : 'one of those pages';
   const missingLanguage =
     newLanguage && duplicates.every(duplicate => !duplicate.languages.includes(newLanguage));
   const advice = missingLanguage
-    ? `Add a ${languageName(newLanguage)} translation to ${target}`
+    ? `Add a translation in ${languageName(newLanguage)} to ${target}`
     : `Improve ${target}`;
   const slugs = JSON.stringify(duplicates.map(duplicate => duplicate.slug));
   return `Not created: "${newTitle}" may already exist as ${list}. ${advice}, or create this one again with notDuplicateOf: ${slugs} if it is a different topic.`;
 };
 
 /**
- * Refuses a new article that may already exist, unless every possible
- * duplicate is named in notDuplicateOf. Pages outside articles pass.
+ * Refuses a new page that may already exist, unless every possible
+ * duplicate in its namespace is named in notDuplicateOf.
  */
-export async function checkNewArticle(
+export async function checkNewPage(
   dalInstance: DataAccessLayer,
-  { slug, title, canonicalLanguage, wikidata, notDuplicateOf = [] }: NewArticleCheckInput
-): Promise<NewArticleCheckResult> {
+  { slug, title, canonicalLanguage, wikidata, notDuplicateOf = [] }: NewPageCheckInput
+): Promise<NewPageCheckResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const checked = notDuplicateOf.map((value, index) =>
     toAddressForm(normalizeSlugInput(value, `notDuplicateOf.${index}`, errors))
@@ -241,7 +256,7 @@ export async function checkNewArticle(
   });
 
   const checkedSet = new Set(checked);
-  const blocking = duplicates.filter(duplicate => !checkedSet.has(duplicate.slug));
+  const blocking = duplicates.filter(duplicate => !checkedSet.has(toAddressForm(duplicate.slug)));
   if (blocking.length) {
     const newLanguage = canonicalLanguage ?? Object.keys(titleMap)[0] ?? null;
     const newTitle = displayTitle(titleMap, newLanguage, toAddressForm(slug));

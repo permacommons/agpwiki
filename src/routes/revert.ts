@@ -10,7 +10,7 @@ import {
   PreconditionFailedError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath } from '../lib/forum-paths.js';
+import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, formatDateUTC, prepareTitle } from '../render.js';
 import {
@@ -32,7 +32,7 @@ const isEditWarGuard = (error: unknown) =>
   error instanceof ConflictError && (error.details as { reason?: string } | undefined)?.reason === 'edit_war_guard';
 
 const discussionPath = (slug: string) =>
-  forumCategoryPagePath(slug.startsWith('meta/') ? 'policy' : 'articles', slug);
+  forumCategoryPagePath(forumPageCategory(slug) ?? 'articles', slug);
 
 const readRequest = (source: Record<string, unknown>) => {
   const slug = typeof source.page === 'string' ? source.page : '';

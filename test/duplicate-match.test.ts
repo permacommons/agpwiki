@@ -2,12 +2,12 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 import {
-  isArticleSlug,
   mainTitleWords,
   normalizeAddressForMatch,
   normalizeTitleForMatch,
   sharesMainWords,
 } from '../src/lib/duplicate-match.js';
+import { isArticleSlug, resolvePageAddress } from '../src/lib/page-address.js';
 import { renderRevisionHistory } from '../src/routes/lib/history.js';
 
 test('titles match ignoring capitals, accents and punctuation', () => {
@@ -20,6 +20,8 @@ test('addresses match once hyphens and plurals are set aside', () => {
   assert.equal(normalizeAddressForMatch('world-wars'), normalizeAddressForMatch('worldwar'));
   assert.equal(normalizeAddressForMatch('gutenberg-bibles'), normalizeAddressForMatch('gutenberg-bible'));
   assert.equal(normalizeAddressForMatch('glass'), 'glass');
+  assert.notEqual(normalizeAddressForMatch('foo/bar'), normalizeAddressForMatch('foobar'));
+  assert.equal(normalizeAddressForMatch('foo/world-wars'), 'foo/worldwar');
   assert.notEqual(normalizeAddressForMatch('france'), normalizeAddressForMatch('frances-war'));
 });
 
@@ -32,10 +34,23 @@ test('related titles share the main words of the new title', () => {
   assert.equal(sharesMainWords(mainTitleWords('Of the'), mainTitleWords('Of the')), false);
 });
 
-test('only articles are checked, not meta or tool pages', () => {
+test('page namespaces are distinct from application routes', () => {
   assert.equal(isArticleSlug('gutenberg-bible'), true);
   assert.equal(isArticleSlug('meta/proposals/x'), false);
   assert.equal(isArticleSlug('tool/recent-changes'), false);
+  assert.deepEqual(resolvePageAddress('/META/Values/'), {
+    slug: 'meta/values', namespace: 'meta', localName: 'values',
+  });
+  assert.deepEqual(resolvePageAddress('meta/proposals/example'), {
+    slug: 'meta/proposals/example', namespace: 'meta', localName: 'proposals/example',
+  });
+  assert.deepEqual(resolvePageAddress('foo/bar'), {
+    slug: 'foo/bar', namespace: 'article', localName: 'foo/bar',
+  });
+  for (const prefix of ['tool', 'api', 'mcp', 'blog', 'cite', 'media']) {
+    assert.equal(resolvePageAddress(`${prefix}/example`), null);
+    assert.equal(resolvePageAddress(prefix), null);
+  }
 });
 
 test('the version history names pages a new article was checked against', () => {

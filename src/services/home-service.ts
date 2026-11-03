@@ -2,6 +2,7 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { firstSentence } from '../lib/excerpt.js';
 import { extractMediaSlugsFromSources } from '../lib/media-render.js';
+import { pageNamespaceSql } from '../lib/page-address.js';
 import { type ArticleIssueKind, countArticlesWithIssues } from './article-issues-service.js';
 
 const { mlString } = dal;
@@ -71,7 +72,7 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
   const result = await dalInstance.query(
     `SELECT slug, title, body, created_at FROM pages
       WHERE _old_rev_of IS NULL AND _rev_deleted = false
-        AND slug NOT LIKE 'meta/%' AND slug NOT LIKE 'tool/%'
+        AND ${pageNamespaceSql()} = 'article'
       ORDER BY created_at DESC, slug
       LIMIT $1`,
     [NEW_ARTICLE_COUNT]

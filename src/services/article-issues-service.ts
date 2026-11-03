@@ -1,4 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { pageNamespaceSql } from '../lib/page-address.js';
 import { PAGE_CHECK_TYPES, type PageCheckType } from '../lib/page-checks.js';
 
 // Kinds of issue that show a notice on articles. The lists use the same
@@ -33,9 +34,8 @@ export interface ArticleIssueList {
   articles: ArticleWithIssue[];
 }
 
-// Articles are pages outside meta/ and tool/.
 const ARTICLE_FILTER = `p._old_rev_of IS NULL AND p._rev_deleted = false
-  AND p.slug NOT LIKE 'meta/%' AND p.slug NOT LIKE 'tool/%'`;
+  AND ${pageNamespaceSql('p.slug')} = 'article'`;
 
 const CURRENT_CHECK = `c.page_id = p.id AND c._old_rev_of IS NULL AND c._rev_deleted = false`;
 
