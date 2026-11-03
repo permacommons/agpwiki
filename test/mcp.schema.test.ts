@@ -146,7 +146,7 @@ test('MCP tool schemas describe localized fields', () => {
   const blogCreate = getSchemaShape(tools.blog_createPost.inputSchema);
   assert.ok(blogCreate.body?.description?.includes('Each value is Markdown.'));
   assert.ok(blogCreate.summary?.description?.includes('agpwiki://locales'));
-  assert.ok(blogCreate.originalLanguage?.description?.includes('agpwiki://locales'));
+  assert.ok(blogCreate.canonicalLanguage?.description?.includes('agpwiki://locales'));
 
   const blogUpdate = getSchemaShape(tools.blog_updatePost.inputSchema);
   assert.ok(blogUpdate.body?.description?.includes('Each value is Markdown.'));
@@ -299,7 +299,7 @@ test('MCP tool schema hints describe character caps', () => {
   assert.ok(wikiCreate.slug?.description?.includes('Max 200 characters'));
   assert.ok(wikiCreate.title?.description?.includes('Max 200 characters per language'));
   assert.ok(wikiCreate.body?.description?.includes('Max 50000 characters per language'));
-  assert.ok(wikiCreate.originalLanguage?.description?.includes('Max 8 characters'));
+  assert.ok(wikiCreate.canonicalLanguage?.description?.includes('Max 8 characters'));
   assert.ok(wikiCreate.revSummary?.description?.includes('Max 300 characters per language'));
 
   const blogCreate = getSchemaShape(tools.blog_createPost.inputSchema);

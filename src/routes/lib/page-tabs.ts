@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import { escapeHtml } from '../../render.js';
+import { renderFollowControl } from './follow-control.js';
 import { HISTORY_ANCHOR } from './history.js';
 
 export interface PageTabsParams {
@@ -11,6 +12,8 @@ export interface PageTabsParams {
   discussHref: string | null;
   discussCount: number;
   editHref: string;
+  // Shown to signed-in readers: whether they follow the comments on the page.
+  follow?: { slug: string; following: boolean; returnTo: string; action: string };
   t: TFunction;
 }
 
@@ -29,6 +32,7 @@ export const renderPageTabs = ({
   discussHref,
   discussCount,
   editHref,
+  follow,
   t,
 }: PageTabsParams): string => {
   const left = [
@@ -40,6 +44,14 @@ export const renderPageTabs = ({
       : '',
   ];
   const right = [
+    follow ? renderFollowControl({
+      action: follow.action,
+      following: follow.following,
+      fields: { page: follow.slug, return: follow.returnTo, action: follow.following ? 'unfollow' : 'follow' },
+      tab: true,
+      help: t(follow.following ? 'pageTabs.followingHelp' : 'pageTabs.followHelp'),
+      t,
+    }) : '',
     isCurrentView ? tab(editHref, t('pageTabs.edit'), { className: 'page-tab--edit' }) : '',
     tab(`#${HISTORY_ANCHOR}`, t('pageTabs.history')),
   ];

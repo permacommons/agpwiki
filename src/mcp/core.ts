@@ -206,6 +206,8 @@ const WRITE_RESPONSE_DESCRIPTION =
   'Write responses return compact metadata and omit full body content. Use the read tool to retrieve content after writing.';
 const READ_REVISION_DESCRIPTION =
   'The result includes currentRevId; pass it as expectedRevId (baseRevId for wiki_applyPatch) when you edit.';
+const TRANSLATION_RULES_DESCRIPTION =
+  'Each page has a canonical language (canonicalLanguage), the reference version. Translate from the canonical version, never from another translation. If you add or correct something in a translation only, make the same change in the canonical version in the same session. wiki_readPage reports for each translation the revision it was made from and editsBehind, the edits of the canonical text since: to update a translation, read only what changed with wiki_diffRevisions from that revision, then record the new revId with translatedFrom.';
 const CONCURRENCY_DESCRIPTION =
   'Pass expectedRevId (the currentRevId from your last read or write of this document) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the document again, reapply your change to the current version, and retry.';
 
@@ -362,7 +364,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .max(LANGUAGE_TAG_MAX_LENGTH, { error: contentLanguageMessage })
     .optional()
     .describe(
-      'Language to return: a supported locale code, or "*" for all languages. Without it, the page\'s original language is returned when it has text, otherwise English, otherwise the first available language. The response lists selectedLanguage and availableLanguages; a missing language is an error, never a fallback.'
+      'Language to return: a supported locale code, or "*" for all languages. Without it, the page\'s canonical language is returned when it has text, otherwise English, otherwise the first available language. The response lists selectedLanguage and availableLanguages; a missing language is an error, never a fallback.'
     );
   const REVISION_LIST_DEFAULT_LIMIT = 50;
   const REVISION_LIST_MAX_LIMIT = 100;
@@ -528,6 +530,15 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .describe(
       'Optional. The currentRevId from your last read or write of this document. If another revision has been saved since, nothing is written and a precondition_failed error returns the currentRevId.'
     );
+  const translatedFromSchema = z
+    .object({
+      language: languageTagSchema.required,
+      revId: uuidSchema,
+    })
+    .optional()
+    .describe(
+      `Optional. Record that the text you write is a translation of the canonical version: language is the page's canonical language (canonicalLanguage) and revId the revision of it you translated from. ${TRANSLATION_RULES_DESCRIPTION}`
+    );
   const baseRevIdSchema = uuidSchema
     .optional()
     .describe(
@@ -688,13 +699,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Before making edits, review policies linked from /meta/policy. A new article is refused with a possible_duplicate error when it may already exist in any language (see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related articles are returned as relatedArticles, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. A new article is refused with a possible_duplicate error when it may already exist in any language (see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related articles are returned as relatedArticles, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
-        originalLanguage: languageTagSchema.optionalNullable,
+        canonicalLanguage: languageTagSchema.optionalNullable,
         wikidata: wikidataIdSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
@@ -819,7 +830,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
-        originalLanguage: languageTagSchema.optionalNullable,
+        canonicalLanguage: languageTagSchema.optionalNullable,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
       },
@@ -846,7 +857,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
         summary: localizedSummarySchema.optional,
-        originalLanguage: languageTagSchema.optionalNullable,
+        canonicalLanguage: languageTagSchema.optionalNullable,
         expectedRevId: expectedRevIdSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1267,7 +1278,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           ? ALL_LANGUAGES
           : selectContentLanguage({
               requested: args.lang,
-              originalLanguage: target.originalLanguage,
+              canonicalLanguage: target.canonicalLanguage,
               availableLanguages: args.lang ? availableLanguages : targetLanguages,
               slug: args.slug,
             });
@@ -1464,7 +1475,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_readPage',
     {
       title: 'Read Wiki Page',
-      description: `Read a single wiki page by slug, in one language by default (see lang; pass "*" for all languages). ${READ_REVISION_DESCRIPTION} contentHash always covers every language.`,
+      description: `Read a single wiki page by slug, in one language by default (see lang; pass "*" for all languages). ${READ_REVISION_DESCRIPTION} contentHash always covers every language. canonicalLanguage is the page's canonical language. translatedFrom lists, for each translation recorded as such, the canonical revision it was made from (language, revId) and editsBehind, the number of edits that changed the canonical text since (null if that revision is no longer in the history).`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1863,6 +1874,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
         baseRevId: baseRevIdSchema,
+        translatedFrom: translatedFromSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1902,6 +1914,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         content: z.string().describe(rewriteContentDescription),
         lang: languageTagSchema.optional,
         expectedRevId: expectedRevIdSchema,
+        translatedFrom: translatedFromSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1942,6 +1955,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           .min(1),
         lang: languageTagSchema.optional,
         expectedRevId: expectedRevIdSchema,
+        translatedFrom: translatedFromSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -1968,7 +1982,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Update Wiki Page',
       description:
-        `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. canonicalLanguage sets the page's canonical language. translatedFrom applies to every body language you write other than the source language. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1976,9 +1990,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
         body: localizedBodySchema.optional,
-        originalLanguage: languageTagSchema.optionalNullable,
+        canonicalLanguage: languageTagSchema.optionalNullable,
         wikidata: wikidataIdSchema,
         expectedRevId: expectedRevIdSchema,
+        translatedFrom: translatedFromSchema,
         policyHash: policyHashSchema,
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.required,
@@ -2010,7 +2025,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     'wiki_restoreRevision',
     {
       title: 'Restore Page Version',
-      description: `Bring a wiki page back to exactly the title, body, original language and Wikidata ID of an earlier revision (revId from wiki_listRevisions). Any account approved for editing may do this; protected pages need a wiki admin. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
+      description: `Bring a wiki page back to exactly the title, body, canonical language, Wikidata ID and translation sources of an earlier revision (revId from wiki_listRevisions). Any account approved for editing may do this; protected pages need a wiki admin. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,

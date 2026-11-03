@@ -184,13 +184,13 @@ test('The home page shows the sections below its text, and the page list sorts n
     if (!welcomeExisted) {
       await createWikiPage(
         dal,
-        { slug: HOME_PAGE_SLUG, title: { en: 'Welcome' }, body: { en: 'Welcome text.' }, originalLanguage: 'en' },
+        { slug: HOME_PAGE_SLUG, title: { en: 'Welcome' }, body: { en: 'Welcome text.' }, canonicalLanguage: 'en' },
         user.id
       );
     }
     await createWikiPage(
       dal,
-      { slug: `${prefix}-older`, title: { en: 'Older' }, body: { en: 'Older text.' }, originalLanguage: 'en' },
+      { slug: `${prefix}-older`, title: { en: 'Older' }, body: { en: 'Older text.' }, canonicalLanguage: 'en' },
       user.id
     );
     await createWikiPage(
@@ -199,7 +199,7 @@ test('The home page shows the sections below its text, and the page list sorts n
         slug: `${prefix}-newer`,
         title: { en: 'Newer' },
         body: { en: 'The newer article is about tea. It has two sentences.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
       },
       user.id
     );

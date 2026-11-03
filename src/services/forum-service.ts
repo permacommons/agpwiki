@@ -21,6 +21,7 @@ import {
   subscribeActorToForumThread,
 } from './forum-notification-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
+import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNonEmptyString,
@@ -48,7 +49,7 @@ export interface ForumThreadResult {
   category: ForumCategorySlug;
   pageSlug: string | null | undefined;
   title: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
   pinned: boolean;
   attachedType: string | null;
   attachedId: string | null;
@@ -68,14 +69,14 @@ export interface ForumCommentVersion {
   revDate: Date;
   revUser: string | null;
   body: Record<string, string> | null;
-  originalLanguage: string | null;
+  canonicalLanguage: string | null;
 }
 
 export interface ForumCommentResult {
   id: string;
   threadId: string;
   body: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
   revDeleted?: boolean;
@@ -92,7 +93,7 @@ export interface ForumCategoryListItem {
         threadId: string;
         commentId: string;
         title: Record<string, string> | null | undefined;
-        originalLanguage: string | null | undefined;
+        canonicalLanguage: string | null | undefined;
         createdAt: Date | null;
       }
     | null;
@@ -162,7 +163,7 @@ const toForumThreadResult = (thread: ForumThreadInstance): ForumThreadResult => 
   category: ensureForumCategory(thread.category) ?? 'general',
   pageSlug: thread.pageSlug ?? null,
   title: thread.title ?? null,
-  originalLanguage: thread.originalLanguage ?? null,
+  canonicalLanguage: thread.canonicalLanguage ?? null,
   pinned: Boolean(thread.pinned),
   attachedType: thread.attachedType ?? null,
   attachedId: thread.attachedId ?? null,
@@ -174,7 +175,7 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   id: comment.id,
   threadId: comment.threadId,
   body: comment.body ?? null,
-  originalLanguage: comment.originalLanguage ?? null,
+  canonicalLanguage: comment.canonicalLanguage ?? null,
   createdAt: comment.createdAt ?? null,
   updatedAt: comment.updatedAt ?? null,
   revDeleted: comment._revDeleted ?? false,
@@ -277,7 +278,7 @@ export const buildForumQuote = (value: string) => `${normalizeQuotedMarkdown(val
 export interface ForumPageTarget {
   canonicalSlug: string;
   title: Record<string, string> | null | undefined;
-  originalLanguage: string | null | undefined;
+  canonicalLanguage: string | null | undefined;
 }
 
 export const resolveForumPageTarget = async (
@@ -290,7 +291,7 @@ export const resolveForumPageTarget = async (
   return {
     canonicalSlug: page.slug,
     title: page.title ?? null,
-    originalLanguage: page.originalLanguage ?? null,
+    canonicalLanguage: page.canonicalLanguage ?? null,
   };
 };
 
@@ -310,7 +311,7 @@ export const listForumCategories = async (
        t.category,
        t.id AS thread_id,
        t.title,
-       t.original_language,
+       t.canonical_language,
        c.id AS comment_id,
        c.created_at
      FROM ${ForumThread.tableName} t
@@ -334,7 +335,7 @@ export const listForumCategories = async (
         threadId: row.thread_id as string,
         commentId: row.comment_id as string,
         title: (row.title as Record<string, string> | null) ?? null,
-        originalLanguage: (row.original_language as string | null) ?? null,
+        canonicalLanguage: (row.canonical_language as string | null) ?? null,
         createdAt: (row.created_at as Date | null) ?? null,
       },
     ])
@@ -492,7 +493,7 @@ export const createForumThread = async (
   thread.category = normalizedCategory ?? 'general';
   thread.pageSlug = normalizedPageSlug;
   thread.title = sanitizeLocalizedMapInput({ [language]: escapeHtml(title.trim()) });
-  thread.originalLanguage = language;
+  thread.canonicalLanguage = language;
   thread.pinned = 0;
   thread.attachedType = attachment?.type ?? null;
   thread.attachedId = attachment?.id ?? null;
@@ -507,7 +508,7 @@ export const createForumThread = async (
     );
     comment.threadId = thread.id;
     comment.body = sanitizeLocalizedMapInput({ [language]: body });
-    comment.originalLanguage = language;
+    comment.canonicalLanguage = language;
     comment.createdAt = createdAt;
     comment.updatedAt = createdAt;
     await comment.save({ transaction });
@@ -519,6 +520,21 @@ export const createForumThread = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to auto-subscribe thread creator for thread ${thread.id}: ${message}`);
+  }
+
+  // Attached threads hold replies to something on the page; whoever creates
+  // them notifies once the right people follow the thread.
+  if (normalizedPageSlug && !attachment) {
+    try {
+      await notifyPageFollowersOfForumPost(
+        ForumThread.dal as DataAccessLayer,
+        { threadId: thread.id, commentId: firstCommentId, actorUserId: userId, event: 'thread' },
+        enqueueNotificationJob
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      debug.error(`Failed to notify page followers of thread ${thread.id}: ${message}`);
+    }
   }
 
   return {
@@ -548,7 +564,7 @@ export const createForumComment = async (
   );
   comment.threadId = thread.id;
   comment.body = sanitizeLocalizedMapInput({ [language]: body });
-  comment.originalLanguage = language;
+  comment.canonicalLanguage = language;
   comment.createdAt = createdAt;
   comment.updatedAt = createdAt;
   await comment.save();
@@ -583,6 +599,16 @@ export const createForumComment = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to enqueue forum reply notification for comment ${comment.id}: ${message}`);
+  }
+  try {
+    await notifyPageFollowersOfForumPost(
+      ForumThread.dal as DataAccessLayer,
+      { threadId: thread.id, commentId: comment.id, actorUserId: userId, event: 'comment' },
+      enqueueNotificationJob
+    );
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    debug.error(`Failed to notify page followers of comment ${comment.id}: ${message}`);
   }
 
   return toForumCommentResult(comment);
@@ -633,7 +659,7 @@ export const updateForumComment = async (
   const updatedAt = new Date();
   const revision = await comment.newRevision({ id: userId }, { tags: ['edit'], date: updatedAt });
   revision.body = sanitizeLocalizedMapInput({ [language]: body });
-  revision.originalLanguage = language;
+  revision.canonicalLanguage = language;
   revision.updatedAt = updatedAt;
   await revision.save();
   return toForumCommentResult(revision);
@@ -647,7 +673,7 @@ export const listForumCommentVersions = async (
   const comment = await requireComment(commentId);
   await requireThread(comment.threadId);
   const result = await dalInstance.query(
-    `SELECT _rev_id, _rev_date, _rev_user, body, original_language
+    `SELECT _rev_id, _rev_date, _rev_user, body, canonical_language
        FROM ${ForumComment.tableName}
       WHERE (id = $1 OR _old_rev_of = $1) AND _rev_deleted = false
       ORDER BY _rev_date ASC`,
@@ -658,7 +684,7 @@ export const listForumCommentVersions = async (
     revDate: row._rev_date as Date,
     revUser: (row._rev_user as string | null) ?? null,
     body: (row.body as Record<string, string> | null) ?? null,
-    originalLanguage: (row.original_language as string | null) ?? null,
+    canonicalLanguage: (row.canonical_language as string | null) ?? null,
   }));
 };
 

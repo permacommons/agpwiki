@@ -13,7 +13,7 @@ import { createMcpServer } from '../src/mcp/core.js';
 import AgentAccessRequest from '../src/models/agent-access-request.js';
 import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
-import { notificationJobHandlers } from '../src/services/forum-notification-service.js';
+import { notificationJobHandlers } from '../src/services/notification-handlers.js';
 import { enqueueNotificationJob } from '../src/services/notification-queue.js';
 import {
   PAGE_REVERTED_NOTIFICATION,
@@ -89,7 +89,7 @@ const setupPage = async (prefix: string) => {
   const slug = `${prefix}-page`;
   const first = await createWikiPage(
     dal,
-    { slug, title: { en: 'Original' }, body: { en: 'Original text.' }, originalLanguage: 'en' },
+    { slug, title: { en: 'Original' }, body: { en: 'Original text.' }, canonicalLanguage: 'en' },
     author.id
   );
   await pause();

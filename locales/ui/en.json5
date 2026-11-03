@@ -477,8 +477,6 @@
       "pin": "Pin thread",
       "unpin": "Unpin thread",
       "delete": "Delete thread",
-      "subscribe": "Subscribe",
-      "unsubscribe": "Unsubscribe",
       "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
@@ -559,6 +557,10 @@
       "all": "Show all changes"
     }
   },
+  "followControl": {
+    "follow": "Follow",
+    "unfollow": "Unfollow"
+  },
   // Tabs under the title of a wiki page.
   "pageTabs": {
     "label": "Page tabs",
@@ -566,7 +568,9 @@
     "page": "Page",
     "discuss": "Discuss",
     "edit": "Edit",
-    "history": "History"
+    "history": "History",
+    "followHelp": "Get notified of new comments on this page. Edits don't notify you.",
+    "followingHelp": "You're notified of new comments on this page. Edits don't notify you. Click to unfollow."
   },
   // Page for people who cannot edit a page directly yet.
   "howToEdit": {
@@ -1126,6 +1130,10 @@
     "someone": "Someone",
     "kind": {
       "forumReply": "{{name}} replied in {{subject}}",
+      "pageThread": "{{name}} started a discussion on {{subject}}",
+      "pageComment": "{{name}} commented on {{subject}}",
+      "pagePosition": "{{name}} posted a position ({{stance}}) on {{subject}}",
+      "pagePositionChanged": "{{name}} changed their position to {{stance}} on {{subject}}",
       "pageRevert": "{{name}} reverted your edits to {{subject}}",
       "other": "New activity in {{subject}}"
     },
@@ -1134,7 +1142,13 @@
     "all": "All notifications",
     "unread": "new",
     "settings": "Notification settings",
-    "empty": "No notifications yet. You get one when someone replies in a forum thread you are subscribed to."
+    "empty": "No notifications yet. Follow pages or discussion threads to hear about new comments and replies."
+  },
+  // The list of pages someone follows, in the settings.
+  "following": {
+    "heading": "Pages you follow",
+    "intro": "You are told about new comments on these pages.",
+    "empty": "You don't follow any pages yet.",
   },
   "settings": {
     "title": "Settings",
@@ -1152,8 +1166,12 @@
       },
       "kind": {
         "forumReply": {
-          "label": "Replies in forum threads you are subscribed to",
-          "help": "You are subscribed to a thread when you start it or reply in it. You can also subscribe or unsubscribe on the thread."
+          "label": "Replies in threads you follow",
+          "help": "You follow a thread when you start it or reply in it. You can also follow or unfollow it on the thread."
+        },
+        "pageComment": {
+          "label": "Comments on pages you follow",
+          "help": "You follow the pages you create, and any page where you click Follow. You are told about new discussions, comments and positions there, never about edits."
         },
         "pageRevert": {
           "label": "Reverts of your edits",

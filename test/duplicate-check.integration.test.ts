@@ -79,7 +79,7 @@ test('Possible duplicates are found by Wikidata item, title, alias and address',
         slug,
         title: { en: `Gutenberg Bible ${word}` },
         body: { en: 'Text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
         wikidata,
       },
       user.id
@@ -171,7 +171,7 @@ test('wiki_createPage refuses a possible duplicate unless every match is set asi
         slug: existing,
         title: { en: `Gutenberg Bible ${word}` },
         body: { en: 'Text.' },
-        originalLanguage: 'en',
+        canonicalLanguage: 'en',
         wikidata,
       },
       user.id
@@ -183,7 +183,7 @@ test('wiki_createPage refuses a possible duplicate unless every match is set asi
         slug: sameTitle,
         title: { de: `Gutenberg-Bibel ${word}` },
         body: { de: 'Text.' },
-        originalLanguage: 'de',
+        canonicalLanguage: 'de',
       },
       user.id
     );
@@ -208,7 +208,7 @@ test('wiki_createPage refuses a possible duplicate unless every match is set asi
           slug: newSlug,
           title: { de: `Gutenberg-Bibel ${word}` },
           body: { de: 'Text.' },
-          originalLanguage: 'de',
+          canonicalLanguage: 'de',
           wikidata,
           notDuplicateOf,
         },
@@ -288,7 +288,7 @@ test('Search finds titles in every language', async () => {
     const slug = `${prefix}-chateau`;
     await createWikiPage(
       dal,
-      { slug, title: { fr: `Château ${word}` }, body: { fr: 'Texte.' }, originalLanguage: 'fr' },
+      { slug, title: { fr: `Château ${word}` }, body: { fr: 'Texte.' }, canonicalLanguage: 'fr' },
       user.id
     );
     const results = await searchWikiPages(dal, { query: `château ${word}` });

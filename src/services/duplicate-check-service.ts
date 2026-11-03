@@ -46,7 +46,7 @@ export interface DuplicateCheckResult {
 export interface NewArticleCheckInput {
   slug: string;
   title?: LocalizedMapInput;
-  originalLanguage?: string | null;
+  canonicalLanguage?: string | null;
   wikidata?: string | null;
   notDuplicateOf?: string[];
 }
@@ -60,7 +60,7 @@ export interface NewArticleCheckResult {
 type ArticleRow = {
   slug: string;
   title: Record<string, string> | null;
-  original_language: string | null;
+  canonical_language: string | null;
   wikidata: string | null;
 };
 
@@ -94,7 +94,7 @@ export async function findPossibleDuplicates(
 
   const [articleResult, aliasResult] = await Promise.all([
     dalInstance.query(
-      `SELECT slug, title, original_language, properties->>'wikidata' AS wikidata
+      `SELECT slug, title, canonical_language, properties->>'wikidata' AS wikidata
          FROM pages WHERE ${CURRENT_ARTICLE}`
     ),
     dalInstance.query(
@@ -221,7 +221,7 @@ const describeDuplicates = (
  */
 export async function checkNewArticle(
   dalInstance: DataAccessLayer,
-  { slug, title, originalLanguage, wikidata, notDuplicateOf = [] }: NewArticleCheckInput
+  { slug, title, canonicalLanguage, wikidata, notDuplicateOf = [] }: NewArticleCheckInput
 ): Promise<NewArticleCheckResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const checked = notDuplicateOf.map((value, index) =>
@@ -243,7 +243,7 @@ export async function checkNewArticle(
   const checkedSet = new Set(checked);
   const blocking = duplicates.filter(duplicate => !checkedSet.has(duplicate.slug));
   if (blocking.length) {
-    const newLanguage = originalLanguage ?? Object.keys(titleMap)[0] ?? null;
+    const newLanguage = canonicalLanguage ?? Object.keys(titleMap)[0] ?? null;
     const newTitle = displayTitle(titleMap, newLanguage, toAddressForm(slug));
     throw new PossibleDuplicateError(describeDuplicates(newTitle, newLanguage, blocking), {
       duplicates: blocking,

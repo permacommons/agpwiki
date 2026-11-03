@@ -222,8 +222,6 @@
       pin: 'Pripni nit',
       unpin: 'Odpni nit',
       delete: 'Izbriši nit',
-      subscribe: 'Naroči se',
-      unsubscribe: 'Odjavi naročnino',
       notificationsDisabled: "Obvestila o odgovorih na forumu so izklopljena v tvojih <a href=\"{{settingsHref}}\">nastavitvah</a>.",
     },
     pageLink: {
@@ -302,13 +300,19 @@
       "all": "Pokaži vse spremembe"
     }
   },
+  "followControl": {
+    "follow": "Spremljaj",
+    "unfollow": "Prenehaj spremljati"
+  },
   pageTabs: {
     label: 'Zavihki strani',
     article: 'Članek',
     page: 'Stran',
     discuss: 'Pogovor',
     edit: 'Uredi',
-    history: 'Zgodovina'
+    history: 'Zgodovina',
+    "followHelp": "Prejemaj obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil.",
+    "followingHelp": "Prejemaš obvestila o novih komentarjih na tej strani. Urejanja ne pošiljajo obvestil. Klikni, da prenehaš spremljati."
   },
   howToEdit: {
     title: 'Kako urediti to stran',
@@ -803,6 +807,10 @@
     "someone": "Nekdo",
     "kind": {
       "forumReply": "{{name}} je odgovoril(a) v niti {{subject}}",
+      "pageThread": "{{name}} je začel(a) razpravo o {{subject}}",
+      "pageComment": "{{name}} je komentiral(a) {{subject}}",
+      "pagePosition": "{{name}} je izrazil(a) stališče ({{stance}}) o {{subject}}",
+      "pagePositionChanged": "{{name}} je spremenil(a) stališče o {{subject}} v {{stance}}",
       "pageRevert": "{{name}} je vrnil(a) vaša urejanja strani {{subject}}",
       "other": "Nova dejavnost: {{subject}}"
     },
@@ -812,6 +820,12 @@
     "unread": "novo",
     "settings": "Nastavitve obvestil",
     "empty": "Še ni obvestil. Prejmeš ga, ko nekdo odgovori v niti foruma, ki ji slediš."
+  },
+  "following": {
+    "heading": "Strani, ki jih spremljaš",
+    "intro": "Izveš za nove komentarje na teh straneh.",
+    "empty": "Še ne spremljaš nobene strani.",
+    "unfollow": "Prenehaj spremljati"
   },
   settings: {
     title: 'Nastavitve',
@@ -831,6 +845,10 @@
         "forumReply": {
           "label": "Odgovori v nitih foruma, ki jim slediš",
           "help": "Niti slediš, ko jo začneš ali v njej odgovoriš. Sledenje lahko vklopiš ali izklopiš tudi v sami niti."
+        },
+        "pageComment": {
+          "label": "Komentarji na straneh, ki jih spremljaš",
+          "help": "Spremljaš strani, ki jih ustvariš, in vsako stran, kjer klikneš Spremljaj. Izveš za nove razprave, komentarje in stališča, nikoli za urejanja."
         },
         "pageRevert": {
           "label": "Vrnitve vaših urejanj",

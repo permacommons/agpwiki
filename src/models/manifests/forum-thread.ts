@@ -13,7 +13,7 @@ const forumThreadManifest = {
     category: types.string().max(32).required(),
     pageSlug: types.string().max(200),
     title: mlString.getSafeTextSchema({ maxLength: 200 }),
-    originalLanguage: types.string().max(8),
+    canonicalLanguage: types.string().max(8),
     pinned: types.number().default(() => 0),
     attachedType: types.string().max(32),
     attachedId: types.string().uuid(4),
@@ -22,7 +22,7 @@ const forumThreadManifest = {
   },
   camelToSnake: {
     pageSlug: 'page_slug',
-    originalLanguage: 'original_language',
+    canonicalLanguage: 'canonical_language',
     attachedType: 'attached_type',
     attachedId: 'attached_id',
     createdAt: 'created_at',

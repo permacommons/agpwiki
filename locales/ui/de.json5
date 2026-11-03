@@ -222,8 +222,6 @@
       pin: 'Thema anpinnen',
       unpin: 'Thema lösen',
       delete: 'Thema löschen',
-      subscribe: 'Abonnieren',
-      unsubscribe: 'Abo beenden',
       notificationsDisabled: "Benachrichtigungen zu Forumsantworten sind in deinen <a href=\"{{settingsHref}}\">Einstellungen</a> ausgeschaltet.",
     },
     pageLink: {
@@ -302,13 +300,19 @@
       "all": "Alle Änderungen zeigen"
     }
   },
+  "followControl": {
+    "follow": "Folgen",
+    "unfollow": "Nicht mehr folgen"
+  },
   pageTabs: {
     label: 'Seiten-Reiter',
     article: 'Artikel',
     page: 'Seite',
     discuss: 'Diskussion',
     edit: 'Bearbeiten',
-    history: 'Versionen'
+    history: 'Versionen',
+    "followHelp": "Bei neuen Kommentaren auf dieser Seite benachrichtigt werden. Bearbeitungen lösen keine Benachrichtigung aus.",
+    "followingHelp": "Du wirst bei neuen Kommentaren auf dieser Seite benachrichtigt. Bearbeitungen lösen keine Benachrichtigung aus. Klicke, um nicht mehr zu folgen."
   },
   howToEdit: {
     title: 'So bearbeitest du diese Seite',
@@ -800,6 +804,10 @@
     "someone": "Jemand",
     "kind": {
       "forumReply": "{{name}} hat in {{subject}} geantwortet",
+      "pageThread": "{{name}} hat eine Diskussion zu {{subject}} begonnen",
+      "pageComment": "{{name}} hat {{subject}} kommentiert",
+      "pagePosition": "{{name}} hat eine Position ({{stance}}) zu {{subject}} abgegeben",
+      "pagePositionChanged": "{{name}} hat die Position zu {{subject}} auf {{stance}} geändert",
       "pageRevert": "{{name}} hat deine Bearbeitungen an {{subject}} zurückgesetzt",
       "other": "Neue Aktivität in {{subject}}"
     },
@@ -809,6 +817,12 @@
     "unread": "neu",
     "settings": "Benachrichtigungseinstellungen",
     "empty": "Noch keine Benachrichtigungen. Du bekommst eine, wenn jemand in einem Forumsthema antwortet, dem du folgst."
+  },
+  "following": {
+    "heading": "Seiten, denen du folgst",
+    "intro": "Du wirst über neue Kommentare auf diesen Seiten informiert.",
+    "empty": "Du folgst noch keiner Seite.",
+    "unfollow": "Nicht mehr folgen"
   },
   settings: {
     title: 'Einstellungen',
@@ -828,6 +842,10 @@
         "forumReply": {
           "label": "Antworten in Forumsthemen, denen du folgst",
           "help": "Du folgst einem Thema, wenn du es eröffnest oder darin antwortest. Du kannst ihm auch im Thema selbst folgen oder nicht mehr folgen."
+        },
+        "pageComment": {
+          "label": "Kommentare auf Seiten, denen du folgst",
+          "help": "Du folgst den Seiten, die du anlegst, und jeder Seite, auf der du auf Folgen klickst. Du erfährst von neuen Diskussionen, Kommentaren und Positionen dort, nie von Bearbeitungen."
         },
         "pageRevert": {
           "label": "Zurücksetzungen deiner Bearbeitungen",
