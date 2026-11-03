@@ -155,7 +155,7 @@ export async function findPossibleDuplicates(
     }))
     .sort((a, b) => a.slug.localeCompare(b.slug));
 
-  const newWords = new Set(titles.flatMap(title => [...mainTitleWords(title)]));
+  const proposedTitleWords = titles.map(mainTitleWords);
   const related = pages
     .filter(page => resolvePageAddress(page.slug)?.namespace === namespace
       && !matches.has(page.slug) && page.slug !== newSlug)
@@ -163,7 +163,9 @@ export async function findPossibleDuplicates(
       let score = 0;
       for (const value of titleValues(page.title)) {
         const words = mainTitleWords(value);
-        if (sharesMainWords(newWords, words)) score = Math.max(score, countSharedWords(newWords, words));
+        for (const newWords of proposedTitleWords) {
+          if (sharesMainWords(newWords, words)) score = Math.max(score, countSharedWords(newWords, words));
+        }
       }
       return { page, score };
     })

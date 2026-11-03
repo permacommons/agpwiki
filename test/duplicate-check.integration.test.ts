@@ -154,6 +154,13 @@ test('Related articles share main title words and never count as duplicates', as
       [relatedSlug]
     );
     assert.deepEqual(related[0]?.languages.sort(), ['en', 'fr']);
+
+    const singleTitle = await findPossibleDuplicates(dal, { titles: [word] });
+    const translatedTitles = await findPossibleDuplicates(dal, { titles: [word, randomWord()] });
+    const fixtureSlugs = (result: typeof singleTitle) =>
+      result.related.filter(page => page.slug.startsWith(prefix)).map(page => page.slug);
+    assert.deepEqual(fixtureSlugs(singleTitle), [relatedSlug, `${prefix}-other`].sort());
+    assert.deepEqual(fixtureSlugs(translatedTitles), fixtureSlugs(singleTitle));
   } finally {
     await cleanup(prefix, userId);
   }
