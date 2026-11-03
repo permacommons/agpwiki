@@ -1,46 +1,27 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import {
-  countSharedWords,
-  mainTitleWords,
-  normalizeAddressForMatch,
-  normalizeTitleForMatch,
-  sharesMainWords,
+  type DuplicateAlias,
+  type DuplicateCandidate,
+  type DuplicateCheckResult,
+  matchPossibleDuplicates,
+  type PossibleDuplicate,
+  type RelatedPage,
 } from '../lib/duplicate-match.js';
+
 import { InvalidRequestError, PossibleDuplicateError, ValidationCollector } from '../lib/errors.js';
 import type { LocalizedMapInput } from '../lib/localized.js';
-import { pageNamespaceSql, resolvePageAddress } from '../lib/page-address.js';
+import { DEFAULT_PAGE_NAMESPACE, pageNamespaceSql, resolvePageAddress } from '../lib/page-address.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeSlugInput } from './validation.js';
 
+export type { DuplicateCheckResult, DuplicateMatch, PossibleDuplicate, RelatedPage } from '../lib/duplicate-match.js';
+
 export const NOT_DUPLICATE_TAG_PREFIX = 'not-duplicate-of:';
-
-const RELATED_LIMIT = 10;
-
-export type DuplicateMatch = 'wikidata' | 'title' | 'alias' | 'address';
-
-export interface PossibleDuplicate {
-  slug: string;
-  title: Record<string, string> | null;
-  languages: string[];
-  wikidata: string | null;
-  matchedBy: DuplicateMatch[];
-}
-
-export interface RelatedPage {
-  slug: string;
-  title: Record<string, string> | null;
-  languages: string[];
-}
 
 export interface DuplicateCheckInput {
   titles: string[];
   slug?: string | null;
   wikidata?: string | null;
-}
-
-export interface DuplicateCheckResult {
-  duplicates: PossibleDuplicate[];
-  related: RelatedPage[];
 }
 
 export interface NewPageCheckInput {
@@ -57,30 +38,12 @@ export interface NewPageCheckResult {
   tags: string[];
 }
 
-type PageRow = {
-  slug: string;
-  title: Record<string, string> | null;
-  canonical_language: string | null;
-  wikidata: string | null;
-};
-
-type AliasRow = { slug: string; page_slug: string };
-
 const CURRENT_PAGE = '_old_rev_of IS NULL AND _rev_deleted = false';
 
 const titleValues = (title: Record<string, string> | null) =>
   Object.values(title ?? {}).filter((value): value is string => typeof value === 'string');
 
-const titleLanguages = (title: Record<string, string> | null) =>
-  Object.entries(title ?? {})
-    .filter(([, value]) => typeof value === 'string' && value.trim())
-    .map(([lang]) => lang);
-
-/**
- * Existing pages that may be the same topic as a new one, and pages
- * that overlap with it. Titles and addresses are compared in code because
- * PostgreSQL cannot set accents aside without an extra extension.
- */
+// Matching runs in code so accent folding needs no PostgreSQL extension.
 export async function findPossibleDuplicates(
   dalInstance: DataAccessLayer,
   { titles, slug, wikidata }: DuplicateCheckInput
@@ -90,15 +53,10 @@ export async function findPossibleDuplicates(
     throw new InvalidRequestError(`Wiki page slug is reserved: ${normalizedSlug}`, { slug: normalizedSlug });
   }
   const address = resolvePageAddress(normalizedSlug ?? '');
-  const namespace = address?.namespace ?? 'article';
-  const newSlug = address?.slug ?? null;
-
-  const titleKeys = new Set(titles.map(normalizeTitleForMatch).filter(Boolean));
-  const addressKey = newSlug ? normalizeAddressForMatch(address?.localName ?? newSlug) : '';
-
+  const namespace = address?.namespace ?? DEFAULT_PAGE_NAMESPACE.name;
   const [pageResult, aliasResult] = await Promise.all([
     dalInstance.query(
-      `SELECT slug, title, canonical_language, properties->>'wikidata' AS wikidata
+      `SELECT slug, title, properties->>'wikidata' AS wikidata
          FROM pages WHERE ${CURRENT_PAGE}
           AND ${pageNamespaceSql()} IS NOT NULL
           AND (${pageNamespaceSql()} = $1 OR id IN (
@@ -107,7 +65,7 @@ export async function findPossibleDuplicates(
       [namespace]
     ),
     dalInstance.query(
-      `SELECT a.slug, p.slug AS page_slug
+      `SELECT a.slug, p.slug AS "pageSlug"
          FROM page_aliases a JOIN pages p ON p.id = a.page_id
         WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
           AND ${pageNamespaceSql('p.slug')} IS NOT NULL
@@ -115,70 +73,8 @@ export async function findPossibleDuplicates(
       [namespace]
     ),
   ]);
-  const pages = pageResult.rows as PageRow[];
-  const aliases = aliasResult.rows as AliasRow[];
-
-  const matches = new Map<string, Set<DuplicateMatch>>();
-  const addMatch = (pageSlug: string, match: DuplicateMatch) => {
-    const set = matches.get(pageSlug) ?? new Set<DuplicateMatch>();
-    set.add(match);
-    matches.set(pageSlug, set);
-  };
-
-  for (const page of pages) {
-    const otherAddress = resolvePageAddress(page.slug);
-    if (otherAddress?.namespace !== namespace) continue;
-    if (wikidata && page.wikidata === wikidata) addMatch(page.slug, 'wikidata');
-    if (titleValues(page.title).some(value => titleKeys.has(normalizeTitleForMatch(value)))) {
-      addMatch(page.slug, 'title');
-    }
-    if (addressKey && normalizeAddressForMatch(otherAddress.localName) === addressKey) {
-      addMatch(page.slug, 'address');
-    }
-  }
-  for (const alias of aliases) {
-    const aliasName = resolvePageAddress(alias.slug)?.localName ?? alias.slug;
-    if (titleKeys.has(normalizeTitleForMatch(aliasName))) addMatch(alias.page_slug, 'alias');
-    if (addressKey && normalizeAddressForMatch(aliasName) === addressKey) {
-      addMatch(alias.page_slug, 'address');
-    }
-  }
-
-  const duplicates: PossibleDuplicate[] = pages
-    .filter(page => matches.has(page.slug))
-    .map(page => ({
-      slug: page.slug,
-      title: page.title,
-      languages: titleLanguages(page.title),
-      wikidata: page.wikidata,
-      matchedBy: [...(matches.get(page.slug) ?? [])],
-    }))
-    .sort((a, b) => a.slug.localeCompare(b.slug));
-
-  const proposedTitleWords = titles.map(mainTitleWords);
-  const related = pages
-    .filter(page => resolvePageAddress(page.slug)?.namespace === namespace
-      && !matches.has(page.slug) && page.slug !== newSlug)
-    .map(page => {
-      let score = 0;
-      for (const value of titleValues(page.title)) {
-        const words = mainTitleWords(value);
-        for (const newWords of proposedTitleWords) {
-          if (sharesMainWords(newWords, words)) score = Math.max(score, countSharedWords(newWords, words));
-        }
-      }
-      return { page, score };
-    })
-    .filter(item => item.score > 0)
-    .sort((a, b) => b.score - a.score || a.page.slug.localeCompare(b.page.slug))
-    .slice(0, RELATED_LIMIT)
-    .map(({ page }) => ({
-      slug: page.slug,
-      title: page.title,
-      languages: titleLanguages(page.title),
-    }));
-
-  return { duplicates, related };
+  return matchPossibleDuplicates({ titles, address, wikidata },
+    pageResult.rows as DuplicateCandidate[], aliasResult.rows as DuplicateAlias[]);
 }
 
 const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });

@@ -5,7 +5,7 @@ import { randomBytes, randomInt } from 'node:crypto';
 import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
-import { pageNamespaceSql, resolvePageAddress } from '../src/lib/page-address.js';
+import { PAGE_NAMESPACES, pageNamespaceSql, resolvePageAddress } from '../src/lib/page-address.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import User from '../src/models/user.js';
 import { findPossibleDuplicates } from '../src/services/duplicate-check-service.js';
@@ -383,7 +383,7 @@ test('Aliases keep their own namespace when a page moves between namespaces', as
 
 test('Database namespace scoping agrees with address classification', async () => {
   const dal = await getDal();
-  const slugs = ['values', 'meta/values', 'meta/proposals/x', 'foo/bar', 'metadata/x',
+  const slugs = [...PAGE_NAMESPACES.map(entry => `${entry.prefix}namespace-probe`), 'values', 'meta/values', 'meta/proposals/x', 'foo/bar', 'metadata/x',
     'tool/x', 'api/x', 'blog/x', 'mcp', '.well-known/x'];
   const result = await dal.query(
     `SELECT slug, ${pageNamespaceSql()} AS namespace FROM unnest($1::text[]) AS slug`, [slugs]
