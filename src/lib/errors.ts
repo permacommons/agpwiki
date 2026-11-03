@@ -7,6 +7,7 @@ export type ToolErrorCode =
   | 'invalid_request'
   | 'precondition_failed'
   | 'unsupported'
+  | 'possible_duplicate'
   | 'internal_error';
 
 export type FieldError = {
@@ -130,6 +131,12 @@ export class PreconditionFailedError extends McpToolError {
 export class UnsupportedError extends McpToolError {
   constructor(message: string, details?: Record<string, unknown>) {
     super('unsupported', message, { details, retryable: false });
+  }
+}
+
+export class PossibleDuplicateError extends McpToolError {
+  constructor(message: string, details?: Record<string, unknown>) {
+    super('possible_duplicate', message, { details, retryable: false });
   }
 }
 

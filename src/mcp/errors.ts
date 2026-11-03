@@ -5,6 +5,7 @@ export {
   InvalidRequestError,
   McpToolError,
   NotFoundError,
+  PossibleDuplicateError,
   PreconditionFailedError,
   type ToolErrorCode,
   type ToolErrorPayload,

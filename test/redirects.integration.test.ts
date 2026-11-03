@@ -340,7 +340,7 @@ test('Wiki previews prefer legacy exact addresses over normalized matches', asyn
     await dal.query('UPDATE pages SET slug = $1 WHERE id = $2', [legacySlug, legacy.id]);
     const canonical = await createWikiPage(
       dal,
-      { slug: `${prefix}-belt-buckle`, title: { en: 'Canonical page' }, body: { en: 'Canonical content.' } },
+      { slug: `${prefix}-belt-buckle`, title: { en: 'Canonical page' }, body: { en: 'Canonical content.' }, notDuplicateOf: [legacySlug] },
       user.id
     );
     assert.deepEqual(

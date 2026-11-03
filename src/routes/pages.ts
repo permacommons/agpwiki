@@ -1,5 +1,4 @@
 import type { Express, Request, Response } from 'express';
-
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
@@ -15,6 +14,7 @@ import {
 } from '../lib/errors.js';
 import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
+import { isArticleSlug, resolvePageAddress } from '../lib/page-address.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { isPromptPageSlug } from '../lib/prompt-registry.js';
 import {
@@ -1584,7 +1584,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const pageChecksResult = await listPageChecks(dalInstance, slug);
       const pageChecks = pageChecksResult.checks.slice(0, 10);
-      const isArticle = !canonicalSlug.startsWith('meta/') && !canonicalSlug.startsWith('tool/');
+      const isArticle = isArticleSlug(canonicalSlug);
       const hasCompletedCheck = pageChecksResult.checks.some(c => c.status === 'completed');
       const draftNoticeHtml =
         isArticle && !hasCompletedCheck
@@ -1858,11 +1858,9 @@ export const registerPageRoutes = (app: Express) => {
           ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
           : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const pageTypeLabel = canonicalSlug.startsWith('meta/')
+      const pageTypeLabel = resolvePageAddress(canonicalSlug)?.namespace === 'meta'
         ? req.t('label.meta')
-        : canonicalSlug.startsWith('tool/')
-          ? req.t('label.tool')
-          : req.t('label.article');
+        : req.t('label.article');
       const labelHtml = renderPageTypeLabel(
         req,
         pageTypeLabel,
