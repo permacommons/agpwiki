@@ -51,6 +51,7 @@ export interface InfoboxDefinition {
 // Born and died ages are counted from the date of birth.
 export const DATE_OF_BIRTH = 'P569';
 export const DATE_OF_DEATH = 'P570';
+export const INFOBOX_DATE_PROPERTIES: ReadonlySet<string> = new Set([DATE_OF_BIRTH, DATE_OF_DEATH, 'P571', 'P2031', 'P2032']);
 // The caption of an image is its "media legend" qualifier.
 export const MEDIA_LEGEND = 'P2096';
 // Qualifiers of a scientific name: who described the taxon, and the year.

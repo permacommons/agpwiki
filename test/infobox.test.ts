@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
-import { renderInfobox } from '../src/lib/infobox-render.js';
+import { parseLocalDate, renderInfobox } from '../src/lib/infobox-render.js';
 import { fetchWikidataSnapshot, type WikidataSnapshot } from '../src/lib/wikidata.js';
 
 const t = i18next.t.bind(i18next);
@@ -364,4 +364,21 @@ test('Image captions prefer the reader language over an earlier English caption'
   const french = render('fr');
   assert.match(french, /<figcaption>Sur scène<\/figcaption>/);
   assert.doesNotMatch(french, /<figcaption>On stage<\/figcaption>/);
+});
+
+
+test('Local dates reject impossible calendar dates without normalizing them', () => {
+  for (const value of ['1964-13-40', '2024-00', '2024-01-00', '2024-04-31', '2023-02-29', '1900-02-29', '0000', 'May 30, 1964']) {
+    assert.equal(parseLocalDate(value), null, value);
+  }
+  for (const value of ['1964', '1964-05', '1964-05-30', '2024-02-29', '2000-02-29', '0001-01-01', '-0044', '-0044-03-15']) {
+    assert.ok(parseLocalDate(value), value);
+  }
+  const snapshot: WikidataSnapshot = { qid: 'Q1', boxId: 'person', claims: {}, labels: {}, classification: [], images: {} };
+  const html = renderInfobox({
+    snapshot, titleHtml: 'Person', locale: 'en', t,
+    localValues: { P569: { value: '1964-13-40', citation: 'history' } },
+  });
+  assert.match(html, /1964-13-40/);
+  assert.doesNotMatch(html, /class="infobox-age"/);
 });

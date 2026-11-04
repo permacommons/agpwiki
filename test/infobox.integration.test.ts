@@ -370,3 +370,55 @@ test('Periodic sweeps populate missing items, refresh stale items and respect fa
     await cleanup(dal, { qid, slug, userId, citationKey: null });
   }
 });
+
+
+test('Page writes reject invalid local dates without creating or revising a page', async () => {
+  const dal = await getDal();
+  const slug = `test-infobox-date-validation-${uniqueSuffix()}`;
+  const citationKey = `infobox-date-source-${uniqueSuffix()}`;
+  let userId: string | null = null;
+  const invalidValues = {
+    P569: { value: '1964-13-40', citation: citationKey },
+    P570: { value: '2023-02-29', citation: citationKey },
+    P571: { value: '1900-02-29', citation: citationKey },
+    P2031: { value: '2024-04-31', citation: citationKey },
+    P2032: { value: '0000', citation: citationKey },
+  };
+  const rejectsDates = (error: unknown) => {
+    assert.ok(error instanceof ValidationError);
+    assert.deepEqual(
+      error.fieldErrors?.map(entry => entry.field).sort(),
+      Object.keys(invalidValues).map(property => `infoboxValues.${property}.value`).sort()
+    );
+    return true;
+  };
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await createTestCitation(dal, citationKey, user.id);
+    await assert.rejects(
+      createWikiPage(dal, { slug, title: { en: 'Dates' }, infoboxValues: invalidValues }, user.id),
+      rejectsDates
+    );
+    const absent = await dal.query('SELECT id FROM pages WHERE slug = $1', [slug]);
+    assert.equal(absent.rowCount, 0);
+    const created = await createWikiPage(dal, {
+      slug, title: { en: 'Dates' },
+      infoboxValues: {
+        P569: { value: '1964', citation: citationKey },
+        P570: { value: '2024-02', citation: citationKey },
+        P571: { value: '2000-02-29', citation: citationKey },
+        P2031: { value: '-0044-03-15', citation: citationKey },
+      },
+    }, user.id);
+    await assert.rejects(
+      updateWikiPage(dal, { slug, infoboxValues: invalidValues, revSummary: { en: 'Invalid dates.' } }, user.id),
+      rejectsDates
+    );
+    const unchanged = await readWikiPage(dal, slug);
+    assert.equal(unchanged.currentRevId, created.currentRevId);
+    assert.deepEqual(unchanged.infoboxValues, created.infoboxValues);
+  } finally {
+    await cleanup(dal, { slug, citationKey, userId, qid: null });
+  }
+});

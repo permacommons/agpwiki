@@ -19,8 +19,8 @@ import {
   ValidationCollector,
   ValidationError,
 } from '../lib/errors.js';
-import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
-import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-render.js';
+import { INFOBOX_DATE_PROPERTIES, LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
+import { type InfoboxLocalValue, type InfoboxLocalValues, parseLocalDate } from '../lib/infobox-render.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
@@ -346,6 +346,9 @@ const validateInfoboxValues = async (value: unknown, field: string, errors: Vali
     const text = typeof record.value === 'string' ? record.value.trim() : '';
     if (!text || text.length > INFOBOX_VALUE_MAX_LENGTH || /[\p{Cc}]/u.test(text)) {
       errors.add(`${entryField}.value`, `must be text of 1 to ${INFOBOX_VALUE_MAX_LENGTH} characters on one line.`, 'invalid');
+    }
+    if (text && INFOBOX_DATE_PROPERTIES.has(property) && !parseLocalDate(text)) {
+      errors.add(`${entryField}.value`, 'must be a valid Gregorian date in YYYY, YYYY-MM or YYYY-MM-DD form; use a negative year for BCE, with no year zero.', 'invalid');
     }
     const key = typeof record.citation === 'string' ? record.citation.trim() : '';
     if (!key) errors.add(`${entryField}.citation`, 'must be the key of the citation supporting the value.', 'required');

@@ -5,6 +5,7 @@ import {
   DATE_OF_BIRTH,
   DATE_OF_DEATH,
   findInfoboxDefinition,
+  INFOBOX_DATE_PROPERTIES,
   type InfoboxRow,
   MEDIA_LEGEND,
   TAXON_AUTHOR,
@@ -19,10 +20,6 @@ export interface InfoboxLocalValue {
   citation: string;
 }
 export type InfoboxLocalValues = Record<string, InfoboxLocalValue>;
-
-// Properties whose values are dates, so values added on Agpedia (written
-// 1964, 1964-05 or 1964-05-30) are formatted like Wikidata's.
-const TIME_PROPERTIES = new Set([DATE_OF_BIRTH, DATE_OF_DEATH, 'P571', 'P2031', 'P2032']);
 
 // Long lists show this many values, then "and N more".
 export const MAX_LISTED_VALUES = 3;
@@ -68,12 +65,15 @@ export const parseLocalDate = (value: string): ParsedTime | null => {
   const match = /^(-?)(\d{1,4})(?:-(\d{2})(?:-(\d{2}))?)?$/.exec(value.trim());
   if (!match) return null;
   const year = Number(match[2]) * (match[1] === '-' ? -1 : 1);
-  return {
-    year,
-    month: match[3] ? Number(match[3]) : 0,
-    day: match[4] ? Number(match[4]) : 0,
-    precision: match[4] ? 11 : match[3] ? 10 : 9,
-  };
+  const month = match[3] ? Number(match[3]) : 0;
+  const day = match[4] ? Number(match[4]) : 0;
+  if (year === 0 || (match[3] && (month < 1 || month > 12))) return null;
+  // Gregorian leap-year arithmetic uses astronomical years, unlike the stored BCE numbering.
+  const calendarYear = year < 0 ? year + 1 : year;
+  const leapYear = calendarYear % 4 === 0 && (calendarYear % 100 !== 0 || calendarYear % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  if (match[4] && (day < 1 || day > daysInMonth[month - 1])) return null;
+  return { year, month, day, precision: match[4] ? 11 : match[3] ? 10 : 9 };
 };
 
 const toDate = (parsed: ParsedTime) => {
@@ -195,7 +195,7 @@ export const renderInfobox = ({
   const formatLocal = (property: string): string | null => {
     const entry = local[property];
     if (!entry) return null;
-    const parsed = TIME_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
+    const parsed = INFOBOX_DATE_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
     const text = escapeHtml(parsed ? formatTime(parsed, locale, t) : entry.value);
     const href = `/cite/${encodeURIComponent(entry.citation)}`;
     return `${text} <span class="infobox-local">(<a href="${href}" title="${escapeHtml(
@@ -213,7 +213,7 @@ export const renderInfobox = ({
     const first = statementsOf(property)[0]?.value;
     if (first?.type === 'time') return parseWikidataTime(first.time, first.precision);
     const entry = local[property];
-    return entry && TIME_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
+    return entry && INFOBOX_DATE_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
   };
 
   // `alt` is HTML-safe text.
