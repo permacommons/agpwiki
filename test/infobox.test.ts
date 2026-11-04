@@ -197,3 +197,41 @@ test('No box is shown without a matching box or any facts', () => {
   assert.equal(renderInfobox({ snapshot: { ...empty, boxId: 'person' }, titleHtml: 'X', locale: 'en', t }), '');
   assert.equal(renderInfobox({ snapshot: null, titleHtml: 'X', locale: 'en', t }), '');
 });
+
+
+test('Local instruments and labels reveal the musical career group', async () => {
+  const snapshot = await personSnapshot();
+  delete snapshot.claims.P1303;
+  delete snapshot.claims.P264;
+  const render = (localValues = {}) => renderInfobox({ snapshot, localValues, titleHtml: 'Person', locale: 'en', t });
+  assert.doesNotMatch(render(), /Musical career/);
+  for (const property of ['P1303', 'P264']) {
+    const html = render({ [property]: { value: 'Local music fact', citation: 'music-bio' } });
+    assert.match(html, /Musical career/);
+    assert.match(html, /Local music fact/);
+    assert.match(html, /href="\/cite\/music-bio"/);
+  }
+});
+
+test('Monolingual facts select one language in preference order and keep its values', () => {
+  const snapshot: WikidataSnapshot = {
+    qid: 'Q1', boxId: 'species', labels: {}, classification: [], images: {},
+    claims: { P1843: [
+      { value: { type: 'monolingual', language: 'en', text: 'English name' } },
+      { value: { type: 'monolingual', language: 'pt', text: 'Portuguese name' } },
+      { value: { type: 'monolingual', language: 'pt', text: 'Another Portuguese name' } },
+      { value: { type: 'monolingual', language: 'fr', text: 'French name' } },
+    ] },
+  };
+  const render = (locale: string) => renderInfobox({ snapshot, titleHtml: 'Species', locale, t });
+  const portuguese = render('pt-PT');
+  assert.match(portuguese, /Portuguese name/);
+  assert.match(portuguese, /Another Portuguese name/);
+  assert.doesNotMatch(portuguese, /English name|French name/);
+  const englishFallback = render('de');
+  assert.match(englishFallback, /English name/);
+  assert.doesNotMatch(englishFallback, /Portuguese name|French name/);
+  const french = render('fr');
+  assert.match(french, /French name/);
+  assert.doesNotMatch(french, /English name|Portuguese name/);
+});

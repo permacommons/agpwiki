@@ -150,11 +150,17 @@ export const renderInfobox = ({
   const statementsOf = (property: string): WikidataStatement[] => {
     const statements = snapshot.claims[property] ?? [];
     if (!statements.some(statement => statement.value.type === 'monolingual')) return statements;
-    // Text in several languages: the reader's, otherwise the first one.
-    const own = statements.filter(
-      statement => statement.value.type === 'monolingual' && languages.includes(statement.value.language.toLowerCase())
+    for (const language of languages) {
+      const preferred = statements.filter(
+        statement => statement.value.type === 'monolingual' && statement.value.language.toLowerCase() === language
+      );
+      if (preferred.length) return preferred;
+    }
+    const first = statements.find(statement => statement.value.type === 'monolingual')?.value;
+    return statements.filter(
+      statement => statement.value.type === 'monolingual' &&
+        first?.type === 'monolingual' && statement.value.language.toLowerCase() === first.language.toLowerCase()
     );
-    return own.length ? own : statements.slice(0, 1);
   };
 
   const formatValue = (value: WikidataValue): string => {
@@ -306,7 +312,7 @@ export const renderInfobox = ({
 
   const groupsHtml = definition.groups
     .map(group => {
-      if (group.onlyWith && !group.onlyWith.some(property => snapshot.claims[property]?.length)) return '';
+      if (group.onlyWith && !group.onlyWith.some(property => snapshot.claims[property]?.length || local[property])) return '';
       const rows = group.rows.map(renderRow).join('');
       if (!rows) return '';
       const heading = group.id
