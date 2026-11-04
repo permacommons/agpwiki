@@ -3,11 +3,11 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { SUPPORTED_LOCALES } from '../../locales/languages.js';
 import { fetchCommonsMetadata } from '../lib/commons.js';
 import {
-  type InfoboxLocalValues,
   type RenderInfoboxInput,
   renderInfobox,
   wikidataLabelLanguages,
 } from '../lib/infobox-render.js';
+import type { InfoboxLocalValues } from '../lib/infobox-values.js';
 import type { WikidataImage, WikidataSnapshot } from '../lib/wikidata.js';
 import { fetchWikidataSnapshot } from './wikidata-service.js';
 import { createWikimediaRequestService, WIKIMEDIA_REQUEST_TIMEOUT_MS } from './wikimedia-request-service.js';

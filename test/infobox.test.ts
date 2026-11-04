@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
-import { parseLocalDate, renderInfobox } from '../src/lib/infobox-render.js';
+import { renderInfobox } from '../src/lib/infobox-render.js';
 import { GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
 import { fetchWikidataSnapshot } from '../src/services/wikidata-service.js';
 
@@ -368,13 +368,7 @@ test('Image captions prefer the reader language over an earlier English caption'
 });
 
 
-test('Local dates reject impossible calendar dates without normalizing them', () => {
-  for (const value of ['1964-13-40', '2024-00', '2024-01-00', '2024-04-31', '2023-02-29', '1900-02-29', '0000', 'May 30, 1964']) {
-    assert.equal(parseLocalDate(value), null, value);
-  }
-  for (const value of ['1964', '1964-05', '1964-05-30', '2024-02-29', '2000-02-29', '0001-01-01', '-0044', '-0044-03-15']) {
-    assert.ok(parseLocalDate(value), value);
-  }
+test('Invalid stored local dates render literally without an age', () => {
   const snapshot: WikidataSnapshot = { qid: 'Q1', boxId: 'person', claims: {}, labels: {}, classification: [], images: {} };
   const html = renderInfobox({
     snapshot, titleHtml: 'Person', locale: 'en', t,

@@ -6,7 +6,7 @@ import {
   NotFoundError,
   ValidationCollector,
 } from '../lib/errors.js';
-import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-render.js';
+import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-values.js';
 import { canUseAgentFeatures } from './account-lifecycle.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';

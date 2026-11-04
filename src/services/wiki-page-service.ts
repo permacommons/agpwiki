@@ -19,8 +19,9 @@ import {
   ValidationCollector,
   ValidationError,
 } from '../lib/errors.js';
+import { parseLocalDate } from '../lib/infobox-dates.js';
 import { INFOBOX_DATE_PROPERTIES, LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
-import { type InfoboxLocalValue, type InfoboxLocalValues, parseLocalDate } from '../lib/infobox-render.js';
+import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-values.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
