@@ -445,3 +445,24 @@ test('Death evidence suppresses present-day ages independently of date formattin
     assert.doesNotMatch(html, /class="infobox-age"/, name);
   }
 });
+
+test('BCE dates preserve supplied month and day precision', async () => {
+  for (const { date, precision, expected } of [
+    { date: '-0044-03-00', precision: 10, expected: 'March 44 BC' },
+    { date: '-0044-03-15', precision: 11, expected: 'March 15, 44 BC' },
+  ]) {
+    const { fetchImpl } = fakeWikidata({
+      Q297552: { P31: [item('Q5')], P570: [time(`${date}T00:00:00Z`, precision)] },
+    });
+    const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
+    const remote = renderInfobox({ snapshot, titleHtml: 'Historical person', locale: 'en', t });
+    assert.ok(remote.includes(`<th scope="row">Died</th><td>${expected}</td>`), `Wikidata precision ${precision}: ${remote}`);
+
+    snapshot.claims = {};
+    const local = renderInfobox({
+      snapshot, titleHtml: 'Historical person', locale: 'en', t,
+      localValues: { P570: { value: precision === 10 ? date.slice(0, 8) : date, citation: 'history' } },
+    });
+    assert.ok(local.includes(`<th scope="row">Died</th><td>${expected} <span class="infobox-local">`), `local precision ${precision}: ${local}`);
+  }
+});
