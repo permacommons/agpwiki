@@ -13,9 +13,12 @@ import {
 // What an infobox needs from Wikidata, reduced to plain JSON so it can be
 // cached in the database and rendered without asking Wikidata again.
 
+export const GREGORIAN_CALENDAR = 'http://www.wikidata.org/entity/Q1985727';
+export const JULIAN_CALENDAR = 'http://www.wikidata.org/entity/Q1985786';
+
 export type WikidataValue =
   | { type: 'item'; id: string }
-  | { type: 'time'; time: string; precision: number }
+  | { type: 'time'; time: string; precision: number; calendarModel?: string }
   | { type: 'string'; value: string; datatype: string }
   | { type: 'monolingual'; text: string; language: string }
   | { type: 'quantity'; amount: string; unit: string | null };
@@ -92,7 +95,8 @@ export const simplifySnak = (snak: ApiSnak | undefined): WikidataValue | null =>
       return typeof record.id === 'string' && ITEM_ID.test(record.id) ? { type: 'item', id: record.id } : null;
     case 'time':
       return typeof record.time === 'string' && typeof record.precision === 'number'
-        ? { type: 'time', time: record.time, precision: record.precision }
+        ? { type: 'time', time: record.time, precision: record.precision,
+          calendarModel: typeof record.calendarmodel === 'string' ? record.calendarmodel : undefined }
         : null;
     case 'string':
       return typeof value === 'string' ? { type: 'string', value, datatype: snak.datatype ?? 'string' } : null;

@@ -7,7 +7,7 @@ import i18next from 'i18next';
 import './_setup-i18n.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
-import type { WikidataSnapshot } from '../src/lib/wikidata.js';
+import { GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
 import AgentAccessRequest from '../src/models/agent-access-request.js';
 import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -74,7 +74,7 @@ const personSnapshot = (qid: string): WikidataSnapshot => ({
   qid,
   boxId: 'person',
   claims: {
-    P569: [{ value: { type: 'time', time: '+1964-05-30T00:00:00Z', precision: 11 } }],
+    P569: [{ value: { type: 'time', calendarModel: GREGORIAN_CALENDAR, time: '+1964-05-30T00:00:00Z', precision: 11 } }],
     P106: [{ value: { type: 'item', id: 'Q855091' } }],
   },
   labels: { Q855091: { en: 'guitarist' } },

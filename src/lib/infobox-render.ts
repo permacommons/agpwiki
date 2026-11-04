@@ -11,7 +11,7 @@ import {
   TAXON_AUTHOR,
   TAXON_YEAR,
 } from './infobox-definitions.js';
-import type { WikidataSnapshot, WikidataStatement, WikidataValue } from './wikidata.js';
+import { GREGORIAN_CALENDAR, JULIAN_CALENDAR, type WikidataSnapshot, type WikidataStatement, type WikidataValue } from './wikidata.js';
 
 // A value an editor added on Agpedia for a fact Wikidata lacks, keyed by
 // Wikidata property in the page's properties.
@@ -51,13 +51,14 @@ interface ParsedTime {
   month: number;
   day: number;
   precision: number;
+  calendarModel?: string;
 }
 
-const parseWikidataTime = (time: string, precision: number): ParsedTime | null => {
+const parseWikidataTime = (time: string, precision: number, calendarModel?: string): ParsedTime | null => {
   const match = /^([+-])(\d+)-(\d{2})-(\d{2})/.exec(time);
   if (!match) return null;
   const year = Number(match[2]) * (match[1] === '-' ? -1 : 1);
-  return { year, month: Number(match[3]), day: Number(match[4]), precision };
+  return { year, month: Number(match[3]), day: Number(match[4]), precision, calendarModel };
 };
 
 /** A date written on Agpedia (1964, 1964-05 or 1964-05-30), or null. */
@@ -73,25 +74,26 @@ export const parseLocalDate = (value: string): ParsedTime | null => {
   const leapYear = calendarYear % 4 === 0 && (calendarYear % 100 !== 0 || calendarYear % 400 === 0);
   const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   if (match[4] && (day < 1 || day > daysInMonth[month - 1])) return null;
-  return { year, month, day, precision: match[4] ? 11 : match[3] ? 10 : 9 };
+  return { year, month, day, precision: match[4] ? 11 : match[3] ? 10 : 9, calendarModel: GREGORIAN_CALENDAR };
 };
 
-const toDate = (parsed: ParsedTime) => {
-  const date = new Date(Date.UTC(2000, Math.max(parsed.month, 1) - 1, Math.max(parsed.day, 1)));
-  date.setUTCFullYear(parsed.year);
-  return date;
+const formatDateParts = (parsed: ParsedTime, locale: string, includeDay: boolean): string => {
+  // A leap-year anchor preserves Julian dates such as 29 February 1900 without Gregorian normalization.
+  const anchor = new Date(Date.UTC(2000, Math.max(parsed.month, 1) - 1, Math.max(parsed.day, 1)));
+  const year = new Intl.NumberFormat(locale, { useGrouping: false }).format(parsed.year);
+  return new Intl.DateTimeFormat(locale, {
+    calendar: 'gregory', year: 'numeric', month: 'long', ...(includeDay ? { day: 'numeric' as const } : {}), timeZone: 'UTC',
+  }).formatToParts(anchor).map(part => part.type === 'year' ? year : part.value).join('');
 };
 
-const formatTime = (parsed: ParsedTime, locale: string, t: TFunction): string => {
+const formatTimeFields = (parsed: ParsedTime, locale: string, t: TFunction): string => {
   if (parsed.year < 0) return t('infobox.yearBce', { year: Math.abs(parsed.year) });
   if (parsed.year === 0) return '0';
   if (parsed.precision >= 11 && parsed.month && parsed.day) {
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(
-      toDate(parsed)
-    );
+    return formatDateParts(parsed, locale, true);
   }
   if (parsed.precision === 10 && parsed.month) {
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(toDate(parsed));
+    return formatDateParts(parsed, locale, false);
   }
   if (parsed.precision === 8) return t('infobox.decade', { year: Math.floor(parsed.year / 10) * 10 });
   // A century is shown as its years, "1800s".
@@ -99,9 +101,17 @@ const formatTime = (parsed: ParsedTime, locale: string, t: TFunction): string =>
   return String(parsed.year);
 };
 
+const formatTime = (parsed: ParsedTime, locale: string, t: TFunction): string => {
+  const date = formatTimeFields(parsed, locale, t);
+  if (parsed.calendarModel === GREGORIAN_CALENDAR) return date;
+  return t(parsed.calendarModel === JULIAN_CALENDAR ? 'infobox.julianDate' : 'infobox.unknownCalendarDate', { date });
+};
+
 /** Whole years from `from` to `to`, when both dates are known to the day. */
 const yearsBetween = (from: ParsedTime | null, to: ParsedTime | null): number | null => {
   if (!from || !to || !from.year || !to.year || from.precision < 11 || to.precision < 11) return null;
+  if (!from.calendarModel || from.calendarModel !== to.calendarModel ||
+    ![GREGORIAN_CALENDAR, JULIAN_CALENDAR].includes(from.calendarModel)) return null;
   let years = to.year - from.year;
   // Wikidata JSON uses historical years, with no year zero between BCE and CE.
   if (from.year < 0 && to.year > 0) years -= 1;
@@ -171,7 +181,7 @@ export const renderInfobox = ({
       case 'item':
         return escapeHtml(label(value.id));
       case 'time': {
-        const parsed = parseWikidataTime(value.time, value.precision);
+        const parsed = parseWikidataTime(value.time, value.precision, value.calendarModel);
         return escapeHtml(parsed ? formatTime(parsed, locale, t) : value.time);
       }
       case 'monolingual':
@@ -211,7 +221,7 @@ export const renderInfobox = ({
   };
   const timeOf = (property: string): ParsedTime | null => {
     const first = statementsOf(property)[0]?.value;
-    if (first?.type === 'time') return parseWikidataTime(first.time, first.precision);
+    if (first?.type === 'time') return parseWikidataTime(first.time, first.precision, first.calendarModel);
     const entry = local[property];
     return entry && INFOBOX_DATE_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
   };
@@ -266,7 +276,7 @@ export const renderInfobox = ({
         if (!date && !place) return '';
         let age: number | null = null;
         if (row.age === 'sinceBirth' && !snapshot.deathDateUnknown && !timeOf(DATE_OF_DEATH)) {
-          const today = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1, day: now.getUTCDate(), precision: 11 };
+          const today = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1, day: now.getUTCDate(), precision: 11, calendarModel: GREGORIAN_CALENDAR };
           age = yearsBetween(timeOf(dateProperty), today);
         } else if (row.age === 'atDeath') {
           age = yearsBetween(timeOf(DATE_OF_BIRTH), timeOf(dateProperty));
@@ -293,8 +303,8 @@ export const renderInfobox = ({
         }
         const authors = (statement.qualifiers?.[TAXON_AUTHOR] ?? []).map(formatValue);
         const year = (statement.qualifiers?.[TAXON_YEAR] ?? []).map(value => {
-          const parsed = value.type === 'time' ? parseWikidataTime(value.time, value.precision) : null;
-          return parsed ? String(parsed.year) : '';
+          const parsed = value.type === 'time' ? parseWikidataTime(value.time, value.precision, value.calendarModel) : null;
+          return parsed ? formatTime({ ...parsed, precision: 9 }, locale, t) : '';
         })[0];
         const authority = [authors.join(', '), year].filter(Boolean).join(', ');
         return rowHtml(heading, `<i>${formatValue(statement.value)}</i>${authority ? ` (${authority})` : ''}`);

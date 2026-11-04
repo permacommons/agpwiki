@@ -3,7 +3,7 @@ import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
 import { parseLocalDate, renderInfobox } from '../src/lib/infobox-render.js';
-import { fetchWikidataSnapshot, type WikidataSnapshot } from '../src/lib/wikidata.js';
+import { fetchWikidataSnapshot, GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
 
 const t = i18next.t.bind(i18next);
 
@@ -268,7 +268,7 @@ test('BCE years retain Wikidata historical numbering for remote and local dates'
   for (const [year, expected] of [['-0044', '44 BC'], ['-0001', '1 BC'], ['+0001', '1']]) {
     const snapshot: WikidataSnapshot = {
       qid: 'Q1', boxId: 'organisation', labels: {}, classification: [], images: {},
-      claims: { P571: [{ value: { type: 'time', time: `${year}-00-00T00:00:00Z`, precision: 9 } }] },
+      claims: { P571: [{ value: { type: 'time', calendarModel: GREGORIAN_CALENDAR, time: `${year}-00-00T00:00:00Z`, precision: 9 } }] },
     };
     const render = (localValues = {}) => renderInfobox({ snapshot, localValues, titleHtml: 'Organisation', locale: 'en', t });
     assert.ok(render().includes(`<th scope="row">Founded</th><td>${expected}</td>`));
@@ -290,8 +290,8 @@ test('Ages across BCE and CE skip year zero and respect birthdays', () => {
     const snapshot: WikidataSnapshot = {
       qid: 'Q1', boxId: 'person', labels: {}, classification: [], images: {},
       claims: {
-        P569: [{ value: { type: 'time', time: `${birth}T00:00:00Z`, precision: 11 } }],
-        P570: [{ value: { type: 'time', time: `${death}T00:00:00Z`, precision: 11 } }],
+        P569: [{ value: { type: 'time', calendarModel: GREGORIAN_CALENDAR, time: `${birth}T00:00:00Z`, precision: 11 } }],
+        P570: [{ value: { type: 'time', calendarModel: GREGORIAN_CALENDAR, time: `${death}T00:00:00Z`, precision: 11 } }],
       },
     };
     const html = renderInfobox({ snapshot, titleHtml: 'Person', locale: 'en', t });
@@ -381,4 +381,46 @@ test('Local dates reject impossible calendar dates without normalizing them', ()
   });
   assert.match(html, /1964-13-40/);
   assert.doesNotMatch(html, /class="infobox-age"/);
+});
+
+test('Julian dates retain their calendar and do not produce mixed-calendar ages', async () => {
+  const birth = time('+1900-03-01T00:00:00Z');
+  birth.mainsnak.datavalue.value.calendarmodel = 'http://www.wikidata.org/entity/Q1985786';
+  const { fetchImpl } = fakeWikidata({
+    Q297552: {
+      P31: [item('Q5')],
+      P569: [birth],
+      P570: [time('+1980-03-05T00:00:00Z')],
+    },
+  });
+  const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
+  assert.equal(snapshot.claims.P569[0].value.type, 'time');
+  assert.equal((snapshot.claims.P569[0].value as { calendarModel?: string }).calendarModel, birth.mainsnak.datavalue.value.calendarmodel);
+  const html = renderInfobox({ snapshot, titleHtml: 'Historical person', locale: 'en', t });
+  const born = html.match(/<th scope="row">Born<\/th><td>(.*?)<\/td>/)?.[1] ?? '';
+  assert.match(born, /March 1, 1900/);
+  assert.match(born, /Julian/, 'the original calendar must be explicit');
+  assert.doesNotMatch(html, /class="infobox-age"/, 'Julian birth and Gregorian death must not be compared directly');
+});
+
+
+test('Calendar labels preserve Julian leap days and missing calendars suppress ages', async () => {
+  const birth = time('+1900-02-29T00:00:00Z');
+  birth.mainsnak.datavalue.value.calendarmodel = 'http://www.wikidata.org/entity/Q1985786';
+  const death = time('+1980-03-01T00:00:00Z');
+  death.mainsnak.datavalue.value.calendarmodel = birth.mainsnak.datavalue.value.calendarmodel;
+  const { fetchImpl } = fakeWikidata({ Q297552: { P31: [item('Q5')], P569: [birth], P570: [death] } });
+  const snapshot = JSON.parse(JSON.stringify(await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl)))) as WikidataSnapshot;
+  const render = () => renderInfobox({ snapshot, titleHtml: 'Person', locale: 'en', t, now: new Date('2026-03-01T12:00:00Z') });
+  const html = render();
+  assert.match(html, /February 29, 1900 \(Julian calendar\)/);
+  assert.match(html, /March 1, 1980 \(Julian calendar\)/);
+  assert.match(html, /\(aged 80\)/);
+  delete snapshot.claims.P570;
+  assert.doesNotMatch(render(), /class="infobox-age"/, 'Julian dates cannot be compared with Gregorian today');
+  const value = snapshot.claims.P569[0].value;
+  if (value.type !== 'time') assert.fail('expected time');
+  delete value.calendarModel;
+  assert.match(render(), /calendar unknown/);
+  assert.doesNotMatch(render(), /class="infobox-age"/, 'legacy snapshots must not assume a Gregorian calendar');
 });

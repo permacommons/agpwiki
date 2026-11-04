@@ -1198,6 +1198,8 @@
     "oldRevisionNote": "You are viewing an older version of this article. The facts in this box are today's values from Wikidata.",
     "age": "(age {{count}})",
     "agedAtDeath": "(aged {{count}})",
+    "julianDate": "{{date}} (Julian calendar)",
+    "unknownCalendarDate": "{{date}} (calendar unknown)",
     "yearBce": "{{year}} BC",
     "decade": "{{year}}s",
     "present": "present",
