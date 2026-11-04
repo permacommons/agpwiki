@@ -78,18 +78,19 @@ export const fetchWikidataSnapshot = async (
   };
   const entityId = (binding: { value?: string } | undefined) => binding?.value?.match(/\/(Q[1-9][0-9]*)$/)?.[1] ?? null;
 
-  const entityData = await api({ action: 'wbgetentities', ids: qid, props: 'claims' });
+  const entityData = await api({ action: 'wbgetentities', ids: qid, props: 'claims', redirects: 'yes' });
   const entities = (entityData.entities ?? {}) as Record<string, ApiEntity>;
   // A merged item answers under the ID it was merged into.
   const entity = entities[qid] ?? Object.values(entities)[0];
   const empty: WikidataSnapshot = { qid, boxId: null, claims: {}, labels: {}, classification: [], images: {} };
   if (!entity || entity.missing !== undefined) return empty;
+  const resolvedId = entity.id ?? qid;
   const allClaims = entity.claims ?? {};
 
   const instanceOf = itemIdsOf(simplifyStatements(allClaims[INSTANCE_OF]));
   const definition = await chooseInfoboxDefinition(instanceOf, async roots => {
     const rows = await sparql(
-      `SELECT DISTINCT ?root WHERE { VALUES ?root { ${roots.map(root => `wd:${root}`).join(' ')} } wd:${qid} wdt:P31/wdt:P279* ?root . }`
+      `SELECT DISTINCT ?root WHERE { VALUES ?root { ${roots.map(root => `wd:${root}`).join(' ')} } wd:${resolvedId} wdt:P31/wdt:P279* ?root . }`
     );
     return new Set(rows.map(row => entityId(row.root)).filter((id): id is string => id !== null));
   });
@@ -104,12 +105,12 @@ export const fetchWikidataSnapshot = async (
   const classification: WikidataSnapshot['classification'] = [];
   if (definition.groups.some(group => group.rows.some(row => row.kind === 'classification'))) {
     const rows = await sparql(
-      `SELECT ?taxon ?rank ?name WHERE { VALUES ?rank { ${CLASSIFICATION_RANKS.map(rank => `wd:${rank.id}`).join(' ')} } wd:${qid} wdt:P171* ?taxon . ?taxon wdt:P105 ?rank . OPTIONAL { ?taxon wdt:P225 ?name . } }`
+      `SELECT ?taxon ?rank ?name WHERE { VALUES ?rank { ${CLASSIFICATION_RANKS.map(rank => `wd:${rank.id}`).join(' ')} } wd:${resolvedId} wdt:P171* ?taxon . ?taxon wdt:P105 ?rank . OPTIONAL { ?taxon wdt:P225 ?name . } }`
     );
     for (const rank of CLASSIFICATION_RANKS) {
       const row = rows.find(candidate => entityId(candidate.rank) === rank.id);
       const taxon = entityId(row?.taxon);
-      if (!taxon || taxon === qid) continue;
+      if (!taxon || taxon === resolvedId) continue;
       const name = row?.name?.value;
       classification.push(name ? { rank: rank.id, taxon, name } : { rank: rank.id, taxon });
     }

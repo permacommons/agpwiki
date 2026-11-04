@@ -460,3 +460,40 @@ test('BCE dates preserve supplied month and day precision', async () => {
     assert.ok(local.includes(`<th scope="row">Died</th><td>${expected} <span class="infobox-local">`), `local precision ${precision}: ${local}`);
   }
 });
+
+test('Merged items use the resolved entity for follow-up SPARQL queries', async t => {
+  for (const scenario of [
+    { name: 'organisation subclass matching', claims: { P31: [item('Q4830453')] }, rows: [{ root: 'Q43229' }], boxId: 'organisation' },
+    { name: 'species classification', claims: { P31: [item('Q16521')] }, rows: [{ taxon: 'Q729', rank: 'Q36732' }], boxId: 'species' },
+  ]) {
+    await t.test(scenario.name, async () => {
+      const sourceId = 'Q100';
+      const resolvedId = 'Q200';
+      const upstream = fakeWikidata({}, scenario.rows);
+      const queries: string[] = [];
+      const fetchImpl = (async (input: string | URL, init?: RequestInit) => {
+        const url = new URL(String(input));
+        if (url.hostname === 'api.example' && url.searchParams.get('props') === 'claims') {
+          assert.equal(url.searchParams.get('ids'), sourceId);
+          return Response.json({
+            redirects: [{ from: sourceId, to: resolvedId }],
+            entities: { [resolvedId]: { id: resolvedId, claims: scenario.claims } },
+          });
+        }
+        if (url.hostname === 'query.example') {
+          const query = url.searchParams.get('query') ?? '';
+          queries.push(query);
+          if (!query.includes(`wd:${resolvedId} `)) return Response.json({ results: { bindings: [] } });
+        }
+        return upstream.fetchImpl(input, init);
+      }) as typeof fetch;
+      const snapshot = await fetchWikidataSnapshot(sourceId, fetchOptions(fetchImpl));
+      assert.equal(snapshot.boxId, scenario.boxId);
+      if (scenario.boxId === 'species') {
+        assert.deepEqual(snapshot.classification, [{ rank: 'Q36732', taxon: 'Q729' }]);
+      }
+      assert.ok(queries.length > 0);
+      assert.ok(queries.every(query => query.includes(`wd:${resolvedId} `)), queries.join('\n'));
+    });
+  }
+});
