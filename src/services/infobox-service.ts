@@ -9,12 +9,10 @@ import {
   wikidataLabelLanguages,
 } from '../lib/infobox-render.js';
 import { fetchWikidataSnapshot, type WikidataImage, type WikidataSnapshot } from '../lib/wikidata.js';
+import { createWikimediaRequestService, WIKIMEDIA_REQUEST_TIMEOUT_MS } from './wikimedia-request-service.js';
 
 interface WikidataConfig {
-  apiBaseUrl: string;
-  sparqlUrl: string;
   userAgent: string;
-  fetchTimeoutMs: number;
   refreshAfterHours: number;
   // Off in tests, so nothing reaches Wikidata: only cached items are shown.
   fetchEnabled: boolean;
@@ -28,8 +26,15 @@ const FAILED_RETRY_MS = 10 * 60 * 1000;
 // next view.
 const DEFAULT_WAIT_MS = 3000;
 
+const API_BASE_URL = 'https://www.wikidata.org/w/api.php';
+const SPARQL_URL = 'https://query.wikidata.org/sparql';
+const SWEEP_INTERVAL_MS = 60_000;
+const SWEEP_BATCH_SIZE = 20;
+
+const wikimediaFetch = createWikimediaRequestService();
+
 const fetchImage = async (file: string): Promise<WikidataImage | null> => {
-  const { data } = await fetchCommonsMetadata(file, { userAgent: readConfig().userAgent });
+  const { data } = await fetchCommonsMetadata(file, { userAgent: readConfig().userAgent, fetchImpl: wikimediaFetch });
   return {
     file,
     thumbnailUrl: data.thumbnailUrlTemplate ?? null,
@@ -43,10 +48,11 @@ const fetchImage = async (file: string): Promise<WikidataImage | null> => {
 const defaultFetchSnapshot = (qid: string) => {
   const settings = readConfig();
   return fetchWikidataSnapshot(qid, {
-    apiBaseUrl: settings.apiBaseUrl,
-    sparqlUrl: settings.sparqlUrl,
+    fetchImpl: wikimediaFetch,
+    apiBaseUrl: API_BASE_URL,
+    sparqlUrl: SPARQL_URL,
     userAgent: settings.userAgent,
-    timeoutMs: settings.fetchTimeoutMs,
+    timeoutMs: WIKIMEDIA_REQUEST_TIMEOUT_MS,
     languages: wikidataLabelLanguages(SUPPORTED_LOCALES),
     fetchImage,
   });
@@ -114,16 +120,76 @@ export const createInfoboxService = (options: InfoboxServiceOptions = {}) => {
       return row.snapshot;
     }
     if (!canFetch(qid)) return null;
+    if (waitMs <= 0) {
+      void refresh(dal, qid);
+      return null;
+    }
     const timeout = new Promise<null>(resolve => {
       setTimeout(() => resolve(null), waitMs).unref?.();
     });
     return Promise.race([refresh(dal, qid), timeout]);
   };
 
-  return { getSnapshot, refresh };
+  const warmCache = (dal: DataAccessLayer, qid: string): void => {
+    if (!fetchEnabled()) return;
+    void getSnapshot(dal, qid, 0).catch(error => {
+      console.error(`Wikidata cache warming failed for ${qid}:`, error);
+    });
+  };
+
+  const sweep = async (dal: DataAccessLayer, batchSize = SWEEP_BATCH_SIZE): Promise<void> => {
+    if (!fetchEnabled()) return;
+    const excluded = new Set(pending.keys());
+    for (const [qid, until] of failedUntil) {
+      if (until > now()) excluded.add(qid);
+      else failedUntil.delete(qid);
+    }
+    const result = await dal.query(
+      `SELECT DISTINCT p.properties->>'wikidata' AS qid, w.fetched_at
+       FROM pages p
+       LEFT JOIN wikidata_items w ON w.qid = p.properties->>'wikidata'
+       WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
+         AND p.properties->>'wikidata' ~ '^Q[1-9][0-9]{0,11}$'
+         AND NOT (p.properties->>'wikidata' = ANY($1::text[]))
+         AND (w.fetched_at IS NULL OR w.fetched_at < $2)
+       ORDER BY w.fetched_at ASC NULLS FIRST, qid
+       LIMIT $3`,
+      [[...excluded], new Date(now() - refreshAfterMs()), batchSize]
+    );
+    for (const row of result.rows as Array<{ qid: string }>) {
+      await getSnapshot(dal, row.qid, 0);
+      await pending.get(row.qid);
+    }
+  };
+
+  return { getSnapshot, refresh, warmCache, sweep };
 };
 
 export const infoboxService = createInfoboxService();
+
+export const startInfoboxRefresh = (dal: DataAccessLayer): (() => void) => {
+  const settings = readConfig();
+  if (!settings.fetchEnabled) return () => {};
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const run = async () => {
+    try {
+      await infoboxService.sweep(dal);
+    } catch (error) {
+      console.error('Wikidata cache sweep failed:', error);
+    } finally {
+      if (!stopped) {
+        timer = setTimeout(() => void run(), SWEEP_INTERVAL_MS);
+        timer.unref();
+      }
+    }
+  };
+  void run();
+  return () => {
+    stopped = true;
+    clearTimeout(timer);
+  };
+};
 
 export async function renderArticleInfobox(
   dal: DataAccessLayer,

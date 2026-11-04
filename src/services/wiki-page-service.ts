@@ -44,6 +44,7 @@ import {
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
 import { checkNewPage, type RelatedPage } from './duplicate-check-service.js';
+import { infoboxService } from './infobox-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
@@ -1048,6 +1049,8 @@ export async function createWikiPage(
   page.updatedAt = createdAt;
 
   await page.save();
+  const qid = readWikidataId(page);
+  if (qid) infoboxService.warmCache(dalInstance, qid);
   try {
     await followPage(dalInstance, page.id, userId);
   } catch (error) {
@@ -1172,6 +1175,8 @@ export async function updateWikiPage(
     }
   });
 
+  const qid = readWikidataId(page);
+  if (qid) infoboxService.warmCache(dalInstance, qid);
   return toWikiPageResult(page);
 }
 

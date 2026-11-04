@@ -12,7 +12,7 @@ import AgentAccessRequest from '../src/models/agent-access-request.js';
 import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { createCitation } from '../src/services/citation-service.js';
-import { createInfoboxService } from '../src/services/infobox-service.js';
+import { createInfoboxService, infoboxService } from '../src/services/infobox-service.js';
 import { restoreWikiPageRevision } from '../src/services/page-revert-service.js';
 import {
   createWikiPage,
@@ -266,5 +266,107 @@ test('Articles show cached Wikidata facts and local gap filling', async () => {
   } finally {
     server.close();
     await cleanup(dal, { slug, userId, citationKey, qid });
+  }
+});
+
+
+const scopeSweepTo = (dal: Dal, qid: string): Dal => new Proxy(dal, {
+  get(target, property) {
+    if (property !== 'query') return Reflect.get(target, property);
+    return (sql: string, params: unknown[]) => {
+      if (!sql.includes('SELECT DISTINCT p.properties')) return target.query(sql, params);
+      return target.query(
+        sql.replace('WHERE p._old_rev_of', "WHERE p.properties->>'wikidata' = $4 AND p._old_rev_of"),
+        [...params, qid]
+      );
+    };
+  },
+});
+
+test('Save warming, views and sweeps share a single in-flight fetch', async () => {
+  const dal = await getDal();
+  const qid = testQid();
+  const slug = `test-infobox-warm-${uniqueSuffix()}`;
+  let userId: string | null = null;
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  let started!: () => void;
+  const fetching = new Promise<void>(resolve => { started = resolve; });
+  let count = 0;
+  const service = createInfoboxService({
+    fetchEnabled: true,
+    fetchSnapshot: async id => {
+      count++;
+      started();
+      await gate;
+      return personSnapshot(id);
+    },
+  });
+  const warm = test.mock.method(infoboxService, 'warmCache', (_dal: Dal, id: string) => service.warmCache(_dal, id));
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await createWikiPage(dal, { slug, title: { en: 'Warm cache' }, wikidata: qid }, user.id);
+    await fetching;
+    assert.equal(warm.mock.callCount(), 1);
+    const view = service.getSnapshot(dal, qid);
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    service.warmCache(dal, qid);
+    release();
+    assert.equal((await view)?.qid, qid);
+    await updateWikiPage(dal, { slug, title: { en: 'Updated' }, revSummary: { en: 'Update title.' } }, user.id);
+    await service.getSnapshot(dal, qid);
+    assert.equal(count, 1, 'saving and viewing fresh data do not fetch it again');
+    assert.equal(warm.mock.callCount(), 2);
+  } finally {
+    release();
+    warm.mock.restore();
+    await service.refresh(dal, qid);
+    await cleanup(dal, { qid, slug, userId, citationKey: null });
+  }
+});
+
+test('Periodic sweeps populate missing items, refresh stale items and respect failure cooldowns', async () => {
+  const dal = await getDal();
+  const qid = testQid();
+  const slug = `test-infobox-sweep-${uniqueSuffix()}`;
+  let userId: string | null = null;
+  let clock = Date.now();
+  let count = 0;
+  let fail = false;
+  const service = createInfoboxService({
+    fetchEnabled: true,
+    refreshAfterMs: 60_000,
+    now: () => clock,
+    fetchSnapshot: async id => {
+      count++;
+      if (fail) throw new Error('Wikidata unavailable');
+      return personSnapshot(id);
+    },
+  });
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await createWikiPage(dal, { slug, title: { en: 'Sweep cache' }, wikidata: qid }, user.id);
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 1);
+    assert.equal((await service.getSnapshot(dal, qid))?.qid, qid);
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 1, 'fresh entries are skipped');
+    clock += 120_000;
+    fail = true;
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 2);
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 2, 'failed entries wait through the retry cooldown');
+    assert.equal((await service.getSnapshot(dal, qid))?.qid, qid, 'failures preserve stale snapshots');
+    clock += 600_001;
+    fail = false;
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 3);
+    await service.sweep(scopeSweepTo(dal, qid), 20);
+    assert.equal(count, 3);
+  } finally {
+    await cleanup(dal, { qid, slug, userId, citationKey: null });
   }
 });
