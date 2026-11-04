@@ -336,8 +336,9 @@ export const renderInfobox = ({
     const statement = statementsOf(property)[0];
     if (statement?.value.type !== 'string') continue;
     const legend = (statement.qualifiers?.[MEDIA_LEGEND] ?? []).filter(value => value.type === 'monolingual');
-    const caption =
-      legend.find(value => value.type === 'monolingual' && languages.includes(value.language.toLowerCase())) ?? null;
+    const caption = languages
+      .map(language => legend.find(value => value.type === 'monolingual' && value.language.toLowerCase() === language))
+      .find(value => value !== undefined) ?? null;
     topImage = imageHtml(statement.value.value, titleHtml, caption?.type === 'monolingual' ? caption.text : null);
     if (topImage) {
       topFile = statement.value.value;

@@ -349,3 +349,19 @@ test('Unknown death dates follow statement ranks and no-value does not indicate 
   const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
   assert.equal(snapshot.deathDateUnknown, false, 'preferred statements take precedence over normal statements');
 });
+
+test('Image captions prefer the reader language over an earlier English caption', async () => {
+  const snapshot = await personSnapshot();
+  snapshot.claims.P18[0].qualifiers = {
+    P2096: [
+      { type: 'monolingual', language: 'en', text: 'On stage' },
+      { type: 'monolingual', language: 'fr', text: 'Sur scène' },
+    ],
+  };
+  const render = (locale: string) => renderInfobox({ snapshot, titleHtml: 'Person', locale, t });
+  const fallback = render('de');
+  assert.match(fallback, /<figcaption>On stage<\/figcaption>/);
+  const french = render('fr');
+  assert.match(french, /<figcaption>Sur scène<\/figcaption>/);
+  assert.doesNotMatch(french, /<figcaption>On stage<\/figcaption>/);
+});
