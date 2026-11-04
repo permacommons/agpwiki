@@ -20,12 +20,6 @@ export interface InfoboxLocalValue {
 }
 export type InfoboxLocalValues = Record<string, InfoboxLocalValue>;
 
-export interface InfoboxMismatch {
-  property: string;
-  agpediaValue: string;
-  wikidataValue: string;
-}
-
 // Properties whose values are dates, so values added on Agpedia (written
 // 1964, 1964-05 or 1964-05-30) are formatted like Wikidata's.
 const TIME_PROPERTIES = new Set([DATE_OF_BIRTH, DATE_OF_DEATH, 'P571', 'P2031', 'P2032']);
@@ -355,65 +349,4 @@ ${noteHtml}${creditHtml}<p class="infobox-source"><a href="${wikidataItemUrl(sna
     t('infobox.factsOnWikidata')
   )}</a></p>
 </aside>`;
-};
-
-// Text of a value for comparing and for the mismatch record, in English.
-const plainText = (snapshot: WikidataSnapshot, value: WikidataValue): string => {
-  switch (value.type) {
-    case 'item':
-      return snapshot.labels[value.id]?.en ?? snapshot.labels[value.id]?.mul ?? value.id;
-    case 'time':
-      return value.time.replace(/^\+/, '').slice(0, value.precision >= 11 ? 10 : value.precision === 10 ? 7 : 4).replace(/^0+(?=\d)/, '');
-    case 'monolingual':
-      return value.text;
-    case 'quantity':
-      return value.amount.replace(/^\+/, '');
-    case 'string':
-      return value.value;
-  }
-};
-
-const normalize = (text: string) => text.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en');
-
-const valueMatches = (snapshot: WikidataSnapshot, property: string, local: string, value: WikidataValue): boolean => {
-  if (value.type === 'time' && TIME_PROPERTIES.has(property)) {
-    const mine = parseLocalDate(local);
-    const theirs = parseWikidataTime(value.time, value.precision);
-    if (!mine || !theirs) return false;
-    // Equal as far as both are known: 1964 matches 1964-05-30.
-    if (mine.year !== theirs.year) return false;
-    if (mine.precision >= 10 && theirs.precision >= 10 && mine.month !== theirs.month) return false;
-    if (mine.precision >= 11 && theirs.precision >= 11 && mine.day !== theirs.day) return false;
-    return true;
-  }
-  if (value.type === 'item') {
-    if (local.trim() === value.id) return true;
-    return Object.values(snapshot.labels[value.id] ?? {}).some(text => normalize(text) === normalize(local));
-  }
-  if (value.type === 'quantity') return Number(local.replace(/[\s,]/g, '')) === Number(value.amount);
-  return normalize(plainText(snapshot, value)) === normalize(local);
-};
-
-/**
- * Values added on Agpedia that differ from what Wikidata now has for the
- * same property. Values for properties Wikidata has nothing for are not
- * mismatches: they fill a gap.
- */
-export const findInfoboxMismatches = (
-  snapshot: WikidataSnapshot | null,
-  localValues: InfoboxLocalValues | null | undefined
-): InfoboxMismatch[] => {
-  if (!snapshot || !localValues) return [];
-  const mismatches: InfoboxMismatch[] = [];
-  for (const [property, entry] of Object.entries(localValues)) {
-    const statements = snapshot.claims[property] ?? [];
-    if (!statements.length) continue;
-    if (statements.some(statement => valueMatches(snapshot, property, entry.value, statement.value))) continue;
-    mismatches.push({
-      property,
-      agpediaValue: entry.value,
-      wikidataValue: statements.map(statement => plainText(snapshot, statement.value)).join('; '),
-    });
-  }
-  return mismatches;
 };

@@ -1856,7 +1856,6 @@ export const registerPageRoutes = (app: Express) => {
       const infoboxHtml =
         isArticle && selectedRevision.wikidata && !diffFrom && !diffTo
           ? await renderArticleInfobox(dalInstance, {
-              pageId: page.id,
               qid: selectedRevision.wikidata,
               localValues: selectedRevision.infoboxValues,
               titleHtml: typeof title === 'string' ? escapeHtml(title) : title.value,

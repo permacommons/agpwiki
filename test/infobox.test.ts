@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
-import { findInfoboxMismatches, renderInfobox } from '../src/lib/infobox-render.js';
+import { renderInfobox } from '../src/lib/infobox-render.js';
 import { fetchWikidataSnapshot, type WikidataSnapshot } from '../src/lib/wikidata.js';
 
 const t = i18next.t.bind(i18next);
@@ -173,7 +173,7 @@ test('The Person box shows known facts only, shortens long lists and links to Wi
   assert.doesNotMatch(html, /infobox-note/);
 });
 
-test('Values added on Agpedia fill gaps only, and differences from Wikidata are found', async () => {
+test('Values added on Agpedia fill gaps only', async () => {
   const snapshot = await personSnapshot();
   const localValues = {
     P1477: { value: 'Thomas Baptist Morello', citation: 'morello-bio' },
@@ -189,13 +189,6 @@ test('Values added on Agpedia fill gaps only, and differences from Wikidata are 
   assert.match(html, /<td>May 30, 1964/);
   assert.doesNotMatch(html, /May 31/);
   assert.match(html, /<p class="infobox-note">You are viewing an older version/);
-
-  assert.deepEqual(findInfoboxMismatches(snapshot, localValues), [
-    { property: 'P569', agpediaValue: '1964-05-31', wikidataValue: '1964-05-30' },
-  ]);
-  // A date known only to the year agrees with the full date.
-  assert.deepEqual(findInfoboxMismatches(snapshot, { P569: { value: '1964', citation: 'x' } }), []);
-  assert.deepEqual(findInfoboxMismatches(snapshot, { P106: { value: 'Guitarist', citation: 'x' } }), []);
 });
 
 test('No box is shown without a matching box or any facts', () => {

@@ -3,9 +3,7 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { SUPPORTED_LOCALES } from '../../locales/languages.js';
 import { fetchCommonsMetadata } from '../lib/commons.js';
 import {
-  findInfoboxMismatches,
   type InfoboxLocalValues,
-  type InfoboxMismatch,
   type RenderInfoboxInput,
   renderInfobox,
   wikidataLabelLanguages,
@@ -127,43 +125,9 @@ export const createInfoboxService = (options: InfoboxServiceOptions = {}) => {
 
 export const infoboxService = createInfoboxService();
 
-/**
- * Keeps the recorded mismatches of a page in step with what its infobox
- * found: new or changed ones are saved, ones that are gone are removed.
- */
-export async function recordInfoboxMismatches(
-  dal: DataAccessLayer,
-  pageId: string,
-  qid: string,
-  mismatches: InfoboxMismatch[]
-): Promise<void> {
-  await dal.query('DELETE FROM infobox_mismatches WHERE page_id = $1 AND NOT (property = ANY($2::text[]))', [
-    pageId,
-    mismatches.map(mismatch => mismatch.property),
-  ]);
-  for (const mismatch of mismatches) {
-    await dal.query(
-      `INSERT INTO infobox_mismatches (page_id, property, qid, agpedia_value, wikidata_value)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (page_id, property) DO UPDATE
-         SET qid = EXCLUDED.qid, agpedia_value = EXCLUDED.agpedia_value,
-             wikidata_value = EXCLUDED.wikidata_value, detected_at = NOW()
-       WHERE infobox_mismatches.qid IS DISTINCT FROM EXCLUDED.qid
-          OR infobox_mismatches.agpedia_value IS DISTINCT FROM EXCLUDED.agpedia_value
-          OR infobox_mismatches.wikidata_value IS DISTINCT FROM EXCLUDED.wikidata_value`,
-      [pageId, mismatch.property, qid, mismatch.agpediaValue, mismatch.wikidataValue]
-    );
-  }
-}
-
-/**
- * The infobox of an article from its Wikidata item. Viewing the current
- * version also records where values added on Agpedia differ from Wikidata.
- */
 export async function renderArticleInfobox(
   dal: DataAccessLayer,
   input: Omit<RenderInfoboxInput, 'snapshot' | 'localValues'> & {
-    pageId: string;
     qid: string;
     localValues: InfoboxLocalValues | null;
   },
@@ -171,9 +135,6 @@ export async function renderArticleInfobox(
 ): Promise<string> {
   try {
     const snapshot = await service.getSnapshot(dal, input.qid);
-    if (!input.isOldRevision && snapshot) {
-      await recordInfoboxMismatches(dal, input.pageId, input.qid, findInfoboxMismatches(snapshot, input.localValues));
-    }
     return renderInfobox({ ...input, snapshot });
   } catch (error) {
     console.error(`Infobox failed for ${input.qid}:`, error instanceof Error ? error.message : error);

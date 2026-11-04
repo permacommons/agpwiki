@@ -84,10 +84,6 @@ const personSnapshot = (qid: string): WikidataSnapshot => ({
 
 const cleanup = async (dal: Dal, { slug, userId, citationKey, qid }: Record<string, string | null>) => {
   if (slug) {
-    await dal.query(
-      'DELETE FROM infobox_mismatches WHERE page_id IN (SELECT id FROM pages WHERE slug = $1)',
-      [slug]
-    );
     await dal.query('DELETE FROM pages WHERE slug = $1 OR _old_rev_of IN (SELECT id FROM pages WHERE slug = $1)', [slug]);
   }
   if (qid) await dal.query('DELETE FROM wikidata_items WHERE qid = $1', [qid]);
@@ -204,7 +200,7 @@ test('Infobox values are checked, merged, kept in history and restored by revert
   }
 });
 
-test('Articles show the infobox from the cache and record differences with Wikidata', async () => {
+test('Articles show cached Wikidata facts and local gap filling', async () => {
   const dal = await getDal();
   const slug = `test-infobox-page-${uniqueSuffix()}`;
   const citationKey = `infobox-source-${uniqueSuffix()}`;
@@ -265,25 +261,8 @@ test('Articles show the infobox from the cache and record differences with Wikid
     assert.match(body, /<td>May 30, 1964/);
     assert.match(body, /Thomas Baptist Morello <span class="infobox-local">/);
 
-    const mismatches = await dal.query(
-      'SELECT property, agpedia_value, wikidata_value FROM infobox_mismatches WHERE page_id = $1',
-      [created.id]
-    );
-    assert.deepEqual(mismatches.rows, [{ property: 'P569', agpedia_value: '1964-05-31', wikidata_value: '1964-05-30' }]);
-
-    // Once the two agree, the record goes away.
-    const fixed = await updateWikiPage(
-      dal,
-      { slug, infoboxValues: { P569: { value: '1964-05-30', citation: citationKey } }, revSummary: { en: 'Fix date.' } },
-      user.id
-    );
-    await bodyOf();
-    const after = await dal.query('SELECT 1 FROM infobox_mismatches WHERE page_id = $1', [created.id]);
-    assert.equal(after.rowCount, 0);
-
     const old = await bodyOf(`?rev=${created.currentRevId}`);
     assert.match(old, /class="infobox-note"/);
-    assert.ok(fixed.currentRevId);
   } finally {
     server.close();
     await cleanup(dal, { slug, userId, citationKey, qid });
