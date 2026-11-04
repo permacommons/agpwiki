@@ -262,3 +262,39 @@ test('Key people retain local gap filling for properties absent from Wikidata', 
   assert.match(row, /class="infobox-local"/);
   assert.match(row, /href="\/cite\/company-source"/);
 });
+
+
+test('BCE years retain Wikidata historical numbering for remote and local dates', () => {
+  for (const [year, expected] of [['-0044', '44 BC'], ['-0001', '1 BC'], ['+0001', '1']]) {
+    const snapshot: WikidataSnapshot = {
+      qid: 'Q1', boxId: 'organisation', labels: {}, classification: [], images: {},
+      claims: { P571: [{ value: { type: 'time', time: `${year}-00-00T00:00:00Z`, precision: 9 } }] },
+    };
+    const render = (localValues = {}) => renderInfobox({ snapshot, localValues, titleHtml: 'Organisation', locale: 'en', t });
+    assert.ok(render().includes(`<th scope="row">Founded</th><td>${expected}</td>`));
+    snapshot.claims = {};
+    const local = render({ P571: { value: String(Number(year)), citation: 'history' } });
+    assert.ok(local.includes(`<th scope="row">Founded</th><td>${expected} <span class="infobox-local">`));
+  }
+});
+
+test('Ages across BCE and CE skip year zero and respect birthdays', () => {
+  const cases = [
+    ['-0001-06-15', '+0001-06-15', 1],
+    ['-0004-06-15', '+0004-06-15', 7],
+    ['-0004-06-15', '+0004-06-14', 6],
+    ['-0004-06-15', '-0001-06-15', 3],
+    ['+0001-06-15', '+0004-06-15', 3],
+  ] as const;
+  for (const [birth, death, age] of cases) {
+    const snapshot: WikidataSnapshot = {
+      qid: 'Q1', boxId: 'person', labels: {}, classification: [], images: {},
+      claims: {
+        P569: [{ value: { type: 'time', time: `${birth}T00:00:00Z`, precision: 11 } }],
+        P570: [{ value: { type: 'time', time: `${death}T00:00:00Z`, precision: 11 } }],
+      },
+    };
+    const html = renderInfobox({ snapshot, titleHtml: 'Person', locale: 'en', t });
+    assert.ok(html.includes(`(aged ${age})`), `${birth} to ${death} should be ${age} years`);
+  }
+});

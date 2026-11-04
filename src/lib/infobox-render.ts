@@ -83,7 +83,8 @@ const toDate = (parsed: ParsedTime) => {
 };
 
 const formatTime = (parsed: ParsedTime, locale: string, t: TFunction): string => {
-  if (parsed.year <= 0) return t('infobox.yearBce', { year: 1 - parsed.year });
+  if (parsed.year < 0) return t('infobox.yearBce', { year: Math.abs(parsed.year) });
+  if (parsed.year === 0) return '0';
   if (parsed.precision >= 11 && parsed.month && parsed.day) {
     return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(
       toDate(parsed)
@@ -100,8 +101,10 @@ const formatTime = (parsed: ParsedTime, locale: string, t: TFunction): string =>
 
 /** Whole years from `from` to `to`, when both dates are known to the day. */
 const yearsBetween = (from: ParsedTime | null, to: ParsedTime | null): number | null => {
-  if (!from || !to || from.precision < 11 || to.precision < 11) return null;
+  if (!from || !to || !from.year || !to.year || from.precision < 11 || to.precision < 11) return null;
   let years = to.year - from.year;
+  // Wikidata JSON uses historical years, with no year zero between BCE and CE.
+  if (from.year < 0 && to.year > 0) years -= 1;
   if (to.month < from.month || (to.month === from.month && to.day < from.day)) years -= 1;
   return years >= 0 ? years : null;
 };
