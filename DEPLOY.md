@@ -298,3 +298,69 @@ This writes a redacted content-only archive to `public/downloads/dumps/`.
 - Preview caches are process-local in-memory caches. They do not survive
   restarts, and multiple app instances do not share cache state.
 - The app sends a project-specific `User-Agent` when calling Wikipedia.
+
+
+## Wikidata infobox cache
+
+Infobox snapshots are stored in PostgreSQL's `wikidata_items` table and survive
+restarts. Creating or updating a page with a Wikidata ID warms missing or stale
+cache entries asynchronously after the save succeeds. Saving does not wait for
+Wikidata, and fresh entries are not fetched again.
+
+The web process also sweeps Wikidata IDs referenced by current, non-deleted pages
+on startup and periodically thereafter. It processes missing entries first, then
+the oldest stale entries, sequentially in bounded batches. Deployment settings under
+`wikidata` in `config/default.json5` are:
+
+- `refreshAfterHours: 24`: age after which a snapshot is stale.
+- `fetchEnabled: true`: enables fetching through saves, views, and sweeps.
+- `userAgent`: identifies the deployment and provides a contact URL.
+
+Internal constants set a 60-second delay between completed sweeps, a maximum of
+20 items per sweep, one-second request spacing, and an eight-second network
+timeout. API endpoints are fixed in production; fetch tests inject their own.
+
+All infobox Wikidata, SPARQL, and Commons metadata requests share one serial queue
+per process, including requests triggered by saves, views, and sweeps. The queue
+waits for response bodies, not just headers, before starting the next request.
+The default spacing caps starts at roughly 60 requests per minute across these
+endpoints; one item may require several requests. Other media-import requests do
+not use this infobox queue and must be included when budgeting total traffic.
+
+Action API requests include `maxlag=5`. HTTP 429/5xx responses, network failures,
+and API errors activate endpoint-wide backoff, starting at five seconds and
+increasing exponentially to five minutes. A longer `Retry-After` delay (seconds or
+HTTP date) is honored without that cap. Requests to that endpoint fail while it
+is in backoff; the existing item retry cooldown and later sweeps provide retries.
+Success resets the endpoint backoff. API error envelopes returned with HTTP 200
+are rejected, so they cannot replace a usable snapshot with empty data.
+
+These internal limits are conservative defaults, not a guarantee against throttling.
+Check the current [Wikimedia API limits](https://www.mediawiki.org/wiki/Wikimedia_APIs/Rate_limits)
+and [SPARQL limits](https://www.mediawiki.org/wiki/Wikidata_Query_Service/User_Manual#Query_limits)
+before increasing traffic. SPARQL also has processing-time limits.
+
+Views still provide a fallback for operator edits and saves followed by immediate
+views. Cached snapshots are returned immediately, with stale entries refreshed in
+the background. A view without a cached snapshot waits at most three seconds;
+the fetch continues afterward, and that response has no infobox if it timed out.
+Failed fetches keep existing snapshots and have a ten-minute retry cooldown.
+
+Current limitations:
+
+- In-flight fetch sharing and retry cooldowns are in memory, scoped to one process.
+  Saves, views, and sweeps in that process share them, along with request pacing
+  and endpoint backoff. Separate web/MCP processes
+  or replicas can duplicate requests; restarts clear cooldowns. Use database-backed
+  coordination before relying on deduplication or aggregate rate limits across
+  processes.
+- Sweeps run only in the web process, not in MCP or notification workers. There is
+  no durable job queue or strict freshness guarantee. Work resumes from database
+  cache timestamps after restart, and large backlogs take multiple sweeps.
+- Request queues are in memory and are not bounded by the sweep batch size;
+  bursts of saves or uncached views can queue additional work.
+- Saves can finish before warming completes. Wikidata outages can leave snapshots
+  stale indefinitely or leave an uncached article without an infobox.
+- Cache entries are not automatically purged when no article references them, and
+  changes to infobox definitions or supported languages do not invalidate snapshots
+  immediately; those changes take effect on a subsequent refresh.

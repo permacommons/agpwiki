@@ -25,6 +25,7 @@ import { registerSearchRoutes } from './routes/search.js';
 import { registerSettingsRoutes } from './routes/settings.js';
 import { registerToolRoutes } from './routes/tools.js';
 import { getAccountLifecycleState } from './services/account-lifecycle.js';
+import { startInfoboxRefresh } from './services/infobox-service.js';
 import { getUserRoles, hasRole, SITE_ADMIN_ROLE } from './services/roles.js';
 import {
   countUnreadNotifications,
@@ -112,7 +113,8 @@ const port = config.get<number>('server.port');
 
 async function start(): Promise<void> {
   await initializeI18n();
-  await initializePostgreSQL();
+  const dal = await initializePostgreSQL();
+  startInfoboxRefresh(dal);
 
   app.listen(port, () => {
     debug.app(`AGP Wiki listening on port ${port}`);
