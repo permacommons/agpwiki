@@ -3,7 +3,8 @@ import test from 'node:test';
 import i18next from 'i18next';
 import './_setup-i18n.js';
 import { parseLocalDate, renderInfobox } from '../src/lib/infobox-render.js';
-import { fetchWikidataSnapshot, GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
+import { GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
+import { fetchWikidataSnapshot } from '../src/services/wikidata-service.js';
 
 const t = i18next.t.bind(i18next);
 

@@ -8,7 +8,8 @@ import {
   renderInfobox,
   wikidataLabelLanguages,
 } from '../lib/infobox-render.js';
-import { fetchWikidataSnapshot, type WikidataImage, type WikidataSnapshot } from '../lib/wikidata.js';
+import type { WikidataImage, WikidataSnapshot } from '../lib/wikidata.js';
+import { fetchWikidataSnapshot } from './wikidata-service.js';
 import { createWikimediaRequestService, WIKIMEDIA_REQUEST_TIMEOUT_MS } from './wikimedia-request-service.js';
 
 interface WikidataConfig {
