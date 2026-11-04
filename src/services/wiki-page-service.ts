@@ -23,6 +23,7 @@ import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
 import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-render.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { pageNamespaceSql } from '../lib/page-address.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
 import { missingPromptPlaceholders, requiredPromptPlaceholders } from '../lib/prompt-registry.js';
 import {
@@ -42,6 +43,7 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { checkNewPage, type RelatedPage } from './duplicate-check-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
@@ -92,6 +94,14 @@ export interface WikiPageWriteInput {
   canonicalLanguage?: string | null;
   tags?: string[];
   revSummary?: LocalizedMapInput;
+}
+
+export interface WikiPageCreateInput extends WikiPageWriteInput {
+  notDuplicateOf?: string[];
+}
+
+export interface WikiPageCreateResult extends WikiPageResult {
+  relatedPages: RelatedPage[];
 }
 
 /** The canonical version a translation was made from. */
@@ -278,6 +288,8 @@ export interface WikiPageSearchInput {
   query: string;
   limit?: number;
   scope?: 'all' | 'content_only' | 'meta_only';
+  // Preferred language for the title shown; other languages are the fallback.
+  lang?: string;
 }
 
 export interface WikiPageSearchItem {
@@ -866,7 +878,7 @@ export interface MissingWikidataPage {
 }
 
 /**
- * Current articles (not meta/ or tool/ pages) without a Wikidata ID.
+ * Current articles without a Wikidata ID.
  */
 export async function listPagesMissingWikidata(
   dalInstance: DataAccessLayer
@@ -874,7 +886,7 @@ export async function listPagesMissingWikidata(
   const result = await dalInstance.query(
     `SELECT slug, title FROM pages
       WHERE _old_rev_of IS NULL AND _rev_deleted = false
-        AND slug NOT LIKE 'meta/%' AND slug NOT LIKE 'tool/%'
+        AND ${pageNamespaceSql()} = 'article'
         AND (properties->>'wikidata') IS NULL
       ORDER BY slug`
   );
@@ -908,30 +920,47 @@ export async function listWikiPageResources(
 
 export async function searchWikiPages(
   dalInstance: DataAccessLayer,
-  { query, limit, scope = 'all' }: WikiPageSearchInput
+  { query, limit, scope = 'all', lang }: WikiPageSearchInput
 ): Promise<WikiPageSearchItem[]> {
   ensureNonEmptyString(query, 'query');
   const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
-  // Search is intentionally simple and locale-stable for web + API callers.
+  // Search is intentionally simple: a substring of the address or of the
+  // title in any language.
   const result = await dalInstance.query(
-    `SELECT slug, title->>'en' as title
+    `SELECT slug, title, canonical_language
      FROM ${WikiPage.tableName}
      WHERE _old_rev_of IS NULL AND _rev_deleted = false
        AND (
          $2 = 'all'
-         OR ($2 = 'content_only' AND slug NOT LIKE 'meta/%')
-         OR ($2 = 'meta_only' AND slug LIKE 'meta/%')
+         OR ($2 = 'content_only' AND ${pageNamespaceSql()} = 'article')
+         OR ($2 = 'meta_only' AND ${pageNamespaceSql()} = 'meta')
        )
-       AND (slug ILIKE $1 OR (title->>'en') ILIKE $1)
+       AND (
+         slug ILIKE $1
+         OR EXISTS (SELECT 1 FROM jsonb_each_text(COALESCE(title, '{}'::jsonb)) t WHERE t.value ILIKE $1)
+       )
      ORDER BY slug
      LIMIT $3`,
     [`%${query}%`, scope, normalizedLimit]
   );
 
-  return result.rows.map((row: { slug: string; title: string | null }) => ({
-    slug: row.slug,
-    title: row.title ?? row.slug,
-  }));
+  const needle = query.toLowerCase();
+  return result.rows.map(
+    (row: { slug: string; title: Record<string, string> | null; canonical_language: string | null }) => {
+      const titles = row.title ?? {};
+      const matching = Object.values(titles).find(value => value?.toLowerCase().includes(needle));
+      return {
+        slug: row.slug,
+        title:
+          (lang && titles[lang]) ||
+          titles.en ||
+          (row.canonical_language && titles[row.canonical_language]) ||
+          matching ||
+          Object.values(titles)[0] ||
+          row.slug,
+      };
+    }
+  );
 }
 
 export async function readWikiPage(
@@ -955,9 +984,9 @@ export async function readWikiPage(
 
 export async function createWikiPage(
   dalInstance: DataAccessLayer,
-  { slug, title, body, canonicalLanguage, wikidata, infoboxValues, tags = [], revSummary }: WikiPageWriteInput,
+  { slug, title, body, canonicalLanguage, wikidata, infoboxValues, tags = [], revSummary, notDuplicateOf }: WikiPageCreateInput,
   userId: string
-): Promise<WikiPageResult> {
+): Promise<WikiPageCreateResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
   ensureNonEmptyString(userId, 'userId', errors);
@@ -995,10 +1024,14 @@ export async function createWikiPage(
 
   assertPromptPlaceholdersKept(normalizedSlug, sanitizeLocalizedMapInput(body));
 
+  const check = await checkNewPage(dalInstance, {
+    slug: normalizedSlug, title, canonicalLanguage, wikidata, notDuplicateOf,
+  });
+
   const createdAt = new Date();
   const page = await WikiPage.createFirstRevision(
     { id: userId },
-    { tags: ['create', ...tags], date: createdAt }
+    { tags: [...new Set(['create', ...tags, ...check.tags])], date: createdAt }
   );
 
   page.slug = normalizedSlug;
@@ -1022,7 +1055,7 @@ export async function createWikiPage(
     debug.error(`Failed to make ${userId} follow new page ${page.id}: ${message}`);
   }
 
-  return toWikiPageResult(page);
+  return { ...await toWikiPageResult(page), relatedPages: check.related };
 }
 
 export async function updateWikiPage(

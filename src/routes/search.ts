@@ -14,7 +14,11 @@ export const registerSearchRoutes = (app: Express) => {
     let results: Array<{ slug: string; title: string }> = [];
 
     if (query) {
-      results = await searchWikiPages(dalInstance, { query, limit: 20 });
+      results = await searchWikiPages(dalInstance, {
+        query,
+        limit: 20,
+        lang: res.locals.locale as string | undefined,
+      });
     }
 
     const resultsHtml = results
@@ -52,7 +56,12 @@ export const registerSearchRoutes = (app: Express) => {
     }
 
     const dalInstance = await initializePostgreSQL();
-    const results = await searchWikiPages(dalInstance, { query, limit: 10, scope });
+    const results = await searchWikiPages(dalInstance, {
+      query,
+      limit: 10,
+      scope,
+      lang: res.locals.locale as string | undefined,
+    });
 
     res.json({ results });
   });

@@ -1,3 +1,5 @@
+import { resolvePageAddress } from './page-address.js';
+
 export const FORUM_BASE_PATH = '/tool/forum';
 
 export const forumIndexPath = () => FORUM_BASE_PATH;
@@ -34,5 +36,7 @@ export const forumCommentEditPath = (commentId: string) =>
 export const forumCommentHistoryPath = (commentId: string) =>
   `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/history`;
 
-export const forumPageCategory = (slug: string): 'articles' | 'policy' | null =>
-  slug.startsWith('tool/') ? null : slug.startsWith('meta/') ? 'policy' : 'articles';
+export const forumPageCategory = (slug: string): 'articles' | 'policy' | null => {
+  const address = resolvePageAddress(slug);
+  return address ? address.namespace === 'meta' ? 'policy' : 'articles' : null;
+};

@@ -36,12 +36,13 @@ export const normalizeSlug = (slug: string) =>
 export const toAddressForm = (slug: string) =>
   normalizeSlug(slug).toLowerCase().replace(/[\s_]+/g, '-');
 
+export const isApplicationSlug = (slug: string) => RESERVED_SLUGS.has(slug.split('/')[0] ?? '');
+
 export const isBlockedSlug = (slug: string) => {
   if (!slug) return true;
   const segments = slug.split('/');
   if (segments.some(segment => segment === '.' || segment === '..')) return true;
-  const [prefix] = segments;
-  if (prefix && RESERVED_SLUGS.has(prefix)) return true;
+  if (isApplicationSlug(slug)) return true;
   if (/^.+\/checks\/[^/]+$/.test(slug)) return true;
 
   for (const suffix of RESERVED_SUFFIXES) {

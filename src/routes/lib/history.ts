@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import type { initializePostgreSQL } from '../../db.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
+import { NOT_DUPLICATE_TAG_PREFIX } from '../../services/duplicate-check-service.js';
 
 type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -57,6 +58,14 @@ export const renderRevisionHistory = ({
       const summaryHtml = rev.summary
         ? `<div class="rev-summary">${renderText(rev.summary)}</div>`
         : '';
+      const checkedPages = (rev.revTags ?? [])
+        .filter(tag => tag.startsWith(NOT_DUPLICATE_TAG_PREFIX))
+        .map(tag => tag.slice(NOT_DUPLICATE_TAG_PREFIX.length));
+      const notDuplicateHtml = checkedPages.length
+        ? `<div class="rev-note">${escapeHtml(
+            t('history.notDuplicateOf', { pages: checkedPages.join(', ') })
+          )}</div>`
+        : '';
       const fromChecked = diffFrom ? diffFrom === rev.revId : index === 1;
       const toChecked = diffTo ? diffTo === rev.revId : index === 0;
       const displayName = rev.revUser ? userMap.get(rev.revUser) ?? rev.revUser : null;
@@ -87,7 +96,7 @@ export const renderRevisionHistory = ({
     <strong>${renderText(rev.title)}</strong>
     <span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span>
   </div>
-  ${summaryHtml}
+  ${summaryHtml}${notDuplicateHtml}
   <div class="rev-actions">
     ${(rev.revTags ?? []).includes('revert') ? `<span class="rev-tag-revert">${escapeHtml(t('revert.tag'))}</span> ` : ''}<a href="${escapeHtml(viewHref(rev.revId))}">${t('history.view')}</a>${(
       extraActions?.(rev, index) ?? []

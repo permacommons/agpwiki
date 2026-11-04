@@ -266,6 +266,7 @@
     view: 'Näytä',
     title: 'Versiohistoria',
     compare: 'Vertaa valittuja versioita',
+    notDuplicateOf: 'Ei kaksoiskappale sivusta {{pages}}',
   },
   "revert": {
     "tag": "kumoaminen",
