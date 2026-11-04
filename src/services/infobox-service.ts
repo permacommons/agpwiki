@@ -80,11 +80,20 @@ export const createInfoboxService = (options: InfoboxServiceOptions = {}) => {
   const pending = new Map<string, Promise<WikidataSnapshot | null>>();
   const failedUntil = new Map<string, number>();
 
+  const readCache = async (dal: DataAccessLayer, qid: string) => {
+    const result = await dal.query('SELECT snapshot, fetched_at FROM wikidata_items WHERE qid = $1', [qid]);
+    return result.rows[0] as { snapshot: WikidataSnapshot; fetched_at: Date } | undefined;
+  };
+  const isFresh = (row: { fetched_at: Date }) => now() - new Date(row.fetched_at).getTime() <= refreshAfterMs();
+
   const refresh = (dal: DataAccessLayer, qid: string): Promise<WikidataSnapshot | null> => {
     const running = pending.get(qid);
     if (running) return running;
     const request = (async () => {
       try {
+        // A caller's earlier cache miss may predate another completed refresh.
+        const cached = await readCache(dal, qid);
+        if (cached && isFresh(cached)) return cached.snapshot;
         const snapshot = await fetchSnapshot(qid);
         await dal.query(
           `INSERT INTO wikidata_items (qid, snapshot, fetched_at) VALUES ($1, $2, $3)
@@ -112,10 +121,9 @@ export const createInfoboxService = (options: InfoboxServiceOptions = {}) => {
     qid: string,
     waitMs = DEFAULT_WAIT_MS
   ): Promise<WikidataSnapshot | null> => {
-    const result = await dal.query('SELECT snapshot, fetched_at FROM wikidata_items WHERE qid = $1', [qid]);
-    const row = result.rows[0] as { snapshot: WikidataSnapshot; fetched_at: Date } | undefined;
+    const row = await readCache(dal, qid);
     if (row) {
-      if (now() - new Date(row.fetched_at).getTime() > refreshAfterMs() && canFetch(qid)) {
+      if (!isFresh(row) && canFetch(qid)) {
         void refresh(dal, qid);
       }
       return row.snapshot;

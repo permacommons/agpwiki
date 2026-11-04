@@ -422,3 +422,64 @@ test('Page writes reject invalid local dates without creating or revising a page
     await cleanup(dal, { slug, citationKey, userId, qid: null });
   }
 });
+
+test('A delayed cache miss does not refetch a snapshot already saved by another caller', async () => {
+  const dal = await getDal();
+  const qid = testQid();
+  let releaseFetch!: () => void;
+  const fetchGate = new Promise<void>(resolve => { releaseFetch = resolve; });
+  let fetchStarted!: () => void;
+  const fetching = new Promise<void>(resolve => { fetchStarted = resolve; });
+  let releaseLookup!: () => void;
+  const lookupGate = new Promise<void>(resolve => { releaseLookup = resolve; });
+  let lookupRead!: () => void;
+  const lookupCaptured = new Promise<void>(resolve => { lookupRead = resolve; });
+  const events: string[] = [];
+  let fetchCount = 0;
+  const service = createInfoboxService({
+    fetchEnabled: true,
+    fetchSnapshot: async id => {
+      events.push(`fetch ${++fetchCount}`);
+      fetchStarted();
+      await fetchGate;
+      return personSnapshot(id);
+    },
+  });
+  let delayed = false;
+  const delayedDal = new Proxy(dal, {
+    get(target, property) {
+      if (property !== 'query') return Reflect.get(target, property);
+      return async (sql: string, params: unknown[]) => {
+        const result = await target.query(sql, params);
+        if (!delayed && sql.startsWith('SELECT snapshot, fetched_at')) {
+          delayed = true;
+          assert.equal(result.rowCount, 0);
+          events.push('second lookup observed an empty cache');
+          lookupRead();
+          await lookupGate;
+          events.push('second lookup delivered its earlier result');
+        }
+        return result;
+      };
+    },
+  });
+  let first: Promise<WikidataSnapshot | null> | undefined;
+  let second: Promise<WikidataSnapshot | null> | undefined;
+  try {
+    first = service.getSnapshot(dal, qid);
+    await fetching;
+    second = service.getSnapshot(delayedDal, qid);
+    await lookupCaptured;
+    releaseFetch();
+    assert.equal((await first)?.qid, qid);
+    events.push('first fetch saved and completed');
+    releaseLookup();
+    assert.equal((await second)?.qid, qid);
+    assert.equal(fetchCount, 1, events.join(' -> '));
+  } finally {
+    releaseFetch();
+    releaseLookup();
+    await Promise.allSettled([first, second]);
+    await cleanup(dal, { qid, slug: null, userId: null, citationKey: null });
+  }
+});
