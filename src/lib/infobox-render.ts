@@ -265,7 +265,7 @@ export const renderInfobox = ({
         const place = single(placeProperty);
         if (!date && !place) return '';
         let age: number | null = null;
-        if (row.age === 'sinceBirth' && !timeOf(DATE_OF_DEATH)) {
+        if (row.age === 'sinceBirth' && !snapshot.deathDateUnknown && !timeOf(DATE_OF_DEATH)) {
           const today = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1, day: now.getUTCDate(), precision: 11 };
           age = yearsBetween(timeOf(dateProperty), today);
         } else if (row.age === 'atDeath') {

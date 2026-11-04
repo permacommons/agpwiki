@@ -298,3 +298,54 @@ test('Ages across BCE and CE skip year zero and respect birthdays', () => {
     assert.ok(html.includes(`(aged ${age})`), `${birth} to ${death} should be ${age} years`);
   }
 });
+
+test('An unknown death date suppresses present-day age', async () => {
+  const { fetchImpl } = fakeWikidata({
+    Q297552: {
+      ...PERSON_CLAIMS,
+      P570: [{ mainsnak: { snaktype: 'somevalue', datatype: 'time' }, rank: 'normal' }],
+    },
+  });
+  const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
+  assert.equal(snapshot.deathDateUnknown, true);
+  const html = renderInfobox({
+    snapshot: JSON.parse(JSON.stringify(snapshot)),
+    titleHtml: 'Person with unknown death date',
+    locale: 'en',
+    t,
+    now: new Date('2026-11-01T12:00:00Z'),
+  });
+  assert.match(html, /<th scope="row">Born<\/th><td>May 30, 1964/);
+  assert.doesNotMatch(html, /class="infobox-age"/, 'a person known to have died has no present-day age');
+});
+
+
+test('Unknown death dates follow statement ranks and no-value does not indicate death', async () => {
+  const cases = [
+    { snaktype: 'somevalue', rank: 'deprecated', hasAge: true },
+    { snaktype: 'somevalue', rank: 'preferred', hasAge: false },
+    { snaktype: 'novalue', rank: 'normal', hasAge: true },
+  ];
+  for (const { snaktype, rank, hasAge } of cases) {
+    const { fetchImpl } = fakeWikidata({
+      Q297552: {
+        ...PERSON_CLAIMS,
+        P570: [{ mainsnak: { snaktype, datatype: 'time' }, rank }],
+      },
+    });
+    const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
+    const html = renderInfobox({ snapshot, titleHtml: 'Person', locale: 'en', t, now: new Date('2026-11-01T12:00:00Z') });
+    assert.equal(html.includes('class="infobox-age"'), hasAge, `${rank} ${snaktype}`);
+  }
+  const { fetchImpl } = fakeWikidata({
+    Q297552: {
+      ...PERSON_CLAIMS,
+      P570: [
+        { mainsnak: { snaktype: 'somevalue', datatype: 'time' }, rank: 'normal' },
+        { mainsnak: { snaktype: 'novalue', datatype: 'time' }, rank: 'preferred' },
+      ],
+    },
+  });
+  const snapshot = await fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
+  assert.equal(snapshot.deathDateUnknown, false, 'preferred statements take precedence over normal statements');
+});

@@ -1,5 +1,6 @@
 import {
   CLASSIFICATION_RANKS,
+  DATE_OF_DEATH,
   definitionProperties,
   INFOBOX_DEFINITIONS,
   INSTANCE_OF,
@@ -38,6 +39,7 @@ export interface WikidataSnapshot {
   // The box chosen for the item, or null when none applies.
   boxId: string | null;
   claims: Record<string, WikidataStatement[]>;
+  deathDateUnknown?: boolean;
   // Labels of the items the claims point to, by item and language.
   labels: Record<string, Record<string, string>>;
   // Taxa above the item, kingdom first, with their scientific names.
@@ -108,18 +110,20 @@ export const simplifySnak = (snak: ApiSnak | undefined): WikidataValue | null =>
   }
 };
 
+const rankedStatements = (statements: ApiStatement[] = []): ApiStatement[] => {
+  const usable = statements.filter(statement => statement.rank !== 'deprecated');
+  const preferred = usable.filter(statement => statement.rank === 'preferred');
+  return preferred.length ? preferred : usable;
+};
+
 /**
  * The statements of one property as Wikidata ranks them: preferred
  * statements when there are any, otherwise the normal ones; deprecated
  * statements are dropped.
  */
 export const simplifyStatements = (statements: ApiStatement[] | undefined): WikidataStatement[] => {
-  if (!statements?.length) return [];
-  const usable = statements.filter(statement => statement.rank !== 'deprecated');
-  const preferred = usable.filter(statement => statement.rank === 'preferred');
-  const chosen = preferred.length ? preferred : usable;
   const result: WikidataStatement[] = [];
-  for (const statement of chosen) {
+  for (const statement of rankedStatements(statements)) {
     const value = simplifySnak(statement.mainsnak);
     if (!value) continue;
     const qualifiers: Record<string, WikidataValue[]> = {};
@@ -273,5 +277,8 @@ export const fetchWikidataSnapshot = async (
     }
   }
 
-  return { qid, boxId: definition.id, claims, labels, classification, images };
+  const deathDateUnknown = rankedStatements(allClaims[DATE_OF_DEATH]).some(
+    statement => statement.mainsnak?.snaktype === 'somevalue'
+  );
+  return { qid, boxId: definition.id, claims, labels, classification, images, deathDateUnknown };
 };
