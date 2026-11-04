@@ -235,3 +235,30 @@ test('Monolingual facts select one language in preference order and keep its val
   assert.match(french, /French name/);
   assert.doesNotMatch(french, /English name|Portuguese name/);
 });
+
+test('Key people retain local gap filling for properties absent from Wikidata', () => {
+  const snapshot: WikidataSnapshot = {
+    qid: 'Q1',
+    boxId: 'organisation',
+    claims: { P169: [{ value: { type: 'item', id: 'Q2' } }] },
+    labels: { Q2: { en: 'Wikidata CEO' } },
+    classification: [],
+    images: {},
+  };
+  const html = renderInfobox({
+    snapshot,
+    localValues: {
+      P169: { value: 'Local CEO', citation: 'company-source' },
+      P488: { value: 'Local chairperson', citation: 'company-source' },
+    },
+    titleHtml: 'Company',
+    locale: 'en',
+    t,
+  });
+  const row = html.match(/<th scope="row">Key people<\/th><td>(.*?)<\/td>/)?.[1] ?? '';
+  assert.match(row, /Wikidata CEO/);
+  assert.doesNotMatch(row, /Local CEO/);
+  assert.match(row, /Local chairperson/);
+  assert.match(row, /class="infobox-local"/);
+  assert.match(row, /href="\/cite\/company-source"/);
+});

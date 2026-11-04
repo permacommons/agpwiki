@@ -234,13 +234,18 @@ export const renderInfobox = ({
     const heading = t(`infobox.rows.${row.id}`);
     switch (row.kind) {
       case 'list': {
-        const values = row.properties.flatMap(property => statementsOf(property).map(statement => statement.value));
-        if (!values.length) {
-          const locals = row.properties.map(formatLocal).filter((text): text is string => text !== null);
-          return locals.length ? rowHtml(heading, locals.join(', ')) : '';
-        }
-        const formatted = values.map(formatValue);
-        if (values[0].type === 'item') formatted[0] = escapeHtml(capitalize(label((values[0] as { id: string }).id), locale));
+        const formatted = row.properties.flatMap(property => {
+          const statements = statementsOf(property);
+          if (!statements.length) {
+            const value = formatLocal(property);
+            return value === null ? [] : [value];
+          }
+          return statements.map(statement => formatValue(statement.value));
+        });
+        if (!formatted.length) return '';
+        const firstProperty = row.properties.find(property => statementsOf(property).length || local[property]);
+        const first = firstProperty ? statementsOf(firstProperty)[0]?.value : undefined;
+        if (first?.type === 'item') formatted[0] = escapeHtml(capitalize(label(first.id), locale));
         if (formatted.length <= MAX_LISTED_VALUES + 1) return rowHtml(heading, formatted.join(', '));
         const more = formatted.length - MAX_LISTED_VALUES;
         const moreLink = `<a href="${wikidataItemUrl(snapshot.qid)}#${row.properties[0]}" rel="noopener" target="_blank">${escapeHtml(
