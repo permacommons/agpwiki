@@ -51,6 +51,7 @@ export interface InfoboxDefinition {
 // Born and died ages are counted from the date of birth.
 export const DATE_OF_BIRTH = 'P569';
 export const DATE_OF_DEATH = 'P570';
+export const PLACE_OF_DEATH = 'P20';
 export const INFOBOX_DATE_PROPERTIES: ReadonlySet<string> = new Set([DATE_OF_BIRTH, DATE_OF_DEATH, 'P571', 'P2031', 'P2032']);
 // The caption of an image is its "media legend" qualifier.
 export const MEDIA_LEGEND = 'P2096';
@@ -86,7 +87,7 @@ export const INFOBOX_DEFINITIONS: InfoboxDefinition[] = [
         rows: [
           list('birthName', 'P1477'),
           { id: 'born', kind: 'event', properties: [DATE_OF_BIRTH, 'P19'], age: 'sinceBirth' },
-          { id: 'died', kind: 'event', properties: [DATE_OF_DEATH, 'P20'], age: 'atDeath' },
+          { id: 'died', kind: 'event', properties: [DATE_OF_DEATH, PLACE_OF_DEATH], age: 'atDeath' },
           list('nationality', 'P27'),
           list('education', 'P69'),
           list('occupation', 'P106'),

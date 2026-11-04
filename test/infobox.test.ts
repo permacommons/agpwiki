@@ -424,3 +424,23 @@ test('Calendar labels preserve Julian leap days and missing calendars suppress a
   assert.match(render(), /calendar unknown/);
   assert.doesNotMatch(render(), /class="infobox-age"/, 'legacy snapshots must not assume a Gregorian calendar');
 });
+
+
+test('Death evidence suppresses present-day ages independently of date formatting', () => {
+  const cases = [
+    { name: 'Wikidata death place', claims: { P20: [{ value: { type: 'item' as const, id: 'Q2' } }] }, localValues: {} },
+    { name: 'local death place', claims: {}, localValues: { P20: { value: 'Paris', citation: 'biography' } } },
+    { name: 'local death date', claims: {}, localValues: { P570: { value: '2020', citation: 'biography' } } },
+    { name: 'unparseable stored death date', claims: {}, localValues: { P570: { value: 'date unknown', citation: 'biography' } } },
+  ];
+  for (const { name, claims, localValues } of cases) {
+    const snapshot: WikidataSnapshot = {
+      qid: 'Q1', boxId: 'person', labels: { Q2: { en: 'Paris' } }, classification: [], images: {},
+      claims: { P569: [{ value: { type: 'time', time: '+1964-05-30T00:00:00Z', precision: 11, calendarModel: GREGORIAN_CALENDAR } }], ...claims },
+    };
+    const html = renderInfobox({ snapshot, localValues, titleHtml: 'Person', locale: 'en', t, now: new Date('2026-11-01T12:00:00Z') });
+    assert.match(html, /<th scope="row">Born<\/th><td>May 30, 1964/, name);
+    assert.match(html, /<th scope="row">Died<\/th>/, name);
+    assert.doesNotMatch(html, /class="infobox-age"/, name);
+  }
+});

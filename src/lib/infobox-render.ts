@@ -8,6 +8,7 @@ import {
   INFOBOX_DATE_PROPERTIES,
   type InfoboxRow,
   MEDIA_LEGEND,
+  PLACE_OF_DEATH,
   TAXON_AUTHOR,
   TAXON_YEAR,
 } from './infobox-definitions.js';
@@ -151,6 +152,8 @@ export const renderInfobox = ({
   const definition = findInfoboxDefinition(snapshot?.boxId);
   if (!snapshot || !definition) return '';
   const local = localValues ?? {};
+  const hasFact = (property: string): boolean => Boolean(snapshot.claims[property]?.length || local[property]);
+  const hasDeathEvidence = Boolean(snapshot.deathDateUnknown || [DATE_OF_DEATH, PLACE_OF_DEATH].some(hasFact));
   const languages = labelLanguagesFor(locale);
 
   const label = (id: string) => {
@@ -256,7 +259,7 @@ export const renderInfobox = ({
           return statements.map(statement => formatValue(statement.value));
         });
         if (!formatted.length) return '';
-        const firstProperty = row.properties.find(property => statementsOf(property).length || local[property]);
+        const firstProperty = row.properties.find(hasFact);
         const first = firstProperty ? statementsOf(firstProperty)[0]?.value : undefined;
         if (first?.type === 'item') formatted[0] = escapeHtml(capitalize(label(first.id), locale));
         if (formatted.length <= MAX_LISTED_VALUES + 1) return rowHtml(heading, formatted.join(', '));
@@ -275,7 +278,7 @@ export const renderInfobox = ({
         const place = single(placeProperty);
         if (!date && !place) return '';
         let age: number | null = null;
-        if (row.age === 'sinceBirth' && !snapshot.deathDateUnknown && !timeOf(DATE_OF_DEATH)) {
+        if (row.age === 'sinceBirth' && !hasDeathEvidence) {
           const today = { year: now.getUTCFullYear(), month: now.getUTCMonth() + 1, day: now.getUTCDate(), precision: 11, calendarModel: GREGORIAN_CALENDAR };
           age = yearsBetween(timeOf(dateProperty), today);
         } else if (row.age === 'atDeath') {
@@ -330,7 +333,7 @@ export const renderInfobox = ({
 
   const groupsHtml = definition.groups
     .map(group => {
-      if (group.onlyWith && !group.onlyWith.some(property => snapshot.claims[property]?.length || local[property])) return '';
+      if (group.onlyWith && !group.onlyWith.some(hasFact)) return '';
       const rows = group.rows.map(renderRow).join('');
       if (!rows) return '';
       const heading = group.id
