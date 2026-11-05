@@ -6,20 +6,25 @@ import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { diffLocalizedField } from '../lib/diff-engine.js';
 import {
+  commentLinkPath,
+  discussionPath,
+  discussionTargetOfThread,
+  threadLinkPath,
+  threadLocationPath,
+} from '../lib/discussion-paths.js';
+import {
   ForbiddenError,
   isRevisionConflictError,
   NotFoundError,
   ValidationError,
 } from '../lib/errors.js';
 import {
-  forumCategoryPagePath,
   forumCategoryPath,
   forumCommentAnchor,
   forumCommentDeletePath,
   forumCommentHistoryPath,
   forumDismissPreamblePath,
   forumIndexPath,
-  forumPageCategory,
   forumThreadCommentPath,
   forumThreadDeletePath,
   forumThreadPath,
@@ -65,6 +70,7 @@ import {
 } from '../services/forum-subscription-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { normalizeSlugInput } from '../services/validation.js';
+import { renderPageDiscussionForThread } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
@@ -105,7 +111,9 @@ const renderCategoryCards = (
       .map(item => {
         const latestTitle = getThreadTitleRenderValue(locale, item.latestPost?.title ?? null);
         const latestHtml = item.latestPost
-          ? `<a class="forum-latest-link" href="${forumThreadPath(item.latestPost.threadId)}#${forumCommentAnchor(item.latestPost.commentId)}">${renderText(
+          ? `<a class="forum-latest-link" href="${escapeHtml(
+              commentLinkPath(item.latestPost, item.latestPost.commentId)
+            )}">${renderText(
               latestTitle
             )}</a>`
           : `<span class="forum-empty">${t('forum.index.noThreads')}</span>`;
@@ -177,14 +185,14 @@ const renderThreadList = (
           ? `<span class="forum-pin-badge">${t('forum.thread.pinned')}</span>`
           : '';
         return `<li class="forum-thread-list-item">
-  <h2 class="forum-thread-title-row"><a class="forum-thread-title-link" href="${forumThreadPath(thread.id)}">${renderText(threadTitle)}</a>${pinHtml}</h2>
+  <h2 class="forum-thread-title-row"><a class="forum-thread-title-link" href="${escapeHtml(threadLinkPath(thread))}">${renderText(threadTitle)}</a>${pinHtml}</h2>
   <div class="forum-thread-meta">
     <span>${t('forum.thread.commentCount', { count: thread.commentCount ?? 0 })}</span>
     <span>${t('forum.thread.createdAt', { date: escapeHtml(formatDateUTC(thread.createdAt)) })}</span>
     ${
       options.showPageSlug && thread.pageSlug && options.pageCategory
         ? `<span>${t('forum.thread.pageLabel', {
-            page: `<a href="${forumCategoryPagePath(options.pageCategory, thread.pageSlug)}">${escapeHtml(thread.pageSlug)}</a>`,
+            page: `<a href="${escapeHtml(discussionPath({ kind: 'page', slug: thread.pageSlug }))}">${escapeHtml(thread.pageSlug)}</a>`,
           })}</span>`
         : ''
     }
@@ -487,7 +495,7 @@ const commentReturnPath = (value: unknown, comment: ForumCommentResult) =>
   typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') &&
   !/[\\\r\n\t]/.test(value)
     ? value
-    : `${forumThreadPath(comment.threadId)}#comment-${comment.id}`;
+    : `${forumThreadPath(comment.threadId)}#${forumCommentAnchor(comment.id)}`;
 
 const renderCommentEditPage = (
   req: Request,
@@ -509,6 +517,38 @@ const renderCommentEditPage = (
     req.t('forum.comment.edit'),
     `<div class="forum-page"><h1>${escapeHtml(req.t('forum.comment.edit'))}</h1>${options.errorMessage ? `<p class="form-error" role="alert">${escapeHtml(options.errorMessage)}</p>` : ''}${editor}</div>`,
     `<div class="page-label">${req.t('label.forum')}</div>`
+  );
+};
+
+/**
+ * A reply that could not be saved, in a thread that is part of a page's
+ * discussion: show the discussion again with the reply form still open.
+ */
+const renderReplyErrorInDiscussion = async (req: Request, res: Response, error: ValidationError | ForbiddenError) => {
+  let detail: Awaited<ReturnType<typeof readForumThread>>;
+  try {
+    detail = await readForumThread(await initializePostgreSQL(), String(req.params.threadId));
+  } catch {
+    return false;
+  }
+  const { thread } = detail;
+  if (!movedThreadLocation(thread) || !thread.pageSlug) return false;
+  const parentId = typeof req.body?.parentId === 'string' && req.body.parentId ? req.body.parentId : detail.comments[0]?.id;
+  if (!parentId) return false;
+  res.status(error instanceof ValidationError ? 400 : 403);
+  return renderPageDiscussionForThread(
+    req,
+    res,
+    { id: thread.id, pageSlug: thread.pageSlug },
+    {
+      openReply: {
+        threadId: thread.id,
+        parentId,
+        body: typeof req.body?.body === 'string' ? req.body.body : '',
+        language: getSelectedLanguage(req, resLocale(req)),
+        errorMessage: error instanceof ValidationError ? resolveForumValidationMessage(req.t, error) : error.message,
+      },
+    }
   );
 };
 
@@ -564,95 +604,6 @@ const renderCategoryPage = async (
   withForumPage(
     res,
     req.t(FORUM_CATEGORY_KEYS[category]),
-    bodyHtml,
-    `<div class="page-label">${req.t('label.forum')}</div>`
-  );
-};
-
-const renderPageLinkedCategoryPage = async (
-  req: Request,
-  res: Response,
-  category: 'articles' | 'policy',
-  requestedSlug: string,
-  options: {
-    threadPreviewHtml?: string;
-    threadErrorMessage?: string;
-  } = {}
-) => {
-  const dalInstance = await initializePostgreSQL();
-  const normalizedRequestedSlug = normalizeSlugInput(requestedSlug, 'pageSlug');
-  const target = await resolveForumPageTarget(normalizedRequestedSlug);
-  const storedSlug = target?.canonicalSlug ?? normalizedRequestedSlug;
-  if (target && forumPageCategory(storedSlug) !== category) {
-    const targetCategory = forumPageCategory(storedSlug);
-    if (!targetCategory) throw new NotFoundError('Page discussion not available.');
-    res.redirect(303, forumCategoryPagePath(targetCategory, storedSlug));
-    return;
-  }
-  const pageLabel = getPageLabel(
-    resLocale(req),
-    target?.title ?? null,
-    storedSlug
-  );
-  const pageTitle = getThreadTitlePlainText(
-    resLocale(req),
-    target?.title ?? null,
-    storedSlug
-  );
-  const threads = await listForumThreads(dalInstance, category, {
-    pageSlug: storedSlug,
-  });
-  const composeHtml = !res.locals.signedIn || !canContributeToForum(res)
-    ? renderForumComposeGate(req, res)
-    : target
-      ? renderThreadForm({
-          t: req.t,
-          languageOptions: res.locals.languageOptions,
-          values: {
-            ...getThreadValues(req),
-            pageSlug: storedSlug,
-          },
-          previewHtml: options.threadPreviewHtml,
-          errorMessage: options.threadErrorMessage,
-          pageMode: {
-            mode: 'scoped',
-            category,
-            pageSlug: storedSlug,
-            pageLabel,
-            pageHref: `/${storedSlug}`,
-          },
-        })
-      : category === 'articles'
-        ? `<p class="forum-empty">${req.t('forum.pageLink.cannotCreateMissingPageRequired')}</p>`
-        : `<p class="forum-empty">${req.t('forum.pageLink.cannotCreateMissingPageOptional')}</p>`;
-  const bodyHtml = `<div class="forum-page">
-    ${renderForumBreadcrumbs(
-      [
-        { label: req.t('forum.title'), href: forumIndexPath() },
-        {
-          label: req.t(FORUM_CATEGORY_KEYS[category]),
-          href: forumCategoryPath(category),
-        },
-        { label: pageLabel },
-      ],
-      req.t
-    )}
-    <p class="forum-page-context">${
-      target
-        ? req.t('forum.pageLink.context', {
-            page: `<a href="/${encodeURIComponent(storedSlug)}">${renderText(pageLabel)}</a>`,
-          })
-        : req.t('forum.pageLink.orphanedContext', {
-            slug: escapeHtml(storedSlug),
-          })
-    }</p>
-    ${renderThreadList(threads, resLocale(req), req.t)}
-    ${composeHtml}
-  </div>`;
-
-  withForumPage(
-    res,
-    pageTitle,
     bodyHtml,
     `<div class="page-label">${req.t('label.forum')}</div>`
   );
@@ -819,7 +770,7 @@ const renderThreadPage = async (
           ? [
               {
                 label: pageLabel ?? detail.thread.pageSlug,
-                href: forumCategoryPagePath(detail.thread.category, detail.thread.pageSlug),
+                href: discussionPath({ kind: 'page', slug: detail.thread.pageSlug }),
               },
             ]
           : []),
@@ -834,7 +785,7 @@ const renderThreadPage = async (
           (detail.thread.category === 'articles' || detail.thread.category === 'policy') &&
           detail.thread.pageSlug
             ? `<span>${req.t('forum.thread.pageLabel', {
-                page: `<a href="${forumCategoryPagePath(detail.thread.category, detail.thread.pageSlug)}">${renderText(
+                page: `<a href="${escapeHtml(discussionPath({ kind: 'page', slug: detail.thread.pageSlug }))}">${renderText(
                   pageLabel ?? detail.thread.pageSlug
                 )}</a>`,
               })}</span>`
@@ -900,75 +851,39 @@ const renderAttachedPositionContext = async (
 </aside>`;
 };
 
-const registerPageLinkedForumRoutes = (
-  app: Express,
-  category: 'articles' | 'policy'
-) => {
-  app.get(`/tool/forum/${category}/page/:slug`, async (req, res) => {
+// A page's threads used to be listed here; they are now sections of the
+// page's own discussion.
+const registerPageLinkedForumRoutes = (app: Express, category: 'articles' | 'policy') => {
+  const pageDiscussionPath = (slug: string) => discussionPath({ kind: 'page', slug: normalizeSlugInput(slug, 'pageSlug') });
+  app.get(`/tool/forum/${category}/page/:slug`, (req, res) => {
     try {
-      await renderPageLinkedCategoryPage(req, res, category, req.params.slug);
-    } catch (error) {
-      if (error instanceof NotFoundError || error instanceof ValidationError) {
-        res.status(404).type('text').send(req.t('page.notFound'));
-        return;
-      }
-      console.error(`Failed to render page-linked ${category} forum category:`, error);
-      res.status(500).type('text').send(req.t('page.serverError'));
-    }
-  });
-
-  app.post(`/tool/forum/${category}/page/:slug`, async (req, res) => {
-    try {
-      const userId = await requireForumSession(req, res);
-      const intent = typeof req.body?.intent === 'string' ? req.body.intent : 'post';
-      const title = typeof req.body?.title === 'string' ? req.body.title : '';
-      const body = typeof req.body?.body === 'string' ? req.body.body : '';
-      const language = getSelectedLanguage(req, resLocale(req));
-      const pageSlug = req.params.slug;
-
-      if (intent === 'preview') {
-        const dalInstance = await initializePostgreSQL();
-        const threadPreviewHtml = await renderMarkdownPreviewHtml(
-          dalInstance,
-          body,
-          req.t('citation.backToCitationAria')
-        );
-        await renderPageLinkedCategoryPage(req, res, category, pageSlug, {
-          threadPreviewHtml,
-        });
-        return;
-      }
-
-      const thread = await createForumThread(
-        { category, pageSlug, title, body, language },
-        userId
-      );
-      res.redirect(303, forumThreadPath(thread.id));
+      res.redirect(301, pageDiscussionPath(req.params.slug));
     } catch (error) {
       if (error instanceof ValidationError) {
-        await renderPageLinkedCategoryPage(req, res, category, req.params.slug, {
-          threadErrorMessage: resolveForumValidationMessage(req.t, error, { category }),
-        });
-        return;
-      }
-      if (error instanceof ForbiddenError) {
-        if (res.locals.signedIn) {
-          await renderPageLinkedCategoryPage(req, res, category, req.params.slug, {
-            threadErrorMessage: error.message,
-          });
-          return;
-        }
-        res.redirect(303, `/tool/login?redirect=${encodeURIComponent(req.originalUrl || req.url)}`);
-        return;
-      }
-      if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
         return;
       }
-      console.error(`Failed to create page-linked ${category} forum thread:`, error);
-      res.status(500).type('text').send(req.t('page.serverError'));
+      throw error;
     }
   });
+  // 308 keeps the method and the form, so a form still open in a browser posts its thread.
+  app.post(`/tool/forum/${category}/page/:slug`, (req, res) => {
+    try {
+      res.redirect(308, pageDiscussionPath(req.params.slug));
+    } catch (error) {
+      if (error instanceof ValidationError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      throw error;
+    }
+  });
+};
+
+/** Where a thread lives now, or null when it still has a page of its own. */
+const movedThreadLocation = (thread: { id: string; category: string; pageSlug?: string | null; attachedType: string | null }) => {
+  const target = discussionTargetOfThread(thread);
+  return target.kind === 'page' && !thread.attachedType ? threadLocationPath(target, thread.id) : null;
 };
 
 export const registerForumRoutes = (app: Express) => {
@@ -1029,6 +944,14 @@ export const registerForumRoutes = (app: Express) => {
 
   app.get('/tool/forum/thread/:threadId', async (req, res) => {
     try {
+      const { thread } = await readForumThread(await initializePostgreSQL(), req.params.threadId);
+      const moved = movedThreadLocation(thread);
+      if (moved) {
+        // No fragment here: the browser keeps the one of the old link, such
+        // as #comment-…, and the discussion scrolls to the thread otherwise.
+        res.redirect(301, moved);
+        return;
+      }
       await renderThreadPage(req, res, req.params.threadId);
     } catch (error) {
       if (error instanceof NotFoundError) {
@@ -1050,6 +973,7 @@ export const registerForumRoutes = (app: Express) => {
       const threadId = req.params.threadId;
       const language = getSelectedLanguage(req, resLocale(req));
       const body = typeof req.body?.body === 'string' ? req.body.body : '';
+      const parentId = typeof req.body?.parentId === 'string' && req.body.parentId ? req.body.parentId : null;
 
       if (intent === 'preview') {
         const dalInstance = await initializePostgreSQL();
@@ -1062,9 +986,20 @@ export const registerForumRoutes = (app: Express) => {
         return;
       }
 
-      await createForumComment({ threadId, body, language }, userId);
-      res.redirect(303, `${forumThreadPath(threadId)}#reply-form`);
+      const comment = await createForumComment({ threadId, parentId, body, language }, userId);
+      const { thread } = await readForumThread(await initializePostgreSQL(), threadId);
+      res.redirect(
+        303,
+        movedThreadLocation(thread) ? commentLinkPath(thread, comment.id) : `${forumThreadPath(threadId)}#reply-form`
+      );
     } catch (error) {
+      if (
+        (error instanceof ValidationError || error instanceof ForbiddenError) &&
+        res.locals.signedIn &&
+        (await renderReplyErrorInDiscussion(req, res, error))
+      ) {
+        return;
+      }
       if (error instanceof ValidationError) {
         await renderThreadPage(req, res, req.params.threadId, {
           commentErrorMessage: error.message,
@@ -1100,7 +1035,7 @@ export const registerForumRoutes = (app: Express) => {
         );
         return;
       }
-      await readForumThread(await initializePostgreSQL(), req.params.threadId);
+      const { thread } = await readForumThread(await initializePostgreSQL(), req.params.threadId);
 
       if (req.body?.subscribed === 'true') {
         await subscribeUserToForumThread(req.params.threadId, session.userId);
@@ -1108,7 +1043,7 @@ export const registerForumRoutes = (app: Express) => {
         await unsubscribeUserFromForumThread(req.params.threadId, session.userId);
       }
 
-      res.redirect(303, forumThreadPath(req.params.threadId));
+      res.redirect(303, threadLinkPath(thread));
     } catch (error) {
       if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
@@ -1123,7 +1058,7 @@ export const registerForumRoutes = (app: Express) => {
     try {
       const userId = await requireForumSession(req, res);
       const pinned = req.body?.pinned === 'true';
-      await setForumThreadPinned(
+      const thread = await setForumThreadPinned(
         await initializePostgreSQL(),
         {
           threadId: req.params.threadId,
@@ -1134,7 +1069,7 @@ export const registerForumRoutes = (app: Express) => {
         },
         userId
       );
-      res.redirect(303, forumThreadPath(req.params.threadId));
+      res.redirect(303, threadLinkPath(thread));
     } catch (error) {
       if (error instanceof ForbiddenError) {
         res.status(403).type('text').send(req.t('page.accessDenied'));
@@ -1156,15 +1091,18 @@ export const registerForumRoutes = (app: Express) => {
   app.post('/tool/forum/thread/:threadId/delete', async (req, res) => {
     try {
       const userId = await requireForumSession(req, res);
+      const dalInstance = await initializePostgreSQL();
+      const { thread } = await readForumThread(dalInstance, req.params.threadId);
       await deleteForumThread(
-        await initializePostgreSQL(),
+        dalInstance,
         {
           threadId: req.params.threadId,
           revSummary: { en: 'Delete forum thread.' },
         },
         userId
       );
-      res.redirect(303, forumIndexPath());
+      const target = discussionTargetOfThread(thread);
+      res.redirect(303, target.kind === 'page' ? discussionPath(target) : forumIndexPath());
     } catch (error) {
       if (error instanceof ForbiddenError) {
         res.status(403).type('text').send(req.t('page.accessDenied'));
@@ -1196,7 +1134,8 @@ export const registerForumRoutes = (app: Express) => {
         },
         userId
       );
-      res.redirect(303, forumThreadPath(comment.threadId));
+      const { thread } = await readForumThread(dalInstance, comment.threadId);
+      res.redirect(303, threadLinkPath(thread));
     } catch (error) {
       if (error instanceof ForbiddenError) {
         res.status(403).type('text').send(req.t('page.accessDenied'));
@@ -1318,8 +1257,9 @@ export const registerForumRoutes = (app: Express) => {
         })
         .reverse()
         .join('');
+      const { thread } = await readForumThread(dalInstance, comment.threadId);
       const bodyHtml = `<div class="forum-page">
-  <p><a href="${forumThreadPath(comment.threadId)}#comment-${encodeURIComponent(comment.id)}">${escapeHtml(
+  <p><a href="${escapeHtml(commentLinkPath(thread, comment.id))}">${escapeHtml(
     req.t('forum.comment.historyBack')
   )}</a></p>
   <ol class="forum-comment-versions">${items}</ol>
@@ -1374,7 +1314,7 @@ export const registerForumRoutes = (app: Express) => {
         { category, pageSlug, title, body, language },
         userId
       );
-      res.redirect(303, forumThreadPath(thread.id));
+      res.redirect(303, threadLinkPath(thread));
     } catch (error) {
       if (error instanceof ValidationError) {
         const category = ensureForumCategory(req.params.category) as ForumCategorySlug;

@@ -75,6 +75,7 @@ export interface ForumCommentVersion {
 export interface ForumCommentResult {
   id: string;
   threadId: string;
+  parentId: string | null;
   body: Record<string, string> | null | undefined;
   canonicalLanguage: string | null | undefined;
   createdAt: Date | null | undefined;
@@ -90,7 +91,10 @@ export interface ForumCategoryListItem {
   threadCount: number;
   latestPost:
     | {
+        id: string;
         threadId: string;
+        category: string;
+        pageSlug: string | null;
         commentId: string;
         title: Record<string, string> | null | undefined;
         canonicalLanguage: string | null | undefined;
@@ -120,6 +124,9 @@ export interface CreateForumThreadInput {
 
 export interface CreateForumCommentInput {
   threadId: string;
+  // The comment this one answers. Replying to a reply answers the comment
+  // that reply is under, so replies stay one level deep.
+  parentId?: string | null;
   body: string;
   language: string;
 }
@@ -174,6 +181,7 @@ const toForumThreadResult = (thread: ForumThreadInstance): ForumThreadResult => 
 const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult => ({
   id: comment.id,
   threadId: comment.threadId,
+  parentId: comment.parentId ?? null,
   body: comment.body ?? null,
   canonicalLanguage: comment.canonicalLanguage ?? null,
   createdAt: comment.createdAt ?? null,
@@ -301,7 +309,7 @@ export const listForumCategories = async (
   const threadRows = await dalInstance.query(
     `SELECT category, COUNT(*)::int AS thread_count
      FROM ${ForumThread.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false
+     WHERE _old_rev_of IS NULL AND _rev_deleted = false AND attached_type IS NULL
      GROUP BY category`,
     []
   );
@@ -310,6 +318,7 @@ export const listForumCategories = async (
     `SELECT DISTINCT ON (t.category)
        t.category,
        t.id AS thread_id,
+       t.page_slug,
        t.title,
        t.canonical_language,
        c.id AS comment_id,
@@ -321,6 +330,7 @@ export const listForumCategories = async (
       AND c._rev_deleted = false
      WHERE t._old_rev_of IS NULL
        AND t._rev_deleted = false
+       AND t.attached_type IS NULL
      ORDER BY t.category, c.created_at DESC, c._rev_date DESC`,
     []
   );
@@ -332,7 +342,10 @@ export const listForumCategories = async (
     latestRows.rows.map(row => [
       row.category as string,
       {
+        id: row.thread_id as string,
         threadId: row.thread_id as string,
+        category: row.category as string,
+        pageSlug: (row.page_slug as string | null) ?? null,
         commentId: row.comment_id as string,
         title: (row.title as Record<string, string> | null) ?? null,
         canonicalLanguage: (row.canonical_language as string | null) ?? null,
@@ -373,6 +386,7 @@ export const listForumThreads = async (
       AND c._rev_deleted = false
      WHERE t._old_rev_of IS NULL
        AND t._rev_deleted = false
+       AND t.attached_type IS NULL
        AND t.category = $1
        ${pageFilterSql}
      GROUP BY t.id
@@ -385,28 +399,6 @@ export const listForumThreads = async (
     commentCount: Number(row.comment_count) || 0,
     latestCommentAt: (row.latest_comment_at as Date | null) ?? null,
   }));
-};
-
-/** Comments in the category linked by the page’s Discuss tab. */
-export const countForumCommentsForPage = async (
-  dalInstance: DataAccessLayer,
-  pageSlug: string,
-  category: 'articles' | 'policy'
-): Promise<number> => {
-  const result = await dalInstance.query(
-    `SELECT COUNT(c.id)::int AS comment_count
-     FROM ${ForumThread.tableName} t
-     INNER JOIN ${ForumComment.tableName} c
-       ON c.thread_id = t.id
-      AND c._old_rev_of IS NULL
-      AND c._rev_deleted = false
-     WHERE t._old_rev_of IS NULL
-       AND t._rev_deleted = false
-       AND t.page_slug = $1
-       AND t.category = $2`,
-    [normalizeSlugInput(pageSlug, 'pageSlug'), category]
-  );
-  return Number(result.rows[0]?.comment_count) || 0;
 };
 
 export const readForumThread = async (
@@ -544,8 +536,19 @@ export const createForumThread = async (
   };
 };
 
+const resolveReplyParent = async (threadId: string, parentId: string | null | undefined) => {
+  if (!parentId) return null;
+  const parent = await findCurrentCommentById(parentId);
+  if (!parent || parent.threadId !== threadId) {
+    const errors = new ValidationCollector('Invalid forum comment input.');
+    errors.add('parentId', 'must be a comment in this thread.', 'invalid');
+    errors.throwIfAny();
+  }
+  return parent?.parentId ?? parent?.id ?? null;
+};
+
 export const createForumComment = async (
-  { threadId, body, language }: CreateForumCommentInput,
+  { threadId, parentId, body, language }: CreateForumCommentInput,
   userId: string
 ): Promise<ForumCommentResult> => {
   const errors = new ValidationCollector('Invalid forum comment input.');
@@ -557,12 +560,14 @@ export const createForumComment = async (
   errors.throwIfAny();
 
   const thread = await requireThread(threadId);
+  const replyTo = await resolveReplyParent(thread.id, parentId);
   const createdAt = new Date();
   const comment = await ForumComment.createFirstRevision(
     { id: userId },
     { tags: ['create'], date: createdAt }
   );
   comment.threadId = thread.id;
+  comment.parentId = replyTo;
   comment.body = sanitizeLocalizedMapInput({ [language]: body });
   comment.canonicalLanguage = language;
   comment.createdAt = createdAt;

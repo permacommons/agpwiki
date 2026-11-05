@@ -7,9 +7,6 @@ export const forumIndexPath = () => FORUM_BASE_PATH;
 export const forumCategoryPath = (category: string) =>
   `${FORUM_BASE_PATH}/${encodeURIComponent(category)}`;
 
-export const forumCategoryPagePath = (category: string, slug: string) =>
-  `${forumCategoryPath(category)}/page/${encodeURIComponent(slug)}`;
-
 export const forumDismissPreamblePath = () => `${FORUM_BASE_PATH}/dismiss-preamble`;
 
 export const forumThreadPath = (threadId: string) =>

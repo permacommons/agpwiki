@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 import dal from 'rev-dal';
-import { forumThreadPath } from '../../lib/forum-paths.js';
+import { threadLinkPath } from '../../lib/discussion-paths.js';
 import { markdownToPlainText } from '../../lib/markdown-to-text.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, renderText } from '../../render.js';
@@ -73,7 +73,7 @@ export const renderHomeSections = (sections: HomeSections, t: TFunction, locale:
         .map(thread => {
           const categoryKey = FORUM_CATEGORY_KEYS[thread.category as ForumCategorySlug];
           const category = categoryKey ? t(categoryKey) : thread.category;
-          return `<li><a href="${escapeHtml(forumThreadPath(thread.id))}">
+          return `<li><a href="${escapeHtml(threadLinkPath(thread))}">
     <span class="home-thread-title">${title(thread.title, '')}</span>
     <span class="home-thread-meta">${escapeHtml(category)} · ${escapeHtml(formatDay(thread.lastActivityAt, locale))}</span>
   </a></li>`;

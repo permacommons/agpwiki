@@ -11,6 +11,8 @@ const forumCommentManifest = {
   schema: {
     id: types.string().uuid(4),
     threadId: types.string().uuid(4).required(),
+    // The top-level comment this one replies to; replies go one level deep.
+    parentId: types.string().uuid(4),
     body: mlString.getHTMLSchema({ maxLength: 20000 }),
     canonicalLanguage: types.string().max(8),
     createdAt: types.date().default(() => new Date()),
@@ -18,6 +20,7 @@ const forumCommentManifest = {
   },
   camelToSnake: {
     threadId: 'thread_id',
+    parentId: 'parent_id',
     canonicalLanguage: 'canonical_language',
     createdAt: 'created_at',
     updatedAt: 'updated_at',

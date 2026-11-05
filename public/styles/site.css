@@ -3977,3 +3977,193 @@ altcha-widget {
   white-space: nowrap;
   border: 0;
 }
+/* One discussion per page: threads are sections, titled with a subheading;
+   replies sit one level under the comment they answer. */
+.page-discussion {
+  clear: both;
+  margin-top: 2.5rem;
+  max-width: 46rem;
+}
+.discussion-page {
+  max-width: 46rem;
+}
+.discussion-summary,
+.discussion-empty,
+.discussion-gate,
+.discussion-more,
+.discussion-loading {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+.discussion-summary {
+  margin: 0 0 1rem;
+}
+.discussion-loading {
+  min-height: 1px;
+  margin: 0.5rem 0;
+  text-align: center;
+}
+.discussion-thread {
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--rule);
+}
+.discussion-thread-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.25rem 1rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--rule);
+}
+.article .discussion-thread-title {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+.article h3.discussion-thread-title {
+  font-size: 1.08rem;
+}
+.discussion-thread-link {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.45rem;
+  padding: 0.1rem;
+  border-radius: 0.25rem;
+  color: var(--accent);
+  vertical-align: -0.1em;
+}
+.discussion-thread-link svg {
+  width: 0.9em;
+  height: 0.9em;
+}
+.discussion-thread-link:hover,
+.discussion-thread-link:focus-visible,
+.discussion-thread-link.is-copied {
+  background: #e6eef1;
+}
+.discussion-thread-meta {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+.discussion-thread-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.4rem 0 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+}
+.discussion-comment {
+  padding: 0.65rem 0 0.35rem;
+}
+.discussion-replies + .discussion-comment {
+  border-top: 1px solid var(--rule);
+}
+.discussion-comment-meta {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+.discussion-author {
+  color: var(--ink);
+  font-weight: 600;
+}
+.discussion-comment-body {
+  margin-top: 0.15rem;
+  overflow-wrap: anywhere;
+}
+.discussion-comment-body > :first-child {
+  margin-top: 0;
+}
+.discussion-comment-body > :last-child,
+.discussion-comment-body > p:last-of-type {
+  margin-bottom: 0;
+}
+.discussion-comment-body > :empty {
+  display: none;
+}
+.discussion-follow button {
+  color: var(--accent);
+  text-decoration: none;
+}
+.discussion-comment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 0.25rem;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.82rem;
+}
+.discussion-comment-actions a {
+  text-decoration: none;
+}
+.discussion-comment-actions a:hover,
+.discussion-comment-actions a:focus-visible {
+  text-decoration: underline;
+}
+.discussion-comment-actions [data-permalink].is-copied {
+  font-weight: 600;
+}
+.discussion-comment-actions .forum-inline-form button {
+  text-decoration: none;
+}
+.discussion-replies {
+  margin: 0 0 0.5rem 2.5rem;
+  padding-left: 1rem;
+  border-left: 2px solid var(--rule);
+}
+.discussion-replies:empty {
+  display: none;
+}
+.discussion-comment--reply {
+  padding: 0.45rem 0 0.2rem;
+}
+.discussion-reply-form {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+}
+.discussion-reply-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+}
+.discussion-start {
+  margin-top: 1.5rem;
+}
+.discussion-start h2 {
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 1rem;
+}
+.discussion-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 1rem 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+@media (max-width: 640px) {
+  .discussion-replies {
+    margin-left: 0.75rem;
+    padding-left: 0.75rem;
+  }
+  .discussion-start {
+    padding: 1rem;
+  }
+}
