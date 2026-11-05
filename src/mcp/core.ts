@@ -43,7 +43,6 @@ import {
   type PageCheckType,
 } from '../lib/page-checks.js';
 import { PROPOSAL_STATUSES } from '../lib/proposal-status.js';
-import { CHANGE_KINDS, type ChangeKind, getChangesSince } from '../lib/recent-changes.js';
 import {
   ARTICLE_ISSUE_KINDS,
   type ArticleIssueKind,
@@ -65,6 +64,7 @@ import {
   readBlogPostRevision,
   updateBlogPost,
 } from '../services/blog-post-service.js';
+import { CHANGE_KINDS, type ChangeKind, getChangesSince } from '../services/change-service.js';
 import {
   type CitationClaimDeleteInput,
   type CitationClaimDiffInput,
@@ -1482,17 +1482,6 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .optional()
     .describe(`Most items to return (default and max ${CHANGE_PAGE_MAX_LIMIT}).`);
 
-  const fetchDisplayNames = async (dal: Awaited<ReturnType<typeof initializePostgreSQL>>, ids: string[]) => {
-    const names = new Map<string, string>();
-    const unique = [...new Set(ids)];
-    if (!unique.length) return names;
-    const result = await dal.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [unique]);
-    for (const row of result.rows as Array<{ id: string; display_name: string }>) {
-      names.set(row.id, row.display_name);
-    }
-    return names;
-  };
-
   server.registerTool(
     'notifications_list',
     {
@@ -1591,31 +1580,13 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       await requireAuthUserId(extra);
       const after = resolveStartCursor(args, () => cursorFromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)));
       const trimSlash = (value?: string) => value?.replace(/^\/+/, '') || null;
-      const { changes, hasMore } = await getChangesSince(dal, {
+      return getChangesSince(dal, {
         after,
         limit: args.limit ?? CHANGE_PAGE_MAX_LIMIT,
         slug: trimSlash(args.slug),
         prefix: trimSlash(args.prefix),
         kinds: args.kinds ?? null,
       });
-      const names = await fetchDisplayNames(
-        dal,
-        changes.flatMap(change => (change.revUser ? [change.revUser] : []))
-      );
-      return {
-        changes: changes.map(change => {
-          const { cursor: _cursor, revUser, title, ...rest } = change;
-          const target = Object.fromEntries(Object.entries(rest).filter(([, value]) => value !== null));
-          return {
-            ...target,
-            ...(title ? { title: title.en ?? Object.values(title)[0] ?? null } : {}),
-            prevRevId: change.prevRevId,
-            user: revUser ? (names.get(revUser) ?? null) : null,
-          };
-        }),
-        hasMore,
-        cursor: encodeChangeCursor(changes.at(-1)?.cursor ?? after),
-      };
     })
   );
 
