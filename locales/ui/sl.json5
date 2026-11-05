@@ -201,27 +201,15 @@
       articles: 'Članki',
       technology: 'Tehnologija',
       policy: 'Politika',
-      empty: 'V tej kategoriji še ni niti.',
     },
     compose: {
-      newThread: 'Začni novo nit',
-      reply: 'Objavi odgovor',
-      title: 'Naslov',
-      page: 'Stran',
-      pageSlug: 'Slug strani',
-      pageSearchPlaceholder: 'Išči naslove strani',
-      pageContext: 'Začenjate razpravo o {{page}}.',
-      pageOptionalHelp: 'Če obstaja obstoječa stran s politiko, povezana s to temo, jo izberite zgoraj. Sicer to polje pustite prazno.',
       body: 'Sporočilo',
       language: 'Jezik komentarja',
-      postThread: 'Objavi nit',
       postReply: 'Objavi odgovor',
     },
     thread: {
-      createdAt: 'Začeto {{date}}',
       commentCount_one: '{{count}} komentar',
       commentCount_other: '{{count}} komentarji',
-      pageLabel: 'Stran: {{page}}',
       pinned: 'Pripeto',
       pin: 'Pripni nit',
       unpin: 'Odpni nit',
@@ -241,10 +229,7 @@
       bodyRequired: 'Vnesite sporočilo.',
     },
     comment: {
-      postedAt: 'Objavljeno {{date}}',
-      languageLabel: 'Jezik: {{language}}',
       unknownOperator: 'Neznan operater',
-      quote: 'Citiraj',
       delete: 'Izbriši',
       "edit": "Uredi",
       "save": "Shrani spremembe",
@@ -259,7 +244,6 @@
       "historyText": "Besedilo"
     },
     "position": {
-      "context": "Odgovori na stališče o: {{proposal}}",
       "withdrawn": "To stališče je bilo medtem umaknjeno."
     }
   },
@@ -498,13 +482,8 @@
     "forbidden": "Tvoj račun ne more izražati stališč do predlogov.",
     "invalid": "Tega stališča ni bilo mogoče shraniti. Izberi za, nevtralno ali proti ter podprt jezik.",
     "reply": {
-      "open": "Odgovori",
-      "label": "Tvoj odgovor",
-      "placeholder": "Napiši odgovor…",
-      "submit": "Objavi odgovor",
       "forbidden": "Tvoj račun ne more odgovarjati na stališča ali pa ta odgovor ni tvoj.",
       "invalid": "Odgovora ni bilo mogoče shraniti. Napiši besedilo in izberi podprt jezik.",
-      "openInForum": "Odpri te odgovore na forumu"
     }
   },
   "home": {
@@ -1009,5 +988,9 @@
     "post": "Objavi",
     "pages": "Strani te razprave",
     "pageOf": "Stran {{page}} od {{count}}",
+    "threads": "Niti",
+    "sectionThreads": "Niti, ki niso o eni strani",
+    "discussedPages": "Strani z nedavno razpravo",
+    "noDiscussedPages": "O nobeni strani še ni bilo razprave.",
   },
 }

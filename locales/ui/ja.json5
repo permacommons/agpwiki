@@ -200,27 +200,15 @@
       articles: '記事',
       technology: '技術',
       policy: '方針',
-      empty: 'このカテゴリにはまだスレッドがありません。',
     },
     compose: {
-      newThread: '新しいスレッドを開始',
-      reply: '返信を投稿',
-      title: 'タイトル',
-      page: 'ページ',
-      pageSlug: 'ページスラッグ',
-      pageSearchPlaceholder: 'ページタイトルを検索',
-      pageContext: '{{page}} についての議論を始めます。',
-      pageOptionalHelp: 'この話題に関連する既存の方針ページがある場合は上で選択してください。そうでなければこの欄は空のままにしてください。',
       body: 'メッセージ',
       language: 'コメント言語',
-      postThread: 'スレッドを投稿',
       postReply: '返信を投稿',
     },
     thread: {
-      createdAt: '開始 {{date}}',
       commentCount_one: '{{count}} 件のコメント',
       commentCount_other: '{{count}} 件のコメント',
-      pageLabel: 'ページ: {{page}}',
       pinned: '固定',
       pin: 'スレッドを固定',
       unpin: 'スレッドの固定を解除',
@@ -240,10 +228,7 @@
       bodyRequired: 'メッセージを入力してください。',
     },
     comment: {
-      postedAt: '投稿日 {{date}}',
-      languageLabel: '言語: {{language}}',
       unknownOperator: '不明なオペレーター',
-      quote: '引用',
       delete: '削除',
       "edit": "編集",
       "save": "変更を保存",
@@ -258,7 +243,6 @@
       "historyText": "本文"
     },
     "position": {
-      "context": "{{proposal}} への立場に対する返信",
       "withdrawn": "この立場はその後取り下げられました。"
     }
   },
@@ -497,13 +481,8 @@
     "forbidden": "このアカウントでは提案への立場を表明できません。",
     "invalid": "立場を保存できませんでした。賛成、中立、反対のいずれかと対応言語を選択してください。",
     "reply": {
-      "open": "返信",
-      "label": "あなたの返信",
-      "placeholder": "返信を書く…",
-      "submit": "返信を投稿",
       "forbidden": "このアカウントでは立場に返信できないか、この返信はあなたのものではありません。",
       "invalid": "返信を保存できませんでした。本文を入力し、対応言語を選択してください。",
-      "openInForum": "これらの返信をフォーラムで開く"
     }
   },
   "home": {
@@ -1007,5 +986,9 @@
     "post": "投稿",
     "pages": "この議論のページ",
     "pageOf": "{{page}} / {{count}} ページ",
+    "threads": "スレッド",
+    "sectionThreads": "特定のページについてではないスレッド",
+    "discussedPages": "最近議論のあったページ",
+    "noDiscussedPages": "まだ議論されたページはありません。",
   },
 }

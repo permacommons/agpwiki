@@ -18,6 +18,8 @@ import { readDiscussion } from '../src/services/discussion-service.js';
 import { createForumComment, createForumThread, setForumThreadPinned } from '../src/services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage, deleteWikiPage } from '../src/services/wiki-page-service.js';
+import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
+import { replyToPosition } from '../src/services/position-reply-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -63,7 +65,14 @@ const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
   await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${prefix}%`]);
   await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [`${prefix}%`]);
   await dal.query('DELETE FROM page_subscriptions WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
+  await dal.query('DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
+  await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
   await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+  // Threads in a forum section have no page; their titles carry the prefix.
+  const sectionThreads = `SELECT id FROM forum_threads WHERE title->>'en' LIKE $1`;
+  await dal.query(`DELETE FROM forum_thread_subscriptions WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
+  await dal.query(`DELETE FROM forum_comments WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
+  await dal.query(`DELETE FROM forum_threads WHERE title->>'en' LIKE $1`, [`${prefix}%`]);
   for (const userId of userIds) {
     await dal.query('DELETE FROM notification_jobs WHERE payload->>\'actorUserId\' = $1', [userId]);
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
@@ -403,6 +412,86 @@ test('Draft discussions retain draft labeling, article tabs and noindex after th
     assert.match(page.labelHtml, /label.draft/);
     assert.match(page.tabsHtml, /pageTabs.article/);
     assert.equal(page.noindex, true);
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Replies to positions show under the position in the proposal discussion; old thread links redirect', async () => {
+  const dal = await getDal();
+  const prefix = `meta/proposals/disc-positions-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  const noJobs = { enqueueJob: async () => null };
+  try {
+    const author = await createTestUser('proposer');
+    const replier = await createTestUser('replier');
+    userIds.push(author.id, replier.id);
+    await createPage(dal, prefix, author.id);
+    const position = await signOffPage(
+      dal,
+      { slug: prefix, stance: 'neutral', comment: 'Should renames warn first?', commentLanguage: 'en' },
+      author.id,
+      noJobs
+    );
+    const reply = await replyToPosition(
+      dal,
+      { slug: prefix, signoffId: position.id, body: 'Yes, they should.', language: 'en' },
+      replier.id
+    );
+    const thread = await startThread(prefix, 'A titled thread', author.id, 'policy');
+
+    const page = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as { bodyHtml: string };
+    assert.ok(page.bodyHtml.includes(`id="position-${position.id}"`));
+    assert.ok(
+      page.bodyHtml.includes(
+        `data-replies="position-${position.id}"><article class="discussion-comment discussion-comment--reply page-signoff-reply" id="comment-${reply.commentId}"`
+      )
+    );
+    assert.ok(page.bodyHtml.includes(`id="thread-${thread.id}"`));
+    // The thread holding the replies is not a thread of its own.
+    assert.ok(!page.bodyHtml.includes(`id="thread-${reply.threadId}"`));
+    assert.ok(!page.bodyHtml.includes('“Should renames warn first?”'));
+
+    const old = await fetch(`${server.url}/tool/forum/thread/${reply.threadId}`, { redirect: 'manual' });
+    assert.equal(old.status, 301);
+    assert.equal(old.headers.get('location'), `/${prefix}/discussion?position=${position.id}`);
+
+    // A withdrawn position keeps its replies readable.
+    await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+    const after = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as { bodyHtml: string };
+    assert.ok(after.bodyHtml.includes('page-signoff--withdrawn'));
+    assert.ok(after.bodyHtml.includes(`id="comment-${reply.commentId}"`));
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('General threads are sections of the General discussion, and their old links redirect', async () => {
+  const dal = await getDal();
+  const prefix = `disc-general-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('general');
+    userIds.push(author.id);
+    const thread = await createForumThread(
+      { category: 'general', title: `${prefix} topic`, body: 'Opening.', language: 'en' },
+      author.id
+    );
+    const old = await fetch(`${server.url}/tool/forum/thread/${thread.id}`, { redirect: 'manual' });
+    assert.equal(old.status, 301);
+    assert.equal(old.headers.get('location'), `/tool/forum/general?thread=${thread.id}`);
+
+    const section = (await (await fetch(`${server.url}/tool/forum/general?thread=${thread.id}`)).json()) as {
+      bodyHtml: string;
+      canonicalUrl: string;
+    };
+    assert.ok(section.bodyHtml.includes(`id="thread-${thread.id}"`));
+    assert.ok(section.bodyHtml.includes(`href="/tool/forum/general?thread=${thread.id}#thread"`));
+    assert.match(section.canonicalUrl, /\/tool\/forum\/general$/);
   } finally {
     await server.close();
     await cleanup(dal, prefix, userIds);

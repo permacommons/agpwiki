@@ -1446,7 +1446,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Reply to a Proposal Position',
       description:
-        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are forum posts (Markdown) in a thread attached to the position: the first reply starts the thread, later ones join it, and the position's author is notified. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
+        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are Markdown comments shown one level under the position in the proposal's discussion (<slug>/discussion), and the position's author is notified. To answer another reply, reply to the same position and start with @username. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,

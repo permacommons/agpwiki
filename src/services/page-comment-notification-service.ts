@@ -147,7 +147,13 @@ const describe = async (
     EXCERPT_LENGTH
   );
   const url = commentLinkPath(
-    { id: thread.id, category: thread.category, pageSlug: thread.pageSlug, attachedType: thread.attachedType },
+    {
+      id: thread.id,
+      category: thread.category,
+      pageSlug: thread.pageSlug,
+      attachedType: thread.attachedType,
+      attachedId: thread.attachedId,
+    },
     comment.id
   );
   return payload.event === 'thread'

@@ -200,27 +200,15 @@
       articles: '条目',
       technology: '技术',
       policy: '政策',
-      empty: '此分类中还没有主题。',
     },
     compose: {
-      newThread: '发起新主题',
-      reply: '发布回复',
-      title: '标题',
-      page: '页面',
-      pageSlug: '页面 slug',
-      pageSearchPlaceholder: '搜索页面标题',
-      pageContext: '你正在发起关于 {{page}} 的讨论。',
-      pageOptionalHelp: '如果已有与此主题相关的政策页面，请在上方选择。否则请将此字段留空。',
       body: '消息',
       language: '评论语言',
-      postThread: '发布主题',
       postReply: '发布回复',
     },
     thread: {
-      createdAt: '开始于 {{date}}',
       commentCount_one: '{{count}} 条评论',
       commentCount_other: '{{count}} 条评论',
-      pageLabel: '页面：{{page}}',
       pinned: '已置顶',
       pin: '置顶主题',
       unpin: '取消置顶',
@@ -240,10 +228,7 @@
       bodyRequired: '请输入消息。',
     },
     comment: {
-      postedAt: '发布于 {{date}}',
-      languageLabel: '语言：{{language}}',
       unknownOperator: '未知操作员',
-      quote: '引用',
       delete: '删除',
       "edit": "编辑",
       "save": "保存更改",
@@ -258,7 +243,6 @@
       "historyText": "正文"
     },
     "position": {
-      "context": "对 {{proposal}} 中某一立场的回复",
       "withdrawn": "该立场后来已撤回。"
     }
   },
@@ -497,13 +481,8 @@
     "forbidden": "你的账户无法对提案表明立场。",
     "invalid": "无法保存此立场。请选择支持、中立或反对，并选择受支持的语言。",
     "reply": {
-      "open": "回复",
-      "label": "你的回复",
-      "placeholder": "写一条回复…",
-      "submit": "发布回复",
       "forbidden": "你的账户无法回复立场，或者这条回复不是你的。",
       "invalid": "无法保存回复。请输入内容并选择受支持的语言。",
-      "openInForum": "在论坛中打开这些回复"
     }
   },
   "home": {
@@ -1007,5 +986,9 @@
     "post": "发布",
     "pages": "此讨论的页面",
     "pageOf": "第 {{page}} 页，共 {{count}} 页",
+    "threads": "主题",
+    "sectionThreads": "不属于单个页面的主题",
+    "discussedPages": "最近有讨论的页面",
+    "noDiscussedPages": "还没有页面被讨论过。",
   },
 }

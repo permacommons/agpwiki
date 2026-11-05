@@ -201,27 +201,15 @@
       articles: 'Artikel',
       technology: 'Technik',
       policy: 'Richtlinien',
-      empty: 'In dieser Kategorie gibt es noch keine Themen.',
     },
     compose: {
-      newThread: 'Neues Thema starten',
-      reply: 'Antwort schreiben',
-      title: 'Titel',
-      page: 'Seite',
-      pageSlug: 'Seiten-Slug',
-      pageSearchPlaceholder: 'Seitentitel durchsuchen',
-      pageContext: 'Du beginnst eine Diskussion zu {{page}}.',
-      pageOptionalHelp: 'Wenn es bereits eine Richtlinienseite zu diesem Thema gibt, wähle sie oben aus. Andernfalls lasse dieses Feld leer.',
       body: 'Nachricht',
       language: 'Sprache des Kommentars',
-      postThread: 'Thema veröffentlichen',
       postReply: 'Antwort veröffentlichen',
     },
     thread: {
-      createdAt: 'Gestartet {{date}}',
       commentCount_one: '{{count}} Kommentar',
       commentCount_other: '{{count}} Kommentare',
-      pageLabel: 'Seite: {{page}}',
       pinned: 'Angepinnt',
       pin: 'Thema anpinnen',
       unpin: 'Thema lösen',
@@ -241,10 +229,7 @@
       bodyRequired: 'Gib eine Nachricht ein.',
     },
     comment: {
-      postedAt: 'Veröffentlicht {{date}}',
-      languageLabel: 'Sprache: {{language}}',
       unknownOperator: 'Unbekannter Operator',
-      quote: 'Zitieren',
       delete: 'Löschen',
       "edit": "Bearbeiten",
       "save": "Änderungen speichern",
@@ -259,7 +244,6 @@
       "historyText": "Text"
     },
     "position": {
-      "context": "Antworten auf eine Position zu {{proposal}}",
       "withdrawn": "Diese Position wurde inzwischen zurückgezogen."
     }
   },
@@ -496,13 +480,8 @@
     "forbidden": "Dein Konto kann zu Vorschlägen keine Stellung beziehen.",
     "invalid": "Diese Position konnte nicht gespeichert werden. Wähle dafür, neutral oder dagegen und eine unterstützte Sprache.",
     "reply": {
-      "open": "Antworten",
-      "label": "Deine Antwort",
-      "placeholder": "Antwort schreiben…",
-      "submit": "Antwort senden",
       "forbidden": "Dein Konto kann nicht auf Positionen antworten, oder diese Antwort gehört nicht dir.",
       "invalid": "Die Antwort konnte nicht gespeichert werden. Schreibe einen Text und wähle eine unterstützte Sprache.",
-      "openInForum": "Diese Antworten im Forum öffnen"
     }
   },
   "home": {
@@ -1006,5 +985,9 @@
     "post": "Veröffentlichen",
     "pages": "Seiten dieser Diskussion",
     "pageOf": "Seite {{page}} von {{count}}",
+    "threads": "Themen",
+    "sectionThreads": "Themen, die keine einzelne Seite betreffen",
+    "discussedPages": "Seiten mit aktueller Diskussion",
+    "noDiscussedPages": "Noch keine Seite wurde diskutiert.",
   },
 }

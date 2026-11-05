@@ -14,7 +14,12 @@ import {
 import { subscribeUserToForumThread } from './forum-subscription-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
-import { canSignOffPages, isSignoffPageSlug } from './page-signoff-service.js';
+import {
+  canSignOffPages,
+  isSignoffPageSlug,
+  type PageSignoffResult,
+  toPageSignoffResult,
+} from './page-signoff-service.js';
 import { ensureNonEmptyString, ensureOptionalLanguage, normalizeSlugInput } from './validation.js';
 import { readWikiPage } from './wiki-page-service.js';
 
@@ -92,6 +97,33 @@ export const listPositionReplies = async (
     grouped.set(signoffId, entry);
   }
   return grouped;
+};
+
+/**
+ * Withdrawn positions on a page that people replied to, oldest first. Their
+ * replies stay readable under them in the proposal's discussion.
+ */
+export const listWithdrawnPositionsWithReplies = async (
+  dalInstance: DataAccessLayer,
+  pageId: string
+): Promise<PageSignoffResult[]> => {
+  const result = await dalInstance.query(
+    `SELECT s.id
+       FROM page_signoffs s
+      WHERE s.page_id = $1 AND s.withdrawn_at IS NOT NULL
+        AND EXISTS (
+          SELECT 1 FROM forum_threads t
+            JOIN forum_comments c
+              ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
+           WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
+             AND t.attached_type = $2 AND t.attached_id = s.id)
+      ORDER BY s.signed_at ASC`,
+    [pageId, POSITION_ATTACHMENT]
+  );
+  const ids = (result.rows as Array<{ id: string }>).map(row => row.id);
+  if (!ids.length) return [];
+  const signoffs = await Promise.all(ids.map(id => PageSignoff.filterWhere({ id }).first()));
+  return signoffs.filter((signoff): signoff is NonNullable<typeof signoff> => Boolean(signoff)).map(toPageSignoffResult);
 };
 
 /**

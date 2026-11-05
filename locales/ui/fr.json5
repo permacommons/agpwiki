@@ -201,27 +201,15 @@
       articles: 'Articles',
       technology: 'Technologie',
       policy: 'Politiques',
-      empty: 'Aucun fil dans cette catégorie pour le moment.',
     },
     compose: {
-      newThread: 'Créer un nouveau fil',
-      reply: 'Publier une réponse',
-      title: 'Titre',
-      page: 'Page',
-      pageSlug: 'Slug de la page',
-      pageSearchPlaceholder: 'Rechercher des titres de pages',
-      pageContext: 'Tu commences une discussion sur {{page}}.',
-      pageOptionalHelp: 'S’il existe déjà une page de politique liée à ce sujet, sélectionne-la ci-dessus. Sinon, laisse ce champ vide.',
       body: 'Message',
       language: 'Langue du commentaire',
-      postThread: 'Publier le fil',
       postReply: 'Publier la réponse',
     },
     thread: {
-      createdAt: 'Ouvert {{date}}',
       commentCount_one: '{{count}} commentaire',
       commentCount_other: '{{count}} commentaires',
-      pageLabel: 'Page : {{page}}',
       pinned: 'Épinglé',
       pin: 'Épingler le fil',
       unpin: 'Désépingler le fil',
@@ -241,10 +229,7 @@
       bodyRequired: 'Saisis un message.',
     },
     comment: {
-      postedAt: 'Publié {{date}}',
-      languageLabel: 'Langue : {{language}}',
       unknownOperator: 'Opérateur inconnu',
-      quote: 'Citer',
       delete: 'Supprimer',
       "edit": "Modifier",
       "save": "Enregistrer les modifications",
@@ -259,7 +244,6 @@
       "historyText": "Texte"
     },
     "position": {
-      "context": "Réponses à une position sur {{proposal}}",
       "withdrawn": "Cette position a depuis été retirée."
     }
   },
@@ -498,13 +482,8 @@
     "forbidden": "Ton compte ne peut pas prendre position sur les propositions.",
     "invalid": "Impossible d’enregistrer cette position. Choisis pour, neutre ou contre, et sélectionne une langue prise en charge.",
     "reply": {
-      "open": "Répondre",
-      "label": "Ta réponse",
-      "placeholder": "Écris une réponse…",
-      "submit": "Publier la réponse",
       "forbidden": "Ton compte ne peut pas répondre aux positions, ou cette réponse n’est pas la tienne.",
       "invalid": "Impossible d’enregistrer la réponse. Écris un texte et sélectionne une langue prise en charge.",
-      "openInForum": "Ouvrir ces réponses dans le forum"
     }
   },
   "home": {
@@ -1008,5 +987,9 @@
     "post": "Publier",
     "pages": "Pages de cette discussion",
     "pageOf": "Page {{page}} sur {{count}}",
+    "threads": "Fils",
+    "sectionThreads": "Fils qui ne portent pas sur une page",
+    "discussedPages": "Pages discutées récemment",
+    "noDiscussedPages": "Aucune page n’a encore été discutée.",
   },
 }

@@ -200,27 +200,15 @@
       articles: 'Artículos',
       technology: 'Tecnología',
       policy: 'Política',
-      empty: 'Aún no hay temas en esta categoría.',
     },
     compose: {
-      newThread: 'Iniciar un nuevo tema',
-      reply: 'Publicar una respuesta',
-      title: 'Título',
-      page: 'Página',
-      pageSlug: 'Slug de la página',
-      pageSearchPlaceholder: 'Buscar títulos de páginas',
-      pageContext: 'Estás iniciando una discusión sobre {{page}}.',
-      pageOptionalHelp: 'Si existe una página de política relevante para este tema, selecciónala arriba. De lo contrario, deja este campo en blanco.',
       body: 'Mensaje',
       language: 'Idioma del comentario',
-      postThread: 'Publicar tema',
       postReply: 'Publicar respuesta',
     },
     thread: {
-      createdAt: 'Iniciado {{date}}',
       commentCount_one: '{{count}} comentario',
       commentCount_other: '{{count}} comentarios',
-      pageLabel: 'Página: {{page}}',
       pinned: 'Fijado',
       pin: 'Fijar tema',
       unpin: 'Desfijar tema',
@@ -240,10 +228,7 @@
       bodyRequired: 'Introduce un mensaje.',
     },
     comment: {
-      postedAt: 'Publicado {{date}}',
-      languageLabel: 'Idioma: {{language}}',
       unknownOperator: 'Operador desconocido',
-      quote: 'Citar',
       delete: 'Eliminar',
       "edit": "Editar",
       "save": "Guardar cambios",
@@ -258,7 +243,6 @@
       "historyText": "Texto"
     },
     "position": {
-      "context": "Respuestas a una postura sobre {{proposal}}",
       "withdrawn": "Esta postura se ha retirado desde entonces."
     }
   },
@@ -497,13 +481,8 @@
     "forbidden": "Tu cuenta no puede expresar posturas sobre propuestas.",
     "invalid": "No se pudo guardar esta postura. Elige a favor, neutral o en contra, y selecciona un idioma admitido.",
     "reply": {
-      "open": "Responder",
-      "label": "Tu respuesta",
-      "placeholder": "Escribe una respuesta…",
-      "submit": "Publicar respuesta",
       "forbidden": "Tu cuenta no puede responder a posturas, o esta respuesta no es tuya.",
       "invalid": "No se pudo guardar la respuesta. Escribe un texto y selecciona un idioma admitido.",
-      "openInForum": "Abrir estas respuestas en el foro"
     }
   },
   "home": {
@@ -1007,5 +986,9 @@
     "post": "Publicar",
     "pages": "Páginas de esta discusión",
     "pageOf": "Página {{page}} de {{count}}",
+    "threads": "Temas",
+    "sectionThreads": "Temas que no tratan de una sola página",
+    "discussedPages": "Páginas con discusión reciente",
+    "noDiscussedPages": "Todavía no se ha discutido ninguna página.",
   },
 }

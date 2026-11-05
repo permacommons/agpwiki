@@ -433,7 +433,8 @@ test('Forum reply notifications follow each person\'s channel choice and are not
     assert.equal(rows[0].kind, 'forum.reply');
     assert.equal(rows[0].subject, baseTitle);
     assert.equal(rows[0].actor_user_id, actor.id);
-    assert.ok(rows[0].url.startsWith('/tool/forum/thread/'));
+    // Forum replies link to the comment inside its section's discussion.
+    assert.ok(rows[0].url.startsWith('/tool/forum/general?thread='));
     assert.ok(rows[0].url.endsWith(`#comment-${reply.id}`));
 
     // A retried job delivers nothing twice.
