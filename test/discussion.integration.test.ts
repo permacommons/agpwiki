@@ -13,7 +13,9 @@ import { registerDiscussionRoutes } from '../src/routes/discussion.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { readDiscussion } from '../src/services/discussion-service.js';
 import { createForumComment, createForumThread, setForumThreadPinned } from '../src/services/forum-service.js';
-import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import { createBlogPost } from '../src/services/blog-post-service.js';
+import { listDiscussedPages } from '../src/services/discussion-service.js';
+import { BLOG_AUTHOR_ROLE, FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
 import { replyToPosition } from '../src/services/position-reply-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
@@ -65,6 +67,8 @@ const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
   await dal.query('DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
   await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
   await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+  await dal.query('DELETE FROM post_aliases WHERE slug LIKE $1', [`${prefix}%`]);
+  await dal.query('DELETE FROM posts WHERE slug LIKE $1', [`${prefix}%`]);
   // Threads in a forum section have no page; their titles carry the prefix.
   const sectionThreads = `SELECT id FROM forum_threads WHERE title->>'en' LIKE $1`;
   await dal.query(`DELETE FROM forum_thread_subscriptions WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
@@ -356,6 +360,51 @@ test('General threads are sections of the General discussion, and their old link
     assert.ok(section.bodyHtml.includes(`id="thread-${thread.id}"`));
     assert.ok(section.bodyHtml.includes(`href="/tool/forum/general?thread=${thread.id}#thread-${thread.id}"`));
     assert.match(section.canonicalUrl, /\/tool\/forum\/general$/);
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('A blog post has its own discussion, under the post and at its address plus /discussion', async () => {
+  const dal = await getDal();
+  const prefix = `disc-blog-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('blogger');
+    userIds.push(author.id);
+    await grantRoleUpsert(dal, author.id, BLOG_AUTHOR_ROLE);
+    await createBlogPost(dal, { slug: prefix, title: { en: 'A post' }, body: { en: 'Text.' } }, author.id);
+    // A wiki page with the same address must not collect the post's threads.
+    await createPage(dal, prefix, author.id);
+
+    await assert.rejects(
+      createForumThread({ category: 'blog', pageSlug: `${prefix}-missing`, title: 'Lost', body: 'Text.', language: 'en' }, author.id),
+      ValidationError
+    );
+    const thread = await createForumThread(
+      { category: 'blog', pageSlug: prefix, title: 'About the post', body: 'A question.', language: 'en' },
+      author.id
+    );
+
+    const response = await fetch(`${server.url}/blog/${prefix}/discussion`);
+    assert.equal(response.status, 200);
+    const page = (await response.json()) as { bodyHtml: string; canonicalUrl: string };
+    assert.ok(page.bodyHtml.includes(`href="/blog/${prefix}/discussion?thread=${thread.id}#thread-${thread.id}"`));
+    assert.match(page.canonicalUrl, new RegExp(`/blog/${prefix}/discussion$`));
+
+    const pageDiscussion = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as { bodyHtml: string };
+    assert.ok(!pageDiscussion.bodyHtml.includes(`id="thread-${thread.id}"`));
+
+    const old = await fetch(`${server.url}/tool/forum/thread/${thread.id}`, { redirect: 'manual' });
+    assert.equal(old.headers.get('location'), `/blog/${prefix}/discussion?thread=${thread.id}`);
+
+    const listed = await listDiscussedPages(dal, 'blog');
+    const item = listed.pages.find(entry => entry.slug === prefix);
+    assert.ok(item);
+    assert.equal(item.threadCount, 1);
+    assert.deepEqual(item.title, { en: 'A post' });
   } finally {
     await server.close();
     await cleanup(dal, prefix, userIds);

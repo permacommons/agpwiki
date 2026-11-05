@@ -197,6 +197,7 @@
       articles: 'Artikel',
       technology: 'Teknologi',
       policy: 'Kebijakan',
+      blog: 'Blog Agpedia',
     },
     compose: {
       body: 'Pesan',

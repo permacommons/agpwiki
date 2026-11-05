@@ -197,6 +197,7 @@
       articles: 'Članki',
       technology: 'Tehnologija',
       policy: 'Politika',
+      blog: 'Blogovni del',
     },
     compose: {
       body: 'Sporočilo',

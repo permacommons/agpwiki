@@ -196,6 +196,7 @@
       articles: '條目',
       technology: '技術',
       policy: '政策',
+      blog: '網誌',
     },
     compose: {
       body: '訊息',

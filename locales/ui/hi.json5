@@ -197,6 +197,7 @@
       articles: 'लेख',
       technology: 'प्रौद्योगिकी',
       policy: 'नीति',
+      blog: 'ब्लॉग',
     },
     compose: {
       body: 'संदेश',

@@ -197,6 +197,7 @@
       articles: 'مضامین',
       technology: 'ٹیکنالوجی',
       policy: 'پالیسی',
+      blog: 'بلاگ',
     },
     compose: {
       body: 'پیغام',

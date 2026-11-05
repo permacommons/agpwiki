@@ -16,10 +16,13 @@ import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, prepareTitle, renderText, toSafeText } from '../render.js';
+import { findCurrentPostBySlugOrAlias } from '../services/blog-post-service.js';
 import {
   countPageDiscussionComments,
   type DiscussionPage,
+  type DiscussionScope,
   listPageDiscussionSlugs,
+  listPostDiscussionSlugs,
   readDiscussion,
 } from '../services/discussion-service.js';
 import { createForumThread, requireSignedInUserId } from '../services/forum-service.js';
@@ -170,13 +173,38 @@ export const renderDiscussionUnderPage = async (
   req: Request,
   res: Response,
   page: { id: string; slug: string }
-) => {
-  const target: DiscussionTarget = { kind: 'page', slug: page.slug };
-  const discussion = await readDiscussion(
+) =>
+  renderDiscussionUnder(
     dalInstance,
-    { pageSlugs: await listPageDiscussionSlugs(dalInstance, page) },
-    { pageSize: THREADS_UNDER_PAGE }
+    req,
+    res,
+    { kind: 'page', slug: page.slug },
+    { pageSlugs: await listPageDiscussionSlugs(dalInstance, page) }
   );
+
+/** The discussion shown under a blog post, as under a wiki page. */
+export const renderDiscussionUnderPost = async (
+  dalInstance: DataAccessLayer,
+  req: Request,
+  res: Response,
+  post: { id: string; slug: string }
+) =>
+  renderDiscussionUnder(
+    dalInstance,
+    req,
+    res,
+    { kind: 'post', slug: post.slug },
+    { postSlugs: await listPostDiscussionSlugs(dalInstance, post) }
+  );
+
+const renderDiscussionUnder = async (
+  dalInstance: DataAccessLayer,
+  req: Request,
+  res: Response,
+  target: DiscussionTarget,
+  scope: DiscussionScope
+) => {
+  const discussion = await readDiscussion(dalInstance, scope, { pageSize: THREADS_UNDER_PAGE });
   const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, { headingLevel: 3 });
   const fullLink = ` · <a href="${escapeHtml(discussionPath(target))}">${escapeHtml(req.t('discussion.openFull'))}</a>`;
   const moreHtml =
@@ -438,7 +466,160 @@ export const renderPageDiscussionForThread = async (
   return true;
 };
 
+interface DiscussionPostRecord {
+  id: string;
+  slug: string;
+  title: Record<string, string> | null | undefined;
+}
+
+/** The blog post whose discussion this address names, or a redirect to its current address. */
+const resolveDiscussionPost = async (
+  dalInstance: DataAccessLayer,
+  req: Request,
+  res: Response,
+  slug: string
+): Promise<DiscussionPostRecord | null> => {
+  const post = await findCurrentPostBySlugOrAlias(dalInstance, slug);
+  if (!post) {
+    res.status(404).type('text').send(req.t('page.notFound'));
+    return null;
+  }
+  if (post.slug !== slug) {
+    res.redirect(301, `${discussionPath({ kind: 'post', slug: post.slug })}${queryStringOf(req.originalUrl)}`);
+    return null;
+  }
+  return post;
+};
+
+/** A blog post's discussion on its own page, at the post's address plus /discussion. */
+export const renderPostDiscussionPage = async (
+  req: Request,
+  res: Response,
+  post: DiscussionPostRecord,
+  state: DiscussionPageState = {}
+) => {
+  const dalInstance = await initializePostgreSQL();
+  const target: DiscussionTarget = { kind: 'post', slug: post.slug };
+  const replyParentId = readString(req.query.reply);
+  const threadId = state.threadId ?? state.openReply?.threadId ?? (readString(req.query.thread) || undefined);
+  const discussion = await readDiscussion(
+    dalInstance,
+    { postSlugs: await listPostDiscussionSlugs(dalInstance, post) },
+    { page: readPositiveInt(req.query.page), threadId }
+  );
+  const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, {
+    headingLevel: 2,
+    openReply: state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined),
+  });
+  const titleText = resolveSafeTextWithFallback(mlString.resolve, ctx.locale, post.title, post.slug);
+  const postHref = `/blog/${encodeURIComponent(post.slug)}`;
+  const bodyHtml = `<div class="discussion-page">
+  <p class="discussion-back"><a href="${escapeHtml(postHref)}">${renderText(titleText)}</a></p>
+  ${
+    discussion.threadCount
+      ? renderDiscussionSummary(discussion, req.t)
+      : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`
+  }
+  ${renderDiscussionThreads(discussion.threads, ctx)}
+  ${renderDiscussionPager(target, discussion, req.t)}
+  ${renderReplyTemplate(ctx)}
+  ${renderStartThread(req, res, target, ctx.viewer, {
+    errorMessage: state.threadErrorMessage,
+    previewHtml: state.threadPreviewHtml,
+  })}
+</div>`;
+  res.render('layout', {
+    title: prepareTitle(toSafeText(req.t('discussion.pageTitle', { title: renderText(titleText) }))),
+    canonicalUrl: canonicalUrlFor(discussionPagePath(target, discussion.page)),
+    relPrev: discussion.page > 1 ? discussionPagePath(target, discussion.page - 1) : null,
+    relNext: discussion.page < discussion.pageCount ? discussionPagePath(target, discussion.page + 1) : null,
+    noindex: discussion.threadCount === 0,
+    labelHtml: `<div class="page-label">${escapeHtml(req.t('label.blogPost'))}</div>`,
+    topHtml: prependAccountBanner(res, ''),
+    bodyHtml,
+  });
+};
+
+/** As {@link renderPageDiscussionForThread}, for a thread about a blog post. */
+export const renderPostDiscussionForThread = async (
+  req: Request,
+  res: Response,
+  thread: { id: string; postSlug: string },
+  state: DiscussionPageState
+) => {
+  const post = await findCurrentPostBySlugOrAlias(await initializePostgreSQL(), thread.postSlug);
+  if (!post) return false;
+  await renderPostDiscussionPage(req, res, post, { ...state, threadId: thread.id });
+  return true;
+};
+
+/** Start a thread about a page or a post, or show the form again with what went wrong. */
+const startThread = async (
+  req: Request,
+  res: Response,
+  target: Extract<DiscussionTarget, { kind: 'page' | 'post' }>,
+  render: (state: DiscussionPageState) => Promise<void>
+) => {
+  const session = await resolveSessionUser(req);
+  if (!session) {
+    res.redirect(303, `/tool/login?redirect=${encodeURIComponent(discussionPath(target))}`);
+    return;
+  }
+  try {
+    const userId = requireSignedInUserId(session.userId);
+    if (!canPostIn(res)) throw new ForbiddenError(req.t('forum.verifyEmailToPost'));
+    const values = startThreadValues(req);
+    const body = normalizeLineEndings(values.body);
+    if (req.body?.intent === 'preview') {
+      const threadPreviewHtml = await renderMarkdownPreviewHtml(
+        await initializePostgreSQL(),
+        body,
+        req.t('citation.backToCitationAria')
+      );
+      await render({ threadPreviewHtml });
+      return;
+    }
+    const category = target.kind === 'post' ? 'blog' : (forumPageCategory(target.slug) ?? 'articles');
+    const thread = await createForumThread(
+      { category, pageSlug: target.slug, title: values.title, body, language: values.language },
+      userId
+    );
+    res.redirect(303, threadPermalink(target, thread.id));
+  } catch (error) {
+    if (error instanceof ValidationError || error instanceof ForbiddenError) {
+      res.status(error instanceof ValidationError ? 400 : 403);
+      await render({
+        threadErrorMessage: error instanceof ValidationError ? resolveForumValidationMessage(req.t, error) : error.message,
+      });
+      return;
+    }
+    throw error;
+  }
+};
+
 export const registerDiscussionRoutes = (app: Express) => {
+  app.get('/blog/:slug/discussion', async (req, res) => {
+    try {
+      const post = await resolveDiscussionPost(await initializePostgreSQL(), req, res, req.params.slug);
+      if (!post) return;
+      await renderPostDiscussionPage(req, res, post);
+    } catch (error) {
+      console.error('Failed to render blog post discussion:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
+  app.post('/blog/:slug/discussion', async (req, res) => {
+    try {
+      const post = await resolveDiscussionPost(await initializePostgreSQL(), req, res, req.params.slug);
+      if (!post) return;
+      await startThread(req, res, { kind: 'post', slug: post.slug }, state => renderPostDiscussionPage(req, res, post, state));
+    } catch (error) {
+      console.error('Failed to start a blog discussion thread:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.get(DISCUSSION_ROUTE, async (req, res) => {
     try {
       const dalInstance = await initializePostgreSQL();
@@ -453,47 +634,10 @@ export const registerDiscussionRoutes = (app: Express) => {
 
   // Start a thread in a page's discussion.
   app.post(DISCUSSION_ROUTE, async (req, res) => {
-    const slug = req.params[0];
     try {
-      const dalInstance = await initializePostgreSQL();
-      const page = await resolveDiscussionPage(dalInstance, req, res, slug);
+      const page = await resolveDiscussionPage(await initializePostgreSQL(), req, res, req.params[0]);
       if (!page) return;
-      const session = await resolveSessionUser(req);
-      if (!session) {
-        res.redirect(303, `/tool/login?redirect=${encodeURIComponent(discussionPath({ kind: 'page', slug: page.slug }))}`);
-        return;
-      }
-      try {
-        const userId = requireSignedInUserId(session.userId);
-        if (!canPostIn(res)) throw new ForbiddenError(req.t('forum.verifyEmailToPost'));
-        const values = startThreadValues(req);
-        const body = normalizeLineEndings(values.body);
-        if (req.body?.intent === 'preview') {
-          const threadPreviewHtml = await renderMarkdownPreviewHtml(
-            dalInstance,
-            body,
-            req.t('citation.backToCitationAria')
-          );
-          await renderPageDiscussionPage(req, res, page, { threadPreviewHtml });
-          return;
-        }
-        const category = forumPageCategory(page.slug) ?? 'articles';
-        const thread = await createForumThread(
-          { category, pageSlug: page.slug, title: values.title, body, language: values.language },
-          userId
-        );
-        res.redirect(303, threadPermalink({ kind: 'page', slug: page.slug }, thread.id));
-      } catch (error) {
-        if (error instanceof ValidationError || error instanceof ForbiddenError) {
-          res.status(error instanceof ValidationError ? 400 : 403);
-          await renderPageDiscussionPage(req, res, page, {
-            threadErrorMessage:
-              error instanceof ValidationError ? resolveForumValidationMessage(req.t, error) : error.message,
-          });
-          return;
-        }
-        throw error;
-      }
+      await startThread(req, res, { kind: 'page', slug: page.slug }, state => renderPageDiscussionPage(req, res, page, state));
     } catch (error) {
       console.error('Failed to start a discussion thread:', error);
       res.status(500).type('text').send(req.t('page.serverError'));

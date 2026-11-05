@@ -196,6 +196,7 @@
       articles: '문서',
       technology: '기술',
       policy: '정책',
+      blog: '블로그',
     },
     compose: {
       body: '메시지',

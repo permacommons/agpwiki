@@ -196,6 +196,7 @@
       articles: 'Articoli',
       technology: 'Tecnologia',
       policy: 'Politiche',
+      blog: 'Diario',
     },
     compose: {
       body: 'Messaggio',

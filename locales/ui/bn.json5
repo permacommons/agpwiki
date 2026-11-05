@@ -197,6 +197,7 @@
       articles: 'নিবন্ধ',
       technology: 'প্রযুক্তি',
       policy: 'নীতি',
+      blog: 'ব্লগ',
     },
     compose: {
       body: 'বার্তা',
