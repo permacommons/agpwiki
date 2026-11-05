@@ -13,6 +13,7 @@ import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
 import languages from '../../locales/languages.js';
 import { initializePostgreSQL } from '../db.js';
+import { cursorFromDate, encodeChangeCursor, resolveStartCursor } from '../lib/change-cursor.js';
 import {
   CITATION_CLAIM_ASSERTION_MAX_LENGTH,
   CITATION_CLAIM_LOCATOR_LABEL_MAX_LENGTH,
@@ -25,6 +26,7 @@ import {
   InvalidRequestError,
   PreconditionFailedError,
   UnsupportedError,
+  ValidationError,
 } from '../lib/errors.js';
 import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
 import {
@@ -62,6 +64,7 @@ import {
   readBlogPostRevision,
   updateBlogPost,
 } from '../services/blog-post-service.js';
+import { CHANGE_KINDS, type ChangeKind, getChangesSince } from '../services/change-service.js';
 import {
   type CitationClaimDeleteInput,
   type CitationClaimDiffInput,
@@ -138,6 +141,12 @@ import { isSignoffPageSlug, listActivePageSignoffs } from '../services/page-sign
 import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
 import { setProposalLinks } from '../services/proposal-links-service.js';
 import { setProposalStatus } from '../services/proposal-status-service.js';
+import {
+  countUnreadNotifications,
+  listSiteNotificationsAfter,
+  markSiteNotificationsRead,
+  markSiteNotificationsReadByIds,
+} from '../services/site-notification-service.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -389,6 +398,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     );
   const REVISION_LIST_DEFAULT_LIMIT = 50;
   const REVISION_LIST_MAX_LIMIT = 100;
+  const CHANGE_PAGE_MAX_LIMIT = 100;
 
   const server = new McpServer(
     {
@@ -1474,6 +1484,133 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const page = await setProposalLinks(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposalLinks: page.proposalLinks };
     }))
+  );
+
+  const changeCursorSchema = z
+    .string()
+    .min(1)
+    .max(200)
+    .optional()
+    .describe('The cursor from your last answer: only what came after it is returned. Takes precedence over since.');
+  const changeSinceSchema = z
+    .string()
+    .max(40)
+    .optional()
+    .describe('Start from this date and time (ISO 8601, e.g. "2026-11-05T12:00:00Z") when you have no cursor yet.');
+  const changeLimitSchema = z
+    .number()
+    .int()
+    .min(1)
+    .max(CHANGE_PAGE_MAX_LIMIT)
+    .optional()
+    .describe(`Most items to return (default and max ${CHANGE_PAGE_MAX_LIMIT}).`);
+
+  server.registerTool(
+    'notifications_list',
+    {
+      title: 'List Notifications',
+      description: `List your operator's own notifications, the ones the bell shows (replies, reverts, comments and positions on followed pages), oldest first, up to ${CHANGE_PAGE_MAX_LIMIT} at a time. Pass the cursor from your last answer to get only newer ones; without a cursor or since, the list starts with the oldest. hasMore true means call again with the returned cursor. When nothing is new, notifications is empty and the cursor is unchanged. Kinds your operator set to "none" are not recorded. Mark what you handled with notifications_markRead.`,
+      annotations: readOnlyToolAnnotations,
+      inputSchema: {
+        cursor: changeCursorSchema,
+        since: changeSinceSchema,
+        unreadOnly: z.boolean().optional().describe('Only notifications not yet read (default false).'),
+        limit: changeLimitSchema,
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      const after = resolveStartCursor(args, () => cursorFromDate(new Date(0)));
+      const [{ notifications, hasMore }, unreadCount] = await Promise.all([
+        listSiteNotificationsAfter(dal, userId, {
+          after,
+          limit: args.limit ?? CHANGE_PAGE_MAX_LIMIT,
+          unreadOnly: args.unreadOnly ?? false,
+        }),
+        countUnreadNotifications(dal, userId),
+      ]);
+      return {
+        notifications: notifications.map(notification => ({
+          id: notification.id,
+          kind: notification.kind,
+          actor: notification.actorName,
+          url: notification.url,
+          subject: notification.subject,
+          excerpt: notification.excerpt,
+          createdAt: notification.createdAt,
+          read: notification.readAt !== null,
+        })),
+        unreadCount,
+        hasMore,
+        cursor: encodeChangeCursor(notifications.at(-1)?.cursor ?? after),
+      };
+    })
+  );
+
+  server.registerTool(
+    'notifications_markRead',
+    {
+      title: 'Mark Notifications Read',
+      description:
+        "Mark your operator's notifications as read, by id (from notifications_list), or all of them with all: true. Notifications already read, or not your operator's, are skipped. Returns how many were marked and the unread count left.",
+      annotations: additiveWriteToolAnnotations,
+      inputSchema: {
+        ids: z.array(uuidSchema).min(1).max(CHANGE_PAGE_MAX_LIMIT).optional(),
+        all: z.literal(true).optional(),
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      const userId = await requireAuthUserId(extra);
+      if (Boolean(args.ids?.length) === Boolean(args.all)) {
+        const message = 'Pass either ids or all: true.';
+        throw new ValidationError(message, [{ field: 'ids', message, code: 'invalid' }]);
+      }
+      const marked = args.all
+        ? await markSiteNotificationsRead(dal, userId)
+        : await markSiteNotificationsReadByIds(dal, userId, args.ids ?? []);
+      return { marked, unreadCount: await countUnreadNotifications(dal, userId) };
+    })
+  );
+
+  server.registerTool(
+    'changes_since',
+    {
+      title: 'List Changes Since',
+      description: `List what changed on the wiki, oldest first, up to ${CHANGE_PAGE_MAX_LIMIT} at a time: the same revisions Recent changes shows, of pages (including proposals and their status), page checks, citations, claims and media. Pass the cursor from your last answer to get only newer changes; without a cursor or since, the list starts 24 hours ago. hasMore true means call again with the returned cursor. When nothing changed, changes is empty and the cursor is unchanged. slug narrows to one page, prefix to every page whose address starts with it (e.g. "meta/proposals/"); either returns only page edits and page checks. Each change has its revId and prevRevId for the diff tools.`,
+      annotations: readOnlyToolAnnotations,
+      inputSchema: {
+        cursor: changeCursorSchema,
+        since: changeSinceSchema,
+        slug: optionalSlugSchema,
+        prefix: z
+          .string()
+          .min(1)
+          .max(SLUG_MAX_LENGTH)
+          .optional()
+          .describe('Only pages whose current address starts with this text, e.g. "meta/proposals/".'),
+        kinds: z
+          .array(z.enum([...CHANGE_KINDS] as [ChangeKind, ...ChangeKind[]]))
+          .min(1)
+          .optional()
+          .describe(`Only these kinds of change: ${CHANGE_KINDS.join(', ')} (default all).`),
+        limit: changeLimitSchema,
+      },
+    },
+    withToolErrorHandling(async (args, extra) => {
+      const dal = await initializePostgreSQL();
+      await requireAuthUserId(extra);
+      const after = resolveStartCursor(args, () => cursorFromDate(new Date(Date.now() - 24 * 60 * 60 * 1000)));
+      const trimSlash = (value?: string) => value?.replace(/^\/+/, '') || null;
+      return getChangesSince(dal, {
+        after,
+        limit: args.limit ?? CHANGE_PAGE_MAX_LIMIT,
+        slug: trimSlash(args.slug),
+        prefix: trimSlash(args.prefix),
+        kinds: args.kinds ?? null,
+      });
+    })
   );
 
   server.registerTool(
