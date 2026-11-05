@@ -196,38 +196,19 @@
       articles: '條目',
       technology: '技術',
       policy: '政策',
-      empty: '此分類中還沒有主題。',
     },
     compose: {
-      newThread: '發起新主題',
-      reply: '發布回覆',
-      title: '標題',
-      page: '頁面',
-      pageSlug: '頁面 slug',
-      pageSearchPlaceholder: '搜尋頁面標題',
-      pageContext: '你正在發起關於 {{page}} 的討論。',
-      pageOptionalHelp: '如果已有與此主題相關的政策頁面，請在上方選擇。否則請將此欄位留空。',
       body: '訊息',
       language: '留言語言',
-      postThread: '發布主題',
       postReply: '發布回覆',
     },
     thread: {
-      createdAt: '開始於 {{date}}',
       commentCount_one: '{{count}} 則留言',
       commentCount_other: '{{count}} 則留言',
-      pageLabel: '頁面：{{page}}',
       pinned: '已置頂',
       pin: '置頂主題',
       unpin: '取消置頂',
       delete: '刪除主題',
-      notificationsDisabled: "論壇回覆通知已在你的<a href=\"{{settingsHref}}\">設定</a>中關閉。",
-    },
-    pageLink: {
-      context: '關於 {{page}} 的討論。',
-      orphanedContext: '針對頁面 slug {{slug}} 的討論。此 slug 目前無法解析到任何 wiki 頁面。',
-      cannotCreateMissingPageRequired: '此頁面 slug 目前無法解析到任何 wiki 頁面，因此無法在這裡發起新的討論主題。',
-      cannotCreateMissingPageOptional: '此頁面 slug 目前無法解析到任何 wiki 頁面，因此無法在這裡發起新的頁面關聯討論主題。',
     },
     validation: {
       pageRequired: '在發起條目討論主題之前，請先選擇一個頁面。',
@@ -238,10 +219,7 @@
       bodyRequired: '請輸入訊息。',
     },
     comment: {
-      postedAt: '發布於 {{date}}',
-      languageLabel: '語言：{{language}}',
       unknownOperator: '未知操作員',
-      quote: '引用',
       delete: '刪除',
       "edit": "編輯",
       "save": "儲存變更",
@@ -256,7 +234,6 @@
       "historyText": "內文"
     },
     "position": {
-      "context": "對 {{proposal}} 中某一立場的回覆",
       "withdrawn": "此立場其後已撤回。"
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "你的帳號無法對提案表明立場。",
     "invalid": "無法儲存此立場。請選擇支持、中立或反對，並選擇支援的語言。",
     "reply": {
-      "open": "回覆",
-      "label": "你的回覆",
-      "placeholder": "寫一則回覆…",
-      "submit": "發布回覆",
       "forbidden": "你的帳號無法回覆立場，或這則回覆不是你的。",
       "invalid": "無法儲存回覆。請輸入內容並選擇支援的語言。",
-      "openInForum": "在論壇中開啟這些回覆"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "更多主題",
     "pages": "此討論的頁面",
     "pageOf": "第 {{page}} 頁，共 {{count}} 頁",
+    "threads": "主題",
+    "sectionThreads": "不屬於單一頁面的主題",
+    "discussedPages": "最近有討論的頁面",
+    "noDiscussedPages": "還沒有頁面被討論過。",
   },
 }

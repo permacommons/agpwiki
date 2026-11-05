@@ -64,6 +64,7 @@ const sections = (overrides: Partial<HomeSections> = {}): HomeSections => ({
       id: '00000000-0000-4000-8000-000000000001',
       title: { en: 'Ideas for the wishlist' },
       category: 'general',
+      pageSlug: null,
       lastActivityAt: new Date('2026-10-23T12:00:00Z'),
     },
   ],
@@ -81,7 +82,10 @@ test('renderHomeSections shows cards, posts, discussions and ways to help, each 
   assert.match(html, /src="\/media-files\/gillray-the-gout-1799\/250"/);
   assert.match(html, /<a class="home-post" href="\/blog\/notifications">/);
   assert.match(html, /src="\/media-files\/agpedia-notifications-mockup\/500"/);
-  assert.match(html, /href="\/tool\/forum\/thread\/00000000-0000-4000-8000-000000000001"/);
+  assert.match(
+    html,
+    /href="\/tool\/forum\/general\?thread=00000000-0000-4000-8000-000000000001#thread-00000000-0000-4000-8000-000000000001"/
+  );
   assert.match(html, /forum\.category\.general · Oct 23, 2026/);
   assert.match(html, /home\.waitingForCheck\{&quot;count&quot;:78\}/);
   assert.match(html, /home\.needWikidata\{&quot;count&quot;:90\}/);

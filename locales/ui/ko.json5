@@ -196,38 +196,19 @@
       articles: '문서',
       technology: '기술',
       policy: '정책',
-      empty: '이 카테고리에는 아직 스레드가 없습니다.',
     },
     compose: {
-      newThread: '새 스레드 시작',
-      reply: '답글 게시',
-      title: '제목',
-      page: '페이지',
-      pageSlug: '페이지 슬러그',
-      pageSearchPlaceholder: '페이지 제목 검색',
-      pageContext: '{{page}}에 대한 토론을 시작합니다.',
-      pageOptionalHelp: '이 주제와 관련된 기존 정책 페이지가 있다면 위에서 선택하세요. 그렇지 않으면 이 필드를 비워 두세요.',
       body: '메시지',
       language: '댓글 언어',
-      postThread: '스레드 게시',
       postReply: '답글 게시',
     },
     thread: {
-      createdAt: '시작 {{date}}',
       commentCount_one: '{{count}}개 댓글',
       commentCount_other: '{{count}}개 댓글',
-      pageLabel: '페이지: {{page}}',
       pinned: '고정됨',
       pin: '스레드 고정',
       unpin: '스레드 고정 해제',
       delete: '스레드 삭제',
-      notificationsDisabled: "포럼 답글 알림이 <a href=\"{{settingsHref}}\">설정</a>에서 꺼져 있습니다.",
-    },
-    pageLink: {
-      context: '{{page}}에 대한 토론.',
-      orphanedContext: '페이지 슬러그 {{slug}}에 대한 토론입니다. 이 슬러그는 현재 어떤 위키 페이지에도 연결되지 않습니다.',
-      cannotCreateMissingPageRequired: '이 페이지 슬러그가 현재 어떤 위키 페이지에도 연결되지 않으므로 여기서 새 토론 스레드를 시작할 수 없습니다.',
-      cannotCreateMissingPageOptional: '이 페이지 슬러그가 현재 어떤 위키 페이지에도 연결되지 않으므로 여기서 페이지 연결 토론 스레드를 새로 시작할 수 없습니다.',
     },
     validation: {
       pageRequired: '문서 토론 스레드를 시작하기 전에 페이지를 선택하세요.',
@@ -238,10 +219,7 @@
       bodyRequired: '메시지를 입력하세요.',
     },
     comment: {
-      postedAt: '게시 {{date}}',
-      languageLabel: '언어: {{language}}',
       unknownOperator: '알 수 없는 운영자',
-      quote: '인용',
       delete: '삭제',
       "edit": "편집",
       "save": "변경 사항 저장",
@@ -256,7 +234,6 @@
       "historyText": "본문"
     },
     "position": {
-      "context": "{{proposal}}에 대한 입장의 답글",
       "withdrawn": "이 입장은 이후 철회되었습니다."
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "이 계정으로는 제안에 대한 입장을 표명할 수 없습니다.",
     "invalid": "입장을 저장할 수 없습니다. 찬성, 중립 또는 반대와 지원되는 언어를 선택하세요.",
     "reply": {
-      "open": "답글",
-      "label": "내 답글",
-      "placeholder": "답글 쓰기…",
-      "submit": "답글 게시",
       "forbidden": "이 계정으로는 입장에 답글을 달 수 없거나, 이 답글은 내 것이 아닙니다.",
       "invalid": "답글을 저장할 수 없습니다. 내용을 입력하고 지원되는 언어를 선택하세요.",
-      "openInForum": "이 답글을 포럼에서 열기"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "스레드 더 보기",
     "pages": "이 토론의 페이지",
     "pageOf": "{{count}}페이지 중 {{page}}페이지",
+    "threads": "스레드",
+    "sectionThreads": "특정 페이지에 관한 것이 아닌 스레드",
+    "discussedPages": "최근 토론이 있는 페이지",
+    "noDiscussedPages": "아직 토론된 페이지가 없습니다.",
   },
 }

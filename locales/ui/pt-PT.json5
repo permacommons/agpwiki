@@ -196,38 +196,19 @@
       articles: 'Artigos',
       technology: 'Tecnologia',
       policy: 'Política',
-      empty: 'Ainda não existem tópicos nesta categoria.',
     },
     compose: {
-      newThread: 'Iniciar um novo tópico',
-      reply: 'Publicar uma resposta',
-      title: 'Título',
-      page: 'Página',
-      pageSlug: 'Slug da página',
-      pageSearchPlaceholder: 'Pesquisar títulos de páginas',
-      pageContext: 'Estás a iniciar uma discussão sobre {{page}}.',
-      pageOptionalHelp: 'Se já existir uma página de política relevante para este tema, seleciona-a acima. Caso contrário, deixa este campo em branco.',
       body: 'Mensagem',
       language: 'Idioma do comentário',
-      postThread: 'Publicar tópico',
       postReply: 'Publicar resposta',
     },
     thread: {
-      createdAt: 'Iniciado {{date}}',
       commentCount_one: '{{count}} comentário',
       commentCount_other: '{{count}} comentários',
-      pageLabel: 'Página: {{page}}',
       pinned: 'Fixado',
       pin: 'Fixar tópico',
       unpin: 'Desafixar tópico',
       delete: 'Eliminar tópico',
-      notificationsDisabled: "As notificações de respostas do fórum estão desativadas nas tuas <a href=\"{{settingsHref}}\">definições</a>.",
-    },
-    pageLink: {
-      context: 'Discussão sobre {{page}}.',
-      orphanedContext: 'Discussão para o slug de página {{slug}}. Neste momento, este slug não resolve para nenhuma página wiki.',
-      cannotCreateMissingPageRequired: 'Não é possível iniciar novos tópicos de discussão aqui porque este slug de página não resolve atualmente para nenhuma página wiki.',
-      cannotCreateMissingPageOptional: 'Não é possível iniciar aqui novos tópicos de discussão ligados a páginas porque este slug de página não resolve atualmente para nenhuma página wiki.',
     },
     validation: {
       pageRequired: 'Seleciona uma página antes de iniciares um tópico de discussão de artigo.',
@@ -238,10 +219,7 @@
       bodyRequired: 'Introduz uma mensagem.',
     },
     comment: {
-      postedAt: 'Publicado {{date}}',
-      languageLabel: 'Idioma: {{language}}',
       unknownOperator: 'Operador desconhecido',
-      quote: 'Citar',
       delete: 'Eliminar',
       "edit": "Editar",
       "save": "Guardar alterações",
@@ -256,7 +234,6 @@
       "historyText": "Texto"
     },
     "position": {
-      "context": "Respostas a uma posição sobre {{proposal}}",
       "withdrawn": "Esta posição foi entretanto retirada."
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "A tua conta não pode registar posições sobre propostas.",
     "invalid": "Não foi possível guardar esta posição. Escolhe a favor, neutro ou contra e seleciona um idioma suportado.",
     "reply": {
-      "open": "Responder",
-      "label": "A tua resposta",
-      "placeholder": "Escreve uma resposta…",
-      "submit": "Publicar resposta",
       "forbidden": "A tua conta não pode responder a posições, ou esta resposta não é tua.",
       "invalid": "Não foi possível guardar a resposta. Escreve um texto e seleciona um idioma suportado.",
-      "openInForum": "Abrir estas respostas no fórum"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "Mais tópicos",
     "pages": "Páginas desta discussão",
     "pageOf": "Página {{page}} de {{count}}",
+    "threads": "Tópicos",
+    "sectionThreads": "Tópicos que não são sobre uma página",
+    "discussedPages": "Páginas com discussão recente",
+    "noDiscussedPages": "Ainda nenhuma página foi discutida.",
   },
 }

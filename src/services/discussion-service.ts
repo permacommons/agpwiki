@@ -227,3 +227,63 @@ export const countPageDiscussionComments = async (
   );
   return Number(result.rows[0]?.comment_count) || 0;
 };
+
+export interface DiscussedPage {
+  slug: string;
+  title: Record<string, string> | null;
+  threadCount: number;
+  commentCount: number;
+  latestActivityAt: Date | null;
+}
+
+/** Pages listed per page of a forum section. */
+export const DISCUSSED_PAGES_PAGE_SIZE = 50;
+
+/**
+ * The pages of a forum section (articles or policy) whose discussions have
+ * activity, the most recent first. Threads stored under an older address
+ * count for the page that address now leads to.
+ */
+export const listDiscussedPages = async (
+  dalInstance: DataAccessLayer,
+  category: string,
+  { page = 1, pageSize = DISCUSSED_PAGES_PAGE_SIZE }: { page?: number; pageSize?: number } = {}
+): Promise<{ pages: DiscussedPage[]; total: number; page: number; pageCount: number }> => {
+  const current = Math.max(1, Math.floor(page) || 1);
+  const result = await dalInstance.query(
+    `SELECT COALESCE(p.slug, ap.slug, t.page_slug) AS slug,
+            COALESCE(p.title, ap.title) AS title,
+            COUNT(DISTINCT t.id) FILTER (WHERE t.attached_type IS NULL)::int AS thread_count,
+            COUNT(c.id)::int AS comment_count,
+            MAX(GREATEST(t.created_at, COALESCE(c.created_at, t.created_at))) AS latest_activity_at,
+            COUNT(*) OVER ()::int AS total
+       FROM ${ForumThread.tableName} t
+       LEFT JOIN ${ForumComment.tableName} c
+         ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
+       LEFT JOIN pages p
+         ON p.slug = t.page_slug AND p._old_rev_of IS NULL AND p._rev_deleted = false
+       LEFT JOIN page_aliases a ON p.id IS NULL AND a.slug = t.page_slug
+       LEFT JOIN pages ap
+         ON ap.id = a.page_id AND ap._old_rev_of IS NULL AND ap._rev_deleted = false
+      WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
+        AND t.category = $1 AND t.page_slug IS NOT NULL
+      GROUP BY 1, 2
+      ORDER BY latest_activity_at DESC, 1
+      LIMIT $2 OFFSET $3`,
+    [category, pageSize, (current - 1) * pageSize]
+  );
+  const rows = result.rows as Array<Record<string, unknown>>;
+  const total = Number(rows[0]?.total) || 0;
+  return {
+    pages: rows.map(row => ({
+      slug: row.slug as string,
+      title: (row.title as Record<string, string> | null) ?? null,
+      threadCount: Number(row.thread_count) || 0,
+      commentCount: Number(row.comment_count) || 0,
+      latestActivityAt: (row.latest_activity_at as Date | null) ?? null,
+    })),
+    total,
+    page: current,
+    pageCount: Math.max(1, Math.ceil(total / pageSize)),
+  };
+};

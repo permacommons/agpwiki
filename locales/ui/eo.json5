@@ -197,38 +197,19 @@
       articles: 'Artikoloj',
       technology: 'Teknologio',
       policy: 'Politiko',
-      empty: 'Ankoraŭ neniuj fadenoj en ĉi tiu kategorio.',
     },
     compose: {
-      newThread: 'Komenci novan fadenon',
-      reply: 'Afiŝi respondon',
-      title: 'Titolo',
-      page: 'Paĝo',
-      pageSlug: 'Paĝa slugo',
-      pageSearchPlaceholder: 'Serĉi paĝtitolojn',
-      pageContext: 'Vi komencas diskuton pri {{page}}.',
-      pageOptionalHelp: 'Se ekzistas rilata politika paĝo pri ĉi tiu temo, elektu ĝin supre. Alie lasu ĉi tiun kampon malplena.',
       body: 'Mesaĝo',
       language: 'Lingvo de komento',
-      postThread: 'Afiŝi fadenon',
       postReply: 'Afiŝi respondon',
     },
     thread: {
-      createdAt: 'Komencita {{date}}',
       commentCount_one: '{{count}} komento',
       commentCount_other: '{{count}} komentoj',
-      pageLabel: 'Paĝo: {{page}}',
       pinned: 'Alpinglita',
       pin: 'Alpingli fadenon',
       unpin: 'Malfiksi fadenon',
       delete: 'Forigi fadenon',
-      notificationsDisabled: "Sciigoj pri forumaj respondoj estas malŝaltitaj en viaj <a href=\"{{settingsHref}}\">agordoj</a>.",
-    },
-    pageLink: {
-      context: 'Diskuto pri {{page}}.',
-      orphanedContext: 'Diskuto por paĝa slugo {{slug}}. Ĉi tiu slugo nuntempe ne kondukas al vikio-paĝo.',
-      cannotCreateMissingPageRequired: 'Novaj diskutaj fadenoj ne povas esti komencitaj ĉi tie, ĉar ĉi tiu paĝa slugo nuntempe ne kondukas al vikio-paĝo.',
-      cannotCreateMissingPageOptional: 'Novaj paĝ-ligitaj diskutaj fadenoj ne povas esti komencitaj ĉi tie, ĉar ĉi tiu paĝa slugo nuntempe ne kondukas al vikio-paĝo.',
     },
     validation: {
       pageRequired: 'Elektu paĝon antaŭ ol komenci artikolan diskutfadenon.',
@@ -239,10 +220,7 @@
       bodyRequired: 'Enigu mesaĝon.',
     },
     comment: {
-      postedAt: 'Afiŝita {{date}}',
-      languageLabel: 'Lingvo: {{language}}',
       unknownOperator: 'Nekonata funkciigisto',
-      quote: 'Citi',
       delete: 'Forigi',
       "edit": "Redakti",
       "save": "Konservi ŝanĝojn",
@@ -257,7 +235,6 @@
       "historyText": "Teksto"
     },
     "position": {
-      "context": "Respondoj al starpunkto pri {{proposal}}",
       "withdrawn": "Ĉi tiu starpunkto poste estis retirita."
     }
   },
@@ -483,13 +460,8 @@
     "forbidden": "Via konto ne rajtas esprimi starpunktojn pri proponoj.",
     "invalid": "Ne eblis konservi ĉi tiun starpunkton. Elektu subtenan, neŭtralan aŭ kontraŭan starpunkton kaj subtenatan lingvon.",
     "reply": {
-      "open": "Respondi",
-      "label": "Via respondo",
-      "placeholder": "Skribu respondon…",
-      "submit": "Afiŝi respondon",
       "forbidden": "Via konto ne povas respondi al starpunktoj, aŭ ĉi tiu respondo ne estas via.",
       "invalid": "Ne eblis konservi la respondon. Skribu tekston kaj elektu subtenatan lingvon.",
-      "openInForum": "Malfermi ĉi tiujn respondojn en la forumo"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "Pliaj fadenoj",
     "pages": "Paĝoj de ĉi tiu diskuto",
     "pageOf": "Paĝo {{page}} el {{count}}",
+    "threads": "Fadenoj",
+    "sectionThreads": "Fadenoj ne pri unu paĝo",
+    "discussedPages": "Paĝoj kun freŝa diskuto",
+    "noDiscussedPages": "Ankoraŭ neniu paĝo estis diskutita.",
   },
 }

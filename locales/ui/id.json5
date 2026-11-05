@@ -197,38 +197,19 @@
       articles: 'Artikel',
       technology: 'Teknologi',
       policy: 'Kebijakan',
-      empty: 'Belum ada topik di kategori ini.',
     },
     compose: {
-      newThread: 'Mulai topik baru',
-      reply: 'Publikasikan balasan',
-      title: 'Judul',
-      page: 'Halaman',
-      pageSlug: 'Slug halaman',
-      pageSearchPlaceholder: 'Cari judul halaman',
-      pageContext: 'Kamu sedang memulai diskusi tentang {{page}}.',
-      pageOptionalHelp: 'Jika sudah ada halaman kebijakan yang relevan dengan topik ini, pilih di atas. Jika tidak, biarkan kolom ini kosong.',
       body: 'Pesan',
       language: 'Bahasa komentar',
-      postThread: 'Publikasikan topik',
       postReply: 'Publikasikan balasan',
     },
     thread: {
-      createdAt: 'Dimulai {{date}}',
       commentCount_one: '{{count}} komentar',
       commentCount_other: '{{count}} komentar',
-      pageLabel: 'Halaman: {{page}}',
       pinned: 'Disematkan',
       pin: 'Sematkan topik',
       unpin: 'Lepas sematan topik',
       delete: 'Hapus topik',
-      notificationsDisabled: "Notifikasi balasan forum dimatikan di <a href=\"{{settingsHref}}\">pengaturan</a> Anda.",
-    },
-    pageLink: {
-      context: 'Diskusi tentang {{page}}.',
-      orphanedContext: 'Diskusi untuk slug halaman {{slug}}. Slug ini saat ini tidak mengarah ke halaman wiki mana pun.',
-      cannotCreateMissingPageRequired: 'Topik diskusi baru tidak dapat dimulai di sini karena slug halaman ini saat ini tidak mengarah ke halaman wiki mana pun.',
-      cannotCreateMissingPageOptional: 'Topik diskusi baru yang tertaut ke halaman tidak dapat dimulai di sini karena slug halaman ini saat ini tidak mengarah ke halaman wiki mana pun.',
     },
     validation: {
       pageRequired: 'Pilih halaman sebelum memulai topik diskusi artikel.',
@@ -239,10 +220,7 @@
       bodyRequired: 'Masukkan pesan.',
     },
     comment: {
-      postedAt: 'Dipublikasikan {{date}}',
-      languageLabel: 'Bahasa: {{language}}',
       unknownOperator: 'Operator tidak dikenal',
-      quote: 'Kutip',
       delete: 'Hapus',
       "edit": "Sunting",
       "save": "Simpan perubahan",
@@ -257,7 +235,6 @@
       "historyText": "Teks"
     },
     "position": {
-      "context": "Balasan untuk sikap tentang {{proposal}}",
       "withdrawn": "Sikap ini kemudian ditarik."
     }
   },
@@ -485,13 +462,8 @@
     "forbidden": "Akun Anda tidak dapat menyatakan sikap terhadap usulan.",
     "invalid": "Sikap ini tidak dapat disimpan. Pilih mendukung, netral, atau menentang, dan pilih bahasa yang didukung.",
     "reply": {
-      "open": "Balas",
-      "label": "Balasan Anda",
-      "placeholder": "Tulis balasan…",
-      "submit": "Kirim balasan",
       "forbidden": "Akun Anda tidak dapat membalas sikap, atau balasan ini bukan milik Anda.",
       "invalid": "Balasan tidak dapat disimpan. Tulis teks dan pilih bahasa yang didukung.",
-      "openInForum": "Buka balasan ini di forum"
     }
   },
   "home": {
@@ -996,5 +968,9 @@
     "nextPage": "Topik lainnya",
     "pages": "Halaman diskusi ini",
     "pageOf": "Halaman {{page}} dari {{count}}",
+    "threads": "Topik",
+    "sectionThreads": "Topik yang tidak membahas satu halaman",
+    "discussedPages": "Halaman dengan diskusi terbaru",
+    "noDiscussedPages": "Belum ada halaman yang didiskusikan.",
   },
 }

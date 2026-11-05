@@ -325,7 +325,7 @@ test('Comment editing works without JavaScript, preserves failed drafts, and che
     });
     const html = async (response: Response) => ((await response.json()) as { bodyHtml: string }).bodyHtml;
 
-    const page = await get(`${server.url}/tool/forum/thread/${thread.id}`);
+    const page = await get(`${server.url}/tool/forum/general?thread=${thread.id}`);
     assert.equal(page.status, 200);
     const threadHtml = await html(page);
     assert.ok(threadHtml.includes('data-comment-edit-link'));
