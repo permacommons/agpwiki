@@ -6,11 +6,11 @@ import ForumThread from '../models/forum-thread.js';
 export const DISCUSSION_PAGE_SIZE = 20;
 
 /**
- * Which threads make up a discussion: those about one page (under its
- * current address or an older one it was renamed from), or those in a forum
- * section that are not about a page.
+ * Which threads make up a discussion: those about one wiki page or blog post
+ * (under its current address or an older one it was renamed from), or those
+ * in a forum section that are not about a page.
  */
-export type DiscussionScope = { pageSlugs: string[] } | { category: string };
+export type DiscussionScope = { pageSlugs: string[] } | { postSlugs: string[] } | { category: string };
 
 export interface DiscussionComment {
   id: string;
@@ -63,9 +63,12 @@ const scopeFilter = (scope: DiscussionScope, params: unknown[]) => {
     params.push(scope.pageSlugs);
     return `t.page_slug = ANY($${params.length}) AND t.category IN ('articles', 'policy')`;
   }
+  if ('postSlugs' in scope) {
+    params.push(scope.postSlugs);
+    return `t.page_slug = ANY($${params.length}) AND t.category = 'blog'`;
+  }
   params.push(scope.category);
-  return `t.category = $${params.length}
-    AND (t.page_slug IS NULL OR t.category NOT IN ('articles', 'policy'))`;
+  return `t.category = $${params.length} AND t.page_slug IS NULL`;
 };
 
 // Threads attached to something else (replies to a position) are shown with
@@ -208,6 +211,15 @@ export const listPageDiscussionSlugs = async (
   return [page.slug, ...(result.rows as Array<{ slug: string }>).map(row => row.slug)];
 };
 
+/** Every address a blog post's discussion threads may be stored under. */
+export const listPostDiscussionSlugs = async (
+  dalInstance: DataAccessLayer,
+  post: { id: string; slug: string }
+): Promise<string[]> => {
+  const result = await dalInstance.query('SELECT slug FROM post_aliases WHERE post_id = $1', [post.id]);
+  return [post.slug, ...(result.rows as Array<{ slug: string }>).map(row => row.slug)];
+};
+
 /**
  * Comments in a page's discussion, for the count on its Discuss tab. Replies
  * to positions on a proposal count too: they are part of its discussion.
@@ -240,9 +252,9 @@ export interface DiscussedPage {
 export const DISCUSSED_PAGES_PAGE_SIZE = 50;
 
 /**
- * The pages of a forum section (articles or policy) whose discussions have
- * activity, the most recent first. Threads stored under an older address
- * count for the page that address now leads to.
+ * The pages of a forum section (articles, policy, or blog posts) whose
+ * discussions have activity, the most recent first. Threads stored under an
+ * older address count for the page or post that address now leads to.
  */
 export const listDiscussedPages = async (
   dalInstance: DataAccessLayer,
@@ -250,6 +262,8 @@ export const listDiscussedPages = async (
   { page = 1, pageSize = DISCUSSED_PAGES_PAGE_SIZE }: { page?: number; pageSize?: number } = {}
 ): Promise<{ pages: DiscussedPage[]; total: number; page: number; pageCount: number }> => {
   const current = Math.max(1, Math.floor(page) || 1);
+  const [items, aliases, itemId] =
+    category === 'blog' ? ['posts', 'post_aliases', 'post_id'] : ['pages', 'page_aliases', 'page_id'];
   const result = await dalInstance.query(
     `SELECT COALESCE(p.slug, ap.slug, t.page_slug) AS slug,
             COALESCE(p.title, ap.title) AS title,
@@ -260,11 +274,11 @@ export const listDiscussedPages = async (
        FROM ${ForumThread.tableName} t
        LEFT JOIN ${ForumComment.tableName} c
          ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
-       LEFT JOIN pages p
+       LEFT JOIN ${items} p
          ON p.slug = t.page_slug AND p._old_rev_of IS NULL AND p._rev_deleted = false
-       LEFT JOIN page_aliases a ON p.id IS NULL AND a.slug = t.page_slug
-       LEFT JOIN pages ap
-         ON ap.id = a.page_id AND ap._old_rev_of IS NULL AND ap._rev_deleted = false
+       LEFT JOIN ${aliases} a ON p.id IS NULL AND a.slug = t.page_slug
+       LEFT JOIN ${items} ap
+         ON ap.id = a.${itemId} AND ap._old_rev_of IS NULL AND ap._rev_deleted = false
       WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
         AND t.category = $1 AND t.page_slug IS NOT NULL
       GROUP BY 1, 2

@@ -59,7 +59,7 @@ import {
   unsubscribeUserFromForumThread,
 } from '../services/forum-subscription-service.js';
 import { normalizeSlugInput } from '../services/validation.js';
-import { buildDiscussionContext, renderPageDiscussionForThread } from './discussion.js';
+import { buildDiscussionContext, renderPageDiscussionForThread, renderPostDiscussionForThread } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor } from './lib/canonical.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
@@ -244,7 +244,7 @@ const readPage = (value: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 };
 
-const SECTIONS_WITH_PAGES = new Set(['articles', 'policy']);
+const SECTIONS_WITH_PAGES = new Set(['articles', 'policy', 'blog']);
 
 /** The pages of a section whose discussions are active, newest activity first. */
 const renderDiscussedPages = async (
@@ -266,7 +266,9 @@ const renderDiscussedPages = async (
             : '',
         }),
       ];
-      return `<li class="discussion-page-item"><a href="${escapeHtml(discussionPath({ kind: 'page', slug: item.slug }))}">${renderText(
+      const target: DiscussionTarget =
+        category === 'blog' ? { kind: 'post', slug: item.slug } : { kind: 'page', slug: item.slug };
+      return `<li class="discussion-page-item"><a href="${escapeHtml(discussionPath(target))}">${renderText(
         title
       )}</a> <span class="discussion-thread-meta">${meta.map(part => escapeHtml(part)).join(' · ')}</span></li>`;
     })
@@ -314,8 +316,9 @@ const renderSectionPage = async (
     headingLevel: 2,
     openReply: state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined),
   });
-  // Article threads always belong to an article, so they start from its page.
-  const canStart = category !== 'articles';
+  // Article and blog threads always belong to an article or a post, so they
+  // start from it.
+  const canStart = category !== 'articles' && category !== 'blog';
   const pagesHtml = SECTIONS_WITH_PAGES.has(category) && discussion.page === 1 ? await renderDiscussedPages(req, dalInstance, category) : '';
   const showThreads = discussion.threadCount > 0 || canStart;
   const startHtml = !canStart
@@ -386,6 +389,9 @@ const renderReplyError = async (req: Request, res: Response, error: ValidationEr
   const target = discussionTargetOfThread(thread);
   if (target.kind === 'page') {
     return renderPageDiscussionForThread(req, res, { id: thread.id, pageSlug: target.slug }, { openReply });
+  }
+  if (target.kind === 'post') {
+    return renderPostDiscussionForThread(req, res, { id: thread.id, postSlug: target.slug }, { openReply });
   }
   await renderSectionPage(req, res, thread.category, { openReply });
   return true;
@@ -599,7 +605,7 @@ export const registerForumRoutes = (app: Express) => {
         userId
       );
       const target = discussionTargetOfThread(thread);
-      res.redirect(303, target.kind === 'page' ? discussionPath(target) : forumIndexPath());
+      res.redirect(303, target.kind === 'section' ? forumIndexPath() : discussionPath(target));
     } catch (error) {
       if (error instanceof ForbiddenError) {
         res.status(403).type('text').send(req.t('page.accessDenied'));

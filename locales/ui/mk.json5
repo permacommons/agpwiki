@@ -197,6 +197,7 @@
       articles: 'Статии',
       technology: 'Технологија',
       policy: 'Политика',
+      blog: 'Блог',
     },
     compose: {
       body: 'Порака',

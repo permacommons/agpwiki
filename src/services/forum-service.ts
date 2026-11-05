@@ -16,6 +16,7 @@ import type { ForumCommentInstance } from '../models/manifests/forum-comment.js'
 import type { ForumThreadInstance } from '../models/manifests/forum-thread.js';
 import { escapeHtml } from '../render.js';
 import { assertCanModerateForum } from './authorization.js';
+import { findCurrentPostBySlugOrAlias } from './blog-post-service.js';
 import {
   enqueueForumReplyNotification,
   subscribeActorToForumThread,
@@ -38,6 +39,7 @@ export const FORUM_CATEGORY_KEYS = {
   articles: 'forum.category.articles',
   technology: 'forum.category.technology',
   policy: 'forum.category.policy',
+  blog: 'forum.category.blog',
 } as const;
 
 export type ForumCategorySlug = keyof typeof FORUM_CATEGORY_KEYS;
@@ -460,10 +462,24 @@ export const createForumThread = async (
         normalizedPageSlug = target.canonicalSlug;
       }
     }
+  } else if (normalizedCategory === 'blog') {
+    // Blog threads are about one post; the slug names the post, not a page.
+    const post = rawPageSlug ? await findCurrentPostBySlugOrAlias(ForumThread.dal as DataAccessLayer, rawPageSlug) : null;
+    if (!rawPageSlug) {
+      errors.add('pageSlug', 'must not be empty.', 'required');
+    } else if (!post) {
+      errors.add('pageSlug', 'must refer to an existing blog post.', 'not_found');
+    } else {
+      normalizedPageSlug = post.slug;
+    }
   } else if (rawPageSlug) {
     errors.add('pageSlug', 'is only allowed for page discussion threads.', 'invalid');
   }
-  if (normalizedPageSlug && forumPageCategory(normalizedPageSlug) !== normalizedCategory) {
+  if (
+    normalizedPageSlug &&
+    normalizedCategory !== 'blog' &&
+    forumPageCategory(normalizedPageSlug) !== normalizedCategory
+  ) {
     errors.add('pageSlug', 'must belong to the selected discussion category.', 'invalid');
   }
   errors.throwIfAny();

@@ -197,6 +197,7 @@
       articles: 'Cikkek',
       technology: 'Technológia',
       policy: 'Szabályzat',
+      blog: 'Napló',
     },
     compose: {
       body: 'Üzenet',

@@ -197,6 +197,7 @@
       articles: 'Články',
       technology: 'Technológie',
       policy: 'Politika',
+      blog: 'Blogová sekcia',
     },
     compose: {
       body: 'Správa',

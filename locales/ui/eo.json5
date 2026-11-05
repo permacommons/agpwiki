@@ -197,6 +197,7 @@
       articles: 'Artikoloj',
       technology: 'Teknologio',
       policy: 'Politiko',
+      blog: 'Blogo',
     },
     compose: {
       body: 'Mesaĝo',
