@@ -14,7 +14,7 @@ import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
-import { createWikiPage, deleteWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { addWikiPageAlias, createWikiPage, deleteWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -101,6 +101,20 @@ test('A permanent link leads to the page under its current address', async () =>
       dal,
       { slug: `${prefix}-old`, title: { en: 'Old' }, body: { en: 'Text.' } },
       user.id
+    );
+
+    const reservedSlug = `id/${randomUUID()}`;
+    await assert.rejects(
+      createWikiPage(dal, { slug: reservedSlug, title: { en: 'Reserved' }, body: { en: 'Text.' } }, user.id),
+      /reserved/
+    );
+    await assert.rejects(
+      updateWikiPage(dal, { slug: page.slug, newSlug: reservedSlug, revSummary: { en: 'Rename.' } }, user.id),
+      /reserved/
+    );
+    await assert.rejects(
+      addWikiPageAlias(dal, { slug: reservedSlug, pageSlug: page.slug }, user.id),
+      /reserved/
     );
 
     const viewed = await fetch(`${server.url}/${prefix}-old`);
