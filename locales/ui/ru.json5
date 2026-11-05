@@ -201,6 +201,7 @@
       articles: 'Статьи',
       technology: 'Технологии',
       policy: 'Политика',
+      blog: 'Блог',
     },
     compose: {
       body: 'Сообщение',

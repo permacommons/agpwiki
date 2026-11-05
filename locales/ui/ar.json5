@@ -200,6 +200,7 @@
       articles: 'مقالات',
       technology: 'تقنية',
       policy: 'سياسات',
+      blog: 'مدونة',
     },
     compose: {
       body: 'الرسالة',

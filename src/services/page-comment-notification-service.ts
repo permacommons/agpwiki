@@ -80,7 +80,8 @@ export const notifyPageFollowersOfForumPost = async (
     string,
     unknown
   >).first();
-  if (!thread?.pageSlug) return null;
+  // Only threads about a wiki page reach the people who follow that page.
+  if (!thread?.pageSlug || (thread.category !== 'articles' && thread.category !== 'policy')) return null;
   const pageId = await findCurrentPageIdBySlug(thread.pageSlug);
   if (!pageId) return null;
   const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];

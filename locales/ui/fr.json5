@@ -201,6 +201,7 @@
       articles: 'Articles',
       technology: 'Technologie',
       policy: 'Politiques',
+      blog: 'Carnet',
     },
     compose: {
       body: 'Message',

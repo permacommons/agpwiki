@@ -201,6 +201,7 @@
       articles: 'Artikelen',
       technology: 'Technologie',
       policy: 'Beleid',
+      blog: 'Bloggedeelte',
     },
     compose: {
       body: 'Bericht',

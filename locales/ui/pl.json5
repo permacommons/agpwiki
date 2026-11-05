@@ -200,6 +200,7 @@
       articles: 'Artykuły',
       technology: 'Technologia',
       policy: 'Zasady',
+      blog: 'Dziennik',
     },
     compose: {
       body: 'Wiadomość',

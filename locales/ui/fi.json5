@@ -201,6 +201,7 @@
       articles: 'Artikkelit',
       technology: 'Teknologia',
       policy: 'Käytännöt',
+      blog: 'Blogi',
     },
     compose: {
       body: 'Viesti',

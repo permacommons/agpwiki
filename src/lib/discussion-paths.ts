@@ -2,12 +2,13 @@ import { FORUM_BASE_PATH } from './forum-paths.js';
 import { encodeSlugPath } from './slug.js';
 
 /**
- * Where a discussion lives: every wiki page has one, at its address plus
- * /discussion, and each forum section has one for threads that are not
- * about a single page.
+ * Where a discussion lives: every wiki page and blog post has one, at its
+ * address plus /discussion, and each forum section has one for threads that
+ * are not about a single page.
  */
 export type DiscussionTarget =
   | { kind: 'page'; slug: string }
+  | { kind: 'post'; slug: string }
   | { kind: 'section'; category: string };
 
 export const DISCUSSION_SUFFIX = 'discussion';
@@ -15,7 +16,9 @@ export const DISCUSSION_SUFFIX = 'discussion';
 export const discussionPath = (target: DiscussionTarget) =>
   target.kind === 'page'
     ? `/${encodeSlugPath(target.slug)}/${DISCUSSION_SUFFIX}`
-    : `${FORUM_BASE_PATH}/${encodeURIComponent(target.category)}`;
+    : target.kind === 'post'
+      ? `/blog/${encodeURIComponent(target.slug)}/${DISCUSSION_SUFFIX}`
+      : `${FORUM_BASE_PATH}/${encodeURIComponent(target.category)}`;
 
 export const discussionPagePath = (target: DiscussionTarget, page: number) =>
   page > 1 ? `${discussionPath(target)}?page=${page}` : discussionPath(target);
@@ -46,9 +49,11 @@ interface ThreadPlacement {
 
 /** The discussion a thread is part of. */
 export const discussionTargetOfThread = ({ category, pageSlug }: ThreadPlacement): DiscussionTarget =>
-  pageSlug && (category === 'articles' || category === 'policy')
-    ? { kind: 'page', slug: pageSlug }
-    : { kind: 'section', category };
+  !pageSlug
+    ? { kind: 'section', category }
+    : category === 'blog'
+      ? { kind: 'post', slug: pageSlug }
+      : { kind: 'page', slug: pageSlug };
 
 interface LinkedThread extends ThreadPlacement {
   id: string;
