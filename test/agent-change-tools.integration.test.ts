@@ -167,6 +167,39 @@ test('notifications_list pages through own notifications and notifications_markR
   }
 });
 
+test('notifications_list excludes all notifications exactly at since', async () => {
+  const dal = await getDal();
+  const reader = await createTestUser('boundary');
+  const since = '2026-01-01T12:00:00.123Z';
+  try {
+    for (const [subject, time] of [
+      ['before', '2026-01-01T12:00:00.122999Z'],
+      ['equal one', since],
+      ['equal two', since],
+      ['after', '2026-01-01T12:00:00.123001Z'],
+    ]) {
+      const id = await createSiteNotification(dal, {
+        userId: reader.id,
+        kind: 'forum.reply',
+        url: '/meta/test',
+        subject,
+      });
+      await dal.query('UPDATE notifications SET created_at = $1 WHERE id = $2', [time, id]);
+    }
+    const tools = getTools();
+    const result = await call<NotificationList>(tools, 'notifications_list', { since }, reader.id);
+    assert.deepEqual(result.notifications.map(n => n.subject), ['after']);
+
+    const empty = await call<NotificationList>(tools, 'notifications_list', { since: '2026-01-01T12:00:01Z' }, reader.id);
+    assert.deepEqual(empty.notifications, []);
+    const resumed = await call<NotificationList>(tools, 'notifications_list', { cursor: empty.cursor }, reader.id);
+    assert.deepEqual(resumed.notifications, []);
+  } finally {
+    await dal.query('DELETE FROM notifications WHERE user_id = $1', [reader.id]);
+    await dal.query('DELETE FROM users WHERE id = $1', [reader.id]);
+  }
+});
+
 test('changes_since lists page changes after a cursor, by page or address prefix', async () => {
   const dal = await getDal();
   const user = await createTestUser('editor');

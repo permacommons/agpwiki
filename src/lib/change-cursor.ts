@@ -29,13 +29,12 @@ export const decodeChangeCursor = (value: string, field = 'cursor'): ChangeCurso
   return { time, id: id.toLowerCase() };
 };
 
-// A starting point given as a date: everything after that moment. The nil
-// UUID sorts before every real ID.
-const NIL_UUID = '00000000-0000-0000-0000-000000000000';
+// The maximum UUID excludes every ID at the starting timestamp.
+const MAX_UUID = 'ffffffff-ffff-ffff-ffff-ffffffffffff';
 
 export const cursorFromDate = (date: Date): ChangeCursor => ({
   time: date.toISOString().replace(/Z$/, '000Z'),
-  id: NIL_UUID,
+  id: MAX_UUID,
 });
 
 /**
