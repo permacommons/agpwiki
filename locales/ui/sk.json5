@@ -13,6 +13,9 @@
     signOut: 'Odhlásiť sa',
     help: 'Pomoc',
     menu: 'Navigačné menu',
+    permanentLink: 'Trvalý odkaz',
+    permanentLinkCopied: 'Odkaz skopírovaný',
+    permanentLinkTitle: 'Skopírovať odkaz na túto stránku, ktorý funguje aj po jej premenovaní',
   },
   search: {
     description: 'Vyhľadávajte názvy stránok a skratky URL.',

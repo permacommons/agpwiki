@@ -13,6 +13,9 @@
     signOut: 'Atsijungti',
     help: 'Pagalba',
     menu: 'Meniu',
+    permanentLink: 'Nuolatinė nuoroda',
+    permanentLinkCopied: 'Nuoroda nukopijuota',
+    permanentLinkTitle: 'Kopijuoti nuorodą į šį puslapį, kuri veiks ir jį pervadinus',
   },
   search: {
     description: 'Ieškokite puslapių pavadinimų ir trumpųjų žymų.',

@@ -13,6 +13,9 @@
     signOut: '退出',
     help: '帮助',
     menu: '菜单',
+    permanentLink: '永久链接',
+    permanentLinkCopied: '已复制链接',
+    permanentLinkTitle: '复制此页面的链接，即使页面改名仍可使用',
   },
   search: {
     description: '搜索页面标题和别名。',

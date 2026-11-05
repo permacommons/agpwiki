@@ -13,6 +13,9 @@
     signOut: 'Çıkış Yap',
     help: 'Yardım',
     menu: 'Menü',
+    permanentLink: 'Kalıcı bağlantı',
+    permanentLinkCopied: 'Bağlantı kopyalandı',
+    permanentLinkTitle: 'Bu sayfaya, adı değişse de çalışan bir bağlantı kopyala',
   },
   search: {
     description: 'Sayfa başlıklarını ve kısa adları ara.',

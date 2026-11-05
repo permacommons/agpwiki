@@ -234,7 +234,10 @@
     "userRights": "User rights",
     "signOut": "Sign out",
     "help": "Help",
-    "menu": "Menu"
+    "menu": "Menu",
+    "permanentLink": "Permanent link",
+    "permanentLinkCopied": "Link copied",
+    "permanentLinkTitle": "Copy a link to this page that keeps working if the page is renamed"
   },
   "search": {
     "placeholder": "Search titles...",

@@ -119,6 +119,7 @@ import {
   readPageCheckRevision,
   updatePageCheck,
 } from '../services/page-check-service.js';
+import { resolvePageSlugOrId } from '../services/page-lookup-service.js';
 import {
   getWikiPageEditability,
   type PageProtectionInput,
@@ -307,6 +308,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     .string()
     .describe(`Citation claim ID. Max ${CITATION_CLAIM_ID_MAX_LENGTH} characters.`);
   const optionalSlugSchema = slugSchema.optional().describe(slugSchema.description ?? '');
+  const pageSlugSchema = z
+    .string()
+    .describe(
+      `Wiki page slug, or the page's permanent ID (the UUID in its /id/ link). Max ${SLUG_MAX_LENGTH} characters.`
+    );
   const keepAliasSchema = z
     .boolean()
     .optional()
@@ -435,6 +441,23 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       } catch (error) {
         return formatToolErrorResult(error);
       }
+    };
+
+  // Agents can name a page by its permanent ID wherever they name it by slug.
+  // The listed fields are turned into the page's current slug first.
+  const withPageIds =
+    <Args,>(
+      fields: readonly string[],
+      handler: (args: Args, extra?: { authInfo?: AuthInfo }) => Promise<unknown>
+    ) =>
+    async (args: Args, extra?: { authInfo?: AuthInfo }) => {
+      await initializePostgreSQL();
+      const resolved: Record<string, unknown> = { ...(args as Record<string, unknown>) };
+      for (const field of fields) {
+        const value = resolved[field];
+        if (typeof value === 'string') resolved[field] = await resolvePageSlugOrId(value);
+      }
+      return handler(resolved as Args, extra);
     };
 
   const requireAuthUserId = async (extra?: { authInfo?: AuthInfo }) =>
@@ -1235,12 +1258,12 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `List revisions for a wiki page by slug, newest first: revision IDs, dates, authors, summaries and tags, without content. Use wiki_readRevision to read one revision's content. Results are paginated: pass offset (default 0) and limit (default ${REVISION_LIST_DEFAULT_LIMIT}, max ${REVISION_LIST_MAX_LIMIT}); nextOffset is null on the last page.`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         offset: z.number().int().min(0).optional(),
         limit: z.number().int().min(1).max(REVISION_LIST_MAX_LIMIT).optional(),
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(withPageIds(['slug'], async args => {
       const dal = await initializePostgreSQL();
       const { pageId, revisions } = await listWikiPageRevisions(dal, args.slug);
       const offset = args.offset ?? 0;
@@ -1260,7 +1283,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           revSummary: revision.revSummary,
         })),
       };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1271,14 +1294,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Compare two revisions of a wiki page. Returns unified diffs and change statistics for one language by default (chosen like wiki_readPage, against the newer revision); pass lang: "*" for all languages. Complete before/after texts are omitted unless includeFullText is true.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         fromRevId: uuidSchema,
         toRevId: uuidSchema.optional(),
         lang: contentLanguageSchema,
         includeFullText: z.boolean().optional(),
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(withPageIds(['slug'], async args => {
       const dal = await initializePostgreSQL();
       const target = args.toRevId
         ? (await readWikiPageRevision(dal, args.slug, args.toRevId)).revision
@@ -1310,7 +1333,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         availableLanguages,
         fields: compactFieldDiffs(diff.fields, selectedLanguage, args.includeFullText ?? false),
       };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1320,7 +1343,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `Set the status of a proposal page under meta/proposals/: ${PROPOSAL_STATUSES.join(', ')}. The proposal's creator or a wiki admin can set draft, open and withdrawn; only wiki admins can record a decision (adopted, applied, not_adopted, superseded), which needs a decisionNote (the published rationale) as a language map, except when moving an adopted proposal to applied. applied needs appliedTo (the pages changed or pull requests merged); superseded needs supersededBy (the replacing proposal's slug). The change is a normal page revision. Deciding a proposal is a human decision: only do it when your operator has decided. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         status: z.enum([...PROPOSAL_STATUSES] as [string, ...string[]]),
         decisionNote: z
           .record(z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH), z.string().min(1).max(2000))
@@ -1333,14 +1356,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(withPageIds(['slug', 'supersededBy'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...input } = args as typeof args & { policyHash?: string };
       await requireCurrentPolicyHash(dal, policyHash);
       const page = await setProposalStatus(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposal: page.proposal };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1351,10 +1374,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(withPageIds(['slug'], async args => {
       const dal = await initializePostgreSQL();
       const page = await readWikiPage(dal, args.slug);
       if (!isSignoffPageSlug(page.slug)) {
@@ -1400,7 +1423,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
           })),
         })),
       };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1411,21 +1434,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are forum posts (Markdown) in a thread attached to the position: the first reply starts the thread, later ones join it, and the position's author is notified. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         signoffId: uuidSchema,
         body: z.string().min(1),
         bodyLanguage: z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH),
         policyHash: policyHashSchema,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash: _policyHash, bodyLanguage, ...input } = args as typeof args & { policyHash?: string };
       await requireCurrentPolicyHash(dal, _policyHash);
       const reply = await replyToPosition(dal, { ...input, language: bodyLanguage }, userId);
       return { commentId: reply.commentId, threadId: reply.threadId, startedThread: reply.createdThread };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1435,7 +1458,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `Set the pull requests implementing a proposal under meta/proposals/ and, optionally, the main proposal it is part of. Anyone who can edit the proposal page can do this. pullRequests replaces the whole list (links to github.com/permacommons/agpwiki/pull/N; an empty list removes them); parent is the main proposal's slug (null or "" removes it), resolved and returned as proposalLinks.parent with its stable id and current slug (null if the parent is unavailable), so renames preserve the relationship. Omit a field to leave it unchanged. Use a main proposal only when grouping helps, for example a large change built in several steps. Grouping is one level deep: a part cannot have parts, and a proposal with parts cannot become a part. The change is a normal page revision. ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         pullRequests: z.array(z.string().min(1).max(300)).max(20).optional(),
         parent: z.string().max(200).nullable().optional(),
         expectedRevId: expectedRevIdSchema,
@@ -1443,14 +1466,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(withPageIds(['slug', 'parent'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...input } = args as typeof args & { policyHash?: string };
       await requireCurrentPolicyHash(dal, policyHash);
       const page = await setProposalLinks(dal, input, userId);
       return { slug: page.slug, currentRevId: page.currentRevId, proposalLinks: page.proposalLinks };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1493,11 +1516,11 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `Read a single wiki page by slug, in one language by default (see lang; pass "*" for all languages). ${READ_REVISION_DESCRIPTION} contentHash always covers every language. canonicalLanguage is the page's canonical language. translatedFrom lists, for each translation recorded as such, the canonical revision it was made from (language, revId) and editsBehind, the number of edits that changed the canonical text since (null if that revision is no longer in the history).`,
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         lang: contentLanguageSchema,
       },
     },
-    withToolErrorHandling(async (args, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const payload = selectPayloadLanguage(await readWikiPage(dal, args.slug), args.lang, args.slug);
       const editability = await getWikiPageEditability(
@@ -1511,7 +1534,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         isEditable: editability.isEditable,
         protection: editability.protection,
       };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1522,19 +1545,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Read a specific wiki page revision by revision ID, in one language by default (see lang; pass "*" for all languages).',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         revId: uuidSchema,
         lang: contentLanguageSchema,
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(withPageIds(['slug'], async args => {
       const dal = await initializePostgreSQL();
       const payload = await readWikiPageRevision(dal, args.slug, args.revId);
       return {
         ...payload,
         revision: selectPayloadLanguage(payload.revision, args.lang, args.slug),
       };
-    })
+    }))
   );
 
   server.registerTool(
@@ -1736,7 +1759,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Create a new page check for a wiki page revision. checkResults and notes use language-keyed maps keyed by supported locale codes (see agpwiki://locales). metrics is required and reports issue counts.',
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         type: pageCheckTypeSchema,
         status: pageCheckStatusSchema,
         checkResults: localizedCheckResultsSchema.required,
@@ -1751,7 +1774,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.optional,
       },
     },
-    withToolErrorHandling(async (args: PageCheckWriteInput & { policyHash: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: PageCheckWriteInput & { policyHash: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
@@ -1762,7 +1785,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return payload;
-    })
+    }))
   );
 
   server.registerTool(
@@ -1811,14 +1834,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'List the current page checks for a wiki page by slug. Each check includes its currentRevId; pass it as expectedRevId to page_check_update.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
       },
     },
-    withToolErrorHandling(async args => {
+    withToolErrorHandling(withPageIds(['slug'], async args => {
       const dal = await initializePostgreSQL();
       const payload = await listPageChecks(dal, args.slug);
       return payload;
-    })
+    }))
   );
 
   server.registerTool(
@@ -1884,7 +1907,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         `Apply a patch to a wiki page body. Use format "unified" (---/+++ with @@ hunks) or "codex" (*** Begin Patch). revSummary is required, e.g., {"en":"Fix date in lead per cited archive"}. Pass baseRevId (the currentRevId from your last read or write of this page) so edits saved since then are not overwritten. On a precondition_failed or conflict error, nothing was written: read the page again, rebuild the patch against the current version, and retry. Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         patch: z.string(),
         format: z.enum(['unified', 'codex']),
         lang: languageTagSchema.optional,
@@ -1895,7 +1918,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPagePatchInput & { policyHash?: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: WikiPagePatchInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
@@ -1906,7 +1929,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return toWikiWriteResponse(payload);
-    })
+    }))
   );
 
   server.registerTool(
@@ -1917,7 +1940,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         `Rewrite a section of a wiki page body. Use target "heading" (default) with strict case-sensitive heading matching, or target "lead" for text before the first heading. For target "heading", content applies to the section body and does not replace the heading line. revSummary is required, e.g., {"en":"Rewrite 'Legacy' section to match sources"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         target: z.enum(['heading', 'lead']).optional(),
         heading: z
           .string()
@@ -1935,7 +1958,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(
+    withToolErrorHandling(withPageIds(['slug'],
       async (args: WikiPageRewriteSectionInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
@@ -1947,7 +1970,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return toWikiWriteResponse(payload);
-      }
+      })
     )
   );
 
@@ -1959,7 +1982,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         `Replace exact case-sensitive text spans in a wiki page body. Each "from" must occur exactly once; if any "from" occurs zero or multiple times, none are applied. revSummary is required, e.g., {"en":"Fix repeated typo in lead and history section"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         replacements: z
           .array(
             z.object({
@@ -1976,7 +1999,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(
+    withToolErrorHandling(withPageIds(['slug'],
       async (args: WikiPageReplaceExactTextInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
@@ -1988,7 +2011,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return toWikiWriteResponse(payload);
-      }
+      })
     )
   );
 
@@ -2000,7 +2023,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         `Create a new revision for an existing wiki page. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. canonicalLanguage sets the page's canonical language. translatedFrom applies to every body language you write other than the source language. revSummary is required, e.g., {"en":"Add 2022 census figures with citations"}. ${CONCURRENCY_DESCRIPTION} Before making edits, review policies linked from /meta/policy. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         newSlug: optionalSlugSchema,
         keepAlias: keepAliasSchema,
         title: localizedTitleSchema.optional,
@@ -2015,7 +2038,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPageUpdateInput & { policyHash?: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: WikiPageUpdateInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
@@ -2026,7 +2049,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         userId
       );
       return toWikiWriteResponse(payload);
-    })
+    }))
   );
 
   const toRevertResponse = (result: PageRevertResult) => ({
@@ -2044,20 +2067,20 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `Bring a wiki page back to exactly the title, body, canonical language, Wikidata ID and translation sources of an earlier revision (revId from wiki_listRevisions). Any account approved for editing may do this; protected pages need a wiki admin. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         revId: uuidSchema.describe('The revision to bring back, from wiki_listRevisions.'),
         expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: PageRestoreInput & { policyHash?: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: PageRestoreInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...input } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       return toRevertResponse(await restoreWikiPageRevision(dal, input, userId));
-    })
+    }))
   );
 
   server.registerTool(
@@ -2067,19 +2090,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       description: `Undo the latest run of edits to a wiki page by one contributor (someone other than you), bringing back the last version before them. Limited to experienced editors and wiki admins. ${revertRulesDescription} ${CONCURRENCY_DESCRIPTION}`,
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         expectedRevId: expectedRevIdSchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: PageRevertInput & { policyHash?: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: PageRevertInput & { policyHash?: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...input } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       return toRevertResponse(await rollbackWikiPage(dal, input, userId));
-    })
+    }))
   );
 
   server.registerTool(
@@ -2090,19 +2113,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
-        pageSlug: slugSchema,
+        pageSlug: pageSlugSchema,
         lang: languageTagSchema.optional,
         policyHash: policyHashSchema,
       },
     },
-    withToolErrorHandling(async (args: WikiPageAliasInput & { policyHash: string }, extra) => {
+    withToolErrorHandling(withPageIds(['pageSlug'], async (args: WikiPageAliasInput & { policyHash: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       const payload = await addWikiPageAlias(dal, writeArgs, userId);
       return payload;
-    })
+    }))
   );
 
   server.registerTool(
@@ -2133,19 +2156,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Soft-delete a wiki page and all its revisions. Requires wiki_admin role. revSummary is required, e.g., {"en":"Remove hoax article; fails reliability policy"}.',
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         policyHash: policyHashSchema,
         revSummary: localizedRevisionSummarySchema.required,
       },
     },
-    withToolErrorHandling(async (args: WikiPageDeleteInput & { policyHash: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: WikiPageDeleteInput & { policyHash: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       const payload = await deleteWikiPage(dal, { ...writeArgs }, userId);
       return payload;
-    })
+    }))
   );
 
   const wikiProtectPageTool = server.registerTool(
@@ -2156,7 +2179,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Protect a wiki page so only wiki admins can edit it (level "admins", the default), or only experienced editors and wiki admins (level "experienced"). Calling it on a protected page changes the level. Requires wiki_admin role.',
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         reason: z.string().optional(),
         level: z
           .enum(PROTECTION_LEVELS)
@@ -2165,14 +2188,14 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         policyHash: policyHashSchema,
       },
     },
-    withToolErrorHandling(async (args: PageProtectionInput & { policyHash: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: PageProtectionInput & { policyHash: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       const protection = await protectWikiPage(dal, writeArgs, userId);
       return { protected: true, protection };
-    })
+    }))
   );
 
   const wikiUnprotectPageTool = server.registerTool(
@@ -2183,19 +2206,19 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Remove wiki page protection so authenticated users can edit it. Requires wiki_admin role.',
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
-        slug: slugSchema,
+        slug: pageSlugSchema,
         reason: z.string().optional(),
         policyHash: policyHashSchema,
       },
     },
-    withToolErrorHandling(async (args: PageProtectionInput & { policyHash: string }, extra) => {
+    withToolErrorHandling(withPageIds(['slug'], async (args: PageProtectionInput & { policyHash: string }, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
       await requireCurrentPolicyHash(dal, policyHash);
       const protection = await unprotectWikiPage(dal, writeArgs, userId);
       return { protected: false, removed: Boolean(protection), protection };
-    })
+    }))
   );
 
   const citationDeleteTool = server.registerTool(

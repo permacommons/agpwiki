@@ -13,6 +13,9 @@
     signOut: 'সাইন আউট',
     help: 'সহায়তা',
     menu: 'মেনু',
+    permanentLink: 'স্থায়ী লিংক',
+    permanentLinkCopied: 'লিংক কপি হয়েছে',
+    permanentLinkTitle: 'এই পাতার এমন একটি লিংক কপি করুন যা পাতার নাম বদলালেও কাজ করবে',
   },
   search: {
     description: 'পৃষ্ঠা শিরোনাম ও স্লাগ খুঁজুন।',

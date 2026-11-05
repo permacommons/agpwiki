@@ -1,3 +1,5 @@
+import { isUuid } from './uuid.js';
+
 const RESERVED_SLUGS = new Set([
   '.well-known',
   'health',
@@ -41,6 +43,7 @@ export const isApplicationSlug = (slug: string) => RESERVED_SLUGS.has(slug.split
 export const isBlockedSlug = (slug: string) => {
   if (!slug) return true;
   const segments = slug.split('/');
+  if (segments.length === 2 && segments[0]?.toLowerCase() === 'id' && isUuid(segments[1])) return true;
   if (segments.some(segment => segment === '.' || segment === '..')) return true;
   if (isApplicationSlug(slug)) return true;
   if (/^.+\/checks\/[^/]+$/.test(slug)) return true;

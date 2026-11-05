@@ -13,6 +13,9 @@
     signOut: 'Logga ut',
     help: 'Hjälp',
     menu: 'Meny',
+    permanentLink: 'Permanent länk',
+    permanentLinkCopied: 'Länken kopierad',
+    permanentLinkTitle: 'Kopiera en länk till sidan som fungerar även om sidan byter namn',
   },
   search: {
     description: 'Sök i sidtitlar och sluggar.',
