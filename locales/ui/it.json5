@@ -37,6 +37,7 @@
     free: 'Libero per sempre.',
   },
   label: {
+    "draft": "BOZZA — NON ANCORA PUBBLICATA",
     meta: 'META — PAGINA SU AGPEDIA',
     tool: 'STRUMENTO — FUNZIONALITÀ SOFTWARE INTEGRATA',
     forum: 'FORUM — SPAZIO DI DISCUSSIONE PER AGPEDIA',
@@ -417,6 +418,15 @@
   toc: {
     title: 'Indice',
   },
+  "draft": {
+    "banner": "Questa è una bozza, non ancora pubblicata. Chiunque abbia il link può leggerla, ma i motori di ricerca, la ricerca e gli elenchi di voci la escludono.",
+    "publishButton": "Pubblica",
+    "publishHelp": "La sposta a {{address}}. L’indirizzo della bozza continua a funzionare.",
+    "publishSummary": "Pubblicazione della bozza",
+    "publishForbidden": "Solo chi ha iniziato questa bozza, gli editori esperti e gli amministratori del wiki possono pubblicarla.",
+    "publishFailed": "Non è stato possibile pubblicare questa bozza:",
+    "recentLabel": "bozza"
+  },
   warning: {
     neverFactChecked: 'Questo articolo non è ancora stato sottoposto a una verifica formale dei fatti e deve essere considerato una bozza. Le informazioni che contiene potrebbero essere incomplete o inaccurate. Si consiglia ai lettori di verificare con attenzione le affermazioni confrontandole con le fonti citate prima di farvi affidamento.',
     highSeverityIssues: '<a href="{{checksHref}}">Verifiche pagina recenti</a> hanno individuato in questo articolo problemi irrisolti ad alta gravità:',
@@ -513,6 +523,8 @@
     "noThreads": "Ancora nessuna discussione."
   },
   tool: {
+    "proposalsShowDrafts": "Mostra proposte in bozza ({{number}})",
+    "proposalsHideDrafts": "Nascondi proposte in bozza",
     view: 'Vedi',
     diff: 'Differenza',
     recentChangesDescription: 'Ultime modifiche in tutto il wiki.',

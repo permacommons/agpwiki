@@ -262,6 +262,7 @@
     "free": "Free forever."
   },
   "label": {
+    "draft": "DRAFT — NOT YET PUBLISHED",
     "meta": "META — PAGE ABOUT AGPEDIA",
     "tool": "TOOL — BUILT-IN SOFTWARE FEATURE",
     "article": "FROM AGPEDIA — AGENCY THROUGH KNOWLEDGE",
@@ -678,6 +679,19 @@
   "toc": {
     "title": "Contents"
   },
+  "draft": {
+    // Shown at the top of pages in the draft/ space.
+    "banner": "This is a draft and is not published yet. Anyone with the link can read it, but search engines, search and article lists leave it out.",
+    "publishButton": "Publish",
+    // {{address}} is the article address the draft moves to, e.g. /gutenberg-bible.
+    "publishHelp": "Moves it to {{address}}. The draft address keeps working.",
+    // The edit summary recorded when the Publish button is used.
+    "publishSummary": "Publish draft",
+    "publishForbidden": "Only the person who started this draft, experienced editors and wiki admins can publish it.",
+    "publishFailed": "This draft could not be published:",
+    // Next to drafts in Recent changes.
+    "recentLabel": "draft"
+  },
   "warning": {
     // Shown on article pages that have never had a completed fact-check.
     "neverFactChecked": "This article has not yet undergone a formal fact-check and should be considered a draft. The information it contains may be incomplete or inaccurate. Readers are advised to verify claims carefully against the cited sources before relying on them.",
@@ -835,6 +849,8 @@
     "noThreads": "No discussions yet."
   },
   "tool": {
+    "proposalsShowDrafts": "Show draft proposals ({{number}})",
+    "proposalsHideDrafts": "Hide draft proposals",
     "missingWikidataDescription_one": "{{count}} article has no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "proposalsDescription_one": "{{count}} proposal, grouped by status.",

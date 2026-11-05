@@ -2277,6 +2277,39 @@ pre.diff ins {
 .article-issues-row span {
   font-weight: 600;
 }
+.draft-banner {
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+  background: #e4edf1;
+  border: 1px solid #8fb0c0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.draft-banner p {
+  margin: 0;
+}
+.draft-banner-publish {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  align-items: center;
+  margin-top: 0.6rem;
+}
+.draft-banner-help {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+.change-badge {
+  display: inline-block;
+  padding: 0 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: #e4edf1;
+  color: #2f5566;
+}
 .page-label {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.7rem;

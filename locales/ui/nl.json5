@@ -38,6 +38,7 @@
     free: 'Vrij voor altijd.',
   },
   label: {
+    "draft": "CONCEPT — NOG NIET GEPUBLICEERD",
     meta: 'META — PAGINA OVER AGPEDIA',
     tool: 'TOOL — INGEBOUWDE SOFTWAREFUNCTIE',
     forum: 'FORUM — DISCUSSIEPLEK VOOR AGPEDIA',
@@ -418,6 +419,15 @@
   toc: {
     title: 'Inhoud',
   },
+  "draft": {
+    "banner": "Dit is een concept en is nog niet gepubliceerd. Iedereen met de link kan het lezen, maar zoekmachines, de zoekfunctie en artikellijsten laten het weg.",
+    "publishButton": "Publiceren",
+    "publishHelp": "Verplaatst het naar {{address}}. Het conceptadres blijft werken.",
+    "publishSummary": "Concept gepubliceerd",
+    "publishForbidden": "Alleen degene die dit concept is begonnen, ervaren bewerkers en wikibeheerders kunnen het publiceren.",
+    "publishFailed": "Dit concept kon niet worden gepubliceerd:",
+    "recentLabel": "concept"
+  },
   warning: {
     neverFactChecked: 'Dit artikel heeft nog geen formele factcheck ondergaan en moet als een concept worden beschouwd. De informatie die het bevat kan onvolledig of onjuist zijn. Lezers wordt aangeraden beweringen zorgvuldig aan de hand van de aangehaalde bronnen te controleren voordat zij erop vertrouwen.',
     highSeverityIssues: '<a href="{{checksHref}}">Recente paginacontroles</a> hebben onopgeloste problemen met hoge ernst in dit artikel vastgesteld:',
@@ -514,6 +524,8 @@
     "noThreads": "Nog geen discussies."
   },
   tool: {
+    "proposalsShowDrafts": "Conceptvoorstellen tonen ({{number}})",
+    "proposalsHideDrafts": "Conceptvoorstellen verbergen",
     view: 'Bekijk',
     diff: 'Verschil',
     recentChangesDescription: 'Laatste bewerkingen op de hele wiki.',
