@@ -451,6 +451,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       handler: (args: Args, extra?: { authInfo?: AuthInfo }) => Promise<unknown>
     ) =>
     async (args: Args, extra?: { authInfo?: AuthInfo }) => {
+      await initializePostgreSQL();
       const resolved: Record<string, unknown> = { ...(args as Record<string, unknown>) };
       for (const field of fields) {
         const value = resolved[field];
