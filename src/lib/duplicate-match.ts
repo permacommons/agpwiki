@@ -1,4 +1,9 @@
-import { DEFAULT_PAGE_NAMESPACE, type PageAddress, resolvePageAddress } from './page-address.js';
+import {
+  DEFAULT_PAGE_NAMESPACE,
+  duplicateScope,
+  type PageAddress,
+  resolvePageAddress,
+} from './page-address.js';
 
 // Short words that say nothing about a topic. Words under three letters
 // ("in", "of", "de", "la") are dropped by length, so only longer ones are here.
@@ -131,7 +136,7 @@ export const matchPossibleDuplicates = (
   pages: readonly DuplicateCandidate[],
   aliases: readonly DuplicateAlias[]
 ): DuplicateCheckResult => {
-  const namespace = address?.namespace ?? DEFAULT_PAGE_NAMESPACE.name;
+  const scope = new Set<string>(duplicateScope(address?.namespace ?? DEFAULT_PAGE_NAMESPACE.name));
   const titleKeys = new Set(titles.map(normalizeTitleForMatch).filter(Boolean));
   const proposedTitleWords = [...titleKeys].map(mainWordsFromKey);
   const addressKey = address ? normalizeAddressForMatch(address.localName) : '';
@@ -157,14 +162,14 @@ export const matchPossibleDuplicates = (
     matches.set(slug, reasons);
   };
   for (const candidate of candidates) {
-    if (candidate.address.namespace !== namespace) continue;
+    if (!scope.has(candidate.address.namespace)) continue;
     if (wikidata && candidate.page.wikidata === wikidata) addMatch(candidate.page.slug, 'wikidata');
     if (candidate.titleKeys.some(key => titleKeys.has(key))) addMatch(candidate.page.slug, 'title');
     if (addressKey && candidate.addressKey === addressKey) addMatch(candidate.page.slug, 'address');
   }
   for (const alias of aliases) {
     const aliasAddress = resolvePageAddress(alias.slug);
-    if (aliasAddress?.namespace !== namespace) continue;
+    if (!aliasAddress || !scope.has(aliasAddress.namespace)) continue;
     if (titleKeys.has(normalizeTitleForMatch(aliasAddress.localName))) addMatch(alias.pageSlug, 'alias');
     if (addressKey && normalizeAddressForMatch(aliasAddress.localName) === addressKey) {
       addMatch(alias.pageSlug, 'address');
@@ -179,7 +184,7 @@ export const matchPossibleDuplicates = (
       matchedBy: [...(matches.get(page.slug) ?? [])],
     }))
     .sort((a, b) => a.slug.localeCompare(b.slug));
-  const related = candidates.filter(candidate => candidate.address.namespace === namespace
+  const related = candidates.filter(candidate => scope.has(candidate.address.namespace)
     && !matches.has(candidate.page.slug) && candidate.page.slug !== address?.slug)
     .map(candidate => {
       let score = 0;

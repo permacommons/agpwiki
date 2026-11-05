@@ -37,6 +37,7 @@
     free: 'Livre para sempre.',
   },
   label: {
+    "draft": "RASCUNHO — AINDA NÃO PUBLICADO",
     meta: 'META — PÁGINA SOBRE A AGPEDIA',
     tool: 'FERRAMENTA — RECURSO DE SOFTWARE INTEGRADO',
     forum: 'FÓRUM — ESPAÇO DE DISCUSSÃO DA AGPEDIA',
@@ -417,6 +418,15 @@
   toc: {
     title: 'Índice',
   },
+  "draft": {
+    "banner": "Este é um rascunho e ainda não foi publicado. Qualquer pessoa com o link pode lê-lo, mas mecanismos de busca, a busca e as listas de artigos o deixam de fora.",
+    "publishButton": "Publicar",
+    "publishHelp": "Move-o para {{address}}. O endereço do rascunho continua funcionando.",
+    "publishSummary": "Publicar rascunho",
+    "publishForbidden": "Só quem começou este rascunho, editores experientes e administradores da wiki podem publicá-lo.",
+    "publishFailed": "Não foi possível publicar este rascunho:",
+    "recentLabel": "rascunho"
+  },
   warning: {
     neverFactChecked: 'Este artigo ainda não passou por uma verificação formal de fatos e deve ser considerado um rascunho. As informações nele contidas podem estar incompletas ou imprecisas. Recomenda-se que os leitores verifiquem cuidadosamente as alegações com base nas fontes citadas antes de confiar nelas.',
     highSeverityIssues: '<a href="{{checksHref}}">Verificações de página recentes</a> identificaram problemas de alta gravidade ainda não resolvidos neste artigo:',
@@ -513,6 +523,8 @@
     "noThreads": "Ainda não há discussões."
   },
   tool: {
+    "proposalsShowDrafts": "Mostrar propostas em rascunho ({{number}})",
+    "proposalsHideDrafts": "Ocultar propostas em rascunho",
     view: 'Ver',
     diff: 'Diferença',
     recentChangesDescription: 'Últimas edições em todo o wiki.',

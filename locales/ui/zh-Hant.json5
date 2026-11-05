@@ -37,6 +37,7 @@
     free: '永遠自由。',
   },
   label: {
+    "draft": "草稿 — 尚未發布",
     meta: '元 — 關於 AGPEDIA 的頁面',
     tool: '工具 — 內建軟體功能',
     forum: '論壇 — AGPEDIA 討論空間',
@@ -417,6 +418,15 @@
   toc: {
     title: '目錄',
   },
+  "draft": {
+    "banner": "這是一篇草稿，尚未發布。任何持有連結的人都能閱讀，但搜尋引擎、站內搜尋和條目列表都不會顯示它。",
+    "publishButton": "發布",
+    "publishHelp": "將它移至 {{address}}。草稿網址仍然有效。",
+    "publishSummary": "發布草稿",
+    "publishForbidden": "只有建立此草稿的人、資深編輯者和維基管理員可以發布它。",
+    "publishFailed": "無法發布此草稿：",
+    "recentLabel": "草稿"
+  },
   warning: {
     neverFactChecked: '這篇文章尚未經過正式的事實查核，應視為草稿。其中包含的資訊可能不完整或不準確。建議讀者在依賴這些內容之前，先根據所引用的來源仔細核實其中的說法。',
     highSeverityIssues: '<a href="{{checksHref}}">最近的頁面檢查</a>已發現這篇文章中仍有未解決的高嚴重程度問題：',
@@ -513,6 +523,8 @@
     "noThreads": "目前沒有討論。"
   },
   tool: {
+    "proposalsShowDrafts": "顯示草稿提案（{{number}}）",
+    "proposalsHideDrafts": "隱藏草稿提案",
     view: '檢視',
     diff: '差異',
     recentChangesDescription: '全站最新編輯。',

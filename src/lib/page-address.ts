@@ -3,9 +3,19 @@ import { isApplicationSlug, reservedSlugs, toAddressForm } from './slug.js';
 export const PAGE_NAMESPACES = [
   { name: 'article', prefix: '' },
   { name: 'meta', prefix: 'meta/' },
+  { name: 'draft', prefix: 'draft/' },
 ] as const;
 
 export type PageNamespace = typeof PAGE_NAMESPACES[number]['name'];
+
+// A draft is meant to become an article, so it may duplicate one.
+const DUPLICATE_SCOPES: Partial<Record<PageNamespace, readonly PageNamespace[]>> = {
+  draft: ['draft', 'article'],
+};
+
+/** The namespaces a new page in this namespace is checked against for duplicates. */
+export const duplicateScope = (namespace: PageNamespace): readonly PageNamespace[] =>
+  DUPLICATE_SCOPES[namespace] ?? [namespace];
 
 const prefixedNamespaces = PAGE_NAMESPACES.filter(entry => entry.prefix.length > 0)
   .sort((a, b) => b.prefix.length - a.prefix.length);
@@ -28,6 +38,19 @@ export const resolvePageAddress = (value: string): PageAddress | null => {
 };
 
 export const isArticleSlug = (slug: string) => resolvePageAddress(slug)?.namespace === 'article';
+
+export const isDraftSlug = (slug: string) => resolvePageAddress(slug)?.namespace === 'draft';
+
+const draftNamespace = PAGE_NAMESPACES.find(entry => entry.name === 'draft');
+if (!draftNamespace) throw new Error('Missing draft page namespace');
+export const DRAFT_PREFIX = draftNamespace.prefix;
+
+/** The draft address for a page: unchanged when it is already a draft. */
+export const toDraftSlug = (slug: string) => {
+  const address = resolvePageAddress(slug);
+  if (!address) return slug;
+  return address.namespace === 'draft' ? address.slug : `${DRAFT_PREFIX}${address.slug}`;
+};
 
 export const articleSlugExclusions = [
   ...prefixedNamespaces.map(entry => `${entry.prefix}%`),

@@ -38,6 +38,7 @@
     free: 'Libera por ĉiam.',
   },
   label: {
+    "draft": "MALNETO — ANKORAŬ NE PUBLIKIGITA",
     meta: 'META — PAĜO PRI AGPEDIA',
     tool: 'ILO — ENKONSTRUITA PROGRAMARA FUNKCIO',
     article: 'DE AGPEDIA — AGANTO PER SCIO',
@@ -416,6 +417,15 @@
   toc: {
     title: 'Enhavo',
   },
+  "draft": {
+    "banner": "Ĉi tio estas malneto, ankoraŭ ne publikigita. Ĉiu kun la ligilo povas legi ĝin, sed serĉiloj, la serĉo kaj artikolaj listoj ellasas ĝin.",
+    "publishButton": "Publikigi",
+    "publishHelp": "Movas ĝin al {{address}}. La adreso de la malneto plu funkcias.",
+    "publishSummary": "Publikigo de malneto",
+    "publishForbidden": "Nur la persono, kiu komencis ĉi tiun malneton, spertaj redaktantoj kaj vikiaj administrantoj povas publikigi ĝin.",
+    "publishFailed": "Ne eblis publikigi ĉi tiun malneton:",
+    "recentLabel": "malneto"
+  },
   warning: {
     neverFactChecked: 'Ĉi tiu artikolo ankoraŭ ne spertis formalan faktokontrolon kaj devas esti konsiderata malneto. La informoj, kiujn ĝi enhavas, povas esti nekompletaj aŭ malprecizaj. Legantoj estas konsilitaj zorge kontroli asertojn laŭ la cititaj fontoj antaŭ ol fidi ilin.',
     highSeverityIssues: '<a href="{{checksHref}}">Lastatempaj paĝaj kontroloj</a> identigis nesolvitajn altegravajn problemojn en ĉi tiu artikolo:',
@@ -512,6 +522,8 @@
     "noThreads": "Ankoraŭ neniuj diskutoj."
   },
   tool: {
+    "proposalsShowDrafts": "Montri malnetajn proponojn ({{number}})",
+    "proposalsHideDrafts": "Kaŝi malnetajn proponojn",
     view: 'Vidi',
     diff: 'Diferenco',
     recentChangesDescription: 'Plej novaj redaktoj tra la vikio.',

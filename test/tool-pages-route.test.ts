@@ -211,3 +211,71 @@ test('Recent changes show one compact line per change, with its links first', as
     await server.close();
   }
 });
+
+test('GET /tool/proposals lists draft proposals only on request', async () => {
+  const server = await makeTestServer();
+  const dal = sharedDal ?? (await initializePostgreSQL());
+  const stamp = Date.now();
+  const prefix = `meta/proposals/test-drafts-${stamp}`;
+  const user = await User.create({
+    username: `proposaldrafts${stamp}`,
+    displayName: 'Proposal Drafts Test',
+    email: `proposal-drafts-${stamp}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+  });
+  try {
+    await createWikiPage(dal, { slug: `${prefix}-draft`, title: { en: 'Draft one' }, body: { en: 'Text.' } }, user.id);
+    await setProposalStatus(dal, { slug: `${prefix}-draft`, status: 'draft' }, user.id);
+    await createWikiPage(dal, { slug: `${prefix}-open`, title: { en: 'Open one' }, body: { en: 'Text.' } }, user.id);
+    await setProposalStatus(dal, { slug: `${prefix}-open`, status: 'open' }, user.id);
+
+    const list = async (query: string) => {
+      const response = await fetch(`${server.url}/tool/proposals${query}`);
+      assert.equal(response.status, 200);
+      return ((await response.json()) as { bodyHtml: string }).bodyHtml;
+    };
+    const hidden = await list('');
+    assert.ok(hidden.includes(`/${prefix}-open"`));
+    assert.equal(hidden.includes(`/${prefix}-draft"`), false);
+    assert.match(hidden, /href="\/tool\/proposals\?drafts=1">tool\.proposalsShowDrafts/);
+    const shown = await list('?drafts=1');
+    assert.ok(shown.includes(`/${prefix}-draft"`));
+    assert.match(shown, /href="\/tool\/proposals">tool\.proposalsHideDrafts/);
+  } finally {
+    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
+    await server.close();
+  }
+});
+
+test('Recent changes label drafts, but not articles named after drafts', async () => {
+  const server = await makeTestServer();
+  const dal = sharedDal ?? (await initializePostgreSQL());
+  const stamp = Date.now();
+  const slug = `test-recent-draft-${stamp}`;
+  const user = await User.create({
+    username: `recentdraft${stamp}`,
+    displayName: 'Recent Draft Test',
+    email: `recent-draft-${stamp}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+  });
+  try {
+    await createWikiPage(dal, { slug, title: { en: 'A draft' }, body: { en: 'Text.' }, draft: true }, user.id);
+    await createWikiPage(dal, { slug: `${slug}-draft-horse`, title: { en: 'Draft horse' } }, user.id);
+    const response = await fetch(`${server.url}/tool/recent-changes`);
+    const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+    const itemOf = (path: string) => {
+      const at = bodyHtml.indexOf(`href="${path}"`);
+      assert.ok(at > -1, path);
+      return bodyHtml.slice(bodyHtml.lastIndexOf('<li>', at), bodyHtml.indexOf('</li>', at));
+    };
+    assert.match(itemOf(`/draft/${slug}`), /<span class="change-badge">draft\.recentLabel<\/span>/);
+    assert.doesNotMatch(itemOf(`/${slug}-draft-horse`), /change-badge/);
+  } finally {
+    await dal.query('DELETE FROM pages WHERE slug LIKE $1 OR slug LIKE $2', [`${slug}%`, `draft/${slug}%`]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
+    await server.close();
+  }
+});

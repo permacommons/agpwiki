@@ -38,6 +38,7 @@
     free: 'Libre pour toujours.',
   },
   label: {
+    "draft": "BROUILLON — PAS ENCORE PUBLIÉ",
     meta: 'META — PAGE SUR AGPEDIA',
     tool: 'OUTIL — FONCTIONNALITÉ LOGICIELLE INTÉGRÉE',
     forum: 'FORUM — ESPACE DE DISCUSSION POUR AGPEDIA',
@@ -418,6 +419,15 @@
   toc: {
     title: 'Sommaire',
   },
+  "draft": {
+    "banner": "Ceci est un brouillon, pas encore publié. Toute personne ayant le lien peut le lire, mais les moteurs de recherche, la recherche et les listes d’articles l’ignorent.",
+    "publishButton": "Publier",
+    "publishHelp": "Le déplace vers {{address}}. L’adresse du brouillon continue de fonctionner.",
+    "publishSummary": "Publication du brouillon",
+    "publishForbidden": "Seuls la personne qui a commencé ce brouillon, les contributeurs expérimentés et les admins du wiki peuvent le publier.",
+    "publishFailed": "Ce brouillon n’a pas pu être publié :",
+    "recentLabel": "brouillon"
+  },
   warning: {
     neverFactChecked: 'Cet article n\'a pas encore fait l\'objet d\'une vérification formelle des faits et doit être considéré comme un brouillon. Les informations qu\'il contient peuvent être incomplètes ou inexactes. Il est conseillé aux lectrices et lecteurs de vérifier soigneusement les affirmations à partir des sources citées avant de s\'y fier.',
     highSeverityIssues: 'De <a href="{{checksHref}}">récents contrôles de page</a> ont identifié dans cet article des problèmes de gravité élevée qui ne sont pas résolus :',
@@ -514,6 +524,8 @@
     "noThreads": "Aucune discussion pour l’instant."
   },
   tool: {
+    "proposalsShowDrafts": "Afficher les propositions en brouillon ({{number}})",
+    "proposalsHideDrafts": "Masquer les propositions en brouillon",
     view: 'Voir',
     diff: 'Différence',
     recentChangesDescription: 'Dernières modifications sur le wiki.',

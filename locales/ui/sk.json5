@@ -38,6 +38,7 @@
     free: 'Slobodné navždy.',
   },
   label: {
+    "draft": "NÁVRH — ZATIAĽ NEZVEREJNENÝ",
     meta: 'META — STRÁNKA O AGPEDIA',
     tool: 'NÁSTROJ — VSTAVANÁ SOFTVÉROVÁ FUNKCIA',
     article: 'OD AGPEDIA — AGENCIA CEZ VEDOMOSTI',
@@ -418,6 +419,15 @@
   toc: {
     title: 'Obsah',
   },
+  "draft": {
+    "banner": "Toto je návrh a zatiaľ nie je zverejnený. Ktokoľvek s odkazom si ho môže prečítať, ale vyhľadávače, vyhľadávanie a zoznamy článkov ho vynechávajú.",
+    "publishButton": "Zverejniť",
+    "publishHelp": "Presunie ho na {{address}}. Adresa návrhu naďalej funguje.",
+    "publishSummary": "Zverejnenie návrhu",
+    "publishForbidden": "Zverejniť ho môže len osoba, ktorá tento návrh začala, skúsení redaktori a správcovia wiki.",
+    "publishFailed": "Tento návrh sa nepodarilo zverejniť:",
+    "recentLabel": "návrh"
+  },
   warning: {
     neverFactChecked: 'Tento článok zatiaľ neprešiel formálnou kontrolou faktov a mal by sa považovať za návrh. Informácie, ktoré obsahuje, môžu byť neúplné alebo nepresné. Čitateľom sa odporúča, aby si pred spoliehaním sa na ne starostlivo overili tvrdenia podľa citovaných zdrojov.',
     highSeverityIssues: '<a href="{{checksHref}}">Nedávne kontroly stránok</a> identifikovali v tomto článku nevyriešené problémy s vysokou závažnosťou:',
@@ -514,6 +524,8 @@
     "noThreads": "Zatiaľ žiadne diskusie."
   },
   tool: {
+    "proposalsShowDrafts": "Zobraziť rozpracované návrhy ({{number}})",
+    "proposalsHideDrafts": "Skryť rozpracované návrhy",
     view: 'Zobraziť',
     diff: 'Rozdiel',
     recentChangesDescription: 'Najnovšie úpravy v celej wiki.',

@@ -38,6 +38,7 @@
     free: 'Bebas selamanya.',
   },
   label: {
+    "draft": "DRAF — BELUM DITERBITKAN",
     meta: 'META — HALAMAN TENTANG AGPEDIA',
     tool: 'ALAT — FITUR PERANGKAT LUNAK BAWAAN',
     forum: 'FORUM — RUANG DISKUSI UNTUK AGPEDIA',
@@ -418,6 +419,15 @@
   toc: {
     title: 'Daftar isi',
   },
+  "draft": {
+    "banner": "Ini adalah draf dan belum diterbitkan. Siapa pun yang punya tautannya bisa membacanya, tetapi mesin pencari, pencarian, dan daftar artikel tidak menampilkannya.",
+    "publishButton": "Terbitkan",
+    "publishHelp": "Memindahkannya ke {{address}}. Alamat draf tetap berfungsi.",
+    "publishSummary": "Terbitkan draf",
+    "publishForbidden": "Hanya orang yang memulai draf ini, penyunting berpengalaman, dan admin wiki yang dapat menerbitkannya.",
+    "publishFailed": "Draf ini tidak dapat diterbitkan:",
+    "recentLabel": "draf"
+  },
   warning: {
     neverFactChecked: 'Artikel ini belum menjalani pemeriksaan fakta formal dan sebaiknya dianggap sebagai draf. Informasi yang dikandungnya mungkin belum lengkap atau tidak akurat. Pembaca disarankan untuk memeriksa klaim dengan saksama terhadap sumber yang dikutip sebelum mengandalkannya.',
     highSeverityIssues: '<a href="{{checksHref}}">Pemeriksaan halaman terbaru</a> telah mengidentifikasi masalah berkeparahan tinggi yang belum terselesaikan dalam artikel ini:',
@@ -514,6 +524,8 @@
     "noThreads": "Belum ada diskusi."
   },
   tool: {
+    "proposalsShowDrafts": "Tampilkan usulan draf ({{number}})",
+    "proposalsHideDrafts": "Sembunyikan usulan draf",
     view: 'Lihat',
     diff: 'Perbedaan',
     recentChangesDescription: 'Suntingan terbaru di seluruh wiki.',

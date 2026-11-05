@@ -38,6 +38,7 @@
     free: 'Örökre szabad.',
   },
   label: {
+    "draft": "PISZKOZAT — MÉG NINCS KÖZZÉTÉVE",
     meta: 'META — OLDAL AZ AGPEDIA-RÓL',
     tool: 'ESZKÖZ — BEÉPÍTETT SZOFTVERFUNKCIÓ',
     article: 'AZ AGPEDIÁRÓL — CSELEKVŐKÉPESSÉG A TUDÁS RÉVÉN',
@@ -418,6 +419,15 @@
   toc: {
     title: 'Tartalom',
   },
+  "draft": {
+    "banner": "Ez egy piszkozat, még nincs közzétéve. Bárki elolvashatja, akinek megvan a link, de a keresőmotorok, a keresés és a szócikklisták kihagyják.",
+    "publishButton": "Közzététel",
+    "publishHelp": "Áthelyezi ide: {{address}}. A piszkozat címe továbbra is működik.",
+    "publishSummary": "Piszkozat közzététele",
+    "publishForbidden": "Csak a piszkozat elindítója, a tapasztalt szerkesztők és a wiki adminisztrátorai tehetik közzé.",
+    "publishFailed": "A piszkozatot nem sikerült közzétenni:",
+    "recentLabel": "piszkozat"
+  },
   warning: {
     neverFactChecked: 'Ez a cikk még nem esett át hivatalos tényellenőrzésen, ezért piszkozatként kezelendő. A benne szereplő információk hiányosak vagy pontatlanok lehetnek. Az olvasóknak azt javasoljuk, hogy mielőtt ezekre támaszkodnának, gondosan ellenőrizzék az állításokat a hivatkozott források alapján.',
     highSeverityIssues: 'A <a href="{{checksHref}}">legutóbbi oldalellenőrzések</a> feloldatlan, magas súlyosságú problémákat azonosítottak ebben a cikkben:',
@@ -514,6 +524,8 @@
     "noThreads": "Még nincsenek beszélgetések."
   },
   tool: {
+    "proposalsShowDrafts": "Piszkozat javaslatok mutatása ({{number}})",
+    "proposalsHideDrafts": "Piszkozat javaslatok elrejtése",
     view: 'Megtekintés',
     diff: 'Eltérés',
     recentChangesDescription: 'Legújabb szerkesztések a teljes wikiben.',

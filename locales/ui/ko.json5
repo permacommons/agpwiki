@@ -37,6 +37,7 @@
     free: '영원히 자유롭습니다.',
   },
   label: {
+    "draft": "초안 — 아직 게시되지 않음",
     meta: '메타 — AGPEDIA 소개 페이지',
     tool: '도구 — 내장 소프트웨어 기능',
     forum: '포럼 — AGPEDIA 토론 공간',
@@ -417,6 +418,15 @@
   toc: {
     title: '목차',
   },
+  "draft": {
+    "banner": "이 문서는 아직 게시되지 않은 초안입니다. 링크가 있으면 누구나 읽을 수 있지만, 검색 엔진, 검색, 문서 목록에는 나타나지 않습니다.",
+    "publishButton": "게시",
+    "publishHelp": "{{address}}(으)로 옮깁니다. 초안 주소도 계속 작동합니다.",
+    "publishSummary": "초안 게시",
+    "publishForbidden": "이 초안을 시작한 사람, 숙련된 편집자, 위키 관리자만 게시할 수 있습니다.",
+    "publishFailed": "이 초안을 게시하지 못했습니다:",
+    "recentLabel": "초안"
+  },
   warning: {
     neverFactChecked: '이 문서는 아직 공식적인 사실 확인을 거치지 않았으므로 초안으로 간주해야 합니다. 여기에 담긴 정보는 불완전하거나 부정확할 수 있습니다. 독자는 이를 신뢰하기 전에 인용된 출처를 바탕으로 주장 내용을 주의 깊게 확인하는 것이 좋습니다.',
     highSeverityIssues: '<a href="{{checksHref}}">최근 페이지 점검</a>에서 이 문서의 미해결 고심각도 문제를 확인했습니다:',
@@ -513,6 +523,8 @@
     "noThreads": "아직 토론이 없습니다."
   },
   tool: {
+    "proposalsShowDrafts": "초안 제안 보기 ({{number}})",
+    "proposalsHideDrafts": "초안 제안 숨기기",
     view: '보기',
     diff: '차이',
     recentChangesDescription: '위키 전체의 최근 수정.',

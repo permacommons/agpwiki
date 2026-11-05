@@ -37,6 +37,7 @@
     free: 'Wolne na zawsze.',
   },
   label: {
+    "draft": "SZKIC — JESZCZE NIEOPUBLIKOWANY",
     meta: 'META — STRONA O AGPEDIA',
     tool: 'NARZĘDZIE — WBUDOWANA FUNKCJA OPROGRAMOWANIA',
     forum: 'FORUM — PRZESTRZEŃ DYSKUSJI AGPEDIA',
@@ -417,6 +418,15 @@
   toc: {
     title: 'Spis treści',
   },
+  "draft": {
+    "banner": "To jest szkic, jeszcze nieopublikowany. Każdy, kto ma link, może go przeczytać, ale wyszukiwarki, wyszukiwanie i listy artykułów go pomijają.",
+    "publishButton": "Opublikuj",
+    "publishHelp": "Przenosi go pod {{address}}. Adres szkicu nadal działa.",
+    "publishSummary": "Publikacja szkicu",
+    "publishForbidden": "Tylko osoba, która rozpoczęła ten szkic, doświadczeni redaktorzy i administratorzy wiki mogą go opublikować.",
+    "publishFailed": "Nie udało się opublikować tego szkicu:",
+    "recentLabel": "szkic"
+  },
   warning: {
     neverFactChecked: 'Ten artykuł nie przeszedł jeszcze formalnej weryfikacji faktów i należy go traktować jako wersję roboczą. Zawarte w nim informacje mogą być niepełne lub niedokładne. Czytelnikom zaleca się, aby przed poleganiem na nich uważnie zweryfikowali twierdzenia na podstawie cytowanych źródeł.',
     highSeverityIssues: '<a href="{{checksHref}}">Najnowsze kontrole strony</a> wykryły w tym artykule nierozwiązane problemy o wysokiej wadze:',
@@ -513,6 +523,8 @@
     "noThreads": "Brak dyskusji."
   },
   tool: {
+    "proposalsShowDrafts": "Pokaż szkice propozycji ({{number}})",
+    "proposalsHideDrafts": "Ukryj szkice propozycji",
     view: 'Widok',
     diff: 'Różnica',
     recentChangesDescription: 'Najnowsze edycje w całej wiki.',
