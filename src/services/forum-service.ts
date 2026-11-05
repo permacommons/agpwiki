@@ -274,15 +274,6 @@ const validateMarkdownBody = async (
   await validateLocalizedMarkdownContent({ [language]: body }, field, errors, []);
 };
 
-const normalizeQuotedMarkdown = (value: string) =>
-  value
-    .replace(/\r\n/g, '\n')
-    .split('\n')
-    .map(line => (line.length > 0 ? `> ${line}` : '>'))
-    .join('\n');
-
-export const buildForumQuote = (value: string) => `${normalizeQuotedMarkdown(value)}\n\n`;
-
 export interface ForumPageTarget {
   canonicalSlug: string;
   title: Record<string, string> | null | undefined;

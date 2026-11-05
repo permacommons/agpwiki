@@ -1,4 +1,4 @@
-import { FORUM_BASE_PATH, forumThreadPath } from './forum-paths.js';
+import { FORUM_BASE_PATH } from './forum-paths.js';
 import { encodeSlugPath } from './slug.js';
 
 /**
@@ -53,23 +53,46 @@ export const discussionTargetOfThread = ({ category, pageSlug }: ThreadPlacement
 interface LinkedThread extends ThreadPlacement {
   id: string;
   attachedType?: string | null;
+  attachedId?: string | null;
 }
 
-/**
- * Where to send a reader for a thread. Threads about a page are sections of
- * its discussion; the others still have a page of their own.
- */
-export const threadLinkPath = (thread: LinkedThread) => {
+// Replies to a position on a proposal are shown under that position, at the
+// top of the proposal's discussion; the thread holding them has no section.
+const positionTarget = (thread: LinkedThread) => {
   const target = discussionTargetOfThread(thread);
-  return target.kind === 'page' && !thread.attachedType
-    ? threadPermalink(target, thread.id)
-    : forumThreadPath(thread.id);
+  return thread.attachedType === 'position' && target.kind === 'page' ? target : null;
 };
 
-/** Where to send a reader for a comment, as {@link threadLinkPath}. */
+/** Where a thread can be read: its section in its discussion. */
+export const threadLinkPath = (thread: LinkedThread) => {
+  const position = positionTarget(thread);
+  if (position) {
+    return thread.attachedId
+      ? `${discussionPath(position)}#${positionAnchor(thread.attachedId)}`
+      : discussionPath(position);
+  }
+  return threadPermalink(discussionTargetOfThread(thread), thread.id);
+};
+
+/** Where a comment can be read, inside its thread's section. */
 export const commentLinkPath = (thread: LinkedThread, commentId: string) => {
-  const target = discussionTargetOfThread(thread);
-  return target.kind === 'page' && !thread.attachedType
-    ? commentPermalink(target, thread.id, commentId)
-    : `${forumThreadPath(thread.id)}#${commentAnchor(commentId)}`;
+  const position = positionTarget(thread);
+  return position
+    ? `${discussionPath(position)}#${commentAnchor(commentId)}`
+    : commentPermalink(discussionTargetOfThread(thread), thread.id, commentId);
+};
+
+/**
+ * Where an old thread address leads. There is no fragment, so the browser
+ * keeps the one of the old link (such as #comment-…); the page scrolls to the
+ * thread or position otherwise.
+ */
+export const movedThreadPath = (thread: LinkedThread) => {
+  const position = positionTarget(thread);
+  if (position) {
+    return thread.attachedId
+      ? `${discussionPath(position)}?position=${encodeURIComponent(thread.attachedId)}`
+      : discussionPath(position);
+  }
+  return threadLocationPath(discussionTargetOfThread(thread), thread.id);
 };

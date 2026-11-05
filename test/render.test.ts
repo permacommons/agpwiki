@@ -17,7 +17,6 @@ import {
   renderUnifiedDiff,
   toSafeText,
 } from '../src/render.js';
-import { buildForumQuote } from '../src/services/forum-service.js';
 
 test('escapeHtml escapes basic characters', () => {
   const input = `<div class="x">Tom & Jerry's</div>`;
@@ -197,8 +196,4 @@ test('renderMarkdown marks internal wiki links for previews and missing links as
     html,
     /<a href="\/existing-page" data-wiki-link="true" data-wiki-link-slug="existing-page">Existing<\/a>/
   );
-});
-
-test('buildForumQuote turns markdown into blockquote lines', () => {
-  assert.equal(buildForumQuote('Line one\n\nLine two'), '> Line one\n>\n> Line two\n\n');
 });

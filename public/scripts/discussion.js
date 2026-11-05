@@ -94,9 +94,13 @@
   // A link to a thread without a fragment (an old thread address, say)
   // still lands on the thread.
   const params = new URLSearchParams(window.location.search);
-  const threadId = params.get('thread');
-  if (threadId && !window.location.hash) {
-    document.getElementById(`thread-${threadId}`)?.scrollIntoView({ block: 'start' });
+  const landing = params.get('thread')
+    ? `thread-${params.get('thread')}`
+    : params.get('position')
+      ? `position-${params.get('position')}`
+      : null;
+  if (landing && !window.location.hash) {
+    document.getElementById(landing)?.scrollIntoView({ block: 'start' });
   }
 
   // The next page of threads loads by itself near the bottom; the plain

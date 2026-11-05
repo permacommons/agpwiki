@@ -13,6 +13,7 @@ import { deliverNotification, loadNotificationRecipients } from './notification-
 import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
 import { getSiteBaseUrl } from './site-config.js';
+import { findCurrentPageBySlugOrAlias } from './wiki-page-service.js';
 
 export const FORUM_REPLY_CREATED_NOTIFICATION = 'forum.reply.created';
 const FORUM_NOTIFICATION_KIND = 'forum.reply';
@@ -90,12 +91,22 @@ export const processForumReplyCreatedNotification = async (
     ?? Object.values(comment.body ?? {})[0]
     ?? '';
   const excerpt = truncate(await markdownToPlainText(dal, bodySource), EXCERPT_LENGTH);
+  // Replies to a position belong to the proposal; the thread holding them
+  // has no title of its own to show.
+  const proposal =
+    thread.attachedType === 'position' && thread.pageSlug ? await findCurrentPageBySlugOrAlias(thread.pageSlug) : null;
   const threadTitle = collapseWhitespace(
-    decodeHTML(striptags(Object.values(thread.title ?? {})[0] ?? thread.id))
+    decodeHTML(striptags(Object.values(proposal?.title ?? thread.title ?? {})[0] ?? thread.id))
   );
   const actorName = actor?.displayName ?? 'Someone';
   const commentPath = commentLinkPath(
-    { id: thread.id, category: thread.category, pageSlug: thread.pageSlug, attachedType: thread.attachedType },
+    {
+      id: thread.id,
+      category: thread.category,
+      pageSlug: thread.pageSlug,
+      attachedType: thread.attachedType,
+      attachedId: thread.attachedId,
+    },
     payload.commentId
   );
   const commentUrl = `${getSiteBaseUrl()}${commentPath}`;

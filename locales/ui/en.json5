@@ -96,8 +96,7 @@
       "forum.relatedLabel",
       "page.actions",
       "forum.category.articles",
-      "forum.compose.body",
-      "forum.compose.page"
+      "forum.compose.body"
     ],
      "hi": ["site.name", "nav.home"],
      "hu": ["site.name", "nav.home", "citation.field.doi", "citation.field.url"],
@@ -451,39 +450,20 @@
       "general": "General",
       "articles": "Articles",
       "technology": "Technology",
-      "policy": "Policy",
-      "empty": "No threads yet in this category."
+      "policy": "Policy"
     },
     "compose": {
-      "newThread": "Start a new thread",
-      "reply": "Post a reply",
-      "title": "Title",
-      "page": "Page",
-      "pageSlug": "Page slug",
-      "pageSearchPlaceholder": "Search page titles",
-      "pageContext": "Starting a discussion for {{page}}.",
-      "pageOptionalHelp": "If there is an existing policy page relevant to this topic, select it above. Otherwise leave this field blank.",
       "body": "Message",
       "language": "Comment language",
-      "postThread": "Post thread",
       "postReply": "Post reply"
     },
     "thread": {
-      "createdAt": "Started {{date}}",
       "commentCount_one": "{{count}} comment",
       "commentCount_other": "{{count}} comments",
-      "pageLabel": "Page: {{page}}",
       "pinned": "Pinned",
       "pin": "Pin thread",
       "unpin": "Unpin thread",
-      "delete": "Delete thread",
-      "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
-    },
-    "pageLink": {
-      "context": "Discussion for {{page}}.",
-      "orphanedContext": "Discussion for page slug {{slug}}. This slug does not currently resolve to a wiki page.",
-      "cannotCreateMissingPageRequired": "New discussion threads cannot be started here because this page slug does not currently resolve to a wiki page.",
-      "cannotCreateMissingPageOptional": "New page-linked discussion threads cannot be started here because this page slug does not currently resolve to a wiki page."
+      "delete": "Delete thread"
     },
     "validation": {
       "pageRequired": "Select a page before starting an article discussion thread.",
@@ -494,10 +474,7 @@
       "bodyRequired": "Enter a message."
     },
     "comment": {
-      "postedAt": "Posted {{date}}",
-      "languageLabel": "Language: {{language}}",
       "unknownOperator": "Unknown operator",
-      "quote": "Quote",
       "delete": "Delete",
       "edit": "Edit",
       "save": "Save changes",
@@ -512,7 +489,6 @@
       "historyText": "Text"
     },
     "position": {
-      "context": "Replies to a position on {{proposal}}",
       "withdrawn": "This position has since been withdrawn."
     }
   },
@@ -805,13 +781,8 @@
     "invalid": "This position could not be saved. Choose support, neutral or oppose, and select a supported language.",
     // Replies under a position's comment (one level).
     "reply": {
-      "open": "Reply",
-      "label": "Your reply",
-      "placeholder": "Write a reply…",
-      "submit": "Post reply",
       "forbidden": "Your account cannot reply to positions, or this reply is not yours to change.",
-      "invalid": "This reply could not be saved. Write some text and select a supported language.",
-      "openInForum": "Open these replies in the forum"
+      "invalid": "This reply could not be saved. Write some text and select a supported language."
     }
   },
   // The sections below the welcome text on the home page.
@@ -1292,5 +1263,9 @@
     "nextPage": "More threads",
     "pages": "Pages of this discussion",
     "pageOf": "Page {{page}} of {{count}}",
-  },
+    "threads": "Threads",
+    "sectionThreads": "Threads not about one page",
+    "discussedPages": "Pages with recent discussion",
+    "noDiscussedPages": "No page has been discussed yet."
+  }
 }

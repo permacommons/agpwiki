@@ -197,38 +197,19 @@
       articles: 'Artikelen',
       technology: 'Technologie',
       policy: 'Beleid',
-      empty: 'Er zijn nog geen threads in deze categorie.',
     },
     compose: {
-      newThread: 'Nieuwe thread starten',
-      reply: 'Reactie plaatsen',
-      title: 'Titel',
-      page: 'Pagina',
-      pageSlug: 'Pagina-slug',
-      pageSearchPlaceholder: 'Zoek paginatitels',
-      pageContext: 'Je begint een discussie over {{page}}.',
-      pageOptionalHelp: 'Als er al een beleidspagina is die bij dit onderwerp past, selecteer die dan hierboven. Laat dit veld anders leeg.',
       body: 'Bericht',
       language: 'Taal van de reactie',
-      postThread: 'Thread plaatsen',
       postReply: 'Reactie plaatsen',
     },
     thread: {
-      createdAt: 'Gestart {{date}}',
       commentCount_one: '{{count}} reactie',
       commentCount_other: '{{count}} reacties',
-      pageLabel: 'Pagina: {{page}}',
       pinned: 'Vastgezet',
       pin: 'Thread vastzetten',
       unpin: 'Thread losmaken',
       delete: 'Thread verwijderen',
-      notificationsDisabled: "Meldingen over forumreacties staan uit in je <a href=\"{{settingsHref}}\">instellingen</a>.",
-    },
-    pageLink: {
-      context: 'Discussie over {{page}}.',
-      orphanedContext: 'Discussie voor pagina-slug {{slug}}. Deze slug verwijst momenteel niet naar een wiki-pagina.',
-      cannotCreateMissingPageRequired: 'Hier kunnen geen nieuwe discussiethreads worden gestart, omdat deze pagina-slug momenteel niet naar een wiki-pagina verwijst.',
-      cannotCreateMissingPageOptional: 'Hier kunnen geen nieuwe aan pagina’s gekoppelde discussiethreads worden gestart, omdat deze pagina-slug momenteel niet naar een wiki-pagina verwijst.',
     },
     validation: {
       pageRequired: 'Selecteer een pagina voordat je een artikeldiscussiethread start.',
@@ -239,10 +220,7 @@
       bodyRequired: 'Vul een bericht in.',
     },
     comment: {
-      postedAt: 'Geplaatst {{date}}',
-      languageLabel: 'Taal: {{language}}',
       unknownOperator: 'Onbekende operator',
-      quote: 'Citeren',
       delete: 'Verwijderen',
       "edit": "Bewerken",
       "save": "Wijzigingen opslaan",
@@ -257,7 +235,6 @@
       "historyText": "Tekst"
     },
     "position": {
-      "context": "Reacties op een standpunt bij {{proposal}}",
       "withdrawn": "Dit standpunt is inmiddels ingetrokken."
     }
   },
@@ -485,13 +462,8 @@
     "forbidden": "Je account kan geen standpunten over voorstellen innemen.",
     "invalid": "Dit standpunt kon niet worden opgeslagen. Kies voor, neutraal of tegen en selecteer een ondersteunde taal.",
     "reply": {
-      "open": "Reageren",
-      "label": "Je reactie",
-      "placeholder": "Schrijf een reactie…",
-      "submit": "Reactie plaatsen",
       "forbidden": "Je account kan niet reageren op standpunten, of deze reactie is niet van jou.",
       "invalid": "De reactie kon niet worden opgeslagen. Schrijf een tekst en selecteer een ondersteunde taal.",
-      "openInForum": "Deze reacties openen op het forum"
     }
   },
   "home": {
@@ -995,5 +967,9 @@
     "nextPage": "Meer discussies",
     "pages": "Pagina's van deze discussie",
     "pageOf": "Pagina {{page}} van {{count}}",
+    "threads": "Discussies",
+    "sectionThreads": "Discussies die niet over één pagina gaan",
+    "discussedPages": "Pagina's met recente discussie",
+    "noDiscussedPages": "Er is nog geen pagina besproken.",
   },
 }

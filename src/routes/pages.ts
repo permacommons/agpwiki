@@ -3,7 +3,7 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { discussionPath } from '../lib/discussion-paths.js';
+import { commentAnchor, discussionPath } from '../lib/discussion-paths.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -55,15 +55,13 @@ import {
 import { getWikiPageEditability, type ProtectionLevel } from '../services/page-protection-service.js';
 import { canUseRevertAction } from '../services/page-revert-service.js';
 import {
-  canSignOffPages,
-  findRevisionsWithChangedText,
   isSignoffPageSlug,
   listActivePageSignoffs,
   signOffPage,
   withdrawPageSignoff,
 } from '../services/page-signoff-service.js';
 import { isFollowingPage } from '../services/page-subscription-service.js';
-import { listPositionReplies, replyToPosition } from '../services/position-reply-service.js';
+import { replyToPosition } from '../services/position-reply-service.js';
 import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
   getProposalStatusPermissions,
@@ -88,7 +86,7 @@ import {
   sectionFingerprint,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
-import { renderDiscussionUnderPage } from './discussion.js';
+import { renderDiscussionUnderPage, renderPositionsSection } from './discussion.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf, slugPath } from './lib/canonical.js';
@@ -119,7 +117,6 @@ import {
   renderPageChecksList,
   renderPageChecksSummary,
 } from './lib/page-checks.js';
-import { renderPageSignoffs } from './lib/page-signoffs.js';
 import { renderPageTabs } from './lib/page-tabs.js';
 import {
   renderProposalHeader,
@@ -1326,7 +1323,7 @@ export const registerPageRoutes = (app: Express) => {
         },
         session.userId
       );
-      res.redirect(303, `${pageViewPath(slug)}#reply-${reply.commentId}`);
+      res.redirect(303, `${discussionPath({ kind: 'page', slug })}#${commentAnchor(reply.commentId)}`);
     } catch (error) {
       if (error instanceof NotFoundError) {
         res.status(404).type('text').send(req.t('page.notFound'));
@@ -1630,34 +1627,6 @@ export const registerPageRoutes = (app: Express) => {
       for (const signoff of signoffs ?? []) {
         userIds.add(signoff.userId);
       }
-      const replyThreads = signoffs
-        ? await listPositionReplies(
-            dalInstance,
-            signoffs.map(signoff => signoff.id)
-          )
-        : new Map();
-      const replySources = [...replyThreads.values()].flatMap(thread => thread.replies.map(reply => reply.body));
-      const replyCitations = replySources.length
-        ? await loadCitationEntriesForSources(dalInstance, replySources)
-        : [];
-      const signoffReplies = new Map(
-        await Promise.all(
-          [...replyThreads.entries()].map(async ([signoffId, thread]) => {
-            for (const reply of thread.replies) if (reply.authorId) userIds.add(reply.authorId);
-            const replies = await Promise.all(
-              thread.replies.map(async reply => ({
-                ...reply,
-                bodyHtml: (
-                  await renderMarkdown(reply.body, replyCitations, {
-                    backToCitationLabel: req.t('citation.backToCitationAria'),
-                  })
-                ).html,
-              }))
-            );
-            return [signoffId, { threadId: thread.threadId, replies }] as const;
-          })
-        )
-      );
       if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
       const userMap = await fetchUserMap(dalInstance, [...userIds]);
 
@@ -1792,13 +1761,6 @@ export const registerPageRoutes = (app: Express) => {
   <span class="tool-related-links">${relatedLinks.join(' · ')}</span>
 </div>`
         : '';
-      const changedRevIds = signoffs
-        ? await findRevisionsWithChangedText(
-            dalInstance,
-            page.id,
-            [...new Set(signoffs.map(signoff => signoff.revId))].filter(id => id !== page.currentRevId)
-          )
-        : new Set<string>();
       const proposalPermissions = signoffs
         ? await getProposalStatusPermissions(dalInstance, page.id, session?.userId)
         : { canChange: false, isAdmin: false };
@@ -1833,24 +1795,10 @@ export const registerPageRoutes = (app: Express) => {
             });
           })()
         : '';
-      const signoffsHtml = signoffs
-        ? renderPageSignoffs({
-            slug: canonicalSlug,
-            currentRevId: page.currentRevId,
-            changedRevIds,
-            signoffs,
-            userMap,
-            viewerId: session?.userId ?? null,
-            canSignOff: await canSignOffPages(dalInstance, session?.userId),
-            canReply:
-              (await canSignOffPages(dalInstance, session?.userId)) &&
-              Boolean((res.locals.accountState as { isEmailVerified?: boolean } | null)?.isEmailVerified),
-            t: req.t,
-            language: req.language ?? 'en',
-            languageOptions: res.locals.languageOptions,
-            replies: signoffReplies,
-          })
-        : '';
+      const signoffsHtml =
+        signoffs
+          ? await renderPositionsSection(dalInstance, req, res, { id: page.id, slug: canonicalSlug, currentRevId: page.currentRevId })
+          : '';
       const wikidataHtml =
         isArticle && selectedRevision.wikidata
           ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`

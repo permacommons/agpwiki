@@ -197,38 +197,19 @@
       articles: 'Straipsniai',
       technology: 'Technologijos',
       policy: 'Politika',
-      empty: 'Šioje kategorijoje dar nėra gijų.',
     },
     compose: {
-      newThread: 'Pradėti naują giją',
-      reply: 'Paskelbti atsakymą',
-      title: 'Pavadinimas',
-      page: 'Puslapis',
-      pageSlug: 'Puslapio slugas',
-      pageSearchPlaceholder: 'Ieškoti puslapių pavadinimų',
-      pageContext: 'Jūs pradedate diskusiją apie {{page}}.',
-      pageOptionalHelp: 'Jei yra esamas politikos puslapis, susijęs su šia tema, pasirinkite jį aukščiau. Kitu atveju palikite šį lauką tuščią.',
       body: 'Žinutė',
       language: 'Komentaro kalba',
-      postThread: 'Paskelbti giją',
       postReply: 'Paskelbti atsakymą',
     },
     thread: {
-      createdAt: 'Pradėta {{date}}',
       commentCount_one: '{{count}} komentaras',
       commentCount_other: '{{count}} komentarai',
-      pageLabel: 'Puslapis: {{page}}',
       pinned: 'Prisegta',
       pin: 'Prisegti giją',
       unpin: 'Atsegti giją',
       delete: 'Ištrinti giją',
-      notificationsDisabled: "Pranešimai apie forumo atsakymus išjungti tavo <a href=\"{{settingsHref}}\">nustatymuose</a>.",
-    },
-    pageLink: {
-      context: 'Diskusija apie {{page}}.',
-      orphanedContext: 'Diskusija puslapio slugui {{slug}}. Šis slugas šiuo metu nenukreipia į wiki puslapį.',
-      cannotCreateMissingPageRequired: 'Naujų diskusijų gijų čia pradėti negalima, nes šis puslapio slugas šiuo metu nenukreipia į wiki puslapį.',
-      cannotCreateMissingPageOptional: 'Naujų su puslapiu susietų diskusijų gijų čia pradėti negalima, nes šis puslapio slugas šiuo metu nenukreipia į wiki puslapį.',
     },
     validation: {
       pageRequired: 'Prieš pradėdami straipsnio diskusijos giją, pasirinkite puslapį.',
@@ -239,10 +220,7 @@
       bodyRequired: 'Įveskite žinutę.',
     },
     comment: {
-      postedAt: 'Paskelbta {{date}}',
-      languageLabel: 'Kalba: {{language}}',
       unknownOperator: 'Nežinomas operatorius',
-      quote: 'Cituoti',
       delete: 'Ištrinti',
       "edit": "Redaguoti",
       "save": "Išsaugoti pakeitimus",
@@ -257,7 +235,6 @@
       "historyText": "Tekstas"
     },
     "position": {
-      "context": "Atsakymai į poziciją dėl: {{proposal}}",
       "withdrawn": "Ši pozicija vėliau atšaukta."
     }
   },
@@ -485,13 +462,8 @@
     "forbidden": "Tavo paskyra negali reikšti pozicijos dėl pasiūlymų.",
     "invalid": "Nepavyko išsaugoti šios pozicijos. Pasirink „Pritariu“, „Neutrali“ arba „Nepritariu“ ir palaikomą kalbą.",
     "reply": {
-      "open": "Atsakyti",
-      "label": "Tavo atsakymas",
-      "placeholder": "Parašyk atsakymą…",
-      "submit": "Paskelbti atsakymą",
       "forbidden": "Tavo paskyra negali atsakyti į pozicijas arba šis atsakymas ne tavo.",
       "invalid": "Atsakymo išsaugoti nepavyko. Parašyk tekstą ir pasirink palaikomą kalbą.",
-      "openInForum": "Atverti šiuos atsakymus forume"
     }
   },
   "home": {
@@ -996,5 +968,9 @@
     "nextPage": "Daugiau gijų",
     "pages": "Šios diskusijos puslapiai",
     "pageOf": "{{page}} puslapis iš {{count}}",
+    "threads": "Gijos",
+    "sectionThreads": "Gijos, nesusijusios su vienu puslapiu",
+    "discussedPages": "Neseniai aptarti puslapiai",
+    "noDiscussedPages": "Dar nė vienas puslapis neaptartas.",
   },
 }

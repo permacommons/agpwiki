@@ -196,38 +196,19 @@
       articles: 'Artículos',
       technology: 'Tecnología',
       policy: 'Política',
-      empty: 'Aún no hay temas en esta categoría.',
     },
     compose: {
-      newThread: 'Iniciar un nuevo tema',
-      reply: 'Publicar una respuesta',
-      title: 'Título',
-      page: 'Página',
-      pageSlug: 'Slug de la página',
-      pageSearchPlaceholder: 'Buscar títulos de páginas',
-      pageContext: 'Estás iniciando una discusión sobre {{page}}.',
-      pageOptionalHelp: 'Si existe una página de política relevante para este tema, selecciónala arriba. De lo contrario, deja este campo en blanco.',
       body: 'Mensaje',
       language: 'Idioma del comentario',
-      postThread: 'Publicar tema',
       postReply: 'Publicar respuesta',
     },
     thread: {
-      createdAt: 'Iniciado {{date}}',
       commentCount_one: '{{count}} comentario',
       commentCount_other: '{{count}} comentarios',
-      pageLabel: 'Página: {{page}}',
       pinned: 'Fijado',
       pin: 'Fijar tema',
       unpin: 'Desfijar tema',
       delete: 'Eliminar tema',
-      notificationsDisabled: "Las notificaciones de respuestas del foro están desactivadas en tus <a href=\"{{settingsHref}}\">ajustes</a>.",
-    },
-    pageLink: {
-      context: 'Discusión sobre {{page}}.',
-      orphanedContext: 'Discusión para el slug de página {{slug}}. Este slug no resuelve actualmente a una página wiki.',
-      cannotCreateMissingPageRequired: 'No se pueden iniciar nuevos temas de discusión aquí porque este slug de página no resuelve actualmente a una página wiki.',
-      cannotCreateMissingPageOptional: 'No se pueden iniciar nuevos temas de discusión vinculados a páginas aquí porque este slug de página no resuelve actualmente a una página wiki.',
     },
     validation: {
       pageRequired: 'Selecciona una página antes de iniciar un tema de discusión de artículos.',
@@ -238,10 +219,7 @@
       bodyRequired: 'Introduce un mensaje.',
     },
     comment: {
-      postedAt: 'Publicado {{date}}',
-      languageLabel: 'Idioma: {{language}}',
       unknownOperator: 'Operador desconocido',
-      quote: 'Citar',
       delete: 'Eliminar',
       "edit": "Editar",
       "save": "Guardar cambios",
@@ -256,7 +234,6 @@
       "historyText": "Texto"
     },
     "position": {
-      "context": "Respuestas a una postura sobre {{proposal}}",
       "withdrawn": "Esta postura se ha retirado desde entonces."
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "Tu cuenta no puede expresar posturas sobre propuestas.",
     "invalid": "No se pudo guardar esta postura. Elige a favor, neutral o en contra, y selecciona un idioma admitido.",
     "reply": {
-      "open": "Responder",
-      "label": "Tu respuesta",
-      "placeholder": "Escribe una respuesta…",
-      "submit": "Publicar respuesta",
       "forbidden": "Tu cuenta no puede responder a posturas, o esta respuesta no es tuya.",
       "invalid": "No se pudo guardar la respuesta. Escribe un texto y selecciona un idioma admitido.",
-      "openInForum": "Abrir estas respuestas en el foro"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "Más temas",
     "pages": "Páginas de esta discusión",
     "pageOf": "Página {{page}} de {{count}}",
+    "threads": "Temas",
+    "sectionThreads": "Temas que no tratan de una sola página",
+    "discussedPages": "Páginas con discusión reciente",
+    "noDiscussedPages": "Todavía no se ha discutido ninguna página.",
   },
 }

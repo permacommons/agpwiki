@@ -196,38 +196,19 @@
       articles: 'Artykuły',
       technology: 'Technologia',
       policy: 'Zasady',
-      empty: 'W tej kategorii nie ma jeszcze wątków.',
     },
     compose: {
-      newThread: 'Rozpocznij nowy wątek',
-      reply: 'Opublikuj odpowiedź',
-      title: 'Tytuł',
-      page: 'Strona',
-      pageSlug: 'Slug strony',
-      pageSearchPlaceholder: 'Szukaj tytułów stron',
-      pageContext: 'Rozpoczynasz dyskusję o {{page}}.',
-      pageOptionalHelp: 'Jeśli istnieje już strona zasad związana z tym tematem, wybierz ją powyżej. W przeciwnym razie zostaw to pole puste.',
       body: 'Wiadomość',
       language: 'Język komentarza',
-      postThread: 'Opublikuj wątek',
       postReply: 'Opublikuj odpowiedź',
     },
     thread: {
-      createdAt: 'Rozpoczęto {{date}}',
       commentCount_one: '{{count}} komentarz',
       commentCount_other: '{{count}} komentarze',
-      pageLabel: 'Strona: {{page}}',
       pinned: 'Przypięty',
       pin: 'Przypnij wątek',
       unpin: 'Odepnij wątek',
       delete: 'Usuń wątek',
-      notificationsDisabled: "Powiadomienia o odpowiedziach na forum są wyłączone w twoich <a href=\"{{settingsHref}}\">ustawieniach</a>.",
-    },
-    pageLink: {
-      context: 'Dyskusja o {{page}}.',
-      orphanedContext: 'Dyskusja dla slugu strony {{slug}}. Ten slug obecnie nie wskazuje na żadną stronę wiki.',
-      cannotCreateMissingPageRequired: 'Nie można tutaj rozpocząć nowych wątków dyskusyjnych, ponieważ ten slug strony obecnie nie wskazuje na żadną stronę wiki.',
-      cannotCreateMissingPageOptional: 'Nie można tutaj rozpocząć nowych wątków dyskusyjnych powiązanych ze stroną, ponieważ ten slug strony obecnie nie wskazuje na żadną stronę wiki.',
     },
     validation: {
       pageRequired: 'Wybierz stronę, zanim rozpoczniesz wątek dyskusyjny o artykule.',
@@ -238,10 +219,7 @@
       bodyRequired: 'Wpisz wiadomość.',
     },
     comment: {
-      postedAt: 'Opublikowano {{date}}',
-      languageLabel: 'Język: {{language}}',
       unknownOperator: 'Nieznany operator',
-      quote: 'Cytuj',
       delete: 'Usuń',
       "edit": "Edytuj",
       "save": "Zapisz zmiany",
@@ -256,7 +234,6 @@
       "historyText": "Tekst"
     },
     "position": {
-      "context": "Odpowiedzi na stanowisko w sprawie: {{proposal}}",
       "withdrawn": "To stanowisko zostało później wycofane."
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "Twoje konto nie może zajmować stanowiska wobec propozycji.",
     "invalid": "Nie udało się zapisać tego stanowiska. Wybierz za, neutralnie lub przeciw oraz obsługiwany język.",
     "reply": {
-      "open": "Odpowiedz",
-      "label": "Twoja odpowiedź",
-      "placeholder": "Napisz odpowiedź…",
-      "submit": "Opublikuj odpowiedź",
       "forbidden": "Twoje konto nie może odpowiadać na stanowiska albo ta odpowiedź nie jest twoja.",
       "invalid": "Nie udało się zapisać odpowiedzi. Wpisz tekst i wybierz obsługiwany język.",
-      "openInForum": "Otwórz te odpowiedzi na forum"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "Więcej wątków",
     "pages": "Strony tej dyskusji",
     "pageOf": "Strona {{page}} z {{count}}",
+    "threads": "Wątki",
+    "sectionThreads": "Wątki niedotyczące jednej strony",
+    "discussedPages": "Strony z niedawną dyskusją",
+    "noDiscussedPages": "Żadna strona nie była jeszcze dyskutowana.",
   },
 }

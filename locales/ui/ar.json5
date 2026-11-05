@@ -196,38 +196,19 @@
       articles: 'مقالات',
       technology: 'تقنية',
       policy: 'سياسات',
-      empty: 'لا توجد مواضيع بعد في هذه الفئة.',
     },
     compose: {
-      newThread: 'ابدأ موضوعًا جديدًا',
-      reply: 'انشر ردًا',
-      title: 'العنوان',
-      page: 'الصفحة',
-      pageSlug: 'مُعرّف الصفحة',
-      pageSearchPlaceholder: 'ابحث في عناوين الصفحات',
-      pageContext: 'أنت تبدأ نقاشًا حول {{page}}.',
-      pageOptionalHelp: 'إذا كانت هناك صفحة سياسات قائمة مرتبطة بهذا الموضوع، فاخترها أعلاه. وإلا فاترك هذا الحقل فارغًا.',
       body: 'الرسالة',
       language: 'لغة التعليق',
-      postThread: 'انشر الموضوع',
       postReply: 'انشر الرد',
     },
     thread: {
-      createdAt: 'بدأ {{date}}',
       commentCount_one: '{{count}} تعليق',
       commentCount_other: '{{count}} تعليقات',
-      pageLabel: 'الصفحة: {{page}}',
       pinned: 'مثبت',
       pin: 'ثبّت الموضوع',
       unpin: 'أزل تثبيت الموضوع',
       delete: 'احذف الموضوع',
-      notificationsDisabled: "إشعارات ردود المنتدى متوقفة في <a href=\"{{settingsHref}}\">إعداداتك</a>.",
-    },
-    pageLink: {
-      context: 'نقاش حول {{page}}.',
-      orphanedContext: 'نقاش لمُعرّف الصفحة {{slug}}. هذا المعرّف لا يشير حاليًا إلى صفحة ويكي.',
-      cannotCreateMissingPageRequired: 'لا يمكن بدء مواضيع نقاش جديدة هنا لأن معرّف هذه الصفحة لا يشير حاليًا إلى صفحة ويكي.',
-      cannotCreateMissingPageOptional: 'لا يمكن بدء مواضيع نقاش جديدة مرتبطة بصفحة هنا لأن معرّف هذه الصفحة لا يشير حاليًا إلى صفحة ويكي.',
     },
     validation: {
       pageRequired: 'اختر صفحة قبل بدء موضوع نقاش عن مقالة.',
@@ -238,10 +219,7 @@
       bodyRequired: 'أدخل رسالة.',
     },
     comment: {
-      postedAt: 'نُشر {{date}}',
-      languageLabel: 'اللغة: {{language}}',
       unknownOperator: 'مشغل غير معروف',
-      quote: 'اقتبس',
       delete: 'احذف',
       "edit": "تعديل",
       "save": "حفظ التغييرات",
@@ -256,7 +234,6 @@
       "historyText": "النص"
     },
     "position": {
-      "context": "ردود على موقف بشأن {{proposal}}",
       "withdrawn": "سُحب هذا الموقف لاحقًا."
     }
   },
@@ -482,13 +459,8 @@
     "forbidden": "لا يمكن لحسابك تسجيل موقف من المقترحات.",
     "invalid": "تعذّر حفظ هذا الموقف. اختر مؤيدًا أو محايدًا أو معارضًا، واختر لغة مدعومة.",
     "reply": {
-      "open": "رد",
-      "label": "ردك",
-      "placeholder": "اكتب ردًا…",
-      "submit": "نشر الرد",
       "forbidden": "لا يمكن لحسابك الرد على المواقف، أو أن هذا الرد ليس لك.",
       "invalid": "تعذّر حفظ الرد. اكتب نصًا واختر لغة مدعومة.",
-      "openInForum": "افتح هذه الردود في المنتدى"
     }
   },
   "home": {
@@ -992,5 +964,9 @@
     "nextPage": "مواضيع أخرى",
     "pages": "صفحات هذا النقاش",
     "pageOf": "الصفحة {{page}} من {{count}}",
+    "threads": "المواضيع",
+    "sectionThreads": "مواضيع لا تخص صفحة واحدة",
+    "discussedPages": "صفحات فيها نقاش حديث",
+    "noDiscussedPages": "لم تُناقَش أي صفحة بعد.",
   },
 }

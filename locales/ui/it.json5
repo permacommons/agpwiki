@@ -196,38 +196,19 @@
       articles: 'Articoli',
       technology: 'Tecnologia',
       policy: 'Politiche',
-      empty: 'Non ci sono ancora thread in questa categoria.',
     },
     compose: {
-      newThread: 'Avvia un nuovo thread',
-      reply: 'Pubblica una risposta',
-      title: 'Titolo',
-      page: 'Pagina',
-      pageSlug: 'Slug della pagina',
-      pageSearchPlaceholder: 'Cerca titoli di pagine',
-      pageContext: 'Stai iniziando una discussione su {{page}}.',
-      pageOptionalHelp: 'Se esiste già una pagina di policy pertinente a questo argomento, selezionala sopra. Altrimenti lascia vuoto questo campo.',
       body: 'Messaggio',
       language: 'Lingua del commento',
-      postThread: 'Pubblica thread',
       postReply: 'Pubblica risposta',
     },
     thread: {
-      createdAt: 'Avviato {{date}}',
       commentCount_one: '{{count}} commento',
       commentCount_other: '{{count}} commenti',
-      pageLabel: 'Pagina: {{page}}',
       pinned: 'In evidenza',
       pin: 'Metti in evidenza il thread',
       unpin: 'Rimuovi evidenza dal thread',
       delete: 'Elimina thread',
-      notificationsDisabled: "Le notifiche delle risposte nel forum sono disattivate nelle tue <a href=\"{{settingsHref}}\">impostazioni</a>.",
-    },
-    pageLink: {
-      context: 'Discussione su {{page}}.',
-      orphanedContext: 'Discussione per lo slug di pagina {{slug}}. Questo slug attualmente non rimanda a nessuna pagina wiki.',
-      cannotCreateMissingPageRequired: 'Qui non è possibile avviare nuovi thread di discussione perché questo slug di pagina al momento non rimanda a nessuna pagina wiki.',
-      cannotCreateMissingPageOptional: 'Qui non è possibile avviare nuovi thread di discussione collegati a una pagina perché questo slug di pagina al momento non rimanda a nessuna pagina wiki.',
     },
     validation: {
       pageRequired: 'Seleziona una pagina prima di avviare un thread di discussione su un articolo.',
@@ -238,10 +219,7 @@
       bodyRequired: 'Inserisci un messaggio.',
     },
     comment: {
-      postedAt: 'Pubblicato {{date}}',
-      languageLabel: 'Lingua: {{language}}',
       unknownOperator: 'Operatore sconosciuto',
-      quote: 'Cita',
       delete: 'Elimina',
       "edit": "Modifica",
       "save": "Salva le modifiche",
@@ -256,7 +234,6 @@
       "historyText": "Testo"
     },
     "position": {
-      "context": "Risposte a una posizione su {{proposal}}",
       "withdrawn": "Questa posizione è stata poi ritirata."
     }
   },
@@ -484,13 +461,8 @@
     "forbidden": "Il tuo account non può esprimere posizioni sulle proposte.",
     "invalid": "Impossibile salvare questa posizione. Scegli favorevole, neutrale o contrario e seleziona una lingua supportata.",
     "reply": {
-      "open": "Rispondi",
-      "label": "La tua risposta",
-      "placeholder": "Scrivi una risposta…",
-      "submit": "Pubblica risposta",
       "forbidden": "Il tuo account non può rispondere alle posizioni, oppure questa risposta non è tua.",
       "invalid": "Impossibile salvare la risposta. Scrivi un testo e seleziona una lingua supportata.",
-      "openInForum": "Apri queste risposte nel forum"
     }
   },
   "home": {
@@ -994,5 +966,9 @@
     "nextPage": "Altri thread",
     "pages": "Pagine di questa discussione",
     "pageOf": "Pagina {{page}} di {{count}}",
+    "threads": "Thread",
+    "sectionThreads": "Thread che non riguardano una sola pagina",
+    "discussedPages": "Pagine con discussioni recenti",
+    "noDiscussedPages": "Nessuna pagina è stata ancora discussa.",
   },
 }
