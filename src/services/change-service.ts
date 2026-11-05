@@ -15,7 +15,7 @@ const PAGE_CHANGE_KINDS: readonly ChangeKind[] = ['page', 'check'];
 
 type ChangeTarget =
   | { kind: 'page'; slug: string; title?: string | null }
-  | { kind: 'check'; slug: string; title?: string | null; checkType: string; checkStatus: string }
+  | { kind: 'check'; checkId: string; slug: string; title?: string | null; checkType: string; checkStatus: string }
   | { kind: 'citation'; key: string }
   | { kind: 'claim'; key: string; claimId: string }
   | { kind: 'media'; mediaSlug: string; commonsTitle: string };
@@ -142,7 +142,8 @@ export async function getChangesSince(
     queries.push(
       dal
         .query(
-          `SELECT cur.slug, cur.title, r.type, r.status, ${revisionColumnsSql(PageCheck.tableName, 'r')}
+          `SELECT cur.slug, cur.title, COALESCE(r._old_rev_of, r.id) AS check_id,
+                  r.type, r.status, ${revisionColumnsSql(PageCheck.tableName, 'r')}
              FROM ${PageCheck.tableName} r
              JOIN ${WikiPage.tableName} cur ON cur.id = r.page_id AND cur._old_rev_of IS NULL
             WHERE r._rev_deleted = false AND ${afterCursorSql('r')} AND ${pageWhere}
@@ -154,6 +155,7 @@ export async function getChangesSince(
           rowsOf(result).map(row => ({
             ...toRevision(row),
             kind: 'check' as const,
+            checkId: row.check_id as string,
             slug: row.slug as string,
             ...titleFields(row),
             checkType: row.type as string,

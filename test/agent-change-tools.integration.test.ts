@@ -12,6 +12,7 @@ import Media from '../src/models/media.js';
 import PageCheck from '../src/models/page-check.js';
 import User from '../src/models/user.js';
 import type { ChangesSinceResult } from '../src/services/change-service.js';
+import { updatePageCheck } from '../src/services/page-check-service.js';
 import { createSiteNotification } from '../src/services/site-notification-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 
@@ -323,6 +324,9 @@ test('changes_since merges every kind and pages through timestamp ties', async (
     assert.equal(received.find(change => change.kind === 'check')?.slug, slug);
     assert.equal(received.find(change => change.kind === 'check')?.checkStatus, 'completed');
     assert.equal(received.find(change => change.kind === 'check')?.checkType, 'fact_check');
+    const createdCheck = received.find(change => change.kind === 'check');
+    assert.ok(createdCheck && 'checkId' in createdCheck);
+    assert.equal(createdCheck.checkId, check.id);
     assert.equal(received.find(change => change.kind === 'citation')?.key, key);
     assert.equal(received.find(change => change.kind === 'claim')?.claimId, 'example');
     assert.equal(received.find(change => change.kind === 'claim')?.key, key);
@@ -337,6 +341,30 @@ test('changes_since merges every kind and pages through timestamp ties', async (
     const quiet = await call<ChangeList>(tools, 'changes_since', args, user.id);
     assert.deepEqual(quiet.changes, []);
     assert.equal(quiet.cursor, args.cursor);
+    const updatedCheck = await updatePageCheck(dal, {
+      checkId: check.id,
+      expectedRevId: createdCheck.revId,
+      notes: { en: 'Updated check notes.' },
+      revSummary: { en: 'Update check for feed-to-diff coverage.' },
+    }, user.id);
+    await dal.query("UPDATE page_checks SET _rev_date = '2090-01-01T00:00:00.123457Z' WHERE _rev_id = $1", [updatedCheck.currentRevId]);
+    const updated = await call<ChangeList>(tools, 'changes_since', { cursor: quiet.cursor, slug }, user.id);
+    assert.equal(updated.changes.length, 1);
+    const changedCheck = updated.changes[0];
+    assert.ok(changedCheck.kind === 'check' && 'checkId' in changedCheck);
+    assert.equal(changedCheck.checkId, check.id);
+    assert.equal(changedCheck.prevRevId, createdCheck.revId);
+    const history = await call<ChangeList>(tools, 'changes_since', {
+      since: '2090-01-01T00:00:00Z', slug, kinds: ['check'],
+    }, user.id);
+    assert.deepEqual(history.changes.map(change => change.kind === 'check' ? change.checkId : null), [check.id, check.id]);
+    const diff = await call<{ checkId: string; fields: Record<string, unknown> }>(tools, 'page_check_diffRevisions', {
+      checkId: changedCheck.checkId,
+      fromRevId: changedCheck.prevRevId,
+      toRevId: changedCheck.revId,
+    }, user.id);
+    assert.equal(diff.checkId, check.id);
+    assert.ok('notes' in diff.fields);
   } finally {
     await dal.query('DELETE FROM page_checks WHERE page_id IN (SELECT id FROM pages WHERE slug = $1)', [slug]);
     await dal.query('DELETE FROM citation_claims WHERE citation_id IN (SELECT id FROM citations WHERE key = $1)', [key]);
