@@ -23,6 +23,7 @@ import {
 } from '../lib/safe-text.js';
 import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
+import { isUuid } from '../lib/uuid.js';
 import {
   WIKI_LINK_PREVIEW_ENDPOINT,
   WIKI_LINK_PREVIEW_PAGE_PATH_HEADER,
@@ -502,6 +503,30 @@ export const registerPageRoutes = (app: Express) => {
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
+  });
+
+  // Permanent link: a page's ID leads to its current address, whatever the
+  // page is called now. The redirect is temporary because that address can
+  // change. Anything after /id/ that is not an ID is an ordinary address.
+  app.get('/id/:id', async (req, res, next) => {
+    const { id } = req.params;
+    if (!isUuid(id)) {
+      next();
+      return;
+    }
+    try {
+      await initializePostgreSQL();
+      const page = await findCurrentPageById(id.toLowerCase());
+      if (!page) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      res.redirect(302, `${slugPath(page.slug)}${queryStringOf(req.originalUrl)}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+      console.error('Failed to resolve permanent page link:', message);
+    }
   });
 
   app.post(
@@ -1883,6 +1908,8 @@ export const registerPageRoutes = (app: Express) => {
       res.render('layout', {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
+        // Copied by the "Permanent link" item of the Tools menu.
+        permanentLinkUrl: canonicalUrlFor(`/id/${page.id}`),
         // Old revisions, diffs and draft proposals stay out of search engines.
         noindex: Boolean(selectedRevId) || selectedRevision.proposal?.status === 'draft',
         labelHtml,

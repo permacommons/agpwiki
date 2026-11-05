@@ -12,6 +12,15 @@
           <a class="tools-menu-link" href="/tool/recent-changes">{{__ "page.recentChanges"}}</a>
           <a class="tools-menu-link" href="/tool/proposals">{{__ "page.proposals"}}</a>
           <a class="tools-menu-link" href="/tool/issues">{{__ "page.articlesWithIssues"}}</a>
+          {{#if permanentLinkUrl}}
+          <a
+            class="tools-menu-link tools-menu-link--page"
+            href="{{permanentLinkUrl}}"
+            title="{{__ "nav.permanentLinkTitle"}}"
+            data-permanent-link
+            data-copied-label="{{__ "nav.permanentLinkCopied"}}"
+          >{{__ "nav.permanentLink"}}</a>
+          {{/if}}
         </div>
       </details>
       <a class="nav-link" href="/meta/help">{{__ "nav.help"}}</a>

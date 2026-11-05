@@ -13,6 +13,9 @@
     signOut: 'Одјави се',
     help: 'Помош',
     menu: 'Мени',
+    permanentLink: 'Постојана врска',
+    permanentLinkCopied: 'Врската е копирана',
+    permanentLinkTitle: 'Копирај врска до страницава што работи и ако таа се преименува',
   },
   search: {
     description: 'Пребарувај наслови и slug-ознаки на страници.',

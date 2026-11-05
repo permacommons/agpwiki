@@ -13,6 +13,9 @@
     signOut: 'Kijelentkezés',
     help: 'Súgó',
     menu: 'Menü',
+    permanentLink: 'Állandó hivatkozás',
+    permanentLinkCopied: 'Hivatkozás másolva',
+    permanentLinkTitle: 'Olyan hivatkozás másolása erre a lapra, amely átnevezés után is működik',
   },
   search: {
     description: 'Oldalcímek és rövid azonosítók keresése.',

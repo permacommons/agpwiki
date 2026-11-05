@@ -420,6 +420,12 @@ header.site-header {
   background: var(--panel);
   outline: none;
 }
+/* Items about the page being read, below the site-wide tools. */
+.tools-menu-link--page {
+  margin-top: 0.35rem;
+  border-top: 1px solid var(--rule);
+  border-radius: 0 0 0.35rem 0.35rem;
+}
 .nav-button {
   background: none;
   border: none;

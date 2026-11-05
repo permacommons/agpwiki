@@ -13,6 +13,9 @@
     signOut: 'خروج',
     help: 'مساعدة',
     menu: 'القائمة',
+    permanentLink: 'رابط دائم',
+    permanentLinkCopied: 'تم نسخ الرابط',
+    permanentLinkTitle: 'انسخ رابطًا إلى هذه الصفحة يبقى صالحًا إذا تغيّر اسمها',
   },
   search: {
     description: 'البحث في عناوين الصفحات والروابط.',

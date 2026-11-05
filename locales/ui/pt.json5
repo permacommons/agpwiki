@@ -13,6 +13,9 @@
     signOut: 'Sair',
     help: 'Ajuda',
     menu: 'Menu de navegação',
+    permanentLink: 'Link permanente',
+    permanentLinkCopied: 'Link copiado',
+    permanentLinkTitle: 'Copiar um link para esta página que continua funcionando se ela for renomeada',
   },
   search: {
     description: 'Pesquisar títulos de páginas e slugs.',
