@@ -16,6 +16,7 @@ const RESERVED_SLUGS = new Set([
 const RESERVED_SUFFIXES = [
   'comments',
   'checks',
+  'discussion',
   'operator-edit',
   'operator-edit/dismiss-banner',
   'proposal-links',

@@ -11,7 +11,10 @@ export interface PageTabsParams {
   isCurrentView: boolean;
   discussHref: string | null;
   discussCount: number;
+  // True on the page's discussion: the Discuss tab is the current one.
+  discussCurrent?: boolean;
   editHref: string;
+  historyHref?: string;
   // Shown to signed-in readers: whether they follow the comments on the page.
   follow?: { slug: string; following: boolean; returnTo: string; action: string };
   t: TFunction;
@@ -31,14 +34,17 @@ export const renderPageTabs = ({
   isCurrentView,
   discussHref,
   discussCount,
+  discussCurrent = false,
   editHref,
+  historyHref = `#${HISTORY_ANCHOR}`,
   follow,
   t,
 }: PageTabsParams): string => {
   const left = [
-    tab(pageHref, t(isArticle ? 'pageTabs.article' : 'pageTabs.page'), { current: isCurrentView }),
+    tab(pageHref, t(isArticle ? 'pageTabs.article' : 'pageTabs.page'), { current: isCurrentView && !discussCurrent }),
     discussHref
       ? tab(discussHref, t('pageTabs.discuss'), {
+          current: discussCurrent,
           countHtml: discussCount > 0 ? ` <span class="page-tab-count">${discussCount}</span>` : '',
         })
       : '',
@@ -53,7 +59,7 @@ export const renderPageTabs = ({
       t,
     }) : '',
     isCurrentView ? tab(editHref, t('pageTabs.edit'), { className: 'page-tab--edit' }) : '',
-    tab(`#${HISTORY_ANCHOR}`, t('pageTabs.history')),
+    tab(historyHref, t('pageTabs.history')),
   ];
   return `<nav class="page-tabs" aria-label="${escapeHtml(t('pageTabs.label'))}">${left.join('')}<span class="page-tabs-spacer"></span>${right.join('')}</nav>`;
 };

@@ -93,8 +93,8 @@ import {
   unprotectWikiPage,
 } from '../src/services/page-protection-service.js';
 import { listRecentAdminEvents } from '../src/services/admin-event-service.js';
+import { countPageDiscussionComments } from '../src/services/discussion-service.js';
 import {
-  countForumCommentsForPage,
   createForumComment,
   createForumThread,
   deleteForumComment,
@@ -2816,15 +2816,13 @@ test('Forum policy threads may optionally link to a wiki page', async () => {
 
     assert.equal(linkedThread.pageSlug, slug);
     assert.equal(genericThread.pageSlug, null);
-    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
-    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 0);
+    assert.equal(await countPageDiscussionComments(dal, [slug]), 1);
 
     await dal.query(
       `UPDATE forum_threads SET category = 'articles', page_slug = $1 WHERE id = $2`,
       [slug, genericThread.id]
     );
-    assert.equal(await countForumCommentsForPage(dal, slug, 'policy'), 1);
-    assert.equal(await countForumCommentsForPage(dal, slug, 'articles'), 1);
+    assert.equal(await countPageDiscussionComments(dal, [slug]), 2);
 
 
     const linkedThreads = await listForumThreads(dal, 'policy', {

@@ -1,10 +1,7 @@
 import type { TFunction } from 'i18next';
 
-import {
-  forumCategoryPagePath,
-  forumCommentHistoryPath,
-  forumThreadPath,
-} from '../../lib/forum-paths.js';
+import { discussionPath } from '../../lib/discussion-paths.js';
+import { forumCommentHistoryPath, forumThreadPath } from '../../lib/forum-paths.js';
 import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
 import {
@@ -213,7 +210,7 @@ export const renderPageSignoffs = ({
   return `<section class="page-signoffs" aria-labelledby="page-signoffs-title">
   <div class="page-signoff-header">
     <h2 id="page-signoffs-title">${escapeHtml(t('signoff.title'))}</h2>
-    <a href="${forumCategoryPagePath('policy', slug)}">${escapeHtml(t('signoff.discussion'))}</a>
+    <a href="${escapeHtml(discussionPath({ kind: 'page', slug }))}">${escapeHtml(t('signoff.discussion'))}</a>
   </div>
   ${summaryHtml}
   ${listHtml}

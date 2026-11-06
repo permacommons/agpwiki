@@ -17,14 +17,14 @@ const render = (signoff: PageSignoffResult) => renderPageSignoffs({
   languageOptions: [{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }],
 });
 
-test('Position rationale records its language, supports RTL, and directs conversation to the forum', () => {
+test('Position rationale records its language, supports RTL, and links to the proposal discussion', () => {
   const html = render(position);
   assert.match(html, /<blockquote[^>]*dir="auto"[^>]*lang="ar"/);
   assert.ok(html.includes('<p class="page-signoff-language">العربية</p>'));
   assert.match(html, /name="commentLanguage"\s+id="page-signoff-language-ar"\s+value="ar" checked/);
   assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
   assert.ok(!html.includes('<script>'));
-  assert.ok(html.includes('/tool/forum/policy/page/meta%2Fproposals%2Ftest'));
+  assert.ok(html.includes('href="/meta/proposals/test/discussion"'));
   assert.ok(html.includes('Brief rationale (optional)'));
 });
 

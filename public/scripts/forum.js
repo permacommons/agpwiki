@@ -15,7 +15,12 @@ document.querySelectorAll('[data-forum-quote-button]').forEach(button => {
   });
 });
 
-document.querySelectorAll('[data-comment-edit]').forEach(comment => {
+// Discussions add threads as the reader scrolls; their comments are bound
+// when they arrive, once each.
+const boundCommentEditors = new WeakSet();
+const bindCommentEditors = root => root.querySelectorAll('[data-comment-edit]').forEach(comment => {
+  if (boundCommentEditors.has(comment)) return;
+  boundCommentEditors.add(comment);
   const link = comment.querySelector('[data-comment-edit-link]');
   const content = comment.querySelector('[data-comment-content]');
   const actions = comment.querySelector('[data-comment-actions]');
@@ -57,3 +62,6 @@ document.querySelectorAll('[data-comment-edit]').forEach(comment => {
     close();
   });
 });
+
+bindCommentEditors(document);
+if (typeof window !== 'undefined') window.agpwikiBindCommentEditors = bindCommentEditors;

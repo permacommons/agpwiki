@@ -13,6 +13,7 @@ import { registerAccountRequestRoutes } from './routes/account-requests.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerBlogRoutes } from './routes/blog.js';
 import { registerCitationRoutes } from './routes/citations.js';
+import { registerDiscussionRoutes } from './routes/discussion.js';
 import { registerFollowRoutes } from './routes/follow.js';
 import { registerForumRoutes } from './routes/forum.js';
 import { renderAccountBanner } from './routes/lib/account-banner.js';
@@ -107,6 +108,7 @@ registerCitationRoutes(app);
 registerMediaRoutes(app);
 registerForumRoutes(app);
 registerAccountRequestRoutes(app);
+registerDiscussionRoutes(app);
 registerPageRoutes(app);
 
 const port = config.get<number>('server.port');

@@ -1254,5 +1254,46 @@
       "family": "Family",
       "genus": "Genus"
     }
-  }
+  },
+  // One discussion per page: its threads, comments and replies.
+  /*
+   i18n-identical-allowlist:
+   {
+     // "Link" and "thread" are the local words too; "Discussion" is French as well.
+     "de": ["discussion.commentLink"],
+     "fr": ["discussion.title"],
+     "it": ["discussion.commentLink", "discussion.threadCount_one"],
+     "nl": ["discussion.commentLink"],
+     "pl": ["discussion.commentLink"],
+     "pt": ["discussion.commentLink"]
+   }
+  */
+  "discussion": {
+    "title": "Discussion",
+    "pageTitle": "Discussion: {{title}}",
+    "threadCount_one": "{{count}} thread",
+    "threadCount_other": "{{count}} threads",
+    "order": "most recent activity first",
+    "openFull": "Open the full discussion",
+    "seeAllThreads_one": "See the whole discussion ({{count}} thread)",
+    "seeAllThreads_other": "See the whole discussion ({{count}} threads)",
+    "empty": "No threads yet.",
+    "lastActivity": "last {{date}}",
+    "threadLink": "Link to this thread",
+    "commentLink": "Link",
+    "reply": "Reply",
+    "replyLabel": "Your reply",
+    "replyPlaceholder": "Write a reply…",
+    "startThread": "Start a thread",
+    "titleLabel": "Title (required)",
+    "titlePlaceholder": "What is this thread about?",
+    "commentLabel": "Comment",
+    "commentPlaceholder": "Write your comment…",
+    "post": "Post",
+    "loadingMore": "Loading more threads…",
+    "previousPage": "Previous threads",
+    "nextPage": "More threads",
+    "pages": "Pages of this discussion",
+    "pageOf": "Page {{page}} of {{count}}",
+  },
 }
