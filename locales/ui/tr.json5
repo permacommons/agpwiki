@@ -40,6 +40,7 @@
     free: 'Sonsuza dek özgür.',
   },
   label: {
+    "draft": "TASLAK — HENÜZ YAYIMLANMADI",
     meta: 'META — AGPEDIA HAKKINDA SAYFA',
     tool: 'ARAÇ — YERLEŞİK YAZILIM ÖZELLİĞİ',
     forum: 'FORUM — AGPEDIA İÇİN TARTIŞMA ALANI',
@@ -420,6 +421,15 @@
   toc: {
     title: 'İçindekiler',
   },
+  "draft": {
+    "banner": "Bu bir taslak ve henüz yayımlanmadı. Bağlantıya sahip herkes okuyabilir, ancak arama motorları, site araması ve madde listeleri onu göstermez.",
+    "publishButton": "Yayımla",
+    "publishHelp": "Onu {{address}} adresine taşır. Taslak adresi çalışmaya devam eder.",
+    "publishSummary": "Taslağı yayımla",
+    "publishForbidden": "Bu taslağı yalnızca başlatan kişi, deneyimli düzenleyiciler ve viki yöneticileri yayımlayabilir.",
+    "publishFailed": "Bu taslak yayımlanamadı:",
+    "recentLabel": "taslak"
+  },
   warning: {
     neverFactChecked: 'Bu madde henüz resmi bir doğruluk denetiminden geçmemiştir ve taslak olarak değerlendirilmelidir. İçerdiği bilgiler eksik veya hatalı olabilir. Okurların, bu bilgilere güvenmeden önce iddiaları atıf yapılan kaynaklara göre dikkatle doğrulamaları önerilir.',
     highSeverityIssues: '<a href="{{checksHref}}">Son sayfa kontrolleri</a> bu maddede çözülmemiş yüksek şiddetli sorunlar tespit etti:',
@@ -516,6 +526,8 @@
     "noThreads": "Henüz tartışma yok."
   },
   tool: {
+    "proposalsShowDrafts": "Taslak önerileri göster ({{number}})",
+    "proposalsHideDrafts": "Taslak önerileri gizle",
     view: 'Görüntüle',
     diff: 'Fark',
     recentChangesDescription: 'Vikideki son değişiklikler.',

@@ -41,6 +41,7 @@
     free: 'Für immer frei.',
   },
   label: {
+    "draft": "ENTWURF — NOCH NICHT VERÖFFENTLICHT",
     meta: 'META — SEITE ÜBER AGPEDIA',
     tool: 'TOOL — EINGEBAUTE SOFTWARE-FUNKTION',
     forum: 'FORUM — DISKUSSIONSBEREICH FÜR AGPEDIA',
@@ -419,6 +420,17 @@
   toc: {
     title: 'Inhaltsverzeichnis',
   },
+  "draft": {
+    "banner": "Dies ist ein Entwurf und noch nicht veröffentlicht. Alle mit dem Link können ihn lesen, aber Suchmaschinen, die Suche und Artikellisten lassen ihn aus.",
+    "publishButton": "Veröffentlichen",
+    "publishHelp": "Verschiebt ihn nach {{address}}. Die Entwurfsadresse funktioniert weiter.",
+    "publishSummary": "Entwurf veröffentlicht",
+    "publishForbidden": "Nur die Person, die diesen Entwurf begonnen hat, erfahrene Bearbeitende und Wiki-Admins können ihn veröffentlichen.",
+    "publishAddressTaken": "Die Artikeladresse ist bereits vergeben. Wähle vor der Veröffentlichung eine andere Adresse für den Entwurf.",
+    "publishDuplicates": "Es wurden mögliche Duplikate gefunden. Prüfe sie, bevor du diesen Entwurf veröffentlichst.",
+    "publishFailed": "Dieser Entwurf konnte nicht veröffentlicht werden.",
+    "recentLabel": "Entwurf"
+  },
   warning: {
     neverFactChecked: 'Dieser Artikel wurde noch keiner formalen Faktenprüfung unterzogen und sollte als Entwurf betrachtet werden. Die darin enthaltenen Informationen können unvollständig oder ungenau sein. Leserinnen und Leser sollten die Angaben sorgfältig anhand der zitierten Quellen überprüfen, bevor sie sich darauf verlassen.',
     highSeverityIssues: '<a href="{{checksHref}}">Letzte Seitenprüfungen</a> haben in diesem Artikel ungelöste Probleme mit hohem Schweregrad festgestellt:',
@@ -515,6 +527,8 @@
     "noThreads": "Noch keine Diskussionen."
   },
   tool: {
+    "proposalsShowDrafts": "Entwürfe von Vorschlägen anzeigen ({{number}})",
+    "proposalsHideDrafts": "Entwürfe von Vorschlägen ausblenden",
     view: 'Ansehen',
     diff: 'Unterschied',
     recentChangesDescription: 'Neueste Bearbeitungen im gesamten Wiki.',

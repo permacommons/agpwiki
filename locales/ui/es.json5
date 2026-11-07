@@ -40,6 +40,7 @@
     free: 'Libre para siempre.',
   },
   label: {
+    "draft": "BORRADOR — AÚN NO PUBLICADO",
     meta: 'META — PÁGINA SOBRE AGPEDIA',
     tool: 'HERRAMIENTA — FUNCIÓN DE SOFTWARE INTEGRADA',
     forum: 'FORO — ESPACIO DE DISCUSIÓN PARA AGPEDIA',
@@ -420,6 +421,15 @@
   toc: {
     title: 'Contenidos',
   },
+  "draft": {
+    "banner": "Esto es un borrador y aún no se ha publicado. Cualquiera con el enlace puede leerlo, pero los buscadores, la búsqueda y las listas de artículos lo dejan fuera.",
+    "publishButton": "Publicar",
+    "publishHelp": "Lo traslada a {{address}}. La dirección del borrador sigue funcionando.",
+    "publishSummary": "Publicar borrador",
+    "publishForbidden": "Solo quien empezó este borrador, los editores con experiencia y los administradores del wiki pueden publicarlo.",
+    "publishFailed": "No se pudo publicar este borrador:",
+    "recentLabel": "borrador"
+  },
   warning: {
     neverFactChecked: 'Este artículo aún no ha pasado por una verificación formal de hechos y debe considerarse un borrador. La información que contiene puede estar incompleta o ser inexacta. Se recomienda a las personas lectoras que verifiquen cuidadosamente las afirmaciones con las fuentes citadas antes de basarse en ellas.',
     highSeverityIssues: '<a href="{{checksHref}}">Chequeos de página recientes</a> han identificado problemas graves sin resolver en este artículo:',
@@ -516,6 +526,8 @@
     "noThreads": "Todavía no hay debates."
   },
   tool: {
+    "proposalsShowDrafts": "Mostrar propuestas en borrador ({{number}})",
+    "proposalsHideDrafts": "Ocultar propuestas en borrador",
     view: 'Ver',
     diff: 'Diferencia',
     recentChangesDescription: 'Últimas ediciones en todo el wiki.',

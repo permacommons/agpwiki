@@ -7,6 +7,7 @@ import {
   ConflictError,
   ForbiddenError,
   isRevisionConflictError,
+  McpToolError,
   NotFoundError,
   PreconditionFailedError,
   toRevisionConflictError,
@@ -14,7 +15,7 @@ import {
 } from '../lib/errors.js';
 import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
-import { isArticleSlug, resolvePageAddress } from '../lib/page-address.js';
+import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { isPromptPageSlug } from '../lib/prompt-registry.js';
 import {
@@ -43,6 +44,7 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { canPublishDraft, publishDraft } from '../services/draft-service.js';
 import { countForumCommentsForPage } from '../services/forum-service.js';
 import { HOME_PAGE_SLUG, loadHomeSections } from '../services/home-service.js';
 import { renderArticleInfobox } from '../services/infobox-service.js';
@@ -100,6 +102,7 @@ import {
 } from './lib/content-language.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
+import { renderDraftBanner } from './lib/draft-banner.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
 import { renderHomeSections } from './lib/home-sections.js';
 import {
@@ -156,6 +159,7 @@ const ROBOTS_TXT = [
   'Disallow: /api/',
   'Disallow: /mcp',
   'Disallow: /search',
+  'Disallow: /draft/',
   'Disallow: /set-locale',
   'Disallow: /*/checks',
   'Disallow: /*/operator-edit',
@@ -1273,6 +1277,48 @@ export const registerPageRoutes = (app: Express) => {
     }
   });
 
+  app.post(/^\/(.+)\/publish-draft$/, async (req, res) => {
+    const slug = req.params[0];
+    if (!isDraftSlug(slug)) {
+      res.status(404).type('text').send(req.t('page.notFound'));
+      return;
+    }
+    const session = await resolveSessionUser(req);
+    if (!session) {
+      res.redirect(303, `/tool/login?redirect=${encodeURIComponent(pageViewPath(slug))}`);
+      return;
+    }
+    try {
+      const dalInstance = await initializePostgreSQL();
+      const published = await publishDraft(
+        dalInstance,
+        { slug, revSummary: { [req.language ?? 'en']: req.t('draft.publishSummary') } },
+        session.userId
+      );
+      res.redirect(303, pageViewPath(published.slug));
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('draft.publishForbidden'));
+        return;
+      }
+      if (error instanceof McpToolError) {
+        const messageKey = error.code === 'possible_duplicate'
+          ? 'draft.publishDuplicates'
+          : error.code === 'conflict' && error.details?.newSlug
+            ? 'draft.publishAddressTaken'
+            : 'draft.publishFailed';
+        res.status(409).type('text').send(req.t(messageKey));
+        return;
+      }
+      console.error('Failed to publish draft:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.post(/^\/(.+)\/proposal-status$/, async (req, res) => {
     const slug = req.params[0];
     if (isBlockedSlug(slug) || !isSignoffPageSlug(slug)) {
@@ -1611,6 +1657,16 @@ export const registerPageRoutes = (app: Express) => {
       const pageChecksResult = await listPageChecks(dalInstance, slug);
       const pageChecks = pageChecksResult.checks.slice(0, 10);
       const isArticle = isArticleSlug(canonicalSlug);
+      const isDraft = isDraftSlug(canonicalSlug);
+      // A draft is an article that is not published yet, and looks like one.
+      const showsAsArticle = isArticle || isDraft;
+      const draftBannerHtml = isDraft
+        ? renderDraftBanner({
+            canPublish: !selectedRevId && (await canPublishDraft(dalInstance, page.id, session?.userId)),
+            slug: canonicalSlug,
+            t: req.t,
+          })
+        : '';
       const hasCompletedCheck = pageChecksResult.checks.some(c => c.status === 'completed');
       const draftNoticeHtml =
         isArticle && !hasCompletedCheck
@@ -1619,7 +1675,7 @@ export const registerPageRoutes = (app: Express) => {
 
       const latestRevDate = revisions[0]?.revDate;
       const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
-      const highSeverityRows = isArticle
+      const highSeverityRows = showsAsArticle
         ? pageChecksResult.checks
             .filter(c => {
               if (c.status !== 'completed' || !c.metrics) return false;
@@ -1793,7 +1849,7 @@ export const registerPageRoutes = (app: Express) => {
       const isCurrentView = !revIdParam && !diffFrom && !diffTo;
       const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
       const tabsHtml = renderPageTabs({
-        isArticle,
+        isArticle: showsAsArticle,
         pageHref: pageViewPath(canonicalSlug, langOverride),
         isCurrentView,
         discussHref: forumPath || null,
@@ -1875,11 +1931,11 @@ export const registerPageRoutes = (app: Express) => {
           })
         : '';
       const wikidataHtml =
-        isArticle && selectedRevision.wikidata
+        showsAsArticle && selectedRevision.wikidata
           ? `<p class="page-wikidata">${escapeHtml(req.t('page.wikidata'))} <a href="https://www.wikidata.org/wiki/${encodeURIComponent(selectedRevision.wikidata)}" rel="noopener">${escapeHtml(selectedRevision.wikidata)}</a></p>`
           : '';
       const infoboxHtml =
-        isArticle && selectedRevision.wikidata && !diffFrom && !diffTo
+        showsAsArticle && selectedRevision.wikidata && !diffFrom && !diffTo
           ? await renderArticleInfobox(dalInstance, {
               qid: selectedRevision.wikidata,
               localValues: selectedRevision.infoboxValues,
@@ -1895,9 +1951,12 @@ export const registerPageRoutes = (app: Express) => {
           ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
           : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
-      const pageTypeLabel = resolvePageAddress(canonicalSlug)?.namespace === 'meta'
+      const namespace = resolvePageAddress(canonicalSlug)?.namespace;
+      const pageTypeLabel = namespace === 'meta'
         ? req.t('label.meta')
-        : req.t('label.article');
+        : namespace === 'draft'
+          ? req.t('label.draft')
+          : req.t('label.article');
       const labelHtml = renderPageTypeLabel(
         req,
         pageTypeLabel,
@@ -1910,11 +1969,11 @@ export const registerPageRoutes = (app: Express) => {
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         // Copied by the "Permanent link" item of the Tools menu.
         permanentLinkUrl: canonicalUrlFor(`/id/${page.id}`),
-        // Old revisions, diffs and draft proposals stay out of search engines.
-        noindex: Boolean(selectedRevId) || selectedRevision.proposal?.status === 'draft',
+        // Old revisions, diffs, drafts and draft proposals stay out of search engines.
+        noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft',
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

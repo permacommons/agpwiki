@@ -77,6 +77,7 @@ test('MCP tools expose review annotations', () => {
     'citation_update',
     'claim_update',
     'wiki_updatePage',
+    'wiki_publishDraft',
     'wiki_restoreRevision',
     'wiki_rollbackPage',
     'wiki_applyPatch',

@@ -92,6 +92,7 @@ import {
   readCitationRevision,
   updateCitation,
 } from '../services/citation-service.js';
+import { type PublishDraftInput, publishDraft } from '../services/draft-service.js';
 import { findPossibleDuplicates } from '../services/duplicate-check-service.js';
 import {
   createMedia,
@@ -747,7 +748,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. A new page is refused with a possible_duplicate error when it may already exist in any language within its namespace (articles or meta pages; see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related pages are returned as relatedPages, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. Pass draft: true to start an article as a draft at draft/<slug>: readable by anyone with the link but kept out of search engines, search and article lists until it is published with wiki_publishDraft; give your operator its address. A new page is refused with a possible_duplicate error when it may already exist in any language within its namespace (articles or meta pages; drafts are compared with articles and drafts; see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related pages are returned as relatedPages, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -760,6 +761,10 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         tags: z.array(z.string()).optional(),
         revSummary: localizedRevisionSummarySchema.optional,
         notDuplicateOf: notDuplicateOfSchema,
+        draft: z
+          .boolean()
+          .optional()
+          .describe('Create the article as a draft at draft/<slug> (default false).'),
       },
     },
     withToolErrorHandling(
@@ -791,7 +796,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Find Possible Duplicates',
       description:
-        'Before writing a new page, check whether its topic already exists in any language within its namespace. Pass the planned slug to select its namespace: meta/ pages are compared with meta/ pages, and articles with articles. Without a slug, searches articles. duplicates are pages with the same Wikidata item, a title matching yours in any language (ignoring capitals, accents and punctuation) or a similar address; wiki_createPage refuses to create a page while any of them is not listed in notDuplicateOf. If one is the same topic, improve or translate it instead. related are pages whose titles share the main words of yours: they never block creation; read them, and ask your operator before creating a page that overlaps with one.',
+        'Before writing a new page, check whether its topic already exists in any language within its namespace. Pass the planned slug to select its namespace: meta/ pages are compared with meta/ pages, articles with articles, and draft/ pages with drafts and articles. Without a slug, searches articles. duplicates are pages with the same Wikidata item, a title matching yours in any language (ignoring capitals, accents and punctuation) or a similar address; wiki_createPage refuses to create a page while any of them is not listed in notDuplicateOf. If one is the same topic, improve or translate it instead. related are pages whose titles share the main words of yours: they never block creation; read them, and ask your operator before creating a page that overlaps with one.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         title: z.string().min(1).max(TITLE_MAX_LENGTH).describe('The planned title, in any language.'),
@@ -2187,6 +2192,48 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       );
       return toWikiWriteResponse(payload);
     }))
+  );
+
+  server.registerTool(
+    'wiki_publishDraft',
+    {
+      title: 'Publish Draft',
+      description:
+        `Publish a draft: move it from draft/<name> to the article address <name>, which must be free. The draft address keeps working as an alias. Only the draft's creator, experienced editors and wiki admins can publish. Unless the draft was created within the last hour, it is checked for duplicates again, against articles and drafts; on a possible_duplicate error, check the pages named and call again with notDuplicateOf if they are different topics. revSummary is optional (default {"en":"Publish draft"}). ${CONCURRENCY_DESCRIPTION} ${WRITE_RESPONSE_DESCRIPTION}`,
+      annotations: destructiveWriteToolAnnotations,
+      inputSchema: {
+        slug: pageSlugSchema,
+        notDuplicateOf: notDuplicateOfSchema,
+        expectedRevId: expectedRevIdSchema,
+        policyHash: policyHashSchema,
+        tags: z.array(z.string()).optional(),
+        revSummary: localizedRevisionSummarySchema.optional,
+      },
+    },
+    withToolErrorHandling(
+      withPageIds(['slug'], async (
+        args: Omit<PublishDraftInput, 'revSummary'> & {
+          policyHash?: string;
+          revSummary?: PublishDraftInput['revSummary'];
+        },
+        extra
+      ) => {
+        const dal = await initializePostgreSQL();
+        const userId = await requireAuthUserId(extra);
+        const { policyHash, revSummary, ...publishArgs } = args;
+        await requireCurrentPolicyHash(dal, policyHash);
+        const payload = await publishDraft(
+          dal,
+          {
+            ...publishArgs,
+            revSummary: revSummary ?? { en: 'Publish draft' },
+            tags: mergeTags(publishArgs.tags),
+          },
+          userId
+        );
+        return { ...toWikiWriteResponse(payload), draftSlug: payload.draftSlug };
+      })
+    )
   );
 
   const toRevertResponse = (result: PageRevertResult) => ({

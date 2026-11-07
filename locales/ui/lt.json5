@@ -41,6 +41,7 @@
     free: 'Laisva amžinai.',
   },
   label: {
+    "draft": "JUODRAŠTIS — DAR NEPASKELBTAS",
     meta: 'META — PUSLAPIS APIE AGPEDIA',
     tool: 'ĮRANKIS — INTEGRUOTA PROGRAMINĖS ĮRANGOS FUNKCIJA',
     article: 'IŠ AGPEDIA — VEIKIMAS PER ŽINIAS',
@@ -421,6 +422,15 @@
   toc: {
     title: 'Turinys',
   },
+  "draft": {
+    "banner": "Tai juodraštis, dar nepaskelbtas. Jį gali skaityti kiekvienas, turintis nuorodą, bet paieškos sistemos, paieška ir straipsnių sąrašai jo nerodo.",
+    "publishButton": "Paskelbti",
+    "publishHelp": "Perkelia jį į {{address}}. Juodraščio adresas ir toliau veikia.",
+    "publishSummary": "Juodraščio paskelbimas",
+    "publishForbidden": "Šį juodraštį gali paskelbti tik jį pradėjęs asmuo, patyrę redaktoriai ir vikio administratoriai.",
+    "publishFailed": "Šio juodraščio nepavyko paskelbti:",
+    "recentLabel": "juodraštis"
+  },
   warning: {
     neverFactChecked: 'Šiam straipsniui dar nebuvo atliktas oficialus faktų patikrinimas, todėl jį reikėtų laikyti juodraščiu. Jame pateikta informacija gali būti neišsami arba netiksli. Prieš ja remiantis skaitytojams patariama atidžiai patikrinti teiginius pagal nurodytus šaltinius.',
     highSeverityIssues: '<a href="{{checksHref}}">Naujausios puslapio patikros</a> šiame straipsnyje nustatė neišspręstų didelio sunkumo problemų:',
@@ -517,6 +527,8 @@
     "noThreads": "Diskusijų dar nėra."
   },
   tool: {
+    "proposalsShowDrafts": "Rodyti pasiūlymų juodraščius ({{number}})",
+    "proposalsHideDrafts": "Slėpti pasiūlymų juodraščius",
     view: 'Peržiūrėti',
     diff: 'Skirtumas',
     recentChangesDescription: 'Naujausi redagavimai visame vikyje.',

@@ -41,6 +41,7 @@
     free: 'Svobodno za vedno.',
   },
   label: {
+    "draft": "OSNUTEK — ŠE NI OBJAVLJEN",
     meta: 'META — STRAN O AGPEDIA',
     tool: 'ORODJE — VGRAJENA FUNKCIJA PROGRAMSKE OPREME',
     article: 'IZ AGPEDIA — DELOVANJE SKOZI ZNANJE',
@@ -421,6 +422,15 @@
   toc: {
     title: 'Vsebina',
   },
+  "draft": {
+    "banner": "To je osnutek in še ni objavljen. Prebere ga lahko vsak, ki ima povezavo, vendar ga iskalniki, iskanje in seznami člankov izpuščajo.",
+    "publishButton": "Objavi",
+    "publishHelp": "Premakne ga na {{address}}. Naslov osnutka še naprej deluje.",
+    "publishSummary": "Objava osnutka",
+    "publishForbidden": "Objavijo ga lahko samo oseba, ki je osnutek začela, izkušeni urejevalci in skrbniki wikija.",
+    "publishFailed": "Osnutka ni bilo mogoče objaviti:",
+    "recentLabel": "osnutek"
+  },
   warning: {
     neverFactChecked: 'Ta članek še ni bil formalno preverjen glede dejstev in ga je treba obravnavati kot osnutek. Informacije, ki jih vsebuje, so lahko nepopolne ali netočne. Bralcem svetujemo, da trditve pred zanašanjem nanje skrbno preverijo glede na navedene vire.',
     highSeverityIssues: '<a href="{{checksHref}}">Nedavna preverjanja strani</a> so v tem članku prepoznala nerešene težave z visoko resnostjo:',
@@ -517,6 +527,8 @@
     "noThreads": "Še ni razprav."
   },
   tool: {
+    "proposalsShowDrafts": "Prikaži osnutke predlogov ({{number}})",
+    "proposalsHideDrafts": "Skrij osnutke predlogov",
     view: 'Prikaži',
     diff: 'Razlika',
     recentChangesDescription: 'Najnovejša urejanja po celotni wiki zbirki.',
