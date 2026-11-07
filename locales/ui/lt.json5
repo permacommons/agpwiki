@@ -428,6 +428,8 @@
     "publishHelp": "Perkelia jį į {{address}}. Juodraščio adresas ir toliau veikia.",
     "publishSummary": "Juodraščio paskelbimas",
     "publishForbidden": "Šį juodraštį gali paskelbti tik jį pradėjęs asmuo, patyrę redaktoriai ir vikio administratoriai.",
+    "publishAddressTaken": "Straipsnio adresas jau naudojamas. Prieš skelbdami pasirinkite kitą juodraščio adresą.",
+    "publishDuplicates": "Rasta galimų dublikatų. Peržiūrėkite juos prieš skelbdami šį juodraštį.",
     "publishFailed": "Šio juodraščio nepavyko paskelbti:",
     "recentLabel": "juodraštis"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Sekami puslapiai",
     "intro": "Tau pranešama apie naujus komentarus šiuose puslapiuose.",
-    "empty": "Dar neseki nė vieno puslapio.",
-    "unfollow": "Nebesekti"
+    "empty": "Dar neseki nė vieno puslapio."
   },
   settings: {
     title: 'Nustatymai',
@@ -924,6 +925,8 @@
     "supersededBy": "pakeista pasiūlymu",
   },
   "infobox": {
+    "julianDate": "{{date}} (Julijaus kalendorius)",
+    "unknownCalendarDate": "{{date}} (kalendorius nežinomas)",
     "ariaLabel": "Pagrindiniai faktai",
     "factsOnWikidata": "Faktai ir šaltiniai Vikiduomenyse",
     "imageCredit": "Paveikslėlis:",

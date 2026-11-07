@@ -427,6 +427,8 @@
     "publishHelp": "Move-o para {{address}}. O endereço do rascunho continua funcionando.",
     "publishSummary": "Publicar rascunho",
     "publishForbidden": "Só quem começou este rascunho, editores experientes e administradores da wiki podem publicá-lo.",
+    "publishAddressTaken": "O endereço do artigo já está em uso. Escolha outro endereço para o rascunho antes de publicá-lo.",
+    "publishDuplicates": "Foram encontradas possíveis duplicatas. Revise-as antes de publicar este rascunho.",
     "publishFailed": "Não foi possível publicar este rascunho:",
     "recentLabel": "rascunho"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Páginas que você segue",
     "intro": "Você é avisado de novos comentários nestas páginas.",
-    "empty": "Você ainda não segue nenhuma página.",
-    "unfollow": "Deixar de seguir"
+    "empty": "Você ainda não segue nenhuma página."
   },
   settings: {
     title: 'Configurações',
@@ -922,6 +923,8 @@
     "supersededBy": "substituída por",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendário juliano)",
+    "unknownCalendarDate": "{{date}} (calendário desconhecido)",
     "ariaLabel": "Fatos principais",
     "factsOnWikidata": "Fatos e fontes no Wikidata",
     "imageCredit": "Imagem:",

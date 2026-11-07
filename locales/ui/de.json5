@@ -838,8 +838,7 @@
   "following": {
     "heading": "Seiten, denen du folgst",
     "intro": "Du wirst über neue Kommentare auf diesen Seiten informiert.",
-    "empty": "Du folgst noch keiner Seite.",
-    "unfollow": "Nicht mehr folgen"
+    "empty": "Du folgst noch keiner Seite."
   },
   settings: {
     title: 'Einstellungen',
@@ -923,6 +922,8 @@
     "supersededBy": "ersetzt durch",
   },
   "infobox": {
+    "julianDate": "{{date}} (julianischer Kalender)",
+    "unknownCalendarDate": "{{date}} (Kalender unbekannt)",
     "ariaLabel": "Kurzinfo",
     "factsOnWikidata": "Fakten und Quellen auf Wikidata",
     "imageCredit": "Bild:",

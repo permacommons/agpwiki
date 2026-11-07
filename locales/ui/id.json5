@@ -428,6 +428,8 @@
     "publishHelp": "Memindahkannya ke {{address}}. Alamat draf tetap berfungsi.",
     "publishSummary": "Terbitkan draf",
     "publishForbidden": "Hanya orang yang memulai draf ini, penyunting berpengalaman, dan admin wiki yang dapat menerbitkannya.",
+    "publishAddressTaken": "Alamat artikel sudah digunakan. Pilih alamat lain untuk draf sebelum menerbitkannya.",
+    "publishDuplicates": "Kemungkinan duplikat ditemukan. Tinjau sebelum menerbitkan draf ini.",
     "publishFailed": "Draf ini tidak dapat diterbitkan:",
     "recentLabel": "draf"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Halaman yang Anda ikuti",
     "intro": "Anda diberi tahu tentang komentar baru di halaman-halaman ini.",
-    "empty": "Anda belum mengikuti halaman apa pun.",
-    "unfollow": "Berhenti mengikuti"
+    "empty": "Anda belum mengikuti halaman apa pun."
   },
   settings: {
     title: 'Pengaturan',
@@ -924,6 +925,8 @@
     "supersededBy": "digantikan oleh",
   },
   "infobox": {
+    "julianDate": "{{date}} (kalender Julian)",
+    "unknownCalendarDate": "{{date}} (kalender tidak diketahui)",
     "ariaLabel": "Fakta utama",
     "factsOnWikidata": "Fakta dan sumber di Wikidata",
     "imageCredit": "Gambar:",

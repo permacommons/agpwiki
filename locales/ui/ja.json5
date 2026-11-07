@@ -427,6 +427,8 @@
     "publishHelp": "{{address}} に移動します。下書きのアドレスも引き続き使えます。",
     "publishSummary": "下書きを公開",
     "publishForbidden": "この下書きを公開できるのは、作成者、経験豊富な編集者、ウィキ管理者のみです。",
+    "publishAddressTaken": "記事のアドレスはすでに使用されています。公開する前に下書きのアドレスを変更してください。",
+    "publishDuplicates": "重複の可能性がある記事が見つかりました。この下書きを公開する前に確認してください。",
     "publishFailed": "この下書きを公開できませんでした:",
     "recentLabel": "下書き"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "フォロー中のページ",
     "intro": "これらのページへの新しいコメントが通知されます。どのページでも「議論」の隣の「フォロー」ボタンでフォローできます。",
-    "empty": "まだフォローしているページはありません。",
-    "unfollow": "フォローをやめる"
+    "empty": "まだフォローしているページはありません。"
   },
   settings: {
     title: '設定',
@@ -922,6 +923,8 @@
     "supersededBy": "後継提案:",
   },
   "infobox": {
+    "julianDate": "{{date}} (ユリウス暦)",
+    "unknownCalendarDate": "{{date}} (暦不明)",
     "ariaLabel": "基本情報",
     "factsOnWikidata": "ウィキデータの事実と出典",
     "imageCredit": "画像:",

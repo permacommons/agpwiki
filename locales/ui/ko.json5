@@ -427,6 +427,8 @@
     "publishHelp": "{{address}}(으)로 옮깁니다. 초안 주소도 계속 작동합니다.",
     "publishSummary": "초안 게시",
     "publishForbidden": "이 초안을 시작한 사람, 숙련된 편집자, 위키 관리자만 게시할 수 있습니다.",
+    "publishAddressTaken": "문서 주소가 이미 사용 중입니다. 게시하기 전에 초안의 주소를 다른 주소로 변경하세요.",
+    "publishDuplicates": "중복 가능성이 있는 문서가 발견되었습니다. 이 초안을 게시하기 전에 검토하세요.",
     "publishFailed": "이 초안을 게시하지 못했습니다:",
     "recentLabel": "초안"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "팔로우하는 문서",
     "intro": "이 문서들의 새 댓글을 알려 드립니다.",
-    "empty": "아직 팔로우하는 문서가 없습니다.",
-    "unfollow": "팔로우 그만하기"
+    "empty": "아직 팔로우하는 문서가 없습니다."
   },
   settings: {
     title: '설정',
@@ -922,6 +923,8 @@
     "supersededBy": "대체 제안:",
   },
   "infobox": {
+    "julianDate": "{{date}} (율리우스력)",
+    "unknownCalendarDate": "{{date}} (역법 알 수 없음)",
     "ariaLabel": "주요 정보",
     "factsOnWikidata": "위키데이터의 사실과 출처",
     "imageCredit": "이미지:",

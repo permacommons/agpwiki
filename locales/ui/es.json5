@@ -427,6 +427,8 @@
     "publishHelp": "Lo traslada a {{address}}. La dirección del borrador sigue funcionando.",
     "publishSummary": "Publicar borrador",
     "publishForbidden": "Solo quien empezó este borrador, los editores con experiencia y los administradores del wiki pueden publicarlo.",
+    "publishAddressTaken": "La dirección del artículo ya está en uso. Elige otra dirección para el borrador antes de publicarlo.",
+    "publishDuplicates": "Se encontraron posibles duplicados. Revísalos antes de publicar este borrador.",
     "publishFailed": "No se pudo publicar este borrador:",
     "recentLabel": "borrador"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Páginas que sigues",
     "intro": "Te avisamos de los comentarios nuevos en estas páginas.",
-    "empty": "Aún no sigues ninguna página.",
-    "unfollow": "Dejar de seguir"
+    "empty": "Aún no sigues ninguna página."
   },
   settings: {
     title: 'Configuración',
@@ -922,6 +923,8 @@
     "supersededBy": "sustituida por",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendario juliano)",
+    "unknownCalendarDate": "{{date}} (calendario desconocido)",
     "ariaLabel": "Datos clave",
     "factsOnWikidata": "Datos y fuentes en Wikidata",
     "imageCredit": "Imagen:",

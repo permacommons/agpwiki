@@ -428,6 +428,8 @@
     "publishHelp": "Presunie ho na {{address}}. Adresa návrhu naďalej funguje.",
     "publishSummary": "Zverejnenie návrhu",
     "publishForbidden": "Zverejniť ho môže len osoba, ktorá tento návrh začala, skúsení redaktori a správcovia wiki.",
+    "publishAddressTaken": "Adresa článku je už obsadená. Pred zverejnením vyberte pre koncept inú adresu.",
+    "publishDuplicates": "Našli sa možné duplikáty. Pred zverejnením tohto konceptu ich skontrolujte.",
     "publishFailed": "Tento návrh sa nepodarilo zverejniť:",
     "recentLabel": "návrh"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Sledované stránky",
     "intro": "Dozvieš sa o nových komentároch na týchto stránkach.",
-    "empty": "Zatiaľ nesleduješ žiadnu stránku.",
-    "unfollow": "Prestať sledovať"
+    "empty": "Zatiaľ nesleduješ žiadnu stránku."
   },
   settings: {
     title: 'Nastavenia',
@@ -924,6 +925,8 @@
     "supersededBy": "nahradený návrhom",
   },
   "infobox": {
+    "julianDate": "{{date}} (juliánsky kalendár)",
+    "unknownCalendarDate": "{{date}} (neznámy kalendár)",
     "ariaLabel": "Hlavné údaje",
     "factsOnWikidata": "Údaje a zdroje na Wikiúdajoch",
     "imageCredit": "Obrázok:",

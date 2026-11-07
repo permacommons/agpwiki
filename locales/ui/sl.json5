@@ -428,6 +428,8 @@
     "publishHelp": "Premakne ga na {{address}}. Naslov osnutka še naprej deluje.",
     "publishSummary": "Objava osnutka",
     "publishForbidden": "Objavijo ga lahko samo oseba, ki je osnutek začela, izkušeni urejevalci in skrbniki wikija.",
+    "publishAddressTaken": "Naslov članka je že zaseden. Pred objavo izberite drug naslov za osnutek.",
+    "publishDuplicates": "Najdeni so bili morebitni dvojniki. Preglejte jih pred objavo tega osnutka.",
     "publishFailed": "Osnutka ni bilo mogoče objaviti:",
     "recentLabel": "osnutek"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Strani, ki jih spremljaš",
     "intro": "Izveš za nove komentarje na teh straneh.",
-    "empty": "Še ne spremljaš nobene strani.",
-    "unfollow": "Prenehaj spremljati"
+    "empty": "Še ne spremljaš nobene strani."
   },
   settings: {
     title: 'Nastavitve',
@@ -924,6 +925,8 @@
     "supersededBy": "nadomeščen s predlogom",
   },
   "infobox": {
+    "julianDate": "{{date}} (julijanski koledar)",
+    "unknownCalendarDate": "{{date}} (neznan koledar)",
     "ariaLabel": "Ključni podatki",
     "factsOnWikidata": "Podatki in viri na Wikipodatkih",
     "imageCredit": "Slika:",

@@ -428,6 +428,8 @@
     "publishHelp": "Flyttar det till {{address}}. Utkastets adress fortsätter att fungera.",
     "publishSummary": "Publicera utkast",
     "publishForbidden": "Bara den som påbörjade utkastet, erfarna redigerare och wikiadministratörer kan publicera det.",
+    "publishAddressTaken": "Artikeladressen används redan. Välj en annan adress för utkastet innan du publicerar det.",
+    "publishDuplicates": "Möjliga dubbletter hittades. Granska dem innan du publicerar det här utkastet.",
     "publishFailed": "Utkastet kunde inte publiceras:",
     "recentLabel": "utkast"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Sidor du följer",
     "intro": "Du får veta om nya kommentarer på de här sidorna.",
-    "empty": "Du följer inga sidor ännu.",
-    "unfollow": "Sluta följa"
+    "empty": "Du följer inga sidor ännu."
   },
   settings: {
     title: 'Inställningar',
@@ -924,6 +925,8 @@
     "supersededBy": "ersatt av",
   },
   "infobox": {
+    "julianDate": "{{date}} (julianska kalendern)",
+    "unknownCalendarDate": "{{date}} (okänd kalender)",
     "ariaLabel": "Viktiga fakta",
     "factsOnWikidata": "Fakta och källor på Wikidata",
     "imageCredit": "Bild:",

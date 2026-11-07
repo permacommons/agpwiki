@@ -427,6 +427,8 @@
     "publishHelp": "La sposta a {{address}}. L’indirizzo della bozza continua a funzionare.",
     "publishSummary": "Pubblicazione della bozza",
     "publishForbidden": "Solo chi ha iniziato questa bozza, gli editori esperti e gli amministratori del wiki possono pubblicarla.",
+    "publishAddressTaken": "L’indirizzo dell’articolo è già in uso. Scegli un altro indirizzo per la bozza prima di pubblicarla.",
+    "publishDuplicates": "Sono stati trovati possibili duplicati. Esaminali prima di pubblicare questa bozza.",
     "publishFailed": "Non è stato possibile pubblicare questa bozza:",
     "recentLabel": "bozza"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Pagine che segui",
     "intro": "Vieni informato dei nuovi commenti su queste pagine.",
-    "empty": "Non segui ancora nessuna pagina.",
-    "unfollow": "Smetti di seguire"
+    "empty": "Non segui ancora nessuna pagina."
   },
   settings: {
     title: 'Impostazioni',
@@ -922,6 +923,8 @@
     "supersededBy": "sostituita da",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendario giuliano)",
+    "unknownCalendarDate": "{{date}} (calendario sconosciuto)",
     "ariaLabel": "Dati principali",
     "factsOnWikidata": "Dati e fonti su Wikidata",
     "imageCredit": "Immagine:",
