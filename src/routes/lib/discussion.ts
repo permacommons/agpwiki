@@ -104,6 +104,7 @@ export const loadDiscussionRenderData = async (
   for (const comment of comments) {
     const rendered = await renderMarkdown(bodySourceOf(comment), citationEntries, {
       backToCitationLabel,
+      citationIdPrefix: `comment-${comment.id}-`,
       mediaRegistry,
       locale,
     });

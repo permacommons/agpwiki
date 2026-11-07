@@ -9,6 +9,9 @@ import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
 import User from '../src/models/user.js';
+import { renderMarkdown } from '../src/render.js';
+import { loadDiscussionRenderData } from '../src/routes/lib/discussion.js';
+import { createCitation } from '../src/services/citation-service.js';
 import { registerDiscussionRoutes } from '../src/routes/discussion.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { readDiscussion } from '../src/services/discussion-service.js';
@@ -332,6 +335,51 @@ test('Deleting a page preserves its discussion, replies, aliases and thread link
     assert.equal(post.status, 403);
   } finally {
     await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('An article and discussion comments keep citation targets and backlinks within their own content', async () => {
+  const dal = await getDal();
+  const prefix = `disc-citations-${Date.now()}`;
+  const userIds: string[] = [];
+  const reference = { id: prefix, type: 'webpage', title: 'Shared source', URL: 'https://example.com/source' };
+  try {
+    const author = await createTestUser('citations');
+    userIds.push(author.id);
+    await createCitation(dal, { key: prefix, data: reference }, author.id);
+    const comments = ['first', 'second'].map(id => ({
+      id,
+      authorId: null,
+      canonicalLanguage: 'en',
+      body: { en: `Source [@${prefix}], repeated [@${prefix}]. Claim [@${prefix}:fact], repeated [@${prefix}:fact].` },
+    }));
+    const article = await renderMarkdown(`Article [@${prefix}].`, [reference]);
+    const { bodies } = await loadDiscussionRenderData(dal, comments, { backToCitationLabel: 'Back to citation', locale: 'en' });
+    const fragments = [article.html, ...bodies.values()];
+    const ids = [...fragments.join('').matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+    assert.equal(new Set(ids).size, ids.length, `all embedded citation anchors must be unique: ${ids.filter((id, index) => ids.indexOf(id) !== index).join(', ')}`);
+    assert.match(article.html, /id="ref-1"/);
+    assert.match(article.html, /href="#ref-1"/);
+
+    for (const comment of comments) {
+      const html = bodies.get(comment.id);
+      assert.ok(html);
+      const commentPrefix = `comment-${comment.id}-`;
+      const localIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
+      const links = [...html.matchAll(/href="#([^"]+)"/g)].map(match => match[1]);
+      assert.ok(localIds.has(`${commentPrefix}ref-1`));
+      assert.ok(localIds.has(`${commentPrefix}ref-1-1`), 'claim-specific references are namespaced too');
+      assert.ok(localIds.has(`${commentPrefix}cite-ref-1-a`));
+      assert.ok(localIds.has(`${commentPrefix}cite-ref-1-d`), 'repeated citations keep distinct backlink targets');
+      for (const target of links) {
+        assert.ok(target.startsWith(commentPrefix), `unexpected citation target ${target}`);
+        assert.ok(localIds.has(target), `missing local citation target ${target}`);
+      }
+      assert.ok(html.includes(`href="/cite/${reference.id}#claim-fact"`), 'links to the citation entity retain their own fragments');
+    }
+  } finally {
+    await dal.query('DELETE FROM citations WHERE key = $1', [prefix]);
     await cleanup(dal, prefix, userIds);
   }
 });
