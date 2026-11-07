@@ -426,6 +426,8 @@
     "publishHelp": "Movas ĝin al {{address}}. La adreso de la malneto plu funkcias.",
     "publishSummary": "Publikigo de malneto",
     "publishForbidden": "Nur la persono, kiu komencis ĉi tiun malneton, spertaj redaktantoj kaj vikiaj administrantoj povas publikigi ĝin.",
+    "publishAddressTaken": "La artikola adreso jam estas okupita. Elektu alian adreson por la malneto antaŭ publikigo.",
+    "publishDuplicates": "Eblaj duplikatoj estis trovitaj. Reviziu ilin antaŭ ol publikigi ĉi tiun malneton.",
     "publishFailed": "Ne eblis publikigi ĉi tiun malneton:",
     "recentLabel": "malneto"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Paĝoj, kiujn vi sekvas",
     "intro": "Vi ekscias pri novaj komentoj ĉe ĉi tiuj paĝoj.",
-    "empty": "Vi ankoraŭ sekvas neniun paĝon.",
-    "unfollow": "Ĉesi sekvi"
+    "empty": "Vi ankoraŭ sekvas neniun paĝon."
   },
   settings: {
     title: 'Agordoj',
@@ -922,6 +923,8 @@
     "supersededBy": "anstataŭigita de",
   },
   "infobox": {
+    "julianDate": "{{date}} (julia kalendaro)",
+    "unknownCalendarDate": "{{date}} (kalendaro nekonata)",
     "ariaLabel": "Ĉefaj faktoj",
     "factsOnWikidata": "Faktoj kaj fontoj en Vikidatumoj",
     "imageCredit": "Bildo:",

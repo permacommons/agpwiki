@@ -428,6 +428,8 @@
     "publishHelp": "Áthelyezi ide: {{address}}. A piszkozat címe továbbra is működik.",
     "publishSummary": "Piszkozat közzététele",
     "publishForbidden": "Csak a piszkozat elindítója, a tapasztalt szerkesztők és a wiki adminisztrátorai tehetik közzé.",
+    "publishAddressTaken": "A cikk címe már foglalt. Közzététel előtt válassz másik címet a piszkozatnak.",
+    "publishDuplicates": "Lehetséges másolatokat találtunk. A piszkozat közzététele előtt nézd át őket.",
     "publishFailed": "A piszkozatot nem sikerült közzétenni:",
     "recentLabel": "piszkozat"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Követett oldalak",
     "intro": "Ezeknek az oldalaknak az új hozzászólásairól értesülsz.",
-    "empty": "Még nem követsz egy oldalt sem.",
-    "unfollow": "Követés leállítása"
+    "empty": "Még nem követsz egy oldalt sem."
   },
   settings: {
     title: 'Beállítások',
@@ -924,6 +925,8 @@
     "supersededBy": "felváltó javaslat:",
   },
   "infobox": {
+    "julianDate": "{{date}} (Julián-naptár)",
+    "unknownCalendarDate": "{{date}} (ismeretlen naptár)",
     "ariaLabel": "Fő adatok",
     "factsOnWikidata": "Adatok és források a Wikidatán",
     "imageCredit": "Kép:",

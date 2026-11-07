@@ -427,6 +427,8 @@
     "publishHelp": "将它移至 {{address}}。草稿地址仍然有效。",
     "publishSummary": "发布草稿",
     "publishForbidden": "只有创建此草稿的人、资深编辑者和维基管理员可以发布它。",
+    "publishAddressTaken": "文章地址已被占用。请在发布前为草稿选择其他地址。",
+    "publishDuplicates": "发现可能重复的文章。请在发布此草稿前检查。",
     "publishFailed": "无法发布此草稿：",
     "recentLabel": "草稿"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "你关注的页面",
     "intro": "这些页面有新评论时你会收到通知。在任何页面使用“讨论”旁的“关注”按钮即可关注。",
-    "empty": "你还没有关注任何页面。",
-    "unfollow": "取消关注"
+    "empty": "你还没有关注任何页面。"
   },
   settings: {
     title: '设置',
@@ -922,6 +923,8 @@
     "supersededBy": "替代提案：",
   },
   "infobox": {
+    "julianDate": "{{date}} (儒略历)",
+    "unknownCalendarDate": "{{date}} (历法不明)",
     "ariaLabel": "基本资料",
     "factsOnWikidata": "维基数据上的事实和来源",
     "imageCredit": "图片：",

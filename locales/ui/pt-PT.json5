@@ -427,6 +427,8 @@
     "publishHelp": "Move-o para {{address}}. O endereço do rascunho continua a funcionar.",
     "publishSummary": "Publicar rascunho",
     "publishForbidden": "Só quem começou este rascunho, os editores experientes e os administradores da wiki o podem publicar.",
+    "publishAddressTaken": "O endereço do artigo já está a ser utilizado. Escolha outro endereço para o rascunho antes de o publicar.",
+    "publishDuplicates": "Foram encontrados possíveis duplicados. Reveja-os antes de publicar este rascunho.",
     "publishFailed": "Não foi possível publicar este rascunho:",
     "recentLabel": "rascunho"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Páginas que segues",
     "intro": "És avisado de novos comentários nestas páginas.",
-    "empty": "Ainda não segues nenhuma página.",
-    "unfollow": "Deixar de seguir"
+    "empty": "Ainda não segues nenhuma página."
   },
   settings: {
     title: 'Definições',
@@ -922,6 +923,8 @@
     "supersededBy": "substituída por",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendário juliano)",
+    "unknownCalendarDate": "{{date}} (calendário desconhecido)",
     "ariaLabel": "Factos principais",
     "factsOnWikidata": "Factos e fontes no Wikidata",
     "imageCredit": "Imagem:",

@@ -428,6 +428,8 @@
     "publishHelp": "Verplaatst het naar {{address}}. Het conceptadres blijft werken.",
     "publishSummary": "Concept gepubliceerd",
     "publishForbidden": "Alleen degene die dit concept is begonnen, ervaren bewerkers en wikibeheerders kunnen het publiceren.",
+    "publishAddressTaken": "Het artikeladres is al in gebruik. Kies een ander adres voor het concept voordat je het publiceert.",
+    "publishDuplicates": "Er zijn mogelijke duplicaten gevonden. Bekijk ze voordat je dit concept publiceert.",
     "publishFailed": "Dit concept kon niet worden gepubliceerd:",
     "recentLabel": "concept"
   },
@@ -838,8 +840,7 @@
   "following": {
     "heading": "Pagina's die je volgt",
     "intro": "Je krijgt bericht over nieuwe reacties op deze pagina's.",
-    "empty": "Je volgt nog geen pagina's.",
-    "unfollow": "Niet meer volgen"
+    "empty": "Je volgt nog geen pagina's."
   },
   settings: {
     title: 'Instellingen',
@@ -923,6 +924,8 @@
     "supersededBy": "vervangen door",
   },
   "infobox": {
+    "julianDate": "{{date}} (Juliaanse kalender)",
+    "unknownCalendarDate": "{{date}} (kalender onbekend)",
     "ariaLabel": "Kerngegevens",
     "factsOnWikidata": "Feiten en bronnen op Wikidata",
     "imageCredit": "Afbeelding:",

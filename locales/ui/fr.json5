@@ -428,6 +428,8 @@
     "publishHelp": "Le déplace vers {{address}}. L’adresse du brouillon continue de fonctionner.",
     "publishSummary": "Publication du brouillon",
     "publishForbidden": "Seuls la personne qui a commencé ce brouillon, les contributeurs expérimentés et les admins du wiki peuvent le publier.",
+    "publishAddressTaken": "L’adresse de l’article est déjà utilisée. Choisis une autre adresse pour le brouillon avant de le publier.",
+    "publishDuplicates": "Des doublons possibles ont été trouvés. Examine-les avant de publier ce brouillon.",
     "publishFailed": "Ce brouillon n’a pas pu être publié :",
     "recentLabel": "brouillon"
   },
@@ -838,8 +840,7 @@
   "following": {
     "heading": "Pages que tu suis",
     "intro": "Tu es informé des nouveaux commentaires sur ces pages.",
-    "empty": "Tu ne suis encore aucune page.",
-    "unfollow": "Ne plus suivre"
+    "empty": "Tu ne suis encore aucune page."
   },
   settings: {
     title: 'Paramètres',
@@ -923,6 +924,8 @@
     "supersededBy": "remplacée par",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendrier julien)",
+    "unknownCalendarDate": "{{date}} (calendrier inconnu)",
     "ariaLabel": "Faits essentiels",
     "factsOnWikidata": "Faits et sources sur Wikidata",
     "imageCredit": "Image :",

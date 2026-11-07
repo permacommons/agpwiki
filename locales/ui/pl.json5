@@ -427,6 +427,8 @@
     "publishHelp": "Przenosi go pod {{address}}. Adres szkicu nadal działa.",
     "publishSummary": "Publikacja szkicu",
     "publishForbidden": "Tylko osoba, która rozpoczęła ten szkic, doświadczeni redaktorzy i administratorzy wiki mogą go opublikować.",
+    "publishAddressTaken": "Adres artykułu jest już zajęty. Wybierz inny adres szkicu przed publikacją.",
+    "publishDuplicates": "Znaleziono możliwe duplikaty. Przejrzyj je przed opublikowaniem tego szkicu.",
     "publishFailed": "Nie udało się opublikować tego szkicu:",
     "recentLabel": "szkic"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Obserwowane strony",
     "intro": "Dowiadujesz się o nowych komentarzach na tych stronach.",
-    "empty": "Nie obserwujesz jeszcze żadnej strony.",
-    "unfollow": "Przestań obserwować"
+    "empty": "Nie obserwujesz jeszcze żadnej strony."
   },
   settings: {
     title: 'Ustawienia',
@@ -922,6 +923,8 @@
     "supersededBy": "zastąpiona przez",
   },
   "infobox": {
+    "julianDate": "{{date}} (kalendarz juliański)",
+    "unknownCalendarDate": "{{date}} (nieznany kalendarz)",
     "ariaLabel": "Najważniejsze informacje",
     "factsOnWikidata": "Fakty i źródła w Wikidanych",
     "imageCredit": "Ilustracja:",

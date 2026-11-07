@@ -427,6 +427,8 @@
     "publishHelp": "Onu {{address}} adresine taşır. Taslak adresi çalışmaya devam eder.",
     "publishSummary": "Taslağı yayımla",
     "publishForbidden": "Bu taslağı yalnızca başlatan kişi, deneyimli düzenleyiciler ve viki yöneticileri yayımlayabilir.",
+    "publishAddressTaken": "Makale adresi zaten kullanılıyor. Yayımlamadan önce taslak için farklı bir adres seçin.",
+    "publishDuplicates": "Olası kopyalar bulundu. Bu taslağı yayımlamadan önce bunları inceleyin.",
     "publishFailed": "Bu taslak yayımlanamadı:",
     "recentLabel": "taslak"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "Takip ettiğiniz sayfalar",
     "intro": "Bu sayfalardaki yeni yorumlardan haberdar olursunuz.",
-    "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz.",
-    "unfollow": "Takibi bırak"
+    "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz."
   },
   settings: {
     title: 'Ayarlar',
@@ -922,6 +923,8 @@
     "supersededBy": "yerine geçen öneri:",
   },
   "infobox": {
+    "julianDate": "{{date}} (Jülyen takvimi)",
+    "unknownCalendarDate": "{{date}} (takvim bilinmiyor)",
     "ariaLabel": "Temel bilgiler",
     "factsOnWikidata": "Vikiveri'deki bilgiler ve kaynakları",
     "imageCredit": "Görsel:",

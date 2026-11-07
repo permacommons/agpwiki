@@ -427,6 +427,8 @@
     "publishHelp": "將它移至 {{address}}。草稿網址仍然有效。",
     "publishSummary": "發布草稿",
     "publishForbidden": "只有建立此草稿的人、資深編輯者和維基管理員可以發布它。",
+    "publishAddressTaken": "文章位址已被使用。請在發布前為草稿選擇其他位址。",
+    "publishDuplicates": "發現可能重複的文章。請在發布此草稿前檢查。",
     "publishFailed": "無法發布此草稿：",
     "recentLabel": "草稿"
   },
@@ -837,8 +839,7 @@
   "following": {
     "heading": "您關注的頁面",
     "intro": "這些頁面有新留言時您會收到通知。在任何頁面使用「討論」旁的「關注」按鈕即可關注。",
-    "empty": "您尚未關注任何頁面。",
-    "unfollow": "取消關注"
+    "empty": "您尚未關注任何頁面。"
   },
   settings: {
     title: '設定',
@@ -922,6 +923,8 @@
     "supersededBy": "替代提案：",
   },
   "infobox": {
+    "julianDate": "{{date}} (儒略曆)",
+    "unknownCalendarDate": "{{date}} (曆法不明)",
     "ariaLabel": "基本資料",
     "factsOnWikidata": "維基數據上的事實和來源",
     "imageCredit": "圖片：",

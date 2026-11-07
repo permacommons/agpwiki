@@ -428,6 +428,8 @@
     "publishHelp": "Siirtää sen osoitteeseen {{address}}. Luonnoksen osoite toimii edelleen.",
     "publishSummary": "Luonnoksen julkaisu",
     "publishForbidden": "Vain luonnoksen aloittaja, kokeneet muokkaajat ja wikin ylläpitäjät voivat julkaista sen.",
+    "publishAddressTaken": "Artikkelin osoite on jo käytössä. Valitse luonnokselle toinen osoite ennen julkaisua.",
+    "publishDuplicates": "Mahdollisia kaksoiskappaleita löytyi. Tarkista ne ennen tämän luonnoksen julkaisua.",
     "publishFailed": "Luonnosta ei voitu julkaista:",
     "recentLabel": "luonnos"
   },
@@ -839,8 +841,7 @@
   "following": {
     "heading": "Seuraamasi sivut",
     "intro": "Saat tiedon näiden sivujen uusista kommenteista.",
-    "empty": "Et seuraa vielä yhtään sivua.",
-    "unfollow": "Lopeta seuraaminen"
+    "empty": "Et seuraa vielä yhtään sivua."
   },
   settings: {
     title: 'Asetukset',
@@ -924,6 +925,8 @@
     "supersededBy": "korvattu ehdotuksella",
   },
   "infobox": {
+    "julianDate": "{{date}} (juliaaninen kalenteri)",
+    "unknownCalendarDate": "{{date}} (kalenteri tuntematon)",
     "ariaLabel": "Keskeiset tiedot",
     "factsOnWikidata": "Tiedot ja lähteet Wikidatassa",
     "imageCredit": "Kuva:",
