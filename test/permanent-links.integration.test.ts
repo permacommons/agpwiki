@@ -91,7 +91,7 @@ const getToolHandlers = (server: object) =>
 
 test('A permanent link leads to the page under its current address', async () => {
   const dal = await getDal();
-  const prefix = `test-permalink-${Date.now()}`;
+  const prefix = `test-permalink-${randomUUID()}`;
   let userId: string | null = null;
   const server = await startServer();
   try {
@@ -99,7 +99,7 @@ test('A permanent link leads to the page under its current address', async () =>
     userId = user.id;
     const page = await createWikiPage(
       dal,
-      { slug: `${prefix}-old`, title: { en: 'Old' }, body: { en: 'Text.' } },
+      { slug: `${prefix}-old`, title: { en: `${prefix} Old` }, body: { en: 'Text.' } },
       user.id
     );
 
@@ -149,7 +149,7 @@ test('A permanent link leads to the page under its current address', async () =>
 
 test('A deleted page answers its permanent link like its old address', async () => {
   const dal = await getDal();
-  const prefix = `test-permalink-deleted-${Date.now()}`;
+  const prefix = `test-permalink-deleted-${randomUUID()}`;
   let userId: string | null = null;
   const server = await startServer();
   try {
@@ -158,7 +158,7 @@ test('A deleted page answers its permanent link like its old address', async () 
     await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
     const page = await createWikiPage(
       dal,
-      { slug: prefix, title: { en: 'Deleted' }, body: { en: 'Text.' } },
+      { slug: prefix, title: { en: `${prefix} Deleted` }, body: { en: 'Text.' } },
       user.id
     );
     await deleteWikiPage(dal, { slug: prefix, revSummary: { en: 'Delete test page.' } }, user.id);
@@ -176,14 +176,14 @@ test('A deleted page answers its permanent link like its old address', async () 
 
 test('MCP page tools accept a page ID in place of its slug', async () => {
   const dal = await getDal();
-  const prefix = `test-permalink-mcp-${Date.now()}`;
+  const prefix = `test-permalink-mcp-${randomUUID()}`;
   let userId: string | null = null;
   try {
     const user = await createTestUser();
     userId = user.id;
     const page = await createWikiPage(
       dal,
-      { slug: `${prefix}-old`, title: { en: 'By ID' }, body: { en: 'Text.' } },
+      { slug: `${prefix}-old`, title: { en: `${prefix} By ID` }, body: { en: 'Text.' } },
       user.id
     );
     await updateWikiPage(
