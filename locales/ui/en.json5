@@ -688,7 +688,9 @@
     // The edit summary recorded when the Publish button is used.
     "publishSummary": "Publish draft",
     "publishForbidden": "Only the person who started this draft, experienced editors and wiki admins can publish it.",
-    "publishFailed": "This draft could not be published:",
+    "publishAddressTaken": "The article address is already taken. Choose a different address for the draft before publishing.",
+    "publishDuplicates": "Possible duplicates were found. Review them before publishing this draft.",
+    "publishFailed": "This draft could not be published.",
     // Next to drafts in Recent changes.
     "recentLabel": "draft"
   },

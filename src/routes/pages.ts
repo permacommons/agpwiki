@@ -1281,7 +1281,12 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
       if (error instanceof McpToolError) {
-        res.status(409).type('text').send(`${req.t('draft.publishFailed')} ${error.message}`);
+        const messageKey = error.code === 'possible_duplicate'
+          ? 'draft.publishDuplicates'
+          : error.code === 'conflict' && error.details?.newSlug
+            ? 'draft.publishAddressTaken'
+            : 'draft.publishFailed';
+        res.status(409).type('text').send(req.t(messageKey));
         return;
       }
       console.error('Failed to publish draft:', error);
@@ -1528,10 +1533,7 @@ export const registerPageRoutes = (app: Express) => {
       const [citationEntries, mediaRegistry, existingLinkSlugs] = await Promise.all([
         loadCitationEntriesForSources(dalInstance, [bodySource]),
         loadMediaEntriesForSources(dalInstance, [bodySource]),
-        findExistingWikiLinkSlugs(dalInstance, candidateLinkSlugs, {
-          // Published articles do not lead readers to drafts.
-          includeDrafts: !isArticleSlug(page.slug),
-        }),
+        findExistingWikiLinkSlugs(dalInstance, candidateLinkSlugs),
       ]);
       const missingLinkSlugs = new Set(
         candidateLinkSlugs.filter(candidateSlug => !existingLinkSlugs.has(candidateSlug))

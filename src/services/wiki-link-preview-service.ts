@@ -2,7 +2,6 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
-import { isDraftSlug } from '../lib/page-address.js';
 import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { buildWikipediaTitleVariants } from '../lib/wiki-links.js';
 import PageAlias from '../models/page-alias.js';
@@ -99,8 +98,7 @@ const localPreviewCache = createTtlCache<LocalWikiPreview>(LOCAL_PREVIEW_CACHE_M
 
 export const findExistingWikiLinkSlugs = async (
   dal: DataAccessLayer,
-  slugs: string[],
-  { includeDrafts = true }: { includeDrafts?: boolean } = {}
+  slugs: string[]
 ): Promise<Set<string>> => {
   if (slugs.length === 0) {
     return new Set();
@@ -113,13 +111,13 @@ export const findExistingWikiLinkSlugs = async (
   const candidates = [...new Set(normalized.flatMap(slug => [slug, toAddressForm(slug)]))];
 
   const result = await dal.query(
-    `SELECT slug, slug AS target
+    `SELECT slug
      FROM ${WikiPage.tableName}
      WHERE slug = ANY($1::text[])
        AND _old_rev_of IS NULL
        AND _rev_deleted = false
      UNION
-     SELECT a.slug, p.slug AS target
+     SELECT a.slug
      FROM ${PageAlias.tableName} a
      JOIN ${WikiPage.tableName} p ON p.id = a.page_id
      WHERE a.slug = ANY($1::text[])
@@ -129,8 +127,7 @@ export const findExistingWikiLinkSlugs = async (
   );
 
   const existing = new Set(
-    (result.rows as Array<{ slug: unknown; target: unknown }>)
-      .filter(row => includeDrafts || typeof row.target !== 'string' || !isDraftSlug(row.target))
+    (result.rows as Array<{ slug: unknown }>)
       .map(row => row.slug)
       .filter((slug): slug is string => typeof slug === 'string')
   );

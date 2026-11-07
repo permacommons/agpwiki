@@ -7,6 +7,8 @@ import test from 'node:test';
 
 import express from 'express';
 
+import { createSession } from '../src/auth/session.js';
+import { initializeI18n, i18next } from '../src/i18n.js';
 import { initializePostgreSQL } from '../src/db.js';
 import {
   duplicateScope,
@@ -79,10 +81,11 @@ const ageDraft = async (slug: string) => {
   await dal.query('UPDATE pages SET created_at = $2 WHERE slug = $1 AND _old_rev_of IS NULL', [slug, createdAt]);
 };
 
-const startServer = async () => {
+const startServer = async (language?: string) => {
   const app = express();
   app.use((req, res, next) => {
-    req.t = ((key: string) => key) as typeof req.t;
+    req.t = language ? i18next.getFixedT(language) : ((key: string) => key) as typeof req.t;
+    req.language = language ?? 'en';
     res.locals.locale = 'en';
     res.locals.languageOptions = [];
     res.locals.accountBannerHtml = '';
@@ -129,7 +132,7 @@ test('only the full draft/ prefix makes a draft', async () => {
   }
 });
 
-test('drafts are created with the draft option and stay out of search, lists and article links', async () => {
+test('drafts stay out of search and lists but are recognized as existing link targets', async () => {
   const dal = await getDal();
   const prefix = newPrefix('draft-lists');
   const user = await createTestUser();
@@ -155,7 +158,6 @@ test('drafts are created with the draft option and stay out of search, lists and
 
     const links = [draft.slug, horse.slug];
     assert.deepEqual([...(await findExistingWikiLinkSlugs(dal, links))].sort(), [...links].sort());
-    assert.deepEqual([...(await findExistingWikiLinkSlugs(dal, links, { includeDrafts: false }))], [horse.slug]);
   } finally {
     await cleanup(prefix, [user.id]);
   }
@@ -324,6 +326,47 @@ test('MCP creates drafts and publishes them', async () => {
   } finally {
     await client.close();
     await server.close();
+    await cleanup(prefix, [user.id]);
+  }
+});
+
+test('publish failures use localized messages for occupied addresses and possible duplicates', async () => {
+  await initializeI18n();
+  const dal = await getDal();
+  const prefix = newPrefix('publish-errors');
+  const user = await createTestUser();
+  const server = await startServer('de');
+  try {
+    const { token } = await createSession(user.id);
+    for (const reason of ['address', 'duplicates'] as const) {
+      const slug = `${prefix}-${reason}`;
+      const title = { en: randomWord() };
+      const draft = await createWikiPage(
+        dal, { slug, title, body: { en: 'Text.' }, draft: true }, user.id
+      );
+      await createWikiPage(
+        dal,
+        { slug: reason === 'address' ? slug : `${slug}-other`, title, body: { en: 'Text.' } },
+        user.id
+      );
+      if (reason === 'duplicates') await ageDraft(draft.slug);
+      const response = await fetch(`${server.url}/${draft.slug}/publish-draft`, {
+        method: 'POST',
+        headers: { cookie: `agpwiki_session=${token}` },
+        redirect: 'manual',
+      });
+      assert.equal(response.status, 409);
+      const key = reason === 'address' ? 'draft.publishAddressTaken' : 'draft.publishDuplicates';
+      const expected = i18next.t(key, { lng: 'de' });
+      assert.notEqual(expected, key);
+      assert.notEqual(expected, i18next.t(key, { lng: 'en' }));
+      const body = await response.text();
+      assert.equal(body, expected);
+      assert.equal((await findCurrentPageBySlugOrAlias(draft.slug))?.slug, draft.slug);
+    }
+  } finally {
+    await server.close();
+    await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [user.id]);
     await cleanup(prefix, [user.id]);
   }
 });
