@@ -13,6 +13,9 @@
     signOut: '退出',
     help: '帮助',
     menu: '菜单',
+    permanentLink: '永久链接',
+    permanentLinkCopied: '已复制链接',
+    permanentLinkTitle: '复制此页面的链接，即使页面改名仍可使用',
   },
   search: {
     description: '搜索页面标题和别名。',
@@ -37,6 +40,7 @@
     free: '永远自由。',
   },
   label: {
+    "draft": "草稿 — 尚未发布",
     meta: '元 — 关于 AGPEDIA 的页面',
     tool: '工具 — 内置软件功能',
     forum: '论坛 — AGPEDIA 讨论空间',
@@ -415,6 +419,17 @@
   toc: {
     title: '目录',
   },
+  "draft": {
+    "banner": "这是一篇草稿，尚未发布。任何持有链接的人都能阅读，但搜索引擎、站内搜索和条目列表都不会显示它。",
+    "publishButton": "发布",
+    "publishHelp": "将它移至 {{address}}。草稿地址仍然有效。",
+    "publishSummary": "发布草稿",
+    "publishForbidden": "只有创建此草稿的人、资深编辑者和维基管理员可以发布它。",
+    "publishAddressTaken": "文章地址已被占用。请在发布前为草稿选择其他地址。",
+    "publishDuplicates": "发现可能重复的文章。请在发布此草稿前检查。",
+    "publishFailed": "无法发布此草稿：",
+    "recentLabel": "草稿"
+  },
   warning: {
     neverFactChecked: '这篇文章尚未经过正式的事实核查，应视为草稿。其中包含的信息可能不完整或不准确。建议读者在依赖这些内容之前，先根据所引用的来源仔细核实其中的说法。',
     highSeverityIssues: '<a href="{{checksHref}}">最近的页面检查</a>已发现这篇文章中仍有未解决的高严重程度问题：',
@@ -511,6 +526,8 @@
     "noThreads": "暂无讨论。"
   },
   tool: {
+    "proposalsShowDrafts": "显示草稿提案（{{number}}）",
+    "proposalsHideDrafts": "隐藏草稿提案",
     view: '查看',
     diff: '差异',
     recentChangesDescription: '全站最新编辑。',
@@ -820,8 +837,7 @@
   "following": {
     "heading": "你关注的页面",
     "intro": "这些页面有新评论时你会收到通知。在任何页面使用“讨论”旁的“关注”按钮即可关注。",
-    "empty": "你还没有关注任何页面。",
-    "unfollow": "取消关注"
+    "empty": "你还没有关注任何页面。"
   },
   settings: {
     title: '设置',
@@ -905,6 +921,8 @@
     "supersededBy": "替代提案：",
   },
   "infobox": {
+    "julianDate": "{{date}} (儒略历)",
+    "unknownCalendarDate": "{{date}} (历法不明)",
     "ariaLabel": "基本资料",
     "factsOnWikidata": "维基数据上的事实和来源",
     "imageCredit": "图片：",

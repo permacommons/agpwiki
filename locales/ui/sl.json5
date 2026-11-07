@@ -13,6 +13,9 @@
     signOut: 'Odjava',
     help: 'Pomoč',
     menu: 'Meni',
+    permanentLink: 'Trajna povezava',
+    permanentLinkCopied: 'Povezava kopirana',
+    permanentLinkTitle: 'Kopiraj povezavo do te strani, ki deluje tudi po preimenovanju',
   },
   search: {
     description: 'Išči po naslovih strani in kratkih oznakah.',
@@ -38,6 +41,7 @@
     free: 'Svobodno za vedno.',
   },
   label: {
+    "draft": "OSNUTEK — ŠE NI OBJAVLJEN",
     meta: 'META — STRAN O AGPEDIA',
     tool: 'ORODJE — VGRAJENA FUNKCIJA PROGRAMSKE OPREME',
     article: 'IZ AGPEDIA — DELOVANJE SKOZI ZNANJE',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Vsebina',
   },
+  "draft": {
+    "banner": "To je osnutek in še ni objavljen. Prebere ga lahko vsak, ki ima povezavo, vendar ga iskalniki, iskanje in seznami člankov izpuščajo.",
+    "publishButton": "Objavi",
+    "publishHelp": "Premakne ga na {{address}}. Naslov osnutka še naprej deluje.",
+    "publishSummary": "Objava osnutka",
+    "publishForbidden": "Objavijo ga lahko samo oseba, ki je osnutek začela, izkušeni urejevalci in skrbniki wikija.",
+    "publishAddressTaken": "Naslov članka je že zaseden. Pred objavo izberite drug naslov za osnutek.",
+    "publishDuplicates": "Najdeni so bili morebitni dvojniki. Preglejte jih pred objavo tega osnutka.",
+    "publishFailed": "Osnutka ni bilo mogoče objaviti:",
+    "recentLabel": "osnutek"
+  },
   warning: {
     neverFactChecked: 'Ta članek še ni bil formalno preverjen glede dejstev in ga je treba obravnavati kot osnutek. Informacije, ki jih vsebuje, so lahko nepopolne ali netočne. Bralcem svetujemo, da trditve pred zanašanjem nanje skrbno preverijo glede na navedene vire.',
     highSeverityIssues: '<a href="{{checksHref}}">Nedavna preverjanja strani</a> so v tem članku prepoznala nerešene težave z visoko resnostjo:',
@@ -512,6 +527,8 @@
     "noThreads": "Še ni razprav."
   },
   tool: {
+    "proposalsShowDrafts": "Prikaži osnutke predlogov ({{number}})",
+    "proposalsHideDrafts": "Skrij osnutke predlogov",
     view: 'Prikaži',
     diff: 'Razlika',
     recentChangesDescription: 'Najnovejša urejanja po celotni wiki zbirki.',
@@ -822,8 +839,7 @@
   "following": {
     "heading": "Strani, ki jih spremljaš",
     "intro": "Izveš za nove komentarje na teh straneh.",
-    "empty": "Še ne spremljaš nobene strani.",
-    "unfollow": "Prenehaj spremljati"
+    "empty": "Še ne spremljaš nobene strani."
   },
   settings: {
     title: 'Nastavitve',
@@ -907,6 +923,8 @@
     "supersededBy": "nadomeščen s predlogom",
   },
   "infobox": {
+    "julianDate": "{{date}} (julijanski koledar)",
+    "unknownCalendarDate": "{{date}} (neznan koledar)",
     "ariaLabel": "Ključni podatki",
     "factsOnWikidata": "Podatki in viri na Wikipodatkih",
     "imageCredit": "Slika:",

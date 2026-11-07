@@ -127,7 +127,7 @@ export const findExistingWikiLinkSlugs = async (
   );
 
   const existing = new Set(
-    result.rows
+    (result.rows as Array<{ slug: unknown }>)
       .map(row => row.slug)
       .filter((slug): slug is string => typeof slug === 'string')
   );

@@ -24,7 +24,13 @@ import { INFOBOX_DATE_PROPERTIES, LOCAL_VALUE_PROPERTIES } from '../lib/infobox-
 import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-values.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
 import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
-import { pageNamespaceSql } from '../lib/page-address.js';
+import {
+  isArticleSlug,
+  isDraftSlug,
+  pageNamespaceSql,
+  resolvePageAddress,
+  toDraftSlug,
+} from '../lib/page-address.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
 import { missingPromptPlaceholders, requiredPromptPlaceholders } from '../lib/prompt-registry.js';
 import {
@@ -100,6 +106,8 @@ export interface WikiPageWriteInput {
 
 export interface WikiPageCreateInput extends WikiPageWriteInput {
   notDuplicateOf?: string[];
+  // Start the page in the draft space (draft/<slug>).
+  draft?: boolean;
 }
 
 export interface WikiPageCreateResult extends WikiPageResult {
@@ -131,6 +139,11 @@ export interface WikiPageUpdateInput extends WikiPageWriteInput {
   // Replaces all translation sources as they are; used by reverts.
   restoreTranslatedFrom?: TranslatedFromMap | null;
   revSummary: Record<string, string | null>;
+}
+
+export interface WikiPageUpdateOptions {
+  // Publishing is the only way out of the draft space; see publishDraft.
+  publishingDraft?: boolean;
 }
 
 export interface ProposalLinksResult {
@@ -422,6 +435,14 @@ const assertPromptPlaceholdersKept = (slug: string, body: Record<string, string 
   if (fieldErrors.length) {
     throw new ValidationError('A prompt page must keep the placeholders its prompt fills in.', fieldErrors);
   }
+};
+
+// A draft is published at its address without the draft/ prefix, which
+// must be an article address.
+const assertDraftBecomesArticle = (slug: string) => {
+  const address = resolvePageAddress(slug);
+  if (address?.namespace !== 'draft' || isArticleSlug(address.localName)) return;
+  throw new InvalidRequestError(`Only articles can be drafts: ${slug}`, { slug });
 };
 
 const updatePageProperties = (page: WikiPageInstance, change: (properties: PageProperties) => void) => {
@@ -930,11 +951,12 @@ export async function searchWikiPages(
   ensureNonEmptyString(query, 'query');
   const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
   // Search is intentionally simple: a substring of the address or of the
-  // title in any language.
+  // title in any language. Drafts are not promoted, so they never match.
   const result = await dalInstance.query(
     `SELECT slug, title, canonical_language
      FROM ${WikiPage.tableName}
      WHERE _old_rev_of IS NULL AND _rev_deleted = false
+       AND ${pageNamespaceSql()} IS DISTINCT FROM 'draft'
        AND (
          $2 = 'all'
          OR ($2 = 'content_only' AND ${pageNamespaceSql()} = 'article')
@@ -989,11 +1011,14 @@ export async function readWikiPage(
 
 export async function createWikiPage(
   dalInstance: DataAccessLayer,
-  { slug, title, body, canonicalLanguage, wikidata, infoboxValues, tags = [], revSummary, notDuplicateOf }: WikiPageCreateInput,
+  {
+    slug, title, body, canonicalLanguage, wikidata, infoboxValues, tags = [], revSummary, notDuplicateOf, draft = false,
+  }: WikiPageCreateInput,
   userId: string
 ): Promise<WikiPageCreateResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
-  const normalizedSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
+  const addressSlug = toAddressForm(normalizeSlugInput(slug, 'slug', errors));
+  const normalizedSlug = draft && addressSlug ? toDraftSlug(addressSlug) : addressSlug;
   ensureNonEmptyString(userId, 'userId', errors);
   ensureOptionalLanguage(canonicalLanguage, 'canonicalLanguage', errors);
   ensureOptionalWikidataId(wikidata, 'wikidata', errors);
@@ -1013,6 +1038,7 @@ export async function createWikiPage(
       slug: normalizedSlug,
     });
   }
+  assertDraftBecomesArticle(normalizedSlug);
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
   if (existing) {
@@ -1082,7 +1108,8 @@ export async function updateWikiPage(
     tags = [],
     revSummary,
   }: WikiPageUpdateInput,
-  userId: string
+  userId: string,
+  { publishingDraft = false }: WikiPageUpdateOptions = {}
 ): Promise<WikiPageResult> {
   const errors = new ValidationCollector('Invalid wiki page update input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
@@ -1129,6 +1156,15 @@ export async function updateWikiPage(
 
   const previousSlug = page.slug;
   const isRename = Boolean(normalizedNewSlug && normalizedNewSlug !== previousSlug);
+  if (normalizedNewSlug && isRename) {
+    if (isDraftSlug(previousSlug) && !isDraftSlug(normalizedNewSlug) && !publishingDraft) {
+      throw new InvalidRequestError(
+        `Drafts leave the draft space only by being published: use wiki_publishDraft for ${previousSlug}.`,
+        { slug: previousSlug, newSlug: normalizedNewSlug }
+      );
+    }
+    assertDraftBecomesArticle(normalizedNewSlug);
+  }
   // An alias of this same page may be renamed onto (moving a page back); it is
   // removed rather than treated as a conflict.
   let aliasToRelease: PageAliasInstance | null = null;

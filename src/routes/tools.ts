@@ -8,6 +8,7 @@ import { discussionPath } from '../lib/discussion-paths.js';
 import { NotFoundError } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { formatMediaLabel } from '../lib/media.js';
+import { isDraftSlug } from '../lib/page-address.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
 import {
   getRecentCitationChanges,
@@ -91,6 +92,7 @@ type RecentListItem = {
   revUser: string | null;
   revTags: string[];
   actions?: RecentListAction[];
+  badge?: string;
 };
 
 const parseIntegerQuery = (
@@ -138,9 +140,12 @@ const renderRecentList = (
         ? `<div class="change-summary">${renderText(item.summary)}</div>`
         : '';
       const primaryLabel = renderText(item.primaryLabel);
-      const primaryHtml = item.primaryHref
+      const linkHtml = item.primaryHref
         ? `<a href="${escapeHtml(item.primaryHref)}">${primaryLabel}</a>`
         : `<span>${primaryLabel}</span>`;
+      const primaryHtml = item.badge
+        ? `${linkHtml} <span class="change-badge">${escapeHtml(item.badge)}</span>`
+        : linkHtml;
       const actionsHtml =
         item.actions?.length
           ? `<div class="change-actions">${item.actions
@@ -793,6 +798,7 @@ export const registerToolRoutes = (app: Express) => {
         revUser: change.revUser,
         revTags: change.revTags,
         actions,
+        badge: isDraftSlug(change.slug) ? req.t('draft.recentLabel') : undefined,
       };
     });
     const itemsHtml = renderRecentList(items, userMap, req.t);
@@ -1149,7 +1155,17 @@ export const registerToolRoutes = (app: Express) => {
     const dalInstance = await initializePostgreSQL();
     const proposals = await listProposalPages(dalInstance);
     const lang = (res.locals.locale as string | undefined) ?? 'en';
-    const sections = PROPOSAL_LIST_ORDER.map(status => {
+    // Draft proposals are not promoted: they are listed only on request.
+    const showDrafts = req.query.drafts === '1';
+    const draftCount = proposals.filter(item => item.status === 'draft').length;
+    const draftToggleHtml = draftCount
+      ? `<p class="recent-filter"><a href="${showDrafts ? '/tool/proposals' : '/tool/proposals?drafts=1'}">${escapeHtml(
+          showDrafts
+            ? req.t('tool.proposalsHideDrafts')
+            : req.t('tool.proposalsShowDrafts', { number: draftCount })
+        )}</a></p>`
+      : '';
+    const sections = PROPOSAL_LIST_ORDER.filter(status => showDrafts || status !== 'draft').map(status => {
       const items = proposals.filter(item => item.status === status);
       if (!items.length) return '';
       const label = status ? req.t(`proposalStatus.status.${status}`) : req.t('proposalStatus.noStatus');
@@ -1169,6 +1185,7 @@ export const registerToolRoutes = (app: Express) => {
     }).join('');
     const bodyHtml = `<div class="tool-page">
   <p>${escapeHtml(req.t('tool.proposalsDescription', { count: proposals.length }))}</p>
+  ${draftToggleHtml}
   ${sections}
 </div>`;
     res.render('layout', {

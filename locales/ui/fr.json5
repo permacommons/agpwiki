@@ -14,6 +14,9 @@
     signOut: 'Déconnexion',
     help: 'Aide',
     menu: 'Navigation',
+    permanentLink: 'Lien permanent',
+    permanentLinkCopied: 'Lien copié',
+    permanentLinkTitle: 'Copier un lien vers cette page qui reste valable si elle est renommée',
   },
   search: {
     description: 'Rechercher des titres de pages et des slugs.',
@@ -38,6 +41,7 @@
     free: 'Libre pour toujours.',
   },
   label: {
+    "draft": "BROUILLON — PAS ENCORE PUBLIÉ",
     meta: 'META — PAGE SUR AGPEDIA',
     tool: 'OUTIL — FONCTIONNALITÉ LOGICIELLE INTÉGRÉE',
     forum: 'FORUM — ESPACE DE DISCUSSION POUR AGPEDIA',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Sommaire',
   },
+  "draft": {
+    "banner": "Ceci est un brouillon, pas encore publié. Toute personne ayant le lien peut le lire, mais les moteurs de recherche, la recherche et les listes d’articles l’ignorent.",
+    "publishButton": "Publier",
+    "publishHelp": "Le déplace vers {{address}}. L’adresse du brouillon continue de fonctionner.",
+    "publishSummary": "Publication du brouillon",
+    "publishForbidden": "Seuls la personne qui a commencé ce brouillon, les contributeurs expérimentés et les admins du wiki peuvent le publier.",
+    "publishAddressTaken": "L’adresse de l’article est déjà utilisée. Choisis une autre adresse pour le brouillon avant de le publier.",
+    "publishDuplicates": "Des doublons possibles ont été trouvés. Examine-les avant de publier ce brouillon.",
+    "publishFailed": "Ce brouillon n’a pas pu être publié :",
+    "recentLabel": "brouillon"
+  },
   warning: {
     neverFactChecked: 'Cet article n\'a pas encore fait l\'objet d\'une vérification formelle des faits et doit être considéré comme un brouillon. Les informations qu\'il contient peuvent être incomplètes ou inexactes. Il est conseillé aux lectrices et lecteurs de vérifier soigneusement les affirmations à partir des sources citées avant de s\'y fier.',
     highSeverityIssues: 'De <a href="{{checksHref}}">récents contrôles de page</a> ont identifié dans cet article des problèmes de gravité élevée qui ne sont pas résolus :',
@@ -512,6 +527,8 @@
     "noThreads": "Aucune discussion pour l’instant."
   },
   tool: {
+    "proposalsShowDrafts": "Afficher les propositions en brouillon ({{number}})",
+    "proposalsHideDrafts": "Masquer les propositions en brouillon",
     view: 'Voir',
     diff: 'Différence',
     recentChangesDescription: 'Dernières modifications sur le wiki.',
@@ -821,8 +838,7 @@
   "following": {
     "heading": "Pages que tu suis",
     "intro": "Tu es informé des nouveaux commentaires sur ces pages.",
-    "empty": "Tu ne suis encore aucune page.",
-    "unfollow": "Ne plus suivre"
+    "empty": "Tu ne suis encore aucune page."
   },
   settings: {
     title: 'Paramètres',
@@ -906,6 +922,8 @@
     "supersededBy": "remplacée par",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendrier julien)",
+    "unknownCalendarDate": "{{date}} (calendrier inconnu)",
     "ariaLabel": "Faits essentiels",
     "factsOnWikidata": "Faits et sources sur Wikidata",
     "imageCredit": "Image :",

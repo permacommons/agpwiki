@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
@@ -81,6 +81,21 @@ type RegisteredToolHandler = (args: unknown, extra?: { authInfo?: { extra?: { us
 
 const getToolHandlers = (server: object) =>
   (server as { _registeredTools: Record<string, { handler: RegisteredToolHandler }> })._registeredTools;
+
+test('MCP resolves a page ID before any database initialization', async () => {
+  const { server } = createMcpServer();
+  try {
+    const result = await getToolHandlers(server).wiki_readPage.handler({ slug: randomUUID() });
+    assert.equal(result.isError, true);
+    assert.equal(
+      (result.structuredContent as { error: { code: string } }).error.code,
+      'not_found'
+    );
+  } finally {
+    await getDal();
+    await server.close();
+  }
+});
 
 test('MCP admin tools are disabled without admin roles', () => {
   const mcpWithoutRoles = createMcpServer({ userRoles: [] });

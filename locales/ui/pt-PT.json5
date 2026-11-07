@@ -13,6 +13,9 @@
     signOut: 'Sair',
     help: 'Ajuda',
     menu: 'Menu de navegação',
+    permanentLink: 'Ligação permanente',
+    permanentLinkCopied: 'Ligação copiada',
+    permanentLinkTitle: 'Copia uma ligação para esta página que continua a funcionar se ela mudar de nome',
   },
   search: {
     description: 'Pesquisar títulos de páginas e slugs.',
@@ -37,6 +40,7 @@
     free: 'Livre para sempre.',
   },
   label: {
+    "draft": "RASCUNHO — AINDA NÃO PUBLICADO",
     meta: 'META — PÁGINA SOBRE A AGPEDIA',
     tool: 'FERRAMENTA — FUNCIONALIDADE DE SOFTWARE INTEGRADA',
     forum: 'FÓRUM — ESPAÇO DE DISCUSSÃO DA AGPEDIA',
@@ -415,6 +419,17 @@
   toc: {
     title: 'Índice',
   },
+  "draft": {
+    "banner": "Isto é um rascunho e ainda não foi publicado. Qualquer pessoa com a ligação pode lê-lo, mas os motores de pesquisa, a pesquisa e as listas de artigos deixam-no de fora.",
+    "publishButton": "Publicar",
+    "publishHelp": "Move-o para {{address}}. O endereço do rascunho continua a funcionar.",
+    "publishSummary": "Publicar rascunho",
+    "publishForbidden": "Só quem começou este rascunho, os editores experientes e os administradores da wiki o podem publicar.",
+    "publishAddressTaken": "O endereço do artigo já está a ser utilizado. Escolha outro endereço para o rascunho antes de o publicar.",
+    "publishDuplicates": "Foram encontrados possíveis duplicados. Reveja-os antes de publicar este rascunho.",
+    "publishFailed": "Não foi possível publicar este rascunho:",
+    "recentLabel": "rascunho"
+  },
   warning: {
     neverFactChecked: 'Este artigo ainda não foi sujeito a uma verificação formal de factos e deve ser considerado um rascunho. A informação que contém pode estar incompleta ou ser imprecisa. Recomenda-se aos leitores que verifiquem cuidadosamente as alegações com base nas fontes citadas antes de confiarem nelas.',
     highSeverityIssues: '<a href="{{checksHref}}">Verificações de página recentes</a> identificaram problemas de elevada gravidade ainda não resolvidos neste artigo:',
@@ -511,6 +526,8 @@
     "noThreads": "Ainda não há discussões."
   },
   tool: {
+    "proposalsShowDrafts": "Mostrar propostas em rascunho ({{number}})",
+    "proposalsHideDrafts": "Ocultar propostas em rascunho",
     view: 'Ver',
     diff: 'Diferença',
     recentChangesDescription: 'Últimas edições em todo o wiki.',
@@ -820,8 +837,7 @@
   "following": {
     "heading": "Páginas que segues",
     "intro": "És avisado de novos comentários nestas páginas.",
-    "empty": "Ainda não segues nenhuma página.",
-    "unfollow": "Deixar de seguir"
+    "empty": "Ainda não segues nenhuma página."
   },
   settings: {
     title: 'Definições',
@@ -905,6 +921,8 @@
     "supersededBy": "substituída por",
   },
   "infobox": {
+    "julianDate": "{{date}} (calendário juliano)",
+    "unknownCalendarDate": "{{date}} (calendário desconhecido)",
     "ariaLabel": "Factos principais",
     "factsOnWikidata": "Factos e fontes no Wikidata",
     "imageCredit": "Imagem:",

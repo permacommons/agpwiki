@@ -13,6 +13,9 @@
     signOut: 'ログアウト',
     help: 'ヘルプ',
     menu: 'メニュー',
+    permanentLink: '固定リンク',
+    permanentLinkCopied: 'リンクをコピーしました',
+    permanentLinkTitle: 'ページ名が変わっても使えるこのページへのリンクをコピー',
   },
   search: {
     description: 'ページタイトルとスラッグを検索。',
@@ -37,6 +40,7 @@
     free: 'いつまでも自由。',
   },
   label: {
+    "draft": "下書き — 未公開",
     meta: 'メタ — AGPEDIA について',
     tool: 'ツール — 組み込みソフトウェア機能',
     forum: 'フォーラム — AGPEDIA の議論スペース',
@@ -415,6 +419,17 @@
   toc: {
     title: '目次',
   },
+  "draft": {
+    "banner": "これは下書きで、まだ公開されていません。リンクを知っている人は誰でも読めますが、検索エンジン、サイト内検索、記事一覧には表示されません。",
+    "publishButton": "公開する",
+    "publishHelp": "{{address}} に移動します。下書きのアドレスも引き続き使えます。",
+    "publishSummary": "下書きを公開",
+    "publishForbidden": "この下書きを公開できるのは、作成者、経験豊富な編集者、ウィキ管理者のみです。",
+    "publishAddressTaken": "記事のアドレスはすでに使用されています。公開する前に下書きのアドレスを変更してください。",
+    "publishDuplicates": "重複の可能性がある記事が見つかりました。この下書きを公開する前に確認してください。",
+    "publishFailed": "この下書きを公開できませんでした:",
+    "recentLabel": "下書き"
+  },
   warning: {
     neverFactChecked: 'この記事はまだ正式なファクトチェックを受けておらず、草稿として扱うべきです。含まれている情報は不完全または不正確である可能性があります。依拠する前に、引用された情報源に照らして主張を注意深く確認することを読者に勧めます。',
     highSeverityIssues: '<a href="{{checksHref}}">最近のページチェック</a>により、この記事で未解決の高重大度の問題が特定されています:',
@@ -511,6 +526,8 @@
     "noThreads": "まだ議論はありません。"
   },
   tool: {
+    "proposalsShowDrafts": "下書きの提案を表示 ({{number}})",
+    "proposalsHideDrafts": "下書きの提案を隠す",
     view: '表示',
     diff: '差分',
     recentChangesDescription: 'Wiki全体の最新の編集。',
@@ -820,8 +837,7 @@
   "following": {
     "heading": "フォロー中のページ",
     "intro": "これらのページへの新しいコメントが通知されます。どのページでも「議論」の隣の「フォロー」ボタンでフォローできます。",
-    "empty": "まだフォローしているページはありません。",
-    "unfollow": "フォローをやめる"
+    "empty": "まだフォローしているページはありません。"
   },
   settings: {
     title: '設定',
@@ -905,6 +921,8 @@
     "supersededBy": "後継提案:",
   },
   "infobox": {
+    "julianDate": "{{date}} (ユリウス暦)",
+    "unknownCalendarDate": "{{date}} (暦不明)",
     "ariaLabel": "基本情報",
     "factsOnWikidata": "ウィキデータの事実と出典",
     "imageCredit": "画像:",

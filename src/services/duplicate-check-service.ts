@@ -10,7 +10,7 @@ import {
 
 import { InvalidRequestError, PossibleDuplicateError, ValidationCollector } from '../lib/errors.js';
 import type { LocalizedMapInput } from '../lib/localized.js';
-import { DEFAULT_PAGE_NAMESPACE, pageNamespaceSql, resolvePageAddress } from '../lib/page-address.js';
+import { DEFAULT_PAGE_NAMESPACE, duplicateScope, pageNamespaceSql, resolvePageAddress } from '../lib/page-address.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeSlugInput } from './validation.js';
 
@@ -22,6 +22,8 @@ export interface DuplicateCheckInput {
   titles: string[];
   slug?: string | null;
   wikidata?: string | null;
+  // A page that is not its own duplicate, such as a draft being published.
+  excludeSlug?: string | null;
 }
 
 export interface NewPageCheckInput {
@@ -30,6 +32,7 @@ export interface NewPageCheckInput {
   canonicalLanguage?: string | null;
   wikidata?: string | null;
   notDuplicateOf?: string[];
+  excludeSlug?: string | null;
 }
 
 export interface NewPageCheckResult {
@@ -46,31 +49,34 @@ const titleValues = (title: Record<string, string> | null) =>
 // Matching runs in code so accent folding needs no PostgreSQL extension.
 export async function findPossibleDuplicates(
   dalInstance: DataAccessLayer,
-  { titles, slug, wikidata }: DuplicateCheckInput
+  { titles, slug, wikidata, excludeSlug }: DuplicateCheckInput
 ): Promise<DuplicateCheckResult> {
   const normalizedSlug = slug == null ? null : toAddressForm(normalizeSlugInput(slug, 'slug'));
   if (normalizedSlug && isBlockedSlug(normalizedSlug)) {
     throw new InvalidRequestError(`Wiki page slug is reserved: ${normalizedSlug}`, { slug: normalizedSlug });
   }
   const address = resolvePageAddress(normalizedSlug ?? '');
-  const namespace = address?.namespace ?? DEFAULT_PAGE_NAMESPACE.name;
+  const namespaces = duplicateScope(address?.namespace ?? DEFAULT_PAGE_NAMESPACE.name);
+  const excluded = excludeSlug ?? '';
   const [pageResult, aliasResult] = await Promise.all([
     dalInstance.query(
       `SELECT slug, title, properties->>'wikidata' AS wikidata
          FROM pages WHERE ${CURRENT_PAGE}
+          AND slug <> $2
           AND ${pageNamespaceSql()} IS NOT NULL
-          AND (${pageNamespaceSql()} = $1 OR id IN (
-            SELECT page_id FROM page_aliases WHERE ${pageNamespaceSql()} = $1
+          AND (${pageNamespaceSql()} = ANY($1::text[]) OR id IN (
+            SELECT page_id FROM page_aliases WHERE ${pageNamespaceSql()} = ANY($1::text[])
           ))`,
-      [namespace]
+      [namespaces, excluded]
     ),
     dalInstance.query(
       `SELECT a.slug, p.slug AS "pageSlug"
          FROM page_aliases a JOIN pages p ON p.id = a.page_id
         WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
+          AND p.slug <> $2
           AND ${pageNamespaceSql('p.slug')} IS NOT NULL
-          AND ${pageNamespaceSql('a.slug')} = $1`,
-      [namespace]
+          AND ${pageNamespaceSql('a.slug')} = ANY($1::text[])`,
+      [namespaces, excluded]
     ),
   ]);
   return matchPossibleDuplicates({ titles, address, wikidata },
@@ -134,7 +140,7 @@ const describeDuplicates = (
  */
 export async function checkNewPage(
   dalInstance: DataAccessLayer,
-  { slug, title, canonicalLanguage, wikidata, notDuplicateOf = [] }: NewPageCheckInput
+  { slug, title, canonicalLanguage, wikidata, notDuplicateOf = [], excludeSlug }: NewPageCheckInput
 ): Promise<NewPageCheckResult> {
   const errors = new ValidationCollector('Invalid wiki page input.');
   const checked = notDuplicateOf.map((value, index) =>
@@ -151,6 +157,7 @@ export async function checkNewPage(
     titles: Object.values(titleMap),
     slug,
     wikidata: wikidata ?? null,
+    excludeSlug,
   });
 
   const checkedSet = new Set(checked);

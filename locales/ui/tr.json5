@@ -13,6 +13,9 @@
     signOut: 'Çıkış Yap',
     help: 'Yardım',
     menu: 'Menü',
+    permanentLink: 'Kalıcı bağlantı',
+    permanentLinkCopied: 'Bağlantı kopyalandı',
+    permanentLinkTitle: 'Bu sayfaya, adı değişse de çalışan bir bağlantı kopyala',
   },
   search: {
     description: 'Sayfa başlıklarını ve kısa adları ara.',
@@ -37,6 +40,7 @@
     free: 'Sonsuza dek özgür.',
   },
   label: {
+    "draft": "TASLAK — HENÜZ YAYIMLANMADI",
     meta: 'META — AGPEDIA HAKKINDA SAYFA',
     tool: 'ARAÇ — YERLEŞİK YAZILIM ÖZELLİĞİ',
     forum: 'FORUM — AGPEDIA İÇİN TARTIŞMA ALANI',
@@ -415,6 +419,17 @@
   toc: {
     title: 'İçindekiler',
   },
+  "draft": {
+    "banner": "Bu bir taslak ve henüz yayımlanmadı. Bağlantıya sahip herkes okuyabilir, ancak arama motorları, site araması ve madde listeleri onu göstermez.",
+    "publishButton": "Yayımla",
+    "publishHelp": "Onu {{address}} adresine taşır. Taslak adresi çalışmaya devam eder.",
+    "publishSummary": "Taslağı yayımla",
+    "publishForbidden": "Bu taslağı yalnızca başlatan kişi, deneyimli düzenleyiciler ve viki yöneticileri yayımlayabilir.",
+    "publishAddressTaken": "Makale adresi zaten kullanılıyor. Yayımlamadan önce taslak için farklı bir adres seçin.",
+    "publishDuplicates": "Olası kopyalar bulundu. Bu taslağı yayımlamadan önce bunları inceleyin.",
+    "publishFailed": "Bu taslak yayımlanamadı:",
+    "recentLabel": "taslak"
+  },
   warning: {
     neverFactChecked: 'Bu madde henüz resmi bir doğruluk denetiminden geçmemiştir ve taslak olarak değerlendirilmelidir. İçerdiği bilgiler eksik veya hatalı olabilir. Okurların, bu bilgilere güvenmeden önce iddiaları atıf yapılan kaynaklara göre dikkatle doğrulamaları önerilir.',
     highSeverityIssues: '<a href="{{checksHref}}">Son sayfa kontrolleri</a> bu maddede çözülmemiş yüksek şiddetli sorunlar tespit etti:',
@@ -511,6 +526,8 @@
     "noThreads": "Henüz tartışma yok."
   },
   tool: {
+    "proposalsShowDrafts": "Taslak önerileri göster ({{number}})",
+    "proposalsHideDrafts": "Taslak önerileri gizle",
     view: 'Görüntüle',
     diff: 'Fark',
     recentChangesDescription: 'Vikideki son değişiklikler.',
@@ -820,8 +837,7 @@
   "following": {
     "heading": "Takip ettiğiniz sayfalar",
     "intro": "Bu sayfalardaki yeni yorumlardan haberdar olursunuz.",
-    "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz.",
-    "unfollow": "Takibi bırak"
+    "empty": "Henüz hiçbir sayfayı takip etmiyorsunuz."
   },
   settings: {
     title: 'Ayarlar',
@@ -905,6 +921,8 @@
     "supersededBy": "yerine geçen öneri:",
   },
   "infobox": {
+    "julianDate": "{{date}} (Jülyen takvimi)",
+    "unknownCalendarDate": "{{date}} (takvim bilinmiyor)",
     "ariaLabel": "Temel bilgiler",
     "factsOnWikidata": "Vikiveri'deki bilgiler ve kaynakları",
     "imageCredit": "Görsel:",

@@ -42,4 +42,27 @@
       if (menu.open && !menu.contains(event.target)) menu.open = false;
     }
   });
+
+  // "Permanent link" copies the page's /id/ link instead of following it,
+  // since following it only leads back to this page. Without the clipboard,
+  // the link is still there to copy from the browser's own link menu.
+  for (const link of document.querySelectorAll('[data-permanent-link]')) {
+    const label = link.textContent;
+    let resetTimer = null;
+    link.addEventListener('click', async event => {
+      if (!navigator.clipboard?.writeText) return;
+      event.preventDefault();
+      try {
+        await navigator.clipboard.writeText(link.href);
+      } catch {
+        window.prompt(link.title || label, link.href);
+        return;
+      }
+      link.textContent = link.dataset.copiedLabel || label;
+      clearTimeout(resetTimer);
+      resetTimer = setTimeout(() => {
+        link.textContent = label;
+      }, 2000);
+    });
+  }
 })();

@@ -57,6 +57,8 @@ test('MCP tools expose review annotations', () => {
     'proposal_listPositions',
     'wiki_listArticlesWithIssues',
     'wiki_findPossibleDuplicates',
+    'notifications_list',
+    'changes_since',
   ]);
   const additiveWriteTools = new Set([
     'proposal_replyToPosition',
@@ -67,6 +69,7 @@ test('MCP tools expose review annotations', () => {
     'media_create',
     'page_check_create',
     'wiki_addAlias',
+    'notifications_markRead',
   ]);
   const destructiveWriteTools = new Set([
     'blog_updatePost',
@@ -74,6 +77,7 @@ test('MCP tools expose review annotations', () => {
     'citation_update',
     'claim_update',
     'wiki_updatePage',
+    'wiki_publishDraft',
     'wiki_restoreRevision',
     'wiki_rollbackPage',
     'wiki_applyPatch',

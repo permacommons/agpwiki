@@ -13,6 +13,9 @@
     signOut: 'Kijelentkezés',
     help: 'Súgó',
     menu: 'Menü',
+    permanentLink: 'Állandó hivatkozás',
+    permanentLinkCopied: 'Hivatkozás másolva',
+    permanentLinkTitle: 'Olyan hivatkozás másolása erre a lapra, amely átnevezés után is működik',
   },
   search: {
     description: 'Oldalcímek és rövid azonosítók keresése.',
@@ -38,6 +41,7 @@
     free: 'Örökre szabad.',
   },
   label: {
+    "draft": "PISZKOZAT — MÉG NINCS KÖZZÉTÉVE",
     meta: 'META — OLDAL AZ AGPEDIA-RÓL',
     tool: 'ESZKÖZ — BEÉPÍTETT SZOFTVERFUNKCIÓ',
     article: 'AZ AGPEDIÁRÓL — CSELEKVŐKÉPESSÉG A TUDÁS RÉVÉN',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Tartalom',
   },
+  "draft": {
+    "banner": "Ez egy piszkozat, még nincs közzétéve. Bárki elolvashatja, akinek megvan a link, de a keresőmotorok, a keresés és a szócikklisták kihagyják.",
+    "publishButton": "Közzététel",
+    "publishHelp": "Áthelyezi ide: {{address}}. A piszkozat címe továbbra is működik.",
+    "publishSummary": "Piszkozat közzététele",
+    "publishForbidden": "Csak a piszkozat elindítója, a tapasztalt szerkesztők és a wiki adminisztrátorai tehetik közzé.",
+    "publishAddressTaken": "A cikk címe már foglalt. Közzététel előtt válassz másik címet a piszkozatnak.",
+    "publishDuplicates": "Lehetséges másolatokat találtunk. A piszkozat közzététele előtt nézd át őket.",
+    "publishFailed": "A piszkozatot nem sikerült közzétenni:",
+    "recentLabel": "piszkozat"
+  },
   warning: {
     neverFactChecked: 'Ez a cikk még nem esett át hivatalos tényellenőrzésen, ezért piszkozatként kezelendő. A benne szereplő információk hiányosak vagy pontatlanok lehetnek. Az olvasóknak azt javasoljuk, hogy mielőtt ezekre támaszkodnának, gondosan ellenőrizzék az állításokat a hivatkozott források alapján.',
     highSeverityIssues: 'A <a href="{{checksHref}}">legutóbbi oldalellenőrzések</a> feloldatlan, magas súlyosságú problémákat azonosítottak ebben a cikkben:',
@@ -512,6 +527,8 @@
     "noThreads": "Még nincsenek beszélgetések."
   },
   tool: {
+    "proposalsShowDrafts": "Piszkozat javaslatok mutatása ({{number}})",
+    "proposalsHideDrafts": "Piszkozat javaslatok elrejtése",
     view: 'Megtekintés',
     diff: 'Eltérés',
     recentChangesDescription: 'Legújabb szerkesztések a teljes wikiben.',
@@ -822,8 +839,7 @@
   "following": {
     "heading": "Követett oldalak",
     "intro": "Ezeknek az oldalaknak az új hozzászólásairól értesülsz.",
-    "empty": "Még nem követsz egy oldalt sem.",
-    "unfollow": "Követés leállítása"
+    "empty": "Még nem követsz egy oldalt sem."
   },
   settings: {
     title: 'Beállítások',
@@ -907,6 +923,8 @@
     "supersededBy": "felváltó javaslat:",
   },
   "infobox": {
+    "julianDate": "{{date}} (Julián-naptár)",
+    "unknownCalendarDate": "{{date}} (ismeretlen naptár)",
     "ariaLabel": "Fő adatok",
     "factsOnWikidata": "Adatok és források a Wikidatán",
     "imageCredit": "Kép:",

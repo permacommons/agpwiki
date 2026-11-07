@@ -13,6 +13,9 @@
     signOut: 'Logga ut',
     help: 'Hjälp',
     menu: 'Meny',
+    permanentLink: 'Permanent länk',
+    permanentLinkCopied: 'Länken kopierad',
+    permanentLinkTitle: 'Kopiera en länk till sidan som fungerar även om sidan byter namn',
   },
   search: {
     description: 'Sök i sidtitlar och sluggar.',
@@ -38,6 +41,7 @@
     free: 'Fritt för alltid.',
   },
   label: {
+    "draft": "UTKAST — ÄNNU INTE PUBLICERAT",
     meta: 'META — SIDA OM AGPEDIA',
     tool: 'VERKTYG — INBYGGD PROGRAMVARUFUNKTION',
     forum: 'FORUM — DISKUSSIONSYTA FÖR AGPEDIA',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Innehåll',
   },
+  "draft": {
+    "banner": "Det här är ett utkast som ännu inte är publicerat. Alla med länken kan läsa det, men sökmotorer, sökfunktionen och artikellistor utelämnar det.",
+    "publishButton": "Publicera",
+    "publishHelp": "Flyttar det till {{address}}. Utkastets adress fortsätter att fungera.",
+    "publishSummary": "Publicera utkast",
+    "publishForbidden": "Bara den som påbörjade utkastet, erfarna redigerare och wikiadministratörer kan publicera det.",
+    "publishAddressTaken": "Artikeladressen används redan. Välj en annan adress för utkastet innan du publicerar det.",
+    "publishDuplicates": "Möjliga dubbletter hittades. Granska dem innan du publicerar det här utkastet.",
+    "publishFailed": "Utkastet kunde inte publiceras:",
+    "recentLabel": "utkast"
+  },
   warning: {
     neverFactChecked: 'Den här artikeln har ännu inte genomgått någon formell faktagranskning och bör betraktas som ett utkast. Informationen i den kan vara ofullständig eller felaktig. Läsare rekommenderas att noggrant kontrollera påståenden mot de angivna källorna innan de förlitar sig på dem.',
     highSeverityIssues: '<a href="{{checksHref}}">Senaste sidkontroller</a> har identifierat olösta problem med hög allvarlighetsgrad i den här artikeln:',
@@ -512,6 +527,8 @@
     "noThreads": "Inga diskussioner ännu."
   },
   tool: {
+    "proposalsShowDrafts": "Visa förslagsutkast ({{number}})",
+    "proposalsHideDrafts": "Dölj förslagsutkast",
     view: 'Visa',
     diff: 'Skillnad',
     recentChangesDescription: 'Senaste redigeringar i hela wikin.',
@@ -822,8 +839,7 @@
   "following": {
     "heading": "Sidor du följer",
     "intro": "Du får veta om nya kommentarer på de här sidorna.",
-    "empty": "Du följer inga sidor ännu.",
-    "unfollow": "Sluta följa"
+    "empty": "Du följer inga sidor ännu."
   },
   settings: {
     title: 'Inställningar',
@@ -907,6 +923,8 @@
     "supersededBy": "ersatt av",
   },
   "infobox": {
+    "julianDate": "{{date}} (julianska kalendern)",
+    "unknownCalendarDate": "{{date}} (okänd kalender)",
     "ariaLabel": "Viktiga fakta",
     "factsOnWikidata": "Fakta och källor på Wikidata",
     "imageCredit": "Bild:",

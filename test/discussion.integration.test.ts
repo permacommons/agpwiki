@@ -83,6 +83,8 @@ const startServer = async () => {
     res.render = ((_view: string, options?: Record<string, unknown>) => {
       res.json({
         bodyHtml: options?.bodyHtml ?? null,
+        tabsHtml: options?.tabsHtml ?? null,
+        labelHtml: options?.labelHtml ?? null,
         canonicalUrl: options?.canonicalUrl ?? null,
         relNext: options?.relNext ?? null,
         relPrev: options?.relPrev ?? null,
@@ -380,6 +382,29 @@ test('An article and discussion comments keep citation targets and backlinks wit
     }
   } finally {
     await dal.query('DELETE FROM citations WHERE key = $1', [prefix]);
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Draft discussions retain draft labeling, article tabs and noindex after threads are added', async () => {
+  const dal = await getDal();
+  const prefix = `draft/disc-draft-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('draft');
+    userIds.push(author.id);
+    await createPage(dal, prefix, author.id);
+    const thread = await startThread(prefix, 'Draft discussion', author.id);
+    const response = await fetch(`${server.url}/${prefix}/discussion`);
+    assert.equal(response.status, 200);
+    const page = await response.json() as { bodyHtml: string; tabsHtml: string; labelHtml: string; noindex: boolean };
+    assert.ok(page.bodyHtml.includes(`id="thread-${thread.id}"`));
+    assert.match(page.labelHtml, /label.draft/);
+    assert.match(page.tabsHtml, /pageTabs.article/);
+    assert.equal(page.noindex, true);
+  } finally {
+    await server.close();
     await cleanup(dal, prefix, userIds);
   }
 });

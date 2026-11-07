@@ -11,7 +11,7 @@ import {
 } from '../lib/discussion-paths.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
-import { isArticleSlug, resolvePageAddress } from '../lib/page-address.js';
+import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
@@ -271,8 +271,9 @@ export const renderPageDiscussionPage = async (
     ? await getWikiPageEditability(dalInstance, { id: page.id }, session)
     : { isProtected: false, isEditable: false };
   const canEditDirectly = Boolean(session) && (!editability.isProtected || editability.isEditable);
+  const isDraft = isDraftSlug(page.slug);
   const tabsHtml = renderPageTabs({
-    isArticle: isArticleSlug(page.slug),
+    isArticle: isArticleSlug(page.slug) || isDraft,
     pageHref,
     isCurrentView: Boolean(page.id),
     discussHref: discussionPath(target),
@@ -306,14 +307,14 @@ export const renderPageDiscussionPage = async (
     previewHtml: state.threadPreviewHtml,
   }) : `<p class="forum-empty">${escapeHtml(req.t('forum.pageLink.cannotCreateMissingPageRequired'))}</p>`}
 </div>`;
-  const pageType = resolvePageAddress(page.slug)?.namespace === 'meta' ? req.t('label.meta') : req.t('label.article');
+  const pageType = isDraft ? req.t('label.draft')
+    : resolvePageAddress(page.slug)?.namespace === 'meta' ? req.t('label.meta') : req.t('label.article');
   res.render('layout', {
     title: prepareTitle(toSafeText(req.t('discussion.pageTitle', { title: renderText(titleText) }))),
     canonicalUrl: canonicalUrlFor(discussionPagePath(target, discussion.page)),
     relPrev: discussion.page > 1 ? discussionPagePath(target, discussion.page - 1) : null,
     relNext: discussion.page < discussion.pageCount ? discussionPagePath(target, discussion.page + 1) : null,
-    // An empty discussion has nothing for search engines yet.
-    noindex: discussion.threadCount === 0,
+    noindex: isDraft || discussion.threadCount === 0,
     labelHtml: `<div class="page-label-row"><div class="page-label">${escapeHtml(pageType)}</div></div>`,
     tabsHtml,
     topHtml: prependAccountBanner(res, ''),

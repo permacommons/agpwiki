@@ -13,6 +13,9 @@
     signOut: 'Kirjaudu ulos',
     help: 'Apua',
     menu: 'Valikko',
+    permanentLink: 'Pysyvä linkki',
+    permanentLinkCopied: 'Linkki kopioitu',
+    permanentLinkTitle: 'Kopioi tälle sivulle linkki, joka toimii myös sivun nimen muuttuessa',
   },
   search: {
     description: 'Hae sivuotsikoita ja slugeja.',
@@ -38,6 +41,7 @@
     free: 'Vapaa ikuisesti.',
   },
   label: {
+    "draft": "LUONNOS — EI VIELÄ JULKAISTU",
     meta: 'META — SIVU AGPEDIASTA',
     tool: 'TYÖKALU — SISÄÄNRAKENNETTU OHJELMISTO-OMINAISUUS',
     forum: 'FOORUMI — AGPEDIAN KESKUSTELUTILA',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Sisällys',
   },
+  "draft": {
+    "banner": "Tämä on luonnos, eikä sitä ole vielä julkaistu. Kuka tahansa linkin saanut voi lukea sen, mutta hakukoneet, haku ja artikkelilistat jättävät sen pois.",
+    "publishButton": "Julkaise",
+    "publishHelp": "Siirtää sen osoitteeseen {{address}}. Luonnoksen osoite toimii edelleen.",
+    "publishSummary": "Luonnoksen julkaisu",
+    "publishForbidden": "Vain luonnoksen aloittaja, kokeneet muokkaajat ja wikin ylläpitäjät voivat julkaista sen.",
+    "publishAddressTaken": "Artikkelin osoite on jo käytössä. Valitse luonnokselle toinen osoite ennen julkaisua.",
+    "publishDuplicates": "Mahdollisia kaksoiskappaleita löytyi. Tarkista ne ennen tämän luonnoksen julkaisua.",
+    "publishFailed": "Luonnosta ei voitu julkaista:",
+    "recentLabel": "luonnos"
+  },
   warning: {
     neverFactChecked: 'Tälle artikkelille ei ole vielä tehty virallista faktantarkistusta, ja sitä pitäisi pitää luonnoksena. Sen sisältämät tiedot voivat olla puutteellisia tai epätarkkoja. Lukijoita kehotetaan tarkistamaan väitteet huolellisesti viitattujen lähteiden perusteella ennen kuin niihin luotetaan.',
     highSeverityIssues: '<a href="{{checksHref}}">Viimeisimmät sivutarkistukset</a> ovat tunnistaneet tässä artikkelissa ratkaisemattomia vakavia ongelmia:',
@@ -512,6 +527,8 @@
     "noThreads": "Ei vielä keskusteluja."
   },
   tool: {
+    "proposalsShowDrafts": "Näytä luonnosehdotukset ({{number}})",
+    "proposalsHideDrafts": "Piilota luonnosehdotukset",
     view: 'Näytä',
     diff: 'Erot',
     recentChangesDescription: 'Viimeisimmät muokkaukset koko wikissä.',
@@ -822,8 +839,7 @@
   "following": {
     "heading": "Seuraamasi sivut",
     "intro": "Saat tiedon näiden sivujen uusista kommenteista.",
-    "empty": "Et seuraa vielä yhtään sivua.",
-    "unfollow": "Lopeta seuraaminen"
+    "empty": "Et seuraa vielä yhtään sivua."
   },
   settings: {
     title: 'Asetukset',
@@ -907,6 +923,8 @@
     "supersededBy": "korvattu ehdotuksella",
   },
   "infobox": {
+    "julianDate": "{{date}} (juliaaninen kalenteri)",
+    "unknownCalendarDate": "{{date}} (kalenteri tuntematon)",
     "ariaLabel": "Keskeiset tiedot",
     "factsOnWikidata": "Tiedot ja lähteet Wikidatassa",
     "imageCredit": "Kuva:",

@@ -13,6 +13,9 @@
     signOut: 'Keluar',
     help: 'Bantuan',
     menu: 'Menu navigasi',
+    permanentLink: 'Tautan permanen',
+    permanentLinkCopied: 'Tautan disalin',
+    permanentLinkTitle: 'Salin tautan ke halaman ini yang tetap berfungsi meskipun namanya diganti',
   },
   search: {
     description: 'Cari judul halaman dan slug.',
@@ -38,6 +41,7 @@
     free: 'Bebas selamanya.',
   },
   label: {
+    "draft": "DRAF — BELUM DITERBITKAN",
     meta: 'META — HALAMAN TENTANG AGPEDIA',
     tool: 'ALAT — FITUR PERANGKAT LUNAK BAWAAN',
     forum: 'FORUM — RUANG DISKUSI UNTUK AGPEDIA',
@@ -416,6 +420,17 @@
   toc: {
     title: 'Daftar isi',
   },
+  "draft": {
+    "banner": "Ini adalah draf dan belum diterbitkan. Siapa pun yang punya tautannya bisa membacanya, tetapi mesin pencari, pencarian, dan daftar artikel tidak menampilkannya.",
+    "publishButton": "Terbitkan",
+    "publishHelp": "Memindahkannya ke {{address}}. Alamat draf tetap berfungsi.",
+    "publishSummary": "Terbitkan draf",
+    "publishForbidden": "Hanya orang yang memulai draf ini, penyunting berpengalaman, dan admin wiki yang dapat menerbitkannya.",
+    "publishAddressTaken": "Alamat artikel sudah digunakan. Pilih alamat lain untuk draf sebelum menerbitkannya.",
+    "publishDuplicates": "Kemungkinan duplikat ditemukan. Tinjau sebelum menerbitkan draf ini.",
+    "publishFailed": "Draf ini tidak dapat diterbitkan:",
+    "recentLabel": "draf"
+  },
   warning: {
     neverFactChecked: 'Artikel ini belum menjalani pemeriksaan fakta formal dan sebaiknya dianggap sebagai draf. Informasi yang dikandungnya mungkin belum lengkap atau tidak akurat. Pembaca disarankan untuk memeriksa klaim dengan saksama terhadap sumber yang dikutip sebelum mengandalkannya.',
     highSeverityIssues: '<a href="{{checksHref}}">Pemeriksaan halaman terbaru</a> telah mengidentifikasi masalah berkeparahan tinggi yang belum terselesaikan dalam artikel ini:',
@@ -512,6 +527,8 @@
     "noThreads": "Belum ada diskusi."
   },
   tool: {
+    "proposalsShowDrafts": "Tampilkan usulan draf ({{number}})",
+    "proposalsHideDrafts": "Sembunyikan usulan draf",
     view: 'Lihat',
     diff: 'Perbedaan',
     recentChangesDescription: 'Suntingan terbaru di seluruh wiki.',
@@ -822,8 +839,7 @@
   "following": {
     "heading": "Halaman yang Anda ikuti",
     "intro": "Anda diberi tahu tentang komentar baru di halaman-halaman ini.",
-    "empty": "Anda belum mengikuti halaman apa pun.",
-    "unfollow": "Berhenti mengikuti"
+    "empty": "Anda belum mengikuti halaman apa pun."
   },
   settings: {
     title: 'Pengaturan',
@@ -907,6 +923,8 @@
     "supersededBy": "digantikan oleh",
   },
   "infobox": {
+    "julianDate": "{{date}} (kalender Julian)",
+    "unknownCalendarDate": "{{date}} (kalender tidak diketahui)",
     "ariaLabel": "Fakta utama",
     "factsOnWikidata": "Fakta dan sumber di Wikidata",
     "imageCredit": "Gambar:",
