@@ -68,6 +68,7 @@ const DISCUSSION_ROUTE = /^\/(.+)\/discussion$/;
 interface DiscussionPageRecord {
   id: string | null;
   discussionSlugs?: string[];
+  deletedPageId?: string;
   slug: string;
   currentRevId: string;
   title: Record<string, string> | null | undefined;
@@ -159,7 +160,9 @@ export const renderPositionsSection = async (
   req: Request,
   res: Response,
   page: { id: string; slug: string; currentRevId: string },
-  { showDiscussionLink = true, openReply }: { showDiscussionLink?: boolean; openReply?: OpenPositionReply } = {}
+  { showDiscussionLink = true, openReply, readOnly = false }: {
+    showDiscussionLink?: boolean; openReply?: OpenPositionReply; readOnly?: boolean;
+  } = {}
 ) => {
   const signoffs = await listActivePageSignoffs(dalInstance, page.id);
   const withdrawn = await listWithdrawnPositionsWithReplies(dalInstance, page.id);
@@ -192,7 +195,7 @@ export const renderPositionsSection = async (
     [...replyThreads.values()].map(thread => thread.threadId),
     session?.userId ?? null
   );
-  const canSignOff = await canSignOffPages(dalInstance, session?.userId);
+  const canSignOff = !readOnly && (await canSignOffPages(dalInstance, session?.userId));
   const changedRevIds = await findRevisionsWithChangedText(
     dalInstance,
     page.id,
@@ -254,7 +257,10 @@ const resolveDiscussionPage = async (
         res.status(404).type('text').send(req.t('page.notFound'));
         return null;
       }
-      page = { id: null, slug: orphan.slug, title: null, currentRevId: '', discussionSlugs: orphan.slugs };
+      page = {
+        id: null, slug: orphan.slug, title: null, currentRevId: orphan.currentRevId,
+        discussionSlugs: orphan.slugs, deletedPageId: orphan.deletedPageId,
+      };
     }
   }
   if (page.slug !== slug) {
@@ -320,15 +326,17 @@ export const renderPageDiscussionPage = async (
     : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`;
   // A proposal's positions come first, on the first page only.
   const isProposal = isSignoffPageSlug(page.slug);
+  const positionPageId = page.id ?? page.deletedPageId;
   const positionsHtml =
-    isProposal && page.id && discussion.page === 1
+    isProposal && positionPageId && discussion.page === 1
       ? await renderPositionsSection(
           dalInstance,
           req,
           res,
-          { id: page.id, slug: page.slug, currentRevId: page.currentRevId },
+          { id: positionPageId, slug: page.slug, currentRevId: page.currentRevId },
           {
             showDiscussionLink: false,
+            readOnly: !page.id,
             openReply:
               state.openPosition ??
               (replyParentId && !threadId ? { signoffId: replyParentId } : undefined),
@@ -378,7 +386,10 @@ export const renderPageDiscussionForThread = async (
   if (!page) {
     const orphan = await findOrphanedDiscussion(dalInstance, thread.pageSlug);
     if (!orphan) return false;
-    page = { id: null, slug: orphan.slug, title: null, currentRevId: '', discussionSlugs: orphan.slugs };
+    page = {
+      id: null, slug: orphan.slug, title: null, currentRevId: orphan.currentRevId,
+      discussionSlugs: orphan.slugs, deletedPageId: orphan.deletedPageId,
+    };
   }
   await renderPageDiscussionPage(req, res, page, { ...state, threadId: thread.id });
   return true;

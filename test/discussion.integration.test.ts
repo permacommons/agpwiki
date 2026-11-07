@@ -570,3 +570,61 @@ test('Position conversations let readers unfollow and follow again, including wi
     await cleanup(dal, prefix, userIds);
   }
 });
+
+for (const hasOrdinaryThread of [false, true]) {
+  test(`Deleted proposals retain position replies ${hasOrdinaryThread ? 'with' : 'without'} ordinary threads`, async () => {
+    const dal = await getDal();
+    const prefix = `meta/proposals/disc-deleted-positions-${Date.now()}`;
+    const userIds: string[] = [];
+    const server = await startServer();
+    try {
+      const author = await createTestUser('deletedposition');
+      const participant = await createTestUser('deletedreply');
+      userIds.push(author.id, participant.id);
+      await grantRoleUpsert(dal, author.id, WIKI_ADMIN_ROLE);
+      const page = await createPage(dal, prefix, author.id);
+      const position = await signOffPage(dal, {
+        slug: prefix, stance: 'support', comment: 'Keep this rationale.', commentLanguage: 'en',
+      }, author.id, { enqueueJob: async () => null });
+      const reply = await replyToPosition(dal, {
+        slug: prefix, signoffId: position.id, body: 'Keep this reply.', language: 'en',
+      }, participant.id);
+      await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+      const active = await signOffPage(dal, {
+        slug: prefix, stance: 'neutral', comment: 'An active position.', commentLanguage: 'en',
+      }, author.id, { enqueueJob: async () => null });
+      const activeReply = await replyToPosition(dal, {
+        slug: prefix, signoffId: active.id, body: 'An active reply.', language: 'en',
+      }, participant.id);
+      if (hasOrdinaryThread) await startThread(prefix, 'Ordinary discussion', author.id, 'policy');
+      const alias = `${prefix}-old`;
+      await PageAlias.create({ pageId: page.id, slug: alias, createdBy: author.id });
+      await deleteWikiPage(dal, { slug: prefix, revSummary: { en: 'Delete proposal.' } }, author.id);
+      const { token } = await createSession(participant.id);
+      const headers = { cookie: `agpwiki_session=${token}` };
+      for (const url of [
+        `/${prefix}/discussion`, `/${alias}/discussion`,
+        `/tool/forum/thread/${reply.threadId}`, `/tool/forum/thread/${activeReply.threadId}`,
+      ]) {
+        const response = await fetch(`${server.url}${url}`, { headers });
+        assert.equal(response.status, 200, `Deleted position conversation must remain accessible: ${url}`);
+        const { bodyHtml } = await response.json() as { bodyHtml: string };
+        assert.ok(bodyHtml.includes(`id="position-${position.id}"`));
+        assert.ok(bodyHtml.includes(`id="comment-${reply.commentId}"`));
+        assert.ok(bodyHtml.includes(`id="position-${active.id}"`));
+        assert.ok(bodyHtml.includes(`id="comment-${activeReply.commentId}"`));
+        assert.ok(bodyHtml.includes('Keep this rationale.'));
+        assert.ok(bodyHtml.includes('Keep this reply.'));
+        assert.ok(bodyHtml.includes('page-signoff--withdrawn'));
+        assert.ok(bodyHtml.includes('forum.pageLink.orphanedContext'));
+        assert.ok(bodyHtml.includes(`action="/tool/forum/thread/${reply.threadId}/subscription"`));
+        assert.ok(!bodyHtml.includes('class="page-signoff-form"'));
+        assert.ok(!bodyHtml.includes('data-reply-to="position-'));
+      }
+    } finally {
+      await server.close();
+      for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}

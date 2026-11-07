@@ -240,16 +240,29 @@ export const countPageDiscussionComments = async (
 
 export const findOrphanedDiscussion = async (dalInstance: DataAccessLayer, slug: string) => {
   const result = await dalInstance.query(
-    `SELECT p.id, p.slug FROM pages p
+    `SELECT p.id, p.slug, p._rev_id AS current_rev_id,
+            EXISTS (
+              SELECT 1 FROM page_signoffs s
+              JOIN forum_threads t ON t.attached_type = 'position' AND t.attached_id = s.id
+              JOIN forum_comments c ON c.thread_id = t.id
+              WHERE s.page_id = p.id
+                AND t._old_rev_of IS NULL AND t._rev_deleted = false
+                AND c._old_rev_of IS NULL AND c._rev_deleted = false
+            ) AS has_position_replies
+       FROM pages p
       WHERE p._old_rev_of IS NULL AND p._rev_deleted = true
         AND (p.slug = $1 OR p.id IN (SELECT page_id FROM page_aliases WHERE slug = $1))
       ORDER BY (p.slug = $1) DESC LIMIT 1`,
     [slug]
   );
-  const page = result.rows[0] as { id: string; slug: string } | undefined;
+  const page = result.rows[0] as {
+    id: string; slug: string; current_rev_id: string; has_position_replies: boolean;
+  } | undefined;
   const slugs = page ? await listPageDiscussionSlugs(dalInstance, page) : [slug];
   const discussion = await readDiscussion(dalInstance, { pageSlugs: slugs }, { pageSize: 1 });
-  return discussion.threadCount ? { slug: page?.slug ?? slug, slugs } : null;
+  return discussion.threadCount || page?.has_position_replies
+    ? { slug: page?.slug ?? slug, slugs, deletedPageId: page?.id, currentRevId: page?.current_rev_id ?? '' }
+    : null;
 };
 
 export interface DiscussedPage {
