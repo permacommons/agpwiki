@@ -2,6 +2,7 @@ import type { Express, Request, Response } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
+import { discussionPath as pageDiscussionPath } from '../lib/discussion-paths.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -10,7 +11,6 @@ import {
   PreconditionFailedError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, formatDateUTC, prepareTitle } from '../render.js';
 import {
@@ -31,8 +31,7 @@ export const REVERT_PATH = '/tool/revert';
 const isEditWarGuard = (error: unknown) =>
   error instanceof ConflictError && (error.details as { reason?: string } | undefined)?.reason === 'edit_war_guard';
 
-const discussionPath = (slug: string) =>
-  forumCategoryPagePath(forumPageCategory(slug) ?? 'articles', slug);
+const discussionPath = (slug: string) => pageDiscussionPath({ kind: 'page', slug });
 
 const readRequest = (source: Record<string, unknown>) => {
   const slug = typeof source.page === 'string' ? source.page : '';

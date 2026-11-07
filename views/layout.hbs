@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{{title}}</title>
     {{#if canonicalUrl}}<link rel="canonical" href="{{canonicalUrl}}" />{{/if}}
+    {{#if relPrev}}<link rel="prev" href="{{relPrev}}" />{{/if}}
+    {{#if relNext}}<link rel="next" href="{{relNext}}" />{{/if}}
     {{#if noindex}}<meta name="robots" content="noindex" />{{/if}}
     <link rel="stylesheet" href="{{{assets.siteCss}}}" />
     {{!-- Progressive enhancement hooks: .js-enabled hides no-js-only fallbacks, noscript hides requires-js controls. --}}
@@ -39,6 +41,7 @@
     </div>
     {{> footer}}
     <script src="{{{assets.forumJs}}}" defer></script>
+    <script src="{{{assets.discussionJs}}}" data-state-url="{{{assets.discussionStateJs}}}" defer></script>
     <script src="{{{assets.formLanguageSelectorJs}}}" defer></script>
     <script src="{{{assets.markdownPreviewJs}}}" defer></script>
     <script src="{{{assets.searchJs}}}" defer></script>

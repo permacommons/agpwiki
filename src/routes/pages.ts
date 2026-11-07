@@ -3,6 +3,7 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { loadCitationEntriesForSources } from '../lib/citation-render.js';
+import { discussionPath } from '../lib/discussion-paths.js';
 import {
   ConflictError,
   ForbiddenError,
@@ -13,7 +14,7 @@ import {
   toRevisionConflictError,
   ValidationError,
 } from '../lib/errors.js';
-import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
+import { forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
@@ -44,8 +45,8 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { countPageDiscussionComments, listPageDiscussionSlugs } from '../services/discussion-service.js';
 import { canPublishDraft, publishDraft } from '../services/draft-service.js';
-import { countForumCommentsForPage } from '../services/forum-service.js';
 import { HOME_PAGE_SLUG, loadHomeSections } from '../services/home-service.js';
 import { renderArticleInfobox } from '../services/infobox-service.js';
 import {
@@ -90,6 +91,7 @@ import {
   sectionFingerprint,
   updateWikiPage,
 } from '../services/wiki-page-service.js';
+import { renderDiscussionUnderPage } from './discussion.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf, slugPath } from './lib/canonical.js';
@@ -1824,9 +1826,7 @@ export const registerPageRoutes = (app: Express) => {
         queryParams,
       });
       const discussionCategory = forumPageCategory(canonicalSlug);
-      const forumPath = discussionCategory
-        ? forumCategoryPagePath(discussionCategory, canonicalSlug)
-        : '';
+      const forumPath = discussionCategory ? discussionPath({ kind: 'page', slug: canonicalSlug }) : '';
       const signedIn = Boolean(session);
       const canShowOperatorEditLink =
         !revIdParam && !diffFrom && !diffTo && (!editability.isProtected || editability.isEditable);
@@ -1853,7 +1853,9 @@ export const registerPageRoutes = (app: Express) => {
         pageHref: pageViewPath(canonicalSlug, langOverride),
         isCurrentView,
         discussHref: forumPath || null,
-        discussCount: discussionCategory ? await countForumCommentsForPage(dalInstance, canonicalSlug, discussionCategory) : 0,
+        discussCount: discussionCategory
+          ? await countPageDiscussionComments(dalInstance, await listPageDiscussionSlugs(dalInstance, page))
+          : 0,
         editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
         follow: session
           ? {
@@ -1950,6 +1952,12 @@ export const registerPageRoutes = (app: Express) => {
         canonicalSlug === HOME_PAGE_SLUG && !selectedRevId && !diffHtml
           ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
           : '';
+      // The discussion follows the current version of the page; the home page
+      // shows what is new instead.
+      const discussionHtml =
+        discussionCategory && isCurrentView && canonicalSlug !== HOME_PAGE_SLUG
+          ? await renderDiscussionUnderPage(dalInstance, req, res, page)
+          : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
       const namespace = resolvePageAddress(canonicalSlug)?.namespace;
       const pageTypeLabel = namespace === 'meta'
@@ -1973,7 +1981,7 @@ export const registerPageRoutes = (app: Express) => {
         noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft',
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}`,
+        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

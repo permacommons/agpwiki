@@ -484,10 +484,8 @@
       "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
-      "context": "Discussion for {{page}}.",
       "orphanedContext": "Discussion for page slug {{slug}}. This slug does not currently resolve to a wiki page.",
       "cannotCreateMissingPageRequired": "New discussion threads cannot be started here because this page slug does not currently resolve to a wiki page.",
-      "cannotCreateMissingPageOptional": "New page-linked discussion threads cannot be started here because this page slug does not currently resolve to a wiki page."
     },
     "validation": {
       "pageRequired": "Select a page before starting an article discussion thread.",
@@ -1272,5 +1270,51 @@
       "family": "Family",
       "genus": "Genus"
     }
-  }
+  },
+  // One discussion per page: its threads, comments and replies.
+  /*
+   i18n-identical-allowlist:
+   {
+     // "Link" and "thread" are the local words too; "Discussion" is French as well.
+     "de": ["discussion.commentLink"],
+     "fr": ["discussion.title"],
+     "it": ["discussion.commentLink", "discussion.threadCount_one"],
+     "nl": ["discussion.commentLink"],
+     "pl": ["discussion.commentLink"],
+     "pt": ["discussion.commentLink"]
+   }
+  */
+  "discussion": {
+    "title": "Discussion",
+    "pageTitle": "Discussion: {{title}}",
+    "threadCount_one": "{{count}} thread",
+    "threadCount_other": "{{count}} threads",
+    "order": "most recent activity first",
+    "openFull": "Open the full discussion",
+    "seeAllThreads_one": "See the whole discussion ({{count}} thread)",
+    "seeAllThreads_other": "See the whole discussion ({{count}} threads)",
+    "empty": "No threads yet.",
+    "lastActivity": "last {{date}}",
+    "threadLink": "Link to this thread",
+    "commentLink": "Link",
+    "reply": "Reply",
+    "replyLabel": "Your reply",
+    "replyPlaceholder": "Write a reply…",
+    "startThread": "Start a thread",
+    "titleLabel": "Title (required)",
+    "titlePlaceholder": "What is this thread about?",
+    "commentLabel": "Comment",
+    "commentPlaceholder": "Write your comment…",
+    "post": "Post",
+    "loading": "Loading threads…",
+    "loadError": "Threads could not be loaded. Try the loading control again.",
+    "loadedRange": "Threads {{start}}–{{end}} of {{total}} loaded",
+    "noNewer": "No newer threads.",
+    "noOlder": "No older threads.",
+    "automatic": "Load older threads automatically",
+    "loadNewer": "Load newer threads",
+    "loadOlder": "Load older threads",
+    "pages": "Pages of this discussion",
+    "pageOf": "Page {{page}} of {{count}}",
+  },
 }

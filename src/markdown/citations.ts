@@ -103,7 +103,8 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
     if (!options?.['suppress-bibliography']) {
       md.core.ruler.push('bibliography', state => {
         if (!state.inlineMode) {
-          const i = state.tokens.findIndex(tk => tk.attrGet('id') === 'refs');
+          const refsId = `${state.env.citationIdPrefix ?? ''}refs`;
+          const i = state.tokens.findIndex(tk => tk.attrGet('id') === refsId);
           if (i >= 0) {
             const refsOpen = state.tokens[i];
             if (refsOpen.nesting !== 1) {
@@ -124,7 +125,7 @@ const Citations: PluginWithOptions<CitationOptions> = (md, options) => {
             return false;
           }
           const refsOpen = new state.Token('refs_container', 'div', 1);
-          refsOpen.attrSet('id', 'refs');
+          refsOpen.attrSet('id', refsId);
           state.tokens.push(refsOpen);
           state.tokens.push(new state.Token('bibliography', '', 0));
           state.tokens.push(new state.Token('refs_container', 'div', -1));

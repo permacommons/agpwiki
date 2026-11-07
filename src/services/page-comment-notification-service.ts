@@ -1,5 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { forumThreadPath } from '../lib/forum-paths.js';
+import { commentLinkPath } from '../lib/discussion-paths.js';
 import { escapeHtml } from '../lib/html.js';
 import {
   collapseWhitespace,
@@ -146,7 +146,10 @@ const describe = async (
     await markdownToPlainText(dal, pickLocalizedText(comment.body, comment.canonicalLanguage)),
     EXCERPT_LENGTH
   );
-  const url = `${forumThreadPath(thread.id)}#comment-${encodeURIComponent(comment.id)}`;
+  const url = commentLinkPath(
+    { id: thread.id, category: thread.category, pageSlug: thread.pageSlug, attachedType: thread.attachedType },
+    comment.id
+  );
   return payload.event === 'thread'
     ? {
         siteKind: 'page.thread',

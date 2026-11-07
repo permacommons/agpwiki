@@ -36,6 +36,7 @@ export interface HomeThread {
   id: string;
   title: Record<string, string> | null;
   category: string;
+  pageSlug: string | null;
   lastActivityAt: Date;
 }
 
@@ -123,7 +124,7 @@ const loadPosts = async (dalInstance: DataAccessLayer, lang: string): Promise<Ho
 // Threads with the latest activity: a new thread or a new comment.
 const loadThreads = async (dalInstance: DataAccessLayer): Promise<HomeThread[]> => {
   const result = await dalInstance.query(
-    `SELECT t.id, t.title, t.category,
+    `SELECT t.id, t.title, t.category, t.page_slug,
             GREATEST(t.created_at, COALESCE(MAX(c.created_at), t.created_at)) AS last_activity_at
        FROM forum_threads t
        LEFT JOIN forum_comments c
@@ -138,11 +139,18 @@ const loadThreads = async (dalInstance: DataAccessLayer): Promise<HomeThread[]> 
     [FORUM_THREAD_COUNT]
   );
   return (
-    result.rows as Array<{ id: string; title: Record<string, string> | null; category: string; last_activity_at: Date }>
+    result.rows as Array<{
+      id: string;
+      title: Record<string, string> | null;
+      category: string;
+      page_slug: string | null;
+      last_activity_at: Date;
+    }>
   ).map(row => ({
     id: row.id,
     title: row.title,
     category: row.category,
+    pageSlug: row.page_slug,
     lastActivityAt: row.last_activity_at,
   }));
 };

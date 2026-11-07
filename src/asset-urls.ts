@@ -13,6 +13,8 @@ const versionedAssetUrl = (relativePath: string) => {
 
 export const layoutAssets = {
   forumJs: versionedAssetUrl('scripts/forum.js'),
+  discussionJs: versionedAssetUrl('scripts/discussion.js'),
+  discussionStateJs: versionedAssetUrl('scripts/discussion-state.js'),
   formLanguageSelectorJs: versionedAssetUrl('scripts/form-language-selector.js'),
   markdownPreviewJs: versionedAssetUrl('scripts/markdown-preview.js'),
   siteCss: versionedAssetUrl('styles/site.css'),

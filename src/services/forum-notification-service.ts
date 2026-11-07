@@ -1,7 +1,7 @@
 import { decodeHTML } from 'entities';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
-import { forumThreadPath } from '../lib/forum-paths.js';
+import { commentLinkPath } from '../lib/discussion-paths.js';
 import { escapeHtml } from '../lib/html.js';
 import { collapseWhitespace, EXCERPT_LENGTH, truncate } from '../lib/notification-text.js';
 import ForumComment from '../models/forum-comment.js';
@@ -24,10 +24,6 @@ export type ForumReplyCreatedPayload = {
   recipientUserIds?: string[];
 };
 
-const buildCommentPath = (threadId: string, commentId: string) =>
-  `${forumThreadPath(threadId)}#comment-${encodeURIComponent(commentId)}`;
-const buildCommentUrl = (threadId: string, commentId: string) =>
-  `${getSiteBaseUrl()}${buildCommentPath(threadId, commentId)}`;
 
 export const enqueueForumReplyNotification = async (
   threadId: string,
@@ -98,13 +94,17 @@ export const processForumReplyCreatedNotification = async (
     decodeHTML(striptags(Object.values(thread.title ?? {})[0] ?? thread.id))
   );
   const actorName = actor?.displayName ?? 'Someone';
-  const commentUrl = buildCommentUrl(payload.threadId, payload.commentId);
+  const commentPath = commentLinkPath(
+    { id: thread.id, category: thread.category, pageSlug: thread.pageSlug, attachedType: thread.attachedType },
+    payload.commentId
+  );
+  const commentUrl = `${getSiteBaseUrl()}${commentPath}`;
   const settingsUrl = `${getSiteBaseUrl()}/tool/settings`;
   const subject = `New reply in: ${threadTitle}`;
   return deliverNotification(dal, job.id, recipients, {
     kind: FORUM_NOTIFICATION_KIND,
     actorUserId: payload.actorUserId,
-    url: buildCommentPath(payload.threadId, payload.commentId),
+    url: commentPath,
     subject: threadTitle,
     excerpt,
   }, user => ({

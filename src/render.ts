@@ -208,8 +208,10 @@ type BacklinkEntry = {
 
 const buildCiteproc = (
   references: Array<Record<string, unknown>>,
-  backToCitationLabel: string
+  backToCitationLabel: string,
+  citationIdPrefix = ''
 ) => {
+  const anchorPrefix = escapeHtml(citationIdPrefix);
   const driver = new Driver({
     style: citationStyle,
     format: 'html',
@@ -300,16 +302,16 @@ const buildCiteproc = (
         const backlinkList = refBacklinks.get(citationId) ?? [];
         const backlinkIndex = backlinkList.length;
         const suffix = toBacklinkSuffix(backlinkIndex);
-        const anchorId = `cite-ref-${refNumber}-${suffix}`;
+        const anchorId = `${anchorPrefix}cite-ref-${refNumber}-${suffix}`;
         const normalizedClaimId = normalizeClaimId(claimId);
         const claimSlots = citationClaimSlots.get(citationId);
         const claimSlot = normalizedClaimId ? claimSlots?.get(normalizedClaimId) : undefined;
         const refLabel = claimSlot ? `${refNumber}:${claimSlot}` : `${refNumber}`;
-        // Claim-specific refs target claim anchors; plain refs keep the legacy #ref-N target.
-        const targetId = claimSlot ? `ref-${refNumber}-${claimSlot}` : undefined;
+        // Claim slots distinguish assertions while plain references identify the source.
+        const targetId = claimSlot ? `${anchorPrefix}ref-${refNumber}-${claimSlot}` : undefined;
         backlinkList.push({ anchorId, claimId: normalizedClaimId, targetId, claimSlot });
         refBacklinks.set(citationId, backlinkList);
-        const targetHref = targetId ? `#${targetId}` : `#ref-${refNumber}`;
+        const targetHref = targetId ? `#${targetId}` : `#${anchorPrefix}ref-${refNumber}`;
         return `<sup class="citation-ref" id="${anchorId}">[<a href="${targetHref}">${refLabel}</a>]</sup>`;
       });
 
@@ -383,7 +385,7 @@ const buildCiteproc = (
             linkPairs = [...claimGroupHtml, nonClaimHtml].filter(Boolean).join(' ');
           }
           const linkHtml = linkPairs ? `<span class="ref-claim-pairs">${linkPairs}</span> ` : '';
-          return `<li id="ref-${refNumber}">${linkHtml}${entry}</li>`;
+          return `<li id="${anchorPrefix}ref-${refNumber}">${linkHtml}${entry}</li>`;
         })
         .filter(Boolean)
         .join('\n');
@@ -420,6 +422,7 @@ export type RenderResult = {
 export type RenderMarkdownOptions = {
   afterLeadHtml?: string;
   backToCitationLabel?: string;
+  citationIdPrefix?: string;
   wikiLinks?: {
     missingSlugs: Set<string>;
   };
@@ -441,6 +444,7 @@ type RenderEnv = Record<string, unknown> & {
   mediaRegistry?: Map<string, MediaRegistryEntry>;
   locale?: string;
   sectionEditLink?: SectionEditLinkRenderer;
+  citationIdPrefix?: string;
 };
 
 export const renderMarkdown = async (
@@ -458,9 +462,10 @@ export const renderMarkdown = async (
     locale: options.locale,
     showUnknownVariables: options.showUnknownVariables,
     sectionEditLink: options.sectionEditLink,
+    citationIdPrefix: options.citationIdPrefix,
   };
   if (citationEntries.length > 0) {
-    env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel);
+    env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel, options.citationIdPrefix);
   }
 
   if (bodySource.includes('{{article_count}}')) {

@@ -4,8 +4,9 @@ import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
 import { formatCitationLabel } from '../lib/citation.js';
+import { discussionPath } from '../lib/discussion-paths.js';
 import { NotFoundError } from '../lib/errors.js';
-import { forumCategoryPagePath, forumPageCategory } from '../lib/forum-paths.js';
+import { forumPageCategory } from '../lib/forum-paths.js';
 import { formatMediaLabel } from '../lib/media.js';
 import { isDraftSlug } from '../lib/page-address.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
@@ -1221,7 +1222,7 @@ export const registerToolRoutes = (app: Express) => {
     const title = resolveSafeTextWithFallback(mlString.resolve, res.locals.locale ?? 'en', page.title, page.slug);
     const titleLinkHtml = `<a href="${escapeHtml(pageHref)}">${renderText(title)}</a>`;
     const category = forumPageCategory(page.slug);
-    const discussHref = category ? forumCategoryPagePath(category, page.slug) : '';
+    const discussHref = category ? discussionPath({ kind: 'page', slug: page.slug }) : '';
     const accountState = res.locals.accountState as { agentAccessStatus?: string } | null | undefined;
 
     const stepsHtml = (() => {
