@@ -183,7 +183,14 @@ test('A discussion lists threads by latest activity, pinned first, paged, with r
     const second = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { page: 2, pageSize: 2 });
     assert.deepEqual(second.threads.map(thread => thread.id), [newest.id]);
     assert.equal(second.pageCount, 2);
-    const located = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadId: newest.id, pageSize: 2 });
+    const snapshot = all.threadIds;
+    await createForumComment({ threadId: newest.id, body: 'Moves in live order.', language: 'en' }, author.id);
+    const batch = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadIds: snapshot.slice(1), pageSize: 2 });
+    assert.deepEqual(batch.threads.map(thread => thread.id), snapshot.slice(1));
+    const scoped = await readDiscussion(dal, { pageSlugs: [`${prefix}-missing`] }, { threadIds: snapshot });
+    assert.equal(scoped.threads.length, 0);
+
+    const located = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadId: oldest.id, pageSize: 2 });
     assert.equal(located.page, 2);
   } finally {
     await cleanup(dal, prefix, userIds);
@@ -211,7 +218,7 @@ test('The discussion page shows titled threads with permanent links, and old add
     assert.match(page.canonicalUrl, new RegExp(`/${prefix}/discussion$`));
     assert.equal(page.noindex, false);
     assert.match(page.bodyHtml, /<h2 class="discussion-thread-title"[^>]*>Plain heading<a class="discussion-thread-link"/);
-    assert.ok(page.bodyHtml.includes(`href="/${prefix}/discussion?thread=${thread.id}#thread-${thread.id}"`));
+    assert.ok(page.bodyHtml.includes(`href="/${prefix}/discussion?thread=${thread.id}#thread"`));
     assert.ok(page.bodyHtml.includes(`id="thread-${thread.id}"`));
     assert.ok(page.bodyHtml.includes(`data-replies="${thread.firstCommentId}"><article class="discussion-comment discussion-comment--reply" id="comment-${reply.id}"`));
 
@@ -256,7 +263,9 @@ test('A long discussion is paged with plain links and canonical addresses', asyn
     };
     assert.equal(first.relNext, `/${prefix}/discussion?page=2`);
     assert.equal(first.relPrev, null);
-    assert.match(first.bodyHtml, /rel="next" data-discussion-next/);
+    assert.match(first.bodyHtml, /rel="next" data-discussion-older/);
+    assert.match(first.bodyHtml, /data-discussion-range role="status" aria-live="polite" aria-atomic="true"/);
+    assert.ok(!first.bodyHtml.includes('data-loaded-label'));
 
     // The oldest thread is on the second page; its link opens that page.
     const located = (await (await fetch(`${server.url}/${prefix}/discussion?thread=${threads[0].id}`)).json()) as {
@@ -267,6 +276,16 @@ test('A long discussion is paged with plain links and canonical addresses', asyn
     assert.match(located.canonicalUrl, new RegExp(`/${prefix}/discussion\\?page=2$`));
     assert.equal(located.relPrev, `/${prefix}/discussion`);
     assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
+    assert.equal((located.bodyHtml.match(/id="thread"/g) ?? []).length, 1);
+    assert.ok(located.bodyHtml.indexOf('id="thread"') > located.bodyHtml.indexOf(`id="thread-${threads[0].id}"`));
+    assert.ok(located.bodyHtml.includes(`href="/${prefix}/discussion" rel="prev" data-discussion-newer`));
+    assert.match(located.bodyHtml, /data-end-label=/);
+    const batchResponse = await fetch(`${server.url}/${prefix}/discussion?batch=${threads[0].id},${threads[20].id},${threads[0].id}`);
+    assert.equal(batchResponse.status, 200);
+    const batch = await batchResponse.json() as { bodyHtml: string };
+    assert.equal((batch.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 2);
+    assert.ok(batch.bodyHtml.indexOf(`id="thread-${threads[0].id}"`) < batch.bodyHtml.indexOf(`id="thread-${threads[20].id}"`));
+
   } finally {
     await server.close();
     await cleanup(dal, prefix, userIds);

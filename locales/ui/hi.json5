@@ -225,10 +225,8 @@
       notificationsDisabled: "फ़ोरम जवाबों की सूचनाएँ आपकी <a href=\"{{settingsHref}}\">सेटिंग</a> में बंद हैं।",
     },
     pageLink: {
-      context: '{{page}} के लिए चर्चा।',
       orphanedContext: 'पृष्ठ स्लग {{slug}} के लिए चर्चा। यह स्लग अभी किसी विकि पृष्ठ पर नहीं जाता।',
       cannotCreateMissingPageRequired: 'यहाँ नए चर्चा थ्रेड शुरू नहीं किए जा सकते, क्योंकि यह पृष्ठ स्लग अभी किसी विकि पृष्ठ पर नहीं जाता।',
-      cannotCreateMissingPageOptional: 'यहाँ नए पृष्ठ-लिंक्ड चर्चा थ्रेड शुरू नहीं किए जा सकते, क्योंकि यह पृष्ठ स्लग अभी किसी विकि पृष्ठ पर नहीं जाता।',
     },
     validation: {
       pageRequired: 'लेख चर्चा थ्रेड शुरू करने से पहले एक पृष्ठ चुनें।',
@@ -991,9 +989,6 @@
     "commentLabel": "टिप्पणी",
     "commentPlaceholder": "अपनी टिप्पणी लिखें…",
     "post": "पोस्ट करें",
-    "loadingMore": "और थ्रेड लोड हो रहे हैं…",
-    "previousPage": "पिछले थ्रेड",
-    "nextPage": "और थ्रेड",
     "pages": "इस चर्चा के पन्ने",
     "pageOf": "पन्ना {{page}} / {{count}}",
   },

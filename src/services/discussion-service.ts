@@ -40,6 +40,7 @@ export interface DiscussionThread {
 
 export interface DiscussionPage {
   threads: DiscussionThread[];
+  threadIds: string[];
   threadCount: number;
   commentCount: number;
   page: number;
@@ -168,15 +169,23 @@ export const readDiscussion = async (
   {
     page = 1,
     threadId,
+    threadIds,
     pageSize = DISCUSSION_PAGE_SIZE,
-  }: { page?: number; threadId?: string; pageSize?: number } = {}
+  }: { page?: number; threadId?: string; threadIds?: string[]; pageSize?: number } = {}
 ): Promise<DiscussionPage> => {
   const rows = await listThreadRows(dalInstance, scope);
   const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
   const threadIndex = threadId ? rows.findIndex(row => row.id === threadId) : -1;
   const requested = threadIndex >= 0 ? Math.floor(threadIndex / pageSize) + 1 : page;
   const current = Math.min(Math.max(1, Math.floor(requested) || 1), pageCount);
-  const selected = rows.slice((current - 1) * pageSize, current * pageSize);
+  const byId = new Map(rows.map(row => [row.id, row]));
+  // Explicit batches preserve browsing order while replies change the live ranking.
+  const selected = threadIds
+    ? [...new Set(threadIds)].slice(0, pageSize).flatMap(id => {
+        const row = byId.get(id);
+        return row ? [row] : [];
+      })
+    : rows.slice((current - 1) * pageSize, current * pageSize);
   const comments = await listThreadComments(
     dalInstance,
     selected.map(row => row.id)
@@ -189,6 +198,7 @@ export const readDiscussion = async (
   }
   return {
     threads: selected.map(row => toThread(row, byThread.get(row.id) ?? [])),
+    threadIds: rows.map(row => row.id),
     threadCount: rows.length,
     commentCount: rows.reduce((sum, row) => sum + (Number(row.comment_count) || 0), 0),
     page: current,

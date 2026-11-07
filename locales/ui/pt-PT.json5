@@ -224,10 +224,8 @@
       notificationsDisabled: "As notificações de respostas do fórum estão desativadas nas tuas <a href=\"{{settingsHref}}\">definições</a>.",
     },
     pageLink: {
-      context: 'Discussão sobre {{page}}.',
       orphanedContext: 'Discussão para o slug de página {{slug}}. Neste momento, este slug não resolve para nenhuma página wiki.',
       cannotCreateMissingPageRequired: 'Não é possível iniciar novos tópicos de discussão aqui porque este slug de página não resolve atualmente para nenhuma página wiki.',
-      cannotCreateMissingPageOptional: 'Não é possível iniciar aqui novos tópicos de discussão ligados a páginas porque este slug de página não resolve atualmente para nenhuma página wiki.',
     },
     validation: {
       pageRequired: 'Seleciona uma página antes de iniciares um tópico de discussão de artigo.',
@@ -989,9 +987,6 @@
     "commentLabel": "Comentário",
     "commentPlaceholder": "Escreve o teu comentário…",
     "post": "Publicar",
-    "loadingMore": "A carregar mais tópicos…",
-    "previousPage": "Tópicos anteriores",
-    "nextPage": "Mais tópicos",
     "pages": "Páginas desta discussão",
     "pageOf": "Página {{page}} de {{count}}",
   },

@@ -224,10 +224,8 @@
       notificationsDisabled: "论坛回复通知已在你的<a href=\"{{settingsHref}}\">设置</a>中关闭。",
     },
     pageLink: {
-      context: '关于 {{page}} 的讨论。',
       orphanedContext: '针对页面 slug {{slug}} 的讨论。该 slug 当前无法解析到任何 wiki 页面。',
       cannotCreateMissingPageRequired: '此页面 slug 当前无法解析到任何 wiki 页面，因此无法在这里发起新的讨论主题。',
-      cannotCreateMissingPageOptional: '此页面 slug 当前无法解析到任何 wiki 页面，因此无法在这里发起新的页面关联讨论主题。',
     },
     validation: {
       pageRequired: '在发起条目讨论主题之前，请先选择一个页面。',
@@ -989,9 +987,6 @@
     "commentLabel": "评论",
     "commentPlaceholder": "写下你的评论…",
     "post": "发布",
-    "loadingMore": "正在加载更多主题…",
-    "previousPage": "较早的主题",
-    "nextPage": "更多主题",
     "pages": "此讨论的页面",
     "pageOf": "第 {{page}} 页，共 {{count}} 页",
   },

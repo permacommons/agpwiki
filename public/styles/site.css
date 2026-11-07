@@ -4004,6 +4004,9 @@ altcha-widget {
   margin: 0.5rem 0;
   text-align: center;
 }
+.discussion-thread-anchor {
+  display: block;
+}
 .discussion-thread {
   margin: 0 0 1.25rem;
   padding-bottom: 0.25rem;
@@ -4147,6 +4150,20 @@ altcha-widget {
   border: 0;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 1rem;
+}
+.discussion-pager:empty {
+  display: none;
+}
+.discussion-pager button[aria-disabled="true"] {
+  opacity: 0.6;
+  cursor: default;
+}
+.discussion-pager button.discussion-boundary {
+  padding: 0;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  opacity: 1;
 }
 .discussion-pager {
   display: flex;

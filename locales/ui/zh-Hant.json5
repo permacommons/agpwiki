@@ -224,10 +224,8 @@
       notificationsDisabled: "論壇回覆通知已在你的<a href=\"{{settingsHref}}\">設定</a>中關閉。",
     },
     pageLink: {
-      context: '關於 {{page}} 的討論。',
       orphanedContext: '針對頁面 slug {{slug}} 的討論。此 slug 目前無法解析到任何 wiki 頁面。',
       cannotCreateMissingPageRequired: '此頁面 slug 目前無法解析到任何 wiki 頁面，因此無法在這裡發起新的討論主題。',
-      cannotCreateMissingPageOptional: '此頁面 slug 目前無法解析到任何 wiki 頁面，因此無法在這裡發起新的頁面關聯討論主題。',
     },
     validation: {
       pageRequired: '在發起條目討論主題之前，請先選擇一個頁面。',
@@ -989,9 +987,6 @@
     "commentLabel": "留言",
     "commentPlaceholder": "寫下你的留言…",
     "post": "發布",
-    "loadingMore": "正在載入更多主題…",
-    "previousPage": "較早的主題",
-    "nextPage": "更多主題",
     "pages": "此討論的頁面",
     "pageOf": "第 {{page}} 頁，共 {{count}} 頁",
   },

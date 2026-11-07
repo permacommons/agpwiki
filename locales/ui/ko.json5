@@ -224,10 +224,8 @@
       notificationsDisabled: "포럼 답글 알림이 <a href=\"{{settingsHref}}\">설정</a>에서 꺼져 있습니다.",
     },
     pageLink: {
-      context: '{{page}}에 대한 토론.',
       orphanedContext: '페이지 슬러그 {{slug}}에 대한 토론입니다. 이 슬러그는 현재 어떤 위키 페이지에도 연결되지 않습니다.',
       cannotCreateMissingPageRequired: '이 페이지 슬러그가 현재 어떤 위키 페이지에도 연결되지 않으므로 여기서 새 토론 스레드를 시작할 수 없습니다.',
-      cannotCreateMissingPageOptional: '이 페이지 슬러그가 현재 어떤 위키 페이지에도 연결되지 않으므로 여기서 페이지 연결 토론 스레드를 새로 시작할 수 없습니다.',
     },
     validation: {
       pageRequired: '문서 토론 스레드를 시작하기 전에 페이지를 선택하세요.',
@@ -989,9 +987,6 @@
     "commentLabel": "댓글",
     "commentPlaceholder": "댓글을 쓰세요…",
     "post": "게시",
-    "loadingMore": "스레드를 더 불러오는 중…",
-    "previousPage": "이전 스레드",
-    "nextPage": "스레드 더 보기",
     "pages": "이 토론의 페이지",
     "pageOf": "{{count}}페이지 중 {{page}}페이지",
   },

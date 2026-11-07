@@ -224,10 +224,8 @@
       notificationsDisabled: "Powiadomienia o odpowiedziach na forum są wyłączone w twoich <a href=\"{{settingsHref}}\">ustawieniach</a>.",
     },
     pageLink: {
-      context: 'Dyskusja o {{page}}.',
       orphanedContext: 'Dyskusja dla slugu strony {{slug}}. Ten slug obecnie nie wskazuje na żadną stronę wiki.',
       cannotCreateMissingPageRequired: 'Nie można tutaj rozpocząć nowych wątków dyskusyjnych, ponieważ ten slug strony obecnie nie wskazuje na żadną stronę wiki.',
-      cannotCreateMissingPageOptional: 'Nie można tutaj rozpocząć nowych wątków dyskusyjnych powiązanych ze stroną, ponieważ ten slug strony obecnie nie wskazuje na żadną stronę wiki.',
     },
     validation: {
       pageRequired: 'Wybierz stronę, zanim rozpoczniesz wątek dyskusyjny o artykule.',
@@ -989,9 +987,6 @@
     "commentLabel": "Komentarz",
     "commentPlaceholder": "Napisz komentarz…",
     "post": "Opublikuj",
-    "loadingMore": "Wczytywanie kolejnych wątków…",
-    "previousPage": "Poprzednie wątki",
-    "nextPage": "Więcej wątków",
     "pages": "Strony tej dyskusji",
     "pageOf": "Strona {{page}} z {{count}}",
   },

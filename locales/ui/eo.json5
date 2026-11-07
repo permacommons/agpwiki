@@ -225,10 +225,8 @@
       notificationsDisabled: "Sciigoj pri forumaj respondoj estas malŝaltitaj en viaj <a href=\"{{settingsHref}}\">agordoj</a>.",
     },
     pageLink: {
-      context: 'Diskuto pri {{page}}.',
       orphanedContext: 'Diskuto por paĝa slugo {{slug}}. Ĉi tiu slugo nuntempe ne kondukas al vikio-paĝo.',
       cannotCreateMissingPageRequired: 'Novaj diskutaj fadenoj ne povas esti komencitaj ĉi tie, ĉar ĉi tiu paĝa slugo nuntempe ne kondukas al vikio-paĝo.',
-      cannotCreateMissingPageOptional: 'Novaj paĝ-ligitaj diskutaj fadenoj ne povas esti komencitaj ĉi tie, ĉar ĉi tiu paĝa slugo nuntempe ne kondukas al vikio-paĝo.',
     },
     validation: {
       pageRequired: 'Elektu paĝon antaŭ ol komenci artikolan diskutfadenon.',
@@ -989,9 +987,6 @@
     "commentLabel": "Komento",
     "commentPlaceholder": "Skribu vian komenton…",
     "post": "Afiŝi",
-    "loadingMore": "Ŝargante pliajn fadenojn…",
-    "previousPage": "Antaŭaj fadenoj",
-    "nextPage": "Pliaj fadenoj",
     "pages": "Paĝoj de ĉi tiu diskuto",
     "pageOf": "Paĝo {{page}} el {{count}}",
   },

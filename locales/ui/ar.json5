@@ -224,10 +224,8 @@
       notificationsDisabled: "إشعارات ردود المنتدى متوقفة في <a href=\"{{settingsHref}}\">إعداداتك</a>.",
     },
     pageLink: {
-      context: 'نقاش حول {{page}}.',
       orphanedContext: 'نقاش لمُعرّف الصفحة {{slug}}. هذا المعرّف لا يشير حاليًا إلى صفحة ويكي.',
       cannotCreateMissingPageRequired: 'لا يمكن بدء مواضيع نقاش جديدة هنا لأن معرّف هذه الصفحة لا يشير حاليًا إلى صفحة ويكي.',
-      cannotCreateMissingPageOptional: 'لا يمكن بدء مواضيع نقاش جديدة مرتبطة بصفحة هنا لأن معرّف هذه الصفحة لا يشير حاليًا إلى صفحة ويكي.',
     },
     validation: {
       pageRequired: 'اختر صفحة قبل بدء موضوع نقاش عن مقالة.',
@@ -987,9 +985,6 @@
     "commentLabel": "التعليق",
     "commentPlaceholder": "اكتب تعليقك…",
     "post": "انشر",
-    "loadingMore": "جارٍ تحميل مواضيع أخرى…",
-    "previousPage": "المواضيع السابقة",
-    "nextPage": "مواضيع أخرى",
     "pages": "صفحات هذا النقاش",
     "pageOf": "الصفحة {{page}} من {{count}}",
   },

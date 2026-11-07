@@ -225,10 +225,8 @@
       notificationsDisabled: "Pranešimai apie forumo atsakymus išjungti tavo <a href=\"{{settingsHref}}\">nustatymuose</a>.",
     },
     pageLink: {
-      context: 'Diskusija apie {{page}}.',
       orphanedContext: 'Diskusija puslapio slugui {{slug}}. Šis slugas šiuo metu nenukreipia į wiki puslapį.',
       cannotCreateMissingPageRequired: 'Naujų diskusijų gijų čia pradėti negalima, nes šis puslapio slugas šiuo metu nenukreipia į wiki puslapį.',
-      cannotCreateMissingPageOptional: 'Naujų su puslapiu susietų diskusijų gijų čia pradėti negalima, nes šis puslapio slugas šiuo metu nenukreipia į wiki puslapį.',
     },
     validation: {
       pageRequired: 'Prieš pradėdami straipsnio diskusijos giją, pasirinkite puslapį.',
@@ -991,9 +989,6 @@
     "commentLabel": "Komentaras",
     "commentPlaceholder": "Parašyk komentarą…",
     "post": "Skelbti",
-    "loadingMore": "Įkeliama daugiau gijų…",
-    "previousPage": "Ankstesnės gijos",
-    "nextPage": "Daugiau gijų",
     "pages": "Šios diskusijos puslapiai",
     "pageOf": "{{page}} puslapis iš {{count}}",
   },

@@ -225,10 +225,8 @@
       notificationsDisabled: "Notifikasi balasan forum dimatikan di <a href=\"{{settingsHref}}\">pengaturan</a> Anda.",
     },
     pageLink: {
-      context: 'Diskusi tentang {{page}}.',
       orphanedContext: 'Diskusi untuk slug halaman {{slug}}. Slug ini saat ini tidak mengarah ke halaman wiki mana pun.',
       cannotCreateMissingPageRequired: 'Topik diskusi baru tidak dapat dimulai di sini karena slug halaman ini saat ini tidak mengarah ke halaman wiki mana pun.',
-      cannotCreateMissingPageOptional: 'Topik diskusi baru yang tertaut ke halaman tidak dapat dimulai di sini karena slug halaman ini saat ini tidak mengarah ke halaman wiki mana pun.',
     },
     validation: {
       pageRequired: 'Pilih halaman sebelum memulai topik diskusi artikel.',
@@ -991,9 +989,6 @@
     "commentLabel": "Komentar",
     "commentPlaceholder": "Tulis komentarmu…",
     "post": "Kirim",
-    "loadingMore": "Memuat topik lainnya…",
-    "previousPage": "Topik sebelumnya",
-    "nextPage": "Topik lainnya",
     "pages": "Halaman diskusi ini",
     "pageOf": "Halaman {{page}} dari {{count}}",
   },

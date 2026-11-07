@@ -225,10 +225,8 @@
       notificationsDisabled: "Obvestila o odgovorih na forumu so izklopljena v tvojih <a href=\"{{settingsHref}}\">nastavitvah</a>.",
     },
     pageLink: {
-      context: 'Razprava o {{page}}.',
       orphanedContext: 'Razprava za slug strani {{slug}}. Ta slug trenutno ne vodi do wiki strani.',
       cannotCreateMissingPageRequired: 'Tukaj ni mogoče začeti novih razpravnih niti, ker ta slug strani trenutno ne vodi do wiki strani.',
-      cannotCreateMissingPageOptional: 'Tukaj ni mogoče začeti novih razpravnih niti, povezanih s stranjo, ker ta slug strani trenutno ne vodi do wiki strani.',
     },
     validation: {
       pageRequired: 'Pred začetkom razpravne niti o članku izberite stran.',
@@ -991,9 +989,6 @@
     "commentLabel": "Komentar",
     "commentPlaceholder": "Napiši svoj komentar…",
     "post": "Objavi",
-    "loadingMore": "Nalagam več niti…",
-    "previousPage": "Prejšnje niti",
-    "nextPage": "Več niti",
     "pages": "Strani te razprave",
     "pageOf": "Stran {{page}} od {{count}}",
   },

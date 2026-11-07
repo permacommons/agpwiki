@@ -224,10 +224,8 @@
       notificationsDisabled: "Forum yanıtı bildirimleri <a href=\"{{settingsHref}}\">ayarlarınızda</a> kapalı.",
     },
     pageLink: {
-      context: '{{page}} hakkında tartışma.',
       orphanedContext: '{{slug}} sayfa slugı için tartışma. Bu slug şu anda hiçbir wiki sayfasına çözülmüyor.',
       cannotCreateMissingPageRequired: 'Bu sayfa slugı şu anda hiçbir wiki sayfasına çözülmediği için burada yeni tartışma başlıkları başlatılamaz.',
-      cannotCreateMissingPageOptional: 'Bu sayfa slugı şu anda hiçbir wiki sayfasına çözülmediği için burada sayfaya bağlı yeni tartışma başlıkları başlatılamaz.',
     },
     validation: {
       pageRequired: 'Makale tartışma başlığı başlatmadan önce bir sayfa seç.',
@@ -989,9 +987,6 @@
     "commentLabel": "Yorum",
     "commentPlaceholder": "Yorumunu yaz…",
     "post": "Gönder",
-    "loadingMore": "Başka başlıklar yükleniyor…",
-    "previousPage": "Önceki başlıklar",
-    "nextPage": "Daha fazla başlık",
     "pages": "Bu tartışmanın sayfaları",
     "pageOf": "Sayfa {{page}} / {{count}}",
   },

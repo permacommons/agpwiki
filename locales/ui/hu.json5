@@ -225,10 +225,8 @@
       notificationsDisabled: "A fórumválaszokról szóló értesítések ki vannak kapcsolva a <a href=\"{{settingsHref}}\">beállításaidban</a>.",
     },
     pageLink: {
-      context: 'Beszélgetés erről: {{page}}.',
       orphanedContext: 'Beszélgetés a(z) {{slug}} oldalslughoz. Ez a slug jelenleg nem mutat wikioldalra.',
       cannotCreateMissingPageRequired: 'Itt nem lehet új beszélgetési témát indítani, mert ez az oldalslug jelenleg nem mutat wikioldalra.',
-      cannotCreateMissingPageOptional: 'Itt nem lehet új, oldalhoz kapcsolt beszélgetési témát indítani, mert ez az oldalslug jelenleg nem mutat wikioldalra.',
     },
     validation: {
       pageRequired: 'Cikkvitát indító téma előtt válassz egy oldalt.',
@@ -991,9 +989,6 @@
     "commentLabel": "Hozzászólás",
     "commentPlaceholder": "Írd meg a hozzászólásodat…",
     "post": "Közzététel",
-    "loadingMore": "További témák betöltése…",
-    "previousPage": "Előző témák",
-    "nextPage": "További témák",
     "pages": "A vita oldalai",
     "pageOf": "{{page}}. oldal / {{count}}",
   },

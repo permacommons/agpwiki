@@ -225,10 +225,8 @@
       notificationsDisabled: "Benachrichtigungen zu Forumsantworten sind in deinen <a href=\"{{settingsHref}}\">Einstellungen</a> ausgeschaltet.",
     },
     pageLink: {
-      context: 'Diskussion zu {{page}}.',
       orphanedContext: 'Diskussion für den Seiten-Slug {{slug}}. Dieser Slug verweist derzeit auf keine Wiki-Seite.',
       cannotCreateMissingPageRequired: 'Hier können keine neuen Diskussionsthemen gestartet werden, weil dieser Seiten-Slug derzeit auf keine Wiki-Seite verweist.',
-      cannotCreateMissingPageOptional: 'Hier können keine neuen seitenbezogenen Diskussionsthemen gestartet werden, weil dieser Seiten-Slug derzeit auf keine Wiki-Seite verweist.',
     },
     validation: {
       pageRequired: 'Wähle eine Seite aus, bevor du ein Artikeldiskussionsthema startest.',
@@ -988,9 +986,6 @@
     "commentLabel": "Kommentar",
     "commentPlaceholder": "Schreib deinen Kommentar…",
     "post": "Veröffentlichen",
-    "loadingMore": "Weitere Themen werden geladen…",
-    "previousPage": "Vorherige Themen",
-    "nextPage": "Weitere Themen",
     "pages": "Seiten dieser Diskussion",
     "pageOf": "Seite {{page}} von {{count}}",
   },

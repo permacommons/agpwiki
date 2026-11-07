@@ -23,7 +23,7 @@ import {
 import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
-import type { DiscussionComment, DiscussionThread } from '../../services/discussion-service.js';
+import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionThread } from '../../services/discussion-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
 import { renderMarkdownPreviewPanel } from './markdown-preview.js';
@@ -65,6 +65,7 @@ export interface DiscussionRenderContext {
   // Thread titles are h3 under a page and h2 on the discussion's own page.
   headingLevel: 2 | 3;
   openReply?: OpenReplyForm;
+  requestedThreadId?: string;
 }
 
 // Feather icons (MIT) — link
@@ -325,6 +326,7 @@ export const renderThreadSection = (thread: DiscussionThread, ctx: DiscussionRen
     t('discussion.lastActivity', { date: formatDay(thread.latestActivityAt, locale) }),
   ];
   return `<section class="discussion-thread" id="${threadAnchor(thread.id)}" aria-labelledby="${threadAnchor(thread.id)}-title">
+  ${ctx.requestedThreadId === thread.id ? '<span id="thread" class="discussion-thread-anchor" aria-hidden="true"></span>' : ''}
   <div class="discussion-thread-head">
     <${tag} class="discussion-thread-title" id="${threadAnchor(thread.id)}-title">${renderText(title)}<a class="discussion-thread-link" href="${escapeHtml(
       permalink
@@ -353,30 +355,29 @@ export const renderDiscussionSummary = (
     t('forum.thread.commentCount', { count: commentCount })
   )} · ${escapeHtml(t('discussion.order'))}${extraHtml}</p>`;
 
-/**
- * Plain links to the previous and next pages, which search engines follow;
- * in the browser the next page loads by itself near the bottom.
- */
+export const renderDiscussionNewer = (
+  target: DiscussionTarget,
+  { page }: { page: number },
+  t: TFunction
+) => `<nav class="discussion-pager" data-discussion-newer-nav aria-label="${escapeHtml(t('discussion.pages'))}">${page > 1
+  ? `<a href="${escapeHtml(discussionPagePath(target, page - 1))}" rel="prev" data-discussion-newer>${escapeHtml(t('discussion.loadNewer'))}</a>` : ''}</nav>`;
+
 export const renderDiscussionPager = (
   target: DiscussionTarget,
-  { page, pageCount }: { page: number; pageCount: number },
+  { page, pageCount, threadIds }: { page: number; pageCount: number; threadIds: string[] },
   t: TFunction
-) => {
-  if (pageCount <= 1) return '';
-  const previous =
-    page > 1
-      ? `<a href="${escapeHtml(discussionPagePath(target, page - 1))}" rel="prev">${escapeHtml(t('discussion.previousPage'))}</a>`
-      : '';
-  const next =
-    page < pageCount
-      ? `<a href="${escapeHtml(discussionPagePath(target, page + 1))}" rel="next" data-discussion-next>${escapeHtml(
-          t('discussion.nextPage')
-        )}</a>`
-      : '';
-  return `<nav class="discussion-pager" aria-label="${escapeHtml(t('discussion.pages'))}" data-discussion-pager data-loading-label="${escapeHtml(
-    t('discussion.loadingMore')
-  )}">${previous}<span>${escapeHtml(t('discussion.pageOf', { page, count: pageCount }))}</span>${next}</nav>`;
-};
+) => `<nav class="discussion-pager" aria-label="${escapeHtml(t('discussion.pages'))}" data-discussion-pager
+  data-thread-ids="${escapeHtml(JSON.stringify(threadIds))}" data-page="${page}" data-page-size="${DISCUSSION_PAGE_SIZE}"
+  data-newer-label="${escapeHtml(t('discussion.loadNewer'))}" data-older-label="${escapeHtml(t('discussion.loadOlder'))}"
+  data-automatic-label="${escapeHtml(t('discussion.automatic'))}"
+  data-loading-label="${escapeHtml(t('discussion.loading'))}"
+  data-error-label="${escapeHtml(t('discussion.loadError'))}"
+  data-range-label="${escapeHtml(t('discussion.loadedRange', { start: '{start}', end: '{end}', total: '{total}' }))}"
+  data-no-newer-label="${escapeHtml(t('discussion.noNewer'))}"
+  data-end-label="${escapeHtml(t('discussion.noOlder'))}">
+  <span data-discussion-range role="status" aria-live="polite" aria-atomic="true">${escapeHtml(t('discussion.pageOf', { page, count: pageCount }))}</span>
+  ${page < pageCount ? `<a href="${escapeHtml(discussionPagePath(target, page + 1))}" rel="next" data-discussion-older>${escapeHtml(t('discussion.loadOlder'))}</a>` : `<span data-discussion-end>${escapeHtml(t('discussion.noOlder'))}</span>`}
+</nav>`;
 
 export interface StartThreadValues {
   title: string;

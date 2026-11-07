@@ -480,10 +480,8 @@
       "notificationsDisabled": "Notifications for forum replies are switched off in your <a href=\"{{settingsHref}}\">settings</a>."
     },
     "pageLink": {
-      "context": "Discussion for {{page}}.",
       "orphanedContext": "Discussion for page slug {{slug}}. This slug does not currently resolve to a wiki page.",
       "cannotCreateMissingPageRequired": "New discussion threads cannot be started here because this page slug does not currently resolve to a wiki page.",
-      "cannotCreateMissingPageOptional": "New page-linked discussion threads cannot be started here because this page slug does not currently resolve to a wiki page."
     },
     "validation": {
       "pageRequired": "Select a page before starting an article discussion thread.",
@@ -1287,9 +1285,14 @@
     "commentLabel": "Comment",
     "commentPlaceholder": "Write your comment…",
     "post": "Post",
-    "loadingMore": "Loading more threads…",
-    "previousPage": "Previous threads",
-    "nextPage": "More threads",
+    "loading": "Loading threads…",
+    "loadError": "Threads could not be loaded. Try the loading control again.",
+    "loadedRange": "Threads {{start}}–{{end}} of {{total}} loaded",
+    "noNewer": "No newer threads.",
+    "noOlder": "No older threads.",
+    "automatic": "Load older threads automatically",
+    "loadNewer": "Load newer threads",
+    "loadOlder": "Load older threads",
     "pages": "Pages of this discussion",
     "pageOf": "Page {{page}} of {{count}}",
   },

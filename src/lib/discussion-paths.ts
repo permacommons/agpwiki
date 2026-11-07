@@ -33,7 +33,7 @@ export const threadLocationPath = (target: DiscussionTarget, threadId: string) =
 
 /** The permanent link of a thread: its section in the page's discussion. */
 export const threadPermalink = (target: DiscussionTarget, threadId: string) =>
-  `${threadLocationPath(target, threadId)}#${threadAnchor(threadId)}`;
+  `${threadLocationPath(target, threadId)}#thread`;
 
 /** The permanent link of a comment, inside its thread's section. */
 export const commentPermalink = (target: DiscussionTarget, threadId: string, commentId: string) =>

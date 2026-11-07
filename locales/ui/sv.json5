@@ -225,10 +225,8 @@
       notificationsDisabled: "Aviseringar om forumsvar är avstängda i dina <a href=\"{{settingsHref}}\">inställningar</a>.",
     },
     pageLink: {
-      context: 'Diskussion om {{page}}.',
       orphanedContext: 'Diskussion för sid-slugen {{slug}}. Den här slugen pekar för närvarande inte på någon wiki-sida.',
       cannotCreateMissingPageRequired: 'Nya diskussionstrådar kan inte startas här eftersom den här sid-slugen för närvarande inte pekar på någon wiki-sida.',
-      cannotCreateMissingPageOptional: 'Nya sidlänkade diskussionstrådar kan inte startas här eftersom den här sid-slugen för närvarande inte pekar på någon wiki-sida.',
     },
     validation: {
       pageRequired: 'Välj en sida innan du startar en artikeltråd.',
@@ -991,9 +989,6 @@
     "commentLabel": "Kommentar",
     "commentPlaceholder": "Skriv din kommentar…",
     "post": "Publicera",
-    "loadingMore": "Laddar fler trådar…",
-    "previousPage": "Föregående trådar",
-    "nextPage": "Fler trådar",
     "pages": "Sidor i den här diskussionen",
     "pageOf": "Sida {{page}} av {{count}}",
   },

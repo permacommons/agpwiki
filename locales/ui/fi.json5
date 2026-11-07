@@ -225,10 +225,8 @@
       notificationsDisabled: "Foorumivastausten ilmoitukset on poistettu käytöstä <a href=\"{{settingsHref}}\">asetuksissasi</a>.",
     },
     pageLink: {
-      context: 'Keskustelu sivusta {{page}}.',
       orphanedContext: 'Keskustelu sivuslugista {{slug}}. Tämä slug ei tällä hetkellä ratkea wiki-sivuksi.',
       cannotCreateMissingPageRequired: 'Uusia keskusteluketjuja ei voi aloittaa täällä, koska tämä sivuslug ei tällä hetkellä ratkea wiki-sivuksi.',
-      cannotCreateMissingPageOptional: 'Uusia sivuun liittyviä keskusteluketjuja ei voi aloittaa täällä, koska tämä sivuslug ei tällä hetkellä ratkea wiki-sivuksi.',
     },
     validation: {
       pageRequired: 'Valitse sivu ennen kuin aloitat artikkelia koskevan keskusteluketjun.',
@@ -991,9 +989,6 @@
     "commentLabel": "Kommentti",
     "commentPlaceholder": "Kirjoita kommenttisi…",
     "post": "Julkaise",
-    "loadingMore": "Ladataan lisää ketjuja…",
-    "previousPage": "Edelliset ketjut",
-    "nextPage": "Lisää ketjuja",
     "pages": "Tämän keskustelun sivut",
     "pageOf": "Sivu {{page}}/{{count}}",
   },

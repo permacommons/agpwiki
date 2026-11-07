@@ -224,10 +224,8 @@
       notificationsDisabled: "Le notifiche delle risposte nel forum sono disattivate nelle tue <a href=\"{{settingsHref}}\">impostazioni</a>.",
     },
     pageLink: {
-      context: 'Discussione su {{page}}.',
       orphanedContext: 'Discussione per lo slug di pagina {{slug}}. Questo slug attualmente non rimanda a nessuna pagina wiki.',
       cannotCreateMissingPageRequired: 'Qui non è possibile avviare nuovi thread di discussione perché questo slug di pagina al momento non rimanda a nessuna pagina wiki.',
-      cannotCreateMissingPageOptional: 'Qui non è possibile avviare nuovi thread di discussione collegati a una pagina perché questo slug di pagina al momento non rimanda a nessuna pagina wiki.',
     },
     validation: {
       pageRequired: 'Seleziona una pagina prima di avviare un thread di discussione su un articolo.',
@@ -989,9 +987,6 @@
     "commentLabel": "Commento",
     "commentPlaceholder": "Scrivi il tuo commento…",
     "post": "Pubblica",
-    "loadingMore": "Caricamento di altri thread…",
-    "previousPage": "Thread precedenti",
-    "nextPage": "Altri thread",
     "pages": "Pagine di questa discussione",
     "pageOf": "Pagina {{page}} di {{count}}",
   },

@@ -18,6 +18,7 @@ import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, prepareTitle, renderText, toSafeText } from '../render.js';
 import {
   countPageDiscussionComments,
+  DISCUSSION_PAGE_SIZE,
   type DiscussionPage,
   findOrphanedDiscussion,
   listPageDiscussionSlugs,
@@ -38,6 +39,7 @@ import {
   listFollowedThreadIds,
   loadDiscussionRenderData,
   type OpenReplyForm,
+  renderDiscussionNewer,
   renderDiscussionPager,
   renderDiscussionSummary,
   renderDiscussionThreads,
@@ -246,7 +248,13 @@ export const renderPageDiscussionPage = async (
   const discussion = await readDiscussion(
     dalInstance,
     { pageSlugs: slugs },
-    { page: readPositiveInt(req.query.page), threadId }
+    {
+      page: readPositiveInt(req.query.page),
+      threadId,
+      threadIds: typeof req.query.batch === 'string'
+        ? req.query.batch.split(',').slice(0, DISCUSSION_PAGE_SIZE)
+        : undefined,
+    }
   );
   const openReply =
     state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined);
@@ -254,6 +262,7 @@ export const renderPageDiscussionPage = async (
     headingLevel: 2,
     openReply,
   });
+  ctx.requestedThreadId = threadId;
   const session = ctx.viewer.userId;
   const locale = ctx.locale;
   const pageHref = pageHrefOf(page.slug);
@@ -288,6 +297,7 @@ export const renderPageDiscussionPage = async (
   ${page.id ? '' : `<p class="forum-page-context">${escapeHtml(req.t('forum.pageLink.orphanedContext', { slug: page.slug }))}</p>`}
   ${renderDiscussionSummary(discussion, req.t)}
   ${emptyHtml}
+  ${renderDiscussionNewer(target, discussion, req.t)}
   ${renderDiscussionThreads(discussion.threads, ctx)}
   ${renderDiscussionPager(target, discussion, req.t)}
   ${renderReplyTemplate(ctx)}

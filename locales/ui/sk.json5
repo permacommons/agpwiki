@@ -225,10 +225,8 @@
       notificationsDisabled: "Upozornenia na odpovede vo fóre sú vypnuté v tvojich <a href=\"{{settingsHref}}\">nastaveniach</a>.",
     },
     pageLink: {
-      context: 'Diskusia o {{page}}.',
       orphanedContext: 'Diskusia pre slug stránky {{slug}}. Tento slug momentálne neodkazuje na žiadnu wiki stránku.',
       cannotCreateMissingPageRequired: 'Nové diskusné vlákna tu nemožno začať, pretože tento slug stránky momentálne neodkazuje na žiadnu wiki stránku.',
-      cannotCreateMissingPageOptional: 'Nové diskusné vlákna prepojené so stránkou tu nemožno začať, pretože tento slug stránky momentálne neodkazuje na žiadnu wiki stránku.',
     },
     validation: {
       pageRequired: 'Pred začatím diskusného vlákna o článku vyberte stránku.',
@@ -991,9 +989,6 @@
     "commentLabel": "Komentár",
     "commentPlaceholder": "Napíš svoj komentár…",
     "post": "Odoslať",
-    "loadingMore": "Načítavajú sa ďalšie vlákna…",
-    "previousPage": "Predchádzajúce vlákna",
-    "nextPage": "Ďalšie vlákna",
     "pages": "Stránky tejto diskusie",
     "pageOf": "Strana {{page}} z {{count}}",
   },

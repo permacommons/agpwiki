@@ -224,10 +224,8 @@
       notificationsDisabled: "フォーラムの返信通知は<a href=\"{{settingsHref}}\">設定</a>でオフになっています。",
     },
     pageLink: {
-      context: '{{page}} についての議論。',
       orphanedContext: 'ページスラッグ {{slug}} に対する議論です。このスラッグは現在どの wiki ページにも解決されません。',
       cannotCreateMissingPageRequired: 'このページスラッグは現在どの wiki ページにも解決されないため、ここでは新しい議論スレッドを開始できません。',
-      cannotCreateMissingPageOptional: 'このページスラッグは現在どの wiki ページにも解決されないため、ここではページに紐づく新しい議論スレッドを開始できません。',
     },
     validation: {
       pageRequired: '記事の議論スレッドを始める前にページを選択してください。',
@@ -989,9 +987,6 @@
     "commentLabel": "コメント",
     "commentPlaceholder": "コメントを書く…",
     "post": "投稿",
-    "loadingMore": "スレッドを読み込んでいます…",
-    "previousPage": "前のスレッド",
-    "nextPage": "さらにスレッド",
     "pages": "この議論のページ",
     "pageOf": "{{page}} / {{count}} ページ",
   },

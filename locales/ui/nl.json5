@@ -225,10 +225,8 @@
       notificationsDisabled: "Meldingen over forumreacties staan uit in je <a href=\"{{settingsHref}}\">instellingen</a>.",
     },
     pageLink: {
-      context: 'Discussie over {{page}}.',
       orphanedContext: 'Discussie voor pagina-slug {{slug}}. Deze slug verwijst momenteel niet naar een wiki-pagina.',
       cannotCreateMissingPageRequired: 'Hier kunnen geen nieuwe discussiethreads worden gestart, omdat deze pagina-slug momenteel niet naar een wiki-pagina verwijst.',
-      cannotCreateMissingPageOptional: 'Hier kunnen geen nieuwe aan pagina’s gekoppelde discussiethreads worden gestart, omdat deze pagina-slug momenteel niet naar een wiki-pagina verwijst.',
     },
     validation: {
       pageRequired: 'Selecteer een pagina voordat je een artikeldiscussiethread start.',
@@ -990,9 +988,6 @@
     "commentLabel": "Reactie",
     "commentPlaceholder": "Schrijf je reactie…",
     "post": "Plaatsen",
-    "loadingMore": "Meer discussies laden…",
-    "previousPage": "Vorige discussies",
-    "nextPage": "Meer discussies",
     "pages": "Pagina's van deze discussie",
     "pageOf": "Pagina {{page}} van {{count}}",
   },
