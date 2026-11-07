@@ -14,6 +14,9 @@
     signOut: 'Afmelden',
     help: 'Hulp',
     menu: 'Navigatiemenu',
+    permanentLink: 'Permanente link',
+    permanentLinkCopied: 'Link gekopieerd',
+    permanentLinkTitle: 'Een link naar deze pagina kopiëren die blijft werken als de pagina wordt hernoemd',
   },
   search: {
     description: 'Zoek paginatitels en slugs.',

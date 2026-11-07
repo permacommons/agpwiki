@@ -13,6 +13,9 @@
     signOut: 'Wyloguj',
     help: 'Pomoc',
     menu: 'Menu nawigacji',
+    permanentLink: 'Stały link',
+    permanentLinkCopied: 'Link skopiowany',
+    permanentLinkTitle: 'Skopiuj link do tej strony, który działa także po zmianie jej nazwy',
   },
   search: {
     description: 'Przeszukuj tytuły stron i aliasy.',

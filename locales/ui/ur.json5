@@ -13,6 +13,9 @@
     signOut: 'لاگ آؤٹ',
     help: 'مدد',
     menu: 'مینو',
+    permanentLink: 'مستقل لنک',
+    permanentLinkCopied: 'لنک کاپی ہو گیا',
+    permanentLinkTitle: 'اس صفحے کا ایسا لنک کاپی کریں جو نام بدلنے پر بھی کام کرے',
   },
   search: {
     description: 'صفحہ عنوانات اور سلاگ تلاش کریں۔',

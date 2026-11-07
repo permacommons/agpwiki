@@ -13,6 +13,9 @@
     signOut: '登出',
     help: '幫助',
     menu: '選單',
+    permanentLink: '永久連結',
+    permanentLinkCopied: '已複製連結',
+    permanentLinkTitle: '複製此頁面的連結，即使頁面改名仍可使用',
   },
   search: {
     description: '搜尋頁面標題和別名。',

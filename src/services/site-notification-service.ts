@@ -1,4 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { type ChangeCursor, cursorTimeSql } from '../lib/change-cursor.js';
 import { NotFoundError } from '../lib/errors.js';
 import { isUuid } from '../lib/uuid.js';
 
@@ -128,5 +129,46 @@ export const markSiteNotificationsRead = async (
     : await dal.query('UPDATE notifications SET read_at = NOW() WHERE user_id = $1 AND read_at IS NULL', [
         userId,
       ]);
+  return result.rowCount ?? 0;
+};
+
+export interface SiteNotificationSince extends SiteNotification {
+  cursor: ChangeCursor;
+}
+
+/** Someone's notifications after a cursor, oldest first. */
+export const listSiteNotificationsAfter = async (
+  dal: DataAccessLayer,
+  userId: string,
+  { after, limit, unreadOnly = false }: { after: ChangeCursor; limit: number; unreadOnly?: boolean }
+) => {
+  const result = await dal.query(
+    `SELECT n.id, n.kind, n.actor_user_id, u.display_name AS actor_name, n.url, n.subject,
+            n.excerpt, n.created_at, n.read_at, ${cursorTimeSql('n.created_at')} AS cursor_time
+       FROM notifications n
+       LEFT JOIN users u ON u.id = n.actor_user_id
+      WHERE n.user_id = $1
+        AND (n.created_at, n.id) > ($2::timestamptz, $3::uuid)
+        AND ($4::boolean = false OR n.read_at IS NULL)
+      ORDER BY n.created_at, n.id
+      LIMIT $5`,
+    [userId, after.time, after.id, unreadOnly, limit + 1]
+  );
+  const rows = result.rows as Array<Record<string, unknown>>;
+  const notifications: SiteNotificationSince[] = rows.slice(0, limit).map(row => ({
+    ...toSiteNotification(row),
+    cursor: { time: row.cursor_time as string, id: row.id as string },
+  }));
+  return { notifications, hasMore: rows.length > limit };
+};
+
+/** Mark some of someone's notifications as read; IDs that are not theirs are skipped. */
+export const markSiteNotificationsReadByIds = async (dal: DataAccessLayer, userId: string, ids: string[]) => {
+  const valid = ids.filter(isUuid);
+  if (!valid.length) return 0;
+  const result = await dal.query(
+    'UPDATE notifications SET read_at = NOW() WHERE id = ANY($1::uuid[]) AND user_id = $2 AND read_at IS NULL',
+    [valid, userId]
+  );
   return result.rowCount ?? 0;
 };

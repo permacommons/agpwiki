@@ -90,7 +90,11 @@ const startServer = async (language?: string) => {
     res.locals.languageOptions = [];
     res.locals.accountBannerHtml = '';
     res.render = ((_view: string, options?: Record<string, unknown>) => {
-      res.json({ noindex: options?.noindex ?? null, bodyHtml: options?.bodyHtml ?? '' });
+      res.json({
+        noindex: options?.noindex ?? null,
+        bodyHtml: options?.bodyHtml ?? '',
+        permanentLinkUrl: options?.permanentLinkUrl ?? null,
+      });
     }) as express.Response['render'];
     next();
   });
@@ -280,10 +284,14 @@ test('drafts are blocked in robots.txt and marked noindex, with a banner', async
     const view = async (slug: string) => {
       const response = await fetch(`${server.url}/${slug}`);
       assert.equal(response.status, 200);
-      return (await response.json()) as { noindex: boolean; bodyHtml: string };
+      return (await response.json()) as { noindex: boolean; bodyHtml: string; permanentLinkUrl: string };
     };
     const draftView = await view(draft.slug);
     assert.equal(draftView.noindex, true);
+    assert.ok(draftView.permanentLinkUrl.endsWith(`/id/${draft.id}`));
+    const permanent = await fetch(`${server.url}/id/${draft.id}`, { redirect: 'manual' });
+    assert.equal(permanent.status, 302);
+    assert.equal(permanent.headers.get('location'), `/${draft.slug}`);
     assert.match(draftView.bodyHtml, /class="draft-banner"/);
     assert.doesNotMatch(draftView.bodyHtml, /publish-draft/);
     const articleView = await view(article.slug);
@@ -295,7 +303,7 @@ test('drafts are blocked in robots.txt and marked noindex, with a banner', async
   }
 });
 
-test('MCP creates drafts and publishes them', async () => {
+test('MCP creates drafts and publishes them by permanent page ID', async () => {
   const prefix = newPrefix('draft-mcp');
   const user = await createTestUser();
   const { server } = createMcpServer({ skipPolicyCheck: true });
@@ -314,7 +322,11 @@ test('MCP creates drafts and publishes them', async () => {
     });
     assert.equal(created.isError, undefined);
     assert.equal((created.structuredContent as { slug: string }).slug, `draft/${prefix}`);
-    const published = await call('wiki_publishDraft', { slug: `draft/${prefix}`, policyHash: 'test' });
+    const draftId = (created.structuredContent as { id: string }).id;
+    const draftChanges = await call('changes_since', { slug: `draft/${prefix}`, kinds: ['page'] });
+    assert.equal(draftChanges.isError, undefined);
+    assert.equal((draftChanges.structuredContent as { changes: unknown[] }).changes.length, 1);
+    const published = await call('wiki_publishDraft', { slug: draftId, policyHash: 'test' });
     assert.equal(published.isError, undefined);
     assert.equal((published.structuredContent as { slug: string }).slug, prefix);
     const page = await findCurrentPageBySlugOrAlias(`draft/${prefix}`);
@@ -323,6 +335,15 @@ test('MCP creates drafts and publishes them', async () => {
     const tags = (history.structuredContent as { revisions: Array<{ revTags: string[] }> }).revisions[0].revTags;
     assert.ok(tags.includes('publish'));
     assert.ok(tags.includes('agent:draft-flow-test'));
+    const changes = await call('changes_since', { slug: prefix, kinds: ['page'] });
+    assert.equal(changes.isError, undefined);
+    const entries = (changes.structuredContent as {
+      changes: Array<{ slug: string; revId: string; prevRevId: string | null; revTags: string[] }>;
+    }).changes;
+    assert.equal(entries.length, 2);
+    assert.ok(entries.every(entry => entry.slug === prefix));
+    assert.equal(entries[1].prevRevId, entries[0].revId);
+    assert.ok(entries[1].revTags.includes('publish'));
   } finally {
     await client.close();
     await server.close();

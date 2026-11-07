@@ -13,6 +13,9 @@
     signOut: 'Odjava',
     help: 'Pomoč',
     menu: 'Meni',
+    permanentLink: 'Trajna povezava',
+    permanentLinkCopied: 'Povezava kopirana',
+    permanentLinkTitle: 'Kopiraj povezavo do te strani, ki deluje tudi po preimenovanju',
   },
   search: {
     description: 'Išči po naslovih strani in kratkih oznakah.',

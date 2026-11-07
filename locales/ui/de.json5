@@ -14,6 +14,9 @@
     signOut: 'Abmelden',
     help: 'Hilfe',
     menu: 'Menü',
+    permanentLink: 'Permanenter Link',
+    permanentLinkCopied: 'Link kopiert',
+    permanentLinkTitle: 'Einen Link auf diese Seite kopieren, der auch nach einer Umbenennung funktioniert',
   },
   search: {
     description: 'Seitentitel und Slugs durchsuchen.',

@@ -13,6 +13,9 @@
     signOut: '로그아웃',
     help: '도움말',
     menu: '메뉴',
+    permanentLink: '고유 링크',
+    permanentLinkCopied: '링크를 복사했습니다',
+    permanentLinkTitle: '이름이 바뀌어도 작동하는 이 문서의 링크 복사',
   },
   search: {
     description: '페이지 제목 및 슬러그 검색.',

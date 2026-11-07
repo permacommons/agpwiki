@@ -1,3 +1,4 @@
+import { isUuid } from '../lib/uuid.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
 
@@ -27,3 +28,13 @@ export const findCurrentPageBySlugOrAlias = async (slug: string) => {
 
 export const findCurrentPageIdBySlug = async (slug: string) =>
   (await findCurrentPageBySlugOrAlias(slug))?.id ?? null;
+
+/**
+ * A page's permanent ID names it as well as its address does. Returns the
+ * current address of the page with that ID, or the value unchanged when it
+ * is not the ID of a current page, so it is read as an address.
+ */
+export const resolvePageSlugOrId = async (value: string) => {
+  if (!isUuid(value)) return value;
+  return (await findCurrentPageById(value.toLowerCase()))?.slug ?? value;
+};

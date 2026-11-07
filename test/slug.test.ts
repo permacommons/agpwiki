@@ -32,6 +32,15 @@ test('isBlockedSlug blocks reserved suffixes', () => {
   assert.equal(isBlockedSlug('foo/checks'), true);
 });
 
+test('isBlockedSlug reserves permanent links while allowing other id addresses', () => {
+  const id = '82796d63-a4e1-47d1-9f29-11a703d7dcc9';
+  assert.equal(isBlockedSlug(`id/${id}`), true);
+  assert.equal(isBlockedSlug(`ID/${id.toUpperCase()}`), true);
+  assert.equal(isBlockedSlug('id/guide'), false);
+  assert.equal(isBlockedSlug(`id/${id}/guide`), false);
+  assert.equal(isBlockedSlug(`meta/id/${id}`), false);
+});
+
 test('isBlockedSlug blocks dot segments anywhere in a slug', () => {
   for (const segment of ['.', '..']) {
     for (const slug of [segment, `${segment}/foo`, `foo/${segment}`, `foo/${segment}/bar`]) {

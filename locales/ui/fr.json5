@@ -14,6 +14,9 @@
     signOut: 'Déconnexion',
     help: 'Aide',
     menu: 'Navigation',
+    permanentLink: 'Lien permanent',
+    permanentLinkCopied: 'Lien copié',
+    permanentLinkTitle: 'Copier un lien vers cette page qui reste valable si elle est renommée',
   },
   search: {
     description: 'Rechercher des titres de pages et des slugs.',

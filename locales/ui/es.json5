@@ -13,6 +13,9 @@
     signOut: 'Cerrar sesión',
     help: 'Ayuda',
     menu: 'Menú',
+    permanentLink: 'Enlace permanente',
+    permanentLinkCopied: 'Enlace copiado',
+    permanentLinkTitle: 'Copiar un enlace a esta página que sigue funcionando aunque se le cambie el nombre',
   },
   search: {
     description: 'Buscar títulos de páginas y slugs.',

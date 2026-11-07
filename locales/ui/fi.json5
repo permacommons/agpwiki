@@ -13,6 +13,9 @@
     signOut: 'Kirjaudu ulos',
     help: 'Apua',
     menu: 'Valikko',
+    permanentLink: 'Pysyvä linkki',
+    permanentLinkCopied: 'Linkki kopioitu',
+    permanentLinkTitle: 'Kopioi tälle sivulle linkki, joka toimii myös sivun nimen muuttuessa',
   },
   search: {
     description: 'Hae sivuotsikoita ja slugeja.',

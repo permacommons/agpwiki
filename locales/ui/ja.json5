@@ -13,6 +13,9 @@
     signOut: 'ログアウト',
     help: 'ヘルプ',
     menu: 'メニュー',
+    permanentLink: '固定リンク',
+    permanentLinkCopied: 'リンクをコピーしました',
+    permanentLinkTitle: 'ページ名が変わっても使えるこのページへのリンクをコピー',
   },
   search: {
     description: 'ページタイトルとスラッグを検索。',

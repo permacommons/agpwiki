@@ -13,6 +13,9 @@
     signOut: 'साइन आउट',
     help: 'सहायता',
     menu: 'मेनू',
+    permanentLink: 'स्थायी लिंक',
+    permanentLinkCopied: 'लिंक कॉपी हो गया',
+    permanentLinkTitle: 'इस पृष्ठ का ऐसा लिंक कॉपी करें जो नाम बदलने पर भी काम करे',
   },
   search: {
     description: 'पेज शीर्षक और स्लग खोजें।',
