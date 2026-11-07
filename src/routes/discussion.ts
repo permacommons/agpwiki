@@ -18,39 +18,43 @@ import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, prepareTitle, renderText, toSafeText } from '../render.js';
 import {
   countPageDiscussionComments,
-  DISCUSSION_PAGE_SIZE,
-  type DiscussionPage,
   findOrphanedDiscussion,
   listPageDiscussionSlugs,
   readDiscussion,
 } from '../services/discussion-service.js';
 import { createForumThread, requireSignedInUserId } from '../services/forum-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
+import {
+  canSignOffPages,
+  findRevisionsWithChangedText,
+  isSignoffPageSlug,
+  listActivePageSignoffs,
+} from '../services/page-signoff-service.js';
 import { isFollowingPage } from '../services/page-subscription-service.js';
+import { listPositionReplies, listWithdrawnPositionsWithReplies } from '../services/position-reply-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { findCurrentPageBySlugOrAlias, readWikiPage } from '../services/wiki-page-service.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
-  type DiscussionRenderContext,
   type DiscussionViewer,
-  discussionCommentsOf,
   listFollowedThreadIds,
   loadDiscussionRenderData,
   type OpenReplyForm,
-  renderDiscussionNewer,
-  renderDiscussionPager,
   renderDiscussionSummary,
   renderDiscussionThreads,
+  renderPaginatedDiscussion,
   renderPostingGate,
   renderReplyTemplate,
   renderStartThreadForm,
   type StartThreadValues,
 } from './lib/discussion.js';
+import { buildDiscussionContext, loadDiscussionPage } from './lib/discussion-page.js';
 import { HISTORY_ANCHOR } from './lib/history.js';
 import { renderMarkdownPreviewHtml } from './lib/markdown-preview.js';
 import { howToEditPath } from './lib/operator-edit-link.js';
+import { renderPageSignoffs } from './lib/page-signoffs.js';
 import { renderPageTabs } from './lib/page-tabs.js';
 import { resolveForumValidationMessage } from './lib/validation-messages.js';
 
@@ -64,7 +68,9 @@ const DISCUSSION_ROUTE = /^\/(.+)\/discussion$/;
 interface DiscussionPageRecord {
   id: string | null;
   discussionSlugs?: string[];
+  deletedPageId?: string;
   slug: string;
+  currentRevId: string;
   title: Record<string, string> | null | undefined;
 }
 
@@ -73,63 +79,7 @@ const pageHrefOf = (slug: string) => `/${slug.split('/').map(encodeURIComponent)
 const canPostIn = (res: Response) =>
   Boolean((res.locals.accountState as { isEmailVerified?: boolean } | null | undefined)?.isEmailVerified);
 
-const readPositiveInt = (value: unknown) => {
-  const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN;
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-};
-
 const readString = (value: unknown) => (typeof value === 'string' ? value : '');
-
-/** Who is reading and what they may do, for the threads shown. */
-export const loadDiscussionViewer = async (
-  dalInstance: DataAccessLayer,
-  req: Request,
-  res: Response,
-  threadIds: string[]
-): Promise<DiscussionViewer> => {
-  const session = await resolveSessionUser(req);
-  const userId = session?.userId ?? null;
-  return {
-    userId,
-    canPost: Boolean(userId) && canPostIn(res),
-    isModerator: userId ? await userHasRole(dalInstance, userId, FORUM_MODERATOR_ROLE) : false,
-    followedThreadIds: await listFollowedThreadIds(dalInstance, threadIds, userId),
-  };
-};
-
-/** The rendering context for one page of a discussion. */
-export const buildDiscussionContext = async (
-  dalInstance: DataAccessLayer,
-  req: Request,
-  res: Response,
-  target: DiscussionTarget,
-  discussion: DiscussionPage,
-  { headingLevel, openReply }: { headingLevel: 2 | 3; openReply?: OpenReplyForm }
-): Promise<DiscussionRenderContext> => {
-  const locale = (res.locals.locale as string | undefined) ?? req.language ?? 'en';
-  const viewer = await loadDiscussionViewer(
-    dalInstance,
-    req,
-    res,
-    discussion.threads.map(thread => thread.id)
-  );
-  const { bodies, authors } = await loadDiscussionRenderData(dalInstance, discussionCommentsOf(discussion.threads), {
-    backToCitationLabel: req.t('citation.backToCitationAria'),
-    locale,
-  });
-  return {
-    target,
-    t: req.t,
-    locale,
-    language: req.language ?? 'en',
-    languageOptions: res.locals.languageOptions,
-    viewer,
-    authors,
-    bodies,
-    headingLevel,
-    openReply,
-  };
-};
 
 const startThreadValues = (req: Request): StartThreadValues => ({
   title: readString(req.body?.title),
@@ -182,12 +132,104 @@ export const renderDiscussionUnderPage = async (
       : '';
   return `<section class="page-discussion" aria-labelledby="page-discussion-title">
   <h2 id="page-discussion-title">${escapeHtml(req.t('discussion.title'))}</h2>
-  ${renderDiscussionSummary(discussion, req.t, fullLink)}
+  ${
+    discussion.threadCount
+      ? renderDiscussionSummary(discussion, req.t, fullLink)
+      : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`
+  }
   ${renderDiscussionThreads(discussion.threads, ctx)}
   ${moreHtml}
   ${renderReplyTemplate(ctx)}
   ${renderStartThread(req, res, target, ctx.viewer)}
 </section>`;
+};
+
+export interface OpenPositionReply {
+  signoffId: string;
+  body?: string;
+  language?: string;
+  errorMessage?: string;
+}
+
+/**
+ * The positions on a proposal, each a top-level comment with its replies one
+ * level under it, and the form to state your own position.
+ */
+export const renderPositionsSection = async (
+  dalInstance: DataAccessLayer,
+  req: Request,
+  res: Response,
+  page: { id: string; slug: string; currentRevId: string },
+  { showDiscussionLink = true, openReply, readOnly = false }: {
+    showDiscussionLink?: boolean; openReply?: OpenPositionReply; readOnly?: boolean;
+  } = {}
+) => {
+  const signoffs = await listActivePageSignoffs(dalInstance, page.id);
+  const withdrawn = await listWithdrawnPositionsWithReplies(dalInstance, page.id);
+  const replyThreads = await listPositionReplies(
+    dalInstance,
+    [...signoffs, ...withdrawn].map(signoff => signoff.id)
+  );
+  const locale = (res.locals.locale as string | undefined) ?? req.language ?? 'en';
+  const replies = [...replyThreads.values()].flatMap(thread => thread.replies);
+  const { bodies, authors } = await loadDiscussionRenderData(
+    dalInstance,
+    replies.map(reply => ({
+      id: reply.id,
+      authorId: reply.authorId,
+      body: { [reply.bodyLanguage ?? 'en']: reply.body },
+      canonicalLanguage: reply.bodyLanguage,
+    })),
+    { backToCitationLabel: req.t('citation.backToCitationAria'), locale }
+  );
+  const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
+  const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
+  const missing = [...signoffs, ...withdrawn].map(signoff => signoff.userId).filter(id => !userMap.has(id));
+  if (missing.length) {
+    const result = await dalInstance.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [missing]);
+    for (const row of result.rows as Array<{ id: string; display_name: string }>) userMap.set(row.id, row.display_name);
+  }
+  const session = await resolveSessionUser(req);
+  const followedThreadIds = await listFollowedThreadIds(
+    dalInstance,
+    [...replyThreads.values()].map(thread => thread.threadId),
+    session?.userId ?? null
+  );
+  const canSignOff = !readOnly && (await canSignOffPages(dalInstance, session?.userId));
+  const changedRevIds = await findRevisionsWithChangedText(
+    dalInstance,
+    page.id,
+    [...new Set(signoffs.map(signoff => signoff.revId))].filter(id => id !== page.currentRevId)
+  );
+  return renderPageSignoffs({
+    slug: page.slug,
+    currentRevId: page.currentRevId,
+    changedRevIds,
+    signoffs,
+    withdrawn,
+    userMap,
+    usernames,
+    viewerId: session?.userId ?? null,
+    followedThreadIds,
+    canSignOff,
+    canReply: canSignOff && canPostIn(res),
+    isModerator: session ? await userHasRole(dalInstance, session.userId, FORUM_MODERATOR_ROLE) : false,
+    t: req.t,
+    language: req.language ?? 'en',
+    languageOptions: res.locals.languageOptions,
+    replies: new Map(
+      [...replyThreads].map(([signoffId, thread]) => [
+        signoffId,
+        {
+          threadId: thread.threadId,
+          replies: thread.replies.map(reply => ({ ...reply, bodyHtml: bodies.get(reply.id) ?? '' })),
+        },
+      ])
+    ),
+    openReply,
+    showDiscussionLink,
+    locale,
+  });
 };
 
 /** The page whose discussion this address names, or a redirect to its current address. */
@@ -201,20 +243,24 @@ const resolveDiscussionPage = async (
     res.status(404).type('text').send(req.t('page.notFound'));
     return null;
   }
-  let page: DiscussionPageRecord | null = null;
+  let page: DiscussionPageRecord;
   try {
     page = await readWikiPage(dalInstance, slug);
   } catch (error) {
     if (!(error instanceof NotFoundError)) throw error;
     const addressForm = toAddressForm(slug);
-    page = addressForm !== slug ? await findCurrentPageBySlugOrAlias(addressForm) : null;
+    const match = addressForm !== slug ? await findCurrentPageBySlugOrAlias(addressForm) : null;
+    page = match ? await readWikiPage(dalInstance, match.slug) : null;
     if (!page) {
       const orphan = await findOrphanedDiscussion(dalInstance, addressForm);
       if (!orphan) {
         res.status(404).type('text').send(req.t('page.notFound'));
         return null;
       }
-      page = { id: null, slug: orphan.slug, title: null, discussionSlugs: orphan.slugs };
+      page = {
+        id: null, slug: orphan.slug, title: null, currentRevId: orphan.currentRevId,
+        discussionSlugs: orphan.slugs, deletedPageId: orphan.deletedPageId,
+      };
     }
   }
   if (page.slug !== slug) {
@@ -226,6 +272,7 @@ const resolveDiscussionPage = async (
 
 export interface DiscussionPageState {
   openReply?: OpenReplyForm;
+  openPosition?: OpenPositionReply;
   threadErrorMessage?: string;
   threadPreviewHtml?: string;
   threadId?: string;
@@ -244,25 +291,8 @@ export const renderPageDiscussionPage = async (
     ? await listPageDiscussionSlugs(dalInstance, { id: page.id, slug: page.slug })
     : page.discussionSlugs ?? [page.slug];
   const replyParentId = readString(req.query.reply);
-  const threadId = state.threadId ?? state.openReply?.threadId ?? (readString(req.query.thread) || undefined);
-  const discussion = await readDiscussion(
-    dalInstance,
-    { pageSlugs: slugs },
-    {
-      page: readPositiveInt(req.query.page),
-      threadId,
-      threadIds: typeof req.query.batch === 'string'
-        ? req.query.batch.split(',').slice(0, DISCUSSION_PAGE_SIZE)
-        : undefined,
-    }
-  );
-  const openReply =
-    state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined);
-  const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, {
-    headingLevel: 2,
-    openReply,
-  });
-  ctx.requestedThreadId = threadId;
+  const { discussion, ctx } = await loadDiscussionPage(dalInstance, req, res, target, { pageSlugs: slugs }, state);
+  const threadId = ctx.requestedThreadId;
   const session = ctx.viewer.userId;
   const locale = ctx.locale;
   const pageHref = pageHrefOf(page.slug);
@@ -294,13 +324,31 @@ export const renderPageDiscussionPage = async (
   const emptyHtml = discussion.threadCount
     ? ''
     : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`;
+  // A proposal's positions come first, on the first page only.
+  const isProposal = isSignoffPageSlug(page.slug);
+  const positionPageId = page.id ?? page.deletedPageId;
+  const positionsHtml =
+    isProposal && positionPageId && discussion.page === 1
+      ? await renderPositionsSection(
+          dalInstance,
+          req,
+          res,
+          { id: positionPageId, slug: page.slug, currentRevId: page.currentRevId },
+          {
+            showDiscussionLink: false,
+            readOnly: !page.id,
+            openReply:
+              state.openPosition ??
+              (replyParentId && !threadId ? { signoffId: replyParentId } : undefined),
+          }
+        )
+      : '';
   const bodyHtml = `<div class="discussion-page">
   ${page.id ? '' : `<p class="forum-page-context">${escapeHtml(req.t('forum.pageLink.orphanedContext', { slug: page.slug }))}</p>`}
-  ${renderDiscussionSummary(discussion, req.t)}
-  ${emptyHtml}
-  ${renderDiscussionNewer(target, discussion, req.t)}
-  ${renderDiscussionThreads(discussion.threads, ctx)}
-  ${renderDiscussionPager(target, discussion, req.t)}
+  ${positionsHtml}
+  ${isProposal ? `<h2 class="discussion-threads-heading">${escapeHtml(req.t('discussion.threads'))}</h2>` : ''}
+  ${discussion.threadCount ? renderDiscussionSummary(discussion, req.t) : emptyHtml}
+  ${renderPaginatedDiscussion(discussion, ctx)}
   ${renderReplyTemplate(ctx)}
   ${page.id ? renderStartThread(req, res, target, ctx.viewer, {
     errorMessage: state.threadErrorMessage,
@@ -333,11 +381,15 @@ export const renderPageDiscussionForThread = async (
   state: DiscussionPageState
 ) => {
   const dalInstance = await initializePostgreSQL();
-  let page: DiscussionPageRecord | null = await findCurrentPageBySlugOrAlias(thread.pageSlug);
+  const match = await findCurrentPageBySlugOrAlias(thread.pageSlug);
+  let page: DiscussionPageRecord | null = match ? await readWikiPage(dalInstance, match.slug) : null;
   if (!page) {
     const orphan = await findOrphanedDiscussion(dalInstance, thread.pageSlug);
     if (!orphan) return false;
-    page = { id: null, slug: orphan.slug, title: null, discussionSlugs: orphan.slugs };
+    page = {
+      id: null, slug: orphan.slug, title: null, currentRevId: orphan.currentRevId,
+      discussionSlugs: orphan.slugs, deletedPageId: orphan.deletedPageId,
+    };
   }
   await renderPageDiscussionPage(req, res, page, { ...state, threadId: thread.id });
   return true;

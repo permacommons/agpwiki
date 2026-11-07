@@ -200,27 +200,15 @@
       articles: 'Makaleler',
       technology: 'Teknoloji',
       policy: 'Politika',
-      empty: 'Bu kategoride henüz başlık yok.',
     },
     compose: {
-      newThread: 'Yeni başlık aç',
-      reply: 'Yanıt gönder',
-      title: 'Başlık',
-      page: 'Sayfa',
-      pageSlug: 'Sayfa slugı',
-      pageSearchPlaceholder: 'Sayfa başlıklarında ara',
-      pageContext: '{{page}} hakkında bir tartışma başlatıyorsun.',
-      pageOptionalHelp: 'Bu konuyla ilgili mevcut bir politika sayfası varsa yukarıdan seç. Aksi halde bu alanı boş bırak.',
       body: 'Mesaj',
       language: 'Yorum dili',
-      postThread: 'Başlığı yayımla',
       postReply: 'Yanıtı yayımla',
     },
     thread: {
-      createdAt: 'Başlatıldı {{date}}',
       commentCount_one: '{{count}} yorum',
       commentCount_other: '{{count}} yorum',
-      pageLabel: 'Sayfa: {{page}}',
       pinned: 'Sabitlenmiş',
       pin: 'Başlığı sabitle',
       unpin: 'Sabitliği kaldır',
@@ -240,10 +228,7 @@
       bodyRequired: 'Bir mesaj gir.',
     },
     comment: {
-      postedAt: '{{date}} tarihinde gönderildi',
-      languageLabel: 'Dil: {{language}}',
       unknownOperator: 'Bilinmeyen operatör',
-      quote: 'Alıntıla',
       delete: 'Sil',
       "edit": "Düzenle",
       "save": "Değişiklikleri kaydet",
@@ -258,7 +243,6 @@
       "historyText": "Metin"
     },
     "position": {
-      "context": "{{proposal}} hakkındaki bir görüşe yanıtlar",
       "withdrawn": "Bu görüş daha sonra geri çekildi."
     }
   },
@@ -497,13 +481,8 @@
     "forbidden": "Hesabınız öneriler hakkında görüş bildiremez.",
     "invalid": "Bu görüş kaydedilemedi. Destekliyorum, tarafsız veya karşıyım seçeneklerinden birini ve desteklenen bir dil seçin.",
     "reply": {
-      "open": "Yanıtla",
-      "label": "Yanıtınız",
-      "placeholder": "Bir yanıt yazın…",
-      "submit": "Yanıtı gönder",
       "forbidden": "Hesabınız görüşlere yanıt veremez veya bu yanıt size ait değil.",
       "invalid": "Yanıt kaydedilemedi. Bir metin yazın ve desteklenen bir dil seçin.",
-      "openInForum": "Bu yanıtları forumda aç"
     }
   },
   "home": {
@@ -1007,5 +986,9 @@
     "post": "Gönder",
     "pages": "Bu tartışmanın sayfaları",
     "pageOf": "Sayfa {{page}} / {{count}}",
+    "threads": "Başlıklar",
+    "sectionThreads": "Tek bir sayfayla ilgili olmayan başlıklar",
+    "discussedPages": "Yakın zamanda tartışılan sayfalar",
+    "noDiscussedPages": "Henüz hiçbir sayfa tartışılmadı.",
   },
 }

@@ -19,7 +19,7 @@ const render = (signoff: PageSignoffResult) => renderPageSignoffs({
 
 test('Position rationale records its language, supports RTL, and links to the proposal discussion', () => {
   const html = render(position);
-  assert.match(html, /<blockquote[^>]*dir="auto"[^>]*lang="ar"/);
+  assert.match(html, /<div class="discussion-comment-body page-signoff-comment" dir="auto" lang="ar">/);
   assert.ok(html.includes('<p class="page-signoff-language">العربية</p>'));
   assert.match(html, /name="commentLanguage"\s+id="page-signoff-language-ar"\s+value="ar" checked/);
   assert.ok(html.includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
@@ -30,12 +30,12 @@ test('Position rationale records its language, supports RTL, and links to the pr
 
 test('Legacy rationales retain unknown language and new rationales default to the UI language', () => {
   const html = render({ ...position, commentLanguage: null });
-  assert.match(html, /<blockquote class="page-signoff-comment" dir="auto">/);
+  assert.match(html, /<div class="discussion-comment-body page-signoff-comment" dir="auto">/);
   assert.ok(!html.includes('<p class="page-signoff-language">'));
   assert.match(html, /name="commentLanguage"\s+id="page-signoff-language-en"\s+value="en" checked/);
 });
 
-test('Replies to a position show as forum posts, with editing for their author only', () => {
+test('Positions are top-level comments with their replies one level under them', () => {
   const reply = (id: string, authorId: string, bodyHtml: string, edited: boolean) => ({
     id, threadId: 'thread-1', authorId, body: 'Markdown source', bodyLanguage: 'en', createdAt: new Date(), edited, bodyHtml,
   });
@@ -44,40 +44,58 @@ test('Replies to a position show as forum posts, with editing for their author o
   ]);
   const base = {
     slug: 'meta/proposals/test', currentRevId: 'revision', signoffs: [{ ...position, comment: 'A question?' }],
-    userMap: new Map([['user', 'Test user'], ['other', 'Other user']]), canSignOff: true,
+    userMap: new Map([['user', 'Test user'], ['other', 'Other user']]),
+    usernames: new Map([['user', 'testuser'], ['other', 'otheruser']]), canSignOff: true,
     t: i18next.t.bind(i18next), language: 'en',
     languageOptions: [{ code: 'en', label: 'English' }, { code: 'ar', label: 'العربية' }], replies,
   };
   const html = renderPageSignoffs({ ...base, viewerId: 'user' });
+  assert.ok(html.includes('id="position-position"'));
   assert.ok(html.includes('<p>From the other user.</p>'));
-  assert.ok(html.includes('id="reply-c1"'));
-  assert.ok(html.includes('href="/tool/forum/thread/thread-1"'));
-  assert.ok(html.includes('Open these replies in the forum'));
-  assert.ok(html.includes('action="/meta/proposals/test/position-reply"'));
-  assert.ok(html.includes('name="signoffId" value="position"'));
+  assert.ok(html.includes('<div class="discussion-replies" data-replies="position-position"><article class="discussion-comment discussion-comment--reply page-signoff-reply" id="comment-c1"'));
+  assert.ok(!html.includes('href="/tool/forum/thread/'));
+  assert.ok(html.includes('action="/tool/forum/thread/thread-1/subscription"'));
+  assert.ok(html.includes('href="/meta/proposals/test/discussion#comment-c1" data-permalink'));
+  assert.ok(html.includes('data-reply-action="/meta/proposals/test/position-reply"'));
+  assert.ok(html.includes('data-reply-fields="{&quot;signoffId&quot;:&quot;position&quot;}"'));
+  // Answering a reply starts with @username.
+  assert.ok(html.includes('data-reply-mention="otheruser"'));
   // Only the viewer's own reply can be edited, through the forum.
   assert.equal((html.match(/action="\/tool\/forum\/comment\/[^"]+\/edit"/g) ?? []).length, 1);
   assert.ok(html.includes('action="/tool/forum/comment/c2/edit"'));
-  assert.ok(html.includes('href="/tool/forum/comment/c2/edit?return=%2Fmeta%2Fproposals%2Ftest%23reply-c2" data-comment-edit-link'));
+  assert.ok(html.includes('href="/tool/forum/comment/c2/edit?return=%2Fmeta%2Fproposals%2Ftest%2Fdiscussion%23comment-c2" data-comment-edit-link'));
   assert.ok(html.includes('data-comment-editor hidden'));
-  assert.ok(html.includes('data-comment-content'));
-  assert.ok(html.includes('data-comment-edit-cancel>Cancel</a>'));
-  assert.ok(!html.includes('page-signoff-reply-edit'));
-  assert.ok(html.includes('name="return" value="/meta/proposals/test#reply-c2"'));
+  assert.ok(html.includes('name="return" value="/meta/proposals/test/discussion#comment-c2"'));
   // An edited reply links to its history.
   assert.ok(html.includes('href="/tool/forum/comment/c2/history">edited</a>'));
   assert.ok(!html.includes('/tool/forum/comment/c1/history'));
 
   const signedOut = renderPageSignoffs({ ...base, viewerId: null, canSignOff: false });
-  assert.ok(!signedOut.includes('name="signoffId"'));
+  assert.ok(!signedOut.includes('data-reply-to'));
   assert.ok(!signedOut.includes('/edit"'));
   assert.ok(signedOut.includes('<p>Thanks!</p>'));
 
   const unconfirmed = renderPageSignoffs({ ...base, viewerId: 'user', canReply: false });
-  assert.ok(!unconfirmed.includes('name="signoffId"'));
+  assert.ok(!unconfirmed.includes('data-reply-to'));
   assert.ok(unconfirmed.includes('Confirm your email address'));
 
+  // Without JavaScript, the reply form opens under the position.
+  const open = renderPageSignoffs({ ...base, viewerId: 'user', openReply: { signoffId: 'position' } });
+  assert.ok(open.includes('id="reply-form-position"'));
+  assert.ok(open.includes('name="signoffId" value="position"'));
+
   const noComment = renderPageSignoffs({ ...base, viewerId: 'user', signoffs: [{ ...position, comment: null }] });
-  assert.ok(!noComment.includes('page-signoff-thread'));
+  assert.ok(!noComment.includes('data-reply-to'));
   assert.ok(!html.includes('maxlength="2000"'));
+
+  // A withdrawn position people replied to stays, with its replies and no reply form.
+  const withdrawn = renderPageSignoffs({
+    ...base,
+    viewerId: 'user',
+    signoffs: [],
+    withdrawn: [{ ...position, comment: 'A question?', withdrawnAt: new Date() }],
+  });
+  assert.ok(withdrawn.includes('page-signoff--withdrawn'));
+  assert.ok(withdrawn.includes('<p>Thanks!</p>'));
+  assert.ok(!withdrawn.includes('data-reply-to'));
 });

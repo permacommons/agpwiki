@@ -115,8 +115,13 @@
   const params = new URLSearchParams(window.location.search);
   const threadId = params.get('thread');
   placeThreadAnchor(threadId);
-  if (threadId && !window.location.hash) {
-    document.getElementById(`thread-${threadId}`)?.scrollIntoView({ block: 'start' });
+  const landing = params.get('thread')
+    ? `thread-${params.get('thread')}`
+    : params.get('position')
+      ? `position-${params.get('position')}`
+      : null;
+  if (landing && !window.location.hash) {
+    document.getElementById(landing)?.scrollIntoView({ block: 'start' });
   }
 
   const bindDiscussionContent = root => {

@@ -240,14 +240,87 @@ export const countPageDiscussionComments = async (
 
 export const findOrphanedDiscussion = async (dalInstance: DataAccessLayer, slug: string) => {
   const result = await dalInstance.query(
-    `SELECT p.id, p.slug FROM pages p
+    `SELECT p.id, p.slug, p._rev_id AS current_rev_id,
+            EXISTS (
+              SELECT 1 FROM page_signoffs s
+              JOIN forum_threads t ON t.attached_type = 'position' AND t.attached_id = s.id
+              JOIN forum_comments c ON c.thread_id = t.id
+              WHERE s.page_id = p.id
+                AND t._old_rev_of IS NULL AND t._rev_deleted = false
+                AND c._old_rev_of IS NULL AND c._rev_deleted = false
+            ) AS has_position_replies
+       FROM pages p
       WHERE p._old_rev_of IS NULL AND p._rev_deleted = true
         AND (p.slug = $1 OR p.id IN (SELECT page_id FROM page_aliases WHERE slug = $1))
       ORDER BY (p.slug = $1) DESC LIMIT 1`,
     [slug]
   );
-  const page = result.rows[0] as { id: string; slug: string } | undefined;
+  const page = result.rows[0] as {
+    id: string; slug: string; current_rev_id: string; has_position_replies: boolean;
+  } | undefined;
   const slugs = page ? await listPageDiscussionSlugs(dalInstance, page) : [slug];
   const discussion = await readDiscussion(dalInstance, { pageSlugs: slugs }, { pageSize: 1 });
-  return discussion.threadCount ? { slug: page?.slug ?? slug, slugs } : null;
+  return discussion.threadCount || page?.has_position_replies
+    ? { slug: page?.slug ?? slug, slugs, deletedPageId: page?.id, currentRevId: page?.current_rev_id ?? '' }
+    : null;
+};
+
+export interface DiscussedPage {
+  slug: string;
+  title: Record<string, string> | null;
+  threadCount: number;
+  commentCount: number;
+  latestActivityAt: Date | null;
+}
+
+/** Pages listed per page of a forum section. */
+export const DISCUSSED_PAGES_PAGE_SIZE = 50;
+
+/**
+ * The pages of a forum section (articles or policy) whose discussions have
+ * activity, the most recent first. Threads stored under an older address
+ * count for the page that address now leads to.
+ */
+export const listDiscussedPages = async (
+  dalInstance: DataAccessLayer,
+  category: string,
+  { page = 1, pageSize = DISCUSSED_PAGES_PAGE_SIZE }: { page?: number; pageSize?: number } = {}
+): Promise<{ pages: DiscussedPage[]; total: number; page: number; pageCount: number }> => {
+  const current = Math.max(1, Math.floor(page) || 1);
+  const result = await dalInstance.query(
+    `SELECT COALESCE(p.slug, ap.slug, t.page_slug) AS slug,
+            COALESCE(p.title, ap.title) AS title,
+            COUNT(DISTINCT t.id) FILTER (WHERE t.attached_type IS NULL)::int AS thread_count,
+            COUNT(c.id)::int AS comment_count,
+            MAX(GREATEST(t.created_at, COALESCE(c.created_at, t.created_at))) AS latest_activity_at,
+            COUNT(*) OVER ()::int AS total
+       FROM ${ForumThread.tableName} t
+       LEFT JOIN ${ForumComment.tableName} c
+         ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
+       LEFT JOIN pages p
+         ON p.slug = t.page_slug AND p._old_rev_of IS NULL AND p._rev_deleted = false
+       LEFT JOIN page_aliases a ON p.id IS NULL AND a.slug = t.page_slug
+       LEFT JOIN pages ap
+         ON ap.id = a.page_id AND ap._old_rev_of IS NULL AND ap._rev_deleted = false
+      WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
+        AND t.category = $1 AND t.page_slug IS NOT NULL
+      GROUP BY 1, 2
+      ORDER BY latest_activity_at DESC, 1
+      LIMIT $2 OFFSET $3`,
+    [category, pageSize, (current - 1) * pageSize]
+  );
+  const rows = result.rows as Array<Record<string, unknown>>;
+  const total = Number(rows[0]?.total) || 0;
+  return {
+    pages: rows.map(row => ({
+      slug: row.slug as string,
+      title: (row.title as Record<string, string> | null) ?? null,
+      threadCount: Number(row.thread_count) || 0,
+      commentCount: Number(row.comment_count) || 0,
+      latestActivityAt: (row.latest_activity_at as Date | null) ?? null,
+    })),
+    total,
+    page: current,
+    pageCount: Math.max(1, Math.ceil(total / pageSize)),
+  };
 };

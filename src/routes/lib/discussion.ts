@@ -23,7 +23,7 @@ import {
 import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
-import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionThread } from '../../services/discussion-service.js';
+import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
 import { renderMarkdownPreviewPanel } from './markdown-preview.js';
@@ -291,7 +291,10 @@ const renderComment = (
 
 // Following is a small text button beside the thread's counts; pinning and
 // deleting are for moderators only.
-const renderFollowThread = (thread: DiscussionThread, ctx: DiscussionRenderContext) => {
+export const renderFollowThread = (
+  thread: Pick<DiscussionThread, 'id'>,
+  ctx: { viewer: Pick<DiscussionViewer, 'userId' | 'followedThreadIds'>; t: TFunction }
+) => {
   if (!ctx.viewer.userId) return '';
   const following = ctx.viewer.followedThreadIds.has(thread.id);
   return ` · <form method="post" action="${escapeHtml(`${forumThreadPath(thread.id)}/subscription`)}" class="forum-inline-form discussion-follow">
@@ -356,14 +359,14 @@ export const renderDiscussionSummary = (
     t('forum.thread.commentCount', { count: commentCount })
   )} · ${escapeHtml(t('discussion.order'))}${extraHtml}</p>`;
 
-export const renderDiscussionNewer = (
+const renderDiscussionNewer = (
   target: DiscussionTarget,
   { page }: { page: number },
   t: TFunction
 ) => `<nav class="discussion-pager" data-discussion-newer-nav aria-label="${escapeHtml(t('discussion.pages'))}">${page > 1
   ? `<a href="${escapeHtml(discussionPagePath(target, page - 1))}" rel="prev" data-discussion-newer>${escapeHtml(t('discussion.loadNewer'))}</a>` : ''}</nav>`;
 
-export const renderDiscussionPager = (
+const renderDiscussionPager = (
   target: DiscussionTarget,
   { page, pageCount, threadIds }: { page: number; pageCount: number; threadIds: string[] },
   t: TFunction
@@ -379,6 +382,11 @@ export const renderDiscussionPager = (
   <span data-discussion-range role="status" aria-live="polite" aria-atomic="true">${escapeHtml(t('discussion.pageOf', { page, count: pageCount }))}</span>
   ${page < pageCount ? `<a href="${escapeHtml(discussionPagePath(target, page + 1))}" rel="next" data-discussion-older>${escapeHtml(t('discussion.loadOlder'))}</a>` : `<span data-discussion-end>${escapeHtml(t('discussion.noOlder'))}</span>`}
 </nav>`;
+
+export const renderPaginatedDiscussion = (discussion: DiscussionPage, ctx: DiscussionRenderContext) =>
+  `${renderDiscussionNewer(ctx.target, discussion, ctx.t)}
+  ${renderDiscussionThreads(discussion.threads, ctx)}
+  ${renderDiscussionPager(ctx.target, discussion, ctx.t)}`;
 
 export interface StartThreadValues {
   title: string;

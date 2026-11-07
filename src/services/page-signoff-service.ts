@@ -32,6 +32,7 @@ export interface PageSignoffResult {
   comment: string | null;
   commentLanguage: string | null;
   signedAt: Date | null;
+  withdrawnAt?: Date | null;
 }
 
 export interface PageSignoffInput {
@@ -43,7 +44,7 @@ export interface PageSignoffInput {
 
 export const isSignoffPageSlug = (slug: string) => slug.startsWith(SIGNOFF_PAGE_PREFIX);
 
-const toPageSignoffResult = (signoff: PageSignoffInstance): PageSignoffResult => ({
+export const toPageSignoffResult = (signoff: PageSignoffInstance): PageSignoffResult => ({
   id: signoff.id,
   pageId: signoff.pageId,
   revId: signoff.revId,
@@ -52,6 +53,7 @@ const toPageSignoffResult = (signoff: PageSignoffInstance): PageSignoffResult =>
   comment: signoff.comment ?? null,
   commentLanguage: signoff.commentLanguage ?? null,
   signedAt: signoff.signedAt ?? null,
+  withdrawnAt: signoff.withdrawnAt ?? null,
 });
 
 export const canSignOffPages = async (_dalInstance: DataAccessLayer, userId?: string | null) => {

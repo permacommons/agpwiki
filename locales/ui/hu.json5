@@ -201,27 +201,15 @@
       articles: 'Cikkek',
       technology: 'Technológia',
       policy: 'Szabályzat',
-      empty: 'Ebben a kategóriában még nincsenek témák.',
     },
     compose: {
-      newThread: 'Új téma indítása',
-      reply: 'Válasz közzététele',
-      title: 'Cím',
-      page: 'Oldal',
-      pageSlug: 'Oldalslug',
-      pageSearchPlaceholder: 'Oldalcímek keresése',
-      pageContext: 'Beszélgetést indítasz erről: {{page}}.',
-      pageOptionalHelp: 'Ha van ehhez a témához kapcsolódó meglévő szabályzati oldal, válaszd ki fent. Ellenkező esetben hagyd üresen ezt a mezőt.',
       body: 'Üzenet',
       language: 'A hozzászólás nyelve',
-      postThread: 'Téma közzététele',
       postReply: 'Válasz közzététele',
     },
     thread: {
-      createdAt: 'Kezdve: {{date}}',
       commentCount_one: '{{count}} hozzászólás',
       commentCount_other: '{{count}} hozzászólás',
-      pageLabel: 'Oldal: {{page}}',
       pinned: 'Rögzített',
       pin: 'Téma rögzítése',
       unpin: 'Téma rögzítésének feloldása',
@@ -241,10 +229,7 @@
       bodyRequired: 'Adj meg üzenetet.',
     },
     comment: {
-      postedAt: 'Közzétéve: {{date}}',
-      languageLabel: 'Nyelv: {{language}}',
       unknownOperator: 'Ismeretlen operátor',
-      quote: 'Idézés',
       delete: 'Törlés',
       "edit": "Szerkesztés",
       "save": "Módosítások mentése",
@@ -259,7 +244,6 @@
       "historyText": "Szöveg"
     },
     "position": {
-      "context": "Válaszok egy állásfoglalásra: {{proposal}}",
       "withdrawn": "Ezt az állásfoglalást azóta visszavonták."
     }
   },
@@ -498,13 +482,8 @@
     "forbidden": "A fiókoddal nem foglalhatsz állást a javaslatokról.",
     "invalid": "Az állásfoglalás mentése sikertelen. Válaszd a támogató, semleges vagy ellenző álláspontot és egy támogatott nyelvet.",
     "reply": {
-      "open": "Válasz",
-      "label": "A válaszod",
-      "placeholder": "Írj választ…",
-      "submit": "Válasz küldése",
       "forbidden": "A fiókod nem válaszolhat az állásfoglalásokra, vagy ez a válasz nem a tiéd.",
       "invalid": "A választ nem sikerült menteni. Írj szöveget, és válassz támogatott nyelvet.",
-      "openInForum": "Válaszok megnyitása a fórumon"
     }
   },
   "home": {
@@ -1009,5 +988,9 @@
     "post": "Közzététel",
     "pages": "A vita oldalai",
     "pageOf": "{{page}}. oldal / {{count}}",
+    "threads": "Témák",
+    "sectionThreads": "Nem egy oldalhoz kötődő témák",
+    "discussedPages": "Friss vitával rendelkező oldalak",
+    "noDiscussedPages": "Még egyik oldalról sem volt vita.",
   },
 }

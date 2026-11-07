@@ -201,27 +201,15 @@
       articles: 'Články',
       technology: 'Technológie',
       policy: 'Politika',
-      empty: 'V tejto kategórii zatiaľ nie sú žiadne vlákna.',
     },
     compose: {
-      newThread: 'Začať nové vlákno',
-      reply: 'Pridať odpoveď',
-      title: 'Názov',
-      page: 'Stránka',
-      pageSlug: 'Slug stránky',
-      pageSearchPlaceholder: 'Hľadať názvy stránok',
-      pageContext: 'Začínate diskusiu o {{page}}.',
-      pageOptionalHelp: 'Ak existuje stránka politiky súvisiaca s touto témou, vyberte ju vyššie. V opačnom prípade nechajte toto pole prázdne.',
       body: 'Správa',
       language: 'Jazyk komentára',
-      postThread: 'Odoslať vlákno',
       postReply: 'Odoslať odpoveď',
     },
     thread: {
-      createdAt: 'Začaté {{date}}',
       commentCount_one: '{{count}} komentár',
       commentCount_other: '{{count}} komentáre',
-      pageLabel: 'Stránka: {{page}}',
       pinned: 'Pripnuté',
       pin: 'Pripnúť vlákno',
       unpin: 'Odopnúť vlákno',
@@ -241,10 +229,7 @@
       bodyRequired: 'Zadajte správu.',
     },
     comment: {
-      postedAt: 'Publikované {{date}}',
-      languageLabel: 'Jazyk: {{language}}',
       unknownOperator: 'Neznámy operátor',
-      quote: 'Citovať',
       delete: 'Odstrániť',
       "edit": "Upraviť",
       "save": "Uložiť zmeny",
@@ -259,7 +244,6 @@
       "historyText": "Text"
     },
     "position": {
-      "context": "Odpovede na postoj k: {{proposal}}",
       "withdrawn": "Tento postoj bol medzitým stiahnutý."
     }
   },
@@ -498,13 +482,8 @@
     "forbidden": "Tvoj účet nemôže vyjadrovať postoje k návrhom.",
     "invalid": "Tento postoj sa nepodarilo uložiť. Vyber možnosť za, neutrálny alebo proti a podporovaný jazyk.",
     "reply": {
-      "open": "Odpovedať",
-      "label": "Tvoja odpoveď",
-      "placeholder": "Napíš odpoveď…",
-      "submit": "Odoslať odpoveď",
       "forbidden": "Tvoj účet nemôže odpovedať na postoje alebo táto odpoveď nie je tvoja.",
       "invalid": "Odpoveď sa nepodarilo uložiť. Napíš text a vyber podporovaný jazyk.",
-      "openInForum": "Otvoriť tieto odpovede vo fóre"
     }
   },
   "home": {
@@ -1009,5 +988,9 @@
     "post": "Odoslať",
     "pages": "Stránky tejto diskusie",
     "pageOf": "Strana {{page}} z {{count}}",
+    "threads": "Vlákna",
+    "sectionThreads": "Vlákna, ktoré sa netýkajú jednej stránky",
+    "discussedPages": "Stránky s nedávnou diskusiou",
+    "noDiscussedPages": "Zatiaľ sa nediskutovalo o žiadnej stránke.",
   },
 }

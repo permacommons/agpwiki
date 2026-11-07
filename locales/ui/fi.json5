@@ -201,27 +201,15 @@
       articles: 'Artikkelit',
       technology: 'Teknologia',
       policy: 'Käytännöt',
-      empty: 'Tässä luokassa ei ole vielä ketjuja.',
     },
     compose: {
-      newThread: 'Aloita uusi ketju',
-      reply: 'Julkaise vastaus',
-      title: 'Otsikko',
-      page: 'Sivu',
-      pageSlug: 'Sivun slug',
-      pageSearchPlaceholder: 'Hae sivujen otsikoita',
-      pageContext: 'Aloitat keskustelun sivusta {{page}}.',
-      pageOptionalHelp: 'Jos tähän aiheeseen liittyy jo käytäntösivu, valitse se yllä. Muussa tapauksessa jätä tämä kenttä tyhjäksi.',
       body: 'Viesti',
       language: 'Kommentin kieli',
-      postThread: 'Julkaise ketju',
       postReply: 'Julkaise vastaus',
     },
     thread: {
-      createdAt: 'Aloitettu {{date}}',
       commentCount_one: '{{count}} kommentti',
       commentCount_other: '{{count}} kommenttia',
-      pageLabel: 'Sivu: {{page}}',
       pinned: 'Kiinnitetty',
       pin: 'Kiinnitä ketju',
       unpin: 'Poista ketjun kiinnitys',
@@ -241,10 +229,7 @@
       bodyRequired: 'Anna viesti.',
     },
     comment: {
-      postedAt: 'Julkaistu {{date}}',
-      languageLabel: 'Kieli: {{language}}',
       unknownOperator: 'Tuntematon operaattori',
-      quote: 'Lainaa',
       delete: 'Poista',
       "edit": "Muokkaa",
       "save": "Tallenna muutokset",
@@ -259,7 +244,6 @@
       "historyText": "Teksti"
     },
     "position": {
-      "context": "Vastaukset kannanottoon: {{proposal}}",
       "withdrawn": "Kannanotto on sittemmin peruttu."
     }
   },
@@ -498,13 +482,8 @@
     "forbidden": "Tililläsi ei voi ottaa kantaa ehdotuksiin.",
     "invalid": "Kannanottoa ei voitu tallentaa. Valitse kannatan, neutraali tai vastustan sekä tuettu kieli.",
     "reply": {
-      "open": "Vastaa",
-      "label": "Vastauksesi",
-      "placeholder": "Kirjoita vastaus…",
-      "submit": "Lähetä vastaus",
       "forbidden": "Tililläsi ei voi vastata kannanottoihin, tai vastaus ei ole sinun.",
       "invalid": "Vastausta ei voitu tallentaa. Kirjoita tekstiä ja valitse tuettu kieli.",
-      "openInForum": "Avaa nämä vastaukset foorumilla"
     }
   },
   "home": {
@@ -1009,5 +988,9 @@
     "post": "Julkaise",
     "pages": "Tämän keskustelun sivut",
     "pageOf": "Sivu {{page}}/{{count}}",
+    "threads": "Ketjut",
+    "sectionThreads": "Ketjut, jotka eivät koske yhtä sivua",
+    "discussedPages": "Sivut, joilla on tuoretta keskustelua",
+    "noDiscussedPages": "Mistään sivusta ei ole vielä keskusteltu.",
   },
 }

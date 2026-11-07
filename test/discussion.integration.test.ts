@@ -5,6 +5,8 @@ import test from 'node:test';
 
 import express from 'express';
 
+import { createSession } from '../src/auth/session.js';
+import { isUserSubscribedToForumThread } from '../src/services/forum-subscription-service.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
@@ -18,6 +20,8 @@ import { readDiscussion } from '../src/services/discussion-service.js';
 import { createForumComment, createForumThread, setForumThreadPinned } from '../src/services/forum-service.js';
 import { FORUM_MODERATOR_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage, deleteWikiPage } from '../src/services/wiki-page-service.js';
+import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
+import { replyToPosition } from '../src/services/position-reply-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -63,7 +67,14 @@ const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
   await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${prefix}%`]);
   await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [`${prefix}%`]);
   await dal.query('DELETE FROM page_subscriptions WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
+  await dal.query('DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
+  await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
   await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
+  // Threads in a forum section have no page; their titles carry the prefix.
+  const sectionThreads = `SELECT id FROM forum_threads WHERE title->>'en' LIKE $1`;
+  await dal.query(`DELETE FROM forum_thread_subscriptions WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
+  await dal.query(`DELETE FROM forum_comments WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
+  await dal.query(`DELETE FROM forum_threads WHERE title->>'en' LIKE $1`, [`${prefix}%`]);
   for (const userId of userIds) {
     await dal.query('DELETE FROM notification_jobs WHERE payload->>\'actorUserId\' = $1', [userId]);
     await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
@@ -249,53 +260,69 @@ test('The discussion page shows titled threads with permanent links, and old add
   }
 });
 
-test('A long discussion is paged with plain links and canonical addresses', async () => {
-  const dal = await getDal();
-  const prefix = `disc-pages-${Date.now()}`;
-  const userIds: string[] = [];
-  const server = await startServer();
-  try {
-    const author = await createTestUser('pages');
-    userIds.push(author.id);
-    await createPage(dal, prefix, author.id);
-    const threads = [];
-    for (let index = 0; index < 21; index += 1) threads.push(await startThread(prefix, `Thread ${index}`, author.id));
+for (const kind of ['page', 'section'] as const) {
+  test(`A long ${kind} discussion supports navigation, permalinks and batches`, async () => {
+    const dal = await getDal();
+    const prefix = `disc-pages-${Date.now()}`;
+    const userIds: string[] = [];
+    const server = await startServer();
+    try {
+      const author = await createTestUser('pages');
+      userIds.push(author.id);
+      const path = kind === 'page' ? `/${prefix}/discussion` : '/tool/forum/technology';
+      if (kind === 'page') await createPage(dal, prefix, author.id);
+      const threads = [];
+      for (let index = 0; index < 21; index += 1) {
+        threads.push(await createForumThread({
+          category: kind === 'page' ? 'articles' : 'technology',
+          pageSlug: kind === 'page' ? prefix : undefined,
+          title: `${prefix} Thread ${index}`,
+          body: 'Opening.',
+          language: 'en',
+        }, author.id));
+      }
 
-    const first = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as {
-      bodyHtml: string;
-      relNext: string | null;
-      relPrev: string | null;
-    };
-    assert.equal(first.relNext, `/${prefix}/discussion?page=2`);
-    assert.equal(first.relPrev, null);
-    assert.match(first.bodyHtml, /rel="next" data-discussion-older/);
-    assert.match(first.bodyHtml, /data-discussion-range role="status" aria-live="polite" aria-atomic="true"/);
-    assert.ok(!first.bodyHtml.includes('data-loaded-label'));
+      const first = (await (await fetch(`${server.url}${path}`)).json()) as {
+        bodyHtml: string;
+        relNext: string | null;
+        relPrev: string | null;
+      };
+      assert.equal(first.relNext, `${path}?page=2`);
+      assert.equal(first.relPrev, null);
+      assert.match(first.bodyHtml, /rel="next" data-discussion-older/);
+      assert.match(first.bodyHtml, /data-discussion-newer-nav/);
+      assert.equal((first.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 20);
+      const second = await (await fetch(`${server.url}${path}?page=2`)).json() as { bodyHtml: string };
+      assert.ok(second.bodyHtml.includes(`href="${path}" rel="prev" data-discussion-newer`));
+      assert.equal((second.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 1);
+      assert.match(first.bodyHtml, /data-discussion-range role="status" aria-live="polite" aria-atomic="true"/);
+      assert.ok(!first.bodyHtml.includes('data-loaded-label'));
 
-    // The oldest thread is on the second page; its link opens that page.
-    const located = (await (await fetch(`${server.url}/${prefix}/discussion?thread=${threads[0].id}`)).json()) as {
-      bodyHtml: string;
-      canonicalUrl: string;
-      relPrev: string | null;
-    };
-    assert.match(located.canonicalUrl, new RegExp(`/${prefix}/discussion\\?page=2$`));
-    assert.equal(located.relPrev, `/${prefix}/discussion`);
-    assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
-    assert.equal((located.bodyHtml.match(/id="thread"/g) ?? []).length, 1);
-    assert.ok(located.bodyHtml.indexOf('id="thread"') > located.bodyHtml.indexOf(`id="thread-${threads[0].id}"`));
-    assert.ok(located.bodyHtml.includes(`href="/${prefix}/discussion" rel="prev" data-discussion-newer`));
-    assert.match(located.bodyHtml, /data-end-label=/);
-    const batchResponse = await fetch(`${server.url}/${prefix}/discussion?batch=${threads[0].id},${threads[20].id},${threads[0].id}`);
-    assert.equal(batchResponse.status, 200);
-    const batch = await batchResponse.json() as { bodyHtml: string };
-    assert.equal((batch.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 2);
-    assert.ok(batch.bodyHtml.indexOf(`id="thread-${threads[0].id}"`) < batch.bodyHtml.indexOf(`id="thread-${threads[20].id}"`));
+      // The oldest thread is on the second page; its link opens that page.
+      const located = (await (await fetch(`${server.url}${path}?thread=${threads[0].id}`)).json()) as {
+        bodyHtml: string;
+        canonicalUrl: string;
+        relPrev: string | null;
+      };
+      assert.ok(located.canonicalUrl.endsWith(`${path}?page=2`));
+      assert.equal(located.relPrev, path);
+      assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
+      assert.equal((located.bodyHtml.match(/id="thread"/g) ?? []).length, 1);
+      assert.ok(located.bodyHtml.indexOf('id="thread"') > located.bodyHtml.indexOf(`id="thread-${threads[0].id}"`));
+      assert.ok(located.bodyHtml.includes(`href="${path}" rel="prev" data-discussion-newer`));
+      assert.match(located.bodyHtml, /data-end-label=/);
+      const batchResponse = await fetch(`${server.url}${path}?batch=${threads[0].id},${threads[20].id},${threads[0].id}`);
+      assert.equal(batchResponse.status, 200);
+      const batch = await batchResponse.json() as { bodyHtml: string };
+      assert.equal((batch.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 2);
+      assert.ok(batch.bodyHtml.indexOf(`id="thread-${threads[0].id}"`) < batch.bodyHtml.indexOf(`id="thread-${threads[20].id}"`));
 
-  } finally {
-    await server.close();
-    await cleanup(dal, prefix, userIds);
-  }
-});
+    } finally {
+      await server.close();
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}
 
 test('Deleting a page preserves its discussion, replies, aliases and thread links', async () => {
   const dal = await getDal();
@@ -408,3 +435,196 @@ test('Draft discussions retain draft labeling, article tabs and noindex after th
     await cleanup(dal, prefix, userIds);
   }
 });
+
+test('Replies to positions show under the position in the proposal discussion; old thread links redirect', async () => {
+  const dal = await getDal();
+  const prefix = `meta/proposals/disc-positions-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  const noJobs = { enqueueJob: async () => null };
+  try {
+    const author = await createTestUser('proposer');
+    const replier = await createTestUser('replier');
+    userIds.push(author.id, replier.id);
+    await createPage(dal, prefix, author.id);
+    const position = await signOffPage(
+      dal,
+      { slug: prefix, stance: 'neutral', comment: 'Should renames warn first?', commentLanguage: 'en' },
+      author.id,
+      noJobs
+    );
+    const reply = await replyToPosition(
+      dal,
+      { slug: prefix, signoffId: position.id, body: 'Yes, they should.', language: 'en' },
+      replier.id
+    );
+    const thread = await startThread(prefix, 'A titled thread', author.id, 'policy');
+
+    const page = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as { bodyHtml: string };
+    assert.ok(page.bodyHtml.includes(`id="position-${position.id}"`));
+    assert.ok(
+      page.bodyHtml.includes(
+        `data-replies="position-${position.id}"><article class="discussion-comment discussion-comment--reply page-signoff-reply" id="comment-${reply.commentId}"`
+      )
+    );
+    assert.ok(page.bodyHtml.includes(`id="thread-${thread.id}"`));
+    // The thread holding the replies is not a thread of its own.
+    assert.ok(!page.bodyHtml.includes(`id="thread-${reply.threadId}"`));
+    assert.ok(!page.bodyHtml.includes('“Should renames warn first?”'));
+
+    const old = await fetch(`${server.url}/tool/forum/thread/${reply.threadId}`, { redirect: 'manual' });
+    assert.equal(old.status, 301);
+    assert.equal(old.headers.get('location'), `/${prefix}/discussion?position=${position.id}`);
+
+    // A withdrawn position keeps its replies readable.
+    await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+    const after = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as { bodyHtml: string };
+    assert.ok(after.bodyHtml.includes('page-signoff--withdrawn'));
+    assert.ok(after.bodyHtml.includes(`id="comment-${reply.commentId}"`));
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('General threads are sections of the General discussion, and their old links redirect', async () => {
+  const dal = await getDal();
+  const prefix = `disc-general-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('general');
+    userIds.push(author.id);
+    const thread = await createForumThread(
+      { category: 'general', title: `${prefix} topic`, body: 'Opening.', language: 'en' },
+      author.id
+    );
+    const old = await fetch(`${server.url}/tool/forum/thread/${thread.id}`, { redirect: 'manual' });
+    assert.equal(old.status, 301);
+    assert.equal(old.headers.get('location'), `/tool/forum/general?thread=${thread.id}`);
+
+    const section = (await (await fetch(`${server.url}/tool/forum/general?thread=${thread.id}`)).json()) as {
+      bodyHtml: string;
+      canonicalUrl: string;
+    };
+    assert.ok(section.bodyHtml.includes(`id="thread-${thread.id}"`));
+    assert.ok(section.bodyHtml.includes(`href="/tool/forum/general?thread=${thread.id}#thread"`));
+    assert.match(section.canonicalUrl, /\/tool\/forum\/general$/);
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Position conversations let readers unfollow and follow again, including withdrawn positions', async () => {
+  const dal = await getDal();
+  const prefix = `meta/proposals/disc-follow-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('followauthor');
+    const participant = await createTestUser('followparticipant');
+    userIds.push(author.id, participant.id);
+    await createPage(dal, prefix, author.id);
+    const position = await signOffPage(dal, {
+      slug: prefix, stance: 'support', comment: 'I support this.', commentLanguage: 'en',
+    }, author.id, { enqueueJob: async () => null });
+    const reply = await replyToPosition(dal, {
+      slug: prefix, signoffId: position.id, body: 'Agreed.', language: 'en',
+    }, participant.id);
+    const { token } = await createSession(participant.id);
+    const headers = { cookie: `agpwiki_session=${token}` };
+    const path = `/${prefix}/discussion`;
+    const action = `/tool/forum/thread/${reply.threadId}/subscription`;
+    const read = async (signedIn = true) => await (await fetch(`${server.url}${path}`, {
+      headers: signedIn ? headers : {},
+    })).json() as { bodyHtml: string };
+    const assertControl = (html: string, following: boolean) => {
+      assert.ok(html.includes(`action="${action}"`), 'Position replies must expose a subscription control');
+      assert.ok(html.includes(`name="subscribed" value="${!following}"`));
+      assert.ok(html.includes(`aria-pressed="${following}"`));
+      assert.ok(html.includes(following ? 'followControl.unfollow' : 'followControl.follow'));
+    };
+    assert.equal(await isUserSubscribedToForumThread(reply.threadId, participant.id), true);
+    assertControl((await read()).bodyHtml, true);
+    assert.ok(!(await read(false)).bodyHtml.includes(`action="${action}"`));
+    const update = async (subscribed: boolean) => {
+      const response = await fetch(`${server.url}${action}`, {
+        method: 'POST', redirect: 'manual',
+        headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ subscribed: String(subscribed) }),
+      });
+      assert.equal(response.status, 303);
+      assert.equal(response.headers.get('location'), `${path}#position-${position.id}`);
+      assert.equal(await isUserSubscribedToForumThread(reply.threadId, participant.id), subscribed);
+      assertControl((await read()).bodyHtml, subscribed);
+    };
+    await update(false);
+    await update(true);
+    await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+    assertControl((await read()).bodyHtml, true);
+    await update(false);
+  } finally {
+    await server.close();
+    for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+for (const hasOrdinaryThread of [false, true]) {
+  test(`Deleted proposals retain position replies ${hasOrdinaryThread ? 'with' : 'without'} ordinary threads`, async () => {
+    const dal = await getDal();
+    const prefix = `meta/proposals/disc-deleted-positions-${Date.now()}`;
+    const userIds: string[] = [];
+    const server = await startServer();
+    try {
+      const author = await createTestUser('deletedposition');
+      const participant = await createTestUser('deletedreply');
+      userIds.push(author.id, participant.id);
+      await grantRoleUpsert(dal, author.id, WIKI_ADMIN_ROLE);
+      const page = await createPage(dal, prefix, author.id);
+      const position = await signOffPage(dal, {
+        slug: prefix, stance: 'support', comment: 'Keep this rationale.', commentLanguage: 'en',
+      }, author.id, { enqueueJob: async () => null });
+      const reply = await replyToPosition(dal, {
+        slug: prefix, signoffId: position.id, body: 'Keep this reply.', language: 'en',
+      }, participant.id);
+      await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+      const active = await signOffPage(dal, {
+        slug: prefix, stance: 'neutral', comment: 'An active position.', commentLanguage: 'en',
+      }, author.id, { enqueueJob: async () => null });
+      const activeReply = await replyToPosition(dal, {
+        slug: prefix, signoffId: active.id, body: 'An active reply.', language: 'en',
+      }, participant.id);
+      if (hasOrdinaryThread) await startThread(prefix, 'Ordinary discussion', author.id, 'policy');
+      const alias = `${prefix}-old`;
+      await PageAlias.create({ pageId: page.id, slug: alias, createdBy: author.id });
+      await deleteWikiPage(dal, { slug: prefix, revSummary: { en: 'Delete proposal.' } }, author.id);
+      const { token } = await createSession(participant.id);
+      const headers = { cookie: `agpwiki_session=${token}` };
+      for (const url of [
+        `/${prefix}/discussion`, `/${alias}/discussion`,
+        `/tool/forum/thread/${reply.threadId}`, `/tool/forum/thread/${activeReply.threadId}`,
+      ]) {
+        const response = await fetch(`${server.url}${url}`, { headers });
+        assert.equal(response.status, 200, `Deleted position conversation must remain accessible: ${url}`);
+        const { bodyHtml } = await response.json() as { bodyHtml: string };
+        assert.ok(bodyHtml.includes(`id="position-${position.id}"`));
+        assert.ok(bodyHtml.includes(`id="comment-${reply.commentId}"`));
+        assert.ok(bodyHtml.includes(`id="position-${active.id}"`));
+        assert.ok(bodyHtml.includes(`id="comment-${activeReply.commentId}"`));
+        assert.ok(bodyHtml.includes('Keep this rationale.'));
+        assert.ok(bodyHtml.includes('Keep this reply.'));
+        assert.ok(bodyHtml.includes('page-signoff--withdrawn'));
+        assert.ok(bodyHtml.includes('forum.pageLink.orphanedContext'));
+        assert.ok(bodyHtml.includes(`action="/tool/forum/thread/${reply.threadId}/subscription"`));
+        assert.ok(!bodyHtml.includes('class="page-signoff-form"'));
+        assert.ok(!bodyHtml.includes('data-reply-to="position-'));
+      }
+    } finally {
+      await server.close();
+      for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}
