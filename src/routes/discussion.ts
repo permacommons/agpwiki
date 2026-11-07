@@ -19,6 +19,7 @@ import { escapeHtml, prepareTitle, renderText, toSafeText } from '../render.js';
 import {
   countPageDiscussionComments,
   type DiscussionPage,
+  findOrphanedDiscussion,
   listPageDiscussionSlugs,
   readDiscussion,
 } from '../services/discussion-service.js';
@@ -59,7 +60,8 @@ export const THREADS_UNDER_PAGE = 5;
 const DISCUSSION_ROUTE = /^\/(.+)\/discussion$/;
 
 interface DiscussionPageRecord {
-  id: string;
+  id: string | null;
+  discussionSlugs?: string[];
   slug: string;
   title: Record<string, string> | null | undefined;
 }
@@ -205,8 +207,12 @@ const resolveDiscussionPage = async (
     const addressForm = toAddressForm(slug);
     page = addressForm !== slug ? await findCurrentPageBySlugOrAlias(addressForm) : null;
     if (!page) {
-      res.status(404).type('text').send(req.t('page.notFound'));
-      return null;
+      const orphan = await findOrphanedDiscussion(dalInstance, addressForm);
+      if (!orphan) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return null;
+      }
+      page = { id: null, slug: orphan.slug, title: null, discussionSlugs: orphan.slugs };
     }
   }
   if (page.slug !== slug) {
@@ -232,7 +238,9 @@ export const renderPageDiscussionPage = async (
 ) => {
   const dalInstance = await initializePostgreSQL();
   const target: DiscussionTarget = { kind: 'page', slug: page.slug };
-  const slugs = await listPageDiscussionSlugs(dalInstance, page);
+  const slugs = page.id
+    ? await listPageDiscussionSlugs(dalInstance, { id: page.id, slug: page.slug })
+    : page.discussionSlugs ?? [page.slug];
   const replyParentId = readString(req.query.reply);
   const threadId = state.threadId ?? state.openReply?.threadId ?? (readString(req.query.thread) || undefined);
   const discussion = await readDiscussion(
@@ -250,20 +258,20 @@ export const renderPageDiscussionPage = async (
   const locale = ctx.locale;
   const pageHref = pageHrefOf(page.slug);
   const titleText = resolveSafeTextWithFallback(mlString.resolve, locale, page.title, page.slug);
-  const editability = session
+  const editability = session && page.id
     ? await getWikiPageEditability(dalInstance, { id: page.id }, session)
     : { isProtected: false, isEditable: false };
   const canEditDirectly = Boolean(session) && (!editability.isProtected || editability.isEditable);
   const tabsHtml = renderPageTabs({
     isArticle: isArticleSlug(page.slug),
     pageHref,
-    isCurrentView: true,
+    isCurrentView: Boolean(page.id),
     discussHref: discussionPath(target),
     discussCount: await countPageDiscussionComments(dalInstance, slugs),
     discussCurrent: true,
     editHref: canEditDirectly ? `${pageHref}/operator-edit` : howToEditPath(page.slug),
     historyHref: `${pageHref}#${HISTORY_ANCHOR}`,
-    follow: session
+    follow: session && page.id
       ? {
           slug: page.slug,
           following: await isFollowingPage(dalInstance, page.id, session),
@@ -277,15 +285,16 @@ export const renderPageDiscussionPage = async (
     ? ''
     : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`;
   const bodyHtml = `<div class="discussion-page">
+  ${page.id ? '' : `<p class="forum-page-context">${escapeHtml(req.t('forum.pageLink.orphanedContext', { slug: page.slug }))}</p>`}
   ${renderDiscussionSummary(discussion, req.t)}
   ${emptyHtml}
   ${renderDiscussionThreads(discussion.threads, ctx)}
   ${renderDiscussionPager(target, discussion, req.t)}
   ${renderReplyTemplate(ctx)}
-  ${renderStartThread(req, res, target, ctx.viewer, {
+  ${page.id ? renderStartThread(req, res, target, ctx.viewer, {
     errorMessage: state.threadErrorMessage,
     previewHtml: state.threadPreviewHtml,
-  })}
+  }) : `<p class="forum-empty">${escapeHtml(req.t('forum.pageLink.cannotCreateMissingPageRequired'))}</p>`}
 </div>`;
   const pageType = resolvePageAddress(page.slug)?.namespace === 'meta' ? req.t('label.meta') : req.t('label.article');
   res.render('layout', {
@@ -312,9 +321,13 @@ export const renderPageDiscussionForThread = async (
   thread: { id: string; pageSlug: string },
   state: DiscussionPageState
 ) => {
-  await initializePostgreSQL();
-  const page = await findCurrentPageBySlugOrAlias(thread.pageSlug);
-  if (!page) return false;
+  const dalInstance = await initializePostgreSQL();
+  let page: DiscussionPageRecord | null = await findCurrentPageBySlugOrAlias(thread.pageSlug);
+  if (!page) {
+    const orphan = await findOrphanedDiscussion(dalInstance, thread.pageSlug);
+    if (!orphan) return false;
+    page = { id: null, slug: orphan.slug, title: null, discussionSlugs: orphan.slugs };
+  }
   await renderPageDiscussionPage(req, res, page, { ...state, threadId: thread.id });
   return true;
 };
@@ -339,6 +352,11 @@ export const registerDiscussionRoutes = (app: Express) => {
       const dalInstance = await initializePostgreSQL();
       const page = await resolveDiscussionPage(dalInstance, req, res, slug);
       if (!page) return;
+      if (!page.id) {
+        res.status(403);
+        await renderPageDiscussionPage(req, res, page);
+        return;
+      }
       const session = await resolveSessionUser(req);
       if (!session) {
         res.redirect(303, `/tool/login?redirect=${encodeURIComponent(discussionPath({ kind: 'page', slug: page.slug }))}`);

@@ -13,8 +13,8 @@ import { registerDiscussionRoutes } from '../src/routes/discussion.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { readDiscussion } from '../src/services/discussion-service.js';
 import { createForumComment, createForumThread, setForumThreadPinned } from '../src/services/forum-service.js';
-import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
-import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { FORUM_MODERATOR_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import { createWikiPage, deleteWikiPage } from '../src/services/wiki-page-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -267,6 +267,50 @@ test('A long discussion is paged with plain links and canonical addresses', asyn
     assert.match(located.canonicalUrl, new RegExp(`/${prefix}/discussion\\?page=2$`));
     assert.equal(located.relPrev, `/${prefix}/discussion`);
     assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
+  } finally {
+    await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Deleting a page preserves its discussion, replies, aliases and thread links', async () => {
+  const dal = await getDal();
+  const prefix = `disc-deleted-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('deleted');
+    userIds.push(author.id);
+    await grantRoleUpsert(dal, author.id, WIKI_ADMIN_ROLE);
+    const page = await createPage(dal, prefix, author.id);
+    const thread = await startThread(prefix, 'Preserved conversation', author.id);
+    const oldSlug = `${prefix}-old`;
+    await PageAlias.create({ pageId: page.id, slug: oldSlug, createdBy: author.id });
+    await dal.query('UPDATE forum_threads SET page_slug = $1 WHERE id = $2', [oldSlug, thread.id]);
+    await deleteWikiPage(dal, { slug: prefix, revSummary: { en: 'Delete page.' } }, author.id);
+    const reply = await createForumComment(
+      { threadId: thread.id, parentId: thread.firstCommentId, body: 'Reply after deletion.', language: 'en' },
+      author.id
+    );
+
+    const response = await fetch(`${server.url}/${prefix}/discussion?thread=${thread.id}`);
+    assert.equal(response.status, 200);
+    const discussion = await response.json() as { bodyHtml: string };
+    assert.ok(discussion.bodyHtml.includes(`id="thread-${thread.id}"`));
+    assert.ok(discussion.bodyHtml.includes(`id="comment-${reply.id}"`));
+    assert.match(discussion.bodyHtml, /forum.pageLink.orphanedContext/);
+    assert.match(discussion.bodyHtml, /forum.pageLink.cannotCreateMissingPageRequired/);
+    const alias = await fetch(`${server.url}/${oldSlug}/discussion`);
+    assert.equal(alias.status, 200);
+    assert.equal(new URL(alias.url).pathname, `/${prefix}/discussion`);
+    const legacy = await fetch(`${server.url}/tool/forum/thread/${thread.id}`);
+    assert.equal(legacy.status, 200);
+    const post = await fetch(`${server.url}/${prefix}/discussion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'title=New&body=New&language=en',
+    });
+    assert.equal(post.status, 403);
   } finally {
     await server.close();
     await cleanup(dal, prefix, userIds);

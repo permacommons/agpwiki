@@ -227,3 +227,17 @@ export const countPageDiscussionComments = async (
   );
   return Number(result.rows[0]?.comment_count) || 0;
 };
+
+export const findOrphanedDiscussion = async (dalInstance: DataAccessLayer, slug: string) => {
+  const result = await dalInstance.query(
+    `SELECT p.id, p.slug FROM pages p
+      WHERE p._old_rev_of IS NULL AND p._rev_deleted = true
+        AND (p.slug = $1 OR p.id IN (SELECT page_id FROM page_aliases WHERE slug = $1))
+      ORDER BY (p.slug = $1) DESC LIMIT 1`,
+    [slug]
+  );
+  const page = result.rows[0] as { id: string; slug: string } | undefined;
+  const slugs = page ? await listPageDiscussionSlugs(dalInstance, page) : [slug];
+  const discussion = await readDiscussion(dalInstance, { pageSlugs: slugs }, { pageSize: 1 });
+  return discussion.threadCount ? { slug: page?.slug ?? slug, slugs } : null;
+};
