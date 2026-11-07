@@ -53,8 +53,8 @@ test('Positions are top-level comments with their replies one level under them',
   assert.ok(html.includes('id="position-position"'));
   assert.ok(html.includes('<p>From the other user.</p>'));
   assert.ok(html.includes('<div class="discussion-replies" data-replies="position-position"><article class="discussion-comment discussion-comment--reply page-signoff-reply" id="comment-c1"'));
-  // No separate forum thread any more: links lead to the proposal's discussion.
-  assert.ok(!html.includes('/tool/forum/thread/'));
+  assert.ok(!html.includes('href="/tool/forum/thread/'));
+  assert.ok(html.includes('action="/tool/forum/thread/thread-1/subscription"'));
   assert.ok(html.includes('href="/meta/proposals/test/discussion#comment-c1" data-permalink'));
   assert.ok(html.includes('data-reply-action="/meta/proposals/test/position-reply"'));
   assert.ok(html.includes('data-reply-fields="{&quot;signoffId&quot;:&quot;position&quot;}"'));

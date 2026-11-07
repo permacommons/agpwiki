@@ -291,7 +291,10 @@ const renderComment = (
 
 // Following is a small text button beside the thread's counts; pinning and
 // deleting are for moderators only.
-const renderFollowThread = (thread: DiscussionThread, ctx: DiscussionRenderContext) => {
+export const renderFollowThread = (
+  thread: Pick<DiscussionThread, 'id'>,
+  ctx: { viewer: Pick<DiscussionViewer, 'userId' | 'followedThreadIds'>; t: TFunction }
+) => {
   if (!ctx.viewer.userId) return '';
   const following = ctx.viewer.followedThreadIds.has(thread.id);
   return ` · <form method="post" action="${escapeHtml(`${forumThreadPath(thread.id)}/subscription`)}" class="forum-inline-form discussion-follow">

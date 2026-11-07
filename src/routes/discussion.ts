@@ -39,6 +39,7 @@ import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
   type DiscussionViewer,
+  listFollowedThreadIds,
   loadDiscussionRenderData,
   type OpenReplyForm,
   renderDiscussionSummary,
@@ -186,6 +187,11 @@ export const renderPositionsSection = async (
     for (const row of result.rows as Array<{ id: string; display_name: string }>) userMap.set(row.id, row.display_name);
   }
   const session = await resolveSessionUser(req);
+  const followedThreadIds = await listFollowedThreadIds(
+    dalInstance,
+    [...replyThreads.values()].map(thread => thread.threadId),
+    session?.userId ?? null
+  );
   const canSignOff = await canSignOffPages(dalInstance, session?.userId);
   const changedRevIds = await findRevisionsWithChangedText(
     dalInstance,
@@ -201,6 +207,7 @@ export const renderPositionsSection = async (
     userMap,
     usernames,
     viewerId: session?.userId ?? null,
+    followedThreadIds,
     canSignOff,
     canReply: canSignOff && canPostIn(res),
     isModerator: session ? await userHasRole(dalInstance, session.userId, FORUM_MODERATOR_ROLE) : false,

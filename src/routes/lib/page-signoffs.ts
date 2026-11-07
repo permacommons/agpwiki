@@ -10,7 +10,7 @@ import {
   type SignoffStance,
 } from '../../services/page-signoff-service.js';
 import type { PositionReply } from '../../services/position-reply-service.js';
-import { renderCommentMeta, renderReplyForm } from './discussion.js';
+import { renderCommentMeta, renderFollowThread, renderReplyForm } from './discussion.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
 
@@ -21,6 +21,7 @@ type PageSignoffsParams = {
   signoffs: PageSignoffResult[];
   userMap: Map<string, string>;
   viewerId: string | null;
+  followedThreadIds?: Set<string>;
   canSignOff: boolean;
   // Replies are forum posts: posting needs a confirmed email address.
   canReply?: boolean;
@@ -65,6 +66,7 @@ export const renderPageSignoffs = ({
   signoffs,
   userMap,
   viewerId,
+  followedThreadIds = new Set(),
   canSignOff,
   canReply = canSignOff,
   t,
@@ -170,6 +172,10 @@ export const renderPageSignoffs = ({
           positionLink
         )}" data-permalink data-plain-click>${escapeHtml(t('discussion.commentLink'))}</a></div>`
       : '';
+    const thread = replies?.get(signoff.id);
+    const subscriptionHtml = thread ? renderFollowThread({ id: thread.threadId }, {
+      viewer: { userId: viewerId, followedThreadIds }, t,
+    }) : '';
     const metaHtml = `<span class="page-signoff-stance page-signoff-stance--${signoff.stance}">${escapeHtml(
       stanceLabel(signoff.stance, t)
     )}</span> <strong class="discussion-author">${escapeHtml(name)}</strong> <span class="discussion-date" title="${escapeHtml(
@@ -178,7 +184,7 @@ export const renderPageSignoffs = ({
       signoff.signedAt
         ? signoff.signedAt.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' })
         : ''
-    )} · ${revisionLink}${changedHtml}${withdrawnHtml}</span>`;
+    )} · ${revisionLink}${changedHtml}${withdrawnHtml}</span>${subscriptionHtml}`;
     return `<article class="discussion-comment page-signoff${signoff.withdrawnAt ? ' page-signoff--withdrawn' : ''}" id="${positionAnchor(signoff.id)}">
   <div class="discussion-comment-meta page-signoff-meta">${metaHtml}</div>
   ${commentHtml}

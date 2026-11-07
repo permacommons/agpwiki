@@ -5,6 +5,8 @@ import test from 'node:test';
 
 import express from 'express';
 
+import { createSession } from '../src/auth/session.js';
+import { isUserSubscribedToForumThread } from '../src/services/forum-subscription-service.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
@@ -510,6 +512,61 @@ test('General threads are sections of the General discussion, and their old link
     assert.match(section.canonicalUrl, /\/tool\/forum\/general$/);
   } finally {
     await server.close();
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Position conversations let readers unfollow and follow again, including withdrawn positions', async () => {
+  const dal = await getDal();
+  const prefix = `meta/proposals/disc-follow-${Date.now()}`;
+  const userIds: string[] = [];
+  const server = await startServer();
+  try {
+    const author = await createTestUser('followauthor');
+    const participant = await createTestUser('followparticipant');
+    userIds.push(author.id, participant.id);
+    await createPage(dal, prefix, author.id);
+    const position = await signOffPage(dal, {
+      slug: prefix, stance: 'support', comment: 'I support this.', commentLanguage: 'en',
+    }, author.id, { enqueueJob: async () => null });
+    const reply = await replyToPosition(dal, {
+      slug: prefix, signoffId: position.id, body: 'Agreed.', language: 'en',
+    }, participant.id);
+    const { token } = await createSession(participant.id);
+    const headers = { cookie: `agpwiki_session=${token}` };
+    const path = `/${prefix}/discussion`;
+    const action = `/tool/forum/thread/${reply.threadId}/subscription`;
+    const read = async (signedIn = true) => await (await fetch(`${server.url}${path}`, {
+      headers: signedIn ? headers : {},
+    })).json() as { bodyHtml: string };
+    const assertControl = (html: string, following: boolean) => {
+      assert.ok(html.includes(`action="${action}"`), 'Position replies must expose a subscription control');
+      assert.ok(html.includes(`name="subscribed" value="${!following}"`));
+      assert.ok(html.includes(`aria-pressed="${following}"`));
+      assert.ok(html.includes(following ? 'followControl.unfollow' : 'followControl.follow'));
+    };
+    assert.equal(await isUserSubscribedToForumThread(reply.threadId, participant.id), true);
+    assertControl((await read()).bodyHtml, true);
+    assert.ok(!(await read(false)).bodyHtml.includes(`action="${action}"`));
+    const update = async (subscribed: boolean) => {
+      const response = await fetch(`${server.url}${action}`, {
+        method: 'POST', redirect: 'manual',
+        headers: { ...headers, 'content-type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ subscribed: String(subscribed) }),
+      });
+      assert.equal(response.status, 303);
+      assert.equal(response.headers.get('location'), `${path}#position-${position.id}`);
+      assert.equal(await isUserSubscribedToForumThread(reply.threadId, participant.id), subscribed);
+      assertControl((await read()).bodyHtml, subscribed);
+    };
+    await update(false);
+    await update(true);
+    await withdrawPageSignoff(dal, { slug: prefix }, author.id);
+    assertControl((await read()).bodyHtml, true);
+    await update(false);
+  } finally {
+    await server.close();
+    for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
     await cleanup(dal, prefix, userIds);
   }
 });
