@@ -258,53 +258,69 @@ test('The discussion page shows titled threads with permanent links, and old add
   }
 });
 
-test('A long discussion is paged with plain links and canonical addresses', async () => {
-  const dal = await getDal();
-  const prefix = `disc-pages-${Date.now()}`;
-  const userIds: string[] = [];
-  const server = await startServer();
-  try {
-    const author = await createTestUser('pages');
-    userIds.push(author.id);
-    await createPage(dal, prefix, author.id);
-    const threads = [];
-    for (let index = 0; index < 21; index += 1) threads.push(await startThread(prefix, `Thread ${index}`, author.id));
+for (const kind of ['page', 'section'] as const) {
+  test(`A long ${kind} discussion supports navigation, permalinks and batches`, async () => {
+    const dal = await getDal();
+    const prefix = `disc-pages-${Date.now()}`;
+    const userIds: string[] = [];
+    const server = await startServer();
+    try {
+      const author = await createTestUser('pages');
+      userIds.push(author.id);
+      const path = kind === 'page' ? `/${prefix}/discussion` : '/tool/forum/technology';
+      if (kind === 'page') await createPage(dal, prefix, author.id);
+      const threads = [];
+      for (let index = 0; index < 21; index += 1) {
+        threads.push(await createForumThread({
+          category: kind === 'page' ? 'articles' : 'technology',
+          pageSlug: kind === 'page' ? prefix : undefined,
+          title: `${prefix} Thread ${index}`,
+          body: 'Opening.',
+          language: 'en',
+        }, author.id));
+      }
 
-    const first = (await (await fetch(`${server.url}/${prefix}/discussion`)).json()) as {
-      bodyHtml: string;
-      relNext: string | null;
-      relPrev: string | null;
-    };
-    assert.equal(first.relNext, `/${prefix}/discussion?page=2`);
-    assert.equal(first.relPrev, null);
-    assert.match(first.bodyHtml, /rel="next" data-discussion-older/);
-    assert.match(first.bodyHtml, /data-discussion-range role="status" aria-live="polite" aria-atomic="true"/);
-    assert.ok(!first.bodyHtml.includes('data-loaded-label'));
+      const first = (await (await fetch(`${server.url}${path}`)).json()) as {
+        bodyHtml: string;
+        relNext: string | null;
+        relPrev: string | null;
+      };
+      assert.equal(first.relNext, `${path}?page=2`);
+      assert.equal(first.relPrev, null);
+      assert.match(first.bodyHtml, /rel="next" data-discussion-older/);
+      assert.match(first.bodyHtml, /data-discussion-newer-nav/);
+      assert.equal((first.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 20);
+      const second = await (await fetch(`${server.url}${path}?page=2`)).json() as { bodyHtml: string };
+      assert.ok(second.bodyHtml.includes(`href="${path}" rel="prev" data-discussion-newer`));
+      assert.equal((second.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 1);
+      assert.match(first.bodyHtml, /data-discussion-range role="status" aria-live="polite" aria-atomic="true"/);
+      assert.ok(!first.bodyHtml.includes('data-loaded-label'));
 
-    // The oldest thread is on the second page; its link opens that page.
-    const located = (await (await fetch(`${server.url}/${prefix}/discussion?thread=${threads[0].id}`)).json()) as {
-      bodyHtml: string;
-      canonicalUrl: string;
-      relPrev: string | null;
-    };
-    assert.match(located.canonicalUrl, new RegExp(`/${prefix}/discussion\\?page=2$`));
-    assert.equal(located.relPrev, `/${prefix}/discussion`);
-    assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
-    assert.equal((located.bodyHtml.match(/id="thread"/g) ?? []).length, 1);
-    assert.ok(located.bodyHtml.indexOf('id="thread"') > located.bodyHtml.indexOf(`id="thread-${threads[0].id}"`));
-    assert.ok(located.bodyHtml.includes(`href="/${prefix}/discussion" rel="prev" data-discussion-newer`));
-    assert.match(located.bodyHtml, /data-end-label=/);
-    const batchResponse = await fetch(`${server.url}/${prefix}/discussion?batch=${threads[0].id},${threads[20].id},${threads[0].id}`);
-    assert.equal(batchResponse.status, 200);
-    const batch = await batchResponse.json() as { bodyHtml: string };
-    assert.equal((batch.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 2);
-    assert.ok(batch.bodyHtml.indexOf(`id="thread-${threads[0].id}"`) < batch.bodyHtml.indexOf(`id="thread-${threads[20].id}"`));
+      // The oldest thread is on the second page; its link opens that page.
+      const located = (await (await fetch(`${server.url}${path}?thread=${threads[0].id}`)).json()) as {
+        bodyHtml: string;
+        canonicalUrl: string;
+        relPrev: string | null;
+      };
+      assert.ok(located.canonicalUrl.endsWith(`${path}?page=2`));
+      assert.equal(located.relPrev, path);
+      assert.ok(located.bodyHtml.includes(`id="thread-${threads[0].id}"`));
+      assert.equal((located.bodyHtml.match(/id="thread"/g) ?? []).length, 1);
+      assert.ok(located.bodyHtml.indexOf('id="thread"') > located.bodyHtml.indexOf(`id="thread-${threads[0].id}"`));
+      assert.ok(located.bodyHtml.includes(`href="${path}" rel="prev" data-discussion-newer`));
+      assert.match(located.bodyHtml, /data-end-label=/);
+      const batchResponse = await fetch(`${server.url}${path}?batch=${threads[0].id},${threads[20].id},${threads[0].id}`);
+      assert.equal(batchResponse.status, 200);
+      const batch = await batchResponse.json() as { bodyHtml: string };
+      assert.equal((batch.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 2);
+      assert.ok(batch.bodyHtml.indexOf(`id="thread-${threads[0].id}"`) < batch.bodyHtml.indexOf(`id="thread-${threads[20].id}"`));
 
-  } finally {
-    await server.close();
-    await cleanup(dal, prefix, userIds);
-  }
-});
+    } finally {
+      await server.close();
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}
 
 test('Deleting a page preserves its discussion, replies, aliases and thread links', async () => {
   const dal = await getDal();

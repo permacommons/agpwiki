@@ -18,8 +18,6 @@ import { normalizeLineEndings } from '../lib/text-normalization.js';
 import { escapeHtml, prepareTitle, renderText, toSafeText } from '../render.js';
 import {
   countPageDiscussionComments,
-  DISCUSSION_PAGE_SIZE,
-  type DiscussionPage,
   findOrphanedDiscussion,
   listPageDiscussionSlugs,
   readDiscussion,
@@ -40,21 +38,18 @@ import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
-  type DiscussionRenderContext,
   type DiscussionViewer,
-  discussionCommentsOf,
-  listFollowedThreadIds,
   loadDiscussionRenderData,
   type OpenReplyForm,
-  renderDiscussionNewer,
-  renderDiscussionPager,
   renderDiscussionSummary,
   renderDiscussionThreads,
+  renderPaginatedDiscussion,
   renderPostingGate,
   renderReplyTemplate,
   renderStartThreadForm,
   type StartThreadValues,
 } from './lib/discussion.js';
+import { buildDiscussionContext, loadDiscussionPage } from './lib/discussion-page.js';
 import { HISTORY_ANCHOR } from './lib/history.js';
 import { renderMarkdownPreviewHtml } from './lib/markdown-preview.js';
 import { howToEditPath } from './lib/operator-edit-link.js';
@@ -82,63 +77,7 @@ const pageHrefOf = (slug: string) => `/${slug.split('/').map(encodeURIComponent)
 const canPostIn = (res: Response) =>
   Boolean((res.locals.accountState as { isEmailVerified?: boolean } | null | undefined)?.isEmailVerified);
 
-const readPositiveInt = (value: unknown) => {
-  const parsed = typeof value === 'string' ? Number.parseInt(value, 10) : Number.NaN;
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-};
-
 const readString = (value: unknown) => (typeof value === 'string' ? value : '');
-
-/** Who is reading and what they may do, for the threads shown. */
-export const loadDiscussionViewer = async (
-  dalInstance: DataAccessLayer,
-  req: Request,
-  res: Response,
-  threadIds: string[]
-): Promise<DiscussionViewer> => {
-  const session = await resolveSessionUser(req);
-  const userId = session?.userId ?? null;
-  return {
-    userId,
-    canPost: Boolean(userId) && canPostIn(res),
-    isModerator: userId ? await userHasRole(dalInstance, userId, FORUM_MODERATOR_ROLE) : false,
-    followedThreadIds: await listFollowedThreadIds(dalInstance, threadIds, userId),
-  };
-};
-
-/** The rendering context for one page of a discussion. */
-export const buildDiscussionContext = async (
-  dalInstance: DataAccessLayer,
-  req: Request,
-  res: Response,
-  target: DiscussionTarget,
-  discussion: DiscussionPage,
-  { headingLevel, openReply }: { headingLevel: 2 | 3; openReply?: OpenReplyForm }
-): Promise<DiscussionRenderContext> => {
-  const locale = (res.locals.locale as string | undefined) ?? req.language ?? 'en';
-  const viewer = await loadDiscussionViewer(
-    dalInstance,
-    req,
-    res,
-    discussion.threads.map(thread => thread.id)
-  );
-  const { bodies, authors } = await loadDiscussionRenderData(dalInstance, discussionCommentsOf(discussion.threads), {
-    backToCitationLabel: req.t('citation.backToCitationAria'),
-    locale,
-  });
-  return {
-    target,
-    t: req.t,
-    locale,
-    language: req.language ?? 'en',
-    languageOptions: res.locals.languageOptions,
-    viewer,
-    authors,
-    bodies,
-    headingLevel,
-    openReply,
-  };
-};
 
 const startThreadValues = (req: Request): StartThreadValues => ({
   title: readString(req.body?.title),
@@ -339,25 +278,8 @@ export const renderPageDiscussionPage = async (
     ? await listPageDiscussionSlugs(dalInstance, { id: page.id, slug: page.slug })
     : page.discussionSlugs ?? [page.slug];
   const replyParentId = readString(req.query.reply);
-  const threadId = state.threadId ?? state.openReply?.threadId ?? (readString(req.query.thread) || undefined);
-  const discussion = await readDiscussion(
-    dalInstance,
-    { pageSlugs: slugs },
-    {
-      page: readPositiveInt(req.query.page),
-      threadId,
-      threadIds: typeof req.query.batch === 'string'
-        ? req.query.batch.split(',').slice(0, DISCUSSION_PAGE_SIZE)
-        : undefined,
-    }
-  );
-  const openReply =
-    state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined);
-  const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, {
-    headingLevel: 2,
-    openReply,
-  });
-  ctx.requestedThreadId = threadId;
+  const { discussion, ctx } = await loadDiscussionPage(dalInstance, req, res, target, { pageSlugs: slugs }, state);
+  const threadId = ctx.requestedThreadId;
   const session = ctx.viewer.userId;
   const locale = ctx.locale;
   const pageHref = pageHrefOf(page.slug);
@@ -411,9 +333,7 @@ export const renderPageDiscussionPage = async (
   ${positionsHtml}
   ${isProposal ? `<h2 class="discussion-threads-heading">${escapeHtml(req.t('discussion.threads'))}</h2>` : ''}
   ${discussion.threadCount ? renderDiscussionSummary(discussion, req.t) : emptyHtml}
-  ${renderDiscussionNewer(target, discussion, req.t)}
-  ${renderDiscussionThreads(discussion.threads, ctx)}
-  ${renderDiscussionPager(target, discussion, req.t)}
+  ${renderPaginatedDiscussion(discussion, ctx)}
   ${renderReplyTemplate(ctx)}
   ${page.id ? renderStartThread(req, res, target, ctx.viewer, {
     errorMessage: state.threadErrorMessage,

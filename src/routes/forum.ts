@@ -35,7 +35,7 @@ import {
   renderText,
   type SafeText,
 } from '../render.js';
-import { listDiscussedPages, readDiscussion } from '../services/discussion-service.js';
+import { listDiscussedPages } from '../services/discussion-service.js';
 import {
   createForumComment,
   createForumThread,
@@ -59,19 +59,19 @@ import {
   unsubscribeUserFromForumThread,
 } from '../services/forum-subscription-service.js';
 import { normalizeSlugInput } from '../services/validation.js';
-import { buildDiscussionContext, renderPageDiscussionForThread } from './discussion.js';
+import { renderPageDiscussionForThread } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor } from './lib/canonical.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import {
   type OpenReplyForm,
-  renderDiscussionPager,
   renderDiscussionSummary,
-  renderDiscussionThreads,
+  renderPaginatedDiscussion,
   renderPostingGate,
   renderReplyTemplate,
   renderStartThreadForm,
 } from './lib/discussion.js';
+import { loadDiscussionPage } from './lib/discussion-page.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderForumCommentEditor } from './lib/forum-comment-editor.js';
 import { fetchUserMap } from './lib/history.js';
@@ -307,13 +307,7 @@ const renderSectionPage = async (
 ) => {
   const dalInstance = await initializePostgreSQL();
   const target: DiscussionTarget = { kind: 'section', category };
-  const threadId = state.threadId ?? state.openReply?.threadId ?? (typeof req.query.thread === 'string' ? req.query.thread : undefined);
-  const replyParentId = typeof req.query.reply === 'string' ? req.query.reply : '';
-  const discussion = await readDiscussion(dalInstance, { category }, { page: readPage(req.query.page), threadId });
-  const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, {
-    headingLevel: 2,
-    openReply: state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined),
-  });
+  const { discussion, ctx } = await loadDiscussionPage(dalInstance, req, res, target, { category }, state);
   // Article threads always belong to an article, so they start from its page.
   const canStart = category !== 'articles';
   const pagesHtml = SECTIONS_WITH_PAGES.has(category) && discussion.page === 1 ? await renderDiscussedPages(req, dalInstance, category) : '';
@@ -337,8 +331,7 @@ const renderSectionPage = async (
   const threadsHtml = showThreads
     ? `${SECTIONS_WITH_PAGES.has(category) ? `<h2 class="discussion-threads-heading">${escapeHtml(req.t('discussion.sectionThreads'))}</h2>` : ''}
   ${discussion.threadCount ? renderDiscussionSummary(discussion, req.t) : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`}
-  ${renderDiscussionThreads(discussion.threads, ctx)}
-  ${renderDiscussionPager(target, discussion, req.t)}
+  ${renderPaginatedDiscussion(discussion, ctx)}
   ${renderReplyTemplate(ctx)}
   ${startHtml}`
     : '';
