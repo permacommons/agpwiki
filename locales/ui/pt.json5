@@ -200,6 +200,7 @@
       articles: 'Artigos',
       technology: 'Tecnologia',
       policy: 'Política',
+      blog: 'Blog da Agpedia',
     },
     compose: {
       body: 'Mensagem',

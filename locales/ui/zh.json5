@@ -200,6 +200,7 @@
       articles: '条目',
       technology: '技术',
       policy: '政策',
+      blog: '博客',
     },
     compose: {
       body: '消息',

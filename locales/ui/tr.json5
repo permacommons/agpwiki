@@ -200,6 +200,7 @@
       articles: 'Makaleler',
       technology: 'Teknoloji',
       policy: 'Politika',
+      blog: 'Blog bölümü',
     },
     compose: {
       body: 'Mesaj',

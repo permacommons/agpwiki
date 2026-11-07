@@ -201,6 +201,7 @@
       articles: 'Straipsniai',
       technology: 'Technologijos',
       policy: 'Politika',
+      blog: 'Tinklaraštis',
     },
     compose: {
       body: 'Žinutė',

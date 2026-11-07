@@ -201,6 +201,7 @@
       articles: 'Artiklar',
       technology: 'Teknik',
       policy: 'Policy',
+      blog: 'Blogg',
     },
     compose: {
       body: 'Meddelande',

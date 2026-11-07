@@ -200,6 +200,7 @@
       articles: 'Artículos',
       technology: 'Tecnología',
       policy: 'Política',
+      blog: 'Bitácora',
     },
     compose: {
       body: 'Mensaje',

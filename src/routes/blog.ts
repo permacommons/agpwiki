@@ -22,6 +22,7 @@ import {
   readBlogPost,
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
+import { renderDiscussionUnderPost } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';
 import {
@@ -324,11 +325,14 @@ export const registerBlogRoutes = (app: Express) => {
         queryParams,
       });
       const labelHtml = `<div class="page-label">${req.t('label.blogPost')}</div>`;
+      // The discussion follows the current version of the post.
+      const discussionHtml =
+        !revIdParam && !diffFrom && !diffTo ? await renderDiscussionUnderPost(dalInstance, req, res, post) : '';
       res.render('layout', {
         title: prepareTitle(title),
         canonicalUrl: canonicalUrlFor(`/blog/${encodeURIComponent(post.slug)}`),
         labelHtml,
-        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}`,
+        bodyHtml: `${summaryHtml}${bodyHtml}${metaHtml}${languageRow}${discussionHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml: historyHtml,
       });

@@ -454,7 +454,8 @@
       "general": "General",
       "articles": "Articles",
       "technology": "Technology",
-      "policy": "Policy"
+      "policy": "Policy",
+      "blog": "Blog"
     },
     "compose": {
       "body": "Message",
