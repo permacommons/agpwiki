@@ -54,7 +54,8 @@ export const finishDiscussionLoad = (state, succeeded) => {
   };
 };
 
-export const readDiscussionSnapshot = (serialized, pageSize) => {
+export const readDiscussionSnapshot = (serialized, pageSize, navigationType) => {
+  if (navigationType !== 'back_forward') return null;
   try {
     const snapshot = JSON.parse(serialized);
     if (!snapshot || snapshot.pageSize !== pageSize || typeof snapshot.html !== 'string') return null;

@@ -172,8 +172,9 @@
     const previous = history.state?.discussion;
     let snapshotKey = previous?.path === path ? previous.snapshotKey : null;
     let restored = null;
+    const navigationType = performance.getEntriesByType('navigation')[0]?.type;
     try {
-      const snapshot = snapshotKey ? readDiscussionSnapshot(sessionStorage.getItem(snapshotKey), pageSize) : null;
+      const snapshot = snapshotKey ? readDiscussionSnapshot(sessionStorage.getItem(snapshotKey), pageSize, navigationType) : null;
       if (snapshot && Number.isFinite(previous.y) && previous.y >= 0) {
         restored = { ...snapshot, y: previous.y };
       }

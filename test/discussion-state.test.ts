@@ -125,7 +125,7 @@ test('Changing the source list after opening a discussion cannot change the brow
 test('A saved middle range restores navigation and preferences without restoring an in-flight request', () => {
   const pending = beginDiscussionLoad(load(createState(3), 'newer'), 'newer');
   const serialized = JSON.stringify(snapshotOf({ ...pending, automatic: false }));
-  const snapshot = readDiscussionSnapshot(serialized, 20);
+  const snapshot = readDiscussionSnapshot(serialized, 20, 'back_forward');
   assert.ok(snapshot);
   const restored = createDiscussionState({ threadOrder: ['changed-live-order'], pageSize: 20 }, snapshot);
   assert.deepEqual(restored.threadOrder, threadOrder);
@@ -153,7 +153,7 @@ test('Invalid or incompatible saved data falls back instead of restoring corrupt
     JSON.stringify({ ...valid, loadedNewer: null }),
     JSON.stringify({ ...valid, html: null }),
   ];
-  for (const serialized of invalid) assert.equal(readDiscussionSnapshot(serialized, 20), null, String(serialized));
+  for (const serialized of invalid) assert.equal(readDiscussionSnapshot(serialized, 20, 'back_forward'), null, String(serialized));
 });
 
 test('Reading URLs select the visible thread with one ID and a fixed fragment', () => {
@@ -168,4 +168,31 @@ test('A visible comment retains its fragment until the reader moves to another t
   const moved = discussionReadingUrl('/example/discussion?thread=xyz#thread', current, false);
   assert.equal(moved.search, '?thread=xyz');
   assert.equal(moved.hash, '#thread');
+});
+
+test('Reload ignores a saved discussion so fresh replies and ordering remain visible', () => {
+  const saved = JSON.stringify(snapshotOf(load(createState(), 'older')));
+  const snapshot = readDiscussionSnapshot(saved, 20, 'reload');
+  assert.equal(snapshot, null);
+  const fresh = createDiscussionState({ threadOrder: ['thread-with-new-reply', ...threadOrder], pageSize: 20 }, snapshot);
+  assert.equal(fresh.threadOrder[0], 'thread-with-new-reply');
+  assert.equal(fresh.loadedEnd, 20);
+});
+
+test('New or unidentified navigations ignore cached HTML even when a valid snapshot exists', () => {
+  const saved = JSON.stringify(snapshotOf(createState(2)));
+  for (const navigationType of ['navigate', undefined, 'prerender', '']) {
+    assert.equal(readDiscussionSnapshot(saved, 20, navigationType), null, String(navigationType));
+  }
+});
+
+test('Back and Forward can restore the expanded range and saved content', () => {
+  const expanded = load(createState(), 'older');
+  const saved = snapshotOf(expanded);
+  const snapshot = readDiscussionSnapshot(JSON.stringify(saved), 20, 'back_forward');
+  assert.ok(snapshot);
+  assert.equal(snapshot.html, saved.html);
+  const restored = createDiscussionState({ threadOrder: ['fresh-server-thread'], pageSize: 20 }, snapshot);
+  assert.deepEqual(restored.threadOrder, threadOrder);
+  assert.deepEqual([restored.loadedStart, restored.loadedEnd], [0, 40]);
 });
