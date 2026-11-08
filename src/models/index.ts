@@ -7,6 +7,7 @@ export { default as BlogPost } from './blog-post.js';
 export { default as Citation } from './citation.js';
 export { default as CitationClaim } from './citation-claim.js';
 export { default as EmailVerificationToken } from './email-verification-token.js';
+export { default as ExperiencedEditorOverride } from './experienced-editor-override.js';
 export { default as ForumComment } from './forum-comment.js';
 export { default as ForumThread } from './forum-thread.js';
 export { default as ForumThreadSubscription } from './forum-thread-subscription.js';
