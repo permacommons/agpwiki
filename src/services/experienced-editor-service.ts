@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { NotFoundError, ValidationCollector } from '../lib/errors.js';
 import { forgetInRequest, memoizeInRequest } from '../lib/request-scope.js';
+import ExperiencedEditorOverride from '../models/experienced-editor-override.js';
 import User from '../models/user.js';
 import { recordAdminEvent } from './admin-event-service.js';
 import { assertCanManageExperiencedStatus } from './authorization.js';
@@ -178,14 +179,13 @@ export const setExperiencedOverride = async (
     if (override === null) {
       await dalInstance.query('DELETE FROM experienced_editor_overrides WHERE user_id = $1', [userId], transaction);
     } else {
-      await dalInstance.query(
-        `INSERT INTO experienced_editor_overrides (user_id, status, reason, decided_by, decided_at)
-         VALUES ($1, $2, $3, $4, NOW())
-         ON CONFLICT (user_id) DO UPDATE
-           SET status = EXCLUDED.status, reason = EXCLUDED.reason,
-               decided_by = EXCLUDED.decided_by, decided_at = EXCLUDED.decided_at`,
-        [userId, override, trimmedReason, actorUserId],
-        transaction
+      await ExperiencedEditorOverride.upsert(
+        { userId, status: override, reason: trimmedReason, decidedBy: actorUserId, decidedAt: new Date() },
+        {
+          conflictFields: ['userId'],
+          updateFields: ['status', 'reason', 'decidedBy', 'decidedAt'],
+          transaction,
+        }
       );
     }
     await recordAdminEvent(dalInstance, {

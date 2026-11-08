@@ -198,6 +198,47 @@ test('Admins can take the status away or give it early, and it is logged', async
   }
 });
 
+test('Replacing an experienced override updates the decision and audit history', async () => {
+  const dal = await getDal();
+  const prefix = `test-experienced-replace-${Date.now()}`;
+  const userIds: string[] = [];
+  try {
+    const user = await createTestUser();
+    const firstAdmin = await createTestUser();
+    const nextAdmin = await createTestUser();
+    userIds.push(user.id, firstAdmin.id, nextAdmin.id);
+    for (const admin of [firstAdmin, nextAdmin]) {
+      await grantRoleUpsert(dal, admin.id, SITE_ADMIN_ROLE);
+    }
+    await setExperiencedOverride(dal, { userId: user.id, override: 'granted', reason: 'Initial grant.' }, firstAdmin.id);
+    await dal.query(
+      "UPDATE experienced_editor_overrides SET decided_at = NOW() - INTERVAL '1 day' WHERE user_id = $1",
+      [user.id]
+    );
+    const before = new Date();
+    const result = await setExperiencedOverride(
+      dal, { userId: user.id, override: 'revoked', reason: '  Revised decision.  ' }, nextAdmin.id
+    );
+    assert.equal(result.status.isExperienced, false);
+    assert.equal(result.status.override, 'revoked');
+    const rows = await dal.query('SELECT * FROM experienced_editor_overrides WHERE user_id = $1', [user.id]);
+    assert.equal(rows.rows.length, 1);
+    const row = rows.rows[0];
+    assert.equal(row.status, 'revoked');
+    assert.equal(row.reason, 'Revised decision.');
+    assert.equal(row.decided_by, nextAdmin.id);
+    assert.ok(new Date(row.decided_at) >= before);
+    const events = await dal.query(
+      'SELECT details FROM admin_events WHERE target_id = $1 AND actor_user_id = $2', [user.id, nextAdmin.id]
+    );
+    assert.equal(events.rows.length, 1);
+    assert.equal(events.rows[0].details.previousOverride, 'granted');
+    assert.equal(events.rows[0].details.nextOverride, 'revoked');
+  } finally {
+    await cleanup(prefix, userIds);
+  }
+});
+
 test('Pages protected for experienced editors are open to them and to admins only', async () => {
   const prefix = `test-experienced-protect-${Date.now()}`;
   const userIds: string[] = [];
