@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import type { PoolClient } from 'pg';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { createOperators } from 'rev-dal/lib/filter-where';
 import debug from '../../util/debug.js';
 import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import {
@@ -573,22 +574,20 @@ const pruneTranslatedFrom = (page: WikiPageInstance) => {
 };
 
 const countTranslationEditsBehind = async (
-  dalInstance: DataAccessLayer,
   pageId: string,
   currentRevId: string,
   translatedFrom: TranslatedFromMap
 ): Promise<Record<string, TranslationStatus>> => {
-  const revisionIds = [...new Set([currentRevId, ...Object.values(translatedFrom).map(source => source.revId)])];
-  const result = await dalInstance.query(
-    `SELECT _rev_id AS "revId", body_edit_counts AS counts
-       FROM ${WikiPage.tableName}
-      WHERE COALESCE(_old_rev_of, id) = $1 AND _rev_id = ANY($2::uuid[])`,
-    [pageId, revisionIds]
-  );
+  const revisionIds: [string, ...string[]] = [
+    currentRevId,
+    ...new Set(Object.values(translatedFrom).map(source => source.revId).filter(revId => revId !== currentRevId)),
+  ];
+  const rows = await WikiPage.filterWhere({})
+    .getAllRevisions(pageId)
+    .revisionData({ _revID: createOperators<{ _revID: string }>().in(revisionIds, { cast: 'uuid[]' }) })
+    .select('_revID', 'bodyEditCounts');
   const countsByRevision = new Map(
-    (result.rows as Array<{ revId: string; counts: Record<string, number> }>).map(
-      row => [row.revId, row.counts]
-    )
+    rows.map(row => [row._revID, row.bodyEditCounts as Record<string, number>])
   );
   const current = countsByRevision.get(currentRevId);
   return Object.fromEntries(
@@ -925,12 +924,9 @@ export async function listPagesMissingWikidata(
 export async function listWikiPageResources(
   _dalInstance: DataAccessLayer
 ): Promise<WikiPageListResult> {
-  const pages = await WikiPage.filterWhere({
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>)
+  const pages = await WikiPage.filterWhere({})
     .orderBy('slug')
-    .run();
+    .select('slug', 'title');
 
   return {
     hint: 'Use wiki_readPage tool with slug to read a page.',
@@ -991,7 +987,7 @@ export async function searchWikiPages(
 }
 
 export async function readWikiPage(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   slug: string
 ): Promise<WikiPageResult> {
   const normalizedSlug = normalizeSlugInput(slug, 'slug');
@@ -1004,7 +1000,7 @@ export async function readWikiPage(
   const result = await toWikiPageResult(page);
   const translatedFrom = readTranslatedFrom(page);
   if (translatedFrom) {
-    result.translatedFrom = await countTranslationEditsBehind(dalInstance, page.id, page._revID, translatedFrom);
+    result.translatedFrom = await countTranslationEditsBehind(page.id, page._revID, translatedFrom);
   }
   return result;
 }

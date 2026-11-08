@@ -1,6 +1,7 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
+import PageAlias from '../models/page-alias.js';
 
 /** Threads shown per page of a discussion; more load as the reader scrolls. */
 export const DISCUSSION_PAGE_SIZE = 20;
@@ -214,11 +215,11 @@ export const readDiscussion = async (
  * slug and the older ones it keeps as aliases after a rename.
  */
 export const listPageDiscussionSlugs = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   page: { id: string; slug: string }
 ): Promise<string[]> => {
-  const result = await dalInstance.query('SELECT slug FROM page_aliases WHERE page_id = $1', [page.id]);
-  return [page.slug, ...(result.rows as Array<{ slug: string }>).map(row => row.slug)];
+  const aliases = await PageAlias.filterWhere({ pageId: page.id }).select('slug');
+  return [page.slug, ...aliases.map(alias => alias.slug)];
 };
 
 /** Every address a blog post's discussion threads may be stored under. */

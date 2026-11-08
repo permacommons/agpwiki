@@ -4,6 +4,7 @@ import Citation from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
 import Media from '../models/media.js';
 import PageCheck from '../models/page-check.js';
+import User from '../models/user.js';
 import WikiPage from '../models/wiki-page.js';
 
 export const CHANGE_KINDS = ['page', 'check', 'citation', 'claim', 'media'] as const;
@@ -237,9 +238,9 @@ export async function getChangesSince(
   const userIds = [...new Set(selected.flatMap(change => (change.revUser ? [change.revUser] : [])))];
   const names = new Map<string, string>();
   if (userIds.length) {
-    const result = await dal.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [userIds]);
-    for (const row of result.rows as Array<{ id: string; display_name: string }>) {
-      names.set(row.id, row.display_name);
+    const users = await User.filterWhere({}).whereIn('id', userIds).select('id', 'displayName');
+    for (const user of users) {
+      names.set(user.id, user.displayName);
     }
   }
   return {

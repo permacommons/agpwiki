@@ -1,16 +1,18 @@
 import './_setup-i18n.js';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 import express from 'express';
 import i18next from 'i18next';
 import { initializePostgreSQL } from '../src/db.js';
-import { ForbiddenError, ValidationError } from '../src/lib/errors.js';
+import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
+import PageAlias from '../src/models/page-alias.js';
 import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { protectWikiPage } from '../src/services/page-protection-service.js';
-import { setProposalStatus } from '../src/services/proposal-status-service.js';
+import { canSignOffPages } from '../src/services/page-signoff-service.js';
+import { getProposalStatusPermissions, setProposalStatus } from '../src/services/proposal-status-service.js';
 import { setProposalLinks } from '../src/services/proposal-links-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { createWikiPage, readWikiPage } from '../src/services/wiki-page-service.js';
@@ -40,6 +42,7 @@ const setup = async () => {
   const cleanup = async () => {
     await dal.query('DELETE FROM admin_events WHERE target_id = $1', [page.id]);
     await dal.query('DELETE FROM page_protections WHERE page_id = $1', [page.id]);
+    await dal.query('DELETE FROM page_aliases WHERE page_id = $1', [page.id]);
     await dal.query('DELETE FROM pages WHERE id = $1 OR _old_rev_of = $1', [page.id]);
     for (const user of users) {
       await dal.query('DELETE FROM user_roles WHERE user_id = $1', [user.id]);
@@ -57,6 +60,35 @@ test('Proposal status respects page protection', async () => {
     assert.equal((await readWikiPage(dal, slug)).currentRevId, page.currentRevId);
     const opened = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
     assert.equal(opened.proposal?.status, 'open');
+  } finally { await cleanup(); }
+});
+
+test('Permissions use the original proposal author and reject blocked or unknown signers', async () => {
+  const { dal, author, admin, slug, page, cleanup } = await setup();
+  try {
+    await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
+    assert.deepEqual(await getProposalStatusPermissions(dal, page.id, author.id), { canChange: true, isAdmin: false });
+    assert.deepEqual(await getProposalStatusPermissions(dal, page.id, randomUUID()), { canChange: false, isAdmin: false });
+    assert.equal(await canSignOffPages(dal, author.id), true);
+    assert.equal(await canSignOffPages(dal, randomUUID()), false);
+    assert.equal(await canSignOffPages(dal, null), false);
+    await dal.query('UPDATE users SET blocked_at = NOW() WHERE id = $1', [author.id]);
+    assert.equal(await canSignOffPages(dal, author.id), false);
+  } finally { await cleanup(); }
+});
+
+test('Protection follows aliases using current revision metadata and rejects deleted pages', async () => {
+  const { dal, admin, slug, page, cleanup } = await setup();
+  try {
+    const latest = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
+    const aliasSlug = `${slug}-alias`;
+    await PageAlias.create({ pageId: page.id, slug: aliasSlug, createdBy: admin.id });
+    const protection = await protectWikiPage(dal, { slug: aliasSlug, reason: 'Alias lookup' }, admin.id);
+    assert.equal(protection.pageId, page.id);
+    const event = await dal.query('SELECT target_rev_id FROM admin_events WHERE target_id = $1', [page.id]);
+    assert.equal(event.rows[0].target_rev_id, latest.currentRevId);
+    await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [page.id]);
+    await assert.rejects(() => protectWikiPage(dal, { slug: aliasSlug }, admin.id), NotFoundError);
   } finally { await cleanup(); }
 });
 

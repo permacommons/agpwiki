@@ -12,9 +12,10 @@ import { initializePostgreSQL } from '../src/db.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
-import { resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
+import { listPageDiscussionSlugs } from '../src/services/discussion-service.js';
+import { findCurrentPageIdBySlug, resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
-import { addWikiPageAlias, createWikiPage, deleteWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { addWikiPageAlias, createWikiPage, deleteWikiPage, listWikiPageResources, updateWikiPage } from '../src/services/wiki-page-service.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -88,6 +89,47 @@ type ToolHandler = (args: unknown) => Promise<{ isError?: boolean; structuredCon
 
 const getToolHandlers = (server: object) =>
   (server as { _registeredTools: Record<string, { handler: ToolHandler }> })._registeredTools;
+
+test('Resource and address lookups follow renames and ignore deleted pages', async t => {
+  const dal = await getDal();
+  const prefix = `test-read-projections-${randomUUID()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+    const page = await createWikiPage(dal, {
+      slug: `${prefix}-old`, title: { en: 'Projected resource title' }, body: { en: 'Page text.' },
+    }, user.id);
+    const slug = `${prefix}-new`;
+    await updateWikiPage(dal, { slug: page.slug, newSlug: slug, revSummary: { en: 'Rename.' } }, user.id);
+    const originalQuery = dal.query.bind(dal);
+    const columns: string[] = [];
+    const spy = t.mock.method(dal, 'query', async (...args: Parameters<typeof dal.query>) => {
+      const result = await originalQuery(...args);
+      columns.push(...result.fields.map(field => field.name));
+      return result;
+    });
+    const listing = await listWikiPageResources(dal);
+    spy.mock.restore();
+    assert.ok(columns.length > 0);
+    assert.ok(!columns.includes('body'));
+    assert.deepEqual(listing.pages.find(item => item.slug === slug), { slug, name: 'Projected resource title' });
+    assert.ok(!listing.pages.some(item => item.slug === page.slug));
+    assert.equal(await findCurrentPageIdBySlug(slug), page.id);
+    assert.equal(await findCurrentPageIdBySlug(page.slug), page.id);
+    assert.equal(await findCurrentPageIdBySlug(`${prefix}-missing`), null);
+    assert.equal(await resolvePageSlugOrId(page.id.toUpperCase()), slug);
+    assert.deepEqual(await listPageDiscussionSlugs(dal, { id: page.id, slug }), [slug, page.slug]);
+    await deleteWikiPage(dal, { slug, revSummary: { en: 'Delete.' } }, user.id);
+    assert.equal(await findCurrentPageIdBySlug(slug), null);
+    assert.equal(await findCurrentPageIdBySlug(page.slug), null);
+    assert.equal(await resolvePageSlugOrId(page.id), page.id);
+    assert.ok(!(await listWikiPageResources(dal)).pages.some(item => item.slug === slug));
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
 
 test('A permanent link leads to the page under its current address', async () => {
   const dal = await getDal();
