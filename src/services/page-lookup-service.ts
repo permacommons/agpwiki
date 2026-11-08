@@ -20,14 +20,19 @@ export const findCurrentPageBySlugOrAlias = async (slug: string) => {
   const direct = await findCurrentPageBySlug(slug);
   if (direct) return direct;
 
-  const alias = await PageAlias.filterWhere({ slug }).first();
+  const alias = await PageAlias.filterWhere({ slug }).select('pageId').first();
   if (!alias) return null;
 
   return findCurrentPageById(alias.pageId);
 };
 
-export const findCurrentPageIdBySlug = async (slug: string) =>
-  (await findCurrentPageBySlugOrAlias(slug))?.id ?? null;
+export const findCurrentPageIdBySlug = async (slug: string) => {
+  const direct = await WikiPage.filterWhere({ slug }).select('id').first();
+  if (direct) return direct.id;
+  const alias = await PageAlias.filterWhere({ slug }).select('pageId').first();
+  if (!alias) return null;
+  return (await WikiPage.filterWhere({ id: alias.pageId }).select('id').first())?.id ?? null;
+};
 
 /**
  * A page's permanent ID names it as well as its address does. Returns the
@@ -36,5 +41,5 @@ export const findCurrentPageIdBySlug = async (slug: string) =>
  */
 export const resolvePageSlugOrId = async (value: string) => {
   if (!isUuid(value)) return value;
-  return (await findCurrentPageById(value.toLowerCase()))?.slug ?? value;
+  return (await WikiPage.filterWhere({ id: value.toLowerCase() }).select('slug').first())?.slug ?? value;
 };

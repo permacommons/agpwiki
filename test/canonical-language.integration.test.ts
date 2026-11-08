@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
@@ -211,6 +211,47 @@ test('translatedFrom must point at the canonical version', async () => {
 
     const page = await readWikiPage(dal, slug);
     assert.deepEqual(Object.keys(page.translatedFrom ?? {}), ['fr']);
+  } finally {
+    await cleanup(prefix, userId);
+  }
+});
+
+test('translation counters handle shared, deleted, missing and foreign source revisions', async () => {
+  const prefix = `test-counter-projection-${Date.now()}`;
+  let userId: string | null = null;
+  try {
+    const user = await createTestUser();
+    userId = user.id;
+    const { dal, slug, created } = await setupTranslatedPage(prefix, user.id);
+    const latest = await updateWikiPage(dal, {
+      slug, body: { en: 'The lake is very deep.' }, revSummary: summary('Clarify depth'),
+    }, user.id);
+    const other = await createWikiPage(dal, {
+      slug: `${prefix}-other`, body: { en: 'Another page.' }, canonicalLanguage: 'en',
+    }, user.id);
+    const missingRevId = randomUUID();
+    const sources = {
+      fr: { language: 'en', revId: created.currentRevId },
+      de: { language: 'en', revId: created.currentRevId },
+      es: { language: 'en', revId: other.currentRevId },
+      it: { language: 'en', revId: missingRevId },
+      pt: { language: 'en', revId: latest.currentRevId },
+    };
+    // Imported metadata may reference missing or foreign revisions. A deleted
+    // historical source still has counters and belongs to this page's history.
+    await dal.query("UPDATE pages SET properties = jsonb_set(properties, '{translatedFrom}', $2::jsonb) WHERE id = $1", [
+      created.id, JSON.stringify(sources),
+    ]);
+    await dal.query('UPDATE pages SET _rev_deleted = true WHERE _rev_id = $1', [created.currentRevId]);
+
+    const page = await readWikiPage(dal, slug);
+    assert.deepEqual(page.translatedFrom, {
+      fr: { ...sources.fr, editsBehind: 1 },
+      de: { ...sources.de, editsBehind: 1 },
+      es: { ...sources.es, editsBehind: null },
+      it: { ...sources.it, editsBehind: null },
+      pt: { ...sources.pt, editsBehind: 0 },
+    });
   } finally {
     await cleanup(prefix, userId);
   }

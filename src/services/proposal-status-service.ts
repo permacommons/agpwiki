@@ -12,6 +12,7 @@ import {
   readProposalLinks,
   readProposalStatus,
 } from '../lib/proposal-status.js';
+import WikiPage from '../models/wiki-page.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
@@ -34,12 +35,13 @@ export interface ProposalStatusInput {
   revSummary?: Record<string, string | null> | null;
 }
 
-const findProposalCreator = async (dalInstance: DataAccessLayer, pageId: string) => {
-  const result = await dalInstance.query(
-    'SELECT _rev_user FROM pages WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date ASC LIMIT 1',
-    [pageId]
-  );
-  return (result.rows[0] as { _rev_user: string | null } | undefined)?._rev_user ?? null;
+const findProposalCreator = async (pageId: string) => {
+  const revision = await WikiPage.filterWhere({})
+    .getAllRevisions(pageId)
+    .orderBy('_revDate', 'ASC')
+    .select('_revUser')
+    .first();
+  return revision?._revUser ?? null;
 };
 
 export const getProposalStatusPermissions = async (
@@ -50,7 +52,7 @@ export const getProposalStatusPermissions = async (
   if (!userId) return { canChange: false, isAdmin: false };
   const isAdmin = await userHasRole(dalInstance, userId, WIKI_ADMIN_ROLE);
   if (isAdmin) return { canChange: true, isAdmin };
-  return { canChange: (await findProposalCreator(dalInstance, pageId)) === userId, isAdmin };
+  return { canChange: (await findProposalCreator(pageId)) === userId, isAdmin };
 };
 
 /**
@@ -103,7 +105,7 @@ export async function setProposalStatus(
       status,
     });
   }
-  if (!isDecision && !isAdmin && (await findProposalCreator(dalInstance, page.id)) !== userId) {
+  if (!isDecision && !isAdmin && (await findProposalCreator(page.id)) !== userId) {
     throw new ForbiddenError(
       'Only the proposal’s creator or a wiki admin can change its status.',
       { slug: page.slug, status }

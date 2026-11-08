@@ -58,7 +58,7 @@ export const toPageSignoffResult = (signoff: PageSignoffInstance): PageSignoffRe
 
 export const canSignOffPages = async (_dalInstance: DataAccessLayer, userId?: string | null) => {
   if (!userId) return false;
-  const user = await User.filterWhere({ id: userId }).first();
+  const user = await User.filterWhere({ id: userId }).select('blockedAt').first();
   return Boolean(user && !user.blockedAt);
 };
 

@@ -109,25 +109,17 @@ export const assertCanEditWikiPage = async (
 };
 
 const findCurrentPageBySlug = async (slug: string) =>
-  WikiPage.filterWhere({
-    slug,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
+  WikiPage.filterWhere({ slug }).select('id', '_revID').first();
 
 const findCurrentPageById = async (id: string) =>
-  WikiPage.filterWhere({
-    id,
-    _oldRevOf: null,
-    _revDeleted: false,
-  } as Record<string, unknown>).first();
+  WikiPage.filterWhere({ id }).select('id', '_revID').first();
 
 const findPageForProtection = async (slug: string) => {
   const direct = await findCurrentPageBySlug(slug);
   const page = direct
     ? direct
     : await (async () => {
-        const alias = await PageAlias.filterWhere({ slug }).first();
+        const alias = await PageAlias.filterWhere({ slug }).select('pageId').first();
         return alias ? findCurrentPageById(alias.pageId) : null;
       })();
   if (!page) {
