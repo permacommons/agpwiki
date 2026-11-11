@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { commentLinkPath } from '../lib/discussion-paths.js';
+import { PAGE_FORUM_CATEGORIES, type PageForumCategory } from '../lib/forum-paths.js';
 import { escapeHtml } from '../lib/html.js';
 import {
   collapseWhitespace,
@@ -7,6 +8,7 @@ import {
   pickLocalizedText,
   truncate,
 } from '../lib/notification-text.js';
+import { profileSlug } from '../lib/profile-paths.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import PageSignoff from '../models/page-signoff.js';
@@ -18,6 +20,7 @@ import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
 import { findCurrentPageById, findCurrentPageIdBySlug } from './page-lookup-service.js';
 import { listPageFollowerUserIds } from './page-subscription-service.js';
+import { findProfileOwnerBySlug } from './profile-service.js';
 import { getSiteBaseUrl } from './site-config.js';
 
 export const PAGE_COMMENT_NOTIFICATION = 'page.comment.created';
@@ -26,7 +29,10 @@ const PAGE_COMMENT_KIND = 'page.comment';
 export type PageCommentEvent = 'thread' | 'comment' | 'position';
 
 export type PageCommentPayload = {
-  pageId: string;
+  // Absent for the Talk tab of a profile that has no text yet.
+  pageId?: string;
+  // The contributor whose Talk tab this is: told of every message there.
+  profileUserId?: string;
   event: PageCommentEvent;
   actorUserId: string;
   threadId?: string;
@@ -57,7 +63,11 @@ const enqueue = async (
   payload: Omit<PageCommentPayload, 'recipientUserIds'>,
   enqueueJob: EnqueueJob
 ) => {
-  const recipientUserIds = await listPageCommentRecipientUserIds(dal, payload.pageId, payload.actorUserId);
+  const followers = payload.pageId
+    ? await listPageCommentRecipientUserIds(dal, payload.pageId, payload.actorUserId)
+    : [];
+  const recipientUserIds = [...new Set([...(payload.profileUserId ? [payload.profileUserId] : []), ...followers])]
+    .filter(userId => userId !== payload.actorUserId);
   if (recipientUserIds.length === 0) return null;
   return enqueueJob(PAGE_COMMENT_NOTIFICATION, { ...payload, recipientUserIds });
 };
@@ -81,11 +91,17 @@ export const notifyPageFollowersOfForumPost = async (
     unknown
   >).first();
   // Only threads about a wiki page reach the people who follow that page.
-  if (!thread?.pageSlug || (thread.category !== 'articles' && thread.category !== 'policy')) return null;
-  const pageId = await findCurrentPageIdBySlug(thread.pageSlug);
-  if (!pageId) return null;
+  if (!thread?.pageSlug || !PAGE_FORUM_CATEGORIES.includes(thread.category as PageForumCategory)) return null;
+  const pageId = (await findCurrentPageIdBySlug(thread.pageSlug)) ?? undefined;
+  const profileUserId =
+    thread.category === 'users' ? (await findProfileOwnerBySlug(dal, thread.pageSlug))?.id : undefined;
+  if (!pageId && !profileUserId) return null;
   const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];
-  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, enqueueJob);
+  return enqueue(
+    dal,
+    { pageId, profileUserId, event, actorUserId, threadId, commentId, forumRecipientUserIds },
+    enqueueJob
+  );
 };
 
 export const notifyPageFollowersOfPosition = async (
@@ -180,12 +196,19 @@ export const processPageCommentNotification = async (
   sendMailFn: typeof sendMail = sendMail
 ) => {
   const payload = job.payload;
-  const currentPage = await findCurrentPageById(payload.pageId);
-  if (!currentPage) return { sentCount: 0, skipped: 'page_not_found' as const };
-  const page = {
-    slug: currentPage.slug,
-    title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.canonicalLanguage)) || currentPage.slug,
-  };
+  const profileOwner = payload.profileUserId ? await User.filterWhere({ id: payload.profileUserId }).first() : null;
+  const currentPage = !profileOwner && payload.pageId ? await findCurrentPageById(payload.pageId) : null;
+  // A profile is named after its contributor, whatever its page title says.
+  const page = profileOwner
+    ? { slug: profileSlug(profileOwner.username), title: profileOwner.displayName }
+    : currentPage
+      ? {
+          slug: currentPage.slug,
+          title:
+            collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.canonicalLanguage)) || currentPage.slug,
+        }
+      : null;
+  if (!page) return { sentCount: 0, skipped: 'page_not_found' as const };
 
   const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, {
     kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [],
@@ -195,6 +218,10 @@ export const processPageCommentNotification = async (
   const rendered = await describe(dal, payload, page, actor?.displayName ?? 'Someone');
   if ('skipped' in rendered) return { sentCount: 0, siteCount: 0, skipped: rendered.skipped };
 
+  const reason = (userId: string) =>
+    profileOwner?.id === userId
+      ? 'This was posted on the Talk tab of your profile.'
+      : 'You follow the comments on this page.';
   const baseUrl = getSiteBaseUrl();
   const link = `${baseUrl}${rendered.url}`;
   const settingsUrl = `${baseUrl}/tool/settings`;
@@ -212,10 +239,10 @@ export const processPageCommentNotification = async (
       ...(rendered.excerpt ? ['', rendered.excerpt] : []),
       '',
       `Open it: ${link}`,
-      `You follow the comments on this page. To stop, or to change how you are told: ${settingsUrl}`,
+      `${reason(user.id)} To stop, or to change how you are told: ${settingsUrl}`,
     ].join('\n'),
     html: `<p>${escapeHtml(rendered.emailLead)}</p>
 ${rendered.excerpt ? `<blockquote>${escapeHtml(rendered.excerpt)}</blockquote>\n` : ''}<p><a href="${escapeHtml(link)}">Open it</a></p>
-<p>You follow the comments on this page. <a href="${escapeHtml(settingsUrl)}">Stop following, or change how you are told</a></p>`,
+<p>${escapeHtml(reason(user.id))} <a href="${escapeHtml(settingsUrl)}">Stop following, or change how you are told</a></p>`,
   }), sendMailFn);
 };

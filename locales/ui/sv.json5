@@ -994,4 +994,27 @@
     "discussedPages": "Sidor med aktuell diskussion",
     "noDiscussedPages": "Ingen sida har diskuterats ännu.",
   },
+  "profile": {
+    "label": "PROFIL — BIDRAGSGIVARE TILL AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Diskussion",
+    "empty": "{{name}} har inte skrivit något här än.",
+    "emptyOwn": "Du har inte skrivit din profil än.",
+    "write": "Skriv din profil",
+    "editForbidden": "Bara den här bidragsgivaren och wikins administratörer kan redigera profilen.",
+    "talkIntro": "Meddelanden till {{username}}. Alla som är inloggade med en bekräftad e-postadress kan skriva här. {{username}} meddelas om varje nytt meddelande.",
+    "talkTitle": "Diskussion: {{name}}",
+    "forumSection": "Bidragsgivare",
+    "account": {
+      "title": "Konto",
+      "username": "Användarnamn",
+      "displayName": "Visningsnamn",
+      "activeSince": "Aktiv sedan",
+      "edits": "Redigeringar",
+      "pagesCreated": "Skapade sidor",
+      "comments": "Kommentarer",
+      "roles": "Roller",
+      "editsBreakdown": "Redigeringar per typ:"
+    }
+  }
 }

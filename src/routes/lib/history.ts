@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 import type { initializePostgreSQL } from '../../db.js';
+import { renderUserLink } from '../../lib/profile-paths.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
 import { NOT_DUPLICATE_TAG_PREFIX } from '../../services/duplicate-check-service.js';
 
@@ -26,6 +27,8 @@ type HistoryOptions = {
   // Further links after "View", such as restoring that version.
   extraActions?: (revision: HistoryRevision, index: number) => Array<{ label: string; href: string }>;
   userMap: Map<string, string>;
+  // Usernames by user ID: names with one link to their profile.
+  usernames?: Map<string, string>;
   t: TFunction;
 };
 
@@ -43,6 +46,19 @@ export const fetchUserMap = async (dalInstance: DalInstance, userIds: string[]) 
   return userMap;
 };
 
+/** Display names and usernames, to show each contributor with a link to their profile. */
+export const fetchUserNames = async (dalInstance: DalInstance, userIds: string[]) => {
+  const userMap = new Map<string, string>();
+  const usernames = new Map<string, string>();
+  if (!userIds.length) return { userMap, usernames };
+  const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [userIds]);
+  for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
+    userMap.set(row.id, row.display_name);
+    usernames.set(row.id, row.username);
+  }
+  return { userMap, usernames };
+};
+
 export const renderRevisionHistory = ({
   revisions,
   diffFrom,
@@ -51,6 +67,7 @@ export const renderRevisionHistory = ({
   viewHref,
   extraActions,
   userMap,
+  usernames,
   t,
 }: HistoryOptions) => {
   const historyItems = revisions
@@ -72,11 +89,8 @@ export const renderRevisionHistory = ({
       const agentTag = (rev.revTags ?? []).find(tag => tag.startsWith('agent:')) ?? null;
       const agentVersion =
         (rev.revTags ?? []).find(tag => tag.startsWith('agent_version:')) ?? null;
-      const metaLabelParts = [
-        displayName ? t('history.operator', { name: displayName }) : null,
-        agentTag,
-        agentVersion,
-      ].filter(Boolean);
+      // The name is shown next to the date, so its tooltip only names the agent.
+      const metaLabelParts = [agentTag, agentVersion].filter(Boolean);
       const metaLabel = metaLabelParts.join(' · ');
       const metaAttrs = metaLabel
         ? ` data-meta="true" data-user="${escapeHtml(displayName ?? '')}" data-agent="${escapeHtml(
@@ -94,7 +108,9 @@ export const renderRevisionHistory = ({
       toChecked ? 'checked' : ''
     } /></span>
     <strong>${renderText(rev.title)}</strong>
-    <span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span>
+    <span class="rev-byline">${
+      displayName ? `${renderUserLink(displayName, rev.revUser ? usernames?.get(rev.revUser) : null)} · ` : ''
+    }<span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span></span>
   </div>
   ${summaryHtml}${notDuplicateHtml}
   <div class="rev-actions">

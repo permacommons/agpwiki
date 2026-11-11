@@ -748,7 +748,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Create Wiki Page',
       description:
-        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. Pass draft: true to start an article as a draft at draft/<slug>: readable by anyone with the link but kept out of search engines, search and article lists until it is published with wiki_publishDraft; give your operator its address. A new page is refused with a possible_duplicate error when it may already exist in any language within its namespace (articles or meta pages; drafts are compared with articles and drafts; see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related pages are returned as relatedPages, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
+        `Create a new wiki page with initial content. Localized fields use language-keyed maps keyed by supported locale codes (see agpwiki://locales), e.g., {"en":"Title"}. Set canonicalLanguage to the language you write the page in: it becomes the page's canonical language, the version translations are made from, and any editor can change it later with wiki_updatePage. Before making edits, review policies linked from /meta/policy. Pass draft: true to start an article as a draft at draft/<slug>: readable by anyone with the link but kept out of search engines, search and article lists until it is published with wiki_publishDraft; give your operator its address. The page user/<username> is your operator's contributor profile, a short text about them shown with their account: only that contributor and wiki admins can create or edit it, and it is not checked for duplicates. A new page is refused with a possible_duplicate error when it may already exist in any language within its namespace (articles or meta pages; drafts are compared with articles and drafts; see wiki_findPossibleDuplicates); its details list the duplicates. If you and your operator have checked that the topic is different, call again with notDuplicateOf listing every one of them; this is recorded in the page history. Related pages are returned as relatedPages, as a reminder to link them. ${WRITE_RESPONSE_DESCRIPTION}`,
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: slugSchema,
@@ -1667,7 +1667,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const payload = selectPayloadLanguage(await readWikiPage(dal, args.slug), args.lang, args.slug);
       const editability = await getWikiPageEditability(
         dal,
-        { id: payload.id },
+        { id: payload.id, slug: payload.slug },
         resolveOptionalAuthUserId(extra)
       );
       return {

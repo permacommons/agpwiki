@@ -10,6 +10,7 @@ import { forumPageCategory } from '../lib/forum-paths.js';
 import { formatMediaLabel } from '../lib/media.js';
 import { isDraftSlug } from '../lib/page-address.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
+import { renderUserLink } from '../lib/profile-paths.js';
 import {
   getRecentCitationChanges,
   getRecentCitationClaimChanges,
@@ -70,7 +71,7 @@ import {
 } from '../services/user-rights-service.js';
 import { readWikiPage } from '../services/wiki-page-service.js';
 import { prependAccountBanner } from './lib/account-banner.js';
-import { fetchUserMap } from './lib/history.js';
+import { fetchUserMap, fetchUserNames } from './lib/history.js';
 import { HOW_TO_EDIT_PATH } from './lib/operator-edit-link.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
 
@@ -114,18 +115,18 @@ const resolvePreferredText = (
 const renderRecentList = (
   items: RecentListItem[],
   userMap: Map<string, string>,
-  t: TFunction
+  usernames?: Map<string, string>
 ) =>
   items
     .map(item => {
       const displayName = item.revUser ? userMap.get(item.revUser) ?? item.revUser : '';
       const agentTag = item.revTags.find(tag => tag.startsWith('agent:')) ?? '';
       const agentVersion = item.revTags.find(tag => tag.startsWith('agent_version:')) ?? '';
-      const metaLabelParts = [
-        displayName ? t('history.operator', { name: displayName }) : null,
-        agentTag || null,
-        agentVersion || null,
-      ].filter(Boolean);
+      // The name is shown next to the date, so its tooltip only names the agent.
+      const metaLabelParts = [agentTag || null, agentVersion || null].filter(Boolean);
+      const userHtml = displayName
+        ? `<span class="change-user">${renderUserLink(displayName, item.revUser ? usernames?.get(item.revUser) : null)}</span>`
+        : '';
       const metaLabel = metaLabelParts.join(' · ');
       const metaAttrs = metaLabel
         ? ` data-meta="true" data-user="${escapeHtml(displayName)}" data-agent="${escapeHtml(
@@ -156,6 +157,7 @@ const renderRecentList = (
   ${actionsHtml}
   <div class="change-meta">
     ${primaryHtml}
+    ${userHtml}
     <span${metaAttrs}>${escapeHtml(item.dateLabel)}</span>
     ${tags ? `<span>${tags}</span>` : ''}
   </div>
@@ -424,7 +426,7 @@ const renderAdminEventList = (
     };
   });
 
-  return `<ul class="change-list change-list--compact">${renderRecentList(items, userMap, t)}</ul>`;
+  return `<ul class="change-list change-list--compact">${renderRecentList(items, userMap)}</ul>`;
 };
 
 const roleLabelKey = (role: ValidRole) => `userRights.roles.${role}.label`;
@@ -773,7 +775,7 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = await fetchUserMap(dalInstance, userIds);
+    const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
     const items: RecentListItem[] = changes.map(change => {
       const actions: RecentListAction[] = [
         { label: req.t('tool.view'), href: `/${change.slug}?rev=${change.revId}` },
@@ -801,7 +803,7 @@ export const registerToolRoutes = (app: Express) => {
         badge: isDraftSlug(change.slug) ? req.t('draft.recentLabel') : undefined,
       };
     });
-    const itemsHtml = renderRecentList(items, userMap, req.t);
+    const itemsHtml = renderRecentList(items, userMap, usernames);
 
     const relatedHtml = await renderRecentRelatedTools('changes', req, dalInstance);
     const revertFilterHtml = `<p class="recent-filter">${
@@ -838,7 +840,7 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = await fetchUserMap(dalInstance, userIds);
+    const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
     const items: RecentListItem[] = changes.map(change => {
       const encodedKey = encodeURIComponent(change.key);
       const actions: RecentListAction[] = [
@@ -861,7 +863,7 @@ export const registerToolRoutes = (app: Express) => {
         actions,
       };
     });
-    const itemsHtml = renderRecentList(items, userMap, req.t);
+    const itemsHtml = renderRecentList(items, userMap, usernames);
 
     const relatedHtml = await renderRecentRelatedTools('citations', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
@@ -898,7 +900,7 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = await fetchUserMap(dalInstance, userIds);
+    const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
     const items: RecentListItem[] = changes.map(change => {
       const encodedKey = encodeURIComponent(change.key);
       const encodedClaim = encodeURIComponent(change.claimId);
@@ -925,7 +927,7 @@ export const registerToolRoutes = (app: Express) => {
       };
     });
 
-    const itemsHtml = renderRecentList(items, userMap, req.t);
+    const itemsHtml = renderRecentList(items, userMap, usernames);
     const relatedHtml = await renderRecentRelatedTools('claims', req, dalInstance);
     const bodyHtml = `<div class="tool-page">
   <p>${req.t('tool.recentClaimsDescription')}</p>
@@ -955,7 +957,7 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = changes
       .map(change => change.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = await fetchUserMap(dalInstance, userIds);
+    const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
 
     const viewToggleHtml = renderRecentMediaViewToggle(view, req.t);
 
@@ -984,7 +986,7 @@ export const registerToolRoutes = (app: Express) => {
           actions,
         };
       });
-      listingHtml = `<ul class="change-list change-list--compact">${renderRecentList(items, userMap, req.t)}</ul>`;
+      listingHtml = `<ul class="change-list change-list--compact">${renderRecentList(items, userMap, usernames)}</ul>`;
     }
 
     const relatedHtml = await renderRecentRelatedTools('media', req, dalInstance);
@@ -1012,7 +1014,7 @@ export const registerToolRoutes = (app: Express) => {
     const userIds = checks
       .map(check => check.revUser)
       .filter((id): id is string => Boolean(id));
-    const userMap = await fetchUserMap(dalInstance, userIds);
+    const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
 
     const items: RecentListItem[] = checks.map(check => {
       const pageTitle = resolveSafeTextWithFallback(
@@ -1050,7 +1052,7 @@ export const registerToolRoutes = (app: Express) => {
       };
     });
 
-    const itemsHtml = renderRecentList(items, userMap, req.t);
+    const itemsHtml = renderRecentList(items, userMap, usernames);
 
     const relatedHtml = await renderRecentRelatedTools('checks', req, dalInstance);
     const bodyHtml = `<div class="tool-page">

@@ -994,4 +994,27 @@
     "discussedPages": "Friss vitával rendelkező oldalak",
     "noDiscussedPages": "Még egyik oldalról sem volt vita.",
   },
+  "profile": {
+    "label": "PROFIL — AGPEDIA-SZERKESZTŐ",
+    "tabProfile": "Profil",
+    "tabTalk": "Vita",
+    "empty": "{{name}} még nem írt ide semmit.",
+    "emptyOwn": "Még nem írtad meg a profilodat.",
+    "write": "Profil megírása",
+    "editForbidden": "Ezt a profilt csak a gazdája és a wiki adminisztrátorai szerkeszthetik.",
+    "talkIntro": "Üzenetek {{username}} részére. Bárki írhat ide, aki megerősített e-mail-címmel jelentkezett be. {{username}} minden új üzenetről értesítést kap.",
+    "talkTitle": "Vita: {{name}}",
+    "forumSection": "Szerkesztők",
+    "account": {
+      "title": "Fiók",
+      "username": "Felhasználónév",
+      "displayName": "Megjelenített név",
+      "activeSince": "Aktív ekkortól",
+      "edits": "Szerkesztések",
+      "pagesCreated": "Létrehozott lapok",
+      "comments": "Hozzászólások",
+      "roles": "Szerepkörök",
+      "editsBreakdown": "Szerkesztések típus szerint:"
+    }
+  }
 }

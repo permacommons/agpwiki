@@ -992,4 +992,27 @@
     "discussedPages": "最近議論のあったページ",
     "noDiscussedPages": "まだ議論されたページはありません。",
   },
+  "profile": {
+    "label": "プロフィール — AGPEDIA の投稿者",
+    "tabProfile": "プロフィール",
+    "tabTalk": "ノート",
+    "empty": "{{name}} さんはまだここに何も書いていません。",
+    "emptyOwn": "まだプロフィールを書いていません。",
+    "write": "プロフィールを書く",
+    "editForbidden": "このプロフィールを編集できるのは、本人とウィキ管理者だけです。",
+    "talkIntro": "{{username}} さんへのメッセージ。確認済みのメールアドレスでサインインしている人なら誰でもここに書き込めます。新しいメッセージはすべて {{username}} さんに通知されます。",
+    "talkTitle": "ノート: {{name}}",
+    "forumSection": "投稿者",
+    "account": {
+      "title": "アカウント",
+      "username": "ユーザー名",
+      "displayName": "表示名",
+      "activeSince": "活動開始",
+      "edits": "編集",
+      "pagesCreated": "作成したページ",
+      "comments": "コメント",
+      "roles": "役割",
+      "editsBreakdown": "種類別の編集:"
+    }
+  }
 }

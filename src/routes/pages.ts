@@ -18,6 +18,7 @@ import { forumPageCategory } from '../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
+import { isProfileSlug, profilePath, profileSlug } from '../lib/profile-paths.js';
 import { isPromptPageSlug } from '../lib/prompt-registry.js';
 import {
   resolveSafeText,
@@ -65,6 +66,7 @@ import {
 } from '../services/page-signoff-service.js';
 import { isFollowingPage } from '../services/page-subscription-service.js';
 import { replyToPosition } from '../services/position-reply-service.js';
+import { canEditProfile, findProfileOwnerBySlug, type ProfileOwner } from '../services/profile-service.js';
 import { listProposalParts, setProposalLinks } from '../services/proposal-links-service.js';
 import {
   getProposalStatusPermissions,
@@ -77,6 +79,7 @@ import {
   findExistingWikiLinkSlugs,
 } from '../services/wiki-link-preview-service.js';
 import {
+  createWikiPage,
   diffWikiPageRevisions,
   type EditableSection,
   findCurrentPageById,
@@ -103,7 +106,7 @@ import {
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderDraftBanner } from './lib/draft-banner.js';
-import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
+import { fetchUserMap, fetchUserNames, renderRevisionHistory } from './lib/history.js';
 import { renderHomeSections } from './lib/home-sections.js';
 import {
   createPreviewHandler,
@@ -122,6 +125,12 @@ import {
   renderPageChecksSummary,
 } from './lib/page-checks.js';
 import { renderPageTabs } from './lib/page-tabs.js';
+import {
+  loadProfileContext,
+  renderProfileLabel,
+  renderProfileTabs,
+  renderProfileWithoutText,
+} from './lib/profile.js';
 import {
   renderProposalHeader,
   renderProposalLinks,
@@ -196,6 +205,27 @@ const renderPageTypeLabel = (
   <div class="page-label">${escapeHtml(label)}</div>
   ${protectedHtml}
 </div>`;
+};
+
+const renderEmptyProfilePage = async (req: Request, res: Response, owner: ProfileOwner) => {
+  const dalInstance = await initializePostgreSQL();
+  const session = await resolveSessionUser(req);
+  const viewerId = session?.userId ?? null;
+  const profile = await loadProfileContext(dalInstance, owner, {
+    viewerId,
+    t: req.t,
+    locale: (res.locals.locale as string | undefined) ?? 'en',
+  });
+  res.render('layout', {
+    title: prepareTitle(owner.displayName),
+    canonicalUrl: canonicalUrlFor(profilePath(owner.username)),
+    noindex: true,
+    labelHtml: renderProfileLabel(req.t),
+    tabsHtml: renderProfileTabs(profile, { current: 'profile', hasText: false, t: req.t }),
+    topHtml: prependAccountBanner(res, ''),
+    bodyHtml: renderProfileWithoutText(profile, { t: req.t, viewerId }),
+    sidebarHtml: profile.accountBoxHtml,
+  });
 };
 
 const buildRedLinkIntroHtml = (req: Request, signedIn: boolean) =>
@@ -337,7 +367,9 @@ const renderOperatorEditForm = ({
     <input type="hidden" name="sectionOccurrence" value="${escapeHtml(section.occurrence)}" />
     <input type="hidden" name="sectionFingerprint" value="${escapeHtml(section.fingerprint)}" />`
     : '';
-  const titleFieldHtml = section
+  // A profile is headed by its contributor's name and has no Wikidata item.
+  const isProfile = isProfileSlug(slug);
+  const titleFieldHtml = section || isProfile
     ? ''
     : `<label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.title'))}</span>
@@ -349,7 +381,7 @@ const renderOperatorEditForm = ({
         data-markdown-preview-field
       />
     </label>`;
-  const wikidataFieldHtml = section
+  const wikidataFieldHtml = section || isProfile
     ? ''
     : `<label class="form-field">
       <span>${escapeHtml(req.t('operatorEdit.fields.wikidata'))}</span>
@@ -440,8 +472,12 @@ const renderOperatorEditPage = async ({
   section?: SectionFormState;
 }) => {
   const dalInstance = await initializePostgreSQL();
-  const page = await readWikiPage(dalInstance, slug);
-  const pageTitle = resolveSafeText(mlString.resolve, lang, page.title, page.slug);
+  const page = await readWikiPage(dalInstance, slug).catch(error => {
+    // A profile is written for the first time on this form.
+    if (error instanceof NotFoundError && isProfileSlug(slug)) return null;
+    throw error;
+  });
+  const pageTitle = page ? resolveSafeText(mlString.resolve, lang, page.title, page.slug) : titleValue;
   const languageLabel =
     res.locals.languageOptions.find((option: { code: string; label: string }) => option.code === lang)
       ?.label ?? lang;
@@ -464,7 +500,7 @@ const renderOperatorEditPage = async ({
       titleValue,
       bodyValue,
       summaryValue,
-      wikidataValue: wikidataValue ?? page.wikidata ?? '',
+      wikidataValue: wikidataValue ?? page?.wikidata ?? '',
       errorMessage,
       previewHtml,
       section,
@@ -1025,17 +1061,38 @@ export const registerPageRoutes = (app: Express) => {
 
     try {
       const dalInstance = await initializePostgreSQL();
-      const page = await readWikiPage(dalInstance, slug);
-      const editability = await getWikiPageEditability(dalInstance, { id: page.id }, session.userId);
+      const owner = isProfileSlug(slug) ? await findProfileOwnerBySlug(dalInstance, slug) : null;
+      const page = await readWikiPage(dalInstance, slug).catch(error => {
+        if (error instanceof NotFoundError && owner && profileSlug(owner.username) === slug) return null;
+        throw error;
+      });
+      if (!page && owner) {
+        if (!(await canEditProfile(dalInstance, owner, session.userId))) {
+          res.status(403).type('text').send(req.t('profile.editForbidden'));
+          return;
+        }
+        const lang =
+          normalizeOverrideLang(typeof req.query.lang === 'string' ? req.query.lang : undefined) ??
+          (res.locals.locale as string | undefined) ??
+          'en';
+        await renderOperatorEditPage({
+          req, res, slug, lang, titleValue: owner.displayName, bodyValue: '', summaryValue: '',
+        });
+        return;
+      }
+      if (!page) throw new NotFoundError(`Wiki page not found: ${slug}`, { slug });
+      const editability = await getWikiPageEditability(dalInstance, { id: page.id, slug: page.slug }, session.userId);
       if (editability.isProtected && !editability.isEditable) {
         res
           .status(403)
           .type('text')
           .send(
             req.t(
-              editability.protection?.level === 'experienced'
-                ? 'operatorEdit.protectedForbiddenExperienced'
-                : 'operatorEdit.protectedForbidden'
+              editability.profileOf
+                ? 'profile.editForbidden'
+                : editability.protection?.level === 'experienced'
+                  ? 'operatorEdit.protectedForbiddenExperienced'
+                  : 'operatorEdit.protectedForbidden'
             )
           );
         return;
@@ -1158,13 +1215,29 @@ export const registerPageRoutes = (app: Express) => {
         return;
       }
 
+      const owner = isProfileSlug(slug) ? await findProfileOwnerBySlug(dalInstance, slug) : null;
+      if (owner && !(await findCurrentPageBySlugOrAlias(slug))) {
+        await createWikiPage(
+          dalInstance,
+          {
+            slug,
+            title: { [lang]: owner.displayName },
+            body: { [lang]: bodyValue },
+            canonicalLanguage: lang,
+            revSummary: { [lang]: summaryValue },
+          },
+          session.userId
+        );
+        res.redirect(303, pageViewPath(slug, lang));
+        return;
+      }
       await updateWikiPage(
         dalInstance,
         {
           slug,
-          title: { [lang]: titleValue },
+          title: { [lang]: owner ? owner.displayName : titleValue },
           body: { [lang]: bodyValue },
-          wikidata: wikidataValue || null,
+          ...(owner ? {} : { wikidata: wikidataValue || null }),
           revSummary: { [lang]: summaryValue },
         },
         session.userId
@@ -1183,9 +1256,11 @@ export const registerPageRoutes = (app: Express) => {
           .type('text')
           .send(
             req.t(
-              error.details?.level === 'experienced'
-                ? 'operatorEdit.protectedForbiddenExperienced'
-                : 'operatorEdit.protectedForbidden'
+              error.details?.profileOf
+                ? 'profile.editForbidden'
+                : error.details?.level === 'experienced'
+                  ? 'operatorEdit.protectedForbiddenExperienced'
+                  : 'operatorEdit.protectedForbidden'
             )
           );
         return;
@@ -1488,6 +1563,14 @@ export const registerPageRoutes = (app: Express) => {
               res.redirect(301, `${slugPath(match.slug)}${queryStringOf(req.originalUrl)}`);
               return null;
             }
+            // Every contributor has a profile, with or without text of their own.
+            const owner = isProfileSlug(slug) && !revIdParam && !diffFrom && !diffTo
+              ? await findProfileOwnerBySlug(dalInstance, slug)
+              : null;
+            if (owner && profileSlug(owner.username) === slug) {
+              await renderEmptyProfilePage(req, res, owner);
+              return null;
+            }
             res.status(404).type('text').send(req.t('page.notFound'));
             return null;
           }
@@ -1503,9 +1586,17 @@ export const registerPageRoutes = (app: Express) => {
       const session = await resolveSessionUser(req);
       const editability = await getWikiPageEditability(
         dalInstance,
-        { id: page.id },
+        { id: page.id, slug: page.slug },
         session?.userId ?? null
       );
+      const profileOwner = isProfileSlug(page.slug) ? await findProfileOwnerBySlug(dalInstance, page.slug) : null;
+      const profile = profileOwner
+        ? await loadProfileContext(dalInstance, profileOwner, {
+            viewerId: session?.userId ?? null,
+            t: req.t,
+            locale: (res.locals.locale as string | undefined) ?? 'en',
+          })
+        : null;
 
       const revisions = revisionsResult.revisions;
       const selectedRevId = revIdParam ?? (diffFrom && diffTo ? diffTo : undefined);
@@ -1607,6 +1698,7 @@ export const registerPageRoutes = (app: Express) => {
           mediaRegistry,
           locale: res.locals.locale as string | undefined,
           showUnknownVariables: isPromptPageSlug(canonicalSlug),
+          nofollowLinks: Boolean(profile),
         }
       );
 
@@ -1709,7 +1801,7 @@ export const registerPageRoutes = (app: Express) => {
         userIds.add(signoff.userId);
       }
       if (selectedRevision.proposal?.decidedBy) userIds.add(selectedRevision.proposal.decidedBy);
-      const userMap = await fetchUserMap(dalInstance, [...userIds]);
+      const { userMap, usernames } = await fetchUserNames(dalInstance, [...userIds]);
 
       const historyRevisions = revisions.map(rev => ({
         revId: rev.revId,
@@ -1758,6 +1850,7 @@ export const registerPageRoutes = (app: Express) => {
             : [];
         },
         userMap,
+        usernames,
         t: req.t,
       });
 
@@ -1784,7 +1877,7 @@ export const registerPageRoutes = (app: Express) => {
         t: req.t,
       });
       const tocHtml = renderToc(toc, { expanded: true, label: req.t('toc.title') });
-      const sidebarHtml = checksHtml + historyHtml + tocHtml;
+      const sidebarHtml = (profile?.accountBoxHtml ?? '') + checksHtml + historyHtml + tocHtml;
 
       const languageRow = renderContentLanguageRow({
         label: req.t('language.available'),
@@ -1817,7 +1910,9 @@ export const registerPageRoutes = (app: Express) => {
       ].filter(Boolean);
       const isCurrentView = !revIdParam && !diffFrom && !diffTo;
       const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
-      const tabsHtml = renderPageTabs({
+      const tabsHtml = profile
+        ? renderProfileTabs(profile, { current: 'profile', hasText: true, isCurrentView, t: req.t })
+        : renderPageTabs({
         isArticle: showsAsArticle,
         pageHref: pageViewPath(canonicalSlug, langOverride),
         isCurrentView,
@@ -1836,7 +1931,7 @@ export const registerPageRoutes = (app: Express) => {
           : undefined,
         t: req.t,
       });
-      const forumLinkHtml = relatedLinks.length
+      const forumLinkHtml = relatedLinks.length && !profile
         ? `<div class="tool-related">
   <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
   <span class="tool-related-links">${relatedLinks.join(' · ')}</span>
@@ -1903,7 +1998,7 @@ export const registerPageRoutes = (app: Express) => {
       // The discussion follows the current version of the page; the home page
       // shows what is new instead.
       const discussionHtml =
-        discussionCategory && isCurrentView && canonicalSlug !== HOME_PAGE_SLUG
+        discussionCategory && isCurrentView && canonicalSlug !== HOME_PAGE_SLUG && !profile
           ? await renderDiscussionUnderPage(dalInstance, req, res, page)
           : '';
       const topHtml = diffHtml ? `<section class="diff-top">${diffHtml}</section>` : '';
@@ -1913,7 +2008,7 @@ export const registerPageRoutes = (app: Express) => {
         : namespace === 'draft'
           ? req.t('label.draft')
           : req.t('label.article');
-      const labelHtml = renderPageTypeLabel(
+      const labelHtml = profile ? renderProfileLabel(req.t) : renderPageTypeLabel(
         req,
         pageTypeLabel,
         editability.isProtected
@@ -1921,12 +2016,12 @@ export const registerPageRoutes = (app: Express) => {
           : undefined
       );
       res.render('layout', {
-        title: prepareTitle(title),
+        title: prepareTitle(profile ? profile.owner.displayName : title),
         canonicalUrl: canonicalUrlFor(slugPath(canonicalSlug)),
         // Copied by the "Permanent link" item of the Tools menu.
         permanentLinkUrl: canonicalUrlFor(`/id/${page.id}`),
-        // Old revisions, diffs, drafts and draft proposals stay out of search engines.
-        noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft',
+        // Old revisions, diffs, drafts, draft proposals and profiles stay out of search engines.
+        noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft' || Boolean(profile),
         labelHtml,
         tabsHtml,
         bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,

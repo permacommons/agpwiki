@@ -994,4 +994,27 @@
     "discussedPages": "Neseniai aptarti puslapiai",
     "noDiscussedPages": "Dar nė vienas puslapis neaptartas.",
   },
+  "profile": {
+    "label": "PROFILIS — AGPEDIA BENDRADARBIS",
+    "tabProfile": "Profilis",
+    "tabTalk": "Aptarimas",
+    "empty": "{{name}} čia dar nieko neparašė.",
+    "emptyOwn": "Dar neparašei savo profilio.",
+    "write": "Parašyti profilį",
+    "editForbidden": "Šį profilį gali redaguoti tik pats bendradarbis ir vikio administratoriai.",
+    "talkIntro": "Žinutės naudotojui {{username}}. Čia gali rašyti bet kas, prisijungęs su patvirtintu el. pašto adresu. {{username}} gauna pranešimą apie kiekvieną naują žinutę.",
+    "talkTitle": "Aptarimas: {{name}}",
+    "forumSection": "Bendradarbiai",
+    "account": {
+      "title": "Paskyra",
+      "username": "Naudotojo vardas",
+      "displayName": "Rodomas vardas",
+      "activeSince": "Aktyvus nuo",
+      "edits": "Keitimai",
+      "pagesCreated": "Sukurti puslapiai",
+      "comments": "Komentarai",
+      "roles": "Vaidmenys",
+      "editsBreakdown": "Keitimai pagal rūšį:"
+    }
+  }
 }

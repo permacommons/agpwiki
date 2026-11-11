@@ -992,4 +992,27 @@
     "discussedPages": "最近有討論的頁面",
     "noDiscussedPages": "還沒有頁面被討論過。",
   },
+  "profile": {
+    "label": "個人資料 — AGPEDIA 貢獻者",
+    "tabProfile": "個人資料",
+    "tabTalk": "討論",
+    "empty": "{{name}} 還沒有在這裡寫任何內容。",
+    "emptyOwn": "你還沒有寫你的個人資料。",
+    "write": "寫你的個人資料",
+    "editForbidden": "只有該貢獻者本人和維基管理員可以編輯這份個人資料。",
+    "talkIntro": "給 {{username}} 的留言。任何使用已確認電子郵件地址登入的人都可以在這裡留言。每則新留言都會通知 {{username}}。",
+    "talkTitle": "討論：{{name}}",
+    "forumSection": "貢獻者",
+    "account": {
+      "title": "帳戶",
+      "username": "使用者名稱",
+      "displayName": "顯示名稱",
+      "activeSince": "活躍自",
+      "edits": "編輯",
+      "pagesCreated": "建立的頁面",
+      "comments": "留言",
+      "roles": "角色",
+      "editsBreakdown": "按類型的編輯："
+    }
+  }
 }

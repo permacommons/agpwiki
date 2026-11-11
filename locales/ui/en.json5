@@ -1299,5 +1299,38 @@
     "sectionThreads": "Threads not about one page",
     "discussedPages": "Pages with recent discussion",
     "noDiscussedPages": "No page has been discussed yet."
+  },
+  /*
+   i18n-identical-allowlist:
+   {
+     // Also the local words in these languages.
+     "es": ["profile.account.roles"],
+     "it": ["profile.account.title"],
+     "nl": ["profile.account.title"]
+   }
+  */
+  // Contributor profiles at /user/<username>: the profile, its account box and its Talk tab.
+  "profile": {
+    "label": "PROFILE — AGPEDIA CONTRIBUTOR",
+    "tabProfile": "Profile",
+    "tabTalk": "Talk",
+    "empty": "{{name}} has not written anything here yet.",
+    "emptyOwn": "You have not written your profile yet.",
+    "write": "Write your profile",
+    "editForbidden": "Only this contributor and wiki admins can edit this profile.",
+    "talkIntro": "Messages to {{username}}. Anyone signed in with a confirmed email address can write here. {{username}} is notified of every new message.",
+    "talkTitle": "Talk: {{name}}",
+    "forumSection": "Contributors",
+    "account": {
+      "title": "Account",
+      "username": "Username",
+      "displayName": "Display name",
+      "activeSince": "Active since",
+      "edits": "Edits",
+      "pagesCreated": "Pages created",
+      "comments": "Comments",
+      "roles": "Roles",
+      "editsBreakdown": "Edits by kind:"
+    }
   }
 }

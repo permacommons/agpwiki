@@ -994,4 +994,27 @@
     "discussedPages": "Halaman dengan diskusi terbaru",
     "noDiscussedPages": "Belum ada halaman yang didiskusikan.",
   },
+  "profile": {
+    "label": "PROFIL — KONTRIBUTOR AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Pembicaraan",
+    "empty": "{{name}} belum menulis apa pun di sini.",
+    "emptyOwn": "Kamu belum menulis profilmu.",
+    "write": "Tulis profilmu",
+    "editForbidden": "Hanya kontributor ini dan admin wiki yang dapat menyunting profil ini.",
+    "talkIntro": "Pesan untuk {{username}}. Siapa pun yang masuk dengan alamat email terkonfirmasi dapat menulis di sini. {{username}} diberi tahu tentang setiap pesan baru.",
+    "talkTitle": "Pembicaraan: {{name}}",
+    "forumSection": "Kontributor",
+    "account": {
+      "title": "Akun",
+      "username": "Nama pengguna",
+      "displayName": "Nama tampilan",
+      "activeSince": "Aktif sejak",
+      "edits": "Suntingan",
+      "pagesCreated": "Halaman dibuat",
+      "comments": "Komentar",
+      "roles": "Peran",
+      "editsBreakdown": "Suntingan menurut jenis:"
+    }
+  }
 }

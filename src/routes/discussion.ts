@@ -12,6 +12,7 @@ import {
 import { ForbiddenError, NotFoundError, ValidationError } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
+import { profileSlug } from '../lib/profile-paths.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { isBlockedSlug, toAddressForm } from '../lib/slug.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
@@ -35,6 +36,7 @@ import {
 } from '../services/page-signoff-service.js';
 import { isFollowingPage } from '../services/page-subscription-service.js';
 import { listPositionReplies, listWithdrawnPositionsWithReplies } from '../services/position-reply-service.js';
+import { findProfileOwnerBySlug, type ProfileOwner } from '../services/profile-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
 import { findCurrentPageBySlugOrAlias, readWikiPage } from '../services/wiki-page-service.js';
 import { FOLLOW_PATH } from './follow.js';
@@ -59,6 +61,7 @@ import { renderMarkdownPreviewHtml } from './lib/markdown-preview.js';
 import { howToEditPath } from './lib/operator-edit-link.js';
 import { renderPageSignoffs } from './lib/page-signoffs.js';
 import { renderPageTabs } from './lib/page-tabs.js';
+import { loadProfileContext, renderProfileLabel, renderProfileTabs } from './lib/profile.js';
 import { resolveForumValidationMessage } from './lib/validation-messages.js';
 
 const { mlString } = dal;
@@ -75,6 +78,8 @@ interface DiscussionPageRecord {
   slug: string;
   currentRevId: string;
   title: Record<string, string> | null | undefined;
+  // Set on a profile's Talk tab, which exists whether or not the profile has text.
+  profile?: ProfileOwner;
 }
 
 const pageHrefOf = (slug: string) => `/${slug.split('/').map(encodeURIComponent).join('/')}`;
@@ -214,8 +219,11 @@ export const renderPositionsSection = async (
   const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
   const missing = [...signoffs, ...withdrawn].map(signoff => signoff.userId).filter(id => !userMap.has(id));
   if (missing.length) {
-    const result = await dalInstance.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [missing]);
-    for (const row of result.rows as Array<{ id: string; display_name: string }>) userMap.set(row.id, row.display_name);
+    const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [missing]);
+    for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
+      userMap.set(row.id, row.display_name);
+      usernames.set(row.id, row.username);
+    }
   }
   const session = await resolveSessionUser(req);
   const followedThreadIds = await listFollowedThreadIds(
@@ -260,6 +268,10 @@ export const renderPositionsSection = async (
   });
 };
 
+const profileWithoutText = (profile: ProfileOwner): DiscussionPageRecord => ({
+  id: null, slug: profileSlug(profile.username), title: null, currentRevId: '', profile,
+});
+
 /** The page whose discussion this address names, or a redirect to its current address. */
 const resolveDiscussionPage = async (
   dalInstance: DataAccessLayer,
@@ -272,10 +284,12 @@ const resolveDiscussionPage = async (
     return null;
   }
   let page: DiscussionPageRecord;
+  const profile = await findProfileOwnerBySlug(dalInstance, slug);
   try {
-    page = await readWikiPage(dalInstance, slug);
+    page = { ...(await readWikiPage(dalInstance, slug)), profile: profile ?? undefined };
   } catch (error) {
     if (!(error instanceof NotFoundError)) throw error;
+    if (profile && profileSlug(profile.username) === slug) return profileWithoutText(profile);
     const addressForm = toAddressForm(slug);
     const match = addressForm !== slug ? await findCurrentPageBySlugOrAlias(addressForm) : null;
     page = match ? await readWikiPage(dalInstance, match.slug) : null;
@@ -324,13 +338,20 @@ export const renderPageDiscussionPage = async (
   const session = ctx.viewer.userId;
   const locale = ctx.locale;
   const pageHref = pageHrefOf(page.slug);
-  const titleText = resolveSafeTextWithFallback(mlString.resolve, locale, page.title, page.slug);
+  const titleText = page.profile
+    ? page.profile.displayName
+    : resolveSafeTextWithFallback(mlString.resolve, locale, page.title, page.slug);
   const editability = session && page.id
-    ? await getWikiPageEditability(dalInstance, { id: page.id }, session)
+    ? await getWikiPageEditability(dalInstance, { id: page.id, slug: page.slug }, session)
     : { isProtected: false, isEditable: false };
   const canEditDirectly = Boolean(session) && (!editability.isProtected || editability.isEditable);
   const isDraft = isDraftSlug(page.slug);
-  const tabsHtml = renderPageTabs({
+  const profile = page.profile
+    ? await loadProfileContext(dalInstance, page.profile, { viewerId: session, t: req.t, locale })
+    : null;
+  const tabsHtml = profile
+    ? renderProfileTabs(profile, { current: 'talk', hasText: Boolean(page.id), t: req.t })
+    : renderPageTabs({
     isArticle: isArticleSlug(page.slug) || isDraft,
     pageHref,
     isCurrentView: Boolean(page.id),
@@ -371,14 +392,20 @@ export const renderPageDiscussionPage = async (
           }
         )
       : '';
+  const canStart = Boolean(page.id || profile);
+  const contextHtml = profile
+    ? `<p class="profile-talk-intro">${escapeHtml(req.t('profile.talkIntro', { username: profile.owner.username }))}</p>`
+    : page.id
+      ? ''
+      : `<p class="forum-page-context">${escapeHtml(req.t('forum.pageLink.orphanedContext', { slug: page.slug }))}</p>`;
   const bodyHtml = `<div class="discussion-page">
-  ${page.id ? '' : `<p class="forum-page-context">${escapeHtml(req.t('forum.pageLink.orphanedContext', { slug: page.slug }))}</p>`}
+  ${contextHtml}
   ${positionsHtml}
   ${isProposal ? `<h2 class="discussion-threads-heading">${escapeHtml(req.t('discussion.threads'))}</h2>` : ''}
   ${discussion.threadCount ? renderDiscussionSummary(discussion, req.t) : emptyHtml}
   ${renderPaginatedDiscussion(discussion, ctx)}
   ${renderReplyTemplate(ctx)}
-  ${page.id ? renderStartThread(req, res, target, ctx.viewer, {
+  ${canStart ? renderStartThread(req, res, target, ctx.viewer, {
     errorMessage: state.threadErrorMessage,
     previewHtml: state.threadPreviewHtml,
   }) : `<p class="forum-empty">${escapeHtml(req.t('forum.pageLink.cannotCreateMissingPageRequired'))}</p>`}
@@ -386,13 +413,20 @@ export const renderPageDiscussionPage = async (
   const pageType = isDraft ? req.t('label.draft')
     : resolvePageAddress(page.slug)?.namespace === 'meta' ? req.t('label.meta') : req.t('label.article');
   res.render('layout', {
-    title: prepareTitle(toSafeText(req.t('discussion.pageTitle', { title: renderText(titleText) }))),
+    title: prepareTitle(
+      profile
+        ? toSafeText(req.t('profile.talkTitle', { name: renderText(titleText) }))
+        : toSafeText(req.t('discussion.pageTitle', { title: renderText(titleText) }))
+    ),
     canonicalUrl: canonicalUrlFor(discussionPagePath(target, discussion.page)),
     relPrev: discussion.page > 1 ? discussionPagePath(target, discussion.page - 1) : null,
     relNext: discussion.page < discussion.pageCount ? discussionPagePath(target, discussion.page + 1) : null,
-    noindex: isDraft || discussion.threadCount === 0,
-    labelHtml: `<div class="page-label-row"><div class="page-label">${escapeHtml(pageType)}</div></div>`,
+    noindex: isDraft || discussion.threadCount === 0 || Boolean(profile),
+    labelHtml: profile
+      ? renderProfileLabel(req.t)
+      : `<div class="page-label-row"><div class="page-label">${escapeHtml(pageType)}</div></div>`,
     tabsHtml,
+    sidebarHtml: profile?.accountBoxHtml,
     topHtml: prependAccountBanner(res, ''),
     bodyHtml,
   });
@@ -410,7 +444,12 @@ export const renderPageDiscussionForThread = async (
 ) => {
   const dalInstance = await initializePostgreSQL();
   const match = await findCurrentPageBySlugOrAlias(thread.pageSlug);
-  let page: DiscussionPageRecord | null = match ? await readWikiPage(dalInstance, match.slug) : null;
+  const profile = await findProfileOwnerBySlug(dalInstance, thread.pageSlug);
+  let page: DiscussionPageRecord | null = match
+    ? { ...(await readWikiPage(dalInstance, match.slug)), profile: profile ?? undefined }
+    : profile
+      ? profileWithoutText(profile)
+      : null;
   if (!page) {
     const orphan = await findOrphanedDiscussion(dalInstance, thread.pageSlug);
     if (!orphan) return false;
@@ -586,7 +625,7 @@ export const registerDiscussionRoutes = (app: Express) => {
     try {
       const page = await resolveDiscussionPage(await initializePostgreSQL(), req, res, req.params[0]);
       if (!page) return;
-      if (!page.id) {
+      if (!page.id && !page.profile) {
         res.status(403);
         await renderPageDiscussionPage(req, res, page);
         return;

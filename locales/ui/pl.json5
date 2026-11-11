@@ -992,4 +992,27 @@
     "discussedPages": "Strony z niedawną dyskusją",
     "noDiscussedPages": "Żadna strona nie była jeszcze dyskutowana.",
   },
+  "profile": {
+    "label": "PROFIL — WSPÓŁTWÓRCA AGPEDII",
+    "tabProfile": "Profil",
+    "tabTalk": "Dyskusja",
+    "empty": "{{name}} nie napisał(a) tu jeszcze niczego.",
+    "emptyOwn": "Nie napisałeś(-aś) jeszcze swojego profilu.",
+    "write": "Napisz swój profil",
+    "editForbidden": "Ten profil mogą edytować tylko jego właściciel i administratorzy wiki.",
+    "talkIntro": "Wiadomości do {{username}}. Pisać tu może każdy, kto jest zalogowany z potwierdzonym adresem e-mail. {{username}} dostaje powiadomienie o każdej nowej wiadomości.",
+    "talkTitle": "Dyskusja: {{name}}",
+    "forumSection": "Współtwórcy",
+    "account": {
+      "title": "Konto",
+      "username": "Nazwa użytkownika",
+      "displayName": "Wyświetlana nazwa",
+      "activeSince": "Aktywny od",
+      "edits": "Edycje",
+      "pagesCreated": "Utworzone strony",
+      "comments": "Komentarze",
+      "roles": "Role",
+      "editsBreakdown": "Edycje według rodzaju:"
+    }
+  }
 }

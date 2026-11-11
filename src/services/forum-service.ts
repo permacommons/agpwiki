@@ -9,6 +9,8 @@ import {
 } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { profileSlug } from '../lib/profile-paths.js';
+import { toAddressForm } from '../lib/slug.js';
 import { isUuid } from '../lib/uuid.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
@@ -23,6 +25,7 @@ import {
 } from './forum-notification-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
+import { findProfileOwnerBySlug } from './profile-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNonEmptyString,
@@ -39,6 +42,7 @@ export const FORUM_CATEGORY_KEYS = {
   articles: 'forum.category.articles',
   technology: 'forum.category.technology',
   policy: 'forum.category.policy',
+  users: 'profile.forumSection',
   blog: 'forum.category.blog',
 } as const;
 
@@ -461,6 +465,18 @@ export const createForumThread = async (
       } else {
         normalizedPageSlug = target.canonicalSlug;
       }
+    }
+  } else if (normalizedCategory === 'users') {
+    // A contributor's Talk tab: the profile may have no text yet.
+    const owner = rawPageSlug
+      ? await findProfileOwnerBySlug(ForumThread.dal as DataAccessLayer, toAddressForm(rawPageSlug))
+      : null;
+    if (!rawPageSlug) {
+      errors.add('pageSlug', 'must not be empty.', 'required');
+    } else if (!owner) {
+      errors.add('pageSlug', 'must refer to the profile of an existing contributor (user/<username>).', 'not_found');
+    } else {
+      normalizedPageSlug = profileSlug(owner.username);
     }
   } else if (normalizedCategory === 'blog') {
     // Blog threads are about one post; the slug names the post, not a page.

@@ -990,4 +990,27 @@
     "discussedPages": "صفحات فيها نقاش حديث",
     "noDiscussedPages": "لم تُناقَش أي صفحة بعد.",
   },
+  "profile": {
+    "label": "ملف شخصي — مساهم في AGPEDIA",
+    "tabProfile": "الملف الشخصي",
+    "tabTalk": "نقاش",
+    "empty": "لم يكتب {{name}} أي شيء هنا بعد.",
+    "emptyOwn": "لم تكتب ملفك الشخصي بعد.",
+    "write": "اكتب ملفك الشخصي",
+    "editForbidden": "لا يمكن تعديل هذا الملف الشخصي إلا لصاحبه ولمشرفي الويكي.",
+    "talkIntro": "رسائل إلى {{username}}. يمكن لأي شخص مسجّل الدخول ولديه بريد إلكتروني مؤكَّد أن يكتب هنا. يُبلَّغ {{username}} بكل رسالة جديدة.",
+    "talkTitle": "نقاش: {{name}}",
+    "forumSection": "المساهمون",
+    "account": {
+      "title": "الحساب",
+      "username": "اسم المستخدم",
+      "displayName": "الاسم المعروض",
+      "activeSince": "نشط منذ",
+      "edits": "التعديلات",
+      "pagesCreated": "الصفحات المنشأة",
+      "comments": "التعليقات",
+      "roles": "الأدوار",
+      "editsBreakdown": "التعديلات حسب النوع:"
+    }
+  }
 }

@@ -992,4 +992,27 @@
     "discussedPages": "최근 토론이 있는 페이지",
     "noDiscussedPages": "아직 토론된 페이지가 없습니다.",
   },
+  "profile": {
+    "label": "프로필 — AGPEDIA 기여자",
+    "tabProfile": "프로필",
+    "tabTalk": "토론",
+    "empty": "{{name}} 님은 아직 여기에 아무것도 쓰지 않았습니다.",
+    "emptyOwn": "아직 프로필을 쓰지 않았습니다.",
+    "write": "프로필 쓰기",
+    "editForbidden": "이 프로필은 본인과 위키 관리자만 편집할 수 있습니다.",
+    "talkIntro": "{{username}} 님에게 보내는 메시지입니다. 확인된 이메일 주소로 로그인한 사람은 누구나 여기에 쓸 수 있습니다. 새 메시지가 올 때마다 {{username}} 님에게 알림이 갑니다.",
+    "talkTitle": "토론: {{name}}",
+    "forumSection": "기여자",
+    "account": {
+      "title": "계정",
+      "username": "사용자 이름",
+      "displayName": "표시 이름",
+      "activeSince": "활동 시작",
+      "edits": "편집",
+      "pagesCreated": "만든 문서",
+      "comments": "댓글",
+      "roles": "역할",
+      "editsBreakdown": "종류별 편집:"
+    }
+  }
 }
