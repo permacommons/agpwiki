@@ -791,6 +791,9 @@
     "allChecks": "전체",
     "empty": "지금은 이 목록에 문서가 없습니다."
   },
+  "mentions": {
+    "suggestions": "일치하는 사용자 이름"
+  },
   "notifications": {
     loading: '불러오는 중…',
     loadError: '알림을 불러올 수 없습니다.',
@@ -800,6 +803,7 @@
     "someone": "누군가",
     "kind": {
       "forumReply": "{{name}} 님이 {{subject}}에 답글을 남겼습니다",
+      "mention": "{{name}}님이 {{subject}}에서 회원님을 언급했습니다",
       "pageThread": "{{name}} 님이 {{subject}}에 대한 토론을 시작했습니다",
       "pageComment": "{{name}} 님이 {{subject}}에 댓글을 달았습니다",
       "pagePosition": "{{name}} 님이 {{subject}}에 입장({{stance}})을 밝혔습니다",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "팔로우하는 포럼 스레드의 답글",
           "help": "스레드를 시작하거나 답글을 달면 팔로우하게 됩니다. 스레드에서 팔로우하거나 해제할 수도 있습니다."
+        },
+        "mention": {
+          "label": "나를 언급한 글",
+          "help": "누군가 댓글, 입장 또는 답글에 @와 내 사용자 이름을 쓸 때."
         },
         "pageComment": {
           "label": "팔로우하는 문서의 댓글",

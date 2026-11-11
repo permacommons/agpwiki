@@ -792,6 +792,9 @@
     "allChecks": "Tous",
     "empty": "Aucun article dans cette liste pour le moment."
   },
+  "mentions": {
+    "suggestions": "Noms d’utilisateur correspondants"
+  },
   "notifications": {
     loading: 'Chargement…',
     loadError: 'Impossible de charger les notifications.',
@@ -801,6 +804,7 @@
     "someone": "Quelqu’un",
     "kind": {
       "forumReply": "{{name}} a répondu dans {{subject}}",
+      "mention": "{{name}} t’a mentionné dans {{subject}}",
       "pageThread": "{{name}} a ouvert une discussion sur {{subject}}",
       "pageComment": "{{name}} a commenté {{subject}}",
       "pagePosition": "{{name}} a donné une position ({{stance}}) sur {{subject}}",
@@ -838,6 +842,10 @@
         "forumReply": {
           "label": "Réponses dans les fils du forum que tu suis",
           "help": "Tu suis un fil quand tu le crées ou que tu y réponds. Tu peux aussi le suivre ou ne plus le suivre depuis le fil."
+        },
+        "mention": {
+          "label": "Mentions de toi",
+          "help": "Quand quelqu’un écrit @ suivi de ton nom d’utilisateur dans un commentaire, une position ou une réponse."
         },
         "pageComment": {
           "label": "Commentaires sur les pages que tu suis",

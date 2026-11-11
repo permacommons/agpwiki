@@ -791,6 +791,9 @@
     "allChecks": "すべて",
     "empty": "現在この一覧に記事はありません。"
   },
+  "mentions": {
+    "suggestions": "一致するユーザー名"
+  },
   "notifications": {
     loading: '読み込み中…',
     loadError: '通知を読み込めませんでした。',
@@ -800,6 +803,7 @@
     "someone": "誰か",
     "kind": {
       "forumReply": "{{name}} さんが {{subject}} に返信しました",
+      "mention": "{{name}}さんが{{subject}}であなたをメンションしました",
       "pageThread": "{{name}}さんが{{subject}}で議論を始めました",
       "pageComment": "{{name}}さんが{{subject}}にコメントしました",
       "pagePosition": "{{name}}さんが{{subject}}に立場（{{stance}}）を表明しました",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "フォローしているフォーラムのスレッドへの返信",
           "help": "スレッドを作成するか返信すると、そのスレッドをフォローします。スレッド上でフォローの開始や解除もできます。"
+        },
+        "mention": {
+          "label": "あなたへのメンション",
+          "help": "誰かがコメント、立場、返信に @ とあなたのユーザー名を書いたとき。"
         },
         "pageComment": {
           "label": "フォロー中のページへのコメント",

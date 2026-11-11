@@ -793,6 +793,9 @@
     "allChecks": "Vsa",
     "empty": "Na tem seznamu trenutno ni člankov."
   },
+  "mentions": {
+    "suggestions": "Ujemajoča se uporabniška imena"
+  },
   "notifications": {
     loading: 'Nalaganje …',
     loadError: 'Obvestil ni bilo mogoče naložiti.',
@@ -802,6 +805,7 @@
     "someone": "Nekdo",
     "kind": {
       "forumReply": "{{name}} je odgovoril(a) v niti {{subject}}",
+      "mention": "{{name}} te je omenil(a) v {{subject}}",
       "pageThread": "{{name}} je začel(a) razpravo o {{subject}}",
       "pageComment": "{{name}} je komentiral(a) {{subject}}",
       "pagePosition": "{{name}} je izrazil(a) stališče ({{stance}}) o {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Odgovori v nitih foruma, ki jim slediš",
           "help": "Niti slediš, ko jo začneš ali v njej odgovoriš. Sledenje lahko vklopiš ali izklopiš tudi v sami niti."
+        },
+        "mention": {
+          "label": "Omembe tebe",
+          "help": "Ko nekdo v komentar, stališče ali odgovor napiše @ in tvoje uporabniško ime."
         },
         "pageComment": {
           "label": "Komentarji na straneh, ki jih spremljaš",

@@ -790,6 +790,9 @@
     "allChecks": "Alle",
     "empty": "Zurzeit keine Artikel in dieser Liste."
   },
+  "mentions": {
+    "suggestions": "Passende Benutzernamen"
+  },
   "notifications": {
     loading: 'Wird geladen …',
     loadError: 'Benachrichtigungen konnten nicht geladen werden.',
@@ -799,6 +802,7 @@
     "someone": "Jemand",
     "kind": {
       "forumReply": "{{name}} hat in {{subject}} geantwortet",
+      "mention": "{{name}} hat dich in {{subject}} erwähnt",
       "pageThread": "{{name}} hat eine Diskussion zu {{subject}} begonnen",
       "pageComment": "{{name}} hat {{subject}} kommentiert",
       "pagePosition": "{{name}} hat eine Position ({{stance}}) zu {{subject}} abgegeben",
@@ -836,6 +840,10 @@
         "forumReply": {
           "label": "Antworten in Forumsthemen, denen du folgst",
           "help": "Du folgst einem Thema, wenn du es eröffnest oder darin antwortest. Du kannst ihm auch im Thema selbst folgen oder nicht mehr folgen."
+        },
+        "mention": {
+          "label": "Erwähnungen von dir",
+          "help": "Wenn jemand in einem Kommentar, einer Position oder einer Antwort @ und deinen Benutzernamen schreibt."
         },
         "pageComment": {
           "label": "Kommentare auf Seiten, denen du folgst",

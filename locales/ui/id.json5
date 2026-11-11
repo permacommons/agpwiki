@@ -793,6 +793,9 @@
     "allChecks": "Semua",
     "empty": "Saat ini tidak ada artikel dalam daftar ini."
   },
+  "mentions": {
+    "suggestions": "Nama pengguna yang cocok"
+  },
   "notifications": {
     loading: 'Memuat…',
     loadError: 'Notifikasi tidak dapat dimuat.',
@@ -802,6 +805,7 @@
     "someone": "Seseorang",
     "kind": {
       "forumReply": "{{name}} membalas di {{subject}}",
+      "mention": "{{name}} menyebut Anda di {{subject}}",
       "pageThread": "{{name}} memulai diskusi tentang {{subject}}",
       "pageComment": "{{name}} berkomentar di {{subject}}",
       "pagePosition": "{{name}} menyatakan sikap ({{stance}}) tentang {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Balasan di utas forum yang Anda ikuti",
           "help": "Anda mengikuti utas saat memulainya atau membalas di sana. Anda juga bisa mengikuti atau berhenti mengikuti dari utas itu."
+        },
+        "mention": {
+          "label": "Sebutan untuk Anda",
+          "help": "Saat seseorang menulis @ dan nama pengguna Anda di komentar, sikap, atau balasan."
         },
         "pageComment": {
           "label": "Komentar di halaman yang Anda ikuti",

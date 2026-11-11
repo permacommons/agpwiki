@@ -791,6 +791,9 @@
     "allChecks": "Tutti",
     "empty": "Al momento nessun articolo in questo elenco."
   },
+  "mentions": {
+    "suggestions": "Nomi utente corrispondenti"
+  },
   "notifications": {
     loading: 'Caricamento…',
     loadError: 'Impossibile caricare le notifiche.',
@@ -800,6 +803,7 @@
     "someone": "Qualcuno",
     "kind": {
       "forumReply": "{{name}} ha risposto in {{subject}}",
+      "mention": "{{name}} ti ha menzionato in {{subject}}",
       "pageThread": "{{name}} ha aperto una discussione su {{subject}}",
       "pageComment": "{{name}} ha commentato {{subject}}",
       "pagePosition": "{{name}} ha espresso una posizione ({{stance}}) su {{subject}}",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "Risposte nelle discussioni del forum che segui",
           "help": "Segui una discussione quando la apri o vi rispondi. Puoi anche seguirla o smettere di seguirla dalla discussione."
+        },
+        "mention": {
+          "label": "Menzioni di te",
+          "help": "Quando qualcuno scrive @ e il tuo nome utente in un commento, una posizione o una risposta."
         },
         "pageComment": {
           "label": "Commenti sulle pagine che segui",

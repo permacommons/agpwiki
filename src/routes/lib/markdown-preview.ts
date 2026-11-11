@@ -3,6 +3,7 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
 import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { escapeHtml, renderMarkdown } from '../../render.js';
+import { loadMarkdownMentions } from '../../services/mention-service.js';
 
 export interface MarkdownPreviewTexts {
   title: string;
@@ -59,17 +60,21 @@ export const renderMarkdownPreviewHtml = async (
   dalInstance: DataAccessLayer,
   source: string,
   backToCitationLabel: string,
-  locale?: string
+  locale?: string,
+  // Comments link @mentions as they will be shown once posted; articles do not.
+  { mentions = false }: { mentions?: boolean } = {}
 ) => {
-  const [citationEntries, mediaRegistry] = await Promise.all([
+  const [citationEntries, mediaRegistry, mentionMap] = await Promise.all([
     loadCitationEntriesForSources(dalInstance, [source]),
     loadMediaEntriesForSources(dalInstance, [source]),
+    mentions ? loadMarkdownMentions(dalInstance, [source]) : undefined,
   ]);
   return (
     await renderMarkdown(source, citationEntries, {
       backToCitationLabel,
       mediaRegistry,
       locale,
+      mentions: mentionMap,
     })
   ).html;
 };

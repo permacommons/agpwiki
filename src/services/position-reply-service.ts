@@ -1,19 +1,16 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { ConstraintError } from 'rev-dal/lib/errors';
-import debug from '../../util/debug.js';
 import { ForbiddenError, NotFoundError, ValidationCollector } from '../lib/errors.js';
 import { isUuid } from '../lib/uuid.js';
 import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
-import { enqueueForumReplyNotification } from './forum-notification-service.js';
+import { notifyForumPost } from './forum-post-notification-service.js';
 import {
   createForumComment,
   createForumThread,
   findAttachedForumThread,
 } from './forum-service.js';
 import { subscribeUserToForumThread } from './forum-subscription-service.js';
-import { enqueueNotificationJob } from './notification-queue.js';
-import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
 import {
   canSignOffPages,
   isSignoffPageSlug,
@@ -206,23 +203,8 @@ export const replyToPosition = async (
   }
   const commentId = thread.firstCommentId;
   await subscribeUserToForumThread(thread.id, signoff.userId);
-  try {
-    // A new thread does not notify by itself; this first reply should reach
-    // the person whose position it answers.
-    await enqueueForumReplyNotification(thread.id, commentId, userId, enqueueNotificationJob);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to enqueue the first position reply notification for ${thread.id}: ${message}`);
-  }
-  try {
-    await notifyPageFollowersOfForumPost(
-      dalInstance,
-      { threadId: thread.id, commentId, actorUserId: userId, event: 'comment' },
-      enqueueNotificationJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to notify page followers of the first position reply in ${thread.id}: ${message}`);
-  }
+  await notifyForumPost(dalInstance, {
+    threadId: thread.id, commentId, actorUserId: userId, text: body.trim(), event: 'comment',
+  });
   return { threadId: thread.id, commentId, createdThread: true };
 };

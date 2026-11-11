@@ -793,6 +793,9 @@
     "allChecks": "Alla",
     "empty": "Inga artiklar i listan just nu."
   },
+  "mentions": {
+    "suggestions": "Matchande användarnamn"
+  },
   "notifications": {
     loading: 'Laddar …',
     loadError: 'Det gick inte att läsa in aviseringarna.',
@@ -802,6 +805,7 @@
     "someone": "Någon",
     "kind": {
       "forumReply": "{{name}} svarade i {{subject}}",
+      "mention": "{{name}} nämnde dig i {{subject}}",
       "pageThread": "{{name}} startade en diskussion om {{subject}}",
       "pageComment": "{{name}} kommenterade {{subject}}",
       "pagePosition": "{{name}} angav en hållning ({{stance}}) om {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Svar i forumtrådar som du följer",
           "help": "Du följer en tråd när du startar den eller svarar i den. Du kan också följa eller sluta följa den i tråden."
+        },
+        "mention": {
+          "label": "Omnämnanden av dig",
+          "help": "När någon skriver @ och ditt användarnamn i en kommentar, ett ställningstagande eller ett svar."
         },
         "pageComment": {
           "label": "Kommentarer på sidor du följer",

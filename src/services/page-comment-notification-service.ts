@@ -36,6 +36,7 @@ export type PageCommentPayload = {
   changed?: boolean;
   recipientUserIds?: string[];
   forumRecipientUserIds?: string[];
+  mentionRecipientUserIds?: string[];
 };
 
 type EnqueueJob = (type: string, payload: PageCommentPayload) => Promise<unknown>;
@@ -73,7 +74,14 @@ export const notifyPageFollowersOfForumPost = async (
     commentId,
     actorUserId,
     event,
-  }: { threadId: string; commentId: string; actorUserId: string; event: 'thread' | 'comment' },
+    mentionRecipientUserIds = [],
+  }: {
+    threadId: string;
+    commentId: string;
+    actorUserId: string;
+    event: 'thread' | 'comment';
+    mentionRecipientUserIds?: string[];
+  },
   enqueueJob: EnqueueJob
 ) => {
   const thread = await ForumThread.filterWhere({ id: threadId, _oldRevOf: null, _revDeleted: false } as Record<
@@ -85,14 +93,31 @@ export const notifyPageFollowersOfForumPost = async (
   const pageId = await findCurrentPageIdBySlug(thread.pageSlug);
   if (!pageId) return null;
   const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];
-  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, enqueueJob);
+  return enqueue(
+    dal,
+    { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds, mentionRecipientUserIds },
+    enqueueJob
+  );
 };
 
 export const notifyPageFollowersOfPosition = async (
   dal: DataAccessLayer,
-  { pageId, signoffId, actorUserId, changed }: { pageId: string; signoffId: string; actorUserId: string; changed: boolean },
+  { pageId, signoffId, actorUserId, changed, mentionRecipientUserIds }: {
+    pageId: string;
+    signoffId: string;
+    actorUserId: string;
+    changed: boolean;
+    mentionRecipientUserIds: string[];
+  },
   enqueueJob: EnqueueJob
-) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, enqueueJob);
+) => enqueue(dal, {
+  pageId,
+  event: 'position',
+  actorUserId,
+  signoffId,
+  changed,
+  mentionRecipientUserIds: changed ? [] : mentionRecipientUserIds,
+}, enqueueJob);
 
 const pagePath = (slug: string) => `/${slug.split('/').map(encodeURIComponent).join('/')}`;
 
@@ -187,9 +212,11 @@ export const processPageCommentNotification = async (
     title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.canonicalLanguage)) || currentPage.slug,
   };
 
-  const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, {
-    kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [],
-  });
+  const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, [
+    { kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [] },
+    // People the post mentions hear about it through the mention instead.
+    { kind: 'mention', userIds: payload.mentionRecipientUserIds ?? [] },
+  ]);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();
   const rendered = await describe(dal, payload, page, actor?.displayName ?? 'Someone');

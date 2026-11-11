@@ -26,6 +26,7 @@ import {
   readDiscussion,
 } from '../services/discussion-service.js';
 import { createForumThread, requireSignedInUserId } from '../services/forum-service.js';
+import { loadPlainTextMentions } from '../services/mention-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
   canSignOffPages,
@@ -210,6 +211,10 @@ export const renderPositionsSection = async (
     })),
     { backToCitationLabel: req.t('citation.backToCitationAria'), locale }
   );
+  const mentions = await loadPlainTextMentions(
+    dalInstance,
+    [...signoffs, ...withdrawn].map(signoff => signoff.comment ?? '')
+  );
   const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
   const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
   const missing = [...signoffs, ...withdrawn].map(signoff => signoff.userId).filter(id => !userMap.has(id));
@@ -237,6 +242,7 @@ export const renderPositionsSection = async (
     withdrawn,
     userMap,
     usernames,
+    mentions,
     viewerId: session?.userId ?? null,
     followedThreadIds,
     canSignOff,
@@ -523,7 +529,9 @@ const startThread = async (
       const threadPreviewHtml = await renderMarkdownPreviewHtml(
         await initializePostgreSQL(),
         body,
-        req.t('citation.backToCitationAria')
+        req.t('citation.backToCitationAria'),
+        undefined,
+        { mentions: true }
       );
       await render({ threadPreviewHtml });
       return;

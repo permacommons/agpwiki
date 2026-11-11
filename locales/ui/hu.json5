@@ -793,6 +793,9 @@
     "allChecks": "Mind",
     "empty": "Jelenleg nincs szócikk ebben a listában."
   },
+  "mentions": {
+    "suggestions": "Egyező felhasználónevek"
+  },
   "notifications": {
     loading: 'Betöltés…',
     loadError: 'Az értesítéseket nem sikerült betölteni.',
@@ -802,6 +805,7 @@
     "someone": "Valaki",
     "kind": {
       "forumReply": "{{name}} válaszolt itt: {{subject}}",
+      "mention": "{{name}} megemlített téged itt: {{subject}}",
       "pageThread": "{{name}} vitát indított erről: {{subject}}",
       "pageComment": "{{name}} hozzászólt ehhez: {{subject}}",
       "pagePosition": "{{name}} állást foglalt ({{stance}}) erről: {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Válaszok az általad követett fórumszálakban",
           "help": "Egy szálat akkor követsz, ha elindítod vagy válaszolsz benne. A követést a szálban is be- vagy kikapcsolhatod."
+        },
+        "mention": {
+          "label": "Említéseid",
+          "help": "Amikor valaki egy hozzászólásban, állásfoglalásban vagy válaszban @ jellel és a felhasználóneveddel ír."
         },
         "pageComment": {
           "label": "Hozzászólások a követett oldalakon",

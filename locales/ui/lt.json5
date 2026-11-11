@@ -793,6 +793,9 @@
     "allChecks": "Visos",
     "empty": "Šiame sąraše dabar straipsnių nėra."
   },
+  "mentions": {
+    "suggestions": "Atitinkantys naudotojų vardai"
+  },
   "notifications": {
     loading: 'Įkeliama…',
     loadError: 'Nepavyko įkelti pranešimų.',
@@ -802,6 +805,7 @@
     "someone": "Kažkas",
     "kind": {
       "forumReply": "{{name}} atsakė gijoje {{subject}}",
+      "mention": "{{name}} paminėjo tave: {{subject}}",
       "pageThread": "{{name}} pradėjo diskusiją apie {{subject}}",
       "pageComment": "{{name}} pakomentavo {{subject}}",
       "pagePosition": "{{name}} išsakė poziciją ({{stance}}) dėl {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Atsakymai tavo sekamose forumo gijose",
           "help": "Giją seki, kai ją pradedi arba joje atsakai. Sekti arba nebesekti gali ir pačioje gijoje."
+        },
+        "mention": {
+          "label": "Tavo paminėjimai",
+          "help": "Kai kas nors komentare, pozicijoje ar atsakyme parašo @ ir tavo naudotojo vardą."
         },
         "pageComment": {
           "label": "Komentarai sekamuose puslapiuose",

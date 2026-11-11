@@ -793,6 +793,9 @@
     "allChecks": "Kaikki",
     "empty": "Luettelossa ei ole nyt artikkeleita."
   },
+  "mentions": {
+    "suggestions": "Sopivat käyttäjänimet"
+  },
   "notifications": {
     loading: 'Ladataan…',
     loadError: 'Ilmoituksia ei voitu ladata.',
@@ -802,6 +805,7 @@
     "someone": "Joku",
     "kind": {
       "forumReply": "{{name}} vastasi ketjussa {{subject}}",
+      "mention": "{{name}} mainitsi sinut kohteessa {{subject}}",
       "pageThread": "{{name}} aloitti keskustelun sivusta {{subject}}",
       "pageComment": "{{name}} kommentoi sivua {{subject}}",
       "pagePosition": "{{name}} kertoi kantansa ({{stance}}) sivuun {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Vastaukset seuraamissasi foorumiketjuissa",
           "help": "Seuraat ketjua, kun aloitat sen tai vastaat siihen. Voit myös aloittaa tai lopettaa seuraamisen ketjussa."
+        },
+        "mention": {
+          "label": "Maininnat sinusta",
+          "help": "Kun joku kirjoittaa @ ja käyttäjänimesi kommenttiin, kannanottoon tai vastaukseen."
         },
         "pageComment": {
           "label": "Kommentit seuraamillasi sivuilla",

@@ -9,6 +9,7 @@ import {
 } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { pickLocalizedText } from '../lib/notification-text.js';
 import { isUuid } from '../lib/uuid.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
@@ -17,12 +18,9 @@ import type { ForumThreadInstance } from '../models/manifests/forum-thread.js';
 import { escapeHtml } from '../render.js';
 import { assertCanModerateForum } from './authorization.js';
 import { findCurrentPostBySlugOrAlias } from './blog-post-service.js';
-import {
-  enqueueForumReplyNotification,
-  subscribeActorToForumThread,
-} from './forum-notification-service.js';
-import { enqueueNotificationJob } from './notification-queue.js';
-import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
+import { subscribeActorToForumThread } from './forum-notification-service.js';
+import { notifyForumPost } from './forum-post-notification-service.js';
+import { notifyMentions } from './mention-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
   ensureNonEmptyString,
@@ -521,19 +519,11 @@ export const createForumThread = async (
     debug.error(`Failed to auto-subscribe thread creator for thread ${thread.id}: ${message}`);
   }
 
-  // Attached threads hold replies to something on the page; whoever creates
-  // them notifies once the right people follow the thread.
-  if (normalizedPageSlug && !attachment) {
-    try {
-      await notifyPageFollowersOfForumPost(
-        ForumThread.dal as DataAccessLayer,
-        { threadId: thread.id, commentId: firstCommentId, actorUserId: userId, event: 'thread' },
-        enqueueNotificationJob
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      debug.error(`Failed to notify page followers of thread ${thread.id}: ${message}`);
-    }
+  // Position replies notify after their owner has subscribed to the new thread.
+  if (!attachment) {
+    await notifyForumPost(ForumThread.dal as DataAccessLayer, {
+      threadId: thread.id, commentId: firstCommentId, actorUserId: userId, text: body, event: 'thread',
+    });
   }
 
   return {
@@ -601,27 +591,9 @@ export const createForumComment = async (
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to auto-subscribe replier for thread ${thread.id}: ${message}`);
   }
-  try {
-    await enqueueForumReplyNotification(
-      thread.id,
-      comment.id,
-      userId,
-      enqueueNotificationJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to enqueue forum reply notification for comment ${comment.id}: ${message}`);
-  }
-  try {
-    await notifyPageFollowersOfForumPost(
-      ForumThread.dal as DataAccessLayer,
-      { threadId: thread.id, commentId: comment.id, actorUserId: userId, event: 'comment' },
-      enqueueNotificationJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to notify page followers of comment ${comment.id}: ${message}`);
-  }
+  await notifyForumPost(ForumThread.dal as DataAccessLayer, {
+    threadId: thread.id, commentId: comment.id, actorUserId: userId, text: body, event: 'comment',
+  });
 
   return toForumCommentResult(comment);
 };
@@ -668,12 +640,19 @@ export const updateForumComment = async (
   if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
     throw new ForbiddenError('Only the author can edit a post.', { commentId });
   }
+  const previousText = pickLocalizedText(comment.body, comment.canonicalLanguage);
   const updatedAt = new Date();
   const revision = await comment.newRevision({ id: userId }, { tags: ['edit'], date: updatedAt });
   revision.body = sanitizeLocalizedMapInput({ [language]: body });
   revision.canonicalLanguage = language;
   revision.updatedAt = updatedAt;
   await revision.save();
+  // Only people the edit newly mentions are notified.
+  await notifyMentions(
+    dalInstance,
+    { type: 'comment', threadId: comment.threadId, commentId: comment.id },
+    { text: body, previousText, actorUserId: userId }
+  );
   return toForumCommentResult(revision);
 };
 

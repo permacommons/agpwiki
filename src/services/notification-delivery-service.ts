@@ -5,24 +5,37 @@ import { sendMail } from './email-service.js';
 import { listDeliveredUserIds, recordNotificationDelivery } from './notification-queue.js';
 import { createSiteNotification, type SiteNotificationInput } from './site-notification-service.js';
 
+type Coverage = { kind: NotificationKind; userIds: string[] };
+
+/**
+ * Who gets a notification of this kind, and how. Coverage names people who
+ * hear about the same post through another kind (a reply in a thread they
+ * follow, a mention): a channel that kind already uses is not used twice.
+ */
 export const loadNotificationRecipients = async (
   userIds: string[],
   kind: NotificationKind,
-  coverage?: { kind: NotificationKind; userIds: string[] }
+  coverage?: Coverage | Coverage[]
 ) => {
-  const coveredIds = new Set(coverage?.userIds);
+  const coverages = (Array.isArray(coverage) ? coverage : coverage ? [coverage] : []).map(item => ({
+    kind: item.kind,
+    userIds: new Set(item.userIds),
+  }));
   const users = await Promise.all([...new Set(userIds)].map(id => User.filterWhere({ id }).first()));
   return users
     .filter((user): user is NonNullable<typeof user> => Boolean(user && !user.blockedAt))
     .map(user => {
       const channel = readNotificationChannel(user.notificationPreferences, kind);
-      const coveredChannel = coverage && coveredIds.has(user.id)
-        ? readNotificationChannel(user.notificationPreferences, coverage.kind)
-        : 'none';
+      const coveredChannels = coverages
+        .filter(item => item.userIds.has(user.id))
+        .map(item => readNotificationChannel(user.notificationPreferences, item.kind));
       return {
         user,
-        site: wantsSiteNotification(channel) && !wantsSiteNotification(coveredChannel),
-        email: wantsEmailNotification(channel) && Boolean(user.emailVerifiedAt) && !wantsEmailNotification(coveredChannel),
+        site: wantsSiteNotification(channel) && !coveredChannels.some(wantsSiteNotification),
+        email:
+          wantsEmailNotification(channel) &&
+          Boolean(user.emailVerifiedAt) &&
+          !coveredChannels.some(wantsEmailNotification),
       };
     })
     .filter(recipient => recipient.site || recipient.email);
