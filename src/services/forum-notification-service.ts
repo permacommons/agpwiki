@@ -9,7 +9,6 @@ import ForumThread from '../models/forum-thread.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds, subscribeUserToForumThread } from './forum-subscription-service.js';
-import { listCommentMentionRecipientUserIds } from './mention-service.js';
 import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
 import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
@@ -24,6 +23,7 @@ export type ForumReplyCreatedPayload = {
   commentId: string;
   actorUserId: string;
   recipientUserIds?: string[];
+  mentionRecipientUserIds?: string[];
 };
 
 
@@ -31,7 +31,8 @@ export const enqueueForumReplyNotification = async (
   threadId: string,
   commentId: string,
   actorUserId: string,
-  enqueueJob: (type: string, payload: ForumReplyCreatedPayload) => Promise<unknown>
+  enqueueJob: (type: string, payload: ForumReplyCreatedPayload) => Promise<unknown>,
+  mentionRecipientUserIds: string[]
 ) => {
   const recipientUserIds = await listForumReplyRecipientUserIds(threadId, actorUserId);
   return enqueueJob(FORUM_REPLY_CREATED_NOTIFICATION, {
@@ -39,6 +40,7 @@ export const enqueueForumReplyNotification = async (
     commentId,
     actorUserId,
     recipientUserIds,
+    mentionRecipientUserIds,
   });
 };
 
@@ -86,7 +88,7 @@ export const processForumReplyCreatedNotification = async (
     ? payload.recipientUserIds
     : await listForumReplyRecipientUserIds(payload.threadId, payload.actorUserId);
   // People the reply mentions hear about it through the mention instead.
-  const mentionedUserIds = await listCommentMentionRecipientUserIds(dal, comment, payload.actorUserId);
+  const mentionedUserIds = payload.mentionRecipientUserIds ?? [];
   const recipients = await listForumReplyNotificationRecipients(recipientUserIds, mentionedUserIds);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const bodySource =

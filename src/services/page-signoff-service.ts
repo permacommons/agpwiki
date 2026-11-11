@@ -183,24 +183,21 @@ export const signOffPage = async (
     },
   });
 
+  const mentionRecipientUserIds = await notifyMentions(
+    dalInstance,
+    { type: 'position', signoffId: signoff.id },
+    { text: normalizedComment ?? '', previousText: previous?.comment, actorUserId: userId },
+    enqueueJob
+  );
   try {
     await notifyPageFollowersOfPosition(
       dalInstance,
-      { pageId: page.id, signoffId: signoff.id, actorUserId: userId, changed: Boolean(previous) },
+      { pageId: page.id, signoffId: signoff.id, actorUserId: userId, changed: Boolean(previous), mentionRecipientUserIds },
       enqueueJob
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to notify page followers of position ${signoff.id}: ${message}`);
-  }
-  if (normalizedComment) {
-    // Saving a position again only notifies the people it newly mentions.
-    await notifyMentions(
-      dalInstance,
-      { type: 'position', signoffId: signoff.id },
-      { text: normalizedComment, previousText: previous?.comment, actorUserId: userId },
-      enqueueJob
-    );
   }
 
   return toPageSignoffResult(signoff);

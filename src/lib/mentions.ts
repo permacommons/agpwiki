@@ -1,9 +1,9 @@
 import { escapeHtml } from './html.js';
+import { splitEscapedTextUrls } from './plain-text-urls.js';
 import { normalizeUsername } from './username.js';
 
-// At most this many people are notified per post, so mentions cannot be
-// used to spam.
-export const MAX_MENTIONS_PER_POST = 10;
+// Bound notification fanout for each new post or edit.
+export const MAX_MENTIONS_PER_EDIT = 10;
 
 // A mention is @ and a run of letters, digits, marks, dots, hyphens or
 // underscores. It must not follow a word character, so e-mail addresses
@@ -37,12 +37,15 @@ export const readMentionAt = (text: string, start: number) => {
   return name ? { written, name, end } : null;
 };
 
-/** The usernames mentioned in plain text, normalized, in order, once each. */
+/** Usernames outside plain-text URLs, normalized, in order, once each. */
 export const findMentionNames = (text: string) => {
   const names: string[] = [];
-  for (const match of text.matchAll(MENTION_PATTERN)) {
-    const mention = readMentionAt(text, match.index);
-    if (mention && !names.includes(mention.name)) names.push(mention.name);
+  for (const part of splitEscapedTextUrls(escapeHtml(text))) {
+    if (part.isUrl) continue;
+    for (const match of part.text.matchAll(MENTION_PATTERN)) {
+      const mention = readMentionAt(part.text, match.index);
+      if (mention && !names.includes(mention.name)) names.push(mention.name);
+    }
   }
   return names;
 };

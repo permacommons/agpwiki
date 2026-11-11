@@ -501,7 +501,7 @@ export const renderMarkdown = async (
 
 /**
  * The usernames a Markdown text mentions with @, normalized, in order. Code
- * and links are skipped, as when the text is rendered.
+ * spans, code blocks, links, and image alt text are skipped.
  */
 export const findMarkdownMentionNames = (bodySource: string) => {
   const env: RenderEnv = { variables: {}, toc: [], tocSlugs: new Set(), mentionNames: [] };

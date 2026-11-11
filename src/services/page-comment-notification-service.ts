@@ -13,7 +13,6 @@ import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds } from './forum-subscription-service.js';
-import { listCommentMentionRecipientUserIds, listMentionRecipientUserIds } from './mention-service.js';
 import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
 import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
@@ -37,6 +36,7 @@ export type PageCommentPayload = {
   changed?: boolean;
   recipientUserIds?: string[];
   forumRecipientUserIds?: string[];
+  mentionRecipientUserIds?: string[];
 };
 
 type EnqueueJob = (type: string, payload: PageCommentPayload) => Promise<unknown>;
@@ -74,7 +74,14 @@ export const notifyPageFollowersOfForumPost = async (
     commentId,
     actorUserId,
     event,
-  }: { threadId: string; commentId: string; actorUserId: string; event: 'thread' | 'comment' },
+    mentionRecipientUserIds = [],
+  }: {
+    threadId: string;
+    commentId: string;
+    actorUserId: string;
+    event: 'thread' | 'comment';
+    mentionRecipientUserIds?: string[];
+  },
   enqueueJob: EnqueueJob
 ) => {
   const thread = await ForumThread.filterWhere({ id: threadId, _oldRevOf: null, _revDeleted: false } as Record<
@@ -86,33 +93,31 @@ export const notifyPageFollowersOfForumPost = async (
   const pageId = await findCurrentPageIdBySlug(thread.pageSlug);
   if (!pageId) return null;
   const forumRecipientUserIds = event === 'comment' ? await listActiveForumThreadSubscriberUserIds(threadId) : [];
-  return enqueue(dal, { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds }, enqueueJob);
+  return enqueue(
+    dal,
+    { pageId, event, actorUserId, threadId, commentId, forumRecipientUserIds, mentionRecipientUserIds },
+    enqueueJob
+  );
 };
 
 export const notifyPageFollowersOfPosition = async (
   dal: DataAccessLayer,
-  { pageId, signoffId, actorUserId, changed }: { pageId: string; signoffId: string; actorUserId: string; changed: boolean },
+  { pageId, signoffId, actorUserId, changed, mentionRecipientUserIds }: {
+    pageId: string;
+    signoffId: string;
+    actorUserId: string;
+    changed: boolean;
+    mentionRecipientUserIds: string[];
+  },
   enqueueJob: EnqueueJob
-) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, enqueueJob);
-
-// A changed position only notifies people it newly mentions, which this
-// cannot tell, so followers keep their usual notification then.
-const listMentionedInPost = async (dal: DataAccessLayer, payload: PageCommentPayload) => {
-  if (payload.event === 'position') {
-    if (payload.changed || !payload.signoffId) return [];
-    const signoff = await PageSignoff.filterWhere({ id: payload.signoffId } as Record<string, unknown>).first();
-    return signoff?.comment
-      ? listMentionRecipientUserIds(dal, { text: signoff.comment, format: 'plain', actorUserId: payload.actorUserId })
-      : [];
-  }
-  const comment = payload.commentId
-    ? await ForumComment.filterWhere({ id: payload.commentId, _oldRevOf: null, _revDeleted: false } as Record<
-        string,
-        unknown
-      >).first()
-    : null;
-  return comment ? listCommentMentionRecipientUserIds(dal, comment, payload.actorUserId) : [];
-};
+) => enqueue(dal, {
+  pageId,
+  event: 'position',
+  actorUserId,
+  signoffId,
+  changed,
+  mentionRecipientUserIds: changed ? [] : mentionRecipientUserIds,
+}, enqueueJob);
 
 const pagePath = (slug: string) => `/${slug.split('/').map(encodeURIComponent).join('/')}`;
 
@@ -210,7 +215,7 @@ export const processPageCommentNotification = async (
   const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, [
     { kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [] },
     // People the post mentions hear about it through the mention instead.
-    { kind: 'mention', userIds: await listMentionedInPost(dal, payload) },
+    { kind: 'mention', userIds: payload.mentionRecipientUserIds ?? [] },
   ]);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();

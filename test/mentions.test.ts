@@ -4,7 +4,7 @@ import test from 'node:test';
 
 import type { TFunction } from 'i18next';
 import { initializePostgreSQL } from '../src/db.js';
-import { findMentionNames, linkMentionsInEscapedText, MAX_MENTIONS_PER_POST } from '../src/lib/mentions.js';
+import { findMentionNames, linkMentionsInEscapedText, MAX_MENTIONS_PER_EDIT } from '../src/lib/mentions.js';
 import User from '../src/models/user.js';
 import { findMarkdownMentionNames, renderMarkdown } from '../src/render.js';
 import { renderNotificationText } from '../src/routes/lib/notifications.js';
@@ -20,7 +20,10 @@ import {
   suggestMentionUsernames,
 } from '../src/services/mention-service.js';
 import { enqueueNotificationJob } from '../src/services/notification-queue.js';
-import { signOffPage } from '../src/services/page-signoff-service.js';
+import { processPageCommentNotification } from '../src/services/page-comment-notification-service.js';
+import { followPage } from '../src/services/page-subscription-service.js';
+import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
+import { replyToPosition } from '../src/services/position-reply-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
@@ -178,21 +181,86 @@ test('Comments notify the people they mention, once, with the operator as the au
   }
 });
 
-test('At most ten people are notified per post, edits included', async () => {
+for (const channel of ['forum', 'page'] as const) {
+  test(`Removing a mention before delivery does not duplicate the ${channel} notification`, async () => {
+    const dal = await getDal();
+    const prefix = `mention-snapshot-${channel}-${run}`;
+    const userIds: string[] = [];
+    try {
+      const author = await createTestUser(`snapshot${channel}author`);
+      const reader = await createTestUser(`snapshot${channel}reader`);
+      userIds.push(author.id, reader.id);
+      if (channel === 'page') {
+        const page = await createWikiPage(
+          dal,
+          { slug: prefix, title: { en: prefix }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
+          author.id
+        );
+        await followPage(dal, page.id, reader.id);
+      }
+      const thread = await createForumThread(
+        { category: channel === 'page' ? 'articles' : 'general', pageSlug: channel === 'page' ? prefix : undefined,
+          title: prefix, body: 'Opening post.', language: 'en' },
+        author.id
+      );
+      if (channel === 'forum') await subscribeUserToForumThread(thread.id, reader.id);
+      const comment = await createForumComment(
+        { threadId: thread.id, body: `Hello @${reader.username}.`, language: 'en' }, author.id
+      );
+      const mentionJobs = await findJobs(dal, 'commentId', comment.id);
+      assert.equal(mentionJobs.length, 1);
+      const type = channel === 'forum' ? 'forum.reply.created' : 'page.comment.created';
+      const queued = await dal.query(
+        "SELECT id, payload FROM notification_jobs WHERE type = $1 AND payload->>'commentId' = $2",
+        [type, comment.id]
+      );
+      assert.equal(queued.rows.length, 1);
+      assert.deepEqual(
+        (queued.rows[0] as { payload: { mentionRecipientUserIds: string[] } }).payload.mentionRecipientUserIds,
+        mentionJobs[0].payload.recipientUserIds
+      );
+      await updateForumComment(dal, { commentId: comment.id, body: 'Hello everyone.', language: 'en' }, author.id);
+      const sent: string[] = [];
+      const sendMail = async (message: { subject: string }) => {
+        sent.push(message.subject);
+        return { delivered: true, skipped: false } as never;
+      };
+      const processSubscriber = channel === 'forum' ? processForumReplyCreatedNotification : processPageCommentNotification;
+      await processSubscriber(dal, queued.rows[0] as never, sendMail);
+      await processMentionNotification(dal, mentionJobs[0] as never, sendMail);
+      const notifications = await dal.query('SELECT kind FROM notifications WHERE user_id = $1', [reader.id]);
+      assert.deepEqual(notifications.rows, [{ kind: 'mention' }]);
+      assert.equal(sent.length, 1);
+    } finally {
+      await cleanup(dal, prefix, userIds);
+    }
+  });
+}
+
+test('Each edit notifies up to ten people absent from the preceding text', async () => {
   const dal = await getDal();
   const userIds: string[] = [];
   try {
     const author = await createTestUser('capauthor');
     userIds.push(author.id);
     const mentioned = [];
-    for (let index = 0; index < MAX_MENTIONS_PER_POST + 2; index += 1) {
+    for (let index = 0; index < MAX_MENTIONS_PER_EDIT + 2; index += 1) {
       const user = await createTestUser(`cap${index}x`);
       userIds.push(user.id);
       mentioned.push(user);
     }
     const text = mentioned.map(user => `@${user.username}`).join(' ');
     const first = await listMentionRecipientUserIds(dal, { text, format: 'plain', actorUserId: author.id });
-    assert.deepEqual(first, mentioned.slice(0, MAX_MENTIONS_PER_POST).map(user => user.id));
+    assert.deepEqual(first, mentioned.slice(0, MAX_MENTIONS_PER_EDIT).map(user => user.id));
+    const hiddenMentions = mentioned
+      .map(user => `[hello @${user.username}](https://example.org) ![photo @${user.username}](photo.jpg)`)
+      .join(' ');
+    const visibleOnly = await listMentionRecipientUserIds(dal, {
+      text: `${hiddenMentions} @${mentioned.at(-1)!.username}`,
+      format: 'markdown',
+      actorUserId: author.id,
+    });
+    assert.deepEqual(visibleOnly, [mentioned.at(-1)!.id], 'Link labels and alt text must not consume the recipient limit');
     const edited = await listMentionRecipientUserIds(dal, {
       text: `${text} @${author.username}`,
       previousText: mentioned
@@ -202,7 +270,21 @@ test('At most ten people are notified per post, edits included', async () => {
       format: 'plain',
       actorUserId: author.id,
     });
-    assert.deepEqual(edited, [mentioned[9].id]);
+    assert.deepEqual(edited, mentioned.slice(9).map(user => user.id));
+    const restored = await listMentionRecipientUserIds(dal, {
+      text,
+      previousText: '',
+      format: 'plain',
+      actorUserId: author.id,
+    });
+    assert.deepEqual(restored, first);
+    const retained = await listMentionRecipientUserIds(dal, {
+      text,
+      previousText: text,
+      format: 'plain',
+      actorUserId: author.id,
+    });
+    assert.deepEqual(retained, []);
   } finally {
     await cleanup(dal, `mention-cap-${run}`, userIds);
   }
@@ -263,6 +345,136 @@ test('Position comments notify the people they newly mention', async () => {
     assert.equal(row.kind, 'mention');
     assert.match(row.url, new RegExp(`^/meta/proposals/${prefix}#position-`));
     assert.equal(row.subject, 'Mention proposal');
+  } finally {
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('A first position reply mentions its owner without duplicate subscriber delivery', async () => {
+  const dal = await getDal();
+  const prefix = `mention-first-position-reply-${run}`;
+  const slug = `meta/proposals/${prefix}`;
+  const userIds: string[] = [];
+  try {
+    const owner = await createTestUser('firstreplyowner');
+    const author = await createTestUser('firstreplyauthor');
+    userIds.push(owner.id, author.id);
+    await createWikiPage(
+      dal,
+      { slug, title: { en: prefix }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
+      owner.id
+    );
+    const position = await signOffPage(
+      dal, { slug, stance: 'support', comment: prefix, commentLanguage: 'en' }, owner.id
+    );
+    const reply = await replyToPosition(
+      dal, { slug, signoffId: position.id, body: `Thanks @${owner.username}.`, language: 'en' }, author.id
+    );
+    assert.equal(reply.createdThread, true);
+    const mentions = await findJobs(dal, 'commentId', reply.commentId);
+    assert.equal(mentions.length, 1);
+    assert.deepEqual(mentions[0].payload.recipientUserIds, [owner.id]);
+    const queued = await dal.query(
+      "SELECT id, payload FROM notification_jobs WHERE type = 'forum.reply.created' AND payload->>'commentId' = $1",
+      [reply.commentId]
+    );
+    assert.equal(queued.rows.length, 1);
+    const job = queued.rows[0] as { id: string; payload: { recipientUserIds: string[]; mentionRecipientUserIds: string[] } };
+    assert.deepEqual(job.payload.recipientUserIds, [owner.id]);
+    assert.deepEqual(job.payload.mentionRecipientUserIds, [owner.id]);
+    const sendMail = async () => ({ delivered: true, skipped: false }) as never;
+    await processForumReplyCreatedNotification(dal, job as never, sendMail);
+    await processMentionNotification(dal, mentions[0] as never, sendMail);
+    const notifications = await dal.query('SELECT kind FROM notifications WHERE user_id = $1', [owner.id]);
+    assert.deepEqual(notifications.rows, [{ kind: 'mention' }]);
+  } finally {
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('Position URL contents do not notify users or suppress a later visible mention', async () => {
+  const dal = await getDal();
+  const prefix = `mention-position-url-${run}`;
+  const slug = `meta/proposals/${prefix}`;
+  const userIds: string[] = [];
+  try {
+    const proposer = await createTestUser('urlproposer');
+    const voter = await createTestUser('urlvoter');
+    userIds.push(proposer.id, voter.id);
+    await createWikiPage(
+      dal,
+      { slug, title: { en: prefix }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
+      proposer.id
+    );
+    const body = `See https://example.org/?name=@${proposer.username}`;
+    await signOffPage(dal, { slug, stance: 'support', comment: body, commentLanguage: 'en' }, voter.id);
+    const queued = await dal.query(
+      "SELECT id FROM notification_jobs WHERE type = $1 AND payload->>'actorUserId' = $2",
+      [MENTION_NOTIFICATION, voter.id]
+    );
+    assert.deepEqual(queued.rows, [], 'A username inside a URL must not queue a mention');
+    const edited = await signOffPage(
+      dal,
+      { slug, stance: 'support', comment: `${body} Thanks @${proposer.username}.`, commentLanguage: 'en' },
+      voter.id
+    );
+    const jobs = await findJobs(dal, 'signoffId', edited.id);
+    assert.equal(jobs.length, 1);
+    assert.deepEqual(jobs[0].payload.recipientUserIds, [proposer.id]);
+  } finally {
+    await cleanup(dal, prefix, userIds);
+  }
+});
+
+test('A retained position mention is delivered after the position is replaced', async () => {
+  const dal = await getDal();
+  const prefix = `mention-pending-position-${run}`;
+  const slug = `meta/proposals/${prefix}`;
+  const userIds: string[] = [];
+  try {
+    const proposer = await createTestUser('pendingproposer');
+    const voter = await createTestUser('pendingvoter');
+    userIds.push(proposer.id, voter.id);
+    await createWikiPage(
+      dal,
+      { slug, title: { en: 'Pending mention proposal' }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
+      proposer.id
+    );
+    const first = await signOffPage(
+      dal,
+      { slug, stance: 'support', comment: `Agree with @${proposer.username}.`, commentLanguage: 'en' },
+      voter.id
+    );
+    const jobs = await findJobs(dal, 'signoffId', first.id);
+    assert.equal(jobs.length, 1);
+    assert.deepEqual(jobs[0].payload.recipientUserIds, [proposer.id]);
+
+    const replacement = await signOffPage(
+      dal,
+      { slug, stance: 'neutral', comment: `Still considering @${proposer.username}'s point.`, commentLanguage: 'en' },
+      voter.id
+    );
+    assert.notEqual(replacement.id, first.id);
+    assert.deepEqual(await findJobs(dal, 'signoffId', replacement.id), []);
+
+    const result = await processMentionNotification(dal, jobs[0] as never, async () => ({
+      delivered: true,
+      skipped: false,
+    }) as never);
+    assert.equal(result.siteCount, 1, 'The queued mention must survive replacement of its position');
+    const rows = await dal.query('SELECT url FROM notifications WHERE user_id = $1 AND job_id = $2', [
+      proposer.id,
+      jobs[0].id,
+    ]);
+    assert.equal(rows.rows.length, 1);
+    assert.equal((rows.rows[0] as { url: string }).url, `/${slug}#position-${replacement.id}`);
+
+    await withdrawPageSignoff(dal, { slug }, voter.id);
+    const withdrawnResult = await processMentionNotification(dal, jobs[0] as never, async () => {
+      assert.fail('A withdrawn position must not send mail');
+    });
+    assert.equal(withdrawnResult.siteCount, 0);
+    assert.equal('skipped' in withdrawnResult && withdrawnResult.skipped, 'post_not_found');
   } finally {
     await cleanup(dal, prefix, userIds);
   }

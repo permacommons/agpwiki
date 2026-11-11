@@ -3,6 +3,7 @@ import type { TFunction } from 'i18next';
 import { commentAnchor, discussionPath, positionAnchor } from '../../lib/discussion-paths.js';
 import { forumCommentDeletePath, forumCommentHistoryPath } from '../../lib/forum-paths.js';
 import { linkMentionsInEscapedText, type MentionMap } from '../../lib/mentions.js';
+import { splitEscapedTextUrls } from '../../lib/plain-text-urls.js';
 import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
 import {
@@ -55,11 +56,9 @@ export const positionReplyPath = (slug: string) => `/${encodeSlugPath(slug)}/pos
 // first, so the links can only come from http(s) URLs and usernames in it.
 export const renderPlainTextWithLinks = (text: string, mentions?: MentionMap) =>
   linkMentionsInEscapedText(
-    escapeHtml(text).replace(/https?:\/\/[^\s<]+/g, url => {
-      const trailing = /(?:[.,;:!?)]|&quot;|&#39;|&#039;|&gt;)+$/.exec(url)?.[0] ?? '';
-      const href = trailing ? url.slice(0, -trailing.length) : url;
-      return `<a href="${href}" rel="nofollow ugc noopener">${href}</a>${trailing}`;
-    }),
+    splitEscapedTextUrls(escapeHtml(text))
+      .map(part => part.isUrl ? `<a href="${part.text}" rel="nofollow ugc noopener">${part.text}</a>` : part.text)
+      .join(''),
     mentions
   );
 

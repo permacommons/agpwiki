@@ -4,7 +4,7 @@ import striptags from 'striptags';
 import debug from '../../util/debug.js';
 import { commentLinkPath } from '../lib/discussion-paths.js';
 import { escapeHtml } from '../lib/html.js';
-import { findMentionNames, MAX_MENTIONS_PER_POST, type MentionMap } from '../lib/mentions.js';
+import { findMentionNames, MAX_MENTIONS_PER_EDIT, type MentionMap } from '../lib/mentions.js';
 import { collapseWhitespace, EXCERPT_LENGTH, pickLocalizedText, truncate } from '../lib/notification-text.js';
 import { normalizeUsername } from '../lib/username.js';
 import ForumComment from '../models/forum-comment.js';
@@ -61,31 +61,21 @@ export const loadPlainTextMentions = async (dal: DataAccessLayer, texts: string[
 const namesIn = (text: string, format: 'markdown' | 'plain') =>
   !text.includes('@') ? [] : format === 'markdown' ? findMarkdownMentionNames(text) : findMentionNames(text);
 
-// Real accounts mentioned in a text, in the order written, without the
-// author and at most MAX_MENTIONS_PER_POST.
 const mentionedUserIds = async (
   dal: DataAccessLayer,
   text: string,
   format: 'markdown' | 'plain',
-  actorUserId: string,
-  limit = MAX_MENTIONS_PER_POST
+  actorUserId: string
 ) => {
   const names = namesIn(text, format);
-  if (!names.length || limit <= 0) return [];
   const users = await resolveMentionedUsers(dal, names);
-  const ids: string[] = [];
-  for (const name of names) {
-    const id = users.get(name)?.id;
-    if (!id || id === actorUserId || ids.includes(id)) continue;
-    ids.push(id);
-    if (ids.length === limit) break;
-  }
-  return ids;
+  const ids = names.map(name => users.get(name)?.id).filter((id): id is string => Boolean(id && id !== actorUserId));
+  return [...new Set(ids)];
 };
 
 /**
- * The people a post notifies. An edit passes the earlier text: people
- * mentioned there were notified already, and count toward the limit.
+ * Each edit notifies at most ten people absent from the preceding text.
+ * Removing and later restoring a mention can notify that person again.
  */
 export const listMentionRecipientUserIds = async (
   dal: DataAccessLayer,
@@ -97,25 +87,13 @@ export const listMentionRecipientUserIds = async (
   }
 ) => {
   const earlier = previousText ? await mentionedUserIds(dal, previousText, format, actorUserId) : [];
-  const ids = await mentionedUserIds(dal, text, format, actorUserId, Number.POSITIVE_INFINITY);
-  return ids.filter(id => !earlier.includes(id)).slice(0, MAX_MENTIONS_PER_POST - earlier.length);
+  const ids = await mentionedUserIds(dal, text, format, actorUserId);
+  return ids.filter(id => !earlier.includes(id)).slice(0, MAX_MENTIONS_PER_EDIT);
 };
-
-/** People mentioned in a forum comment, as notified when it was posted. */
-export const listCommentMentionRecipientUserIds = async (
-  dal: DataAccessLayer,
-  comment: { body?: Record<string, string> | null; canonicalLanguage?: string | null },
-  actorUserId: string
-) =>
-  listMentionRecipientUserIds(dal, {
-    text: pickLocalizedText(comment.body, comment.canonicalLanguage),
-    format: 'markdown',
-    actorUserId,
-  });
 
 /**
  * Notify the people a new or edited post mentions. Failures are logged, not
- * thrown: the post itself is already saved.
+ * thrown: the post itself is already saved. Returns the queued recipient IDs.
  */
 export const notifyMentions = async (
   dal: DataAccessLayer,
@@ -134,13 +112,14 @@ export const notifyMentions = async (
       format: source.type === 'comment' ? 'markdown' : 'plain',
       actorUserId,
     });
-    if (!recipientUserIds.length) return null;
-    return await enqueueJob(MENTION_NOTIFICATION, { ...source, actorUserId, recipientUserIds });
+    if (!recipientUserIds.length) return [];
+    await enqueueJob(MENTION_NOTIFICATION, { ...source, actorUserId, recipientUserIds });
+    return recipientUserIds;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     const id = source.type === 'comment' ? source.commentId : source.signoffId;
     debug.error(`Failed to enqueue mention notifications for ${source.type} ${id}: ${message}`);
-    return null;
+    return [];
   }
 };
 
@@ -152,10 +131,15 @@ const titleText = (value: Record<string, string> | null | undefined, language?: 
 /** Where the mention is, what to call that place, and the start of the text. */
 const describe = async (dal: DataAccessLayer, payload: MentionPayload) => {
   if (payload.type === 'position') {
-    const signoff = await PageSignoff.filterWhere({ id: payload.signoffId, withdrawnAt: null } as Record<
-      string,
-      unknown
-    >).first();
+    let signoff = await PageSignoff.filterWhere({ id: payload.signoffId }).first();
+    if (signoff?.withdrawnAt) {
+      // Position edits replace the row, while queued mentions retain its ID.
+      signoff = await PageSignoff.filterWhere({
+        pageId: signoff.pageId,
+        userId: signoff.userId,
+        withdrawnAt: null,
+      } as Record<string, unknown>).first();
+    }
     const page = signoff ? await findCurrentPageById(signoff.pageId) : null;
     if (!signoff || !page) return null;
     return {
