@@ -791,6 +791,9 @@
     "allChecks": "Wszystkie",
     "empty": "Obecnie brak artykułów na tej liście."
   },
+  "mentions": {
+    "suggestions": "Pasujące nazwy użytkowników"
+  },
   "notifications": {
     loading: 'Wczytywanie…',
     loadError: 'Nie udało się wczytać powiadomień.',
@@ -800,6 +803,7 @@
     "someone": "Ktoś",
     "kind": {
       "forumReply": "{{name}} odpowiada w wątku {{subject}}",
+      "mention": "{{name}} wspomniał(a) o tobie w {{subject}}",
       "pageThread": "{{name}} rozpoczął(-ęła) dyskusję o {{subject}}",
       "pageComment": "{{name}} skomentował(a) {{subject}}",
       "pagePosition": "{{name}} zajął(-ęła) stanowisko ({{stance}}) w sprawie {{subject}}",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "Odpowiedzi w obserwowanych wątkach forum",
           "help": "Obserwujesz wątek, gdy go zakładasz lub w nim odpowiadasz. Możesz też włączyć lub wyłączyć obserwowanie w samym wątku."
+        },
+        "mention": {
+          "label": "Wzmianki o tobie",
+          "help": "Gdy ktoś napisze @ i twoją nazwę użytkownika w komentarzu, stanowisku lub odpowiedzi."
         },
         "pageComment": {
           "label": "Komentarze na obserwowanych stronach",

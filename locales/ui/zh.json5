@@ -791,6 +791,9 @@
     "allChecks": "全部",
     "empty": "目前此列表中没有条目。"
   },
+  "mentions": {
+    "suggestions": "匹配的用户名"
+  },
   "notifications": {
     loading: '正在加载…',
     loadError: '无法加载通知。',
@@ -800,6 +803,7 @@
     "someone": "有人",
     "kind": {
       "forumReply": "{{name}} 在 {{subject}} 中回复了",
+      "mention": "{{name}} 在 {{subject}} 中提到了你",
       "pageThread": "{{name}} 发起了关于 {{subject}} 的讨论",
       "pageComment": "{{name}} 评论了 {{subject}}",
       "pagePosition": "{{name}} 对 {{subject}} 表明了立场（{{stance}}）",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "你关注的论坛帖子中的回复",
           "help": "你发起或回复帖子时就会关注它。你也可以在帖子页面关注或取消关注。"
+        },
+        "mention": {
+          "label": "提到你的内容",
+          "help": "有人在评论、立场或回复中写下 @ 和你的用户名时。"
         },
         "pageComment": {
           "label": "你关注页面上的评论",

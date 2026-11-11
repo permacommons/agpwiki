@@ -2,6 +2,7 @@ import type { TFunction } from 'i18next';
 
 import { commentAnchor, discussionPath, positionAnchor } from '../../lib/discussion-paths.js';
 import { forumCommentDeletePath, forumCommentHistoryPath } from '../../lib/forum-paths.js';
+import { linkMentionsInEscapedText, type MentionMap } from '../../lib/mentions.js';
 import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
 import {
@@ -34,6 +35,8 @@ type PageSignoffsParams = {
   withdrawn?: PageSignoffResult[];
   // Usernames, so a reply to a reply can start with @username.
   usernames?: Map<string, string>;
+  // Usernames mentioned in position comments, linked to their profiles.
+  mentions?: MentionMap;
   isModerator?: boolean;
   // The position whose reply form is open without JavaScript, or after an error.
   openReply?: { signoffId: string; body?: string; language?: string; errorMessage?: string };
@@ -48,14 +51,17 @@ export type RenderedPositionReply = PositionReply & { bodyHtml: string };
 export const pageSignoffPath = (slug: string) => `/${encodeSlugPath(slug)}/sign-off`;
 export const positionReplyPath = (slug: string) => `/${encodeSlugPath(slug)}/position-reply`;
 
-// Plain text with clickable web links. The text is escaped first, so the
-// links can only come from http(s) URLs written in it.
-export const renderPlainTextWithLinks = (text: string) =>
-  escapeHtml(text).replace(/https?:\/\/[^\s<]+/g, url => {
-    const trailing = /(?:[.,;:!?)]|&quot;|&#39;|&#039;|&gt;)+$/.exec(url)?.[0] ?? '';
-    const href = trailing ? url.slice(0, -trailing.length) : url;
-    return `<a href="${href}" rel="nofollow ugc noopener">${href}</a>${trailing}`;
-  });
+// Plain text with clickable web links and @mentions. The text is escaped
+// first, so the links can only come from http(s) URLs and usernames in it.
+export const renderPlainTextWithLinks = (text: string, mentions?: MentionMap) =>
+  linkMentionsInEscapedText(
+    escapeHtml(text).replace(/https?:\/\/[^\s<]+/g, url => {
+      const trailing = /(?:[.,;:!?)]|&quot;|&#39;|&#039;|&gt;)+$/.exec(url)?.[0] ?? '';
+      const href = trailing ? url.slice(0, -trailing.length) : url;
+      return `<a href="${href}" rel="nofollow ugc noopener">${href}</a>${trailing}`;
+    }),
+    mentions
+  );
 
 const stanceLabel = (stance: SignoffStance, t: TFunction) => t(`signoff.stance.${stance}`);
 
@@ -75,6 +81,7 @@ export const renderPageSignoffs = ({
   replies,
   withdrawn = [],
   usernames = new Map(),
+  mentions,
   isModerator = false,
   openReply,
   showDiscussionLink = true,
@@ -164,7 +171,7 @@ export const renderPageSignoffs = ({
     const commentLanguage = signoff.commentLanguage;
     const languageLabel = languageLabelFor(commentLanguage);
     const commentHtml = signoff.comment
-      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment)}</div>${languageLabel ? `<p class="page-signoff-language">${escapeHtml(languageLabel)}</p>` : ''}`
+      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment, mentions)}</div>${languageLabel ? `<p class="page-signoff-language">${escapeHtml(languageLabel)}</p>` : ''}`
       : '';
     const positionLink = `${discussion}#${positionAnchor(signoff.id)}`;
     const actionsHtml = signoff.comment
@@ -228,7 +235,7 @@ export const renderPageSignoffs = ({
   const formHtml = !canSignOff
     ? ''
     : `<form class="page-signoff-form" method="post" action="${action}">
-  <textarea id="page-signoff-comment" name="comment" rows="2" dir="auto"
+  <textarea id="page-signoff-comment" name="comment" rows="2" dir="auto" data-mention-suggest
     aria-label="${escapeHtml(t('signoff.commentLabel'))}"
     placeholder="${escapeHtml(t('signoff.commentLabel'))}">${escapeHtml(own?.comment ?? '')}</textarea>
   <div class="form-actions page-signoff-actions">

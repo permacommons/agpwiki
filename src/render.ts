@@ -6,10 +6,12 @@ import hbs from 'hbs';
 import MarkdownIt from 'markdown-it';
 import { escapeHtml } from './lib/html.js';
 import type { MediaRegistryEntry } from './lib/media-render.js';
+import type { MentionMap } from './lib/mentions.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
 import { mediaPlugin } from './markdown/media.js';
+import { mentionsPlugin } from './markdown/mentions.js';
 import { type SectionEditLinkRenderer, sectionEditPlugin } from './markdown/section-edit.js';
 import { type TocItem, tocPlugin } from './markdown/toc.js';
 import { variablesPlugin } from './markdown/variables.js';
@@ -413,6 +415,7 @@ markdown.use(citationsPlugin, {
   },
 });
 markdown.use(mediaPlugin());
+markdown.use(mentionsPlugin());
 
 export type RenderResult = {
   html: string;
@@ -432,6 +435,8 @@ export type RenderMarkdownOptions = {
   showUnknownVariables?: boolean;
   // Adds an edit link inside each heading of the source text.
   sectionEditLink?: SectionEditLinkRenderer;
+  // Comments only: the mentioned usernames that exist, linked to profiles.
+  mentions?: MentionMap;
 };
 
 type RenderEnv = Record<string, unknown> & {
@@ -463,6 +468,7 @@ export const renderMarkdown = async (
     showUnknownVariables: options.showUnknownVariables,
     sectionEditLink: options.sectionEditLink,
     citationIdPrefix: options.citationIdPrefix,
+    mentions: options.mentions,
   };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel, options.citationIdPrefix);
@@ -491,6 +497,16 @@ export const renderMarkdown = async (
   }
   const toc = (env.toc ?? []) as TocItem[];
   return { html, toc };
+};
+
+/**
+ * The usernames a Markdown text mentions with @, normalized, in order. Code
+ * and links are skipped, as when the text is rendered.
+ */
+export const findMarkdownMentionNames = (bodySource: string) => {
+  const env: RenderEnv = { variables: {}, toc: [], tocSlugs: new Set(), mentionNames: [] };
+  markdown.parse(bodySource, env);
+  return env.mentionNames as string[];
 };
 
 const { handlebars: Handlebars } = hbs;

@@ -24,6 +24,7 @@ import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
+import { loadMarkdownMentions } from '../../services/mention-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
 import { renderMarkdownPreviewPanel } from './markdown-preview.js';
@@ -96,9 +97,10 @@ export const loadDiscussionRenderData = async (
   { backToCitationLabel, locale }: { backToCitationLabel: string; locale: string }
 ) => {
   const sources = comments.map(bodySourceOf);
-  const [citationEntries, mediaRegistry] = await Promise.all([
+  const [citationEntries, mediaRegistry, mentions] = await Promise.all([
     loadCitationEntriesForSources(dalInstance, sources),
     loadMediaEntriesForSources(dalInstance, sources),
+    loadMarkdownMentions(dalInstance, sources),
   ]);
   const bodies = new Map<string, string>();
   for (const comment of comments) {
@@ -107,6 +109,7 @@ export const loadDiscussionRenderData = async (
       citationIdPrefix: `comment-${comment.id}-`,
       mediaRegistry,
       locale,
+      mentions,
     });
     bodies.set(comment.id, rendered.html);
   }
@@ -170,7 +173,7 @@ export const renderReplyForm = ({
   return `<form method="post" action="${escapeHtml(action)}" class="discussion-reply-form" data-reply-form>
   ${hidden}
   ${errorMessage ? `<p class="form-error" role="alert">${escapeHtml(errorMessage)}</p>` : ''}
-  <textarea name="body" rows="3" dir="auto" required aria-label="${escapeHtml(t('discussion.replyLabel'))}" placeholder="${escapeHtml(
+  <textarea name="body" rows="3" dir="auto" required data-mention-suggest aria-label="${escapeHtml(t('discussion.replyLabel'))}" placeholder="${escapeHtml(
     t('discussion.replyPlaceholder')
   )}">${escapeHtml(body)}</textarea>
   <div class="form-actions">
@@ -428,7 +431,7 @@ export const renderStartThreadForm = ({
     </label>
     <label class="form-field">
       <span>${escapeHtml(t('discussion.commentLabel'))}</span>
-      <textarea id="discussion-thread-body" name="body" rows="5" required data-markdown-preview-field placeholder="${escapeHtml(
+      <textarea id="discussion-thread-body" name="body" rows="5" required data-markdown-preview-field data-mention-suggest placeholder="${escapeHtml(
         t('discussion.commentPlaceholder')
       )}">${escapeHtml(values.body)}</textarea>
     </label>

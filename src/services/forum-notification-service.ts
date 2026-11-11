@@ -9,6 +9,7 @@ import ForumThread from '../models/forum-thread.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds, subscribeUserToForumThread } from './forum-subscription-service.js';
+import { listCommentMentionRecipientUserIds } from './mention-service.js';
 import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
 import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
@@ -52,8 +53,8 @@ export const listForumReplyRecipientUserIds = async (
   return [...new Set(subscriberIds)].filter(userId => userId !== actorUserId);
 };
 
-export const listForumReplyNotificationRecipients = (recipientUserIds: string[]) =>
-  loadNotificationRecipients(recipientUserIds, FORUM_NOTIFICATION_KIND);
+export const listForumReplyNotificationRecipients = (recipientUserIds: string[], mentionedUserIds: string[] = []) =>
+  loadNotificationRecipients(recipientUserIds, FORUM_NOTIFICATION_KIND, { kind: 'mention', userIds: mentionedUserIds });
 
 export const processForumReplyCreatedNotification = async (
   dal: DataAccessLayer,
@@ -84,7 +85,9 @@ export const processForumReplyCreatedNotification = async (
   const recipientUserIds = Array.isArray(payload.recipientUserIds)
     ? payload.recipientUserIds
     : await listForumReplyRecipientUserIds(payload.threadId, payload.actorUserId);
-  const recipients = await listForumReplyNotificationRecipients(recipientUserIds);
+  // People the reply mentions hear about it through the mention instead.
+  const mentionedUserIds = await listCommentMentionRecipientUserIds(dal, comment, payload.actorUserId);
+  const recipients = await listForumReplyNotificationRecipients(recipientUserIds, mentionedUserIds);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const bodySource =
     comment.body?.[comment.canonicalLanguage ?? 'en']

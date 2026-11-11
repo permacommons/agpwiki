@@ -9,6 +9,7 @@ import {
 } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { pickLocalizedText } from '../lib/notification-text.js';
 import { isUuid } from '../lib/uuid.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
@@ -21,6 +22,7 @@ import {
   enqueueForumReplyNotification,
   subscribeActorToForumThread,
 } from './forum-notification-service.js';
+import { notifyMentions } from './mention-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
@@ -536,6 +538,12 @@ export const createForumThread = async (
     }
   }
 
+  await notifyMentions(
+    ForumThread.dal as DataAccessLayer,
+    { type: 'comment', threadId: thread.id, commentId: firstCommentId },
+    { text: body, actorUserId: userId }
+  );
+
   return {
     ...toForumThreadResult(thread),
     commentCount: 1,
@@ -622,6 +630,11 @@ export const createForumComment = async (
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to notify page followers of comment ${comment.id}: ${message}`);
   }
+  await notifyMentions(
+    ForumThread.dal as DataAccessLayer,
+    { type: 'comment', threadId: thread.id, commentId: comment.id },
+    { text: body, actorUserId: userId }
+  );
 
   return toForumCommentResult(comment);
 };
@@ -668,12 +681,19 @@ export const updateForumComment = async (
   if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
     throw new ForbiddenError('Only the author can edit a post.', { commentId });
   }
+  const previousText = pickLocalizedText(comment.body, comment.canonicalLanguage);
   const updatedAt = new Date();
   const revision = await comment.newRevision({ id: userId }, { tags: ['edit'], date: updatedAt });
   revision.body = sanitizeLocalizedMapInput({ [language]: body });
   revision.canonicalLanguage = language;
   revision.updatedAt = updatedAt;
   await revision.save();
+  // Only people the edit newly mentions are notified.
+  await notifyMentions(
+    dalInstance,
+    { type: 'comment', threadId: comment.threadId, commentId: comment.id },
+    { text: body, previousText, actorUserId: userId }
+  );
   return toForumCommentResult(revision);
 };
 

@@ -11,6 +11,7 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { reattachForumThread } from './forum-service.js';
+import { notifyMentions } from './mention-service.js';
 import { enqueueNotificationJob } from './notification-queue.js';
 import { notifyPageFollowersOfPosition } from './page-comment-notification-service.js';
 import { ensureNonEmptyString, ensureOptionalLanguage, ensureOptionalString, normalizeSlugInput } from './validation.js';
@@ -191,6 +192,15 @@ export const signOffPage = async (
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to notify page followers of position ${signoff.id}: ${message}`);
+  }
+  if (normalizedComment) {
+    // Saving a position again only notifies the people it newly mentions.
+    await notifyMentions(
+      dalInstance,
+      { type: 'position', signoffId: signoff.id },
+      { text: normalizedComment, previousText: previous?.comment, actorUserId: userId },
+      enqueueJob
+    );
   }
 
   return toPageSignoffResult(signoff);

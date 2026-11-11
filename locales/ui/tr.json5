@@ -791,6 +791,9 @@
     "allChecks": "Tümü",
     "empty": "Şu anda bu listede madde yok."
   },
+  "mentions": {
+    "suggestions": "Eşleşen kullanıcı adları"
+  },
   "notifications": {
     loading: 'Yükleniyor…',
     loadError: 'Bildirimler yüklenemedi.',
@@ -800,6 +803,7 @@
     "someone": "Biri",
     "kind": {
       "forumReply": "{{name}}, {{subject}} konusunda yanıt verdi",
+      "mention": "{{name}}, {{subject}} içinde sizden bahsetti",
       "pageThread": "{{name}}, {{subject}} hakkında bir tartışma başlattı",
       "pageComment": "{{name}}, {{subject}} için yorum yaptı",
       "pagePosition": "{{name}}, {{subject}} hakkında bir görüş ({{stance}}) bildirdi",
@@ -837,6 +841,10 @@
         "forumReply": {
           "label": "Takip ettiğiniz forum konularındaki yanıtlar",
           "help": "Bir konuyu başlattığınızda veya yanıt verdiğinizde takip edersiniz. Konunun kendisinden de takip edebilir veya bırakabilirsiniz."
+        },
+        "mention": {
+          "label": "Sizden bahsedilmesi",
+          "help": "Biri bir yorumda, tutumda veya yanıtta @ ve kullanıcı adınızı yazdığında."
         },
         "pageComment": {
           "label": "Takip ettiğiniz sayfalardaki yorumlar",

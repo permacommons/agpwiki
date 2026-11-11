@@ -792,6 +792,9 @@
     "allChecks": "Alle",
     "empty": "Op dit moment geen artikelen in deze lijst."
   },
+  "mentions": {
+    "suggestions": "Passende gebruikersnamen"
+  },
   "notifications": {
     loading: 'Laden…',
     loadError: 'Meldingen konden niet worden geladen.',
@@ -801,6 +804,7 @@
     "someone": "Iemand",
     "kind": {
       "forumReply": "{{name}} reageerde in {{subject}}",
+      "mention": "{{name}} noemde je in {{subject}}",
       "pageThread": "{{name}} begon een discussie over {{subject}}",
       "pageComment": "{{name}} reageerde op {{subject}}",
       "pagePosition": "{{name}} gaf een standpunt ({{stance}}) over {{subject}}",
@@ -838,6 +842,10 @@
         "forumReply": {
           "label": "Reacties in forumdraden die je volgt",
           "help": "Je volgt een draad als je hem start of erin reageert. Je kunt hem ook in de draad zelf volgen of ontvolgen."
+        },
+        "mention": {
+          "label": "Vermeldingen van jou",
+          "help": "Als iemand @ en je gebruikersnaam schrijft in een reactie, een standpunt of een antwoord."
         },
         "pageComment": {
           "label": "Reacties op pagina's die je volgt",

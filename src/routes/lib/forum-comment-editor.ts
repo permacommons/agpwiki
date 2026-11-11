@@ -18,7 +18,7 @@ export const renderForumCommentEditor = ({
   hidden?: boolean;
 }) => `<form method="post" action="${escapeHtml(forumCommentEditPath(commentId))}" class="forum-comment-editor" data-comment-editor${hidden ? ' hidden' : ''}>
   <input type="hidden" name="return" value="${escapeHtml(returnPath)}" />
-  <textarea name="body" rows="6" dir="auto" required aria-label="${escapeHtml(t('forum.compose.body'))}">${escapeHtml(body)}</textarea>
+  <textarea name="body" rows="6" dir="auto" required data-mention-suggest aria-label="${escapeHtml(t('forum.compose.body'))}">${escapeHtml(body)}</textarea>
   <div class="form-actions">
     ${renderFormLanguageSelector({
       languageOptions, selected: language, name: 'language', idPrefix: `comment-edit-language-${commentId}`,

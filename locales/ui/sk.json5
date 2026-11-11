@@ -793,6 +793,9 @@
     "allChecks": "Všetky",
     "empty": "V tomto zozname teraz nie sú žiadne články."
   },
+  "mentions": {
+    "suggestions": "Zodpovedajúce používateľské mená"
+  },
   "notifications": {
     loading: 'Načítava sa…',
     loadError: 'Upozornenia sa nepodarilo načítať.',
@@ -802,6 +805,7 @@
     "someone": "Niekto",
     "kind": {
       "forumReply": "{{name}} odpovedal(a) vo vlákne {{subject}}",
+      "mention": "{{name}} ťa spomenul(a) v {{subject}}",
       "pageThread": "{{name}} začal(a) diskusiu o {{subject}}",
       "pageComment": "{{name}} komentoval(a) {{subject}}",
       "pagePosition": "{{name}} vyjadril(a) postoj ({{stance}}) k {{subject}}",
@@ -839,6 +843,10 @@
         "forumReply": {
           "label": "Odpovede vo vláknach fóra, ktoré sleduješ",
           "help": "Vlákno sleduješ, keď ho založíš alebo v ňom odpovieš. Sledovanie môžeš zapnúť alebo vypnúť aj priamo vo vlákne."
+        },
+        "mention": {
+          "label": "Zmienky o tebe",
+          "help": "Keď niekto napíše @ a tvoje používateľské meno do komentára, stanoviska alebo odpovede."
         },
         "pageComment": {
           "label": "Komentáre na sledovaných stránkach",

@@ -447,7 +447,9 @@ export const registerForumRoutes = (app: Express) => {
           ? renderMarkdownPreviewHtml(
               dalInstance,
               source,
-              req.t('citation.backToCitationAria')
+              req.t('citation.backToCitationAria'),
+              undefined,
+              { mentions: true }
             )
           : '';
       }
@@ -798,7 +800,9 @@ export const registerForumRoutes = (app: Express) => {
         const threadPreviewHtml = await renderMarkdownPreviewHtml(
           dalInstance,
           body,
-          req.t('citation.backToCitationAria')
+          req.t('citation.backToCitationAria'),
+          undefined,
+          { mentions: true }
         );
         await renderSectionPage(req, res, category, { threadPreviewHtml });
         return;

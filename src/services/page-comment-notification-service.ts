@@ -13,6 +13,7 @@ import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import { sendMail } from './email-service.js';
 import { listActiveForumThreadSubscriberUserIds } from './forum-subscription-service.js';
+import { listCommentMentionRecipientUserIds, listMentionRecipientUserIds } from './mention-service.js';
 import { deliverNotification, loadNotificationRecipients } from './notification-delivery-service.js';
 import type { NotificationJobRecord } from './notification-queue.js';
 import { markdownToPlainText } from './notification-text.js';
@@ -93,6 +94,25 @@ export const notifyPageFollowersOfPosition = async (
   { pageId, signoffId, actorUserId, changed }: { pageId: string; signoffId: string; actorUserId: string; changed: boolean },
   enqueueJob: EnqueueJob
 ) => enqueue(dal, { pageId, event: 'position', actorUserId, signoffId, changed }, enqueueJob);
+
+// A changed position only notifies people it newly mentions, which this
+// cannot tell, so followers keep their usual notification then.
+const listMentionedInPost = async (dal: DataAccessLayer, payload: PageCommentPayload) => {
+  if (payload.event === 'position') {
+    if (payload.changed || !payload.signoffId) return [];
+    const signoff = await PageSignoff.filterWhere({ id: payload.signoffId } as Record<string, unknown>).first();
+    return signoff?.comment
+      ? listMentionRecipientUserIds(dal, { text: signoff.comment, format: 'plain', actorUserId: payload.actorUserId })
+      : [];
+  }
+  const comment = payload.commentId
+    ? await ForumComment.filterWhere({ id: payload.commentId, _oldRevOf: null, _revDeleted: false } as Record<
+        string,
+        unknown
+      >).first()
+    : null;
+  return comment ? listCommentMentionRecipientUserIds(dal, comment, payload.actorUserId) : [];
+};
 
 const pagePath = (slug: string) => `/${slug.split('/').map(encodeURIComponent).join('/')}`;
 
@@ -187,9 +207,11 @@ export const processPageCommentNotification = async (
     title: collapseWhitespace(pickLocalizedText(currentPage.title, currentPage.canonicalLanguage)) || currentPage.slug,
   };
 
-  const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, {
-    kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [],
-  });
+  const recipients = await loadNotificationRecipients(payload.recipientUserIds ?? [], PAGE_COMMENT_KIND, [
+    { kind: 'forum.reply', userIds: payload.forumRecipientUserIds ?? [] },
+    // People the post mentions hear about it through the mention instead.
+    { kind: 'mention', userIds: await listMentionedInPost(dal, payload) },
+  ]);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const actor = await User.filterWhere({ id: payload.actorUserId }).first();
   const rendered = await describe(dal, payload, page, actor?.displayName ?? 'Someone');

@@ -3628,6 +3628,40 @@ altcha-widget {
 }
 
 /* The bell's panel: a flyout under the bell, like Wikipedia's notifications. */
+/* @mentions in comments, and the usernames suggested while typing one. */
+a.mention {
+  font-weight: 600;
+  text-decoration: none;
+}
+a.mention:hover,
+a.mention:focus-visible {
+  text-decoration: underline;
+}
+.mention-suggestions {
+  position: absolute;
+  z-index: 40;
+  max-width: calc(100vw - 2rem);
+  margin: 0.15rem 0 0;
+  padding: 0.2rem 0;
+  list-style: none;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid #c8ccd1;
+  border-radius: 0.25rem;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.25);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.mention-suggestions li {
+  padding: 0.3rem 0.7rem;
+  cursor: pointer;
+}
+.mention-suggestions li[aria-selected="true"] {
+  background: var(--panel);
+}
+.mention-suggestion-username {
+  color: var(--muted);
+}
 .notification-panel {
   position: absolute;
   top: calc(100% + 0.65rem);
