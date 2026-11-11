@@ -89,8 +89,6 @@ export const renderPageSignoffs = ({
   const pagePath = `/${encodeSlugPath(slug)}`;
   const discussion = discussionPath({ kind: 'page', slug });
   const replyAction = positionReplyPath(slug);
-  const languageLabelFor = (code: string | null) =>
-    code ? (languageOptions.find(option => option.code === code)?.label ?? code) : null;
   // Positions and their replies are on the first page of the discussion, so
   // their links need no thread in the address.
   const commentLink = (id: string) => `${discussion}#${commentAnchor(id)}`;
@@ -168,9 +166,8 @@ export const renderPageSignoffs = ({
       ? ` · <span class="page-signoff-changed">${escapeHtml(t('forum.position.withdrawn'))}</span>`
       : '';
     const commentLanguage = signoff.commentLanguage;
-    const languageLabel = languageLabelFor(commentLanguage);
     const commentHtml = signoff.comment
-      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment, mentions)}</div>${languageLabel ? `<p class="page-signoff-language">${escapeHtml(languageLabel)}</p>` : ''}`
+      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment, mentions)}</div>`
       : '';
     const positionLink = `${discussion}#${positionAnchor(signoff.id)}`;
     const actionsHtml = signoff.comment

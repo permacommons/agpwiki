@@ -1139,11 +1139,6 @@ pre.diff ins {
 .page-signoff-changed {
   color: var(--muted);
 }
-.page-signoff-language {
-  margin: 0.3rem 0 0;
-  color: var(--muted);
-  font-size: 0.85rem;
-}
 .page-signoff-form p {
   margin: 0;
   color: var(--muted);
