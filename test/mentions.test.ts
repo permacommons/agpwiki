@@ -480,7 +480,7 @@ test('A retained position mention is delivered after the position is replaced', 
   }
 });
 
-test('Username suggestions match the start of usernames and leave out blocked accounts', async () => {
+test('Username suggestions match verified, unblocked accounts', async () => {
   const dal = await getDal();
   const userIds: string[] = [];
   try {
@@ -488,14 +488,26 @@ test('Username suggestions match the start of usernames and leave out blocked ac
     const blocked = await User.create({
       username: `${shown.username}blocked`,
       displayName: 'Blocked',
+      emailVerifiedAt: new Date(),
       email: `mention-blocked-${run}@example.com`,
       passwordHash: randomBytes(32).toString('hex'),
       createdAt: new Date(),
     });
-    userIds.push(shown.id, blocked.id);
+    const unverified = await User.create({
+      username: `${shown.username}unverified`,
+      displayName: 'Unverified',
+      email: `mention-unverified-${run}@example.com`,
+      passwordHash: randomBytes(32).toString('hex'),
+      createdAt: new Date(),
+    });
+    userIds.push(shown.id, blocked.id, unverified.id);
     await dal.query('UPDATE users SET blocked_at = NOW() WHERE id = $1', [blocked.id]);
     const users = await suggestMentionUsernames(dal, `Mention_SuggestShown${run}`);
     assert.deepEqual(users, [{ username: shown.username, name: shown.displayName }]);
+    await dal.query('UPDATE users SET email_verified_at = NOW() WHERE id = $1', [unverified.id]);
+    assert.deepEqual(await suggestMentionUsernames(dal, unverified.username), [
+      { username: unverified.username, name: unverified.displayName },
+    ]);
     assert.deepEqual(await suggestMentionUsernames(dal, '%'), []);
     assert.deepEqual(await suggestMentionUsernames(dal, ''), []);
   } finally {

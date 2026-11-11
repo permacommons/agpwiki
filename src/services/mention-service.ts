@@ -226,7 +226,7 @@ export const MENTION_SUGGESTION_LIMIT = 8;
 
 /**
  * A few usernames starting with what someone typed after @, for the
- * suggestions under a comment box. Blocked accounts are left out.
+ * suggestions under a comment box. Only verified, unblocked accounts qualify.
  */
 export const suggestMentionUsernames = async (dal: DataAccessLayer, typed: string) => {
   const prefix = normalizeUsername(typed);
@@ -234,7 +234,7 @@ export const suggestMentionUsernames = async (dal: DataAccessLayer, typed: strin
   const pattern = `${prefix.replace(/[\\%_]/g, char => `\\${char}`)}%`;
   const result = await dal.query(
     `SELECT username, display_name FROM users
-      WHERE username LIKE $1 AND blocked_at IS NULL
+      WHERE username LIKE $1 AND blocked_at IS NULL AND email_verified_at IS NOT NULL
       ORDER BY username = $2 DESC, length(username), username
       LIMIT $3`,
     [pattern, prefix, MENTION_SUGGESTION_LIMIT]
