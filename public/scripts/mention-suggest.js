@@ -20,6 +20,9 @@
   let requestId = 0;
 
   const close = () => {
+    clearTimeout(timer);
+    requestId += 1;
+    typed = null;
     if (list) list.hidden = true;
     if (field) {
       field.removeAttribute('aria-activedescendant');
@@ -97,9 +100,13 @@
   const mentionText = user =>
     NAME_ONLY.test(user.name) && normalize(user.name) === user.username ? user.name : user.username;
 
+  const mentionSelectionIsCurrent = () =>
+    field && typed && field.selectionStart === typed.end && field.selectionEnd === typed.end;
+
   const choose = index => {
     const user = items[index];
     if (!user || !field || !typed) return;
+    if (!mentionSelectionIsCurrent()) return close();
     const { start, end } = typed;
     const insert = `@${mentionText(user)} `;
     field.setRangeText(insert, start, end, 'end');
@@ -113,12 +120,12 @@
     if (caret !== textarea.selectionEnd) return close();
     const match = TYPED_MENTION.exec(textarea.value.slice(0, caret));
     if (!match) return close();
+    close();
     field = textarea;
     field.setAttribute('aria-autocomplete', 'list');
     typed = { start: caret - match[1].length - 1, end: caret };
     const query = match[1];
     const id = ++requestId;
-    clearTimeout(timer);
     timer = setTimeout(async () => {
       try {
         const response = await fetch(`${endpoint}?q=${encodeURIComponent(query)}`, {
@@ -129,20 +136,29 @@
         const data = await response.json();
         if (id === requestId) show(Array.isArray(data.users) ? data.users : []);
       } catch {
-        close();
+        if (id === requestId) close();
       }
     }, 150);
   };
 
+  document.addEventListener('compositionstart', event => {
+    const target = event.target;
+    if (target instanceof HTMLTextAreaElement && target.hasAttribute('data-mention-suggest')) close();
+  });
+
   document.addEventListener('input', event => {
     const target = event.target;
-    if (target instanceof HTMLTextAreaElement && target.hasAttribute('data-mention-suggest')) lookup(target);
+    if (!(target instanceof HTMLTextAreaElement) || !target.hasAttribute('data-mention-suggest')) return;
+    if (event.isComposing) return close();
+    lookup(target);
   });
 
   document.addEventListener(
     'keydown',
     event => {
+      if (event.isComposing || event.keyCode === 229) return;
       if (!list || list.hidden || event.target !== field || !items.length) return;
+      if (!mentionSelectionIsCurrent()) return close();
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault();
         const step = event.key === 'ArrowDown' ? 1 : -1;
