@@ -4,13 +4,17 @@ export const PAGE_NAMESPACES = [
   { name: 'article', prefix: '' },
   { name: 'meta', prefix: 'meta/' },
   { name: 'draft', prefix: 'draft/' },
+  // A contributor's own text on their profile, at user/<username>.
+  { name: 'user', prefix: 'user/' },
 ] as const;
 
 export type PageNamespace = typeof PAGE_NAMESPACES[number]['name'];
 
 // A draft is meant to become an article, so it may duplicate one.
+// A profile belongs to its contributor, so profiles never duplicate each other.
 const DUPLICATE_SCOPES: Partial<Record<PageNamespace, readonly PageNamespace[]>> = {
   draft: ['draft', 'article'],
+  user: [],
 };
 
 /** The namespaces a new page in this namespace is checked against for duplicates. */

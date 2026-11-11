@@ -21,6 +21,7 @@ import {
   forumThreadPinPath,
 } from '../../lib/forum-paths.js';
 import { loadMediaEntriesForSources } from '../../lib/media-render.js';
+import { renderUserLink } from '../../lib/profile-paths.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
@@ -207,9 +208,15 @@ export const renderReplyTemplate = (ctx: Pick<DiscussionRenderContext, 't' | 'la
 
 const plainClick = 'data-plain-click';
 
-/** The meta line of a comment or a position: who wrote it and when. */
-export const renderCommentMeta = (name: string, date: Date | null, extraHtml = '', locale = 'en') =>
-  `<div class="discussion-comment-meta"><strong class="discussion-author">${escapeHtml(name)}</strong> <span class="discussion-date">· ${escapeHtml(
+/** The meta line of a comment or a position: who wrote it, linked to their profile, and when. */
+export const renderCommentMeta = (
+  name: string,
+  date: Date | null,
+  extraHtml = '',
+  locale = 'en',
+  username?: string | null
+) =>
+  `<div class="discussion-comment-meta"><strong class="discussion-author">${renderUserLink(name, username)}</strong> <span class="discussion-date">· ${escapeHtml(
     formatDay(date, locale)
   )}</span>${extraHtml}</div>`;
 
@@ -275,7 +282,7 @@ const renderComment = (
         .map(reply => renderComment(reply, thread, ctx, comment))
         .join('')}${openReply}</div>`;
   return `<article class="discussion-comment${parent ? ' discussion-comment--reply' : ''}" id="${commentAnchor(comment.id)}" data-comment-edit>
-  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale)}
+  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale, author?.username)}
   <div class="discussion-comment-body" data-comment-content${comment.canonicalLanguage ? ` lang="${escapeHtml(comment.canonicalLanguage)}"` : ''} dir="auto">${
     ctx.bodies.get(comment.id) ?? ''
   }</div>

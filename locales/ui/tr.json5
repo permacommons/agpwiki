@@ -992,4 +992,27 @@
     "discussedPages": "Yakın zamanda tartışılan sayfalar",
     "noDiscussedPages": "Henüz hiçbir sayfa tartışılmadı.",
   },
+  "profile": {
+    "label": "PROFİL — AGPEDIA KATKICISI",
+    "tabProfile": "Profil",
+    "tabTalk": "Tartışma",
+    "empty": "{{name}} henüz buraya bir şey yazmadı.",
+    "emptyOwn": "Profilini henüz yazmadın.",
+    "write": "Profilini yaz",
+    "editForbidden": "Bu profili yalnızca sahibi ve viki yöneticileri düzenleyebilir.",
+    "talkIntro": "{{username}} için mesajlar. Onaylı bir e-posta adresiyle oturum açmış herkes buraya yazabilir. {{username}} her yeni mesajdan haberdar edilir.",
+    "talkTitle": "Tartışma: {{name}}",
+    "forumSection": "Katkıcılar",
+    "account": {
+      "title": "Hesap",
+      "username": "Kullanıcı adı",
+      "displayName": "Görünen ad",
+      "activeSince": "Şu tarihten beri etkin",
+      "edits": "Düzenlemeler",
+      "pagesCreated": "Oluşturulan sayfalar",
+      "comments": "Yorumlar",
+      "roles": "Roller",
+      "editsBreakdown": "Türe göre düzenlemeler:"
+    }
+  }
 }

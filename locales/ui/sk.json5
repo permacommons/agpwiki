@@ -994,4 +994,27 @@
     "discussedPages": "Stránky s nedávnou diskusiou",
     "noDiscussedPages": "Zatiaľ sa nediskutovalo o žiadnej stránke.",
   },
+  "profile": {
+    "label": "PROFIL — PRISPIEVATEĽ AGPEDIE",
+    "tabProfile": "Profil",
+    "tabTalk": "Diskusia",
+    "empty": "{{name}} sem zatiaľ nič nenapísal(a).",
+    "emptyOwn": "Svoj profil si ešte nenapísal(a).",
+    "write": "Napísať profil",
+    "editForbidden": "Tento profil môže upravovať len jeho vlastník a správcovia wiki.",
+    "talkIntro": "Správy pre {{username}}. Písať sem môže ktokoľvek, kto je prihlásený s potvrdenou e-mailovou adresou. {{username}} dostane upozornenie na každú novú správu.",
+    "talkTitle": "Diskusia: {{name}}",
+    "forumSection": "Prispievatelia",
+    "account": {
+      "title": "Účet",
+      "username": "Používateľské meno",
+      "displayName": "Zobrazované meno",
+      "activeSince": "Aktívny od",
+      "edits": "Úpravy",
+      "pagesCreated": "Vytvorené stránky",
+      "comments": "Komentáre",
+      "roles": "Roly",
+      "editsBreakdown": "Úpravy podľa druhu:"
+    }
+  }
 }

@@ -182,6 +182,8 @@ markdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     }
     tokens[idx].attrSet('data-wiki-link', 'true');
     tokens[idx].attrSet('data-wiki-link-slug', slug);
+  } else if ((env as RenderEnv).nofollowLinks && href && /^[a-z][a-z0-9+.-]*:/i.test(href)) {
+    tokens[idx].attrSet('rel', 'nofollow ugc');
   }
 
   return defaultLinkOpen(tokens, idx, options, env, self);
@@ -432,6 +434,8 @@ export type RenderMarkdownOptions = {
   showUnknownVariables?: boolean;
   // Adds an edit link inside each heading of the source text.
   sectionEditLink?: SectionEditLinkRenderer;
+  // Links to other sites pass no search ranking, as in text that is not reviewed content.
+  nofollowLinks?: boolean;
 };
 
 type RenderEnv = Record<string, unknown> & {
@@ -445,6 +449,7 @@ type RenderEnv = Record<string, unknown> & {
   locale?: string;
   sectionEditLink?: SectionEditLinkRenderer;
   citationIdPrefix?: string;
+  nofollowLinks?: boolean;
 };
 
 export const renderMarkdown = async (
@@ -463,6 +468,7 @@ export const renderMarkdown = async (
     showUnknownVariables: options.showUnknownVariables,
     sectionEditLink: options.sectionEditLink,
     citationIdPrefix: options.citationIdPrefix,
+    nofollowLinks: options.nofollowLinks,
   };
   if (citationEntries.length > 0) {
     env.citeprocFactory = () => buildCiteproc(citationEntries, backToCitationLabel, options.citationIdPrefix);

@@ -992,4 +992,27 @@
     "discussedPages": "Pagine con discussioni recenti",
     "noDiscussedPages": "Nessuna pagina è stata ancora discussa.",
   },
+  "profile": {
+    "label": "PROFILO — CONTRIBUTORE DI AGPEDIA",
+    "tabProfile": "Profilo",
+    "tabTalk": "Discussione",
+    "empty": "{{name}} non ha ancora scritto nulla qui.",
+    "emptyOwn": "Non hai ancora scritto il tuo profilo.",
+    "write": "Scrivi il tuo profilo",
+    "editForbidden": "Solo questa persona e gli amministratori della wiki possono modificare questo profilo.",
+    "talkIntro": "Messaggi per {{username}}. Chiunque abbia effettuato l’accesso con un indirizzo email confermato può scrivere qui. {{username}} riceve una notifica per ogni nuovo messaggio.",
+    "talkTitle": "Discussione: {{name}}",
+    "forumSection": "Contributori",
+    "account": {
+      "title": "Account",
+      "username": "Nome utente",
+      "displayName": "Nome visualizzato",
+      "activeSince": "Attivo da",
+      "edits": "Modifiche",
+      "pagesCreated": "Pagine create",
+      "comments": "Commenti",
+      "roles": "Ruoli",
+      "editsBreakdown": "Modifiche per tipo:"
+    }
+  }
 }

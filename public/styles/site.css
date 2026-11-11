@@ -4081,3 +4081,50 @@ altcha-widget {
     padding: 1rem;
   }
 }
+/* Contributor profiles: the account box beside the profile and its Talk tab. */
+.profile-account {
+  margin: 0 0 1rem;
+  padding: 0 0 0.75rem;
+}
+.profile-account h2 {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.profile-account-list {
+  margin: 0;
+}
+.profile-account-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+}
+.profile-account-row dt,
+.profile-account-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.profile-account-row dd {
+  color: var(--ink);
+}
+.profile-account-breakdown {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+.profile-empty,
+.profile-talk-intro {
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--muted);
+}
+.profile-talk-intro {
+  font-size: 0.85rem;
+}
+.rev-byline,
+.change-user {
+  font-family: 'IBM Plex Sans', sans-serif;
+}

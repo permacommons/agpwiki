@@ -26,6 +26,7 @@ import {
   forumIndexPath,
   forumThreadPath,
 } from '../lib/forum-paths.js';
+import { profileSlug } from '../lib/profile-paths.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { normalizeLineEndings } from '../lib/text-normalization.js';
 import {
@@ -58,6 +59,7 @@ import {
   subscribeUserToForumThread,
   unsubscribeUserFromForumThread,
 } from '../services/forum-subscription-service.js';
+import { findProfileOwnerBySlug } from '../services/profile-service.js';
 import { normalizeSlugInput } from '../services/validation.js';
 import { renderPageDiscussionForThread, renderPostDiscussionForThread } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
@@ -244,7 +246,7 @@ const readPage = (value: unknown) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 };
 
-const SECTIONS_WITH_PAGES = new Set(['articles', 'policy', 'blog']);
+const SECTIONS_WITH_PAGES = new Set(['articles', 'policy', 'users', 'blog']);
 
 /** The pages of a section whose discussions are active, newest activity first. */
 const renderDiscussedPages = async (
@@ -254,9 +256,16 @@ const renderDiscussedPages = async (
 ) => {
   const list = await listDiscussedPages(dalInstance, category, { page: readPage(req.query.list) });
   const locale = resLocale(req);
+  // A Talk tab is listed under its contributor's name, whether or not the profile has text.
+  const profileNames = new Map<string, string>();
+  if (category === 'users') {
+    const owners = await Promise.all(list.pages.map(item => findProfileOwnerBySlug(dalInstance, item.slug)));
+    for (const owner of owners) if (owner) profileNames.set(profileSlug(owner.username), owner.displayName);
+  }
   const items = list.pages
     .map(item => {
-      const title = getThreadTitleRenderValue(locale, item.title, item.slug);
+      const profileName = profileNames.get(item.slug);
+      const title = profileName ?? getThreadTitleRenderValue(locale, item.title, item.slug);
       const meta = [
         req.t('discussion.threadCount', { count: item.threadCount }),
         req.t('forum.thread.commentCount', { count: item.commentCount }),
@@ -310,8 +319,8 @@ const renderSectionPage = async (
   const dalInstance = await initializePostgreSQL();
   const target: DiscussionTarget = { kind: 'section', category };
   const { discussion, ctx } = await loadDiscussionPage(dalInstance, req, res, target, { category }, state);
-  // Article and blog threads start from their page or post.
-  const canStart = category !== 'articles' && category !== 'blog';
+  // Article, profile and blog threads start from their page, profile or post.
+  const canStart = category !== 'articles' && category !== 'users' && category !== 'blog';
   const pagesHtml = SECTIONS_WITH_PAGES.has(category) && discussion.page === 1 ? await renderDiscussedPages(req, dalInstance, category) : '';
   const showThreads = discussion.threadCount > 0 || canStart;
   const startHtml = !canStart

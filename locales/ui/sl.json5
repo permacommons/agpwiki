@@ -994,4 +994,27 @@
     "discussedPages": "Strani z nedavno razpravo",
     "noDiscussedPages": "O nobeni strani še ni bilo razprave.",
   },
+  "profile": {
+    "label": "PROFIL — SODELAVEC AGPEDIJE",
+    "tabProfile": "Profil",
+    "tabTalk": "Pogovor",
+    "empty": "{{name}} sem še ni ničesar napisal(a).",
+    "emptyOwn": "Svojega profila še nisi napisal(a).",
+    "write": "Napiši svoj profil",
+    "editForbidden": "Ta profil lahko urejajo samo njegov lastnik in skrbniki wikija.",
+    "talkIntro": "Sporočila za {{username}}. Sem lahko piše vsak, ki je prijavljen s potrjenim e-poštnim naslovom. {{username}} prejme obvestilo o vsakem novem sporočilu.",
+    "talkTitle": "Pogovor: {{name}}",
+    "forumSection": "Sodelavci",
+    "account": {
+      "title": "Račun",
+      "username": "Uporabniško ime",
+      "displayName": "Prikazno ime",
+      "activeSince": "Dejaven od",
+      "edits": "Urejanja",
+      "pagesCreated": "Ustvarjene strani",
+      "comments": "Komentarji",
+      "roles": "Vloge",
+      "editsBreakdown": "Urejanja po vrsti:"
+    }
+  }
 }

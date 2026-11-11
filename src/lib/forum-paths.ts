@@ -33,7 +33,13 @@ export const forumCommentEditPath = (commentId: string) =>
 export const forumCommentHistoryPath = (commentId: string) =>
   `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/history`;
 
-export const forumPageCategory = (slug: string): 'articles' | 'policy' | null => {
+export type PageForumCategory = 'articles' | 'policy' | 'users';
+
+/** Forum sections whose threads are each about one wiki page or profile. */
+export const PAGE_FORUM_CATEGORIES: readonly PageForumCategory[] = ['articles', 'policy', 'users'];
+
+export const forumPageCategory = (slug: string): PageForumCategory | null => {
   const address = resolvePageAddress(slug);
-  return address ? address.namespace === 'meta' ? 'policy' : 'articles' : null;
+  if (!address) return null;
+  return address.namespace === 'meta' ? 'policy' : address.namespace === 'user' ? 'users' : 'articles';
 };

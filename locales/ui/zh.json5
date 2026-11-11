@@ -992,4 +992,27 @@
     "discussedPages": "最近有讨论的页面",
     "noDiscussedPages": "还没有页面被讨论过。",
   },
+  "profile": {
+    "label": "个人资料 — AGPEDIA 贡献者",
+    "tabProfile": "个人资料",
+    "tabTalk": "讨论",
+    "empty": "{{name}} 还没有在这里写任何内容。",
+    "emptyOwn": "你还没有写你的个人资料。",
+    "write": "写你的个人资料",
+    "editForbidden": "只有该贡献者本人和维基管理员可以编辑这份个人资料。",
+    "talkIntro": "给 {{username}} 的留言。任何使用已确认电子邮件地址登录的人都可以在这里留言。每条新留言都会通知 {{username}}。",
+    "talkTitle": "讨论：{{name}}",
+    "forumSection": "贡献者",
+    "account": {
+      "title": "账户",
+      "username": "用户名",
+      "displayName": "显示名称",
+      "activeSince": "活跃自",
+      "edits": "编辑",
+      "pagesCreated": "创建的页面",
+      "comments": "评论",
+      "roles": "角色",
+      "editsBreakdown": "按类型的编辑："
+    }
+  }
 }

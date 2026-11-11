@@ -994,4 +994,27 @@
     "discussedPages": "Sivut, joilla on tuoretta keskustelua",
     "noDiscussedPages": "Mistään sivusta ei ole vielä keskusteltu.",
   },
+  "profile": {
+    "label": "PROFIILI — AGPEDIAN MUOKKAAJA",
+    "tabProfile": "Profiili",
+    "tabTalk": "Keskustelu",
+    "empty": "{{name}} ei ole vielä kirjoittanut tänne mitään.",
+    "emptyOwn": "Et ole vielä kirjoittanut profiiliasi.",
+    "write": "Kirjoita profiilisi",
+    "editForbidden": "Vain tämä muokkaaja ja wikin ylläpitäjät voivat muokata tätä profiilia.",
+    "talkIntro": "Viestit käyttäjälle {{username}}. Kuka tahansa vahvistetulla sähköpostiosoitteella kirjautunut voi kirjoittaa tänne. {{username}} saa ilmoituksen jokaisesta uudesta viestistä.",
+    "talkTitle": "Keskustelu: {{name}}",
+    "forumSection": "Muokkaajat",
+    "account": {
+      "title": "Tili",
+      "username": "Käyttäjätunnus",
+      "displayName": "Näyttönimi",
+      "activeSince": "Aktiivinen alkaen",
+      "edits": "Muokkaukset",
+      "pagesCreated": "Luodut sivut",
+      "comments": "Kommentit",
+      "roles": "Roolit",
+      "editsBreakdown": "Muokkaukset lajeittain:"
+    }
+  }
 }

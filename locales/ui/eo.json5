@@ -992,4 +992,27 @@
     "discussedPages": "Paĝoj kun freŝa diskuto",
     "noDiscussedPages": "Ankoraŭ neniu paĝo estis diskutita.",
   },
+  "profile": {
+    "label": "PROFILO — KONTRIBUANTO AL AGPEDIA",
+    "tabProfile": "Profilo",
+    "tabTalk": "Diskuto",
+    "empty": "{{name}} ankoraŭ skribis nenion ĉi tie.",
+    "emptyOwn": "Vi ankoraŭ ne skribis vian profilon.",
+    "write": "Skribi vian profilon",
+    "editForbidden": "Nur ĉi tiu kontribuanto kaj vikiaj administrantoj povas redakti ĉi tiun profilon.",
+    "talkIntro": "Mesaĝoj al {{username}}. Ĉiu, kiu ensalutis kun konfirmita retpoŝta adreso, povas skribi ĉi tie. {{username}} estas sciigata pri ĉiu nova mesaĝo.",
+    "talkTitle": "Diskuto: {{name}}",
+    "forumSection": "Kontribuantoj",
+    "account": {
+      "title": "Konto",
+      "username": "Uzantnomo",
+      "displayName": "Montrata nomo",
+      "activeSince": "Aktiva ekde",
+      "edits": "Redaktoj",
+      "pagesCreated": "Kreitaj paĝoj",
+      "comments": "Komentoj",
+      "roles": "Roloj",
+      "editsBreakdown": "Redaktoj laŭ speco:"
+    }
+  }
 }

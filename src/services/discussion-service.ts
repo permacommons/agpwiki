@@ -1,4 +1,5 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { PAGE_FORUM_CATEGORIES } from '../lib/forum-paths.js';
 import ForumComment from '../models/forum-comment.js';
 import ForumThread from '../models/forum-thread.js';
 import PageAlias from '../models/page-alias.js';
@@ -62,8 +63,8 @@ interface ThreadRow {
 
 const scopeFilter = (scope: DiscussionScope, params: unknown[]) => {
   if ('pageSlugs' in scope) {
-    params.push(scope.pageSlugs);
-    return `t.page_slug = ANY($${params.length}) AND t.category IN ('articles', 'policy')`;
+    params.push(scope.pageSlugs, PAGE_FORUM_CATEGORIES);
+    return `t.page_slug = ANY($${params.length - 1}) AND t.category = ANY($${params.length})`;
   }
   if ('postSlugs' in scope) {
     params.push(scope.postSlugs);
@@ -245,8 +246,8 @@ export const countPageDiscussionComments = async (
        JOIN ${ForumComment.tableName} c
          ON c.thread_id = t.id AND c._old_rev_of IS NULL AND c._rev_deleted = false
       WHERE t._old_rev_of IS NULL AND t._rev_deleted = false
-        AND t.page_slug = ANY($1) AND t.category IN ('articles', 'policy')`,
-    [pageSlugs]
+        AND t.page_slug = ANY($1) AND t.category = ANY($2)`,
+    [pageSlugs, PAGE_FORUM_CATEGORIES]
   );
   return Number(result.rows[0]?.comment_count) || 0;
 };

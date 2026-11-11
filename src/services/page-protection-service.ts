@@ -1,5 +1,6 @@
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { ForbiddenError, NotFoundError, ValidationCollector } from '../lib/errors.js';
+import { isProfileSlug } from '../lib/profile-paths.js';
 import type { PageProtectionInstance } from '../models/manifests/page-protection.js';
 import type { WikiPageInstance } from '../models/manifests/wiki-page.js';
 import PageAlias from '../models/page-alias.js';
@@ -13,6 +14,7 @@ import {
 } from './admin-event-service.js';
 import { assertCanProtectWikiPage } from './authorization.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
+import { canEditProfile, findProfileOwnerBySlug } from './profile-service.js';
 import { userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
 import { ensureNonEmptyString, ensureOptionalString, normalizeSlugInput } from './validation.js';
 
@@ -36,6 +38,8 @@ export interface PageEditabilityResult {
   isProtected: boolean;
   isEditable: boolean;
   protection: PageProtectionResult | null;
+  // Set on a contributor profile: the username of the contributor it belongs to.
+  profileOf?: string;
 }
 
 export interface PageProtectionInput {
@@ -63,15 +67,23 @@ export const getPageProtectionForPage = async (
 
 export const getWikiPageEditability = async (
   dalInstance: DataAccessLayer,
-  page: WikiPageInstance | { id: string },
+  page: WikiPageInstance | { id: string; slug?: string },
   userId?: string | null
 ): Promise<PageEditabilityResult> => {
+  const slug = page.slug ?? (await WikiPage.filterWhere({ id: page.id }).select('slug').first())?.slug ?? '';
+  const owner = isProfileSlug(slug) ? await findProfileOwnerBySlug(dalInstance, slug) : null;
+  const profileOf = owner?.username;
   const protection = await getPageProtectionForPage(dalInstance, page.id);
+  // Only its contributor and wiki admins may write a profile.
+  if (owner && !(await canEditProfile(dalInstance, owner, userId))) {
+    return { isProtected: true, isEditable: false, protection, profileOf };
+  }
   if (!protection) {
     return {
-      isProtected: false,
+      isProtected: Boolean(owner),
       isEditable: Boolean(userId),
       protection: null,
+      profileOf,
     };
   }
 
@@ -83,6 +95,7 @@ export const getWikiPageEditability = async (
     isProtected: true,
     isEditable,
     protection,
+    profileOf,
   };
 };
 
@@ -96,6 +109,13 @@ export const assertCanEditWikiPage = async (
   if (!editability.isProtected) return null;
   if (editability.isEditable) return editability.protection;
 
+  if (editability.profileOf) {
+    throw new ForbiddenError('Only the contributor and wiki admins can edit this profile.', {
+      slug: page.slug,
+      pageId: page.id,
+      profileOf: editability.profileOf,
+    });
+  }
   throw new ForbiddenError(
     editability.protection?.level === 'experienced'
       ? 'Wiki page is protected and can only be edited by experienced editors and wiki admins.'

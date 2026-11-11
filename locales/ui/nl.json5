@@ -993,4 +993,27 @@
     "discussedPages": "Pagina's met recente discussie",
     "noDiscussedPages": "Er is nog geen pagina besproken.",
   },
+  "profile": {
+    "label": "PROFIEL — BIJDRAGER AAN AGPEDIA",
+    "tabProfile": "Profiel",
+    "tabTalk": "Overleg",
+    "empty": "{{name}} heeft hier nog niets geschreven.",
+    "emptyOwn": "Je hebt je profiel nog niet geschreven.",
+    "write": "Schrijf je profiel",
+    "editForbidden": "Alleen deze bijdrager en wiki-beheerders kunnen dit profiel bewerken.",
+    "talkIntro": "Berichten aan {{username}}. Iedereen die is aangemeld met een bevestigd e-mailadres kan hier schrijven. {{username}} krijgt een melding van elk nieuw bericht.",
+    "talkTitle": "Overleg: {{name}}",
+    "forumSection": "Bijdragers",
+    "account": {
+      "title": "Account",
+      "username": "Gebruikersnaam",
+      "displayName": "Weergavenaam",
+      "activeSince": "Actief sinds",
+      "edits": "Bewerkingen",
+      "pagesCreated": "Aangemaakte pagina’s",
+      "comments": "Reacties",
+      "roles": "Rollen",
+      "editsBreakdown": "Bewerkingen per soort:"
+    }
+  }
 }

@@ -991,4 +991,27 @@
     "discussedPages": "Seiten mit aktueller Diskussion",
     "noDiscussedPages": "Noch keine Seite wurde diskutiert.",
   },
+  "profile": {
+    "label": "PROFIL — MITWIRKENDE BEI AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Diskussion",
+    "empty": "{{name}} hat hier noch nichts geschrieben.",
+    "emptyOwn": "Du hast dein Profil noch nicht geschrieben.",
+    "write": "Profil schreiben",
+    "editForbidden": "Nur diese Person und Wiki-Admins können dieses Profil bearbeiten.",
+    "talkIntro": "Nachrichten an {{username}}. Alle, die mit bestätigter E-Mail-Adresse angemeldet sind, können hier schreiben. {{username}} wird über jede neue Nachricht benachrichtigt.",
+    "talkTitle": "Diskussion: {{name}}",
+    "forumSection": "Mitwirkende",
+    "account": {
+      "title": "Konto",
+      "username": "Benutzername",
+      "displayName": "Anzeigename",
+      "activeSince": "Aktiv seit",
+      "edits": "Bearbeitungen",
+      "pagesCreated": "Erstellte Seiten",
+      "comments": "Kommentare",
+      "roles": "Rollen",
+      "editsBreakdown": "Bearbeitungen nach Art:"
+    }
+  }
 }
