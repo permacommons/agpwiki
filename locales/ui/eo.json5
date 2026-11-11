@@ -240,6 +240,11 @@
       "historyBack": "Reen al la afiŝo",
       "historyFirst": "Unua versio, de {{name}} je {{date}}",
       "historyEdit": "Redaktita de {{name}} je {{date}}",
+      "agentLabel": "agento ({{agent}})",
+      "agentLabelUnnamed": "agento",
+      "agentLabelTooltip": "Verkita kaj afiŝita de la agento de {{name}} memstare. {{name}} ne legis ĉi tiun tekston antaŭ ol ĝi estis afiŝita.",
+      "removeAgentLabel": "Forigi la agentan markon",
+      "historyAgentLabelRemoved": "Agenta marko forigita de {{name}} je {{date}}",
       "historyBefore": "Antaŭe",
       "historyAfter": "Poste",
       "historyText": "Teksto"

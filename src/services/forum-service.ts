@@ -72,6 +72,17 @@ export interface ForumCommentVersion {
   revUser: string | null;
   body: Record<string, string> | null;
   canonicalLanguage: string | null;
+  agentAuthored: boolean;
+  agentName: string | null;
+}
+
+/**
+ * An agent that wrote and posted a comment on its own, without its operator
+ * reading the text first. Only MCP tools set this; web posts never do.
+ */
+export interface CommentAgent {
+  // The MCP client name, as recorded in agent: revision tags.
+  name: string | null;
 }
 
 export interface ForumCommentResult {
@@ -80,6 +91,8 @@ export interface ForumCommentResult {
   parentId: string | null;
   body: Record<string, string> | null | undefined;
   canonicalLanguage: string | null | undefined;
+  agentAuthored: boolean;
+  agentName: string | null;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
   revDeleted?: boolean;
@@ -122,6 +135,9 @@ export interface CreateForumThreadInput {
   language: string;
   // Set by services only (never from a form): what the thread belongs to.
   attachment?: ForumThreadAttachment;
+  // Set by MCP tools only, for the opening comment.
+  agent?: CommentAgent | null;
+  tags?: string[];
 }
 
 export interface CreateForumCommentInput {
@@ -131,6 +147,9 @@ export interface CreateForumCommentInput {
   parentId?: string | null;
   body: string;
   language: string;
+  // Set by MCP tools only.
+  agent?: CommentAgent | null;
+  tags?: string[];
 }
 
 export interface UpdateForumThreadPinInput {
@@ -186,6 +205,8 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   parentId: comment.parentId ?? null,
   body: comment.body ?? null,
   canonicalLanguage: comment.canonicalLanguage ?? null,
+  agentAuthored: Boolean(comment.agentAuthored),
+  agentName: comment.agentAuthored ? (comment.agentName ?? null) : null,
   createdAt: comment.createdAt ?? null,
   updatedAt: comment.updatedAt ?? null,
   revDeleted: comment._revDeleted ?? false,
@@ -243,6 +264,13 @@ const deleteAllEntityRevisions = async (
     throw new Error('Entity does not support deleteAllRevisions.');
   }
   return deleteAllRevisions.call(entity, { id: userId }, { tags: ['admin-delete'] });
+};
+
+const AGENT_NAME_MAX_LENGTH = 100;
+
+const applyCommentAgent = (comment: ForumCommentInstance, agent: CommentAgent | null | undefined) => {
+  comment.agentAuthored = Boolean(agent);
+  comment.agentName = agent?.name?.trim().slice(0, AGENT_NAME_MAX_LENGTH) || null;
 };
 
 const validateTitle = (title: string, errors: ValidationCollector) => {
@@ -427,7 +455,7 @@ export const readForumComment = async (
 ): Promise<ForumCommentResult> => toForumCommentResult(await requireComment(commentId));
 
 export const createForumThread = async (
-  { category, pageSlug, title, body, language, attachment }: CreateForumThreadInput,
+  { category, pageSlug, title, body, language, attachment, agent, tags = [] }: CreateForumThreadInput,
   userId: string
 ): Promise<ForumThreadResult & { firstCommentId: string }> => {
   const errors = new ValidationCollector('Invalid forum thread input.');
@@ -503,11 +531,12 @@ export const createForumThread = async (
     await thread.save({ transaction });
     const comment = await ForumComment.createFirstRevision(
       { id: userId },
-      { tags: ['create'], date: createdAt }
+      { tags: [...tags, 'create'], date: createdAt }
     );
     comment.threadId = thread.id;
     comment.body = sanitizeLocalizedMapInput({ [language]: body });
     comment.canonicalLanguage = language;
+    applyCommentAgent(comment, agent);
     comment.createdAt = createdAt;
     comment.updatedAt = createdAt;
     await comment.save({ transaction });
@@ -555,7 +584,7 @@ const resolveReplyParent = async (threadId: string, parentId: string | null | un
 };
 
 export const createForumComment = async (
-  { threadId, parentId, body, language }: CreateForumCommentInput,
+  { threadId, parentId, body, language, agent, tags = [] }: CreateForumCommentInput,
   userId: string
 ): Promise<ForumCommentResult> => {
   const errors = new ValidationCollector('Invalid forum comment input.');
@@ -571,12 +600,13 @@ export const createForumComment = async (
   const createdAt = new Date();
   const comment = await ForumComment.createFirstRevision(
     { id: userId },
-    { tags: ['create'], date: createdAt }
+    { tags: [...tags, 'create'], date: createdAt }
   );
   comment.threadId = thread.id;
   comment.parentId = replyTo;
   comment.body = sanitizeLocalizedMapInput({ [language]: body });
   comment.canonicalLanguage = language;
+  applyCommentAgent(comment, agent);
   comment.createdAt = createdAt;
   comment.updatedAt = createdAt;
   await comment.save();
@@ -677,6 +707,28 @@ export const updateForumComment = async (
   return toForumCommentResult(revision);
 };
 
+/**
+ * The operator read a comment their agent posted on its own and stands by
+ * it: the agent label goes. The labelled version stays in the history.
+ */
+export const removeForumCommentAgentLabel = async (
+  dalInstance: DataAccessLayer,
+  commentId: string,
+  userId: string
+): Promise<ForumCommentResult> => {
+  const comment = await requireComment(commentId);
+  if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
+    throw new ForbiddenError('Only the author can remove the agent label.', { commentId });
+  }
+  if (!comment.agentAuthored) return toForumCommentResult(comment);
+  // The text is unchanged, so updatedAt stays and the post is not shown as edited.
+  const revision = await comment.newRevision({ id: userId }, { tags: ['remove-agent-label'] });
+  revision.agentAuthored = false;
+  revision.agentName = null;
+  await revision.save();
+  return toForumCommentResult(revision);
+};
+
 /** Every version of a post, oldest first. */
 export const listForumCommentVersions = async (
   dalInstance: DataAccessLayer,
@@ -685,7 +737,7 @@ export const listForumCommentVersions = async (
   const comment = await requireComment(commentId);
   await requireThread(comment.threadId);
   const result = await dalInstance.query(
-    `SELECT _rev_id, _rev_date, _rev_user, body, canonical_language
+    `SELECT _rev_id, _rev_date, _rev_user, body, canonical_language, agent_authored, agent_name
        FROM ${ForumComment.tableName}
       WHERE (id = $1 OR _old_rev_of = $1) AND _rev_deleted = false
       ORDER BY _rev_date ASC`,
@@ -697,6 +749,8 @@ export const listForumCommentVersions = async (
     revUser: (row._rev_user as string | null) ?? null,
     body: (row.body as Record<string, string> | null) ?? null,
     canonicalLanguage: (row.canonical_language as string | null) ?? null,
+    agentAuthored: Boolean(row.agent_authored),
+    agentName: row.agent_authored ? ((row.agent_name as string | null) ?? null) : null,
   }));
 };
 

@@ -240,6 +240,11 @@
       "historyBack": "پوسٹ پر واپس",
       "historyFirst": "پہلا نسخہ، از {{name}}، {{date}}",
       "historyEdit": "ترمیم از {{name}}، {{date}}",
+      "agentLabel": "ایجنٹ ({{agent}})",
+      "agentLabelUnnamed": "ایجنٹ",
+      "agentLabelTooltip": "{{name}} کے ایجنٹ نے اسے خود لکھا اور شائع کیا۔ {{name}} نے شائع ہونے سے پہلے یہ متن نہیں پڑھا۔",
+      "removeAgentLabel": "ایجنٹ کا لیبل ہٹائیں",
+      "historyAgentLabelRemoved": "ایجنٹ کا لیبل ہٹایا از {{name}}، {{date}}",
       "historyBefore": "پہلے",
       "historyAfter": "بعد",
       "historyText": "متن"

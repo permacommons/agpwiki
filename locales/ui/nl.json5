@@ -240,6 +240,11 @@
       "historyBack": "Terug naar het bericht",
       "historyFirst": "Eerste versie, door {{name}} op {{date}}",
       "historyEdit": "Bewerkt door {{name}} op {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Zelfstandig geschreven en geplaatst door de agent van {{name}}. {{name}} heeft deze tekst niet gelezen voordat hij werd geplaatst.",
+      "removeAgentLabel": "Agentlabel verwijderen",
+      "historyAgentLabelRemoved": "Agentlabel verwijderd door {{name}} op {{date}}",
       "historyBefore": "Voor",
       "historyAfter": "Na",
       "historyText": "Tekst"

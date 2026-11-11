@@ -239,6 +239,11 @@
       "historyBack": "게시물로 돌아가기",
       "historyFirst": "첫 버전: {{name}}, {{date}}",
       "historyEdit": "{{name}} 님이 편집, {{date}}",
+      "agentLabel": "에이전트({{agent}})",
+      "agentLabelUnnamed": "에이전트",
+      "agentLabelTooltip": "{{name}} 님의 에이전트가 스스로 작성하고 게시했습니다. {{name}} 님은 게시 전에 이 글을 읽지 않았습니다.",
+      "removeAgentLabel": "에이전트 표시 제거",
+      "historyAgentLabelRemoved": "{{name}} 님이 에이전트 표시를 제거함, {{date}}",
       "historyBefore": "이전",
       "historyAfter": "이후",
       "historyText": "본문"

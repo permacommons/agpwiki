@@ -7,6 +7,7 @@ import PageSignoff from '../models/page-signoff.js';
 import User from '../models/user.js';
 import { enqueueForumReplyNotification } from './forum-notification-service.js';
 import {
+  type CommentAgent,
   createForumComment,
   createForumThread,
   findAttachedForumThread,
@@ -34,6 +35,8 @@ export interface PositionReply {
   authorId: string | null;
   body: string;
   bodyLanguage: string | null;
+  agentAuthored: boolean;
+  agentName: string | null;
   createdAt: Date | null;
   edited: boolean;
 }
@@ -48,6 +51,9 @@ export interface PositionReplyInput {
   signoffId: string;
   body: string;
   language: string;
+  // Set by MCP tools only.
+  agent?: CommentAgent | null;
+  tags?: string[];
 }
 
 const excerpt = (text: string, max: number) => {
@@ -66,7 +72,8 @@ export const listPositionReplies = async (
   const grouped = new Map<string, PositionReplyThread>();
   if (!signoffIds.length) return grouped;
   const result = await dalInstance.query(
-    `SELECT t.id AS thread_id, t.attached_id, c.id, c.body, c.canonical_language, c.created_at, c.updated_at,
+    `SELECT t.id AS thread_id, t.attached_id, c.id, c.body, c.canonical_language, c.agent_authored, c.agent_name,
+            c.created_at, c.updated_at,
             (SELECT f._rev_user FROM forum_comments f
               WHERE f.id = c.id OR f._old_rev_of = c.id
               ORDER BY f._rev_date ASC LIMIT 1) AS author_id
@@ -91,6 +98,8 @@ export const listPositionReplies = async (
       authorId: (row.author_id as string | null) ?? null,
       body: (language && body[language]) || Object.values(body)[0] || '',
       bodyLanguage: language,
+      agentAuthored: Boolean(row.agent_authored),
+      agentName: row.agent_authored ? ((row.agent_name as string | null) ?? null) : null,
       createdAt,
       edited: Boolean(createdAt && updatedAt && updatedAt.getTime() - createdAt.getTime() > 1000),
     });
@@ -134,7 +143,7 @@ export const listWithdrawnPositionsWithReplies = async (
  */
 export const replyToPosition = async (
   dalInstance: DataAccessLayer,
-  { slug, signoffId, body, language }: PositionReplyInput,
+  { slug, signoffId, body, language, agent, tags }: PositionReplyInput,
   userId: string
 ): Promise<{ threadId: string; commentId: string; createdThread: boolean }> => {
   const errors = new ValidationCollector('Invalid reply input.');
@@ -178,7 +187,7 @@ export const replyToPosition = async (
   const attachment = { type: POSITION_ATTACHMENT, id: signoff.id };
   const existing = await findAttachedForumThread(attachment);
   if (existing) {
-    const comment = await createForumComment({ threadId: existing.id, body: body.trim(), language }, userId);
+    const comment = await createForumComment({ threadId: existing.id, body: body.trim(), language, agent, tags }, userId);
     return { threadId: existing.id, commentId: comment.id, createdThread: false };
   }
 
@@ -192,6 +201,8 @@ export const replyToPosition = async (
         body: body.trim(),
         language,
         attachment,
+        agent,
+        tags,
       },
       userId
     );
@@ -201,7 +212,7 @@ export const replyToPosition = async (
     }
     const winner = await findAttachedForumThread(attachment);
     if (!winner) throw error;
-    const comment = await createForumComment({ threadId: winner.id, body: body.trim(), language }, userId);
+    const comment = await createForumComment({ threadId: winner.id, body: body.trim(), language, agent, tags }, userId);
     return { threadId: winner.id, commentId: comment.id, createdThread: false };
   }
   const commentId = thread.firstCommentId;

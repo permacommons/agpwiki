@@ -479,6 +479,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     return typeof authUser === 'string' && authUser ? authUser : null;
   };
 
+  const getAgentName = () => server.server.getClientVersion()?.name?.trim() || null;
+
   const getAgentTags = () => {
     const info = server.server.getClientVersion();
     if (!info?.name) return [];
@@ -1386,7 +1388,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Proposal Positions',
       description:
-        'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition.',
+        'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition. A reply an agent posted without its operator reading it first has agentAuthored: true and the agent name in agentName.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,
@@ -1433,6 +1435,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
             user: reply.authorId ? (names.get(reply.authorId) ?? null) : null,
             body: reply.body,
             bodyLanguage: reply.bodyLanguage,
+            agentAuthored: reply.agentAuthored,
+            agentName: reply.agentName,
             createdAt: reply.createdAt,
             edited: reply.edited,
           })),
@@ -1446,22 +1450,41 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Reply to a Proposal Position',
       description:
-        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are Markdown comments shown one level under the position in the proposal's discussion (<slug>/discussion), and the position's author is notified. To answer another reply, reply to the same position and start with @username. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
+        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are Markdown comments shown one level under the position in the proposal's discussion (<slug>/discussion), and the position's author is notified. To answer another reply, reply to the same position and start with @username. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies. Set reviewedByOperator honestly every time: true only if your operator read and approved this exact text before you post it; false posts it with an agent label naming your client, next to your operator's name.",
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,
         signoffId: uuidSchema,
         body: z.string().min(1),
         bodyLanguage: z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH),
+        reviewedByOperator: z
+          .boolean()
+          .describe(
+            'Required, no default. true: your operator read and approved this exact text. false: you wrote and are posting it on your own, and it is labelled as written by an agent.'
+          ),
         policyHash: policyHashSchema,
       },
     },
     withToolErrorHandling(withPageIds(['slug'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
-      const { policyHash: _policyHash, bodyLanguage, ...input } = args as typeof args & { policyHash?: string };
+      const {
+        policyHash: _policyHash,
+        bodyLanguage,
+        reviewedByOperator,
+        ...input
+      } = args as typeof args & { policyHash?: string };
       await requireCurrentPolicyHash(dal, _policyHash);
-      const reply = await replyToPosition(dal, { ...input, language: bodyLanguage }, userId);
+      const reply = await replyToPosition(
+        dal,
+        {
+          ...input,
+          language: bodyLanguage,
+          agent: reviewedByOperator ? null : { name: getAgentName() },
+          tags: getAgentTags(),
+        },
+        userId
+      );
       return { commentId: reply.commentId, threadId: reply.threadId, startedThread: reply.createdThread };
     }))
   );

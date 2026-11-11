@@ -239,6 +239,11 @@
       "historyBack": "返回貼文",
       "historyFirst": "第一版，{{name}}，{{date}}",
       "historyEdit": "{{name}} 編輯於 {{date}}",
+      "agentLabel": "代理程式（{{agent}}）",
+      "agentLabelUnnamed": "代理程式",
+      "agentLabelTooltip": "由 {{name}} 的代理程式自行撰寫並發布。{{name}} 在發布前沒有讀過這段文字。",
+      "removeAgentLabel": "移除代理程式標籤",
+      "historyAgentLabelRemoved": "{{name}} 於 {{date}} 移除了代理程式標籤",
       "historyBefore": "之前",
       "historyAfter": "之後",
       "historyText": "內文"

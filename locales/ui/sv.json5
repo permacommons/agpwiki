@@ -240,6 +240,11 @@
       "historyBack": "Tillbaka till inlägget",
       "historyFirst": "Första versionen, av {{name}} den {{date}}",
       "historyEdit": "Redigerat av {{name}} den {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Skrivet och publicerat av {{name}}s agent på egen hand. {{name}} läste inte texten innan den publicerades.",
+      "removeAgentLabel": "Ta bort agentmärkningen",
+      "historyAgentLabelRemoved": "Agentmärkningen togs bort av {{name}} den {{date}}",
       "historyBefore": "Före",
       "historyAfter": "Efter",
       "historyText": "Text"

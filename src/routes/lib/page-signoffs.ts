@@ -12,7 +12,12 @@ import {
 import type { PositionReply } from '../../services/position-reply-service.js';
 import { renderCommentMeta, renderFollowThread, renderReplyForm } from './discussion.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
-import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
+import {
+  renderAgentLabel,
+  renderForumCommentEditLink,
+  renderForumCommentEditor,
+  renderRemoveAgentLabel,
+} from './forum-comment-editor.js';
 
 type PageSignoffsParams = {
   slug: string;
@@ -116,12 +121,13 @@ export const renderPageSignoffs = ({
         )}</button></form>`
       : '';
     return `<article class="discussion-comment discussion-comment--reply page-signoff-reply" id="${commentAnchor(reply.id)}" data-comment-edit>
-  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale)}
+  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale, renderAgentLabel(reply, name, t))}
   <div class="discussion-comment-body" data-comment-content${reply.bodyLanguage ? ` lang="${escapeHtml(reply.bodyLanguage)}"` : ''} dir="auto">${reply.bodyHtml}</div>
   <div class="discussion-comment-actions" data-comment-actions>
     ${replyTrigger(signoff, reply.authorId ? usernames.get(reply.authorId) : undefined)}
     <a href="${escapeHtml(permalink)}" data-permalink data-plain-click>${escapeHtml(t('discussion.commentLink'))}</a>
     ${own ? renderForumCommentEditLink(reply.id, permalink, t) : ''}
+    ${own && reply.agentAuthored ? renderRemoveAgentLabel(reply.id, permalink, t) : ''}
     ${deleteHtml}
   </div>
   ${editHtml}

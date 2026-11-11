@@ -50,6 +50,7 @@ import {
   listForumCommentVersions,
   readForumComment,
   readForumThread,
+  removeForumCommentAgentLabel,
   requireSignedInUserId,
   setForumThreadPinned,
   updateForumComment,
@@ -73,7 +74,7 @@ import {
 } from './lib/discussion.js';
 import { loadDiscussionPage } from './lib/discussion-page.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
-import { renderForumCommentEditor } from './lib/forum-comment-editor.js';
+import { renderAgentLabel, renderForumCommentEditor } from './lib/forum-comment-editor.js';
 import { fetchUserMap } from './lib/history.js';
 import {
   createPreviewHandler,
@@ -649,6 +650,30 @@ export const registerForumRoutes = (app: Express) => {
     }
   });
 
+  app.post('/tool/forum/comment/:commentId/agent-label', async (req, res) => {
+    try {
+      const userId = await requireForumSession(req, res);
+      const dalInstance = await initializePostgreSQL();
+      const comment = await removeForumCommentAgentLabel(dalInstance, req.params.commentId, userId);
+      res.redirect(303, commentReturnPath(req.body?.return, comment));
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        res.status(403).type('text').send(req.t('page.accessDenied'));
+        return;
+      }
+      if (error instanceof NotFoundError) {
+        res.status(404).type('text').send(req.t('page.notFound'));
+        return;
+      }
+      if (isRevisionConflictError(error)) {
+        res.status(409).type('text').send(req.t('forum.editConflict'));
+        return;
+      }
+      console.error('Failed to remove agent label:', error);
+      res.status(500).type('text').send(req.t('page.serverError'));
+    }
+  });
+
   app.get('/tool/forum/comment/:commentId/edit', async (req, res) => {
     try {
       const userId = await requireForumSession(req, res);
@@ -729,15 +754,31 @@ export const registerForumRoutes = (app: Express) => {
         .map((version, index) => {
           const who = escapeHtml((version.revUser && names.get(version.revUser)) || req.t('forum.comment.unknownOperator'));
           const when = escapeHtml(formatDateUTC(version.revDate));
-          const heading = req.t(index === 0 ? 'forum.comment.historyFirst' : 'forum.comment.historyEdit', {
-            name: who,
-            date: when,
-          });
           const previous = versions[index - 1];
+          // Removing the agent label is a version of its own, with the same text.
+          const labelRemoved = Boolean(previous?.agentAuthored && !version.agentAuthored);
+          const heading = req.t(
+            index === 0
+              ? 'forum.comment.historyFirst'
+              : labelRemoved
+                ? 'forum.comment.historyAgentLabelRemoved'
+                : 'forum.comment.historyEdit',
+            { name: who, date: when }
+          );
+          if (labelRemoved && JSON.stringify(previous.body) === JSON.stringify(version.body)) {
+            return `<li class="forum-comment-version">
+  <h2>${heading}</h2>
+</li>`;
+          }
+          const agentHtml = renderAgentLabel(
+            version,
+            (version.revUser && names.get(version.revUser)) || req.t('forum.comment.unknownOperator'),
+            req.t
+          );
           const diff = previous ? diffLocalizedField('body', previous.body, version.body) : null;
           const bodyText = getCommentBodyForDisplay(version.body, version.canonicalLanguage);
           return `<li class="forum-comment-version">
-  <h2>${heading}</h2>
+  <h2>${heading}${agentHtml}</h2>
   ${
     diff
       ? renderEntityDiff({
