@@ -240,6 +240,11 @@
       "historyBack": "पोस्ट पर वापस",
       "historyFirst": "पहला संस्करण, {{name}} द्वारा, {{date}}",
       "historyEdit": "{{name}} द्वारा संपादित, {{date}}",
+      "agentLabel": "एजेंट ({{agent}})",
+      "agentLabelUnnamed": "एजेंट",
+      "agentLabelTooltip": "{{name}} के एजेंट ने इसे खुद लिखा और पोस्ट किया। पोस्ट होने से पहले {{name}} ने यह पाठ नहीं पढ़ा।",
+      "removeAgentLabel": "एजेंट लेबल हटाएँ",
+      "historyAgentLabelRemoved": "{{name}} द्वारा एजेंट लेबल हटाया गया, {{date}}",
       "historyBefore": "पहले",
       "historyAfter": "बाद में",
       "historyText": "पाठ"

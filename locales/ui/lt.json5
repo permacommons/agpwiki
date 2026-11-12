@@ -240,6 +240,11 @@
       "historyBack": "Grįžti į įrašą",
       "historyFirst": "Pirmoji versija, autorius {{name}}, {{date}}",
       "historyEdit": "Redagavo {{name}}, {{date}}",
+      "agentLabel": "agentas ({{agent}})",
+      "agentLabelUnnamed": "agentas",
+      "agentLabelTooltip": "Parašė ir paskelbė {{name}} agentas savarankiškai. {{name}} šio teksto prieš paskelbiant neskaitė.",
+      "removeAgentLabel": "Pašalinti agento žymą",
+      "historyAgentLabelRemoved": "Agento žymą pašalino {{name}}, {{date}}",
       "historyBefore": "Prieš",
       "historyAfter": "Po",
       "historyText": "Tekstas"

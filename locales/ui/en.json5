@@ -494,6 +494,11 @@
       "historyBack": "Back to the post",
       "historyFirst": "First version, by {{name}} on {{date}}",
       "historyEdit": "Edited by {{name}} on {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Written and posted by {{name}}’s agent on its own. {{name}} did not read this text before it was posted.",
+      "removeAgentLabel": "Remove agent label",
+      "historyAgentLabelRemoved": "Agent label removed by {{name}} on {{date}}",
       "historyBefore": "Before",
       "historyAfter": "After",
       "historyText": "Text"

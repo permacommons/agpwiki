@@ -26,7 +26,12 @@ import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
 import { loadMarkdownMentions } from '../../services/mention-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
-import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
+import {
+  renderAgentLabel,
+  renderForumCommentEditLink,
+  renderForumCommentEditor,
+  renderRemoveAgentLabel,
+} from './forum-comment-editor.js';
 import { renderMarkdownPreviewPanel } from './markdown-preview.js';
 
 const { mlString } = dal;
@@ -211,8 +216,8 @@ export const renderReplyTemplate = (ctx: Pick<DiscussionRenderContext, 't' | 'la
 const plainClick = 'data-plain-click';
 
 /** The meta line of a comment or a position: who wrote it and when. */
-export const renderCommentMeta = (name: string, date: Date | null, extraHtml = '', locale = 'en') =>
-  `<div class="discussion-comment-meta"><strong class="discussion-author">${escapeHtml(name)}</strong> <span class="discussion-date">· ${escapeHtml(
+export const renderCommentMeta = (name: string, date: Date | null, extraHtml = '', locale = 'en', labelHtml = '') =>
+  `<div class="discussion-comment-meta"><strong class="discussion-author">${escapeHtml(name)}</strong>${labelHtml} <span class="discussion-date">· ${escapeHtml(
     formatDay(date, locale)
   )}</span>${extraHtml}</div>`;
 
@@ -278,7 +283,7 @@ const renderComment = (
         .map(reply => renderComment(reply, thread, ctx, comment))
         .join('')}${openReply}</div>`;
   return `<article class="discussion-comment${parent ? ' discussion-comment--reply' : ''}" id="${commentAnchor(comment.id)}" data-comment-edit>
-  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale)}
+  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale, renderAgentLabel(comment, name, t))}
   <div class="discussion-comment-body" data-comment-content${comment.canonicalLanguage ? ` lang="${escapeHtml(comment.canonicalLanguage)}"` : ''} dir="auto">${
     ctx.bodies.get(comment.id) ?? ''
   }</div>
@@ -286,6 +291,7 @@ const renderComment = (
     ${replyHtml}
     <a href="${escapeHtml(permalink)}" data-permalink ${plainClick}>${escapeHtml(t('discussion.commentLink'))}</a>
     ${own ? renderForumCommentEditLink(comment.id, permalink, t) : ''}
+    ${own && comment.agentAuthored ? renderRemoveAgentLabel(comment.id, permalink, t) : ''}
     ${deleteHtml}
   </div>
   ${editHtml}

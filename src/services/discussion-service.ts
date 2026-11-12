@@ -20,6 +20,9 @@ export interface DiscussionComment {
   body: Record<string, string> | null;
   canonicalLanguage: string | null;
   authorId: string | null;
+  // Posted by an agent without its operator reading the text first.
+  agentAuthored: boolean;
+  agentName: string | null;
   createdAt: Date | null;
   edited: boolean;
   replies: DiscussionComment[];
@@ -105,7 +108,8 @@ export const listThreadComments = async (
 ): Promise<DiscussionComment[]> => {
   if (!threadIds.length) return [];
   const result = await dalInstance.query(
-    `SELECT c.id, c.thread_id, c.parent_id, c.body, c.canonical_language, c.created_at, c.updated_at,
+    `SELECT c.id, c.thread_id, c.parent_id, c.body, c.canonical_language, c.agent_authored, c.agent_name,
+            c.created_at, c.updated_at,
             (SELECT f._rev_user FROM ${ForumComment.tableName} f
               WHERE f.id = c.id OR f._old_rev_of = c.id
               ORDER BY f._rev_date ASC LIMIT 1) AS author_id
@@ -124,6 +128,8 @@ export const listThreadComments = async (
       body: (row.body as Record<string, string> | null) ?? null,
       canonicalLanguage: (row.canonical_language as string | null) ?? null,
       authorId: (row.author_id as string | null) ?? null,
+      agentAuthored: Boolean(row.agent_authored),
+      agentName: row.agent_authored ? ((row.agent_name as string | null) ?? null) : null,
       createdAt,
       edited: Boolean(createdAt && updatedAt && updatedAt.getTime() - createdAt.getTime() > 1000),
       replies: [],

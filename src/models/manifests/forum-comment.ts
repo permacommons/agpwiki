@@ -15,6 +15,9 @@ const forumCommentManifest = {
     parentId: types.string().uuid(4),
     body: mlString.getHTMLSchema({ maxLength: 20000 }),
     canonicalLanguage: types.string().max(8),
+    // Posted by an agent without its operator reading the text first.
+    agentAuthored: types.boolean().default(false),
+    agentName: types.string().max(100),
     createdAt: types.date().default(() => new Date()),
     updatedAt: types.date().default(() => new Date()),
   },
@@ -22,6 +25,8 @@ const forumCommentManifest = {
     threadId: 'thread_id',
     parentId: 'parent_id',
     canonicalLanguage: 'canonical_language',
+    agentAuthored: 'agent_authored',
+    agentName: 'agent_name',
     createdAt: 'created_at',
     updatedAt: 'updated_at',
   },

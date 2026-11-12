@@ -30,6 +30,9 @@ export const forumCommentAnchor = (commentId: string) =>
 export const forumCommentEditPath = (commentId: string) =>
   `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/edit`;
 
+export const forumCommentAgentLabelPath = (commentId: string) =>
+  `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/agent-label`;
+
 export const forumCommentHistoryPath = (commentId: string) =>
   `${FORUM_BASE_PATH}/comment/${encodeURIComponent(commentId)}/history`;
 
