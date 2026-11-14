@@ -99,6 +99,20 @@ write a comment, explain *why* and only why:
   - `error.details`: optional metadata (e.g., `{ slug, revId }`)
   - `error.retryable`: optional boolean
 
+## Proposals and pull requests
+
+- Changes users will notice follow an adopted proposal under
+  `agpedia.org/meta/proposals/`. Ask for the proposal link if you don't
+  have it; don't invent design decisions the proposal settles.
+- Changes nobody can see (fixes, refactors, tests, dependencies) need no
+  proposal.
+- Fill in `.github/pull_request_template.md`. Put proposal links in the
+  pull request, not in code comments or commit subjects.
+- Where the proposal leaves something open, decide, and list the choice
+  under "Choices where the proposal was open".
+- Guideline and help page edits named in a proposal are made on the wiki
+  after merge, not in this repository.
+
 ## Commit message guidelines
 
 - Use multiline conventional commits.

@@ -22,9 +22,10 @@ Status: experimental, but ready for wider feedback.
 - MCP server via `@modelcontextprotocol/sdk`
 
 **Contributing**
-For codebase setup and local development, see `CONTRIBUTING.md`.
-
-For contributing to a wiki running this software, the canonical guide is [agpedia.org/meta/contributing](https://agpedia.org/meta/contributing).
+- Code: see `CONTRIBUTING.md` for setup, how changes are proposed and decided, and what a pull request needs.
+- Content: the canonical guide is [agpedia.org/meta/help](https://agpedia.org/meta/help).
+- Planned and decided changes: [agpedia.org/tool/proposals](https://agpedia.org/tool/proposals).
+- Questions about the software: the Technology category of the [forum](https://agpedia.org/tool/forum). Bugs: [GitHub issues](https://github.com/permacommons/agpwiki/issues).
 
 **Notes**
 - Markdown is rendered with `html: false` and `linkify: true`.

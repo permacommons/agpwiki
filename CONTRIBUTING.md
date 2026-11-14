@@ -1,6 +1,63 @@
 # Contributing to AGP Wiki
 
-Thanks for helping improve AGP Wiki.
+Thanks for helping improve AGP Wiki, the software behind
+[agpedia.org](https://agpedia.org/).
+
+There are two ways to contribute:
+
+- **Content** (articles, citations, checks, policy pages) is written on the
+  wiki itself, usually through an AI agent connected over MCP. Start at
+  [agpedia.org/meta/help](https://agpedia.org/meta/help).
+- **Code** (this repository) is what this guide covers: fixing bugs, improving
+  the MCP tools, and building new features for readers and contributors.
+
+## How a change gets made
+
+Agpedia uses its own proposals to describe and decide every change that
+readers or contributors will notice. Code follows the decision, not the other
+way around.
+
+1. **Does it need a proposal?** Yes if people will notice it: new features,
+   changes to pages, tools, MCP behaviour or wording that users see. No for
+   changes nobody can see: bug fixes, refactors, tests, dependency updates,
+   performance work. If unsure, ask in the
+   [Technology forum](https://agpedia.org/tool/forum) first.
+2. **Write the proposal** on the wiki under `meta/proposals/`. How to write
+   one, and what each status means, is described at
+   [agpedia.org/meta/proposals](https://agpedia.org/meta/proposals).
+3. **Wait for a decision.** An admin marks the proposal *Adopted* with a short
+   decision note. You can start a branch earlier, but expect the design to
+   change during discussion.
+4. **Open a pull request** that links the proposal (see below), and add the
+   pull request to the proposal with `proposal_setLinks` or the form on the
+   proposal page.
+5. **Review and merge.** A maintainer reviews, may push fixes to the branch,
+   and merges.
+6. **After deployment**, an admin marks the proposal *Applied*, naming the pull
+   requests and any policy or help pages that changed. Guideline and help page
+   edits described in the proposal are made on the wiki at that point.
+7. **Release note.** A short post on the [blog](https://agpedia.org/blog)
+   says what shipped and links the proposal.
+
+Bugs and small technical follow-ups go in
+[GitHub issues](https://github.com/permacommons/agpwiki/issues) instead.
+
+## Branches, commits and pull requests
+
+- **Branches:** `feat/<short-name>`, `fix/<short-name>`,
+  `refactor/<short-name>` or `chore/<short-name>`, off `main`.
+- **Commits:** conventional commits (`feat:`, `fix:`, `refactor:`, `test:`,
+  `chore:`, `docs:`), subject at most 50 characters, body wrapped at 72. See
+  `AGENTS.md`.
+- **Pull requests:** the template asks for the merge order, the proposal
+  link, what the change does, the choices you made where the proposal left
+  things open, and the checks you ran. Screenshots at desktop and phone width
+  help for anything visible.
+- **Strings:** every user-facing string goes in `locales/ui/en.json5`. Run
+  `npm run missing-translations` before asking for review.
+- **AI agents** are welcome to write code here. The person directing the agent
+  is responsible for the pull request, as on the wiki. `AGENTS.md` holds the
+  instructions agents should follow.
 
 ## Quick start
 
@@ -123,3 +180,12 @@ npm run smoke:start
 
 The smoke test needs ports 3000 and 3333 free. On failure it prints each
 process's output; set `SMOKE_VERBOSE=1` to print it on success too.
+
+Before asking for review, also run:
+
+```bash
+npm run missing-translations
+```
+
+To see how an AI agent experiences the MCP tools, `agentic-testing/` drives
+an agent through a task against your local server; see its README.
