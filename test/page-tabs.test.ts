@@ -167,6 +167,9 @@ test('Wiki pages show the tab row; Edit leads editors to the form and everyone e
     assert.match(signedOut.tabsHtml, /aria-current="page">pageTabs\.article</);
     assert.match(signedOut.tabsHtml, /pageTabs\.discuss <span class="page-tab-count">1<\/span>/);
     assert.ok(signedOut.tabsHtml.includes(`href="/tool/how-to-edit?page=${slug}">pageTabs.edit`));
+    // Logging in from the page's actions returns to the page, not to the editor.
+    assert.ok(signedOut.bodyHtml.includes(`/tool/login?redirect=${encodeURIComponent(`/${slug}`)}\\"`));
+    assert.doesNotMatch(signedOut.bodyHtml, /redirect=[^"]*operator-edit/);
 
     const signedIn = await getJson(`${server.url}/${slug}`, editorSession.token);
     assert.ok(signedIn.tabsHtml.includes(`href="/${slug}/operator-edit?lang=en">pageTabs.edit`));

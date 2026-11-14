@@ -1804,7 +1804,7 @@ export const registerPageRoutes = (app: Express) => {
         visible: canShowOperatorEditLink,
         operatorEditHref: operatorEditPath(canonicalSlug, contentLang),
         loginHref: `/tool/login?redirect=${encodeURIComponent(
-          operatorEditPath(canonicalSlug, contentLang)
+          pageViewPath(canonicalSlug, langOverride)
         )}`,
         signupHref: '/tool/create-account',
         t: req.t,
