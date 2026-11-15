@@ -1,4 +1,10 @@
-import { createDatabaseFromTemplate, dropDatabase, FILE_DATABASE_PREFIX, prepareTemplate } from './_database.ts';
+import {
+  claimDatabase,
+  createDatabaseFromTemplate,
+  dropDatabase,
+  FILE_DATABASE_PREFIX,
+  prepareTemplate,
+} from './_database.ts';
 
 // Preloaded into every test process. NODE_TEST_CONTEXT marks the processes the
 // runner starts for test files, as opposed to the runner itself.
@@ -20,13 +26,27 @@ if (process.env.NODE_TEST_CONTEXT) {
 
     // Without the global setup (e.g. running one file directly), prepare the template here.
     if (!process.env.AGPWIKI_TEST_RUN) await prepareTemplate(base);
-    await createDatabaseFromTemplate(base, database);
+    // Claim before creating, so other runs' cleanup never finds this database
+    // unowned. A database already under this name was left by an exited
+    // process that had the same pid, so it is safe to replace.
+    const claim = await claimDatabase(base, database);
+    try {
+      await dropDatabase(base, database);
+      await createDatabaseFromTemplate(base, database);
+    } catch (error) {
+      await claim.release();
+      throw error;
+    }
 
     let dropped = false;
     process.on('beforeExit', async () => {
       if (dropped) return;
       dropped = true;
-      await dropDatabase(base, database);
+      try {
+        await dropDatabase(base, database);
+      } finally {
+        await claim.release();
+      }
     });
   }
 }
