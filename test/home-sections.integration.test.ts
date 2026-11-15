@@ -214,6 +214,20 @@ test('The home page shows the sections below its text, and the page list sorts n
       "UPDATE forum_threads SET attached_type = 'position', attached_id = gen_random_uuid() WHERE id = $1",
       [attached.id]
     );
+    // Home sections show only the latest few items site-wide; future dates keep
+    // these fixtures among them while parallel tests create their own.
+    await dal.query("UPDATE forum_threads SET created_at = '2300-01-01T00:00:00Z' WHERE id = ANY($1::uuid[])", [
+      threadIds,
+    ]);
+    for (const [suffix, createdAt] of [
+      ['older', '2300-01-01T00:00:00Z'],
+      ['newer', '2300-01-02T00:00:00Z'],
+    ]) {
+      await dal.query('UPDATE pages SET created_at = $2 WHERE slug = $1 AND _old_rev_of IS NULL', [
+        `${prefix}-${suffix}`,
+        createdAt,
+      ]);
+    }
 
     const loaded = await loadHomeSections(dal, 'en', { fresh: true });
     const newer = loaded.articles.find(article => article.slug === `${prefix}-newer`);
@@ -235,7 +249,8 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.doesNotMatch(await getBody(`${server.url}/${prefix}-newer`), /home-sections/);
 
     const newest = await getBody(`${server.url}/tool/pages?sort=new&per=200`);
-    assert.ok(newest.indexOf(`/${prefix}-newer"`) < newest.indexOf(`/${prefix}-older"`));
+    const newerAt = newest.indexOf(`/${prefix}-newer"`);
+    assert.ok(newerAt >= 0 && newerAt < newest.indexOf(`/${prefix}-older"`));
     assert.match(newest, /<span class="pages-created">/);
     assert.match(newest, /<strong aria-current="true">tool\.pagesSortNew<\/strong>/);
     const byTitle = await getBody(`${server.url}/tool/pages?per=200`);
