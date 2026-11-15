@@ -1,6 +1,5 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField, diffStructuredField } from '../lib/diff-engine.js';
@@ -21,6 +20,7 @@ import {
 import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageCheck from '../models/page-check.js';
 import { assertCanDeletePageCheck } from './authorization.js';
+import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {

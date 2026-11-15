@@ -22,6 +22,14 @@
 - `src/models/` — Sequelize-style models with rev-dal
 - `src/scripts/` — CLI scripts for role management, invites, tokens
 
+Database-backed rendering loaders, reference validators, and recent-history
+queries belong in `src/services/`; pure extraction and format validation stay
+in `src/lib/`.
+
+MCP private SDK registry access and custom request dispatch live in
+`src/mcp/sdk-dispatch.ts`. When changing that adapter or upgrading the SDK,
+check the client-level contracts in `test/mcp-sdk-dispatch.test.ts`.
+
 ## Acceptance criteria
 
 - Tests passing

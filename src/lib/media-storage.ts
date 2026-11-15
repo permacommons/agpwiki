@@ -15,6 +15,7 @@ export interface StoredThumbnail {
 }
 
 export interface MediaStorage {
+  // Cache keys may include a revision namespace beneath the media slug.
   // Sync-feeling lookup for an existing thumbnail. Returns null on
   // miss; never fetches.
   findStored(slug: string, wikimediaStep: number): Promise<StoredThumbnail | null>;
@@ -30,11 +31,10 @@ export interface MediaStorage {
   ): Promise<StoredThumbnail>;
 
   // Removes every thumbnail under <slug>/. Used by deleteMedia and
-  // refreshMedia (wipe-and-rebuild-on-demand).
+  // refreshMedia for best-effort reclamation of older revisions.
   deleteAllForSlug(slug: string): Promise<void>;
 
-  // Atomically renames the slug directory. Used by updateMedia when
-  // newSlug is provided.
+  // Atomically renames a cache directory.
   renameSlug(oldSlug: string, newSlug: string): Promise<void>;
 }
 
@@ -248,8 +248,6 @@ export class FilesystemMediaStorage implements MediaStorage {
       await fs.rename(oldDir, newDir);
     } catch (err) {
       if (ENOENT(err)) {
-        // No thumbnails to move — fine. Service-layer rename
-        // succeeds even when nothing was cached yet.
         return;
       }
       throw err;

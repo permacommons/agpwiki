@@ -1,13 +1,6 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequestSchema,
-  type CallToolResult,
-  ErrorCode,
-  McpError,
-  ReadResourceRequestSchema,
-  type ReadResourceResult,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import config from 'config';
 import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
@@ -23,9 +16,7 @@ import {
 } from '../lib/citation-claims.js';
 import { compactFieldDiffs } from '../lib/diff-compact.js';
 import {
-  InvalidRequestError,
   PreconditionFailedError,
-  UnsupportedError,
   ValidationError,
 } from '../lib/errors.js';
 import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
@@ -173,9 +164,10 @@ import {
   type WikiPageUpdateInput,
 } from '../services/wiki-page-service.js';
 import { resolveAuthUserId } from './auth.js';
-import { toToolErrorPayload, toValidationErrorFromZod } from './errors.js';
+import { toToolErrorPayload } from './errors.js';
 import { registerPrompts } from './prompts.js';
 import { createLocalizedSchemas } from './schema.js';
+import { installSdkRequestHandlers } from './sdk-dispatch.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 
@@ -274,36 +266,6 @@ const ensureMcpErrorMap = () => {
 
   (mcpErrorMap as { __agpwikiMcp?: boolean }).__agpwikiMcp = true;
   z.setErrorMap(mcpErrorMap);
-};
-
-const normalizeToolSchema = (schema: unknown): z.ZodTypeAny | undefined => {
-  if (!schema || typeof schema !== 'object') return undefined;
-  const asAny = schema as Record<string, unknown> & {
-    _def?: unknown;
-    _zod?: unknown;
-    safeParse?: unknown;
-    safeParseAsync?: unknown;
-  };
-  if (asAny._def || asAny._zod || typeof asAny.safeParse === 'function') {
-    return schema as z.ZodTypeAny;
-  }
-
-  const values = Object.values(schema as Record<string, unknown>);
-  if (
-    values.length === 0 ||
-    values.every(
-      value =>
-        value &&
-        typeof value === 'object' &&
-        ('_def' in (value as Record<string, unknown>) ||
-          '_zod' in (value as Record<string, unknown>) ||
-          typeof (value as { safeParse?: unknown }).safeParse === 'function')
-    )
-  ) {
-    return z.object(schema as z.ZodRawShape);
-  }
-
-  return undefined;
 };
 
 export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
@@ -2552,114 +2514,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   registerPrompts(server);
 
-  server.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-    type RegisteredTool = {
-      enabled: boolean;
-      inputSchema?: unknown;
-      handler:
-        | ((args: unknown, extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult)
-        | ((extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult);
-    };
-
-    const tools = (server as unknown as { _registeredTools: Record<string, RegisteredTool> })
-      ._registeredTools;
-    const toolName = request.params.name;
-    const tool = tools[toolName];
-
-    if (!tool) {
-      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} not found.`));
-    }
-
-    if (!tool.enabled) {
-      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} disabled.`));
-    }
-
-    if (request.params.task) {
-      return formatToolErrorResult(
-        new UnsupportedError(`Tool ${toolName} does not support task augmentation.`)
-      );
-    }
-
-    let parsedArgs: unknown = request.params.arguments;
-    if (tool.inputSchema) {
-      const schema = normalizeToolSchema(tool.inputSchema);
-      if (schema) {
-        const parseResult = await schema.safeParseAsync(parsedArgs);
-        if (!parseResult.success) {
-          return formatToolErrorResult(
-            toValidationErrorFromZod(
-              `Invalid arguments for tool ${toolName}.`,
-              parseResult.error.issues as {
-                code: string;
-                path?: Array<string | number>;
-                message: string;
-                input?: unknown;
-              }[]
-            )
-          );
-        }
-        parsedArgs = parseResult.data;
-      }
-    }
-
-    try {
-      const handler = tool.handler;
-      if (tool.inputSchema) {
-        return await Promise.resolve(handler(parsedArgs, extra));
-      }
-      return await Promise.resolve(handler(extra));
-    } catch (error) {
-      return formatToolErrorResult(error);
-    }
-  });
-
-  // Override the SDK's resource handler to provide helpful error messages
-  // when clients use incorrect URI formats
-  type RegisteredResource = {
-    enabled: boolean;
-    readCallback: (uri: URL, extra: unknown) => Promise<ReadResourceResult>;
-  };
-  type RegisteredTemplate = {
-    resourceTemplate: { uriTemplate: { match: (uri: string) => Record<string, string> | null } };
-    readCallback: (
-      uri: URL,
-      variables: Record<string, string>,
-      extra: unknown
-    ) => Promise<ReadResourceResult>;
-  };
-
-  server.server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
-    const uri = new URL(request.params.uri);
-
-    // Access private registries (fragile but necessary for custom error handling)
-    const mcpServer = server as unknown as {
-      _registeredResources: Record<string, RegisteredResource>;
-      _registeredResourceTemplates: Record<string, RegisteredTemplate>;
-    };
-
-    // Check for exact resource match
-    const resource = mcpServer._registeredResources[uri.toString()];
-    if (resource) {
-      if (!resource.enabled) {
-        throw new McpError(ErrorCode.InvalidParams, `Resource ${uri} disabled`);
-      }
-      return resource.readCallback(uri, extra);
-    }
-
-    // Check templates
-    for (const template of Object.values(mcpServer._registeredResourceTemplates)) {
-      const variables = template.resourceTemplate.uriTemplate.match(uri.toString());
-      if (variables) {
-        return template.readCallback(uri, variables, extra);
-      }
-    }
-
-    // No match found - provide helpful error message
-    throw new McpError(
-      ErrorCode.InvalidParams,
-      `Resource not found: ${uri}. Available resources: agpwiki://pages, agpwiki://blog/posts, agpwiki://locales. To read individual items, use tools: wiki_readPage, blog_readPost, citation_read.`
-    );
-  });
+  installSdkRequestHandlers(server, formatToolErrorResult);
 
   return { server, formatToolResult, formatToolErrorResult, adminTools };
 };

@@ -110,6 +110,17 @@ it or set it back to `false` and restart the MCP server.
 - **Permission errors:** Re-run `node_modules/rev-dal/setup-db-grants.sql`
 - **Missing extensions:** Ensure `pgcrypto` exists in both databases
 
+## Media thumbnail caching
+
+Thumbnail requests resolve the current media revision in PostgreSQL before
+checking disk. Cached files live under `<slug>/_revisions/<revId>/`, so a
+refresh or slug reuse cannot select thumbnails left by an older revision.
+Updates, refreshes, and deletions reclaim cached files on a best-effort basis;
+cleanup failures are logged and do not turn a committed edit into an error.
+
+Slug-only cache files from older deployments are ignored and thumbnails rebuild
+on demand. Those files are reclaimed by subsequent edits or deletions.
+
 ## Checks
 
 CI runs `npm run lint`, `npm run typecheck` and `npm test`. It also builds the

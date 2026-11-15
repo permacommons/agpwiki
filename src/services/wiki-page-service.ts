@@ -5,7 +5,6 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { createOperators } from 'rev-dal/lib/filter-where';
 import debug from '../../util/debug.js';
-import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import {
   validateLocalizedMarkdownContent,
   validateMarkdownContent,
@@ -24,7 +23,7 @@ import { parseLocalDate } from '../lib/infobox-dates.js';
 import { INFOBOX_DATE_PROPERTIES, LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
 import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-values.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
-import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import {
   isArticleSlug,
   isDraftSlug,
@@ -51,8 +50,10 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
 import { checkNewPage, type RelatedPage } from './duplicate-check-service.js';
 import { infoboxService } from './infobox-service.js';
+import { validateMediaRefs } from './media-reference-validation-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
@@ -688,6 +689,39 @@ export const recordProtectedWikiPageEdit = async (
   }, transaction);
 };
 
+const validateEditedBody = async (
+  page: WikiPageInstance,
+  lang: string,
+  text: string,
+  errors: ValidationCollector
+) => {
+  ensureNoControlCharacters({ [lang]: text }, 'body');
+  await validateMarkdownContent(text, `body.${lang}`, errors, [
+    validateCitationClaimRefs,
+    validateMediaRefs,
+    validateNoStandardMarkdownImages,
+  ]);
+  errors.throwIfAny();
+  assertPromptPlaceholdersKept(page.slug, { ...page.body, [lang]: text });
+};
+
+const createBodyEditRevision = async (
+  page: WikiPageInstance,
+  userId: string,
+  { lang, text, operation, tags, translation, revSummary }: Pick<WikiPagePatchInput, 'lang' | 'tags' | 'revSummary'> & {
+    text: string;
+    operation: 'patch' | 'rewrite-section' | 'replace-exact';
+    translation: Awaited<ReturnType<typeof resolveTranslationSource>> | null;
+  }
+) => {
+  await page.newRevision({ id: userId }, { tags: ['update', operation, ...tags] });
+  page.body = { ...page.body, [lang]: text };
+  recordTranslationSource(page, translation);
+  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
+  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
+  page.updatedAt = new Date();
+};
+
 export const fetchPageRevisionByRevId = async (
   _dalInstance: DataAccessLayer,
   pageId: string,
@@ -1262,26 +1296,11 @@ export async function applyWikiPagePatch(
   const currentBody = page.body ?? {};
   const currentText = mlString.resolve(lang, currentBody)?.str ?? '';
   const patched = applyUnifiedPatch(currentText, patch, format, { expectedFile: normalizedSlug });
-  ensureNoControlCharacters({ [lang]: patched }, 'body');
-  await validateMarkdownContent(patched, `body.${lang}`, errors, [
-    validateCitationClaimRefs,
-    validateMediaRefs,
-    validateNoStandardMarkdownImages,
-  ]);
-  errors.throwIfAny();
-  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: patched });
+  await validateEditedBody(page, lang, patched, errors);
 
-  await page.newRevision({ id: userId }, { tags: ['update', 'patch', ...tags] });
-
-  page.body = {
-    ...currentBody,
-    [lang]: patched,
-  };
-  recordTranslationSource(page, translation);
-  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
-  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
-  page.updatedAt = new Date();
-
+  await createBodyEditRevision(page, userId, {
+    lang, text: patched, operation: 'patch', tags, translation, revSummary,
+  });
   await saveWithExpectedRevision(page, baseRevId, 'baseRevId');
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'patch');
@@ -1432,14 +1451,7 @@ export async function rewriteWikiPageSection(
       heading,
     });
   }
-  ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [
-    validateCitationClaimRefs,
-    validateMediaRefs,
-    validateNoStandardMarkdownImages,
-  ]);
-  errors.throwIfAny();
-  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
+  await validateEditedBody(page, lang, updatedText, errors);
 
   const translation = translatedFrom
     ? await resolveTranslationSource(page, translatedFrom, {
@@ -1448,17 +1460,9 @@ export async function rewriteWikiPageSection(
       })
     : null;
 
-  await page.newRevision({ id: userId }, { tags: ['update', 'rewrite-section', ...tags] });
-
-  page.body = {
-    ...currentBody,
-    [lang]: updatedText,
-  };
-  recordTranslationSource(page, translation);
-  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
-  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
-  page.updatedAt = new Date();
-
+  await createBodyEditRevision(page, userId, {
+    lang, text: updatedText, operation: 'rewrite-section', tags, translation, revSummary,
+  });
   await saveWithExpectedRevision(page, expectedRevId);
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'rewrite-section');
@@ -1520,14 +1524,7 @@ export async function replaceWikiPageExactText(
       slug: normalizedSlug,
     });
   }
-  ensureNoControlCharacters({ [lang]: updatedText }, 'body');
-  await validateMarkdownContent(updatedText, `body.${lang}`, errors, [
-    validateCitationClaimRefs,
-    validateMediaRefs,
-    validateNoStandardMarkdownImages,
-  ]);
-  errors.throwIfAny();
-  assertPromptPlaceholdersKept(page.slug, { ...currentBody, [lang]: updatedText });
+  await validateEditedBody(page, lang, updatedText, errors);
 
   const translation = translatedFrom
     ? await resolveTranslationSource(page, translatedFrom, {
@@ -1536,17 +1533,9 @@ export async function replaceWikiPageExactText(
       })
     : null;
 
-  await page.newRevision({ id: userId }, { tags: ['update', 'replace-exact', ...tags] });
-
-  page.body = {
-    ...currentBody,
-    [lang]: updatedText,
-  };
-  recordTranslationSource(page, translation);
-  const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
-  if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
-  page.updatedAt = new Date();
-
+  await createBodyEditRevision(page, userId, {
+    lang, text: updatedText, operation: 'replace-exact', tags, translation, revSummary,
+  });
   await saveWithExpectedRevision(page, expectedRevId);
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'replace-exact');

@@ -8,7 +8,7 @@ import express from 'express';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ConflictError, ForbiddenError, InvalidRequestError, ValidationError } from '../src/lib/errors.js';
-import { getRecentWikiChanges } from '../src/lib/recent-changes.js';
+import { getRecentWikiChanges } from '../src/services/recent-changes-service.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import AgentAccessRequest from '../src/models/agent-access-request.js';
 import User from '../src/models/user.js';

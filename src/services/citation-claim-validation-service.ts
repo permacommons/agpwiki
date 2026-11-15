@@ -1,7 +1,7 @@
+import type { ContentValidator, MarkdownAnalysis } from '../lib/content-validation.js';
+import type { ValidationCollector } from '../lib/errors.js';
 import CitationModel from '../models/citation.js';
 import CitationClaim from '../models/citation-claim.js';
-import type { ContentValidator, MarkdownAnalysis } from './content-validation.js';
-import type { ValidationCollector } from './errors.js';
 
 const extractClaimRefs = (analysis: MarkdownAnalysis) => {
   const refs = new Map<string, Set<string>>();

@@ -10,6 +10,7 @@ CLAUDE.md
 .gemini/
 .codex/config.toml
 .browser-data/
+.playwright-mcp/
 public/downloads/dumps/
 config/development.json5
 config/local.json5

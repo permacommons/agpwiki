@@ -158,6 +158,15 @@ export interface MediaServiceOptions {
   storage?: MediaStorage;
 }
 
+const cleanUpThumbnails = async (storage: MediaStorage | undefined, slug: string) => {
+  if (!storage) return;
+  try {
+    await storage.deleteAllForSlug(slug);
+  } catch (error) {
+    console.error(`Failed to clean up thumbnails for ${slug}:`, error);
+  }
+};
+
 const toMediaResult = (media: MediaInstance): MediaResult => ({
   id: media.id,
   slug: media.slug,
@@ -387,13 +396,7 @@ export async function updateMedia(
 
   await saveWithExpectedRevision(media, expectedRevId);
 
-  // Move stored thumbnails to the new slug directory if the slug
-  // changed. Storage is best-effort: a missing source dir is fine
-  // (no thumbnails were ever cached); but a real I/O error is a
-  // correctness problem the caller should see.
-  if (options.storage && targetSlug !== null && targetSlug !== slug) {
-    await options.storage.renameSlug(slug, targetSlug);
-  }
+  await cleanUpThumbnails(options.storage, slug);
 
   return toMediaResult(media);
 }
@@ -431,11 +434,7 @@ export async function refreshMedia(
 
   await saveWithExpectedRevision(media, expectedRevId);
 
-  // Cached thumbnails reflect the previous Commons state. Wipe them
-  // so the next render-time miss re-fetches against the current URL.
-  if (options.storage) {
-    await options.storage.deleteAllForSlug(slug);
-  }
+  await cleanUpThumbnails(options.storage, slug);
 
   return toMediaResult(media);
 }
@@ -628,17 +627,7 @@ export async function deleteMedia(
   );
   await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
-  // Reclaim disk after the row is soft-deleted. Best-effort — if
-  // storage cleanup throws, the deletion still succeeded as far as
-  // the DB is concerned, and a future refresh would re-overwrite
-  // anyway.
-  if (options.storage) {
-    try {
-      await options.storage.deleteAllForSlug(slug);
-    } catch {
-      // intentionally swallowed; DB delete is authoritative.
-    }
-  }
+  await cleanUpThumbnails(options.storage, slug);
 
   return {
     id: media.id,
