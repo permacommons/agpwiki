@@ -1,8 +1,8 @@
 # Raw SQL and rev-dal audit
 
 Reviewed 2026-11-15 against the sibling rev-dal documentation and implementation.
-This is an assessment and implementation backlog. P0 and the blog revision-history
-portion of P1 have since been implemented.
+This is an assessment and implementation backlog. P0, blog revision history,
+and citation/media renderer lookups from P1 have since been implemented.
 
 ## Scope and baseline
 
@@ -63,7 +63,14 @@ updates concurrently and verify the returned summaries and preserved site-admin 
 `getAllRevisions` / `getRevisionByRevId`, with explicit descending list order.
 Service integration coverage checks archived and deleted historical revisions,
 current/default and explicit diff targets, document scoping, and missing/deleted
-posts. The remaining items below are still opportunities.
+posts.
+
+**Implemented:** citation and media renderer lookups use `whereIn` and `select`
+with automatic current/live guards. Citation lookups select only key and data;
+media lookups select only registry fields and reuse the instance registry mapper.
+Integration coverage verifies current revision data, deleted/missing references,
+duplicate references, empty-input short circuits, and one query per lookup.
+The other items below remain opportunities.
 
 These have the best ratio of simplification to implementation risk. No general
 SQL expression API is needed.
@@ -250,4 +257,6 @@ The original assessment was documentation-only. The P0 implementation passed
 the targeted rights integration tests, all 632 tests in the full suite, lint,
 and typecheck.
 The blog history migration passed its targeted integration test, all 633 tests
+in the full suite, lint, and typecheck.
+The renderer lookup migration passed its targeted integration test, all 634 tests
 in the full suite, lint, and typecheck.
