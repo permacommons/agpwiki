@@ -74,7 +74,10 @@ const unlockOwner = (client: pg.Client, database: string) =>
 // A plain DROP DATABASE stops autovacuum workers in the database itself,
 // whereas FORCE tries to terminate them and, for a role that is not a
 // superuser, fails with "permission denied to terminate process". So drop
-// plainly, and force only when our own connections are still open.
+// plainly. FORCE is a fallback for connections that are still open: none are
+// expected, because a test process with an open pool does not reach
+// beforeExit and cleanup only drops databases whose owner has exited. No test
+// covers it.
 const OBJECT_IN_USE = '55006';
 
 const dropDatabaseWith = async (client: pg.Client, database: string) => {
@@ -158,7 +161,7 @@ export const claimDatabase = async (base: PostgresConfig, database: string): Pro
 export const dropDatabase = (base: PostgresConfig, database: string) =>
   withMaintenanceClient(base, client => dropDatabaseWith(client, database));
 
-const listDatabases = async (client: pg.Client, prefix: string) => {
+const queryDatabases = async (client: pg.Client, prefix: string) => {
   const { rows } = await client.query<{ datname: string }>(
     'SELECT datname FROM pg_database WHERE left(datname, length($1)) = $1 ORDER BY datname',
     [prefix]
@@ -166,12 +169,16 @@ const listDatabases = async (client: pg.Client, prefix: string) => {
   return rows.map(row => row.datname);
 };
 
+/** Names of the databases with this prefix, sorted. */
+export const listDatabases = (base: PostgresConfig, prefix: string) =>
+  withMaintenanceClient(base, client => queryDatabases(client, prefix));
+
 /** Drop every database with this prefix. Use only once their owners are known to be done. */
 export const dropDatabases = (base: PostgresConfig, prefix: string) =>
   withMaintenanceClient(base, async client => {
-    const databases = await listDatabases(client, prefix);
+    const databases = await queryDatabases(client, prefix);
     for (const database of databases) await dropDatabaseWith(client, database);
-    return databases;
+    return databases.length;
   });
 
 /**
@@ -182,7 +189,7 @@ export const dropDatabases = (base: PostgresConfig, prefix: string) =>
 export const dropAbandonedDatabases = (base: PostgresConfig, prefix: string) =>
   withMaintenanceClient(base, async client => {
     const dropped: string[] = [];
-    for (const database of await listDatabases(client, prefix)) {
+    for (const database of await queryDatabases(client, prefix)) {
       if (!(await tryLockOwner(client, database))) continue;
       // Holding the owner lock while dropping keeps any process from claiming
       // the database in between.

@@ -1,7 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import test, { after } from 'node:test';
-import { pathToFileURL } from 'node:url';
 import config, { type PostgresConfig } from 'config';
 import pg from 'pg';
 
@@ -11,6 +10,7 @@ import {
   dropAbandonedDatabases,
   dropDatabases,
   FILE_DATABASE_PREFIX,
+  listDatabases,
   NO_DATABASE,
   TEMPLATE_LOCK_ID,
 } from './_database.ts';
@@ -20,7 +20,7 @@ import {
 // other runs' databases.
 const base = config.get<PostgresConfig>('postgres');
 const prefix = `agpwiki_test_harness_${process.pid}_`;
-const moduleUrl = (relative: string) => pathToFileURL(new URL(relative, import.meta.url).pathname).href;
+const moduleUrl = (relative: string) => new URL(relative, import.meta.url).href;
 const databaseModule = moduleUrl('./_database.ts');
 
 const connect = async () => {
@@ -29,25 +29,11 @@ const connect = async () => {
   return client;
 };
 
-const existingDatabases = async () => {
-  const client = await connect();
-  try {
-    const { rows } = await client.query<{ datname: string }>(
-      'SELECT datname FROM pg_database WHERE left(datname, length($1)) = $1 ORDER BY datname',
-      [prefix]
-    );
-    return rows.map(row => row.datname);
-  } finally {
-    await client.end();
-  }
-};
-
 /** Run a module script in a fresh Node process that can import the harness. */
 const runChild = (script: string, timeoutMs = 15_000, extraEnv: Record<string, string> = {}) =>
   new Promise<{ code: number | null; signal: NodeJS.Signals | null; output: string }>((resolve, reject) => {
-    const { NODE_TEST_CONTEXT: _, ...env } = process.env;
     const child = spawn(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script], {
-      env: { ...env, HARNESS_BASE: JSON.stringify(base), ...extraEnv },
+      env: { ...process.env, HARNESS_BASE: JSON.stringify(base), ...extraEnv },
     });
     let output = '';
     const collect = (chunk: Buffer) => {
@@ -79,13 +65,13 @@ test('cleanup keeps claimed databases even when nothing is connected to them', a
 
     // Neither database has a connection; only the claim tells them apart.
     assert.deepEqual(await dropAbandonedDatabases(base, prefix), [abandoned]);
-    assert.deepEqual(await existingDatabases(), [owned]);
+    assert.deepEqual(await listDatabases(base, prefix), [owned]);
   } finally {
     await claim.release();
   }
 
   assert.deepEqual(await dropAbandonedDatabases(base, prefix), [owned]);
-  assert.deepEqual(await existingDatabases(), []);
+  assert.deepEqual(await listDatabases(base, prefix), []);
 });
 
 test('a database can only be claimed by one process at a time', async () => {
@@ -110,7 +96,7 @@ test('a crashed owner releases its claim', async () => {
     process.kill(process.pid, 'SIGKILL');
   `);
   assert.equal(result.signal, 'SIGKILL', result.output);
-  assert.deepEqual(await existingDatabases(), [database]);
+  assert.deepEqual(await listDatabases(base, prefix), [database]);
 
   // The server notices the closed socket asynchronously; wait for the lock.
   let dropped: string[] = [];
@@ -157,7 +143,7 @@ test('cloning the template waits while the template is being migrated', async ()
   }
   await clone;
   assert.equal(cloned, true);
-  assert.deepEqual(await existingDatabases(), [database]);
+  assert.deepEqual(await listDatabases(base, prefix), [database]);
 });
 
 test('a file that imports _use-database connects to its own database', async () => {
@@ -194,9 +180,17 @@ test('importing _use-database after config fails with a clear error', async () =
   assert.match(result.output, /import '\.\/_use-database\.js' first/);
 });
 
-test('files without the import point at a database that does not exist', { skip: !process.env.AGPWIKI_TEST_RUN }, () => {
-  assert.equal(base.database, NO_DATABASE);
-});
+// This file doesn't import _use-database, so it gets what every such file
+// gets. Global setup arranges that, so the test needs it.
+test(
+  'files without the import cannot connect',
+  { skip: process.env.AGPWIKI_TEST_RUN ? false : 'needs the global setup' },
+  async () => {
+    assert.equal(base.database, NO_DATABASE);
+    const client = new pg.Client(base);
+    await assert.rejects(client.connect(), { code: '3D000' }); // invalid_catalog_name
+  }
+);
 
 test('_use-database keeps other NODE_CONFIG overrides', async () => {
   const overrides = JSON.parse(process.env.NODE_CONFIG ?? '{}') as { postgres?: Record<string, unknown> };
