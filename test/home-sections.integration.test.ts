@@ -170,14 +170,11 @@ test('The home page shows the sections below its text, and the page list sorts n
   const dal = await getDal();
   const prefix = `test-home-${Date.now()}`;
   const server = await makeServer();
-  let userId: string | null = null;
-  const threadIds: string[] = [];
   const welcomeExisted =
     ((await dal.query('SELECT 1 FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [HOME_PAGE_SLUG])).rowCount ?? 0) >
     0;
   try {
     const user = await createTestUser();
-    userId = user.id;
     if (!welcomeExisted) {
       await createWikiPage(
         dal,
@@ -204,12 +201,10 @@ test('The home page shows the sections below its text, and the page list sorts n
       { category: 'general', title: `${prefix} thread`, body: 'First post.', language: 'en' },
       user.id
     );
-    threadIds.push(thread.id);
     const attached = await createForumThread(
       { category: 'general', title: `${prefix} attached`, body: 'A reply.', language: 'en' },
       user.id
     );
-    threadIds.push(attached.id);
     await dal.query(
       "UPDATE forum_threads SET attached_type = 'position', attached_id = gen_random_uuid() WHERE id = $1",
       [attached.id]
@@ -244,59 +239,40 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(byTitle, /href="\/tool\/pages\?per=200&amp;sort=new">tool\.pagesSortNew/);
   } finally {
     await server.close();
-    for (const threadId of threadIds) {
-      await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = $1', [threadId]);
-      await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' = $1", [threadId]);
-      await dal.query('DELETE FROM forum_comments WHERE thread_id = $1', [threadId]);
-      await dal.query('DELETE FROM forum_threads WHERE id = $1 OR _old_rev_of = $1', [threadId]);
-    }
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-    if (!welcomeExisted) await dal.query('DELETE FROM pages WHERE slug = $1', [HOME_PAGE_SLUG]);
-    if (userId) {
-      await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
-      await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-    }
   }
 });
-
 
 test('Home posts use current text, summary fallback and only live image references', async () => {
   const dal = await getDal();
   const user = await createTestUser();
   const prefix = `home-post-${randomBytes(8).toString('hex')}`;
-  try {
-    const image = await Media.createFirstRevision({ id: user.id });
-    image.slug = prefix;
-    image.commonsTitle = 'File:Example.jpg';
-    image.mediaType = 'image';
-    image.data = {};
-    await image.save();
-    const post = await BlogPost.createFirstRevision({ id: user.id });
-    post.slug = prefix;
-    post.title = { en: 'Home post' };
-    post.body = { en: 'Old body.' };
-    await post.save();
-    await post.newRevision({ id: user.id });
-    post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
-    await post.save();
-    const read = async () => (await loadHomeSections(dal, 'en', { fresh: true })).posts.filter(item => item.slug === prefix);
-    let posts = await read();
-    assert.equal(posts.length, 1);
-    assert.equal(posts[0].summary, 'Current text.');
-    assert.equal(posts[0].imageSlug, prefix);
-    assert.equal(posts[0].createdAt.getTime(), post.createdAt.getTime());
-    await post.newRevision({ id: user.id });
-    post.summary = { en: 'Explicit summary.' };
-    await post.save();
-    await image.deleteAllRevisions({ id: user.id });
-    posts = await read();
-    assert.equal(posts[0].summary, 'Explicit summary.');
-    assert.equal(posts[0].imageSlug, null);
-    await post.deleteAllRevisions({ id: user.id });
-    assert.deepEqual(await read(), []);
-  } finally {
-    await dal.query('DELETE FROM posts WHERE slug = $1', [prefix]);
-    await dal.query('DELETE FROM media WHERE slug = $1', [prefix]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
-  }
+  const image = await Media.createFirstRevision({ id: user.id });
+  image.slug = prefix;
+  image.commonsTitle = 'File:Example.jpg';
+  image.mediaType = 'image';
+  image.data = {};
+  await image.save();
+  const post = await BlogPost.createFirstRevision({ id: user.id });
+  post.slug = prefix;
+  post.title = { en: 'Home post' };
+  post.body = { en: 'Old body.' };
+  await post.save();
+  await post.newRevision({ id: user.id });
+  post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
+  await post.save();
+  const read = async () => (await loadHomeSections(dal, 'en', { fresh: true })).posts.filter(item => item.slug === prefix);
+  let posts = await read();
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].summary, 'Current text.');
+  assert.equal(posts[0].imageSlug, prefix);
+  assert.equal(posts[0].createdAt.getTime(), post.createdAt.getTime());
+  await post.newRevision({ id: user.id });
+  post.summary = { en: 'Explicit summary.' };
+  await post.save();
+  await image.deleteAllRevisions({ id: user.id });
+  posts = await read();
+  assert.equal(posts[0].summary, 'Explicit summary.');
+  assert.equal(posts[0].imageSlug, null);
+  await post.deleteAllRevisions({ id: user.id });
+  assert.deepEqual(await read(), []);
 });

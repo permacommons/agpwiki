@@ -48,6 +48,5 @@ test('User lookups batch names and authors, omit missing users, and skip empty i
     assert.equal(query.mock.callCount(), 3);
   } finally {
     t.mock.restoreAll();
-    await dal.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [ids]);
   }
 });

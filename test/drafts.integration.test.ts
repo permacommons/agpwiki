@@ -32,6 +32,7 @@ import {
 } from '../src/services/wiki-page-service.js';
 import { insertTestUser } from './_test-users.js';
 
+
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
 test.after(async () => {
@@ -53,17 +54,6 @@ const randomWord = () =>
   Array.from({ length: 10 }, () => String.fromCharCode(97 + randomInt(26))).join('');
 
 const newPrefix = (label: string) => `test-${label}-${Date.now()}-${randomWord()}`;
-
-const cleanup = async (prefix: string, userIds: string[]) => {
-  const dal = await getDal();
-  const patterns = [`${prefix}%`, `draft/${prefix}%`];
-  await dal.query(
-    'DELETE FROM page_aliases WHERE slug LIKE ANY($1::text[]) OR page_id IN (SELECT id FROM pages WHERE slug LIKE ANY($1::text[]))',
-    [patterns]
-  );
-  await dal.query('DELETE FROM pages WHERE slug LIKE ANY($1::text[])', [patterns]);
-  if (userIds.length) await dal.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [userIds]);
-};
 
 // Pretends the draft was created long enough ago to be checked again at Publish.
 const ageDraft = async (slug: string) => {
@@ -131,58 +121,50 @@ test('drafts stay out of search and lists but are recognized as existing link ta
   const dal = await getDal();
   const prefix = newPrefix('draft-lists');
   const user = await createTestUser();
-  try {
-    const word = randomWord();
-    const draft = await createWikiPage(
-      dal, { slug: prefix, title: { en: `Draft ${word}` }, body: { en: 'Text.' }, draft: true }, user.id
-    );
-    assert.equal(draft.slug, `draft/${prefix}`);
-    const horse = await createWikiPage(
-      dal, { slug: `${prefix}-draft-horse`, title: { en: `Horse ${word}` }, body: { en: 'Text.' } }, user.id
-    );
-    await assert.rejects(
-      createWikiPage(dal, { slug: `meta/${prefix}`, title: { en: 'Meta' }, draft: true }, user.id),
-      { code: 'invalid_request' }
-    );
+  const word = randomWord();
+  const draft = await createWikiPage(
+    dal, { slug: prefix, title: { en: `Draft ${word}` }, body: { en: 'Text.' }, draft: true }, user.id
+  );
+  assert.equal(draft.slug, `draft/${prefix}`);
+  const horse = await createWikiPage(
+    dal, { slug: `${prefix}-draft-horse`, title: { en: `Horse ${word}` }, body: { en: 'Text.' } }, user.id
+  );
+  await assert.rejects(
+    createWikiPage(dal, { slug: `meta/${prefix}`, title: { en: 'Meta' }, draft: true }, user.id),
+    { code: 'invalid_request' }
+  );
 
-    const found = (await searchWikiPages(dal, { query: word })).map(item => item.slug);
-    assert.deepEqual(found, [horse.slug]);
-    const listed = (await articlePages().run()).map(page => page.slug);
-    assert.ok(listed.includes(horse.slug));
-    assert.equal(listed.includes(draft.slug), false);
+  const found = (await searchWikiPages(dal, { query: word })).map(item => item.slug);
+  assert.deepEqual(found, [horse.slug]);
+  const listed = (await articlePages().run()).map(page => page.slug);
+  assert.ok(listed.includes(horse.slug));
+  assert.equal(listed.includes(draft.slug), false);
 
-    const links = [draft.slug, horse.slug];
-    assert.deepEqual([...(await findExistingWikiLinkSlugs(dal, links))].sort(), [...links].sort());
-  } finally {
-    await cleanup(prefix, [user.id]);
-  }
+  const links = [draft.slug, horse.slug];
+  assert.deepEqual([...(await findExistingWikiLinkSlugs(dal, links))].sort(), [...links].sort());
 });
 
 test('a new draft is checked against articles and drafts', async () => {
   const dal = await getDal();
   const prefix = newPrefix('draft-dup');
   const user = await createTestUser();
-  try {
-    const title = { en: `Topic ${randomWord()}` };
-    const article = await createWikiPage(dal, { slug: prefix, title }, user.id);
-    await assert.rejects(
-      createWikiPage(dal, { slug: `${prefix}-other`, title, draft: true }, user.id),
-      (error: { code?: string; details?: { duplicates?: Array<{ slug: string }> } }) =>
-        error.code === 'possible_duplicate' &&
-        error.details?.duplicates?.some(page => page.slug === article.slug) === true
-    );
-    const draft = await createWikiPage(
-      dal, { slug: `${prefix}-other`, title, draft: true, notDuplicateOf: [article.slug] }, user.id
-    );
-    await assert.rejects(
-      createWikiPage(dal, { slug: `${prefix}-third`, title, draft: true, notDuplicateOf: [article.slug] }, user.id),
-      (error: { code?: string; details?: { duplicates?: Array<{ slug: string }> } }) =>
-        error.code === 'possible_duplicate' &&
-        error.details?.duplicates?.some(page => page.slug === draft.slug) === true
-    );
-  } finally {
-    await cleanup(prefix, [user.id]);
-  }
+  const title = { en: `Topic ${randomWord()}` };
+  const article = await createWikiPage(dal, { slug: prefix, title }, user.id);
+  await assert.rejects(
+    createWikiPage(dal, { slug: `${prefix}-other`, title, draft: true }, user.id),
+    (error: { code?: string; details?: { duplicates?: Array<{ slug: string }> } }) =>
+      error.code === 'possible_duplicate' &&
+      error.details?.duplicates?.some(page => page.slug === article.slug) === true
+  );
+  const draft = await createWikiPage(
+    dal, { slug: `${prefix}-other`, title, draft: true, notDuplicateOf: [article.slug] }, user.id
+  );
+  await assert.rejects(
+    createWikiPage(dal, { slug: `${prefix}-third`, title, draft: true, notDuplicateOf: [article.slug] }, user.id),
+    (error: { code?: string; details?: { duplicates?: Array<{ slug: string }> } }) =>
+      error.code === 'possible_duplicate' &&
+      error.details?.duplicates?.some(page => page.slug === draft.slug) === true
+  );
 });
 
 test('publishing moves a draft to its article address and keeps the draft address', async () => {
@@ -190,81 +172,73 @@ test('publishing moves a draft to its article address and keeps the draft addres
   const prefix = newPrefix('draft-publish');
   const creator = await createTestUser();
   const stranger = await createTestUser();
-  try {
-    const draft = await createWikiPage(
-      dal, { slug: prefix, title: { en: `Publish ${randomWord()}` }, body: { en: 'Text.' }, draft: true }, creator.id
-    );
-    await assert.rejects(
-      updateWikiPage(dal, { slug: draft.slug, newSlug: prefix, revSummary: { en: 'Move' } }, creator.id),
-      { code: 'invalid_request' }
-    );
-    await assert.rejects(
-      publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, stranger.id),
-      { code: 'forbidden' }
-    );
+  const draft = await createWikiPage(
+    dal, { slug: prefix, title: { en: `Publish ${randomWord()}` }, body: { en: 'Text.' }, draft: true }, creator.id
+  );
+  await assert.rejects(
+    updateWikiPage(dal, { slug: draft.slug, newSlug: prefix, revSummary: { en: 'Move' } }, creator.id),
+    { code: 'invalid_request' }
+  );
+  await assert.rejects(
+    publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, stranger.id),
+    { code: 'forbidden' }
+  );
 
-    await updateWikiPage(dal, {
-      slug: draft.slug, body: { en: 'Edited by someone else.' }, revSummary: { en: 'Edit draft' },
-    }, stranger.id);
-    await assert.rejects(
-      publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, stranger.id),
-      { code: 'forbidden' }
-    );
-    const published = await publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, creator.id);
-    assert.equal(published.slug, prefix);
-    assert.equal(published.draftSlug, draft.slug);
-    assert.equal((await findCurrentPageBySlugOrAlias(draft.slug))?.slug, prefix);
-    const history = await listWikiPageRevisions(dal, prefix);
-    assert.ok(history.revisions[0]?.revTags?.includes('publish'));
-    await assert.rejects(
-      publishDraft(dal, { slug: prefix, revSummary: { en: 'Publish draft' } }, creator.id),
-      { code: 'invalid_request' }
-    );
+  await updateWikiPage(dal, {
+    slug: draft.slug, body: { en: 'Edited by someone else.' }, revSummary: { en: 'Edit draft' },
+  }, stranger.id);
+  await assert.rejects(
+    publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, stranger.id),
+    { code: 'forbidden' }
+  );
+  const published = await publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, creator.id);
+  assert.equal(published.slug, prefix);
+  assert.equal(published.draftSlug, draft.slug);
+  assert.equal((await findCurrentPageBySlugOrAlias(draft.slug))?.slug, prefix);
+  const history = await listWikiPageRevisions(dal, prefix);
+  assert.ok(history.revisions[0]?.revTags?.includes('publish'));
+  await assert.rejects(
+    publishDraft(dal, { slug: prefix, revSummary: { en: 'Publish draft' } }, creator.id),
+    { code: 'invalid_request' }
+  );
 
-    const second = await createWikiPage(
-      dal, { slug: `${prefix}-taken`, title: { en: `Taken ${randomWord()}` }, draft: true }, creator.id
-    );
-    await createWikiPage(dal, { slug: `${prefix}-taken`, title: { en: `Other ${randomWord()}` } }, creator.id);
-    await assert.rejects(
-      publishDraft(dal, { slug: second.slug, revSummary: { en: 'Publish draft' } }, creator.id),
-      { code: 'conflict' }
-    );
-  } finally {
-    await cleanup(prefix, [creator.id, stranger.id]);
-  }
+  const second = await createWikiPage(
+    dal, { slug: `${prefix}-taken`, title: { en: `Taken ${randomWord()}` }, draft: true }, creator.id
+  );
+  await createWikiPage(dal, { slug: `${prefix}-taken`, title: { en: `Other ${randomWord()}` } }, creator.id);
+  await assert.rejects(
+    publishDraft(dal, { slug: second.slug, revSummary: { en: 'Publish draft' } }, creator.id),
+    { code: 'conflict' }
+  );
 });
 
 test('Publish checks for duplicates again unless the draft is new', async () => {
   const dal = await getDal();
   const prefix = newPrefix('draft-recheck');
   const user = await createTestUser();
-  try {
-    const title = { en: `Recheck ${randomWord()}` };
-    const fresh = await createWikiPage(dal, { slug: `${prefix}-fresh`, title, draft: true }, user.id);
-    const old = await createWikiPage(
-      dal, { slug: `${prefix}-old`, title, draft: true, notDuplicateOf: [fresh.slug] }, user.id
-    );
-    // Articles are not checked against drafts, so this one appears meanwhile.
-    const article = await createWikiPage(dal, { slug: `${prefix}-article`, title }, user.id);
+  const title = { en: `Recheck ${randomWord()}` };
+  const fresh = await createWikiPage(dal, { slug: `${prefix}-fresh`, title, draft: true }, user.id);
+  const old = await createWikiPage(
+    dal, { slug: `${prefix}-old`, title, draft: true, notDuplicateOf: [fresh.slug] }, user.id
+  );
+  // Articles are not checked against drafts, so this one appears meanwhile.
+  const article = await createWikiPage(dal, { slug: `${prefix}-article`, title }, user.id);
 
-    const publishedFresh = await publishDraft(dal, { slug: fresh.slug, revSummary: { en: 'Publish draft' } }, user.id);
-    assert.equal(publishedFresh.slug, `${prefix}-fresh`);
+  const publishedFresh = await publishDraft(dal, { slug: fresh.slug, revSummary: { en: 'Publish draft' } }, user.id);
+  assert.equal(publishedFresh.slug, `${prefix}-fresh`);
 
-    await ageDraft(old.slug);
-    await assert.rejects(
-      publishDraft(dal, { slug: old.slug, revSummary: { en: 'Publish draft' } }, user.id),
-      { code: 'possible_duplicate' }
-    );
-    const checked = [article.slug, publishedFresh.slug];
-    const published = await publishDraft(
-      dal, { slug: old.slug, notDuplicateOf: checked, revSummary: { en: 'Publish draft' } }, user.id
-    );
-    assert.equal(published.slug, `${prefix}-old`);
-    const tags = (await listWikiPageRevisions(dal, published.slug)).revisions[0]?.revTags ?? [];
-    for (const slug of checked) assert.ok(tags.includes(`not-duplicate-of:${slug}`));
-  } finally {
-    await cleanup(prefix, [user.id]);
-  }
+  await ageDraft(old.slug);
+  await assert.rejects(
+    publishDraft(dal, { slug: old.slug, revSummary: { en: 'Publish draft' } }, user.id),
+    { code: 'possible_duplicate' }
+  );
+  const checked = [article.slug, publishedFresh.slug];
+  const published = await publishDraft(
+    dal, { slug: old.slug, notDuplicateOf: checked, revSummary: { en: 'Publish draft' } }, user.id
+  );
+  assert.equal(published.slug, `${prefix}-old`);
+  const tags = (await listWikiPageRevisions(dal, published.slug)).revisions[0]?.revTags ?? [];
+  for (const slug of checked) assert.ok(tags.includes(`not-duplicate-of:${slug}`));
 });
 
 test('drafts are blocked in robots.txt and marked noindex, with a banner', async () => {
@@ -297,7 +271,6 @@ test('drafts are blocked in robots.txt and marked noindex, with a banner', async
     assert.doesNotMatch(articleView.bodyHtml, /class="draft-banner"/);
   } finally {
     await server.close();
-    await cleanup(prefix, [user.id]);
   }
 });
 
@@ -345,7 +318,6 @@ test('MCP creates drafts and publishes them by permanent page ID', async () => {
   } finally {
     await client.close();
     await server.close();
-    await cleanup(prefix, [user.id]);
   }
 });
 
@@ -385,7 +357,5 @@ test('publish failures use localized messages for occupied addresses and possibl
     }
   } finally {
     await server.close();
-    await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [user.id]);
-    await cleanup(prefix, [user.id]);
   }
 });

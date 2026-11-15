@@ -53,8 +53,8 @@ type Fixture = {
   revisionParam: 'expectedRevId' | 'baseRevId';
   invoke: (revisionId: string | undefined, step: number) => Promise<ToolResult>;
   snapshot: (current: Record<string, unknown>) => unknown;
-  cleanup: () => Promise<void>;
 };
+
 
 let sharedDal: Dal | null = null;
 
@@ -71,11 +71,6 @@ test.after(async () => {
 });
 
 const createTestUser = () => insertTestUser({ prefix: 'expectedrev', displayName: 'Expected Revision Test' });
-
-const cleanupUser = async (dal: Dal, userId: string) => {
-  await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
-  await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-};
 
 const getTools = () => {
   const { server } = createMcpServer({ skipPolicyCheck: true });
@@ -225,29 +220,19 @@ const withFixture = async (
 ) => {
   const dal = await getDal();
   const user = await createTestUser();
-  let fixture: Fixture | null = null;
-  try {
-    fixture = await build({ dal, userId: user.id });
-    await runExpectedRevisionScenario(t, user.id, fixture);
-  } finally {
-    await fixture?.cleanup();
-    await cleanupUser(dal, user.id);
-  }
+  await runExpectedRevisionScenario(t, user.id, await build({ dal, userId: user.id }));
 };
 
 const createWikiFixture = async (dal: Dal, userId: string) => {
   const slug = `test-expected-rev-${uniqueSuffix()}`;
   const page = await createWikiPage(
     dal,
-    { slug, title: { en: 'Expected Revision' }, body: { en: 'Body 0' }, canonicalLanguage: 'en' },
+    { slug, title: { en: `Expected Revision ${slug}` }, body: { en: 'Body 0' }, canonicalLanguage: 'en' },
     userId
   );
   return {
     slug,
     id: page.id,
-    cleanup: async () => {
-      await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-    },
   };
 };
 
@@ -257,7 +242,7 @@ const wikiToolFixture = (
   buildArgs: (slug: string, currentBody: string, step: number) => Record<string, unknown>
 ) =>
   async ({ dal, userId }: { dal: Dal; userId: string }): Promise<Fixture> => {
-    const { slug, id, cleanup } = await createWikiFixture(dal, userId);
+    const { slug, id } = await createWikiFixture(dal, userId);
     const tools = getTools();
     const authInfo = { extra: { userId } };
     return {
@@ -276,7 +261,6 @@ const wikiToolFixture = (
         );
       },
       snapshot: current => current.body,
-      cleanup,
     };
   };
 
@@ -329,7 +313,7 @@ test('blog_updatePost honors expectedRevId', async t => {
     const slug = `test-expected-rev-post-${uniqueSuffix()}`;
     const post = await createBlogPost(
       dal,
-      { slug, title: { en: 'Expected Revision' }, body: { en: 'Body 0' } },
+      { slug, title: { en: `Expected Revision ${slug}` }, body: { en: 'Body 0' } },
       userId
     );
     const tools = getTools();
@@ -343,9 +327,6 @@ test('blog_updatePost honors expectedRevId', async t => {
           { authInfo: { extra: { userId } } }
         ),
       snapshot: current => current.body,
-      cleanup: async () => {
-        await dal.query('DELETE FROM posts WHERE slug = $1', [slug]);
-      },
     };
   });
 });
@@ -371,9 +352,6 @@ test('citation_update honors expectedRevId', async t => {
           { authInfo: { extra: { userId } } }
         ),
       snapshot: current => current.data,
-      cleanup: async () => {
-        await dal.query('DELETE FROM citations WHERE key = $1', [key]);
-      },
     };
   });
 });
@@ -405,10 +383,6 @@ test('claim_update honors expectedRevId', async t => {
           { authInfo: { extra: { userId } } }
         ),
       snapshot: current => current.assertion,
-      cleanup: async () => {
-        await dal.query('DELETE FROM citation_claims WHERE citation_id = $1', [citation.id]);
-        await dal.query('DELETE FROM citations WHERE key = $1', [key]);
-      },
     };
   });
 });
@@ -424,15 +398,12 @@ const createMediaFixture = async (dal: Dal, userId: string) => {
   return {
     slug,
     id: media.id,
-    cleanup: async () => {
-      await dal.query('DELETE FROM media WHERE slug = $1', [slug]);
-    },
   };
 };
 
 test('media_update honors expectedRevId', async t => {
   await withFixture(t, async ({ dal, userId }) => {
-    const { slug, id, cleanup } = await createMediaFixture(dal, userId);
+    const { slug, id } = await createMediaFixture(dal, userId);
     const tools = getTools();
     return {
       Model: Media,
@@ -444,7 +415,6 @@ test('media_update honors expectedRevId', async t => {
           { authInfo: { extra: { userId } } }
         ),
       snapshot: current => current.caption ?? null,
-      cleanup,
     };
   });
 });
@@ -453,7 +423,7 @@ test('media_update honors expectedRevId', async t => {
 // a stubbed fetcher and maps errors the same way the MCP layer does.
 test('media_refresh honors expectedRevId', async t => {
   await withFixture(t, async ({ dal, userId }) => {
-    const { slug, id, cleanup } = await createMediaFixture(dal, userId);
+    const { slug, id } = await createMediaFixture(dal, userId);
     return {
       Model: Media,
       id,
@@ -472,7 +442,6 @@ test('media_refresh honors expectedRevId', async t => {
         }
       },
       snapshot: current => (current.data as { fetchedAt?: string } | null)?.fetchedAt ?? null,
-      cleanup,
     };
   });
 });
@@ -484,7 +453,7 @@ const checkMetrics = {
 
 test('page_check_update honors expectedRevId', async t => {
   await withFixture(t, async ({ dal, userId }) => {
-    const { slug, cleanup } = await createWikiFixture(dal, userId);
+    const { slug } = await createWikiFixture(dal, userId);
     const page = (await WikiPage.filterWhere({ slug }).first()) as { id: string; _revID: string };
     const check = await createPageCheck(
       dal,
@@ -514,10 +483,6 @@ test('page_check_update honors expectedRevId', async t => {
           { authInfo: { extra: { userId } } }
         ),
       snapshot: current => current.checkResults,
-      cleanup: async () => {
-        await dal.query('DELETE FROM page_checks WHERE page_id = $1', [page.id]);
-        await cleanup();
-      },
     };
   });
 });

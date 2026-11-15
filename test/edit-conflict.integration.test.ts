@@ -29,6 +29,7 @@ import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
+
 let sharedDal: Dal | null = null;
 
 const getDal = async () => {
@@ -44,22 +45,6 @@ test.after(async () => {
 });
 
 const createTestUser = () => insertTestUser({ prefix: 'conflicttest', displayName: 'Conflict Test' });
-
-const cleanupUser = async (dal: Dal, userId: string | null) => {
-  if (!userId) return;
-  await dal.query('DELETE FROM forum_thread_subscriptions WHERE user_id = $1', [userId]);
-  await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
-  await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
-  await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-};
-
-const cleanupForumThread = async (dal: Dal, threadId: string | null) => {
-  if (!threadId) return;
-  await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' = $1", [threadId]);
-  await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = $1', [threadId]);
-  await dal.query('DELETE FROM forum_comments WHERE thread_id = $1', [threadId]);
-  await dal.query('DELETE FROM forum_threads WHERE id = $1 OR _old_rev_of = $1', [threadId]);
-};
 
 type RevisionedInstance = {
   id: string;
@@ -143,63 +128,54 @@ const postForm = async (url: string, sessionToken: string, form: Record<string, 
 test('Saving a stale copy of a wiki page maps to a retryable MCP conflict', async () => {
   const dal = await getDal();
   const slug = `test-revision-conflict-${uniqueSuffix()}`;
-  let userId: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await createWikiPage(
-      dal,
-      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
-      user.id
-    );
+  const user = await createTestUser();
+  await createWikiPage(
+    dal,
+    { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
+    user.id
+  );
 
-    const first = await WikiPage.filterWhere({ slug }).first();
-    const second = await WikiPage.filterWhere({ slug }).first();
-    assert.ok(first && second);
-    const loadedRevId = first._revID;
+  const first = await WikiPage.filterWhere({ slug }).first();
+  const second = await WikiPage.filterWhere({ slug }).first();
+  assert.ok(first && second);
+  const loadedRevId = first._revID;
 
-    await first.newRevision({ id: user.id }, { tags: ['update'] });
-    first.body = { en: 'First edit.' };
-    await first.save();
+  await first.newRevision({ id: user.id }, { tags: ['update'] });
+  first.body = { en: 'First edit.' };
+  await first.save();
 
-    await second.newRevision({ id: user.id }, { tags: ['update'] });
-    second.body = { en: 'Second edit.' };
-    const error = await second.save().then(
-      () => assert.fail('expected the stale save to be rejected'),
-      (caught: unknown) => caught
-    );
+  await second.newRevision({ id: user.id }, { tags: ['update'] });
+  second.body = { en: 'Second edit.' };
+  const error = await second.save().then(
+    () => assert.fail('expected the stale save to be rejected'),
+    (caught: unknown) => caught
+  );
 
-    assert.equal((error as Error).name, 'RevisionConflictError');
-    const payload = toToolErrorPayload(error);
-    assert.equal(payload.error.code, 'conflict');
-    assert.equal(payload.error.retryable, true);
-    assert.deepEqual(payload.error.details, {
-      documentId: first.id,
-      expectedRevId: loadedRevId,
-      currentRevId: first._revID,
-    });
+  assert.equal((error as Error).name, 'RevisionConflictError');
+  const payload = toToolErrorPayload(error);
+  assert.equal(payload.error.code, 'conflict');
+  assert.equal(payload.error.retryable, true);
+  assert.deepEqual(payload.error.details, {
+    documentId: first.id,
+    expectedRevId: loadedRevId,
+    currentRevId: first._revID,
+  });
 
-    const current = await WikiPage.filterWhere({ slug }).first();
-    assert.deepEqual(current?.body, { en: 'First edit.' });
-  } finally {
-    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-    await cleanupUser(dal, userId);
-  }
+  const current = await WikiPage.filterWhere({ slug }).first();
+  assert.deepEqual(current?.body, { en: 'First edit.' });
 });
 
 test('Operator edit shows an edit-conflict message when the page changes mid-save', async t => {
   const dal = await getDal();
   const slug = `test-operator-edit-conflict-${uniqueSuffix()}`;
-  let userId: string | null = null;
   const server = await makeTestServer(registerPageRoutes);
 
   try {
     const user = await createTestUser();
-    userId = user.id;
     await createWikiPage(
       dal,
-      { slug, title: { en: 'Conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
+      { slug, title: { en: 'Operator conflict' }, body: { en: 'Original.' }, canonicalLanguage: 'en' },
       user.id
     );
     const { token } = await createSession(user.id);
@@ -207,7 +183,7 @@ test('Operator edit shows an edit-conflict message when the page changes mid-sav
     saveConcurrentRevisionBeforeNextSave(t, WikiPage, user.id);
     const response = await postForm(`${server.url}/${slug}/operator-edit`, token, {
       lang: 'en',
-      title: 'Conflict',
+      title: 'Operator conflict',
       body: 'Operator edit.',
       summary: 'Edit from the web.',
     });
@@ -221,26 +197,20 @@ test('Operator edit shows an edit-conflict message when the page changes mid-sav
     assert.deepEqual(current?.body, { en: 'Original.' });
   } finally {
     await server.close();
-    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-    await cleanupUser(dal, userId);
   }
 });
 
 test('Forum pin responds with an edit conflict when the thread changes mid-save', async t => {
   const dal = await getDal();
-  let userId: string | null = null;
-  let threadId: string | null = null;
   const server = await makeTestServer(registerForumRoutes);
 
   try {
     const user = await createTestUser();
-    userId = user.id;
     await grantRoleUpsert(dal, user.id, FORUM_MODERATOR_ROLE);
     const thread = await createForumThread(
       { category: 'general', title: `conflict-pin-${uniqueSuffix()}`, body: 'Opening.', language: 'en' },
       user.id
     );
-    threadId = thread.id;
     const { token } = await createSession(user.id);
 
     saveConcurrentRevisionBeforeNextSave(t, ForumThread, user.id);
@@ -254,55 +224,38 @@ test('Forum pin responds with an edit conflict when the thread changes mid-save'
     assert.equal(current?.pinned, 0);
   } finally {
     await server.close();
-    await cleanupForumThread(dal, threadId);
-    await cleanupUser(dal, userId);
   }
 });
 
 test('Forum reply is kept when the thread activity bump hits a revision conflict', async t => {
   const dal = await getDal();
-  let userId: string | null = null;
-  let threadId: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    const thread = await createForumThread(
-      { category: 'general', title: `conflict-reply-${uniqueSuffix()}`, body: 'Opening.', language: 'en' },
-      user.id
-    );
-    threadId = thread.id;
+  const user = await createTestUser();
+  const thread = await createForumThread(
+    { category: 'general', title: `conflict-reply-${uniqueSuffix()}`, body: 'Opening.', language: 'en' },
+    user.id
+  );
 
-    saveConcurrentRevisionBeforeNextSave(t, ForumThread, user.id);
-    const reply = await createForumComment(
-      { threadId: thread.id, body: 'Reply during a concurrent thread edit.', language: 'en' },
-      user.id
-    );
+  saveConcurrentRevisionBeforeNextSave(t, ForumThread, user.id);
+  const reply = await createForumComment(
+    { threadId: thread.id, body: 'Reply during a concurrent thread edit.', language: 'en' },
+    user.id
+  );
 
-    const saved = await ForumComment.filterWhere({ id: reply.id }).first();
-    assert.equal(saved?.threadId, thread.id);
-  } finally {
-    await cleanupForumThread(dal, threadId);
-    await cleanupUser(dal, userId);
-  }
+  const saved = await ForumComment.filterWhere({ id: reply.id }).first();
+  assert.equal(saved?.threadId, thread.id);
 });
 
 test('Comment editing works without JavaScript, preserves failed drafts, and checks authorship', async t => {
   const dal = await getDal();
   const server = await makeTestServer(registerForumRoutes);
-  let userId: string | null = null;
-  let otherUserId: string | null = null;
-  let threadId: string | null = null;
   try {
     const user = await createTestUser();
-    userId = user.id;
     const other = await createTestUser();
-    otherUserId = other.id;
     const thread = await createForumThread(
       { category: 'general', title: `edit-${uniqueSuffix()}`, body: 'Original <text>.', language: 'en' },
       user.id
     );
-    threadId = thread.id;
     const comment = (await readForumThread(dal, thread.id)).comments[0];
     const { token } = await createSession(user.id);
     const { token: otherToken } = await createSession(other.id);
@@ -356,12 +309,8 @@ test('Comment editing works without JavaScript, preserves failed drafts, and che
     assert.equal((await readForumComment(comment.id)).body?.en, 'Updated.');
   } finally {
     await server.close();
-    await cleanupForumThread(dal, threadId);
-    await cleanupUser(dal, otherUserId);
-    await cleanupUser(dal, userId);
   }
 });
-
 
 test('Comment history is inaccessible after its parent thread is deleted', async () => {
   const dal = await getDal();
@@ -372,11 +321,9 @@ test('Comment history is inaccessible after its parent thread is deleted', async
     });
     registerForumRoutes(app);
   });
-  let userId: string | null = null;
   let threadId: string | null = null;
   try {
     const user = await createTestUser();
-    userId = user.id;
     await grantRoleUpsert(dal, user.id, FORUM_MODERATOR_ROLE);
     const thread = await createForumThread(
       { category: 'general', title: `history-${uniqueSuffix()}`, body: 'Original private rationale.', language: 'en' },
@@ -401,8 +348,6 @@ test('Comment history is inaccessible after its parent thread is deleted', async
     await assert.rejects(() => listForumCommentVersions(dal, commentId), NotFoundError);
   } finally {
     await server.close();
-    await cleanupForumThread(dal, threadId);
-    await cleanupUser(dal, userId);
   }
 });
 
@@ -410,10 +355,8 @@ test('Malformed forum and position IDs are not found rather than server errors',
   const dal = await getDal();
   const server = await makeTestServer(registerForumRoutes);
   const slug = `meta/proposals/bad-id-${uniqueSuffix()}`;
-  let userId: string | null = null;
   try {
     const user = await createTestUser();
-    userId = user.id;
     user.emailVerifiedAt = new Date();
     await user.save();
     const { token } = await createSession(user.id);
@@ -440,7 +383,5 @@ test('Malformed forum and position IDs are not found rather than server errors',
     );
   } finally {
     await server.close();
-    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-    await cleanupUser(dal, userId);
   }
 });

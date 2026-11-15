@@ -5,7 +5,7 @@ import type { MediaStorage, StoredThumbnail } from '../src/lib/media-storage.js'
 import { getOrFetchThumbnail } from '../src/services/media-thumbnail-service.js';
 import { ForbiddenError, NotFoundError } from '../src/lib/errors.js';
 import { WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
-import { cleanupTestArtifacts, createTestUser, getDal } from './_service-fixtures.js';
+import { createTestUser, getDal } from './_service-fixtures.js';
 
 const buildStubCommonsResponse = (
   overrides: Partial<{
@@ -36,44 +36,34 @@ test('Service createMedia persists fetched Commons metadata as a first revision'
   const { createMedia, readMedia } = await import('../src/services/media-service.js');
   const dal = await getDal();
   const slug = `test-media-${Date.now()}`;
-  const mediaPrefix = `${slug}%`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
+  const user = await createTestUser();
 
-    const stubFetcher = async () => buildStubCommonsResponse();
+  const stubFetcher = async () => buildStubCommonsResponse();
 
-    const created = await createMedia(
-      dal,
-      {
-        slug,
-        commonsTitle: 'File:Test Media.jpg',
-        title: { en: 'Test Media' },
-        caption: { en: 'Sample caption' },
-        revSummary: { en: 'Initial registration.' },
-      },
-      user.id,
-      { commonsFetcher: stubFetcher }
-    );
+  const created = await createMedia(
+    dal,
+    {
+      slug,
+      commonsTitle: 'File:Test Media.jpg',
+      title: { en: 'Test Media' },
+      caption: { en: 'Sample caption' },
+      revSummary: { en: 'Initial registration.' },
+    },
+    user.id,
+    { commonsFetcher: stubFetcher }
+  );
 
-    assert.equal(created.slug, slug);
-    assert.equal(created.commonsTitle, 'File:Test Media.jpg');
-    assert.equal(created.mediaType, 'image');
-    assert.equal(created.title?.en, 'Test Media');
-    assert.equal(created.caption?.en, 'Sample caption');
+  assert.equal(created.slug, slug);
+  assert.equal(created.commonsTitle, 'File:Test Media.jpg');
+  assert.equal(created.mediaType, 'image');
+  assert.equal(created.title?.en, 'Test Media');
+  assert.equal(created.caption?.en, 'Sample caption');
 
-    const reread = await readMedia(dal, slug);
-    assert.equal(reread.id, created.id);
-    assert.equal(reread.commonsTitle, 'File:Test Media.jpg');
-    assert.equal((reread.data as { license?: string }).license, 'CC-BY-SA-4.0');
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      mediaSlugPrefix: mediaPrefix,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  const reread = await readMedia(dal, slug);
+  assert.equal(reread.id, created.id);
+  assert.equal(reread.commonsTitle, 'File:Test Media.jpg');
+  assert.equal((reread.data as { license?: string }).license, 'CC-BY-SA-4.0');
 });
 
 const testThumbnailStorage = () => {
@@ -104,52 +94,48 @@ test('Media cache cleanup failures preserve successful edits without serving sta
   const cleanupLog = t.mock.method(console, 'error', () => {});
   const { storage, cached, fetched } = testThumbnailStorage();
   const commonsFetcher = async () => buildStubCommonsResponse();
-  try {
-    const created = await createMedia(dal, {
-      slug, commonsTitle: `File:${slug}.jpg`,
-    }, user.id, { commonsFetcher });
-    // Legacy slug-only cache entries must not bypass the current database state.
-    cached.set(`${slug}:250`, { path: 'legacy.jpg', extension: 'jpg' });
-    const originalThumbnail = await getOrFetchThumbnail(slug, 250, storage);
-    assert.notEqual(originalThumbnail.path, 'legacy.jpg');
-    assert.deepEqual(await getOrFetchThumbnail(slug, 250, storage), originalThumbnail);
-    assert.equal(fetched.length, 1);
+  const created = await createMedia(dal, {
+    slug, commonsTitle: `File:${slug}.jpg`,
+  }, user.id, { commonsFetcher });
+  // Legacy slug-only cache entries must not bypass the current database state.
+  cached.set(`${slug}:250`, { path: 'legacy.jpg', extension: 'jpg' });
+  const originalThumbnail = await getOrFetchThumbnail(slug, 250, storage);
+  assert.notEqual(originalThumbnail.path, 'legacy.jpg');
+  assert.deepEqual(await getOrFetchThumbnail(slug, 250, storage), originalThumbnail);
+  assert.equal(fetched.length, 1);
 
-    const renamed = await updateMedia(dal, {
-      slug, newSlug: renamedSlug, expectedRevId: created.currentRevId,
-      revSummary: { en: 'Rename despite failed cache reclamation.' },
-    }, user.id, { storage });
-    assert.equal((await readMedia(dal, renamedSlug)).currentRevId, renamed.currentRevId);
-    await assert.rejects(() => getOrFetchThumbnail(slug, 250, storage), NotFoundError);
-    const renamedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
-    assert.notEqual(renamedThumbnail.path, originalThumbnail.path);
+  const renamed = await updateMedia(dal, {
+    slug, newSlug: renamedSlug, expectedRevId: created.currentRevId,
+    revSummary: { en: 'Rename despite failed cache reclamation.' },
+  }, user.id, { storage });
+  assert.equal((await readMedia(dal, renamedSlug)).currentRevId, renamed.currentRevId);
+  await assert.rejects(() => getOrFetchThumbnail(slug, 250, storage), NotFoundError);
+  const renamedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
+  assert.notEqual(renamedThumbnail.path, originalThumbnail.path);
 
-    const refreshed = await refreshMedia(dal, {
-      slug: renamedSlug, expectedRevId: renamed.currentRevId,
-      revSummary: { en: 'Refresh despite failed cache reclamation.' },
-    }, user.id, { storage, commonsFetcher });
-    assert.equal((await readMedia(dal, renamedSlug)).currentRevId, refreshed.currentRevId);
-    const refreshedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
-    assert.notEqual(refreshedThumbnail.path, renamedThumbnail.path);
-    assert.equal(fetched.length, 3);
+  const refreshed = await refreshMedia(dal, {
+    slug: renamedSlug, expectedRevId: renamed.currentRevId,
+    revSummary: { en: 'Refresh despite failed cache reclamation.' },
+  }, user.id, { storage, commonsFetcher });
+  assert.equal((await readMedia(dal, renamedSlug)).currentRevId, refreshed.currentRevId);
+  const refreshedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
+  assert.notEqual(refreshedThumbnail.path, renamedThumbnail.path);
+  assert.equal(fetched.length, 3);
 
-    await assert.rejects(() => refreshMedia(dal, {
-      slug: renamedSlug, expectedRevId: renamed.currentRevId,
-      revSummary: { en: 'Stale retry must not create another revision.' },
-    }, user.id, { storage, commonsFetcher }), /Revision mismatch/);
-    assert.equal(cleanupLog.mock.callCount(), 2);
+  await assert.rejects(() => refreshMedia(dal, {
+    slug: renamedSlug, expectedRevId: renamed.currentRevId,
+    revSummary: { en: 'Stale retry must not create another revision.' },
+  }, user.id, { storage, commonsFetcher }), /Revision mismatch/);
+  assert.equal(cleanupLog.mock.callCount(), 2);
 
-    await createMedia(dal, { slug, commonsTitle: `File:${slug}-replacement.jpg` }, user.id, { commonsFetcher });
-    assert.notEqual((await getOrFetchThumbnail(slug, 250, storage)).path, originalThumbnail.path);
-    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
-    await deleteMedia(dal, {
-      slug: renamedSlug, revSummary: { en: 'Delete despite failed cache reclamation.' },
-    }, user.id, { storage });
-    await assert.rejects(() => getOrFetchThumbnail(renamedSlug, 250, storage), NotFoundError);
-    assert.equal(cleanupLog.mock.callCount(), 3);
-  } finally {
-    await cleanupTestArtifacts(dal, { mediaSlugPrefix: `${slug}%`, userId: user.id });
-  }
+  await createMedia(dal, { slug, commonsTitle: `File:${slug}-replacement.jpg` }, user.id, { commonsFetcher });
+  assert.notEqual((await getOrFetchThumbnail(slug, 250, storage)).path, originalThumbnail.path);
+  await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+  await deleteMedia(dal, {
+    slug: renamedSlug, revSummary: { en: 'Delete despite failed cache reclamation.' },
+  }, user.id, { storage });
+  await assert.rejects(() => getOrFetchThumbnail(renamedSlug, 250, storage), NotFoundError);
+  assert.equal(cleanupLog.mock.callCount(), 3);
 });
 
 test('A thumbnail fetch finishing after refresh cannot populate the new revision cache', { timeout: 10000 }, async () => {
@@ -186,7 +172,6 @@ test('A thumbnail fetch finishing after refresh cannot populate the new revision
   } finally {
     releaseFetch();
     await oldFetch;
-    await cleanupTestArtifacts(dal, { mediaSlugPrefix: `${slug}%`, userId: user.id });
   }
 });
 
@@ -198,93 +183,83 @@ test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()
   const slugA = `test-recent-media-${suffix}-a`;
   const renamedSlugA = `test-recent-media-${suffix}-a-renamed`;
   const slugB = `test-recent-media-${suffix}-b`;
-  const mediaPrefix = `test-recent-media-${suffix}-%`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
+  const user = await createTestUser();
 
-    const stubFetcher = async () => buildStubCommonsResponse();
+  const stubFetcher = async () => buildStubCommonsResponse();
 
-    await createMedia(
-      dal,
-      {
-        slug: slugA,
-        commonsTitle: `File:RecentA_${suffix}.jpg`,
-        revSummary: { en: 'Initial A.' },
-      },
-      user.id,
-      { commonsFetcher: stubFetcher }
-    );
-    // Sub-millisecond ties on _rev_date would make ORDER BY fall back to
-    // _rev_id (UUID) and lose chronological meaning. A small pause keeps
-    // the ordering deterministic.
-    await new Promise(resolve => setTimeout(resolve, 5));
+  await createMedia(
+    dal,
+    {
+      slug: slugA,
+      commonsTitle: `File:RecentA_${suffix}.jpg`,
+      revSummary: { en: 'Initial A.' },
+    },
+    user.id,
+    { commonsFetcher: stubFetcher }
+  );
+  // Sub-millisecond ties on _rev_date would make ORDER BY fall back to
+  // _rev_id (UUID) and lose chronological meaning. A small pause keeps
+  // the ordering deterministic.
+  await new Promise(resolve => setTimeout(resolve, 5));
 
-    await updateMedia(
-      dal,
-      {
-        slug: slugA,
-        newSlug: renamedSlugA,
-        caption: { en: 'Updated caption' },
-        revSummary: { en: 'Update A.' },
-      },
-      user.id
-    );
-    await new Promise(resolve => setTimeout(resolve, 5));
+  await updateMedia(
+    dal,
+    {
+      slug: slugA,
+      newSlug: renamedSlugA,
+      caption: { en: 'Updated caption' },
+      revSummary: { en: 'Update A.' },
+    },
+    user.id
+  );
+  await new Promise(resolve => setTimeout(resolve, 5));
 
-    await createMedia(
-      dal,
-      {
-        slug: slugB,
-        commonsTitle: `File:RecentB_${suffix}.jpg`,
-        revSummary: { en: 'Initial B.' },
-      },
-      user.id,
-      { commonsFetcher: stubFetcher }
-    );
+  await createMedia(
+    dal,
+    {
+      slug: slugB,
+      commonsTitle: `File:RecentB_${suffix}.jpg`,
+      revSummary: { en: 'Initial B.' },
+    },
+    user.id,
+    { commonsFetcher: stubFetcher }
+  );
 
-    // Fetch a generous window; the suite has concurrent media tests so
-    // narrow our assertions to our own slugs.
-    const allChanges = await getRecentMediaChanges(dal, 100);
-    const ours = allChanges.filter(
-      change => change.slug === renamedSlugA || change.slug === slugB
-    );
-    assert.equal(ours.length, 3, 'expected 3 revisions: B-create, A-update, A-create');
+  // Fetch a generous window; the suite has concurrent media tests so
+  // narrow our assertions to our own slugs.
+  const allChanges = await getRecentMediaChanges(dal, 100);
+  const ours = allChanges.filter(
+    change => change.slug === renamedSlugA || change.slug === slugB
+  );
+  assert.equal(ours.length, 3, 'expected 3 revisions: B-create, A-update, A-create');
 
-    const [newest, middle, oldest] = ours;
+  const [newest, middle, oldest] = ours;
 
-    // Ordering: B-create is newest, then A-update, then A-create.
-    assert.equal(newest.slug, slugB);
-    assert.equal(middle.slug, renamedSlugA);
-    assert.equal(oldest.slug, renamedSlugA);
-    assert.notEqual(middle.revId, oldest.revId);
+  // Ordering: B-create is newest, then A-update, then A-create.
+  assert.equal(newest.slug, slugB);
+  assert.equal(middle.slug, renamedSlugA);
+  assert.equal(oldest.slug, renamedSlugA);
+  assert.notEqual(middle.revId, oldest.revId);
 
-    // prevRevId chain: B has no prior rev in its own partition; A-update
-    // points at A-create; A-create is the oldest in its partition.
-    assert.equal(newest.prevRevId, null, 'B-create has no prior revision');
-    assert.equal(
-      middle.prevRevId,
-      oldest.revId,
-      'A-update prevRevId should point at A-create'
-    );
-    assert.equal(oldest.prevRevId, null, 'A-create has no prior revision');
+  // prevRevId chain: B has no prior rev in its own partition; A-update
+  // points at A-create; A-create is the oldest in its partition.
+  assert.equal(newest.prevRevId, null, 'B-create has no prior revision');
+  assert.equal(
+    middle.prevRevId,
+    oldest.revId,
+    'A-update prevRevId should point at A-create'
+  );
+  assert.equal(oldest.prevRevId, null, 'A-create has no prior revision');
 
-    // Field mapping spot-checks on the newest row. commonsTitle is
-    // stored normalized (underscores → spaces by normalizeCommonsTitle).
-    assert.equal(newest.commonsTitle, `File:RecentB ${suffix}.jpg`);
-    assert.equal(newest.mediaType, 'image');
-    assert.equal(newest.revUser, user.id);
-    assert.ok(Array.isArray(newest.revTags));
-    assert.ok(newest.data && typeof newest.data === 'object');
-    assert.equal((newest.data as { mime?: string }).mime, 'image/jpeg');
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      mediaSlugPrefix: mediaPrefix,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  // Field mapping spot-checks on the newest row. commonsTitle is
+  // stored normalized (underscores → spaces by normalizeCommonsTitle).
+  assert.equal(newest.commonsTitle, `File:RecentB ${suffix}.jpg`);
+  assert.equal(newest.mediaType, 'image');
+  assert.equal(newest.revUser, user.id);
+  assert.ok(Array.isArray(newest.revTags));
+  assert.ok(newest.data && typeof newest.data === 'object');
+  assert.equal((newest.data as { mime?: string }).mime, 'image/jpeg');
 });
 
 test('Service updateMedia merges captions into a new revision without re-fetching Commons', async () => {
@@ -293,62 +268,53 @@ test('Service updateMedia merges captions into a new revision without re-fetchin
   );
   const dal = await getDal();
   const slug = `test-media-history-update-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    const title = { en: 'History Media', de: 'Verlaufsmedium' };
-    const stubCommons = buildStubCommonsResponse();
-    let fetchCount = 0;
+  const user = await createTestUser();
+  const title = { en: 'History Media', de: 'Verlaufsmedium' };
+  const stubCommons = buildStubCommonsResponse();
+  let fetchCount = 0;
 
-    const created = await createMedia(
-      dal,
-      {
-        slug,
-        commonsTitle: `File:HistoryUpdate_${Date.now()}.jpg`,
-        title,
-        caption: { en: 'Old caption', de: 'Deutsche Bildunterschrift' },
-        revSummary: { en: 'Initial.' },
+  const created = await createMedia(
+    dal,
+    {
+      slug,
+      commonsTitle: `File:HistoryUpdate_${Date.now()}.jpg`,
+      title,
+      caption: { en: 'Old caption', de: 'Deutsche Bildunterschrift' },
+      revSummary: { en: 'Initial.' },
+    },
+    user.id,
+    {
+      commonsFetcher: async () => {
+        fetchCount += 1;
+        return stubCommons;
       },
-      user.id,
-      {
-        commonsFetcher: async () => {
-          fetchCount += 1;
-          return stubCommons;
-        },
-      }
-    );
+    }
+  );
 
-    const updated = await updateMedia(
-      dal,
-      {
-        slug,
-        caption: { en: 'New caption' },
-        expectedRevId: created.currentRevId,
-        revSummary: { en: 'Revise English caption.' },
-      },
-      user.id
-    );
-    assert.notEqual(updated.currentRevId, created.currentRevId);
+  const updated = await updateMedia(
+    dal,
+    {
+      slug,
+      caption: { en: 'New caption' },
+      expectedRevId: created.currentRevId,
+      revSummary: { en: 'Revise English caption.' },
+    },
+    user.id
+  );
+  assert.notEqual(updated.currentRevId, created.currentRevId);
 
-    const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
-    assert.deepEqual(previous.caption, { en: 'Old caption', de: 'Deutsche Bildunterschrift' });
-    assert.deepEqual(previous.title, title);
-    assert.deepEqual(previous.data, stubCommons.data);
+  const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
+  assert.deepEqual(previous.caption, { en: 'Old caption', de: 'Deutsche Bildunterschrift' });
+  assert.deepEqual(previous.title, title);
+  assert.deepEqual(previous.data, stubCommons.data);
 
-    const current = await readMedia(dal, slug);
-    assert.equal(current.currentRevId, updated.currentRevId);
-    assert.deepEqual(current.caption, { en: 'New caption', de: 'Deutsche Bildunterschrift' });
-    assert.deepEqual(current.title, title);
-    assert.deepEqual(current.data, stubCommons.data);
-    assert.equal(fetchCount, 1);
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      mediaSlugPrefix: `${slug}%`,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  const current = await readMedia(dal, slug);
+  assert.equal(current.currentRevId, updated.currentRevId);
+  assert.deepEqual(current.caption, { en: 'New caption', de: 'Deutsche Bildunterschrift' });
+  assert.deepEqual(current.title, title);
+  assert.deepEqual(current.data, stubCommons.data);
+  assert.equal(fetchCount, 1);
 });
 
 test('Service refreshMedia stores re-fetched metadata as a tagged new revision', async () => {
@@ -357,116 +323,97 @@ test('Service refreshMedia stores re-fetched metadata as a tagged new revision',
   );
   const dal = await getDal();
   const slug = `test-media-history-refresh-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    const title = { en: 'Refresh History', de: 'Aktualisierungsverlauf' };
-    const caption = { en: 'Caption', de: 'Bildunterschrift' };
-    const initialCommons = buildStubCommonsResponse({ license: 'CC-BY-2.0' });
-    const refreshedCommons = buildStubCommonsResponse({
-      license: 'CC-BY-SA-4.0',
-      fetchedAt: '2026-05-03T00:00:00Z',
-    });
+  const user = await createTestUser();
+  const title = { en: 'Refresh History', de: 'Aktualisierungsverlauf' };
+  const caption = { en: 'Caption', de: 'Bildunterschrift' };
+  const initialCommons = buildStubCommonsResponse({ license: 'CC-BY-2.0' });
+  const refreshedCommons = buildStubCommonsResponse({
+    license: 'CC-BY-SA-4.0',
+    fetchedAt: '2026-05-03T00:00:00Z',
+  });
 
-    const created = await createMedia(
-      dal,
-      {
-        slug,
-        commonsTitle: `File:HistoryRefresh_${Date.now()}.jpg`,
-        title,
-        caption,
-        revSummary: { en: 'Initial.' },
-      },
-      user.id,
-      { commonsFetcher: async () => initialCommons }
-    );
+  const created = await createMedia(
+    dal,
+    {
+      slug,
+      commonsTitle: `File:HistoryRefresh_${Date.now()}.jpg`,
+      title,
+      caption,
+      revSummary: { en: 'Initial.' },
+    },
+    user.id,
+    { commonsFetcher: async () => initialCommons }
+  );
 
-    const refreshed = await refreshMedia(
-      dal,
-      {
-        slug,
-        expectedRevId: created.currentRevId,
-        revSummary: { en: 'License updated upstream.' },
-      },
-      user.id,
-      { commonsFetcher: async () => refreshedCommons }
-    );
-    assert.notEqual(refreshed.currentRevId, created.currentRevId);
+  const refreshed = await refreshMedia(
+    dal,
+    {
+      slug,
+      expectedRevId: created.currentRevId,
+      revSummary: { en: 'License updated upstream.' },
+    },
+    user.id,
+    { commonsFetcher: async () => refreshedCommons }
+  );
+  assert.notEqual(refreshed.currentRevId, created.currentRevId);
 
-    const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
-    assert.deepEqual(previous.data, initialCommons.data);
-    assert.deepEqual(previous.title, title);
-    assert.deepEqual(previous.caption, caption);
+  const { revision: previous } = await readMediaRevision(dal, slug, created.currentRevId);
+  assert.deepEqual(previous.data, initialCommons.data);
+  assert.deepEqual(previous.title, title);
+  assert.deepEqual(previous.caption, caption);
 
-    const current = await readMedia(dal, slug);
-    assert.equal(current.currentRevId, refreshed.currentRevId);
-    assert.deepEqual(current.data, refreshedCommons.data);
-    assert.deepEqual(current.title, title);
-    assert.deepEqual(current.caption, caption);
+  const current = await readMedia(dal, slug);
+  assert.equal(current.currentRevId, refreshed.currentRevId);
+  assert.deepEqual(current.data, refreshedCommons.data);
+  assert.deepEqual(current.title, title);
+  assert.deepEqual(current.caption, caption);
 
-    const { revisions } = await listMediaRevisions(dal, slug);
-    assert.equal(revisions.length, 2);
-    assert.ok(revisions[0].revTags?.includes('refresh'));
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      mediaSlugPrefix: `${slug}%`,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  const { revisions } = await listMediaRevisions(dal, slug);
+  assert.equal(revisions.length, 2);
+  assert.ok(revisions[0].revTags?.includes('refresh'));
 });
 
 test('Service deleteMedia requires wiki_admin role', async () => {
   const { createMedia, deleteMedia } = await import('../src/services/media-service.js');
   const dal = await getDal();
   const slug = `test-media-del-${Date.now()}`;
-  const mediaPrefix = `${slug}%`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
+  const user = await createTestUser();
 
-    await createMedia(
-      dal,
-      {
-        slug,
-        commonsTitle: `File:DeleteTest_${Date.now()}.jpg`,
-        revSummary: { en: 'Initial.' },
-      },
-      user.id,
-      { commonsFetcher: async () => buildStubCommonsResponse() }
-    );
+  await createMedia(
+    dal,
+    {
+      slug,
+      commonsTitle: `File:DeleteTest_${Date.now()}.jpg`,
+      revSummary: { en: 'Initial.' },
+    },
+    user.id,
+    { commonsFetcher: async () => buildStubCommonsResponse() }
+  );
 
-    await assert.rejects(
-      () =>
-        deleteMedia(
-          dal,
-          { slug, revSummary: { en: 'Admin deletion.' } },
-          user.id
-        ),
-      error => {
-        assert.ok(error instanceof ForbiddenError);
-        return true;
-      }
-    );
+  await assert.rejects(
+    () =>
+      deleteMedia(
+        dal,
+        { slug, revSummary: { en: 'Admin deletion.' } },
+        user.id
+      ),
+    error => {
+      assert.ok(error instanceof ForbiddenError);
+      return true;
+    }
+  );
 
-    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+  await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
 
-    const result = await deleteMedia(
-      dal,
-      { slug, revSummary: { en: 'Admin deletion.' } },
-      user.id
-    );
-    assert.equal(result.deleted, true);
+  const result = await deleteMedia(
+    dal,
+    { slug, revSummary: { en: 'Admin deletion.' } },
+    user.id
+  );
+  assert.equal(result.deleted, true);
 
-    const { readMedia } = await import('../src/services/media-service.js');
-    await assert.rejects(() => readMedia(dal, slug), NotFoundError);
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      mediaSlugPrefix: mediaPrefix,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  const { readMedia } = await import('../src/services/media-service.js');
+  await assert.rejects(() => readMedia(dal, slug), NotFoundError);
 });

@@ -56,12 +56,10 @@ const startServer = async () => {
 
 test('The panel endpoint returns only your own latest notifications, and mark-all-read answers in JSON', async () => {
   const dal = await getDal();
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const me = await createTestUser();
     const other = await createTestUser();
-    userIds.push(me.id, other.id);
     await dal.query(
       `INSERT INTO notifications (user_id, kind, actor_user_id, url, subject, excerpt, created_at, read_at)
        SELECT $1, 'forum.reply', $2, '/tool/forum', 'Mine ' || n, CASE WHEN n = 1 THEN 'A <b>reply</b>' END,
@@ -118,11 +116,6 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
     assert.equal(await countUnreadNotifications(dal, other.id), 1, "someone else's notifications stay unread");
   } finally {
     await server.close();
-    for (const id of userIds) {
-      await dal.query('DELETE FROM notifications WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM users WHERE id = $1', [id]);
-    }
   }
 });
 

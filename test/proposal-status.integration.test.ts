@@ -37,87 +37,69 @@ const setup = async () => {
   await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
   const slug = `meta/proposals/regression-${suffix}`;
   const page = await createWikiPage(dal, {
-    slug, title: { en: 'Proposal regression' }, body: { en: 'Proposal text.' }, canonicalLanguage: 'en',
+    slug, title: { en: `Proposal regression ${suffix}` }, body: { en: 'Proposal text.' }, canonicalLanguage: 'en',
   }, author.id);
-  const cleanup = async () => {
-    await dal.query('DELETE FROM admin_events WHERE target_id = $1', [page.id]);
-    await dal.query('DELETE FROM page_protections WHERE page_id = $1', [page.id]);
-    await dal.query('DELETE FROM page_aliases WHERE page_id = $1', [page.id]);
-    await dal.query('DELETE FROM pages WHERE id = $1 OR _old_rev_of = $1', [page.id]);
-    for (const user of users) {
-      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [user.id]);
-      await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
-    }
-  };
-  return { dal, author, admin, slug, page, cleanup };
+  return { dal, author, admin, slug, page };
 };
 
 test('Proposal status respects page protection', async () => {
-  const { dal, author, admin, slug, page, cleanup } = await setup();
-  try {
-    await protectWikiPage(dal, { slug, reason: 'Protected proposal.' }, admin.id);
-    await assert.rejects(() => setProposalStatus(dal, { slug, status: 'open' }, author.id), ForbiddenError);
-    assert.equal((await readWikiPage(dal, slug)).currentRevId, page.currentRevId);
-    const opened = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
-    assert.equal(opened.proposal?.status, 'open');
-  } finally { await cleanup(); }
+  const { dal, author, admin, slug, page } = await setup();
+  await protectWikiPage(dal, { slug, reason: 'Protected proposal.' }, admin.id);
+  await assert.rejects(() => setProposalStatus(dal, { slug, status: 'open' }, author.id), ForbiddenError);
+  assert.equal((await readWikiPage(dal, slug)).currentRevId, page.currentRevId);
+  const opened = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
+  assert.equal(opened.proposal?.status, 'open');
 });
 
 test('Permissions use the original proposal author and reject blocked or unknown signers', async () => {
-  const { dal, author, admin, slug, page, cleanup } = await setup();
-  try {
-    await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
-    assert.deepEqual(await getProposalStatusPermissions(dal, page.id, author.id), { canChange: true, isAdmin: false });
-    assert.deepEqual(await getProposalStatusPermissions(dal, page.id, randomUUID()), { canChange: false, isAdmin: false });
-    assert.equal(await canSignOffPages(dal, author.id), true);
-    assert.equal(await canSignOffPages(dal, randomUUID()), false);
-    assert.equal(await canSignOffPages(dal, null), false);
-    await dal.query('UPDATE users SET blocked_at = NOW() WHERE id = $1', [author.id]);
-    assert.equal(await canSignOffPages(dal, author.id), false);
-  } finally { await cleanup(); }
+  const { dal, author, admin, slug, page } = await setup();
+  await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
+  assert.deepEqual(await getProposalStatusPermissions(dal, page.id, author.id), { canChange: true, isAdmin: false });
+  assert.deepEqual(await getProposalStatusPermissions(dal, page.id, randomUUID()), { canChange: false, isAdmin: false });
+  assert.equal(await canSignOffPages(dal, author.id), true);
+  assert.equal(await canSignOffPages(dal, randomUUID()), false);
+  assert.equal(await canSignOffPages(dal, null), false);
+  await dal.query('UPDATE users SET blocked_at = NOW() WHERE id = $1', [author.id]);
+  assert.equal(await canSignOffPages(dal, author.id), false);
 });
 
 test('Protection follows aliases using current revision metadata and rejects deleted pages', async () => {
-  const { dal, admin, slug, page, cleanup } = await setup();
-  try {
-    const latest = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
-    const aliasSlug = `${slug}-alias`;
-    await PageAlias.create({ pageId: page.id, slug: aliasSlug, createdBy: admin.id });
-    const protection = await protectWikiPage(dal, { slug: aliasSlug, reason: 'Alias lookup' }, admin.id);
-    assert.equal(protection.pageId, page.id);
-    const event = await dal.query('SELECT target_rev_id FROM admin_events WHERE target_id = $1', [page.id]);
-    assert.equal(event.rows[0].target_rev_id, latest.currentRevId);
-    await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [page.id]);
-    await assert.rejects(() => protectWikiPage(dal, { slug: aliasSlug }, admin.id), NotFoundError);
-  } finally { await cleanup(); }
+  const { dal, admin, slug, page } = await setup();
+  const latest = await setProposalStatus(dal, { slug, status: 'open' }, admin.id);
+  const aliasSlug = `${slug}-alias`;
+  await PageAlias.create({ pageId: page.id, slug: aliasSlug, createdBy: admin.id });
+  const protection = await protectWikiPage(dal, { slug: aliasSlug, reason: 'Alias lookup' }, admin.id);
+  assert.equal(protection.pageId, page.id);
+  const event = await dal.query('SELECT target_rev_id FROM admin_events WHERE target_id = $1', [page.id]);
+  assert.equal(event.rows[0].target_rev_id, latest.currentRevId);
+  await dal.query('UPDATE pages SET _rev_deleted = true WHERE id = $1', [page.id]);
+  await assert.rejects(() => protectWikiPage(dal, { slug: aliasSlug }, admin.id), NotFoundError);
 });
 
 test('Proposal decisions reject whitespace-only notes and trim valid notes', async () => {
-  const { dal, admin, slug, page, cleanup } = await setup();
-  try {
-    for (const status of ['adopted', 'applied', 'not_adopted', 'superseded']) {
-      await assert.rejects(() => setProposalStatus(dal, {
-        slug, status, decisionNote: { en: ' \n\t ', de: '  ' }, appliedTo: ['meta/values'], supersededBy: slug,
-      }, admin.id), (error: unknown) => {
-        assert.ok(error instanceof ValidationError);
-        assert.ok(error.fieldErrors?.some(field => field.field === 'decisionNote'));
-        return true;
-      });
-    }
-    assert.equal((await readWikiPage(dal, slug)).currentRevId, page.currentRevId);
-    const adopted = await setProposalStatus(dal, {
-      slug, status: 'adopted', decisionNote: { en: '  Adopted after discussion.\n', de: '  ' },
-    }, admin.id);
-    assert.deepEqual(adopted.proposal?.decisionNote, { en: 'Adopted after discussion.' });
-    const applied = await setProposalStatus(dal, {
-      slug, status: 'applied', decisionNote: { en: '  ' }, appliedTo: ['meta/values'],
-    }, admin.id);
-    assert.deepEqual(applied.proposal?.decisionNote, adopted.proposal?.decisionNote);
-  } finally { await cleanup(); }
+  const { dal, admin, slug, page } = await setup();
+  for (const status of ['adopted', 'applied', 'not_adopted', 'superseded']) {
+    await assert.rejects(() => setProposalStatus(dal, {
+      slug, status, decisionNote: { en: ' \n\t ', de: '  ' }, appliedTo: ['meta/values'], supersededBy: slug,
+    }, admin.id), (error: unknown) => {
+      assert.ok(error instanceof ValidationError);
+      assert.ok(error.fieldErrors?.some(field => field.field === 'decisionNote'));
+      return true;
+    });
+  }
+  assert.equal((await readWikiPage(dal, slug)).currentRevId, page.currentRevId);
+  const adopted = await setProposalStatus(dal, {
+    slug, status: 'adopted', decisionNote: { en: '  Adopted after discussion.\n', de: '  ' },
+  }, admin.id);
+  assert.deepEqual(adopted.proposal?.decisionNote, { en: 'Adopted after discussion.' });
+  const applied = await setProposalStatus(dal, {
+    slug, status: 'applied', decisionNote: { en: '  ' }, appliedTo: ['meta/values'],
+  }, admin.id);
+  assert.deepEqual(applied.proposal?.decisionNote, adopted.proposal?.decisionNote);
 });
 
 test('Proposal history renders the selected revision status, links and decision author', async () => {
-  const { dal, author, admin, slug, page, cleanup } = await setup();
+  const { dal, author, admin, slug, page } = await setup();
   const app = express();
   app.use((req, res, next) => {
     req.t = i18next.t.bind(i18next);
@@ -172,6 +154,5 @@ test('Proposal history renders the selected revision status, links and decision 
     assert.doesNotMatch(currentHeader, /pull\/86/);
   } finally {
     await new Promise<void>((resolve, reject) => server.close(error => error ? reject(error) : resolve()));
-    await cleanup();
   }
 });

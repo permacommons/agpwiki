@@ -39,33 +39,6 @@ const run = `${Date.now()}${randomBytes(3).toString('hex')}`;
 const createTestUser = (name: string) =>
   insertTestUser({ prefix: `agentlabel${name}`, displayName: `Operator ${name}`, emailVerified: true });
 
-const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
-  const pages = await dal.query('SELECT id FROM pages WHERE slug LIKE $1', [`%${prefix}%`]);
-  const pageIds = (pages.rows as Array<{ id: string }>).map(row => row.id);
-  const threads = await dal.query(
-    `SELECT id FROM forum_threads WHERE title->>'en' LIKE $1 OR page_slug LIKE $1`,
-    [`%${prefix}%`]
-  );
-  const threadIds = (threads.rows as Array<{ id: string }>).map(row => row.id);
-  const jobFilter = `payload->>'threadId' = ANY($1) OR payload->>'pageId' = ANY($2)`;
-  await dal.query(`DELETE FROM notification_deliveries WHERE job_id IN (SELECT id FROM notification_jobs WHERE ${jobFilter})`, [
-    threadIds,
-    pageIds,
-  ]);
-  await dal.query(`DELETE FROM notification_jobs WHERE ${jobFilter}`, [threadIds, pageIds]);
-  await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = ANY($1) OR user_id = ANY($2)', [
-    threadIds,
-    userIds,
-  ]);
-  await dal.query('DELETE FROM forum_comments WHERE thread_id = ANY($1)', [threadIds]);
-  await dal.query('DELETE FROM forum_threads WHERE id = ANY($1) OR _old_rev_of = ANY($1)', [threadIds]);
-  await dal.query('DELETE FROM page_signoffs WHERE page_id = ANY($1)', [pageIds]);
-  await dal.query('DELETE FROM admin_events WHERE target_id = ANY($1) OR actor_user_id = ANY($2)', [pageIds, userIds]);
-  await dal.query('DELETE FROM page_subscriptions WHERE page_id = ANY($1) OR user_id = ANY($2)', [pageIds, userIds]);
-  await dal.query('DELETE FROM pages WHERE id = ANY($1) OR _old_rev_of = ANY($1)', [pageIds]);
-  await dal.query('DELETE FROM users WHERE id = ANY($1)', [userIds]);
-};
-
 type ToolHandler = (
   args: unknown,
   extra?: { authInfo?: { extra?: { userId?: string } } }
@@ -97,12 +70,10 @@ test('Agent replies are labelled with the client name; reviewed and web replies 
   const dal = await getDal();
   const prefix = `agent-label-${run}`;
   const slug = `meta/proposals/${prefix}`;
-  const userIds: string[] = [];
   const { server, tools } = mcpAs('Claude Code');
   try {
     const proposer = await createTestUser('proposer');
     const operator = await createTestUser('operator');
-    userIds.push(proposer.id, operator.id);
     await createWikiPage(
       dal,
       { slug, title: { en: 'Agent label' }, body: { en: 'Text.' }, canonicalLanguage: 'en', revSummary: { en: 'Create.' } },
@@ -148,49 +119,42 @@ test('Agent replies are labelled with the client name; reviewed and web replies 
     );
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
 test('Only the operator can remove the label; the history keeps the labelled version', async () => {
   const dal = await getDal();
   const prefix = `agent-label-remove-${run}`;
-  const userIds: string[] = [];
-  try {
-    const operator = await createTestUser('remover');
-    const other = await createTestUser('other');
-    userIds.push(operator.id, other.id);
-    const thread = await createForumThread(
-      {
-        category: 'general',
-        title: `${prefix} thread`,
-        body: 'Posted by an agent.',
-        language: 'en',
-        agent: { name: 'claude-ai' },
-      },
-      operator.id
-    );
-    const before = await readForumComment(thread.firstCommentId);
-    assert.equal(before.agentAuthored, true);
+  const operator = await createTestUser('remover');
+  const other = await createTestUser('other');
+  const thread = await createForumThread(
+    {
+      category: 'general',
+      title: `${prefix} thread`,
+      body: 'Posted by an agent.',
+      language: 'en',
+      agent: { name: 'claude-ai' },
+    },
+    operator.id
+  );
+  const before = await readForumComment(thread.firstCommentId);
+  assert.equal(before.agentAuthored, true);
 
-    await assert.rejects(() => removeForumCommentAgentLabel(dal, thread.firstCommentId, other.id), ForbiddenError);
-    const after = await removeForumCommentAgentLabel(dal, thread.firstCommentId, operator.id);
-    assert.equal(after.agentAuthored, false);
-    assert.equal(after.agentName, null);
-    assert.equal(after.edited, false, 'Removing the label does not mark the text as edited');
-    assert.deepEqual(after.body, before.body);
-    assert.deepEqual(after.updatedAt, before.updatedAt);
-    assert.equal(await findForumCommentAuthorId(dal, thread.firstCommentId), operator.id);
-    assert.deepEqual(
-      (await listForumCommentVersions(dal, thread.firstCommentId)).map(version => version.agentAuthored),
-      [true, false]
-    );
-    // Removing it again changes nothing.
-    await removeForumCommentAgentLabel(dal, thread.firstCommentId, operator.id);
-    assert.equal((await listForumCommentVersions(dal, thread.firstCommentId)).length, 2);
-  } finally {
-    await cleanup(dal, prefix, userIds);
-  }
+  await assert.rejects(() => removeForumCommentAgentLabel(dal, thread.firstCommentId, other.id), ForbiddenError);
+  const after = await removeForumCommentAgentLabel(dal, thread.firstCommentId, operator.id);
+  assert.equal(after.agentAuthored, false);
+  assert.equal(after.agentName, null);
+  assert.equal(after.edited, false, 'Removing the label does not mark the text as edited');
+  assert.deepEqual(after.body, before.body);
+  assert.deepEqual(after.updatedAt, before.updatedAt);
+  assert.equal(await findForumCommentAuthorId(dal, thread.firstCommentId), operator.id);
+  assert.deepEqual(
+    (await listForumCommentVersions(dal, thread.firstCommentId)).map(version => version.agentAuthored),
+    [true, false]
+  );
+  // Removing it again changes nothing.
+  await removeForumCommentAgentLabel(dal, thread.firstCommentId, operator.id);
+  assert.equal((await listForumCommentVersions(dal, thread.firstCommentId)).length, 2);
 });
 
 test('The label shows beside the operator with an explanation, and its author can remove it', () => {

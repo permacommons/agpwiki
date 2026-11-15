@@ -128,13 +128,10 @@ test('Wiki pages show the tab row; Edit leads editors to the form and everyone e
   const dal = await getDal();
   const slug = `test-tabs-${uniqueSuffix()}`;
   const protectedSlug = `${slug}-protected`;
-  const userIds: string[] = [];
-  let threadId: string | null = null;
   const server = await makeServer({ isEmailVerified: true, agentAccessStatus: 'approved' });
   try {
     const editor = await createTestUser();
     const admin = await createTestUser();
-    userIds.push(editor.id, admin.id);
     await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
     await createWikiPage(dal, { slug, title: { en: 'Tabs' }, body: { en: 'Text.' }, canonicalLanguage: 'en' }, editor.id);
     await createWikiPage(
@@ -147,7 +144,6 @@ test('Wiki pages show the tab row; Edit leads editors to the form and everyone e
       { category: 'articles', pageSlug: slug, title: 'About the tabs', body: 'First.', language: 'en' },
       editor.id
     );
-    threadId = thread.id;
     const editorSession = await createSession(editor.id);
     const adminSession = await createSession(admin.id);
 
@@ -175,24 +171,6 @@ test('Wiki pages show the tab row; Edit leads editors to the form and everyone e
     assert.match(oldRevision.tabsHtml, /pageTabs\.history/);
   } finally {
     await server.close();
-    if (threadId) {
-      await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = $1', [threadId]);
-      await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' = $1", [threadId]);
-      await dal.query('DELETE FROM forum_comments WHERE thread_id = $1', [threadId]);
-      await dal.query('DELETE FROM forum_threads WHERE id = $1 OR _old_rev_of = $1', [threadId]);
-    }
-    await dal.query('DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
-      `${slug}%`,
-    ]);
-    await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
-      `${slug}%`,
-    ]);
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${slug}%`]);
-    for (const id of userIds) {
-      await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM users WHERE id = $1', [id]);
-    }
   }
 });
 
@@ -200,16 +178,14 @@ test('The how-to-edit page explains the steps, or says who can edit a protected 
   const dal = await getDal();
   const slug = `test-how-to-edit-${uniqueSuffix()}`;
   const protectedSlug = `${slug}-protected`;
-  const userIds: string[] = [];
   const server = await makeServer();
   try {
     const admin = await createTestUser();
-    userIds.push(admin.id);
     await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
     await createWikiPage(dal, { slug, title: { en: 'Open & shut' }, body: { en: 'Text.' }, canonicalLanguage: 'en' }, admin.id);
     await createWikiPage(
       dal,
-      { slug: protectedSlug, title: { en: 'Locked' }, body: { en: 'Text.' }, canonicalLanguage: 'en' },
+      { slug: protectedSlug, title: { en: 'Locked help' }, body: { en: 'Text.' }, canonicalLanguage: 'en' },
       admin.id
     );
     await protectWikiPage(dal, { slug: protectedSlug, reason: 'Test.' }, admin.id);
@@ -234,16 +210,5 @@ test('The how-to-edit page explains the steps, or says who can edit a protected 
     assert.equal(noPage.status, 404);
   } finally {
     await server.close();
-    await dal.query('DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
-      `${slug}%`,
-    ]);
-    await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
-      `${slug}%`,
-    ]);
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${slug}%`]);
-    for (const id of userIds) {
-      await dal.query('DELETE FROM user_roles WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM users WHERE id = $1', [id]);
-    }
   }
 });

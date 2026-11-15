@@ -92,14 +92,6 @@ test.after(async () => {
 
 const createTestUser = () => insertTestUser({ prefix: 'sectiontest', displayName: 'Section Test' });
 
-const cleanup = async (dal: Dal, slug: string, userId: string | null) => {
-  await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-  if (userId) {
-    await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
-
 const currentBody = async (slug: string) => {
   const page = await WikiPage.filterWhere({ slug, _oldRevOf: null } as Record<string, unknown>).first();
   return (page?.body as Record<string, string>).en;
@@ -108,62 +100,56 @@ const currentBody = async (slug: string) => {
 test('Saving a section is refused only when that same section changed since it was loaded', async () => {
   const dal = await getDal();
   const slug = `test-section-save-${uniqueSuffix()}`;
-  let userId: string | null = null;
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
-    const loaded = listEditableSections(BODY);
-    const usesFingerprint = sectionFingerprint(loaded[3].content);
-    const historyFingerprint = sectionFingerprint(loaded[1].content);
+  const user = await createTestUser();
+  await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
+  const loaded = listEditableSections(BODY);
+  const usesFingerprint = sectionFingerprint(loaded[3].content);
+  const historyFingerprint = sectionFingerprint(loaded[1].content);
 
-    // Someone else edits the History section in the meantime.
-    await rewriteWikiPageSection(
-      dal,
-      { slug, heading: 'History', headingLevel: 2, occurrence: 1, content: '\nNew history.\n', revSummary: { en: 'Other edit.' } },
-      user.id
-    );
+  // Someone else edits the History section in the meantime.
+  await rewriteWikiPageSection(
+    dal,
+    { slug, heading: 'History', headingLevel: 2, occurrence: 1, content: '\nNew history.\n', revSummary: { en: 'Other edit.' } },
+    user.id
+  );
 
-    // Editing Uses still works: it did not change.
-    await rewriteWikiPageSection(
-      dal,
-      {
-        slug,
-        heading: 'Uses',
-        headingLevel: 2,
-        occurrence: 1,
-        content: '\nBetter uses text.\n',
-        expectedSectionFingerprint: usesFingerprint,
-        revSummary: { en: 'Uses: clearer.' },
-      },
-      user.id
-    );
-    const body = await currentBody(slug);
-    assert.match(body, /New history\./);
-    assert.match(body, /## Uses\n\nBetter uses text\.\n\n## History\n\nA second history\./);
+  // Editing Uses still works: it did not change.
+  await rewriteWikiPageSection(
+    dal,
+    {
+      slug,
+      heading: 'Uses',
+      headingLevel: 2,
+      occurrence: 1,
+      content: '\nBetter uses text.\n',
+      expectedSectionFingerprint: usesFingerprint,
+      revSummary: { en: 'Uses: clearer.' },
+    },
+    user.id
+  );
+  const body = await currentBody(slug);
+  assert.match(body, /New history\./);
+  assert.match(body, /## Uses\n\nBetter uses text\.\n\n## History\n\nA second history\./);
 
-    // Saving History with the old fingerprint is refused, and nothing changes.
-    await assert.rejects(
-      () =>
-        rewriteWikiPageSection(
-          dal,
-          {
-            slug,
-            heading: 'History',
-            headingLevel: 2,
-            occurrence: 1,
-            content: '\nMy history.\n',
-            expectedSectionFingerprint: historyFingerprint,
-            revSummary: { en: 'History.' },
-          },
-          user.id
-        ),
-      ConflictError
-    );
-    assert.equal(await currentBody(slug), body);
-  } finally {
-    await cleanup(dal, slug, userId);
-  }
+  // Saving History with the old fingerprint is refused, and nothing changes.
+  await assert.rejects(
+    () =>
+      rewriteWikiPageSection(
+        dal,
+        {
+          slug,
+          heading: 'History',
+          headingLevel: 2,
+          occurrence: 1,
+          content: '\nMy history.\n',
+          expectedSectionFingerprint: historyFingerprint,
+          revSummary: { en: 'History.' },
+        },
+        user.id
+      ),
+    ConflictError
+  );
+  assert.equal(await currentBody(slug), body);
 });
 
 const makeServer = async () => {
@@ -204,12 +190,10 @@ const makeServer = async () => {
 test('Editors see section edit links; the section form edits and saves only that section', async () => {
   const dal = await getDal();
   const slug = `test-section-form-${uniqueSuffix()}`;
-  let userId: string | null = null;
   const server = await makeServer();
   try {
     const user = await createTestUser();
-    userId = user.id;
-    await createWikiPage(dal, { slug, title: { en: 'Sections' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
+    await createWikiPage(dal, { slug, title: { en: 'Section form' }, body: { en: BODY }, canonicalLanguage: 'en' }, user.id);
     const { token } = await createSession(user.id);
     const cookie = `agpwiki_session=${token}`;
     const getBody = async (path: string, withSession = true) => {
@@ -273,7 +257,6 @@ test('Editors see section edit links; the section form edits and saves only that
     assert.equal(await currentBody(slug), body);
   } finally {
     await server.close();
-    await cleanup(dal, slug, userId);
   }
 });
 

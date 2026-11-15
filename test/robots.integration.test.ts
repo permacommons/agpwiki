@@ -11,6 +11,7 @@ import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 import { insertTestUser } from './_test-users.js';
 
+
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
 test.after(async () => {
@@ -101,7 +102,5 @@ test('old revisions and draft proposals are marked noindex', async () => {
     assert.equal(await noindexOf(`${server.url}/${proposalSlug}`), false);
   } finally {
     await server.close();
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1 OR slug LIKE $2', [`${prefix}%`, `meta/proposals/${prefix}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
   }
 });

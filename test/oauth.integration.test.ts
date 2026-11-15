@@ -15,6 +15,7 @@ import OAuthRefreshToken from '../src/models/oauth-refresh-token.js';
 import User from '../src/models/user.js';
 import { registerOAuthRoutes } from '../src/routes/oauth.js';
 
+
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
 const getDal = async () => {
@@ -52,88 +53,58 @@ const makeTestServer = () => {
   });
 };
 
-const cleanupOAuthArtifacts = async (
-  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
-  {
-    userId,
-    clientId,
-  }: { userId?: string; clientId?: string }
-) => {
-  if (clientId) {
-    await dal.query('DELETE FROM oauth_access_tokens WHERE client_id = $1', [clientId]);
-    await dal.query('DELETE FROM oauth_refresh_tokens WHERE client_id = $1', [clientId]);
-    await dal.query('DELETE FROM oauth_authorization_codes WHERE client_id = $1', [clientId]);
-    await dal.query('DELETE FROM oauth_clients WHERE client_id = $1', [clientId]);
-  }
-  if (userId) {
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
-
 test('OAuth access token resolves to MCP auth info', async () => {
   const dal = await getDal();
-  let userId: string | null = null;
   const clientId = `test-client-${Date.now()}`;
 
-  try {
-    const user = await User.create({
-      username: `oauthtest${Date.now()}`,
-      displayName: 'OAuth Test',
-      email: `oauth-test-${Date.now()}@example.com`,
-      passwordHash: randomBytes(32).toString('hex'),
-      createdAt: new Date(),
-      emailVerifiedAt: new Date(),
-    });
-    userId = user.id;
+  const user = await User.create({
+    username: `oauthtest${Date.now()}`,
+    displayName: 'OAuth Test',
+    email: `oauth-test-${Date.now()}@example.com`,
+    passwordHash: randomBytes(32).toString('hex'),
+    createdAt: new Date(),
+    emailVerifiedAt: new Date(),
+  });
 
-    await AgentAccessRequest.create({
-      userId: user.id,
-      interests: 'OAuth testing',
-      profileUrl: 'https://example.com/profile',
-      status: 'approved',
-      createdAt: new Date(),
-      submittedAt: new Date(),
-      reviewedAt: new Date(),
-      approvedAt: new Date(),
-    });
+  await AgentAccessRequest.create({
+    userId: user.id,
+    interests: 'OAuth testing',
+    profileUrl: 'https://example.com/profile',
+    status: 'approved',
+    createdAt: new Date(),
+    submittedAt: new Date(),
+    reviewedAt: new Date(),
+    approvedAt: new Date(),
+  });
 
-    await OAuthClient.create({
-      clientId,
-      clientName: 'OAuth Test Client',
-      redirectUris: ['https://example.com/callback'],
-      grantTypes: ['authorization_code', 'refresh_token'],
-      tokenEndpointAuthMethod: 'none',
-      createdAt: new Date(),
-    });
+  await OAuthClient.create({
+    clientId,
+    clientName: 'OAuth Test Client',
+    redirectUris: ['https://example.com/callback'],
+    grantTypes: ['authorization_code', 'refresh_token'],
+    tokenEndpointAuthMethod: 'none',
+    createdAt: new Date(),
+  });
 
-    const token = generateOAuthAccessToken();
-    const tokenMeta = getTokenMetadata(token);
+  const token = generateOAuthAccessToken();
+  const tokenMeta = getTokenMetadata(token);
 
-    await OAuthAccessToken.create({
-      ...tokenMeta,
-      clientId,
-      userId: user.id,
-      scopes: ['mcp.read', 'mcp.write'],
-      issuedAt: new Date(),
-      expiresAt: new Date(Date.now() + 60 * 60 * 1000),
-    });
+  await OAuthAccessToken.create({
+    ...tokenMeta,
+    clientId,
+    userId: user.id,
+    scopes: ['mcp.read', 'mcp.write'],
+    issuedAt: new Date(),
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+  });
 
-    const authInfo = await resolveAuthInfoFromToken(token);
-    assert.equal(authInfo.extra?.userId, user.id);
-    assert.equal(authInfo.extra?.oauthClientId, clientId);
-  } finally {
-    try {
-      await cleanupOAuthArtifacts(dal, { userId: userId ?? undefined, clientId });
-    } catch (cleanupError) {
-      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-      console.warn(`Cleanup failed: ${message}`);
-    }
-  }
+  const authInfo = await resolveAuthInfoFromToken(token);
+  assert.equal(authInfo.extra?.userId, user.id);
+  assert.equal(authInfo.extra?.oauthClientId, clientId);
 });
 
 test('refresh token rotation: new tokens issued before old token is consumed', async () => {
   const dal = await getDal();
-  let userId: string | null = null;
   const clientId = `test-refresh-client-${Date.now()}`;
   const server = await makeTestServer();
 
@@ -145,7 +116,6 @@ test('refresh token rotation: new tokens issued before old token is consumed', a
       passwordHash: randomBytes(32).toString('hex'),
       createdAt: new Date(),
     });
-    userId = user.id;
 
     await OAuthClient.create({
       clientId,
@@ -203,11 +173,5 @@ test('refresh token rotation: new tokens issued before old token is consumed', a
     assert.equal(retryBody.error, 'invalid_grant');
   } finally {
     await server.close();
-    try {
-      await cleanupOAuthArtifacts(dal, { userId: userId ?? undefined, clientId });
-    } catch (cleanupError) {
-      const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
-      console.warn(`Cleanup failed: ${message}`);
-    }
   }
 });
