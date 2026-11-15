@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -24,7 +24,8 @@
     "revoke-role": "node --import tsx src/scripts/revoke-role.ts",
     "list-roles": "node --import tsx src/scripts/list-roles.ts",
     "generate-altcha-key": "node --import tsx src/scripts/generate-altcha-key.ts",
-    "test": "NODE_ENV=test node --import tsx --test test/**/*.test.ts",
+    "test": "npm run -s test:file -- 'test/**/*.test.ts'",
+    "test:file": "NODE_ENV=test node --import tsx --test-global-setup=./test/_global-database.ts --test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src locales util types",
     "lint:fix": "biome check src locales util types --fix"

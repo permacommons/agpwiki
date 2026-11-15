@@ -1,5 +1,6 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
@@ -12,7 +13,8 @@ import {
   grantRoleUpsert,
 } from '../src/services/roles.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
-import User from '../src/models/user.js';
+import { insertTestUser } from './_test-users.js';
+
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -29,50 +31,7 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async () => {
-  const email = `mcp-test-${Date.now()}@example.com`;
-  return User.create({
-    username: `mcptest${Date.now()}`,
-    displayName: 'MCP Test',
-    email,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
-
-const cleanupTestArtifacts = async (
-  dal: Awaited<ReturnType<typeof initializePostgreSQL>>,
-  {
-    slugPrefix,
-    postSlugPrefix,
-    userId,
-  }: { slugPrefix?: string; postSlugPrefix?: string; userId?: string }
-) => {
-  if (slugPrefix) {
-    await dal.query(
-      'DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-      [slugPrefix]
-    );
-    await dal.query(
-      'DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-      [slugPrefix]
-    );
-    await dal.query(
-      'DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-      [slugPrefix]
-    );
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [slugPrefix]);
-  }
-  if (postSlugPrefix) {
-    await dal.query('DELETE FROM posts WHERE slug LIKE $1', [postSlugPrefix]);
-  }
-  if (userId) {
-    await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
-    await dal.query('DELETE FROM page_signoffs WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
+const createTestUser = () => insertTestUser({ prefix: 'mcptest', displayName: 'MCP Test' });
 
 type RegisteredToolHandler = (args: unknown, extra?: { authInfo?: { extra?: { userId?: string } } }) => Promise<{
   isError?: boolean;
@@ -156,292 +115,248 @@ test('MCP blog admin tool is enabled with blog_admin role', () => {
 test('MCP wiki_readPage returns content hash and current revision id', async () => {
   const dal = await getDal();
   const slug = `test-mcp-read-hash-${Date.now()}`;
-  const slugPrefix = `${slug}%`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
+  const user = await createTestUser();
 
-    await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Read Hash Test' },
-        body: { en: 'Hashable content.' },
-        canonicalLanguage: 'en',
-      },
-      user.id
-    );
+  await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Read Hash Test' },
+      body: { en: 'Hashable content.' },
+      canonicalLanguage: 'en',
+    },
+    user.id
+  );
 
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-    const result = await tools.wiki_readPage.handler({ slug });
-    const payload = result.structuredContent as {
-      contentHash?: string;
-      currentRevId?: string;
-      slug?: string;
-      canonicalLanguage?: string;
-    };
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
+  const result = await tools.wiki_readPage.handler({ slug });
+  const payload = result.structuredContent as {
+    contentHash?: string;
+    currentRevId?: string;
+    slug?: string;
+    canonicalLanguage?: string;
+  };
 
-    assert.equal(payload.canonicalLanguage, 'en');
-    assert.equal('originalLanguage' in payload, false);
-    assert.equal(result.isError, undefined);
-    assert.equal(payload.slug, slug);
-    assert.equal(typeof payload.contentHash, 'string');
-    assert.equal(payload.contentHash?.length, 64);
-    assert.match(payload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      slugPrefix,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  assert.equal(payload.canonicalLanguage, 'en');
+  assert.equal('originalLanguage' in payload, false);
+  assert.equal(result.isError, undefined);
+  assert.equal(payload.slug, slug);
+  assert.equal(typeof payload.contentHash, 'string');
+  assert.equal(payload.contentHash?.length, 64);
+  assert.match(payload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
 });
 
 test('MCP wiki protection tools update read editability hints', async () => {
   const dal = await getDal();
   const slug = `test-mcp-protect-${Date.now()}`;
-  const slugPrefix = `${slug}%`;
-  let adminId: string | null = null;
-  let editorId: string | null = null;
 
-  try {
-    const admin = await createTestUser();
-    const editor = await createTestUser();
-    adminId = admin.id;
-    editorId = editor.id;
-    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
-    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+  const admin = await createTestUser();
+  const editor = await createTestUser();
+  await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+  await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
 
-    await createWikiPage(
-      dal,
-      {
-        slug: 'meta/policy',
-        title: { en: 'Policy' },
-        body: { en: 'Current policy text.' },
-        canonicalLanguage: 'en',
-      },
-      admin.id
-    );
-    await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Protect Test' },
-        body: { en: 'Editable content.' },
-        canonicalLanguage: 'en',
-      },
-      editor.id
-    );
+  await createWikiPage(
+    dal,
+    {
+      slug: 'meta/policy',
+      title: { en: 'Policy' },
+      body: { en: 'Current policy text.' },
+      canonicalLanguage: 'en',
+    },
+    admin.id
+  );
+  await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Protect Test' },
+      body: { en: 'Editable content.' },
+      canonicalLanguage: 'en',
+    },
+    editor.id
+  );
 
-    const { server } = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
-    const tools = getToolHandlers(server);
-    const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
-    const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
+  const { server } = createMcpServer({ userRoles: [WIKI_ADMIN_ROLE] });
+  const tools = getToolHandlers(server);
+  const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
+  const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
 
-    const protectedResult = await tools.wiki_protectPage.handler(
-      {
-        slug,
-        reason: 'Prompt injection mitigation.',
-        policyHash,
-      },
-      { authInfo: { extra: { userId: admin.id } } }
-    );
-    assert.equal(protectedResult.isError, undefined);
+  const protectedResult = await tools.wiki_protectPage.handler(
+    {
+      slug,
+      reason: 'Prompt injection mitigation.',
+      policyHash,
+    },
+    { authInfo: { extra: { userId: admin.id } } }
+  );
+  assert.equal(protectedResult.isError, undefined);
 
-    const editorRead = await tools.wiki_readPage.handler(
-      { slug },
-      { authInfo: { extra: { userId: editor.id } } }
-    );
-    const editorPayload = editorRead.structuredContent as {
-      isProtected?: boolean;
-      isEditable?: boolean;
-    };
-    assert.equal(editorPayload.isProtected, true);
-    assert.equal(editorPayload.isEditable, false);
+  const editorRead = await tools.wiki_readPage.handler(
+    { slug },
+    { authInfo: { extra: { userId: editor.id } } }
+  );
+  const editorPayload = editorRead.structuredContent as {
+    isProtected?: boolean;
+    isEditable?: boolean;
+  };
+  assert.equal(editorPayload.isProtected, true);
+  assert.equal(editorPayload.isEditable, false);
 
-    const adminRead = await tools.wiki_readPage.handler(
-      { slug },
-      { authInfo: { extra: { userId: admin.id } } }
-    );
-    const adminPayload = adminRead.structuredContent as {
-      isProtected?: boolean;
-      isEditable?: boolean;
-    };
-    assert.equal(adminPayload.isProtected, true);
-    assert.equal(adminPayload.isEditable, true);
-  } finally {
-    await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug = $1)', [
-      'meta/policy',
-    ]);
-    await dal.query('DELETE FROM page_protections WHERE page_id IN (SELECT id FROM pages WHERE slug = $1)', [
-      'meta/policy',
-    ]);
-    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
-    await cleanupTestArtifacts(dal, {
-      slugPrefix,
-      userId: editorId ?? undefined,
-    });
-    await cleanupTestArtifacts(dal, {
-      userId: adminId ?? undefined,
-    });
-  }
+  const adminRead = await tools.wiki_readPage.handler(
+    { slug },
+    { authInfo: { extra: { userId: admin.id } } }
+  );
+  const adminPayload = adminRead.structuredContent as {
+    isProtected?: boolean;
+    isEditable?: boolean;
+  };
+  assert.equal(adminPayload.isProtected, true);
+  assert.equal(adminPayload.isEditable, true);
 });
 
 test('MCP reads return one language by default and compact history', async () => {
   const dal = await getDal();
   const slug = `test-mcp-lang-scope-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    const created = await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Language test', de: 'Sprachtest' },
-        body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
-        canonicalLanguage: 'de',
-      },
-      user.id
-    );
-    const updated = await updateWikiPage(
-      dal,
-      { slug, body: { en: 'English text, revised.\n' }, revSummary: { en: 'Revise English.' } },
-      user.id
-    );
-
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-
-    type Read = {
-      body: Record<string, string>;
-      title: Record<string, string>;
-      selectedLanguage: string;
-      availableLanguages: string[];
-      contentHash: string;
-    };
-    const byDefault = await callTool<Read>(tools, 'wiki_readPage', { slug });
-    assert.equal(byDefault.selectedLanguage, 'de');
-    assert.deepEqual(byDefault.availableLanguages, ['de', 'en']);
-    assert.deepEqual(byDefault.body, { de: 'Deutscher Text.\n' });
-    assert.deepEqual(byDefault.title, { de: 'Sprachtest' });
-
-    const english = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: 'en' });
-    assert.deepEqual(english.body, { en: 'English text, revised.\n' });
-    const all = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: '*' });
-    assert.deepEqual(Object.keys(all.body).sort(), ['de', 'en']);
-    assert.equal(byDefault.contentHash, all.contentHash);
-
-    const missing = await tools.wiki_readPage.handler({ slug, lang: 'ja' });
-    assert.equal(missing.isError, true);
-    assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
-
-    const oldRevision = await callTool<{ revision: Read }>(tools, 'wiki_readRevision', {
+  const user = await createTestUser();
+  const created = await createWikiPage(
+    dal,
+    {
       slug,
-      revId: created.currentRevId,
-      lang: 'en',
-    });
-    assert.deepEqual(oldRevision.revision.body, { en: 'English text.\n' });
+      title: { en: 'Language test', de: 'Sprachtest' },
+      body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
+      canonicalLanguage: 'de',
+    },
+    user.id
+  );
+  const updated = await updateWikiPage(
+    dal,
+    { slug, body: { en: 'English text, revised.\n' }, revSummary: { en: 'Revise English.' } },
+    user.id
+  );
 
-    type Diff = {
-      selectedLanguage: string;
-      fields: { body?: { modified: Record<string, { unifiedDiff: string; from?: string }> } };
-    };
-    const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
-      slug,
-      fromRevId: created.currentRevId,
-      toRevId: updated.currentRevId,
-      lang: 'en',
-    });
-    assert.match(diff.fields.body?.modified.en.unifiedDiff ?? '', /\+English text, revised\./);
-    assert.equal(diff.fields.body?.modified.en.from, undefined);
-    const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
-      slug,
-      fromRevId: created.currentRevId,
-    });
-    assert.equal(defaultDiff.selectedLanguage, 'de');
-    assert.equal(defaultDiff.fields.body, undefined);
-    const fullDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
-      slug,
-      fromRevId: created.currentRevId,
-      lang: '*',
-      includeFullText: true,
-    });
-    assert.equal(fullDiff.fields.body?.modified.en.from, 'English text.\n');
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
 
-    type List = {
-      total: number;
-      nextOffset: number | null;
-      revisions: Array<Record<string, unknown>>;
-    };
-    const firstPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1 });
-    assert.equal(firstPage.total, 2);
-    assert.equal(firstPage.nextOffset, 1);
-    assert.equal(firstPage.revisions[0].revId, updated.currentRevId);
-    assert.equal('body' in firstPage.revisions[0], false);
-    const secondPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1, offset: 1 });
-    assert.equal(secondPage.nextOffset, null);
-    assert.equal(secondPage.revisions[0].revId, created.currentRevId);
-  } finally {
-    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userIdForCleanup ?? undefined });
-  }
+  type Read = {
+    body: Record<string, string>;
+    title: Record<string, string>;
+    selectedLanguage: string;
+    availableLanguages: string[];
+    contentHash: string;
+  };
+  const byDefault = await callTool<Read>(tools, 'wiki_readPage', { slug });
+  assert.equal(byDefault.selectedLanguage, 'de');
+  assert.deepEqual(byDefault.availableLanguages, ['de', 'en']);
+  assert.deepEqual(byDefault.body, { de: 'Deutscher Text.\n' });
+  assert.deepEqual(byDefault.title, { de: 'Sprachtest' });
+
+  const english = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: 'en' });
+  assert.deepEqual(english.body, { en: 'English text, revised.\n' });
+  const all = await callTool<Read>(tools, 'wiki_readPage', { slug, lang: '*' });
+  assert.deepEqual(Object.keys(all.body).sort(), ['de', 'en']);
+  assert.equal(byDefault.contentHash, all.contentHash);
+
+  const missing = await tools.wiki_readPage.handler({ slug, lang: 'ja' });
+  assert.equal(missing.isError, true);
+  assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
+
+  const oldRevision = await callTool<{ revision: Read }>(tools, 'wiki_readRevision', {
+    slug,
+    revId: created.currentRevId,
+    lang: 'en',
+  });
+  assert.deepEqual(oldRevision.revision.body, { en: 'English text.\n' });
+
+  type Diff = {
+    selectedLanguage: string;
+    fields: { body?: { modified: Record<string, { unifiedDiff: string; from?: string }> } };
+  };
+  const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+    slug,
+    fromRevId: created.currentRevId,
+    toRevId: updated.currentRevId,
+    lang: 'en',
+  });
+  assert.match(diff.fields.body?.modified.en.unifiedDiff ?? '', /\+English text, revised\./);
+  assert.equal(diff.fields.body?.modified.en.from, undefined);
+  const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+    slug,
+    fromRevId: created.currentRevId,
+  });
+  assert.equal(defaultDiff.selectedLanguage, 'de');
+  assert.equal(defaultDiff.fields.body, undefined);
+  const fullDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', {
+    slug,
+    fromRevId: created.currentRevId,
+    lang: '*',
+    includeFullText: true,
+  });
+  assert.equal(fullDiff.fields.body?.modified.en.from, 'English text.\n');
+
+  type List = {
+    total: number;
+    nextOffset: number | null;
+    revisions: Array<Record<string, unknown>>;
+  };
+  const firstPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1 });
+  assert.equal(firstPage.total, 2);
+  assert.equal(firstPage.nextOffset, 1);
+  assert.equal(firstPage.revisions[0].revId, updated.currentRevId);
+  assert.equal('body' in firstPage.revisions[0], false);
+  const secondPage = await callTool<List>(tools, 'wiki_listRevisions', { slug, limit: 1, offset: 1 });
+  assert.equal(secondPage.nextOffset, null);
+  assert.equal(secondPage.revisions[0].revId, created.currentRevId);
 });
 
 test('MCP diffs allow an explicit language removed from the target revision', async () => {
   const dal = await getDal();
   const slug = `test-mcp-removed-language-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    const created = await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Language test', de: 'Sprachtest' },
-        body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
-        canonicalLanguage: 'de',
-      },
-      user.id
-    );
-    const updated = await updateWikiPage(
-      dal,
-      { slug, title: { de: null }, body: { de: null }, revSummary: { en: 'Remove German.' } },
-      user.id
-    );
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-    type Diff = {
-      selectedLanguage: string;
-      availableLanguages: string[];
-      fields: {
-        body?: { removed: Array<{ lang: string; characters: number; value?: string }> };
-      };
+  const user = await createTestUser();
+  const created = await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Language removal', de: 'Sprachentfernung' },
+      body: { en: 'English text.\n', de: 'Deutscher Text.\n' },
+      canonicalLanguage: 'de',
+    },
+    user.id
+  );
+  const updated = await updateWikiPage(
+    dal,
+    { slug, title: { de: null }, body: { de: null }, revSummary: { en: 'Remove German.' } },
+    user.id
+  );
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
+  type Diff = {
+    selectedLanguage: string;
+    availableLanguages: string[];
+    fields: {
+      body?: { removed: Array<{ lang: string; characters: number; value?: string }> };
     };
+  };
 
-    for (const toRevId of [updated.currentRevId, undefined]) {
-      const args = { slug, fromRevId: created.currentRevId, toRevId };
-      const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', { ...args, lang: 'de' });
-      assert.equal(diff.selectedLanguage, 'de');
-      assert.deepEqual(diff.availableLanguages, ['de', 'en']);
-      assert.deepEqual(diff.fields.body?.removed, [
-        { lang: 'de', characters: 'Deutscher Text.\n'.length },
-      ]);
+  for (const toRevId of [updated.currentRevId, undefined]) {
+    const args = { slug, fromRevId: created.currentRevId, toRevId };
+    const diff = await callTool<Diff>(tools, 'wiki_diffRevisions', { ...args, lang: 'de' });
+    assert.equal(diff.selectedLanguage, 'de');
+    assert.deepEqual(diff.availableLanguages, ['de', 'en']);
+    assert.deepEqual(diff.fields.body?.removed, [
+      { lang: 'de', characters: 'Deutscher Text.\n'.length },
+    ]);
 
-      const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', args);
-      assert.equal(defaultDiff.selectedLanguage, 'en');
-      assert.equal(defaultDiff.fields.body, undefined);
+    const defaultDiff = await callTool<Diff>(tools, 'wiki_diffRevisions', args);
+    assert.equal(defaultDiff.selectedLanguage, 'en');
+    assert.equal(defaultDiff.fields.body, undefined);
 
-      const missing = await tools.wiki_diffRevisions.handler({ ...args, lang: 'ja' });
-      assert.equal(missing.isError, true);
-      assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
-    }
-  } finally {
-    await cleanupTestArtifacts(dal, { slugPrefix: `${slug}%`, userId: userIdForCleanup ?? undefined });
+    const missing = await tools.wiki_diffRevisions.handler({ ...args, lang: 'ja' });
+    assert.equal(missing.isError, true);
+    assert.match(JSON.stringify(missing.structuredContent), /Available languages: de, en/);
   }
 });
 
@@ -449,7 +364,6 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
   const dal = await getDal();
   const slug = `test-mcp-expected-rev-${Date.now()}`;
   const user = await createTestUser();
-  let userIdForCleanup: string | null = user.id;
 
   try {
     await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
@@ -510,24 +424,15 @@ test('MCP currentRevId from wiki_readPage works as expectedRevId', async () => {
     const updatedPayload = updatedRead.structuredContent as { body?: Record<string, string> };
     assert.equal(updatedPayload.body?.en, 'Hello revised world');
   } finally {
-    const pagePrefixes = ['meta/policy', slug];
-    for (const pagePrefix of pagePrefixes) {
-      await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
-    }
-    await cleanupTestArtifacts(dal, {
-      userId: userIdForCleanup ?? undefined,
-    });
   }
 });
 
 test('MCP wiki write tools require the latest policy hash', async () => {
   const dal = await getDal();
   const slug = `test-mcp-policy-gate-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
   try {
     const user = await createTestUser();
-    userIdForCleanup = user.id;
     await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
 
     await createWikiPage(
@@ -598,24 +503,15 @@ test('MCP wiki write tools require the latest policy hash', async () => {
     assert.equal(acceptedPayload.contentHash?.length, 64);
     assert.match(acceptedPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
   } finally {
-    const pagePrefixes = ['meta/policy', slug];
-    for (const pagePrefix of pagePrefixes) {
-      await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
-    }
-    await cleanupTestArtifacts(dal, {
-      userId: userIdForCleanup ?? undefined,
-    });
   }
 });
 
 test('MCP policy hash gate can be explicitly skipped for bootstrap', async () => {
   const dal = await getDal();
   const slug = `test-mcp-policy-skip-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
 
   try {
     const user = await createTestUser();
-    userIdForCleanup = user.id;
     await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
 
     const { server } = createMcpServer({ skipPolicyCheck: true });
@@ -645,168 +541,142 @@ test('MCP policy hash gate can be explicitly skipped for bootstrap', async () =>
     assert.equal(acceptedPayload.contentHash?.length, 64);
     assert.match(acceptedPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
   } finally {
-    const pagePrefixes = ['meta/policy', slug];
-    for (const pagePrefix of pagePrefixes) {
-      await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${pagePrefix}%`]);
-    }
-    await cleanupTestArtifacts(dal, {
-      userId: userIdForCleanup ?? undefined,
-    });
   }
 });
 
 test('MCP blog write tools omit full body from responses', async () => {
   const dal = await getDal();
   const slug = `test-mcp-blog-write-${Date.now()}`;
-  const slugPrefix = `${slug}%`;
-  let userIdForCleanup: string | null = null;
 
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+  const user = await createTestUser();
+  await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
 
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-    const authInfo = { extra: { userId: user.id } };
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
+  const authInfo = { extra: { userId: user.id } };
 
-    const created = await tools.blog_createPost.handler(
-      {
-        slug,
-        title: { en: 'Blog Write Test' },
-        body: { en: 'Initial post body.' },
-        summary: { en: 'Initial summary.' },
-      },
-      { authInfo }
-    );
-    const createdPayload = created.structuredContent as {
-      body?: unknown;
-      slug?: string;
-      currentRevId?: string;
-    };
+  const created = await tools.blog_createPost.handler(
+    {
+      slug,
+      title: { en: 'Blog Write Test' },
+      body: { en: 'Initial post body.' },
+      summary: { en: 'Initial summary.' },
+    },
+    { authInfo }
+  );
+  const createdPayload = created.structuredContent as {
+    body?: unknown;
+    slug?: string;
+    currentRevId?: string;
+  };
 
-    assert.equal(created.isError, undefined);
-    assert.equal(createdPayload.slug, slug);
-    assert.equal(Object.hasOwn(createdPayload, 'body'), false);
-    assert.deepEqual(Object.keys(createdPayload).sort(), [
-      'createdAt',
-      'currentRevId',
-      'id',
-      'slug',
-      'updatedAt',
-    ]);
-    assert.match(createdPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
+  assert.equal(created.isError, undefined);
+  assert.equal(createdPayload.slug, slug);
+  assert.equal(Object.hasOwn(createdPayload, 'body'), false);
+  assert.deepEqual(Object.keys(createdPayload).sort(), [
+    'createdAt',
+    'currentRevId',
+    'id',
+    'slug',
+    'updatedAt',
+  ]);
+  assert.match(createdPayload.currentRevId ?? '', /^[0-9a-f-]{36}$/);
 
-    const updated = await tools.blog_updatePost.handler(
-      {
-        slug,
-        body: { en: 'Updated post body.' },
-        revSummary: { en: 'Update blog body.' },
-      },
-      { authInfo }
-    );
-    const updatedPayload = updated.structuredContent as {
-      body?: unknown;
-      slug?: string;
-      currentRevId?: string;
-    };
+  const updated = await tools.blog_updatePost.handler(
+    {
+      slug,
+      body: { en: 'Updated post body.' },
+      revSummary: { en: 'Update blog body.' },
+    },
+    { authInfo }
+  );
+  const updatedPayload = updated.structuredContent as {
+    body?: unknown;
+    slug?: string;
+    currentRevId?: string;
+  };
 
-    assert.equal(updated.isError, undefined);
-    assert.equal(updatedPayload.slug, slug);
-    assert.equal(Object.hasOwn(updatedPayload, 'body'), false);
-    assert.notEqual(updatedPayload.currentRevId, createdPayload.currentRevId);
+  assert.equal(updated.isError, undefined);
+  assert.equal(updatedPayload.slug, slug);
+  assert.equal(Object.hasOwn(updatedPayload, 'body'), false);
+  assert.notEqual(updatedPayload.currentRevId, createdPayload.currentRevId);
 
-    const read = await tools.blog_readPost.handler({ slug });
-    const readPayload = read.structuredContent as {
-      body?: Record<string, string>;
-      currentRevId?: string;
-    };
-    assert.equal(readPayload.body?.en, 'Updated post body.');
-    assert.equal(readPayload.currentRevId, updatedPayload.currentRevId);
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      postSlugPrefix: slugPrefix,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  const read = await tools.blog_readPost.handler({ slug });
+  const readPayload = read.structuredContent as {
+    body?: Record<string, string>;
+    currentRevId?: string;
+  };
+  assert.equal(readPayload.body?.en, 'Updated post body.');
+  assert.equal(readPayload.currentRevId, updatedPayload.currentRevId);
 });
 
 test('MCP citation_create rejects a stale or wrong policy hash', async () => {
   const dal = await getDal();
   const citationKey = `test-mcp-policy-cite-${Date.now()}`;
   const user = await createTestUser();
-  let userIdForCleanup: string | null = user.id;
 
-  try {
-    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
+  await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
 
-    await createWikiPage(
-      dal,
-      {
-        slug: 'meta/policy',
-        title: { en: 'Policy' },
-        body: { en: 'Current policy text.' },
-        canonicalLanguage: 'en',
+  await createWikiPage(
+    dal,
+    {
+      slug: 'meta/policy',
+      title: { en: 'Policy' },
+      body: { en: 'Current policy text.' },
+      canonicalLanguage: 'en',
+    },
+    user.id
+  );
+
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
+  const authInfo = { extra: { userId: user.id } };
+
+  const rejected = await tools.citation_create.handler(
+    {
+      key: citationKey,
+      data: {
+        type: 'webpage',
+        title: 'Blocked with wrong policy hash',
+        URL: 'https://example.com/policy-test',
       },
-      user.id
-    );
-
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-    const authInfo = { extra: { userId: user.id } };
-
-    const rejected = await tools.citation_create.handler(
-      {
-        key: citationKey,
-        data: {
-          type: 'webpage',
-          title: 'Blocked with wrong policy hash',
-          URL: 'https://example.com/policy-test',
-        },
-        policyHash: 'wrong-hash',
-      },
-      { authInfo }
-    );
-    const rejectedPayload = rejected.structuredContent as {
-      error: {
-        code: string;
-        message?: string;
-      };
+      policyHash: 'wrong-hash',
+    },
+    { authInfo }
+  );
+  const rejectedPayload = rejected.structuredContent as {
+    error: {
+      code: string;
+      message?: string;
     };
+  };
 
-    assert.equal(rejected.isError, true);
-    assert.equal(rejectedPayload.error.code, 'precondition_failed');
-    assert.equal(
-      rejectedPayload.error.message,
-      'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
-    );
+  assert.equal(rejected.isError, true);
+  assert.equal(rejectedPayload.error.code, 'precondition_failed');
+  assert.equal(
+    rejectedPayload.error.message,
+    'Use wiki_readPage to read /meta/policy and linked pages that are marked required reading, then submit the contentHash for /meta/policy.'
+  );
 
-    const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
-    const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
+  const policyRead = await tools.wiki_readPage.handler({ slug: 'meta/policy' });
+  const policyHash = (policyRead.structuredContent as { contentHash: string }).contentHash;
 
-    const accepted = await tools.citation_create.handler(
-      {
-        key: citationKey,
-        data: {
-          type: 'webpage',
-          title: 'Allowed with policy hash',
-          URL: 'https://example.com/policy-test',
-        },
-        policyHash,
+  const accepted = await tools.citation_create.handler(
+    {
+      key: citationKey,
+      data: {
+        type: 'webpage',
+        title: 'Allowed with policy hash',
+        URL: 'https://example.com/policy-test',
       },
-      { authInfo }
-    );
-    const acceptedPayload = accepted.structuredContent as { key?: string };
+      policyHash,
+    },
+    { authInfo }
+  );
+  const acceptedPayload = accepted.structuredContent as { key?: string };
 
-    assert.equal(accepted.isError, undefined);
-    assert.equal(acceptedPayload.key, citationKey);
-  } finally {
-    await dal.query('DELETE FROM citations WHERE key LIKE $1', [`${citationKey}%`]);
-    await dal.query('DELETE FROM pages WHERE slug = $1', ['meta/policy']);
-    await cleanupTestArtifacts(dal, {
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+  assert.equal(accepted.isError, undefined);
+  assert.equal(acceptedPayload.key, citationKey);
 });
 
 type ToolHandlers = ReturnType<typeof getToolHandlers>;
@@ -836,7 +706,7 @@ type WikiRevisionFields = {
 
 const HISTORY_ORIGINAL_BODY_EN = 'Lead text.\n\n## History\n\nOld history.\n';
 const HISTORY_BODY_DE = 'Einleitung.\n\n## Geschichte\n\nAlte Geschichte.\n';
-const HISTORY_TITLE = { en: 'History Test', de: 'Verlaufstest' };
+const historyTitle = (slug: string) => ({ en: `History Test ${slug}`, de: `Verlaufstest ${slug}` });
 
 const wikiHistoryCases: Array<{
   tool: string;
@@ -893,284 +763,14 @@ for (const { tool, args } of wikiHistoryCases) {
   test(`MCP ${tool} leaves the previous wiki revision intact`, async () => {
     const dal = await getDal();
     const slug = `test-mcp-history-${tool.toLowerCase().replace('_', '-')}-${Date.now()}`;
-    let userIdForCleanup: string | null = null;
 
-    try {
-      const user = await createTestUser();
-      userIdForCleanup = user.id;
-      await createWikiPage(
-        dal,
-        {
-          slug,
-          title: HISTORY_TITLE,
-          body: { en: HISTORY_ORIGINAL_BODY_EN, de: HISTORY_BODY_DE },
-          canonicalLanguage: 'en',
-        },
-        user.id
-      );
-
-      const { server } = createMcpServer({ skipPolicyCheck: true });
-      const tools = getToolHandlers(server);
-      const authInfo = { extra: { userId: user.id } };
-
-      const before = await callTool<WikiRevisionFields & { currentRevId: string }>(
-        tools,
-        'wiki_readPage',
-        { slug }
-      );
-      assert.equal(before.body?.en, HISTORY_ORIGINAL_BODY_EN);
-
-      const written = await callTool<{ currentRevId: string }>(
-        tools,
-        tool,
-        {
-          ...args(slug, before.currentRevId),
-          policyHash: '',
-          revSummary: { en: `History check for ${tool}.` },
-        },
-        authInfo
-      );
-      assert.notEqual(written.currentRevId, before.currentRevId);
-
-      const previous = await callTool<RevisionRead<WikiRevisionFields>>(
-        tools,
-        'wiki_readRevision',
-        { slug, revId: before.currentRevId, lang: '*' }
-      );
-      assert.equal(previous.revision.revId, before.currentRevId);
-      assert.equal(previous.revision.body?.en, HISTORY_ORIGINAL_BODY_EN);
-      assert.equal(previous.revision.body?.de, HISTORY_BODY_DE);
-      assert.deepEqual(previous.revision.title, HISTORY_TITLE);
-
-      const current = await callTool<WikiRevisionFields & { currentRevId: string }>(
-        tools,
-        'wiki_readPage',
-        { slug, lang: '*' }
-      );
-      assert.equal(current.currentRevId, written.currentRevId);
-      assert.match(current.body?.en ?? '', /New history\./);
-      assert.doesNotMatch(current.body?.en ?? '', /Old history\./);
-      assert.equal(current.body?.de, HISTORY_BODY_DE);
-      assert.deepEqual(current.title, HISTORY_TITLE);
-    } finally {
-      await cleanupTestArtifacts(dal, {
-        slugPrefix: `${slug}%`,
-        userId: userIdForCleanup ?? undefined,
-      });
-    }
-  });
-}
-
-test('MCP blog_updatePost leaves the previous blog revision intact', async () => {
-  const dal = await getDal();
-  const slug = `test-mcp-history-blog-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
-
-  try {
     const user = await createTestUser();
-    userIdForCleanup = user.id;
-    await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
-
-    const { server } = createMcpServer();
-    const tools = getToolHandlers(server);
-    const authInfo = { extra: { userId: user.id } };
-
-    const title = { en: 'Blog History', de: 'Blog-Verlauf' };
-    const summary = { en: 'Summary.', de: 'Zusammenfassung.' };
-    const created = await callTool<{ currentRevId: string }>(
-      tools,
-      'blog_createPost',
-      {
-        slug,
-        title,
-        summary,
-        body: { en: 'Old blog body.', de: 'Deutscher Text.' },
-      },
-      authInfo
-    );
-
-    const updated = await callTool<{ currentRevId: string }>(
-      tools,
-      'blog_updatePost',
-      {
-        slug,
-        body: { en: 'New blog body.' },
-        expectedRevId: created.currentRevId,
-        revSummary: { en: 'Revise English body.' },
-      },
-      authInfo
-    );
-    assert.notEqual(updated.currentRevId, created.currentRevId);
-
-    type BlogFields = {
-      title: Record<string, string> | null;
-      summary: Record<string, string> | null;
-      body: Record<string, string> | null;
-    };
-    const previous = await callTool<RevisionRead<BlogFields>>(tools, 'blog_readRevision', {
-      slug,
-      revId: created.currentRevId,
-    });
-    assert.deepEqual(previous.revision.body, { en: 'Old blog body.', de: 'Deutscher Text.' });
-    assert.deepEqual(previous.revision.title, title);
-    assert.deepEqual(previous.revision.summary, summary);
-
-    const current = await callTool<BlogFields & { currentRevId: string }>(
-      tools,
-      'blog_readPost',
-      { slug }
-    );
-    assert.equal(current.currentRevId, updated.currentRevId);
-    assert.deepEqual(current.body, { en: 'New blog body.', de: 'Deutscher Text.' });
-    assert.deepEqual(current.title, title);
-    assert.deepEqual(current.summary, summary);
-  } finally {
-    await cleanupTestArtifacts(dal, {
-      postSlugPrefix: `${slug}%`,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
-});
-
-test('MCP citation_update and claim_update leave previous revisions intact', async () => {
-  const dal = await getDal();
-  const key = `test-mcp-history-cite-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
-
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-
-    const { server } = createMcpServer({ skipPolicyCheck: true });
-    const tools = getToolHandlers(server);
-    const authInfo = { extra: { userId: user.id } };
-
-    const originalData = {
-      type: 'book',
-      title: 'Old citation title',
-      author: [{ family: 'Doe', given: 'Jane' }],
-      issued: { 'date-parts': [[2020]] },
-    };
-    const createdCitation = await callTool<{ currentRevId: string }>(
-      tools,
-      'citation_create',
-      { key, data: originalData, policyHash: '' },
-      authInfo
-    );
-
-    const updatedData = { ...originalData, title: 'New citation title' };
-    const updatedCitation = await callTool<{ currentRevId: string }>(
-      tools,
-      'citation_update',
-      {
-        key,
-        data: updatedData,
-        expectedRevId: createdCitation.currentRevId,
-        policyHash: '',
-        revSummary: { en: 'Fix title.' },
-      },
-      authInfo
-    );
-    assert.notEqual(updatedCitation.currentRevId, createdCitation.currentRevId);
-
-    type CitationFields = { data: Record<string, unknown> | null };
-    const previousCitation = await callTool<RevisionRead<CitationFields>>(
-      tools,
-      'citation_readRevision',
-      { key, revId: createdCitation.currentRevId }
-    );
-    assert.equal(previousCitation.revision.data?.title, 'Old citation title');
-    assert.deepEqual(previousCitation.revision.data?.author, originalData.author);
-    assert.deepEqual(previousCitation.revision.data?.issued, originalData.issued);
-
-    const currentCitation = await callTool<CitationFields & { currentRevId: string }>(
-      tools,
-      'citation_read',
-      { key }
-    );
-    assert.equal(currentCitation.currentRevId, updatedCitation.currentRevId);
-    assert.equal(currentCitation.data?.title, 'New citation title');
-    assert.deepEqual(currentCitation.data?.author, originalData.author);
-    assert.deepEqual(currentCitation.data?.issued, originalData.issued);
-
-    const claimId = 'history';
-    const locatorValue = { en: '12' };
-    const createdClaim = await callTool<{ currentRevId: string }>(
-      tools,
-      'claim_create',
-      {
-        key,
-        claimId,
-        assertion: { en: 'Old assertion.', de: 'Deutsche Aussage.' },
-        locatorType: 'page',
-        locatorValue,
-        policyHash: '',
-      },
-      authInfo
-    );
-
-    const updatedClaim = await callTool<{ currentRevId: string }>(
-      tools,
-      'claim_update',
-      {
-        key,
-        claimId,
-        assertion: { en: 'New assertion.' },
-        expectedRevId: createdClaim.currentRevId,
-        policyHash: '',
-        revSummary: { en: 'Refine assertion.' },
-      },
-      authInfo
-    );
-    assert.notEqual(updatedClaim.currentRevId, createdClaim.currentRevId);
-
-    type ClaimFields = {
-      assertion: Record<string, string> | null;
-      locatorValue: Record<string, string> | null;
-    };
-    const previousClaim = await callTool<RevisionRead<ClaimFields>>(
-      tools,
-      'claim_readRevision',
-      { key, claimId, revId: createdClaim.currentRevId }
-    );
-    assert.deepEqual(previousClaim.revision.assertion, {
-      en: 'Old assertion.',
-      de: 'Deutsche Aussage.',
-    });
-    assert.deepEqual(previousClaim.revision.locatorValue, locatorValue);
-
-    const currentClaim = await callTool<ClaimFields & { currentRevId: string }>(
-      tools,
-      'claim_read',
-      { key, claimId }
-    );
-    assert.equal(currentClaim.currentRevId, updatedClaim.currentRevId);
-    assert.deepEqual(currentClaim.assertion, { en: 'New assertion.', de: 'Deutsche Aussage.' });
-    assert.deepEqual(currentClaim.locatorValue, locatorValue);
-  } finally {
-    await dal.query(
-      'DELETE FROM citation_claims WHERE citation_id IN (SELECT id FROM citations WHERE key LIKE $1)',
-      [`${key}%`]
-    );
-    await dal.query('DELETE FROM citations WHERE key LIKE $1', [`${key}%`]);
-    await cleanupTestArtifacts(dal, { userId: userIdForCleanup ?? undefined });
-  }
-});
-
-test('MCP page_check_update leaves the previous page check revision intact', async () => {
-  const dal = await getDal();
-  const slug = `test-mcp-history-check-${Date.now()}`;
-  let userIdForCleanup: string | null = null;
-
-  try {
-    const user = await createTestUser();
-    userIdForCleanup = user.id;
-    const page = await createWikiPage(
+    await createWikiPage(
       dal,
       {
         slug,
-        title: { en: 'Page Check History' },
-        body: { en: 'Checked text.' },
+        title: historyTitle(slug),
+        body: { en: HISTORY_ORIGINAL_BODY_EN, de: HISTORY_BODY_DE },
         canonicalLanguage: 'en',
       },
       user.id
@@ -1180,86 +780,314 @@ test('MCP page_check_update leaves the previous page check revision intact', asy
     const tools = getToolHandlers(server);
     const authInfo = { extra: { userId: user.id } };
 
-    const originalMetrics = {
-      issues_found: { high: 1, medium: 2, low: 0 },
-      issues_fixed: { high: 0, medium: 1, low: 0 },
-    };
-    const notes = { en: 'Reviewer notes.' };
-    const created = await callTool<{ id: string; currentRevId: string }>(
+    const before = await callTool<WikiRevisionFields & { currentRevId: string }>(
       tools,
-      'page_check_create',
+      'wiki_readPage',
+      { slug }
+    );
+    assert.equal(before.body?.en, HISTORY_ORIGINAL_BODY_EN);
+
+    const written = await callTool<{ currentRevId: string }>(
+      tools,
+      tool,
       {
-        slug,
-        type: 'fact_check',
-        status: 'in_progress',
-        checkResults: { en: 'Old results.', de: 'Alte Ergebnisse.' },
-        notes,
-        metrics: originalMetrics,
-        targetRevId: page.currentRevId,
+        ...args(slug, before.currentRevId),
         policyHash: '',
+        revSummary: { en: `History check for ${tool}.` },
       },
       authInfo
     );
+    assert.notEqual(written.currentRevId, before.currentRevId);
 
-    const updatedMetrics = {
-      issues_found: { high: 1, medium: 2, low: 0 },
-      issues_fixed: { high: 1, medium: 2, low: 0 },
-    };
-    const updated = await callTool<{ currentRevId: string }>(
+    const previous = await callTool<RevisionRead<WikiRevisionFields>>(
       tools,
-      'page_check_update',
-      {
-        checkId: created.id,
-        status: 'completed',
-        checkResults: { en: 'New results.' },
-        metrics: updatedMetrics,
-        expectedRevId: created.currentRevId,
-        policyHash: '',
-        revSummary: { en: 'Record fixes.' },
-      },
-      authInfo
+      'wiki_readRevision',
+      { slug, revId: before.currentRevId, lang: '*' }
     );
-    assert.notEqual(updated.currentRevId, created.currentRevId);
+    assert.equal(previous.revision.revId, before.currentRevId);
+    assert.equal(previous.revision.body?.en, HISTORY_ORIGINAL_BODY_EN);
+    assert.equal(previous.revision.body?.de, HISTORY_BODY_DE);
+    assert.deepEqual(previous.revision.title, historyTitle(slug));
 
-    type CheckFields = {
-      status: string;
-      checkResults: Record<string, string> | null;
-      notes: Record<string, string> | null;
-      metrics: typeof originalMetrics | null;
-      targetRevId: string;
-    };
-    const previous = await callTool<RevisionRead<CheckFields>>(
+    const current = await callTool<WikiRevisionFields & { currentRevId: string }>(
       tools,
-      'page_check_readRevision',
-      { checkId: created.id, revId: created.currentRevId }
+      'wiki_readPage',
+      { slug, lang: '*' }
     );
-    assert.equal(previous.revision.status, 'in_progress');
-    assert.deepEqual(previous.revision.checkResults, {
-      en: 'Old results.',
-      de: 'Alte Ergebnisse.',
-    });
-    assert.deepEqual(previous.revision.metrics, originalMetrics);
-    assert.deepEqual(previous.revision.notes, notes);
-    assert.equal(previous.revision.targetRevId, page.currentRevId);
+    assert.equal(current.currentRevId, written.currentRevId);
+    assert.match(current.body?.en ?? '', /New history\./);
+    assert.doesNotMatch(current.body?.en ?? '', /Old history\./);
+    assert.equal(current.body?.de, HISTORY_BODY_DE);
+    assert.deepEqual(current.title, historyTitle(slug));
+  });
+}
 
-    type ListedCheck = CheckFields & { id: string; currentRevId: string };
-    const listed = await callTool<{ checks: ListedCheck[] }>(tools, 'page_check_list', { slug });
-    const current = listed.checks.find(check => check.id === created.id);
-    assert.ok(current);
-    assert.equal(current.currentRevId, updated.currentRevId);
-    assert.equal(current.status, 'completed');
-    assert.deepEqual(current.checkResults, { en: 'New results.', de: 'Alte Ergebnisse.' });
-    assert.deepEqual(current.metrics, updatedMetrics);
-    assert.deepEqual(current.notes, notes);
-    assert.equal(current.targetRevId, page.currentRevId);
-  } finally {
-    await dal.query(
-      'DELETE FROM page_checks WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-      [`${slug}%`]
-    );
-    await cleanupTestArtifacts(dal, {
-      slugPrefix: `${slug}%`,
-      userId: userIdForCleanup ?? undefined,
-    });
-  }
+test('MCP blog_updatePost leaves the previous blog revision intact', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-history-blog-${Date.now()}`;
+
+  const user = await createTestUser();
+  await grantRoleUpsert(dal, user.id, BLOG_AUTHOR_ROLE);
+
+  const { server } = createMcpServer();
+  const tools = getToolHandlers(server);
+  const authInfo = { extra: { userId: user.id } };
+
+  const title = { en: 'Blog History', de: 'Blog-Verlauf' };
+  const summary = { en: 'Summary.', de: 'Zusammenfassung.' };
+  const created = await callTool<{ currentRevId: string }>(
+    tools,
+    'blog_createPost',
+    {
+      slug,
+      title,
+      summary,
+      body: { en: 'Old blog body.', de: 'Deutscher Text.' },
+    },
+    authInfo
+  );
+
+  const updated = await callTool<{ currentRevId: string }>(
+    tools,
+    'blog_updatePost',
+    {
+      slug,
+      body: { en: 'New blog body.' },
+      expectedRevId: created.currentRevId,
+      revSummary: { en: 'Revise English body.' },
+    },
+    authInfo
+  );
+  assert.notEqual(updated.currentRevId, created.currentRevId);
+
+  type BlogFields = {
+    title: Record<string, string> | null;
+    summary: Record<string, string> | null;
+    body: Record<string, string> | null;
+  };
+  const previous = await callTool<RevisionRead<BlogFields>>(tools, 'blog_readRevision', {
+    slug,
+    revId: created.currentRevId,
+  });
+  assert.deepEqual(previous.revision.body, { en: 'Old blog body.', de: 'Deutscher Text.' });
+  assert.deepEqual(previous.revision.title, title);
+  assert.deepEqual(previous.revision.summary, summary);
+
+  const current = await callTool<BlogFields & { currentRevId: string }>(
+    tools,
+    'blog_readPost',
+    { slug }
+  );
+  assert.equal(current.currentRevId, updated.currentRevId);
+  assert.deepEqual(current.body, { en: 'New blog body.', de: 'Deutscher Text.' });
+  assert.deepEqual(current.title, title);
+  assert.deepEqual(current.summary, summary);
+});
+
+test('MCP citation_update and claim_update leave previous revisions intact', async () => {
+  const dal = await getDal();
+  const key = `test-mcp-history-cite-${Date.now()}`;
+
+  const user = await createTestUser();
+
+  const { server } = createMcpServer({ skipPolicyCheck: true });
+  const tools = getToolHandlers(server);
+  const authInfo = { extra: { userId: user.id } };
+
+  const originalData = {
+    type: 'book',
+    title: 'Old citation title',
+    author: [{ family: 'Doe', given: 'Jane' }],
+    issued: { 'date-parts': [[2020]] },
+  };
+  const createdCitation = await callTool<{ currentRevId: string }>(
+    tools,
+    'citation_create',
+    { key, data: originalData, policyHash: '' },
+    authInfo
+  );
+
+  const updatedData = { ...originalData, title: 'New citation title' };
+  const updatedCitation = await callTool<{ currentRevId: string }>(
+    tools,
+    'citation_update',
+    {
+      key,
+      data: updatedData,
+      expectedRevId: createdCitation.currentRevId,
+      policyHash: '',
+      revSummary: { en: 'Fix title.' },
+    },
+    authInfo
+  );
+  assert.notEqual(updatedCitation.currentRevId, createdCitation.currentRevId);
+
+  type CitationFields = { data: Record<string, unknown> | null };
+  const previousCitation = await callTool<RevisionRead<CitationFields>>(
+    tools,
+    'citation_readRevision',
+    { key, revId: createdCitation.currentRevId }
+  );
+  assert.equal(previousCitation.revision.data?.title, 'Old citation title');
+  assert.deepEqual(previousCitation.revision.data?.author, originalData.author);
+  assert.deepEqual(previousCitation.revision.data?.issued, originalData.issued);
+
+  const currentCitation = await callTool<CitationFields & { currentRevId: string }>(
+    tools,
+    'citation_read',
+    { key }
+  );
+  assert.equal(currentCitation.currentRevId, updatedCitation.currentRevId);
+  assert.equal(currentCitation.data?.title, 'New citation title');
+  assert.deepEqual(currentCitation.data?.author, originalData.author);
+  assert.deepEqual(currentCitation.data?.issued, originalData.issued);
+
+  const claimId = 'history';
+  const locatorValue = { en: '12' };
+  const createdClaim = await callTool<{ currentRevId: string }>(
+    tools,
+    'claim_create',
+    {
+      key,
+      claimId,
+      assertion: { en: 'Old assertion.', de: 'Deutsche Aussage.' },
+      locatorType: 'page',
+      locatorValue,
+      policyHash: '',
+    },
+    authInfo
+  );
+
+  const updatedClaim = await callTool<{ currentRevId: string }>(
+    tools,
+    'claim_update',
+    {
+      key,
+      claimId,
+      assertion: { en: 'New assertion.' },
+      expectedRevId: createdClaim.currentRevId,
+      policyHash: '',
+      revSummary: { en: 'Refine assertion.' },
+    },
+    authInfo
+  );
+  assert.notEqual(updatedClaim.currentRevId, createdClaim.currentRevId);
+
+  type ClaimFields = {
+    assertion: Record<string, string> | null;
+    locatorValue: Record<string, string> | null;
+  };
+  const previousClaim = await callTool<RevisionRead<ClaimFields>>(
+    tools,
+    'claim_readRevision',
+    { key, claimId, revId: createdClaim.currentRevId }
+  );
+  assert.deepEqual(previousClaim.revision.assertion, {
+    en: 'Old assertion.',
+    de: 'Deutsche Aussage.',
+  });
+  assert.deepEqual(previousClaim.revision.locatorValue, locatorValue);
+
+  const currentClaim = await callTool<ClaimFields & { currentRevId: string }>(
+    tools,
+    'claim_read',
+    { key, claimId }
+  );
+  assert.equal(currentClaim.currentRevId, updatedClaim.currentRevId);
+  assert.deepEqual(currentClaim.assertion, { en: 'New assertion.', de: 'Deutsche Aussage.' });
+  assert.deepEqual(currentClaim.locatorValue, locatorValue);
+});
+
+test('MCP page_check_update leaves the previous page check revision intact', async () => {
+  const dal = await getDal();
+  const slug = `test-mcp-history-check-${Date.now()}`;
+
+  const user = await createTestUser();
+  const page = await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Page Check History' },
+      body: { en: 'Checked text.' },
+      canonicalLanguage: 'en',
+    },
+    user.id
+  );
+
+  const { server } = createMcpServer({ skipPolicyCheck: true });
+  const tools = getToolHandlers(server);
+  const authInfo = { extra: { userId: user.id } };
+
+  const originalMetrics = {
+    issues_found: { high: 1, medium: 2, low: 0 },
+    issues_fixed: { high: 0, medium: 1, low: 0 },
+  };
+  const notes = { en: 'Reviewer notes.' };
+  const created = await callTool<{ id: string; currentRevId: string }>(
+    tools,
+    'page_check_create',
+    {
+      slug,
+      type: 'fact_check',
+      status: 'in_progress',
+      checkResults: { en: 'Old results.', de: 'Alte Ergebnisse.' },
+      notes,
+      metrics: originalMetrics,
+      targetRevId: page.currentRevId,
+      policyHash: '',
+    },
+    authInfo
+  );
+
+  const updatedMetrics = {
+    issues_found: { high: 1, medium: 2, low: 0 },
+    issues_fixed: { high: 1, medium: 2, low: 0 },
+  };
+  const updated = await callTool<{ currentRevId: string }>(
+    tools,
+    'page_check_update',
+    {
+      checkId: created.id,
+      status: 'completed',
+      checkResults: { en: 'New results.' },
+      metrics: updatedMetrics,
+      expectedRevId: created.currentRevId,
+      policyHash: '',
+      revSummary: { en: 'Record fixes.' },
+    },
+    authInfo
+  );
+  assert.notEqual(updated.currentRevId, created.currentRevId);
+
+  type CheckFields = {
+    status: string;
+    checkResults: Record<string, string> | null;
+    notes: Record<string, string> | null;
+    metrics: typeof originalMetrics | null;
+    targetRevId: string;
+  };
+  const previous = await callTool<RevisionRead<CheckFields>>(
+    tools,
+    'page_check_readRevision',
+    { checkId: created.id, revId: created.currentRevId }
+  );
+  assert.equal(previous.revision.status, 'in_progress');
+  assert.deepEqual(previous.revision.checkResults, {
+    en: 'Old results.',
+    de: 'Alte Ergebnisse.',
+  });
+  assert.deepEqual(previous.revision.metrics, originalMetrics);
+  assert.deepEqual(previous.revision.notes, notes);
+  assert.equal(previous.revision.targetRevId, page.currentRevId);
+
+  type ListedCheck = CheckFields & { id: string; currentRevId: string };
+  const listed = await callTool<{ checks: ListedCheck[] }>(tools, 'page_check_list', { slug });
+  const current = listed.checks.find(check => check.id === created.id);
+  assert.ok(current);
+  assert.equal(current.currentRevId, updated.currentRevId);
+  assert.equal(current.status, 'completed');
+  assert.deepEqual(current.checkResults, { en: 'New results.', de: 'Alte Ergebnisse.' });
+  assert.deepEqual(current.metrics, updatedMetrics);
+  assert.deepEqual(current.notes, notes);
+  assert.equal(current.targetRevId, page.currentRevId);
 });

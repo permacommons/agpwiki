@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';
 import test from 'node:test';
@@ -48,6 +49,5 @@ test('User lookups batch names and authors, omit missing users, and skip empty i
     assert.equal(query.mock.callCount(), 3);
   } finally {
     t.mock.restoreAll();
-    await dal.query('DELETE FROM users WHERE id = ANY($1::uuid[])', [ids]);
   }
 });

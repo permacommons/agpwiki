@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import test from 'node:test';
@@ -80,8 +81,5 @@ test('Renderer loaders batch current live entries and preserve renderer fields',
     assert.equal(query.mock.callCount(), 2);
   } finally {
     t.mock.restoreAll();
-    await dal.query('DELETE FROM media WHERE slug LIKE $1', [`${prefix}%`]);
-    await dal.query('DELETE FROM citations WHERE key LIKE $1', [`${prefix}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
   }
 });

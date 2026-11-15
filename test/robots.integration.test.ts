@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import http from 'node:http';
@@ -6,10 +7,11 @@ import test from 'node:test';
 import express from 'express';
 
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
+
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -25,16 +27,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `robotstest${suffix}`,
-    displayName: 'Robots Test',
-    email: `robots-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'robotstest', displayName: 'Robots Test' });
 
 const startServer = async () => {
   const app = express();
@@ -110,7 +103,5 @@ test('old revisions and draft proposals are marked noindex', async () => {
     assert.equal(await noindexOf(`${server.url}/${proposalSlug}`), false);
   } finally {
     await server.close();
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1 OR slug LIKE $2', [`${prefix}%`, `meta/proposals/${prefix}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
   }
 });

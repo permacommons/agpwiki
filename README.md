@@ -15,7 +15,7 @@ Status: experimental, but ready for wider feedback.
 - Role-based access control, invite flows, and API tokens for MCP access.
 
 **Tech stack**
-- Node.js 22 + TypeScript (ESM)
+- Node.js 24 + TypeScript (ESM)
 - Express 5 + Handlebars
 - PostgreSQL + typed DAL + migrations
 - markdown-it rendering with custom plugins

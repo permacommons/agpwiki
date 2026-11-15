@@ -1,5 +1,5 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -10,11 +10,11 @@ import { ForbiddenError, ValidationError } from '../src/lib/errors.js';
 import { PROMPT_SPECS, promptPageSlug } from '../src/lib/prompt-registry.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import { loadPromptText } from '../src/mcp/prompts.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { getWikiPageEditability } from '../src/services/page-protection-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { readWikiPage, replaceWikiPageExactText, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -30,16 +30,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `prompttest${suffix}`,
-    displayName: 'Prompt Test',
-    email: `prompt-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'prompttest', displayName: 'Prompt Test' });
 
 test('Every prompt has an admin-protected page with its placeholders, imported by the migration', async () => {
   const dal = await getDal();
@@ -90,49 +81,39 @@ test('A missing prompt page gives a clear message', async () => {
 
 test('A save that would remove a prompt placeholder is refused, and only admins can edit', async () => {
   const dal = await getDal();
-  let adminId: string | null = null;
-  let editorId: string | null = null;
-  try {
-    const admin = await createTestUser();
-    const editor = await createTestUser();
-    adminId = admin.id;
-    editorId = editor.id;
-    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
-    const slug = 'meta/prompts/fact-check';
-    const before = await readWikiPage(dal, slug);
+  const admin = await createTestUser();
+  const editor = await createTestUser();
+  await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+  const slug = 'meta/prompts/fact-check';
+  const before = await readWikiPage(dal, slug);
 
+  await assert.rejects(
+    () => updateWikiPage(dal, { slug, body: { en: 'No placeholders.' }, revSummary: { en: 'Try.' } }, editor.id),
+    ForbiddenError
+  );
+  await assert.rejects(
+    () => updateWikiPage(dal, { slug, body: { en: 'Check {{metaPages}} only.' }, revSummary: { en: 'Try.' } }, admin.id),
+    (error: unknown) =>
+      error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.message.includes('{{slug}}'))
+  );
+  for (const body of [null, Object.fromEntries(Object.keys(before.body ?? {}).map(lang => [lang, null]))]) {
     await assert.rejects(
-      () => updateWikiPage(dal, { slug, body: { en: 'No placeholders.' }, revSummary: { en: 'Try.' } }, editor.id),
-      ForbiddenError
-    );
-    await assert.rejects(
-      () => updateWikiPage(dal, { slug, body: { en: 'Check {{metaPages}} only.' }, revSummary: { en: 'Try.' } }, admin.id),
+      () => updateWikiPage(dal, { slug, body, revSummary: { en: 'Try clearing prompt text.' } }, admin.id),
       (error: unknown) =>
-        error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.message.includes('{{slug}}'))
+        error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.field === 'body')
     );
-    for (const body of [null, Object.fromEntries(Object.keys(before.body ?? {}).map(lang => [lang, null]))]) {
-      await assert.rejects(
-        () => updateWikiPage(dal, { slug, body, revSummary: { en: 'Try clearing prompt text.' } }, admin.id),
-        (error: unknown) =>
-          error instanceof ValidationError && (error.fieldErrors ?? []).some(item => item.field === 'body')
-      );
-    }
-    await assert.rejects(
-      () =>
-        replaceWikiPageExactText(
-          dal,
-          { slug, replacements: [{ from: '{{metaPages}}', to: 'Read the policies.' }], revSummary: { en: 'Try.' } },
-          admin.id
-        ),
-      ValidationError
-    );
-    // Nothing was written.
-    assert.equal((await readWikiPage(dal, slug)).currentRevId, before.currentRevId);
-  } finally {
-    const ids = [adminId, editorId].filter((id): id is string => Boolean(id));
-    await dal.query('DELETE FROM user_roles WHERE user_id = ANY($1)', [ids]);
-    await dal.query('DELETE FROM users WHERE id = ANY($1)', [ids]);
   }
+  await assert.rejects(
+    () =>
+      replaceWikiPageExactText(
+        dal,
+        { slug, replacements: [{ from: '{{metaPages}}', to: 'Read the policies.' }], revSummary: { en: 'Try.' } },
+        admin.id
+      ),
+    ValidationError
+  );
+  // Nothing was written.
+  assert.equal((await readWikiPage(dal, slug)).currentRevId, before.currentRevId);
 });
 
 test('A prompt page shows its placeholders to readers', async () => {

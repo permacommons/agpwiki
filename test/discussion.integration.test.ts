@@ -1,5 +1,5 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -10,7 +10,6 @@ import { isUserSubscribedToForumThread } from '../src/services/forum-subscriptio
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
-import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
 import { loadDiscussionRenderData } from '../src/routes/lib/discussion.js';
 import { createCitation } from '../src/services/citation-service.js';
@@ -24,6 +23,7 @@ import { createBlogPost } from '../src/services/blog-post-service.js';
 import { listDiscussedPages } from '../src/services/discussion-service.js';
 import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
 import { replyToPosition } from '../src/services/position-reply-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -39,17 +39,8 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async (name: string) => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `disc${name}${suffix}`,
-    displayName: `Discussion ${name}`,
-    email: `discussion-${name}-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    emailVerifiedAt: new Date(),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = (name: string) =>
+  insertTestUser({ prefix: `disc${name}`, displayName: `Discussion ${name}`, emailVerified: true });
 
 const createPage = (dal: Dal, slug: string, userId: string) =>
   createWikiPage(
@@ -60,31 +51,6 @@ const createPage = (dal: Dal, slug: string, userId: string) =>
 
 const startThread = (slug: string, title: string, userId: string, category = 'articles') =>
   createForumThread({ category, pageSlug: slug, title, body: `${title}, opening comment.`, language: 'en' }, userId);
-
-const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
-  const threads = `SELECT id FROM forum_threads WHERE page_slug LIKE $1`;
-  await dal.query(`DELETE FROM notification_jobs WHERE payload->>'threadId' IN (SELECT id::text FROM forum_threads WHERE page_slug LIKE $1)`, [`${prefix}%`]);
-  await dal.query(`DELETE FROM forum_thread_subscriptions WHERE thread_id IN (${threads})`, [`${prefix}%`]);
-  await dal.query(`DELETE FROM forum_comments WHERE thread_id IN (${threads})`, [`${prefix}%`]);
-  await dal.query('DELETE FROM forum_threads WHERE page_slug LIKE $1', [`${prefix}%`]);
-  await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1', [`${prefix}%`]);
-  await dal.query('DELETE FROM page_subscriptions WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
-  await dal.query('DELETE FROM page_signoffs WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
-  await dal.query('DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [`${prefix}%`]);
-  await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-  await dal.query('DELETE FROM post_aliases WHERE slug LIKE $1', [`${prefix}%`]);
-  await dal.query('DELETE FROM posts WHERE slug LIKE $1', [`${prefix}%`]);
-  // Threads in a forum section have no page; their titles carry the prefix.
-  const sectionThreads = `SELECT id FROM forum_threads WHERE title->>'en' LIKE $1`;
-  await dal.query(`DELETE FROM forum_thread_subscriptions WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
-  await dal.query(`DELETE FROM forum_comments WHERE thread_id IN (${sectionThreads})`, [`${prefix}%`]);
-  await dal.query(`DELETE FROM forum_threads WHERE title->>'en' LIKE $1`, [`${prefix}%`]);
-  for (const userId of userIds) {
-    await dal.query('DELETE FROM notification_jobs WHERE payload->>\'actorUserId\' = $1', [userId]);
-    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
 
 const startServer = async () => {
   const app = express();
@@ -126,105 +92,91 @@ const startServer = async () => {
 test('Replies go one level deep: answering a reply joins the list under its comment', async () => {
   const dal = await getDal();
   const prefix = `disc-depth-${Date.now()}`;
-  const userIds: string[] = [];
-  try {
-    const author = await createTestUser('depth');
-    userIds.push(author.id);
-    await createPage(dal, prefix, author.id);
-    const thread = await startThread(prefix, 'Depth', author.id);
-    const reply = await createForumComment(
-      { threadId: thread.id, parentId: thread.firstCommentId, body: 'A reply.', language: 'en' },
-      author.id
-    );
-    assert.equal(reply.parentId, thread.firstCommentId);
+  const author = await createTestUser('depth');
+  await createPage(dal, prefix, author.id);
+  const thread = await startThread(prefix, 'Depth', author.id);
+  const reply = await createForumComment(
+    { threadId: thread.id, parentId: thread.firstCommentId, body: 'A reply.', language: 'en' },
+    author.id
+  );
+  assert.equal(reply.parentId, thread.firstCommentId);
 
-    const answer = await createForumComment(
-      { threadId: thread.id, parentId: reply.id, body: 'An answer to the reply.', language: 'en' },
-      author.id
-    );
-    assert.equal(answer.parentId, thread.firstCommentId, 'joins the list under the top-level comment');
+  const answer = await createForumComment(
+    { threadId: thread.id, parentId: reply.id, body: 'An answer to the reply.', language: 'en' },
+    author.id
+  );
+  assert.equal(answer.parentId, thread.firstCommentId, 'joins the list under the top-level comment');
 
-    const other = await startThread(prefix, 'Other', author.id);
-    await assert.rejects(
-      createForumComment({ threadId: thread.id, parentId: other.firstCommentId, body: 'Wrong thread.', language: 'en' }, author.id),
-      ValidationError
-    );
+  const other = await startThread(prefix, 'Other', author.id);
+  await assert.rejects(
+    createForumComment({ threadId: thread.id, parentId: other.firstCommentId, body: 'Wrong thread.', language: 'en' }, author.id),
+    ValidationError
+  );
 
-    // The database refuses a second level even when the service is bypassed.
-    await assert.rejects(
-      dal.query('UPDATE forum_comments SET parent_id = $1 WHERE id = $2', [reply.id, answer.id]),
-      (error: { code?: string }) => error.code === '23514'
-    );
-    await assert.rejects(
-      dal.query('UPDATE forum_comments SET parent_id = $1 WHERE id = $2', [other.firstCommentId, answer.id]),
-      (error: { code?: string }) => error.code === '23514'
-    );
+  // The database refuses a second level even when the service is bypassed.
+  await assert.rejects(
+    dal.query('UPDATE forum_comments SET parent_id = $1 WHERE id = $2', [reply.id, answer.id]),
+    (error: { code?: string }) => error.code === '23514'
+  );
+  await assert.rejects(
+    dal.query('UPDATE forum_comments SET parent_id = $1 WHERE id = $2', [other.firstCommentId, answer.id]),
+    (error: { code?: string }) => error.code === '23514'
+  );
 
-    const discussion = await readDiscussion(dal, { pageSlugs: [prefix] });
-    const shown = discussion.threads.find(item => item.id === thread.id);
-    assert.ok(shown);
-    assert.equal(shown.comments.length, 1);
-    assert.deepEqual(
-      shown.comments[0].replies.map(item => item.id),
-      [reply.id, answer.id]
-    );
-  } finally {
-    await cleanup(dal, prefix, userIds);
-  }
+  const discussion = await readDiscussion(dal, { pageSlugs: [prefix] });
+  const shown = discussion.threads.find(item => item.id === thread.id);
+  assert.ok(shown);
+  assert.equal(shown.comments.length, 1);
+  assert.deepEqual(
+    shown.comments[0].replies.map(item => item.id),
+    [reply.id, answer.id]
+  );
 });
 
 test('A discussion lists threads by latest activity, pinned first, paged, with renamed addresses', async () => {
   const dal = await getDal();
   const prefix = `disc-order-${Date.now()}`;
-  const userIds: string[] = [];
-  try {
-    const author = await createTestUser('order');
-    const moderator = await createTestUser('moderator');
-    userIds.push(author.id, moderator.id);
-    await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
-    const page = await createPage(dal, prefix, author.id);
-    const oldest = await startThread(prefix, 'Oldest', author.id);
-    const middle = await startThread(prefix, 'Middle', author.id);
-    const newest = await startThread(prefix, 'Newest', author.id);
-    await createForumComment({ threadId: oldest.id, body: 'Revived.', language: 'en' }, author.id);
-    // A thread stored under an older address of the page still belongs to it.
-    await PageAlias.create({ pageId: page.id, slug: `${prefix}-old`, createdBy: author.id });
-    await dal.query('UPDATE forum_threads SET page_slug = $1 WHERE id = $2', [`${prefix}-old`, middle.id]);
-    await setForumThreadPinned(dal, { threadId: middle.id, pinned: true, revSummary: { en: 'Pin.' } }, moderator.id);
+  const author = await createTestUser('order');
+  const moderator = await createTestUser('moderator');
+  await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
+  const page = await createPage(dal, prefix, author.id);
+  const oldest = await startThread(prefix, 'Oldest', author.id);
+  const middle = await startThread(prefix, 'Middle', author.id);
+  const newest = await startThread(prefix, 'Newest', author.id);
+  await createForumComment({ threadId: oldest.id, body: 'Revived.', language: 'en' }, author.id);
+  // A thread stored under an older address of the page still belongs to it.
+  await PageAlias.create({ pageId: page.id, slug: `${prefix}-old`, createdBy: author.id });
+  await dal.query('UPDATE forum_threads SET page_slug = $1 WHERE id = $2', [`${prefix}-old`, middle.id]);
+  await setForumThreadPinned(dal, { threadId: middle.id, pinned: true, revSummary: { en: 'Pin.' } }, moderator.id);
 
-    const all = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] });
-    assert.deepEqual(
-      all.threads.map(thread => thread.id),
-      [middle.id, oldest.id, newest.id]
-    );
-    assert.equal(all.threadCount, 3);
-    assert.equal(all.commentCount, 4);
+  const all = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] });
+  assert.deepEqual(
+    all.threads.map(thread => thread.id),
+    [middle.id, oldest.id, newest.id]
+  );
+  assert.equal(all.threadCount, 3);
+  assert.equal(all.commentCount, 4);
 
-    const second = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { page: 2, pageSize: 2 });
-    assert.deepEqual(second.threads.map(thread => thread.id), [newest.id]);
-    assert.equal(second.pageCount, 2);
-    const snapshot = all.threadIds;
-    await createForumComment({ threadId: newest.id, body: 'Moves in live order.', language: 'en' }, author.id);
-    const batch = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadIds: snapshot.slice(1), pageSize: 2 });
-    assert.deepEqual(batch.threads.map(thread => thread.id), snapshot.slice(1));
-    const scoped = await readDiscussion(dal, { pageSlugs: [`${prefix}-missing`] }, { threadIds: snapshot });
-    assert.equal(scoped.threads.length, 0);
+  const second = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { page: 2, pageSize: 2 });
+  assert.deepEqual(second.threads.map(thread => thread.id), [newest.id]);
+  assert.equal(second.pageCount, 2);
+  const snapshot = all.threadIds;
+  await createForumComment({ threadId: newest.id, body: 'Moves in live order.', language: 'en' }, author.id);
+  const batch = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadIds: snapshot.slice(1), pageSize: 2 });
+  assert.deepEqual(batch.threads.map(thread => thread.id), snapshot.slice(1));
+  const scoped = await readDiscussion(dal, { pageSlugs: [`${prefix}-missing`] }, { threadIds: snapshot });
+  assert.equal(scoped.threads.length, 0);
 
-    const located = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadId: oldest.id, pageSize: 2 });
-    assert.equal(located.page, 2);
-  } finally {
-    await cleanup(dal, prefix, userIds);
-  }
+  const located = await readDiscussion(dal, { pageSlugs: [prefix, `${prefix}-old`] }, { threadId: oldest.id, pageSize: 2 });
+  assert.equal(located.page, 2);
 });
 
 test('The discussion page shows titled threads with permanent links, and old addresses redirect', async () => {
   const dal = await getDal();
   const prefix = `disc-route-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('route');
-    userIds.push(author.id);
     await createPage(dal, prefix, author.id);
     const thread = await startThread(prefix, 'Plain heading', author.id);
     const reply = await createForumComment(
@@ -260,7 +212,6 @@ test('The discussion page shows titled threads with permanent links, and old add
     assert.ok(!withForm.bodyHtml.includes(`id="reply-form-${thread.firstCommentId}"`), 'signed-out readers get no form');
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
@@ -268,11 +219,9 @@ for (const kind of ['page', 'section', 'post'] as const) {
   test(`A long ${kind} discussion supports navigation, permalinks and batches`, async () => {
     const dal = await getDal();
     const prefix = `disc-pages-${Date.now()}`;
-    const userIds: string[] = [];
     const server = await startServer();
     try {
       const author = await createTestUser('pages');
-      userIds.push(author.id);
       const path = kind === 'page' ? `/${prefix}/discussion`
         : kind === 'post' ? `/blog/${prefix}/discussion` : '/tool/forum/technology';
       if (kind === 'page') await createPage(dal, prefix, author.id);
@@ -328,7 +277,6 @@ for (const kind of ['page', 'section', 'post'] as const) {
 
     } finally {
       await server.close();
-      await cleanup(dal, prefix, userIds);
     }
   });
 }
@@ -336,11 +284,9 @@ for (const kind of ['page', 'section', 'post'] as const) {
 test('Deleting a page preserves its discussion, replies, aliases and thread links', async () => {
   const dal = await getDal();
   const prefix = `disc-deleted-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('deleted');
-    userIds.push(author.id);
     await grantRoleUpsert(dal, author.id, WIKI_ADMIN_ROLE);
     const page = await createPage(dal, prefix, author.id);
     const thread = await startThread(prefix, 'Preserved conversation', author.id);
@@ -373,63 +319,53 @@ test('Deleting a page preserves its discussion, replies, aliases and thread link
     assert.equal(post.status, 403);
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
 test('An article and discussion comments keep citation targets and backlinks within their own content', async () => {
   const dal = await getDal();
   const prefix = `disc-citations-${Date.now()}`;
-  const userIds: string[] = [];
   const reference = { id: prefix, type: 'webpage', title: 'Shared source', URL: 'https://example.com/source' };
-  try {
-    const author = await createTestUser('citations');
-    userIds.push(author.id);
-    await createCitation(dal, { key: prefix, data: reference }, author.id);
-    const comments = ['first', 'second'].map(id => ({
-      id,
-      authorId: null,
-      canonicalLanguage: 'en',
-      body: { en: `Source [@${prefix}], repeated [@${prefix}]. Claim [@${prefix}:fact], repeated [@${prefix}:fact].` },
-    }));
-    const article = await renderMarkdown(`Article [@${prefix}].`, [reference]);
-    const { bodies } = await loadDiscussionRenderData(dal, comments, { backToCitationLabel: 'Back to citation', locale: 'en' });
-    const fragments = [article.html, ...bodies.values()];
-    const ids = [...fragments.join('').matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
-    assert.equal(new Set(ids).size, ids.length, `all embedded citation anchors must be unique: ${ids.filter((id, index) => ids.indexOf(id) !== index).join(', ')}`);
-    assert.match(article.html, /id="ref-1"/);
-    assert.match(article.html, /href="#ref-1"/);
+  const author = await createTestUser('citations');
+  await createCitation(dal, { key: prefix, data: reference }, author.id);
+  const comments = ['first', 'second'].map(id => ({
+    id,
+    authorId: null,
+    canonicalLanguage: 'en',
+    body: { en: `Source [@${prefix}], repeated [@${prefix}]. Claim [@${prefix}:fact], repeated [@${prefix}:fact].` },
+  }));
+  const article = await renderMarkdown(`Article [@${prefix}].`, [reference]);
+  const { bodies } = await loadDiscussionRenderData(dal, comments, { backToCitationLabel: 'Back to citation', locale: 'en' });
+  const fragments = [article.html, ...bodies.values()];
+  const ids = [...fragments.join('').matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
+  assert.equal(new Set(ids).size, ids.length, `all embedded citation anchors must be unique: ${ids.filter((id, index) => ids.indexOf(id) !== index).join(', ')}`);
+  assert.match(article.html, /id="ref-1"/);
+  assert.match(article.html, /href="#ref-1"/);
 
-    for (const comment of comments) {
-      const html = bodies.get(comment.id);
-      assert.ok(html);
-      const commentPrefix = `comment-${comment.id}-`;
-      const localIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
-      const links = [...html.matchAll(/href="#([^"]+)"/g)].map(match => match[1]);
-      assert.ok(localIds.has(`${commentPrefix}ref-1`));
-      assert.ok(localIds.has(`${commentPrefix}ref-1-1`), 'claim-specific references are namespaced too');
-      assert.ok(localIds.has(`${commentPrefix}cite-ref-1-a`));
-      assert.ok(localIds.has(`${commentPrefix}cite-ref-1-d`), 'repeated citations keep distinct backlink targets');
-      for (const target of links) {
-        assert.ok(target.startsWith(commentPrefix), `unexpected citation target ${target}`);
-        assert.ok(localIds.has(target), `missing local citation target ${target}`);
-      }
-      assert.ok(html.includes(`href="/cite/${reference.id}#claim-fact"`), 'links to the citation entity retain their own fragments');
+  for (const comment of comments) {
+    const html = bodies.get(comment.id);
+    assert.ok(html);
+    const commentPrefix = `comment-${comment.id}-`;
+    const localIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]));
+    const links = [...html.matchAll(/href="#([^"]+)"/g)].map(match => match[1]);
+    assert.ok(localIds.has(`${commentPrefix}ref-1`));
+    assert.ok(localIds.has(`${commentPrefix}ref-1-1`), 'claim-specific references are namespaced too');
+    assert.ok(localIds.has(`${commentPrefix}cite-ref-1-a`));
+    assert.ok(localIds.has(`${commentPrefix}cite-ref-1-d`), 'repeated citations keep distinct backlink targets');
+    for (const target of links) {
+      assert.ok(target.startsWith(commentPrefix), `unexpected citation target ${target}`);
+      assert.ok(localIds.has(target), `missing local citation target ${target}`);
     }
-  } finally {
-    await dal.query('DELETE FROM citations WHERE key = $1', [prefix]);
-    await cleanup(dal, prefix, userIds);
+    assert.ok(html.includes(`href="/cite/${reference.id}#claim-fact"`), 'links to the citation entity retain their own fragments');
   }
 });
 
 test('Draft discussions retain draft labeling, article tabs and noindex after threads are added', async () => {
   const dal = await getDal();
   const prefix = `draft/disc-draft-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('draft');
-    userIds.push(author.id);
     await createPage(dal, prefix, author.id);
     const thread = await startThread(prefix, 'Draft discussion', author.id);
     const response = await fetch(`${server.url}/${prefix}/discussion`);
@@ -441,20 +377,17 @@ test('Draft discussions retain draft labeling, article tabs and noindex after th
     assert.equal(page.noindex, true);
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
 test('Replies to positions show under the position in the proposal discussion; old thread links redirect', async () => {
   const dal = await getDal();
   const prefix = `meta/proposals/disc-positions-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   const noJobs = { enqueueJob: async () => null };
   try {
     const author = await createTestUser('proposer');
     const replier = await createTestUser('replier');
-    userIds.push(author.id, replier.id);
     await createPage(dal, prefix, author.id);
     const position = await signOffPage(
       dal,
@@ -492,18 +425,15 @@ test('Replies to positions show under the position in the proposal discussion; o
     assert.ok(after.bodyHtml.includes(`id="comment-${reply.commentId}"`));
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
 test('General threads are sections of the General discussion, and their old links redirect', async () => {
   const dal = await getDal();
   const prefix = `disc-general-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('general');
-    userIds.push(author.id);
     const thread = await createForumThread(
       { category: 'general', title: `${prefix} topic`, body: 'Opening.', language: 'en' },
       author.id
@@ -521,19 +451,16 @@ test('General threads are sections of the General discussion, and their old link
     assert.match(section.canonicalUrl, /\/tool\/forum\/general$/);
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });
 
 test('Position conversations let readers unfollow and follow again, including withdrawn positions', async () => {
   const dal = await getDal();
   const prefix = `meta/proposals/disc-follow-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('followauthor');
     const participant = await createTestUser('followparticipant');
-    userIds.push(author.id, participant.id);
     await createPage(dal, prefix, author.id);
     const position = await signOffPage(dal, {
       slug: prefix, stance: 'support', comment: 'I support this.', commentLanguage: 'en',
@@ -575,8 +502,6 @@ test('Position conversations let readers unfollow and follow again, including wi
     await update(false);
   } finally {
     await server.close();
-    for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
-    await cleanup(dal, prefix, userIds);
   }
 });
 
@@ -584,12 +509,10 @@ for (const hasOrdinaryThread of [false, true]) {
   test(`Deleted proposals retain position replies ${hasOrdinaryThread ? 'with' : 'without'} ordinary threads`, async () => {
     const dal = await getDal();
     const prefix = `meta/proposals/disc-deleted-positions-${Date.now()}`;
-    const userIds: string[] = [];
     const server = await startServer();
     try {
       const author = await createTestUser('deletedposition');
       const participant = await createTestUser('deletedreply');
-      userIds.push(author.id, participant.id);
       await grantRoleUpsert(dal, author.id, WIKI_ADMIN_ROLE);
       const page = await createPage(dal, prefix, author.id);
       const position = await signOffPage(dal, {
@@ -632,8 +555,6 @@ for (const hasOrdinaryThread of [false, true]) {
       }
     } finally {
       await server.close();
-      for (const id of userIds) await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
-      await cleanup(dal, prefix, userIds);
     }
   });
 }
@@ -641,11 +562,9 @@ for (const hasOrdinaryThread of [false, true]) {
 test('A blog post has its own discussion, under the post and at its address plus /discussion', async () => {
   const dal = await getDal();
   const prefix = `disc-blog-${Date.now()}`;
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const author = await createTestUser('blogger');
-    userIds.push(author.id);
     await grantRoleUpsert(dal, author.id, BLOG_AUTHOR_ROLE);
     await createBlogPost(dal, { slug: prefix, title: { en: 'A post' }, body: { en: 'Text.' } }, author.id);
     // A wiki page with the same address must not collect the post's threads.
@@ -679,6 +598,5 @@ test('A blog post has its own discussion, under the post and at its address plus
     assert.deepEqual(item.title, { en: 'A post' });
   } finally {
     await server.close();
-    await cleanup(dal, prefix, userIds);
   }
 });

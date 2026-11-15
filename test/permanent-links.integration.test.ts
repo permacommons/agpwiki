@@ -1,5 +1,6 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -10,12 +11,13 @@ import hbs from 'hbs';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { listPageDiscussionSlugs } from '../src/services/discussion-service.js';
 import { findCurrentPageIdBySlug, resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { addWikiPageAlias, createWikiPage, deleteWikiPage, listWikiPageResources, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
+
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -31,16 +33,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `permalinktest${suffix}`,
-    displayName: 'Permalink Test',
-    email: `permalink-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'permalinktest', displayName: 'Permalink Test' });
 
 const startServer = async () => {
   const app = express();
@@ -68,23 +61,6 @@ const startServer = async () => {
   };
 };
 
-const cleanup = async (prefix: string, userId: string | null) => {
-  const dal = await getDal();
-  await dal.query(
-    'DELETE FROM admin_events WHERE target_id IN (SELECT id FROM pages WHERE slug LIKE $1)',
-    [`${prefix}%`]
-  );
-  await dal.query('DELETE FROM page_aliases WHERE slug LIKE $1 OR page_id IN (SELECT id FROM pages WHERE slug LIKE $1)', [
-    `${prefix}%`,
-  ]);
-  await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-  if (userId) {
-    await dal.query('DELETE FROM admin_events WHERE actor_user_id = $1', [userId]);
-    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
-
 type ToolHandler = (args: unknown) => Promise<{ isError?: boolean; structuredContent: unknown }>;
 
 const getToolHandlers = (server: object) =>
@@ -93,52 +69,44 @@ const getToolHandlers = (server: object) =>
 test('Resource and address lookups follow renames and ignore deleted pages', async t => {
   const dal = await getDal();
   const prefix = `test-read-projections-${randomUUID()}`;
-  let userId: string | null = null;
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
-    const page = await createWikiPage(dal, {
-      slug: `${prefix}-old`, title: { en: 'Projected resource title' }, body: { en: 'Page text.' },
-    }, user.id);
-    const slug = `${prefix}-new`;
-    await updateWikiPage(dal, { slug: page.slug, newSlug: slug, revSummary: { en: 'Rename.' } }, user.id);
-    const originalQuery = dal.query.bind(dal);
-    const columns: string[] = [];
-    const spy = t.mock.method(dal, 'query', async (...args: Parameters<typeof dal.query>) => {
-      const result = await originalQuery(...args);
-      columns.push(...result.fields.map(field => field.name));
-      return result;
-    });
-    const listing = await listWikiPageResources(dal);
-    spy.mock.restore();
-    assert.ok(columns.length > 0);
-    assert.ok(!columns.includes('body'));
-    assert.deepEqual(listing.pages.find(item => item.slug === slug), { slug, name: 'Projected resource title' });
-    assert.ok(!listing.pages.some(item => item.slug === page.slug));
-    assert.equal(await findCurrentPageIdBySlug(slug), page.id);
-    assert.equal(await findCurrentPageIdBySlug(page.slug), page.id);
-    assert.equal(await findCurrentPageIdBySlug(`${prefix}-missing`), null);
-    assert.equal(await resolvePageSlugOrId(page.id.toUpperCase()), slug);
-    assert.deepEqual(await listPageDiscussionSlugs(dal, { id: page.id, slug }), [slug, page.slug]);
-    await deleteWikiPage(dal, { slug, revSummary: { en: 'Delete.' } }, user.id);
-    assert.equal(await findCurrentPageIdBySlug(slug), null);
-    assert.equal(await findCurrentPageIdBySlug(page.slug), null);
-    assert.equal(await resolvePageSlugOrId(page.id), page.id);
-    assert.ok(!(await listWikiPageResources(dal)).pages.some(item => item.slug === slug));
-  } finally {
-    await cleanup(prefix, userId);
-  }
+  const user = await createTestUser();
+  await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+  const page = await createWikiPage(dal, {
+    slug: `${prefix}-old`, title: { en: 'Projected resource title' }, body: { en: 'Page text.' },
+  }, user.id);
+  const slug = `${prefix}-new`;
+  await updateWikiPage(dal, { slug: page.slug, newSlug: slug, revSummary: { en: 'Rename.' } }, user.id);
+  const originalQuery = dal.query.bind(dal);
+  const columns: string[] = [];
+  const spy = t.mock.method(dal, 'query', async (...args: Parameters<typeof dal.query>) => {
+    const result = await originalQuery(...args);
+    columns.push(...result.fields.map(field => field.name));
+    return result;
+  });
+  const listing = await listWikiPageResources(dal);
+  spy.mock.restore();
+  assert.ok(columns.length > 0);
+  assert.ok(!columns.includes('body'));
+  assert.deepEqual(listing.pages.find(item => item.slug === slug), { slug, name: 'Projected resource title' });
+  assert.ok(!listing.pages.some(item => item.slug === page.slug));
+  assert.equal(await findCurrentPageIdBySlug(slug), page.id);
+  assert.equal(await findCurrentPageIdBySlug(page.slug), page.id);
+  assert.equal(await findCurrentPageIdBySlug(`${prefix}-missing`), null);
+  assert.equal(await resolvePageSlugOrId(page.id.toUpperCase()), slug);
+  assert.deepEqual(await listPageDiscussionSlugs(dal, { id: page.id, slug }), [slug, page.slug]);
+  await deleteWikiPage(dal, { slug, revSummary: { en: 'Delete.' } }, user.id);
+  assert.equal(await findCurrentPageIdBySlug(slug), null);
+  assert.equal(await findCurrentPageIdBySlug(page.slug), null);
+  assert.equal(await resolvePageSlugOrId(page.id), page.id);
+  assert.ok(!(await listWikiPageResources(dal)).pages.some(item => item.slug === slug));
 });
 
 test('A permanent link leads to the page under its current address', async () => {
   const dal = await getDal();
   const prefix = `test-permalink-${randomUUID()}`;
-  let userId: string | null = null;
   const server = await startServer();
   try {
     const user = await createTestUser();
-    userId = user.id;
     const page = await createWikiPage(
       dal,
       { slug: `${prefix}-old`, title: { en: `${prefix} Old` }, body: { en: 'Text.' } },
@@ -185,18 +153,15 @@ test('A permanent link leads to the page under its current address', async () =>
     assert.equal(notAnId.status, 404);
   } finally {
     await server.close();
-    await cleanup(prefix, userId);
   }
 });
 
 test('A deleted page answers its permanent link like its old address', async () => {
   const dal = await getDal();
   const prefix = `test-permalink-deleted-${randomUUID()}`;
-  let userId: string | null = null;
   const server = await startServer();
   try {
     const user = await createTestUser();
-    userId = user.id;
     await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
     const page = await createWikiPage(
       dal,
@@ -212,46 +177,39 @@ test('A deleted page answers its permanent link like its old address', async () 
     assert.equal(await resolvePageSlugOrId(page.id), page.id);
   } finally {
     await server.close();
-    await cleanup(prefix, userId);
   }
 });
 
 test('MCP page tools accept a page ID in place of its slug', async () => {
   const dal = await getDal();
   const prefix = `test-permalink-mcp-${randomUUID()}`;
-  let userId: string | null = null;
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    const page = await createWikiPage(
-      dal,
-      { slug: `${prefix}-old`, title: { en: `${prefix} By ID` }, body: { en: 'Text.' } },
-      user.id
-    );
-    await updateWikiPage(
-      dal,
-      { slug: `${prefix}-old`, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
-      user.id
-    );
+  const user = await createTestUser();
+  const page = await createWikiPage(
+    dal,
+    { slug: `${prefix}-old`, title: { en: `${prefix} By ID` }, body: { en: 'Text.' } },
+    user.id
+  );
+  await updateWikiPage(
+    dal,
+    { slug: `${prefix}-old`, newSlug: `${prefix}-new`, revSummary: { en: 'Rename.' } },
+    user.id
+  );
 
-    assert.equal(await resolvePageSlugOrId(page.id), `${prefix}-new`);
-    assert.equal(await resolvePageSlugOrId(`${prefix}-old`), `${prefix}-old`);
+  assert.equal(await resolvePageSlugOrId(page.id), `${prefix}-new`);
+  assert.equal(await resolvePageSlugOrId(`${prefix}-old`), `${prefix}-old`);
 
-    const tools = getToolHandlers(createMcpServer().server);
-    const read = await tools.wiki_readPage.handler({ slug: page.id });
-    assert.equal(read.isError, undefined);
-    const readPayload = read.structuredContent as { id: string; slug: string };
-    assert.equal(readPayload.id, page.id);
-    assert.equal(readPayload.slug, `${prefix}-new`);
+  const tools = getToolHandlers(createMcpServer().server);
+  const read = await tools.wiki_readPage.handler({ slug: page.id });
+  assert.equal(read.isError, undefined);
+  const readPayload = read.structuredContent as { id: string; slug: string };
+  assert.equal(readPayload.id, page.id);
+  assert.equal(readPayload.slug, `${prefix}-new`);
 
-    const revisions = await tools.wiki_listRevisions.handler({ slug: page.id });
-    assert.equal((revisions.structuredContent as { pageId: string }).pageId, page.id);
+  const revisions = await tools.wiki_listRevisions.handler({ slug: page.id });
+  assert.equal((revisions.structuredContent as { pageId: string }).pageId, page.id);
 
-    const missing = await tools.wiki_readPage.handler({ slug: randomUUID() });
-    assert.equal(missing.isError, true);
-  } finally {
-    await cleanup(prefix, userId);
-  }
+  const missing = await tools.wiki_readPage.handler({ slug: randomUUID() });
+  assert.equal(missing.isError, true);
 });
 
 test('The Tools menu offers the permanent link on pages only, without showing the ID', () => {
