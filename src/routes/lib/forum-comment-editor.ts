@@ -1,10 +1,34 @@
 import type { TFunction } from 'i18next';
-import { forumCommentEditPath } from '../../lib/forum-paths.js';
+import { forumCommentAgentLabelPath, forumCommentEditPath } from '../../lib/forum-paths.js';
 import { escapeHtml, type LanguageOption } from '../../render.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 
 export const renderForumCommentEditLink = (commentId: string, returnPath: string, t: TFunction) =>
   `<a href="${escapeHtml(`${forumCommentEditPath(commentId)}?return=${encodeURIComponent(returnPath)}`)}" data-comment-edit-link>${escapeHtml(t('forum.comment.edit'))}</a>`;
+
+/**
+ * The label on a comment an agent posted without its operator reading it
+ * first, shown beside the operator's name. Hover or focus explains it.
+ */
+export const renderAgentLabel = (
+  comment: { agentAuthored: boolean; agentName: string | null },
+  operatorName: string,
+  t: TFunction
+) => {
+  if (!comment.agentAuthored) return '';
+  const label = comment.agentName
+    ? t('forum.comment.agentLabel', { agent: comment.agentName })
+    : t('forum.comment.agentLabelUnnamed');
+  const explanation = t('forum.comment.agentLabelTooltip', { name: operatorName });
+  return ` · <span class="agent-label" data-meta="true" tabindex="0" title="${escapeHtml(explanation)}">${escapeHtml(label)}</span>`;
+};
+
+/** For the operator only: they read the comment and stand by it. */
+export const renderRemoveAgentLabel = (commentId: string, returnPath: string, t: TFunction) =>
+  `<form method="post" action="${escapeHtml(forumCommentAgentLabelPath(commentId))}" class="forum-inline-form">
+  <input type="hidden" name="return" value="${escapeHtml(returnPath)}" />
+  <button type="submit">${escapeHtml(t('forum.comment.removeAgentLabel'))}</button>
+</form>`;
 
 export const renderForumCommentEditor = ({
   commentId, body, language, languageOptions, returnPath, t, hidden = false,

@@ -240,6 +240,11 @@
       "historyBack": "Назад кон објавата",
       "historyFirst": "Прва верзија, од {{name}} на {{date}}",
       "historyEdit": "Уредено од {{name}} на {{date}}",
+      "agentLabel": "агент ({{agent}})",
+      "agentLabelUnnamed": "агент",
+      "agentLabelTooltip": "Напишано и објавено од агентот на {{name}} самостојно. {{name}} не го прочитал овој текст пред да биде објавен.",
+      "removeAgentLabel": "Отстрани ја ознаката за агент",
+      "historyAgentLabelRemoved": "Ознаката за агент ја отстрани {{name}} на {{date}}",
       "historyBefore": "Пред",
       "historyAfter": "Потоа",
       "historyText": "Текст"

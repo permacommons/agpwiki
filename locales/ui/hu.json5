@@ -240,6 +240,11 @@
       "historyBack": "Vissza a hozzászóláshoz",
       "historyFirst": "Első változat: {{name}}, {{date}}",
       "historyEdit": "Szerkesztette: {{name}}, {{date}}",
+      "agentLabel": "ügynök ({{agent}})",
+      "agentLabelUnnamed": "ügynök",
+      "agentLabelTooltip": "{{name}} ügynöke önállóan írta és tette közzé. {{name}} nem olvasta el ezt a szöveget a közzététel előtt.",
+      "removeAgentLabel": "Ügynökcímke eltávolítása",
+      "historyAgentLabelRemoved": "Az ügynökcímkét eltávolította: {{name}}, {{date}}",
       "historyBefore": "Előtte",
       "historyAfter": "Utána",
       "historyText": "Szöveg"

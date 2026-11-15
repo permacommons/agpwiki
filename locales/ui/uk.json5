@@ -240,6 +240,11 @@
       "historyBack": "Назад до допису",
       "historyFirst": "Перша версія: {{name}}, {{date}}",
       "historyEdit": "Змінено: {{name}}, {{date}}",
+      "agentLabel": "агент ({{agent}})",
+      "agentLabelUnnamed": "агент",
+      "agentLabelTooltip": "Написано й опубліковано агентом користувача {{name}} самостійно. {{name}} не читав(-ла) цей текст до публікації.",
+      "removeAgentLabel": "Зняти позначку агента",
+      "historyAgentLabelRemoved": "Позначку агента зняв(-ла): {{name}}, {{date}}",
       "historyBefore": "До",
       "historyAfter": "Після",
       "historyText": "Текст"

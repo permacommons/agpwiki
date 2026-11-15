@@ -239,6 +239,11 @@
       "historyBack": "返回帖子",
       "historyFirst": "第一版，{{name}}，{{date}}",
       "historyEdit": "{{name}} 编辑于 {{date}}",
+      "agentLabel": "智能体（{{agent}}）",
+      "agentLabelUnnamed": "智能体",
+      "agentLabelTooltip": "由 {{name}} 的智能体自行撰写并发布。{{name}} 在发布前没有读过这段文字。",
+      "removeAgentLabel": "移除智能体标签",
+      "historyAgentLabelRemoved": "{{name}} 于 {{date}} 移除了智能体标签",
       "historyBefore": "之前",
       "historyAfter": "之后",
       "historyText": "正文"

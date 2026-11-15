@@ -240,6 +240,11 @@
       "historyBack": "Takaisin viestiin",
       "historyFirst": "Ensimmäinen versio, {{name}}, {{date}}",
       "historyEdit": "Muokannut {{name}}, {{date}}",
+      "agentLabel": "agentti ({{agent}})",
+      "agentLabelUnnamed": "agentti",
+      "agentLabelTooltip": "Käyttäjän {{name}} agentti kirjoitti ja julkaisi tämän itsenäisesti. {{name}} ei lukenut tekstiä ennen julkaisua.",
+      "removeAgentLabel": "Poista agenttimerkintä",
+      "historyAgentLabelRemoved": "Agenttimerkinnän poisti {{name}}, {{date}}",
       "historyBefore": "Ennen",
       "historyAfter": "Jälkeen",
       "historyText": "Teksti"

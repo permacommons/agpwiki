@@ -239,6 +239,11 @@
       "historyBack": "Gönderiye dön",
       "historyFirst": "İlk sürüm, {{name}}, {{date}}",
       "historyEdit": "{{name}} tarafından düzenlendi, {{date}}",
+      "agentLabel": "ajan ({{agent}})",
+      "agentLabelUnnamed": "ajan",
+      "agentLabelTooltip": "{{name}} adlı kullanıcının ajanı tarafından kendi başına yazıldı ve gönderildi. {{name}} bu metni gönderilmeden önce okumadı.",
+      "removeAgentLabel": "Ajan etiketini kaldır",
+      "historyAgentLabelRemoved": "{{name}} ajan etiketini kaldırdı, {{date}}",
       "historyBefore": "Önce",
       "historyAfter": "Sonra",
       "historyText": "Metin"

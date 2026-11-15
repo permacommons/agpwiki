@@ -4006,6 +4006,12 @@ a.mention:focus-visible {
   color: var(--ink);
   font-weight: 600;
 }
+/* A comment an agent posted without its operator reading it first. */
+.agent-label {
+  cursor: help;
+  text-decoration: underline dotted;
+  text-underline-offset: 0.15em;
+}
 .discussion-comment-body {
   margin-top: 0.15rem;
   overflow-wrap: anywhere;

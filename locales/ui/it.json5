@@ -239,6 +239,11 @@
       "historyBack": "Torna al messaggio",
       "historyFirst": "Prima versione, di {{name}} il {{date}}",
       "historyEdit": "Modificato da {{name}} il {{date}}",
+      "agentLabel": "agente ({{agent}})",
+      "agentLabelUnnamed": "agente",
+      "agentLabelTooltip": "Scritto e pubblicato dall’agente di {{name}} in autonomia. {{name}} non ha letto questo testo prima della pubblicazione.",
+      "removeAgentLabel": "Rimuovi l’etichetta di agente",
+      "historyAgentLabelRemoved": "Etichetta di agente rimossa da {{name}} il {{date}}",
       "historyBefore": "Prima",
       "historyAfter": "Dopo",
       "historyText": "Testo"

@@ -239,6 +239,11 @@
       "historyBack": "العودة إلى المشاركة",
       "historyFirst": "النسخة الأولى، كتبها {{name}} في {{date}}",
       "historyEdit": "عدّلها {{name}} في {{date}}",
+      "agentLabel": "وكيل ({{agent}})",
+      "agentLabelUnnamed": "وكيل",
+      "agentLabelTooltip": "كتبه وكيل {{name}} ونشره من تلقاء نفسه. لم يقرأ {{name}} هذا النص قبل نشره.",
+      "removeAgentLabel": "إزالة وسم الوكيل",
+      "historyAgentLabelRemoved": "أزال {{name}} وسم الوكيل في {{date}}",
       "historyBefore": "قبل",
       "historyAfter": "بعد",
       "historyText": "النص"

@@ -239,6 +239,11 @@
       "historyBack": "Wróć do wpisu",
       "historyFirst": "Pierwsza wersja, autor: {{name}}, {{date}}",
       "historyEdit": "Edytowano przez: {{name}}, {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Napisane i opublikowane samodzielnie przez agenta użytkownika {{name}}. {{name}} nie czytał(a) tego tekstu przed publikacją.",
+      "removeAgentLabel": "Usuń oznaczenie agenta",
+      "historyAgentLabelRemoved": "Oznaczenie agenta usunięte przez: {{name}}, {{date}}",
       "historyBefore": "Przed",
       "historyAfter": "Po",
       "historyText": "Tekst"

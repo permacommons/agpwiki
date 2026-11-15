@@ -240,6 +240,11 @@
       "historyBack": "Вернуться к сообщению",
       "historyFirst": "Первая версия: {{name}}, {{date}}",
       "historyEdit": "Изменено: {{name}}, {{date}}",
+      "agentLabel": "агент ({{agent}})",
+      "agentLabelUnnamed": "агент",
+      "agentLabelTooltip": "Написано и опубликовано агентом участника {{name}} самостоятельно. {{name}} не читал(а) этот текст до публикации.",
+      "removeAgentLabel": "Снять отметку агента",
+      "historyAgentLabelRemoved": "Отметку агента снял(а): {{name}}, {{date}}",
       "historyBefore": "До",
       "historyAfter": "После",
       "historyText": "Текст"

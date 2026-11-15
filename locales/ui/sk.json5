@@ -240,6 +240,11 @@
       "historyBack": "Späť na príspevok",
       "historyFirst": "Prvá verzia, autor: {{name}}, {{date}}",
       "historyEdit": "Upravil(a): {{name}}, {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Napísal a uverejnil agent používateľa {{name}} sám. {{name}} tento text pred uverejnením nečítal(a).",
+      "removeAgentLabel": "Odstrániť označenie agenta",
+      "historyAgentLabelRemoved": "Označenie agenta odstránil(a): {{name}}, {{date}}",
       "historyBefore": "Predtým",
       "historyAfter": "Potom",
       "historyText": "Text"

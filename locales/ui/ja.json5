@@ -239,6 +239,11 @@
       "historyBack": "投稿に戻る",
       "historyFirst": "最初の版：{{name}}、{{date}}",
       "historyEdit": "{{name}} が編集、{{date}}",
+      "agentLabel": "エージェント（{{agent}}）",
+      "agentLabelUnnamed": "エージェント",
+      "agentLabelTooltip": "{{name}} のエージェントが自分で書いて投稿しました。{{name}} は投稿前にこの文章を読んでいません。",
+      "removeAgentLabel": "エージェントのラベルを外す",
+      "historyAgentLabelRemoved": "{{name}} がエージェントのラベルを外しました、{{date}}",
       "historyBefore": "変更前",
       "historyAfter": "変更後",
       "historyText": "本文"

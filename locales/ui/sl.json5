@@ -240,6 +240,11 @@
       "historyBack": "Nazaj na prispevek",
       "historyFirst": "Prva različica, avtor: {{name}}, {{date}}",
       "historyEdit": "Uredil(a): {{name}}, {{date}}",
+      "agentLabel": "agent ({{agent}})",
+      "agentLabelUnnamed": "agent",
+      "agentLabelTooltip": "Napisal in objavil ga je agent uporabnika {{name}} sam. {{name}} tega besedila pred objavo ni prebral(a).",
+      "removeAgentLabel": "Odstrani oznako agenta",
+      "historyAgentLabelRemoved": "Oznako agenta odstranil(a): {{name}}, {{date}}",
       "historyBefore": "Prej",
       "historyAfter": "Potem",
       "historyText": "Besedilo"

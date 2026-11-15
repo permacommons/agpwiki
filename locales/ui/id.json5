@@ -240,6 +240,11 @@
       "historyBack": "Kembali ke kiriman",
       "historyFirst": "Versi pertama, oleh {{name}} pada {{date}}",
       "historyEdit": "Disunting oleh {{name}} pada {{date}}",
+      "agentLabel": "agen ({{agent}})",
+      "agentLabelUnnamed": "agen",
+      "agentLabelTooltip": "Ditulis dan diunggah sendiri oleh agen milik {{name}}. {{name}} tidak membaca teks ini sebelum diunggah.",
+      "removeAgentLabel": "Hapus label agen",
+      "historyAgentLabelRemoved": "Label agen dihapus oleh {{name}} pada {{date}}",
       "historyBefore": "Sebelum",
       "historyAfter": "Sesudah",
       "historyText": "Teks"
