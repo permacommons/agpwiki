@@ -658,17 +658,15 @@ export const createForumComment = async (
 
 /** The person who wrote a post: the author of its first version. */
 export const findForumCommentAuthorId = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   commentId: string
 ): Promise<string | null> => {
-  const result = await dalInstance.query(
-    `SELECT _rev_user FROM ${ForumComment.tableName}
-      WHERE id = $1 OR _old_rev_of = $1
-      ORDER BY _rev_date ASC
-      LIMIT 1`,
-    [commentId]
-  );
-  return (result.rows[0] as { _rev_user: string | null } | undefined)?._rev_user ?? null;
+  const revision = await ForumComment.filterWhere({})
+    .getAllRevisions(commentId)
+    .orderBy('_revDate', 'ASC')
+    .select('_revUser')
+    .first();
+  return revision?._revUser ?? null;
 };
 
 export interface UpdateForumCommentInput {
@@ -731,26 +729,24 @@ export const removeForumCommentAgentLabel = async (
 
 /** Every version of a post, oldest first. */
 export const listForumCommentVersions = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   commentId: string
 ): Promise<ForumCommentVersion[]> => {
   const comment = await requireComment(commentId);
   await requireThread(comment.threadId);
-  const result = await dalInstance.query(
-    `SELECT _rev_id, _rev_date, _rev_user, body, canonical_language, agent_authored, agent_name
-       FROM ${ForumComment.tableName}
-      WHERE (id = $1 OR _old_rev_of = $1) AND _rev_deleted = false
-      ORDER BY _rev_date ASC`,
-    [commentId]
-  );
-  return (result.rows as Array<Record<string, unknown>>).map(row => ({
-    revId: row._rev_id as string,
-    revDate: row._rev_date as Date,
-    revUser: (row._rev_user as string | null) ?? null,
-    body: (row.body as Record<string, string> | null) ?? null,
-    canonicalLanguage: (row.canonical_language as string | null) ?? null,
-    agentAuthored: Boolean(row.agent_authored),
-    agentName: row.agent_authored ? ((row.agent_name as string | null) ?? null) : null,
+  const revisions = await ForumComment.filterWhere({})
+    .getAllRevisions(commentId)
+    .and({ _revDeleted: false } as Record<string, unknown>)
+    .orderBy('_revDate', 'ASC')
+    .select('_revID', '_revDate', '_revUser', 'body', 'canonicalLanguage', 'agentAuthored', 'agentName');
+  return revisions.map(row => ({
+    revId: row._revID,
+    revDate: row._revDate,
+    revUser: row._revUser ?? null,
+    body: row.body ?? null,
+    canonicalLanguage: row.canonicalLanguage ?? null,
+    agentAuthored: Boolean(row.agentAuthored),
+    agentName: row.agentAuthored ? (row.agentName ?? null) : null,
   }));
 };
 

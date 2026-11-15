@@ -13,6 +13,7 @@ import { renderPageSignoffs } from '../src/routes/lib/page-signoffs.js';
 import {
   createForumComment,
   createForumThread,
+  findForumCommentAuthorId,
   listForumCommentVersions,
   readForumComment,
   removeForumCommentAgentLabel,
@@ -184,6 +185,9 @@ test('Only the operator can remove the label; the history keeps the labelled ver
     assert.equal(after.agentAuthored, false);
     assert.equal(after.agentName, null);
     assert.equal(after.edited, false, 'Removing the label does not mark the text as edited');
+    assert.deepEqual(after.body, before.body);
+    assert.deepEqual(after.updatedAt, before.updatedAt);
+    assert.equal(await findForumCommentAuthorId(dal, thread.firstCommentId), operator.id);
     assert.deepEqual(
       (await listForumCommentVersions(dal, thread.firstCommentId)).map(version => version.agentAuthored),
       [true, false]
