@@ -7,7 +7,7 @@
 
 ## Tech stack
 
-- Node.js 22 + TypeScript (ESM)
+- Node.js 24 + TypeScript (ESM)
 - Express 5 server with Handlebars templates
 - PostgreSQL 16+ with a typed DAL and migrations
 - Markdown rendering via markdown-it with custom plugins

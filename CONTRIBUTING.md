@@ -4,7 +4,7 @@ Thanks for helping improve AGP Wiki.
 
 ## Quick start
 
-1. **Prerequisites:** Node.js 22.x, PostgreSQL 16+
+1. **Prerequisites:** Node.js 24.x, PostgreSQL 16+
 2. **Clone** the repository
 3. **Set up PostgreSQL** (see Database Setup below)
 4. **Install dependencies:** `npm install`
