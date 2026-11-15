@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
+import type { MediaStorage, StoredThumbnail } from '../src/lib/media-storage.js';
+import { getOrFetchThumbnail } from '../src/services/media-thumbnail-service.js';
 
 import express from 'express';
 
@@ -4867,6 +4869,120 @@ test('Service createMedia persists fetched Commons metadata as a first revision'
       const message = cleanupError instanceof Error ? cleanupError.message : String(cleanupError);
       console.warn(`Cleanup failed: ${message}`);
     }
+  }
+});
+
+const testThumbnailStorage = () => {
+  const cached = new Map<string, StoredThumbnail>();
+  const fetched: string[] = [];
+  const storage: MediaStorage = {
+    findStored: async (key, step) => cached.get(`${key}:${step}`) ?? null,
+    storeThumbnail: async (key, step, source) => {
+      fetched.push(source);
+      const entry: StoredThumbnail = { path: `${key}/${step}.jpg`, extension: 'jpg' };
+      cached.set(`${key}:${step}`, entry);
+      return entry;
+    },
+    deleteAllForSlug: async () => { throw new Error('Injected cleanup failure'); },
+    renameSlug: async () => { throw new Error('Cache directories must not be moved'); },
+  };
+  return { storage, cached, fetched };
+};
+
+test('Media cache cleanup failures preserve successful edits without serving stale thumbnails', async t => {
+  const { createMedia, updateMedia, refreshMedia, readMedia, deleteMedia } = await import(
+    '../src/services/media-service.js'
+  );
+  const dal = await getDal();
+  const slug = `test-media-cache-failure-${Date.now()}`;
+  const renamedSlug = `${slug}-renamed`;
+  const user = await createTestUser();
+  const cleanupLog = t.mock.method(console, 'error', () => {});
+  const { storage, cached, fetched } = testThumbnailStorage();
+  const commonsFetcher = async () => buildStubCommonsResponse();
+  try {
+    const created = await createMedia(dal, {
+      slug, commonsTitle: `File:${slug}.jpg`,
+    }, user.id, { commonsFetcher });
+    // Legacy slug-only cache entries must not bypass the current database state.
+    cached.set(`${slug}:250`, { path: 'legacy.jpg', extension: 'jpg' });
+    const originalThumbnail = await getOrFetchThumbnail(slug, 250, storage);
+    assert.notEqual(originalThumbnail.path, 'legacy.jpg');
+    assert.deepEqual(await getOrFetchThumbnail(slug, 250, storage), originalThumbnail);
+    assert.equal(fetched.length, 1);
+
+    const renamed = await updateMedia(dal, {
+      slug, newSlug: renamedSlug, expectedRevId: created.currentRevId,
+      revSummary: { en: 'Rename despite failed cache reclamation.' },
+    }, user.id, { storage });
+    assert.equal((await readMedia(dal, renamedSlug)).currentRevId, renamed.currentRevId);
+    await assert.rejects(() => getOrFetchThumbnail(slug, 250, storage), NotFoundError);
+    const renamedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
+    assert.notEqual(renamedThumbnail.path, originalThumbnail.path);
+
+    const refreshed = await refreshMedia(dal, {
+      slug: renamedSlug, expectedRevId: renamed.currentRevId,
+      revSummary: { en: 'Refresh despite failed cache reclamation.' },
+    }, user.id, { storage, commonsFetcher });
+    assert.equal((await readMedia(dal, renamedSlug)).currentRevId, refreshed.currentRevId);
+    const refreshedThumbnail = await getOrFetchThumbnail(renamedSlug, 250, storage);
+    assert.notEqual(refreshedThumbnail.path, renamedThumbnail.path);
+    assert.equal(fetched.length, 3);
+
+    await assert.rejects(() => refreshMedia(dal, {
+      slug: renamedSlug, expectedRevId: renamed.currentRevId,
+      revSummary: { en: 'Stale retry must not create another revision.' },
+    }, user.id, { storage, commonsFetcher }), /Revision mismatch/);
+    assert.equal(cleanupLog.mock.callCount(), 2);
+
+    await createMedia(dal, { slug, commonsTitle: `File:${slug}-replacement.jpg` }, user.id, { commonsFetcher });
+    assert.notEqual((await getOrFetchThumbnail(slug, 250, storage)).path, originalThumbnail.path);
+    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+    await deleteMedia(dal, {
+      slug: renamedSlug, revSummary: { en: 'Delete despite failed cache reclamation.' },
+    }, user.id, { storage });
+    await assert.rejects(() => getOrFetchThumbnail(renamedSlug, 250, storage), NotFoundError);
+    assert.equal(cleanupLog.mock.callCount(), 3);
+  } finally {
+    await cleanupTestArtifacts(dal, { mediaSlugPrefix: `${slug}%`, userId: user.id });
+  }
+});
+
+test('A thumbnail fetch finishing after refresh cannot populate the new revision cache', { timeout: 10000 }, async () => {
+  const { createMedia, refreshMedia } = await import('../src/services/media-service.js');
+  const dal = await getDal();
+  const slug = `test-media-cache-race-${Date.now()}`;
+  const user = await createTestUser();
+  const { storage, fetched } = testThumbnailStorage();
+  const commonsFetcher = async () => buildStubCommonsResponse();
+  let releaseFetch: () => void;
+  const gate = new Promise<void>(resolve => { releaseFetch = resolve; });
+  let markStarted: () => void;
+  const started = new Promise<void>(resolve => { markStarted = resolve; });
+  const store = storage.storeThumbnail;
+  let calls = 0;
+  storage.storeThumbnail = async (...args) => {
+    if (++calls === 1) { markStarted(); await gate; }
+    return store(...args);
+  };
+  storage.deleteAllForSlug = async () => {};
+  let oldFetch: Promise<StoredThumbnail> | undefined;
+  try {
+    await createMedia(dal, { slug, commonsTitle: `File:${slug}.jpg` }, user.id, { commonsFetcher });
+    oldFetch = getOrFetchThumbnail(slug, 250, storage);
+    await started;
+    await refreshMedia(dal, { slug, revSummary: { en: 'Refresh during fetch.' } }, user.id,
+      { commonsFetcher, storage });
+    const freshThumbnail = await getOrFetchThumbnail(slug, 250, storage);
+    releaseFetch();
+    const oldThumbnail = await oldFetch;
+    assert.notEqual(oldThumbnail.path, freshThumbnail.path);
+    assert.deepEqual(await getOrFetchThumbnail(slug, 250, storage), freshThumbnail);
+    assert.equal(fetched.length, 2);
+  } finally {
+    releaseFetch();
+    await oldFetch;
+    await cleanupTestArtifacts(dal, { mediaSlugPrefix: `${slug}%`, userId: user.id });
   }
 });
 
