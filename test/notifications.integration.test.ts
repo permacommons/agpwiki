@@ -557,20 +557,17 @@ test('Forum notification retry skips recipients already marked sent', async () =
     const job = await findQueuedForumReplyJobByThreadId(thread.id);
     assert.ok(job);
 
+    // Recipients come in no particular order, so the second attempt fails, whoever it is for.
     const firstPassSent: string[] = [];
-    let firstFailure = false;
     await assert.rejects(async () => {
       await processForumReplyCreatedNotification(dal, job, async message => {
         firstPassSent.push(message.to);
-        if (message.to === secondRecipient.email && !firstFailure) {
-          firstFailure = true;
-          throw new Error('Simulated provider failure');
-        }
+        if (firstPassSent.length === 2) throw new Error('Simulated provider failure');
         return { delivered: true as const, skipped: false as const };
       });
     });
 
-    assert.deepEqual(firstPassSent, [firstRecipient.email, secondRecipient.email]);
+    assert.deepEqual([...firstPassSent].sort(), [firstRecipient.email, secondRecipient.email].sort());
 
     const secondPassSent: string[] = [];
     await processForumReplyCreatedNotification(dal, job, async message => {
@@ -578,7 +575,7 @@ test('Forum notification retry skips recipients already marked sent', async () =
       return { delivered: true as const, skipped: false as const };
     });
 
-    assert.deepEqual(secondPassSent, [secondRecipient.email]);
+    assert.deepEqual(secondPassSent, [firstPassSent[1]]);
   } finally {
     await cleanupNotificationScenario(dal, forumThreadPrefix, [
       actorIdForCleanup,

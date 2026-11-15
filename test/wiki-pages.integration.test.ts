@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import test from 'node:test';
+import type { PoolClient } from 'pg';
 import express from 'express';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
@@ -212,30 +213,39 @@ test('Service issue lists follow the same rules as the notices on articles', asy
     const ours = (list: { articles: Array<{ slug: string }> }) =>
       list.articles.map(article => article.slug).filter(slug => slug.startsWith(prefix)).sort();
 
-    const notChecked = await listArticlesWithIssues(dal, { kind: 'unchecked', limit: 500 });
-    assert.deepEqual(ours(notChecked), [unchecked.slug]);
+    // Other test files add pages meanwhile; one snapshot keeps the counts and lists comparable.
+    const client = (await dal.getConnection()) as PoolClient;
+    try {
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
+      const snapshot = { query: (sql: string, params?: unknown[]) => client.query(sql, params) } as unknown as typeof dal;
+      const notChecked = await listArticlesWithIssues(snapshot, { kind: 'unchecked', limit: 500 });
+      assert.deepEqual(ours(notChecked), [unchecked.slug]);
 
-    const issues = await listArticlesWithIssues(dal, { kind: 'check-issues', limit: 500 });
-    assert.deepEqual(ours(issues), [flagged.slug]);
-    const flaggedEntry = issues.articles.find(article => article.slug === flagged.slug);
-    assert.deepEqual(
-      flaggedEntry?.checks?.map(item => [item.type, item.unresolved]),
-      [['fact_check', 2]]
-    );
-    const onlyCopyEdits = await listArticlesWithIssues(dal, { kind: 'check-issues', checkType: 'copy_edit', limit: 500 });
-    assert.deepEqual(ours(onlyCopyEdits), []);
+      const issues = await listArticlesWithIssues(snapshot, { kind: 'check-issues', limit: 500 });
+      assert.deepEqual(ours(issues), [flagged.slug]);
+      const flaggedEntry = issues.articles.find(article => article.slug === flagged.slug);
+      assert.deepEqual(
+        flaggedEntry?.checks?.map(item => [item.type, item.unresolved]),
+        [['fact_check', 2]]
+      );
+      const onlyCopyEdits = await listArticlesWithIssues(snapshot, { kind: 'check-issues', checkType: 'copy_edit', limit: 500 });
+      assert.deepEqual(ours(onlyCopyEdits), []);
 
-    const noWikidata = await listArticlesWithIssues(dal, { kind: 'no-wikidata', limit: 500 });
-    assert.deepEqual(ours(noWikidata), [unchecked.slug]);
+      const noWikidata = await listArticlesWithIssues(snapshot, { kind: 'no-wikidata', limit: 500 });
+      assert.deepEqual(ours(noWikidata), [unchecked.slug]);
 
-    const counts = await countArticlesWithIssues(dal);
-    assert.equal(counts.unchecked, notChecked.total);
-    assert.equal(counts['check-issues'], issues.total);
-    assert.equal(counts['no-wikidata'], noWikidata.total);
+      const counts = await countArticlesWithIssues(snapshot);
+      assert.equal(counts.unchecked, notChecked.total);
+      assert.equal(counts['check-issues'], issues.total);
+      assert.equal(counts['no-wikidata'], noWikidata.total);
 
-    const paged = await listArticlesWithIssues(dal, { kind: 'no-wikidata', limit: 1, offset: 0 });
-    assert.equal(paged.articles.length, 1);
-    assert.equal(paged.total, noWikidata.total);
+      const paged = await listArticlesWithIssues(snapshot, { kind: 'no-wikidata', limit: 1, offset: 0 });
+      assert.equal(paged.articles.length, 1);
+      assert.equal(paged.total, noWikidata.total);
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
   } finally {
     await dal.query(
       'DELETE FROM page_checks WHERE page_id IN (SELECT id FROM pages WHERE slug LIKE $1)',

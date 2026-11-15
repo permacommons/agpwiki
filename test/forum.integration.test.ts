@@ -105,7 +105,7 @@ test('Forum moderator can pin and delete thread and comments', async () => {
 
     const older = await createForumThread(
       {
-        category: 'technology',
+        category: 'general',
         title: `${baseTitle}-older`,
         body: 'Older thread.',
         language: 'en',
@@ -114,7 +114,7 @@ test('Forum moderator can pin and delete thread and comments', async () => {
     );
     const newer = await createForumThread(
       {
-        category: 'technology',
+        category: 'general',
         title: `${baseTitle}-newer`,
         body: 'Newer thread.',
         language: 'en',
@@ -140,7 +140,7 @@ test('Forum moderator can pin and delete thread and comments', async () => {
       moderator.id
     );
 
-    const threadList = await listForumThreads(dal, 'technology');
+    const threadList = await listForumThreads(dal, 'general');
     assert.equal(threadList[0]?.id, older.id);
 
     await deleteForumComment(
@@ -195,7 +195,7 @@ test('Forum thread pin and reply revisions leave previous revisions intact', asy
     await grantRoleUpsert(dal, moderator.id, FORUM_MODERATOR_ROLE);
 
     const thread = await createForumThread(
-      { category: 'technology', title: baseTitle, body: 'Opening post.', language: 'en' },
+      { category: 'general', title: baseTitle, body: 'Opening post.', language: 'en' },
       author.id
     );
     const created = await ForumThread.getById(thread.id);
