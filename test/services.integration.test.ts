@@ -1081,6 +1081,80 @@ test('User rights update changes only roles below site admin', async () => {
   }
 });
 
+test('User rights update rolls back deletion when insertion fails', async t => {
+  const dal = await getDal();
+  const user = await createVerifiedTestUser();
+  const originalQuery = dal.query.bind(dal);
+  try {
+    await grantRoleUpsert(dal, user.id, SITE_ADMIN_ROLE);
+    await grantRoleUpsert(dal, user.id, WIKI_ADMIN_ROLE);
+    const failure = new Error('Injected role insertion failure');
+    const queryMock = t.mock.method(dal, 'query', async (...args: Parameters<typeof dal.query>) => {
+      if (args[0].startsWith('INSERT INTO user_roles') && args[1]?.[0] === user.id) {
+        throw failure;
+      }
+      return originalQuery(...args);
+    });
+    await assert.rejects(updateUserRightsBelowSiteAdmin(dal, user.id, [BLOG_AUTHOR_ROLE]), failure);
+    queryMock.mock.restore();
+    const rows = await dal.query('SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role', [user.id]);
+    assert.deepEqual(rows.rows.map(row => row.role), [SITE_ADMIN_ROLE, WIKI_ADMIN_ROLE].sort());
+  } finally {
+    t.mock.restoreAll();
+    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [user.id]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
+  }
+});
+
+test('Concurrent user rights replacements report serialized before and after states', async t => {
+  const dal = await getDal();
+  const user = await createVerifiedTestUser();
+  const originalQuery = dal.query.bind(dal);
+  const deleted = Promise.withResolvers<void>();
+  const releaseFirst = Promise.withResolvers<void>();
+  const secondLock = Promise.withResolvers<void>();
+  let lockCount = 0;
+  const updates: Promise<unknown>[] = [];
+  try {
+    await grantRoleUpsert(dal, user.id, SITE_ADMIN_ROLE);
+    t.mock.method(dal, 'query', async (...args: Parameters<typeof dal.query>) => {
+      if (args[1]?.[0] !== user.id) return originalQuery(...args);
+      if (args[0].includes('FOR UPDATE') && ++lockCount === 2) secondLock.resolve();
+      const result = await originalQuery(...args);
+      if (args[0].startsWith('DELETE FROM user_roles') && lockCount === 1) {
+        deleted.resolve();
+        await releaseFirst.promise;
+      }
+      return result;
+    });
+    const first = updateUserRightsBelowSiteAdmin(dal, user.id, [WIKI_ADMIN_ROLE]);
+    updates.push(first);
+    await Promise.race([deleted.promise, first.then(() => assert.fail('Expected role deletion'))]);
+    const second = updateUserRightsBelowSiteAdmin(dal, user.id, [BLOG_AUTHOR_ROLE]);
+    updates.push(second);
+    await Promise.race([secondLock.promise, second.then(() => assert.fail('Expected user lock'))]);
+    releaseFirst.resolve();
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    assert.deepEqual(firstResult.beforeRoles, [SITE_ADMIN_ROLE]);
+    assert.deepEqual(firstResult.afterRoles, [SITE_ADMIN_ROLE, WIKI_ADMIN_ROLE]);
+    assert.deepEqual(secondResult.beforeRoles, firstResult.afterRoles);
+    assert.deepEqual(secondResult.afterRoles, [SITE_ADMIN_ROLE, BLOG_AUTHOR_ROLE]);
+    assert.deepEqual(secondResult.user.roles, secondResult.afterRoles);
+    assert.deepEqual(secondResult.changes, [
+      { role: WIKI_ADMIN_ROLE, before: true, after: false },
+      { role: BLOG_AUTHOR_ROLE, before: false, after: true },
+    ]);
+    const rows = await dal.query('SELECT role FROM user_roles WHERE user_id = $1 ORDER BY role', [user.id]);
+    assert.deepEqual(rows.rows.map(row => row.role), [SITE_ADMIN_ROLE, BLOG_AUTHOR_ROLE].sort());
+  } finally {
+    releaseFirst.resolve();
+    await Promise.allSettled(updates);
+    t.mock.restoreAll();
+    await dal.query('DELETE FROM user_roles WHERE user_id = $1', [user.id]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
+  }
+});
+
 test('User rights update rejects site admin and unknown rights', async () => {
   const dal = await getDal();
   let userId: string | null = null;
