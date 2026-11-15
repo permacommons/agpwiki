@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { NotFoundError, ValidationError } from '../src/lib/errors.js';

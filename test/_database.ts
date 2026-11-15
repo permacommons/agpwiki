@@ -16,6 +16,29 @@ export const TEMPLATE_LOCK_ID = 4_231_742;
 // with single-key ones such as TEMPLATE_LOCK_ID.
 const OWNER_LOCK_CLASS = 4_231_743;
 
+// Name of a database that is never created: test files that don't import
+// test/_use-database.ts get it, so connecting from them fails.
+export const NO_DATABASE = `${FILE_DATABASE_PREFIX}none_requested`;
+
+/**
+ * Point this process's config at `database`, keeping any other NODE_CONFIG
+ * overrides (credentials, port). Must run before `config` is first loaded.
+ */
+export const setDatabaseOverride = (database: string) => {
+  let overrides: { postgres?: Record<string, unknown> } & Record<string, unknown> = {};
+  if (process.env.NODE_CONFIG) {
+    try {
+      overrides = JSON.parse(process.env.NODE_CONFIG);
+    } catch {
+      throw new Error('NODE_CONFIG must be valid JSON to run the tests.');
+    }
+  }
+  process.env.NODE_CONFIG = JSON.stringify({
+    ...overrides,
+    postgres: { ...overrides.postgres, database },
+  });
+};
+
 const quote = (name: string) => `"${name.replace(/"/g, '""')}"`;
 
 const createMaintenanceClient = (base: PostgresConfig) =>

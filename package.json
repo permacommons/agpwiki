@@ -25,7 +25,7 @@
     "list-roles": "node --import tsx src/scripts/list-roles.ts",
     "generate-altcha-key": "node --import tsx src/scripts/generate-altcha-key.ts",
     "test": "npm run -s test:file -- 'test/**/*.test.ts'",
-    "test:file": "NODE_ENV=test node --import tsx --import ./test/_per-file-database.ts --test-global-setup=./test/_global-database.ts --test",
+    "test:file": "NODE_ENV=test node --import tsx --test-global-setup=./test/_global-database.ts --test",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "biome check src locales util types",
     "lint:fix": "biome check src locales util types --fix"

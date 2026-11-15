@@ -47,14 +47,14 @@ Tests that use local PostgreSQL or bind ephemeral HTTP servers may need to run
 outside that sandbox. `npm run lint` and `npm run typecheck` should not need
 that exception.
 
-Tests that use PostgreSQL must be named `*.integration.test.ts`: only those
-files get a database, each its own, copied from a migrated template (see
-`test/_per-file-database.ts`). Data from other test files is never visible, so
-tests do not need to guard against parallel writers or clean up after
-themselves. Tests in the same file do share a database, and page creation
-refuses likely duplicates, so give fixture pages titles that are unique within
-the file. Run selected files with `npm run test:file -- <paths>`; plain
-`node --test` skips the database setup.
+A test file that uses PostgreSQL must start with `import './_use-database.js';`,
+before any other import: only those files get a database, each its own, copied
+from a migrated template (see `test/_use-database.ts`). Name such files
+`*.integration.test.ts`. Data from other test files is never visible, so tests
+do not need to guard against parallel writers or clean up after themselves.
+Tests in the same file do share a database, and page creation refuses likely
+duplicates, so give fixture pages titles that are unique within the file. Run
+selected files with `npm run test:file -- <paths>`.
 
 ## Wiki content formatting
 

@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import test, { type TestContext } from 'node:test';

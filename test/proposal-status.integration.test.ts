@@ -1,3 +1,4 @@
+import './_use-database.js';
 import './_setup-i18n.js';
 import assert from 'node:assert/strict';
 import { randomBytes, randomUUID } from 'node:crypto';

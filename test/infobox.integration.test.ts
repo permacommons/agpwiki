@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import { randomInt } from 'node:crypto';
 import http from 'node:http';

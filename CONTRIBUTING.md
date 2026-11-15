@@ -138,15 +138,25 @@ process's output; set `SMOKE_VERBOSE=1` to print it on success too.
 
 ### Test databases
 
-`npm test` gives each integration test file (`*.integration.test.ts`) its own
-database, copied from `agpwiki_test_template`, so test files running in
-parallel cannot affect each other. The template is migrated once per run, and
-each file's database is dropped when the file finishes, so tests need no
-cleanup. Tests in the same file share a database: page creation refuses likely
-duplicates, so fixture pages need titles that are unique within their file. Other test files get no
-database: if one connects, it fails with `database
-"agpwiki_test_file_none_for_unit_tests" does not exist`, which means the file
-should be named `*.integration.test.ts`.
+A test file that uses PostgreSQL starts with this import, before any other:
+
+```ts
+import './_use-database.js';
+```
+
+The file then gets its own database, copied from `agpwiki_test_template`, so
+test files running in parallel cannot affect each other. The template is
+migrated once per run, and each file's database is dropped when the file
+finishes, so tests need no cleanup. Tests in the same file share a database:
+page creation refuses likely duplicates, so fixture pages need titles that are
+unique within their file. Importing it after anything that loads `config`
+throws, because config reads its settings only once.
+
+Test files without the import get no database, and therefore open no
+connection: if one connects, it fails with `database
+"agpwiki_test_file_none_requested" does not exist`, which means it needs the
+import. Files that use the database are named `*.integration.test.ts` by
+convention, but the import is what gives a file a database.
 
 Several runs can share the PostgreSQL server at once, for example from two
 terminals. Each test process holds a PostgreSQL advisory lock on its database

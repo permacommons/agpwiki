@@ -10,6 +10,8 @@ import {
   createDatabaseFromTemplate,
   dropAbandonedDatabases,
   dropDatabases,
+  FILE_DATABASE_PREFIX,
+  NO_DATABASE,
   TEMPLATE_LOCK_ID,
 } from './_database.ts';
 
@@ -18,7 +20,8 @@ import {
 // other runs' databases.
 const base = config.get<PostgresConfig>('postgres');
 const prefix = `agpwiki_test_harness_${process.pid}_`;
-const databaseModule = pathToFileURL(new URL('./_database.ts', import.meta.url).pathname).href;
+const moduleUrl = (relative: string) => pathToFileURL(new URL(relative, import.meta.url).pathname).href;
+const databaseModule = moduleUrl('./_database.ts');
 
 const connect = async () => {
   const client = new pg.Client({ ...base, database: 'postgres' });
@@ -40,11 +43,11 @@ const existingDatabases = async () => {
 };
 
 /** Run a module script in a fresh Node process that can import the harness. */
-const runChild = (script: string, timeoutMs = 15_000) =>
+const runChild = (script: string, timeoutMs = 15_000, extraEnv: Record<string, string> = {}) =>
   new Promise<{ code: number | null; signal: NodeJS.Signals | null; output: string }>((resolve, reject) => {
     const { NODE_TEST_CONTEXT: _, ...env } = process.env;
     const child = spawn(process.execPath, ['--import', 'tsx', '--input-type=module', '-e', script], {
-      env: { ...env, HARNESS_BASE: JSON.stringify(base) },
+      env: { ...env, HARNESS_BASE: JSON.stringify(base), ...extraEnv },
     });
     let output = '';
     const collect = (chunk: Buffer) => {
@@ -155,4 +158,62 @@ test('cloning the template waits while the template is being migrated', async ()
   await clone;
   assert.equal(cloned, true);
   assert.deepEqual(await existingDatabases(), [database]);
+});
+
+test('a file that imports _use-database connects to its own database', async () => {
+  const result = await runChild(`
+    import ${JSON.stringify(moduleUrl('./_use-database.ts'))};
+    import { initializePostgreSQL } from ${JSON.stringify(moduleUrl('../src/db.ts'))};
+    const dal = await initializePostgreSQL();
+    const { rows } = await dal.query('SELECT current_database() AS name');
+    console.log(JSON.stringify({ name: rows[0].name, pid: process.pid }));
+    await dal.disconnect();
+  `, 60_000);
+  assert.equal(result.code, 0, result.output);
+  const line = result.output.split('\n').find(output => output.startsWith('{"name"'));
+  assert.ok(line, result.output);
+  const { name, pid } = JSON.parse(line) as { name: string; pid: number };
+  assert.equal(name, `${FILE_DATABASE_PREFIX}${process.env.AGPWIKI_TEST_RUN ?? 'solo'}_${pid}`);
+
+  // The child dropped its database on exit.
+  const client = await connect();
+  try {
+    const { rowCount } = await client.query('SELECT 1 FROM pg_database WHERE datname = $1', [name]);
+    assert.equal(rowCount, 0);
+  } finally {
+    await client.end();
+  }
+});
+
+test('importing _use-database after config fails with a clear error', async () => {
+  const result = await runChild(`
+    import 'config';
+    import ${JSON.stringify(moduleUrl('./_use-database.ts'))};
+  `);
+  assert.notEqual(result.code, 0, result.output);
+  assert.match(result.output, /import '\.\/_use-database\.js' first/);
+});
+
+test('files without the import point at a database that does not exist', { skip: !process.env.AGPWIKI_TEST_RUN }, () => {
+  assert.equal(base.database, NO_DATABASE);
+});
+
+test('_use-database keeps other NODE_CONFIG overrides', async () => {
+  const overrides = JSON.parse(process.env.NODE_CONFIG ?? '{}') as { postgres?: Record<string, unknown> };
+  const result = await runChild(
+    `
+    import ${JSON.stringify(moduleUrl('./_use-database.ts'))};
+    const { default: config } = await import('config');
+    const postgres = config.get('postgres');
+    console.log(JSON.stringify({ max: postgres.max, database: postgres.database }));
+  `,
+    60_000,
+    { NODE_CONFIG: JSON.stringify({ ...overrides, postgres: { ...overrides.postgres, max: 3 } }) }
+  );
+  assert.equal(result.code, 0, result.output);
+  const line = result.output.split('\n').find(output => output.startsWith('{"max"'));
+  assert.ok(line, result.output);
+  const { max, database } = JSON.parse(line) as { max: number; database: string };
+  assert.equal(max, 3);
+  assert.ok(database.startsWith(FILE_DATABASE_PREFIX), database);
 });
