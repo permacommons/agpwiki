@@ -34,7 +34,7 @@ test.after(async () => {
   }
 });
 
-// Item IDs far above real ones, so parallel runs and real data never meet.
+// Item IDs far above real ones, so tests never stub a real item by accident.
 const testQid = () => `Q9${randomInt(100_000_000, 999_999_999)}`;
 
 // Approved for editing, so it can also restore earlier versions.

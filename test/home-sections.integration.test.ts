@@ -214,20 +214,6 @@ test('The home page shows the sections below its text, and the page list sorts n
       "UPDATE forum_threads SET attached_type = 'position', attached_id = gen_random_uuid() WHERE id = $1",
       [attached.id]
     );
-    // Home sections show only the latest few items site-wide; future dates keep
-    // these fixtures among them while parallel tests create their own.
-    await dal.query("UPDATE forum_threads SET created_at = '2300-01-01T00:00:00Z' WHERE id = ANY($1::uuid[])", [
-      threadIds,
-    ]);
-    for (const [suffix, createdAt] of [
-      ['older', '2300-01-01T00:00:00Z'],
-      ['newer', '2300-01-02T00:00:00Z'],
-    ]) {
-      await dal.query('UPDATE pages SET created_at = $2 WHERE slug = $1 AND _old_rev_of IS NULL', [
-        `${prefix}-${suffix}`,
-        createdAt,
-      ]);
-    }
 
     const loaded = await loadHomeSections(dal, 'en', { fresh: true });
     const newer = loaded.articles.find(article => article.slug === `${prefix}-newer`);
@@ -289,8 +275,6 @@ test('Home posts use current text, summary fallback and only live image referenc
     post.slug = prefix;
     post.title = { en: 'Home post' };
     post.body = { en: 'Old body.' };
-    // Keep this fixture among the limited home posts during parallel tests.
-    post.createdAt = new Date('2300-01-01T00:00:00Z');
     await post.save();
     await post.newRevision({ id: user.id });
     post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
@@ -300,7 +284,7 @@ test('Home posts use current text, summary fallback and only live image referenc
     assert.equal(posts.length, 1);
     assert.equal(posts[0].summary, 'Current text.');
     assert.equal(posts[0].imageSlug, prefix);
-    assert.equal(posts[0].createdAt.getUTCFullYear(), 2300);
+    assert.equal(posts[0].createdAt.getTime(), post.createdAt.getTime());
     await post.newRevision({ id: user.id });
     post.summary = { en: 'Explicit summary.' };
     await post.save();

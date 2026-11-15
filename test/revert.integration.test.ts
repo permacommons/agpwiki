@@ -80,8 +80,7 @@ const setupPage = async (prefix: string) => {
   return { dal, author, editor, slug, first, latest };
 };
 
-// Other test files share the notification queue and claim or clear every job
-// in it, so jobs are captured here instead of queued.
+// Jobs are captured instead of queued, so tests can assert exactly what was queued.
 const captureJobs = () => {
   const jobs: Array<{ type: string; payload: PageRevertedPayload }> = [];
   return {

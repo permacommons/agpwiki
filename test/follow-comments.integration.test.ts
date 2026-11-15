@@ -53,8 +53,7 @@ const createTestUser = (name: string) =>
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}${JSON.stringify(options)}` : key) as unknown as TFunction;
 
-// Other test files share the notification queue, so jobs are captured here
-// instead of queued, and only this file's own queued jobs are removed.
+// Jobs are captured instead of queued, so tests can assert exactly what was queued.
 const captureJobs = () => {
   const jobs: PageCommentPayload[] = [];
   return {

@@ -280,16 +280,6 @@ for (const kind of ['page', 'section', 'post'] as const) {
           language: 'en',
         }, author.id));
       }
-      if (kind === 'section') {
-        // The section lists every thread in its category; future dates keep threads
-        // other test files create meanwhile behind these, and none of them pin here.
-        await dal.query(
-          `UPDATE forum_threads SET created_at = '2300-01-01T00:00:00Z'::timestamptz + (position - 1) * interval '1 second'
-             FROM unnest($1::uuid[]) WITH ORDINALITY AS fixture(id, position)
-            WHERE forum_threads.id = fixture.id`,
-          [threads.map(thread => thread.id)]
-        );
-      }
 
       const first = (await (await fetch(`${server.url}${path}`)).json()) as {
         bodyHtml: string;
