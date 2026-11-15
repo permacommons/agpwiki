@@ -421,23 +421,15 @@ export const listForumThreads = async (
 };
 
 export const readForumThread = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadId: string
 ): Promise<ForumThreadDetailResult> => {
   const thread = await requireThread(threadId);
-  const result = await dalInstance.query(
-    `SELECT *
-     FROM ${ForumComment.tableName}
-     WHERE thread_id = $1
-       AND _old_rev_of IS NULL
-       AND _rev_deleted = false
-     ORDER BY created_at ASC, _rev_date ASC`,
-    [thread.id]
-  );
-
-  const comments = result.rows.map(row =>
-    toForumCommentResult(ForumComment.createFromRow(row))
-  );
+  const rows = await ForumComment.filterWhere({ threadId: thread.id })
+    .orderBy('createdAt', 'ASC')
+    .orderBy('_revDate', 'ASC')
+    .run();
+  const comments = rows.map(toForumCommentResult);
 
   return {
     thread: {

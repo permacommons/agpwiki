@@ -224,20 +224,18 @@ export async function listBlogPostResources(
 }
 
 export async function listBlogPosts(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   { limit, offset }: BlogPostListQueryInput = {}
 ): Promise<BlogPostResult[]> {
   const normalizedLimit = Math.min(Math.max(limit ?? 100, 1), 500);
   const normalizedOffset = Math.max(offset ?? 0, 0);
-  // Route list pages and APIs can share this read model without touching ORM directly.
-  const result = await dalInstance.query(
-    `SELECT * FROM ${BlogPost.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false
-     ORDER BY created_at DESC, _rev_date DESC
-     LIMIT $1 OFFSET $2`,
-    [normalizedLimit, normalizedOffset]
-  );
-  return result.rows.map(row => toBlogPostResult(BlogPost.createFromRow(row)));
+  const posts = await BlogPost.filterWhere({})
+    .orderBy('createdAt', 'DESC')
+    .orderBy('_revDate', 'DESC')
+    .limit(normalizedLimit)
+    .offset(normalizedOffset)
+    .run();
+  return posts.map(toBlogPostResult);
 }
 
 export async function readBlogPost(

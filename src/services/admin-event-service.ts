@@ -58,44 +58,14 @@ export const recordAdminEvent = async (
 };
 
 export const listRecentAdminEvents = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   limit: number
 ): Promise<AdminEventResult[]> => {
   const normalizedLimit = Math.min(Math.max(limit, 1), 100);
-  const result = await dalInstance.query(
-    `SELECT id,
-            event_type,
-            actor_user_id,
-            target_type,
-            target_id,
-            target_rev_id,
-            details,
-            created_at
-     FROM ${AdminEvent.tableName}
-     ORDER BY created_at DESC, id DESC
-     LIMIT $1`,
-    [normalizedLimit]
-  );
-
-  return result.rows.map(
-    (row: {
-      id: string;
-      event_type: string;
-      actor_user_id: string | null;
-      target_type: string;
-      target_id: string | null;
-      target_rev_id: string | null;
-      details: Record<string, unknown> | null;
-      created_at: Date;
-    }) => ({
-      id: row.id,
-      eventType: row.event_type,
-      actorUserId: row.actor_user_id,
-      targetType: row.target_type,
-      targetId: row.target_id,
-      targetRevId: row.target_rev_id,
-      details: row.details,
-      createdAt: row.created_at,
-    })
-  );
+  return AdminEvent.filterWhere({})
+    .orderBy('createdAt', 'DESC')
+    .orderBy('id', 'DESC')
+    .limit(normalizedLimit)
+    .select('id', 'eventType', 'actorUserId', 'targetType', 'targetId', 'targetRevId', 'details', 'createdAt')
+    .run();
 };

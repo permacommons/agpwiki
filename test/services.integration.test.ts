@@ -1445,6 +1445,11 @@ test('Service page protection blocks non-admin wiki edits', async () => {
 
     const events = await listRecentAdminEvents(dal, 10);
     assert.ok(events.some(event => event.eventType === 'wiki_page_protected'));
+    assert.ok(events.length <= 10);
+    assert.deepEqual(events, [...events].sort((a, b) =>
+      b.createdAt!.getTime() - a.createdAt!.getTime() || b.id.localeCompare(a.id)
+    ));
+    assert.equal((await listRecentAdminEvents(dal, 1)).length, 1);
     assert.ok(events.some(event => event.eventType === 'protected_wiki_page_edited'));
 
     const removed = await unprotectWikiPage(dal, { slug: `/${slug}`, reason: 'Done.' }, admin.id);
@@ -2634,6 +2639,7 @@ test('Forum services create threads/comments and list categories', async () => {
     assert.deepEqual(detail.thread.title, { en: `${baseTitle} &lt;b&gt;thread&lt;/b&gt;` });
     assert.equal(detail.thread.canonicalLanguage, 'en');
     assert.equal(detail.comments.length, 2);
+    assert.deepEqual(detail.comments.map(comment => comment.body), [{ en: 'Opening post.' }, { en: 'Second comment.' }]);
     assert.equal(threadList.some(item => item.id === thread.id), true);
   } finally {
     await cleanupTestArtifacts(dal, {

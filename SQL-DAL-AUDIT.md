@@ -79,6 +79,12 @@ mention resolution is separate and remains an opportunity.
 
 The other items below remain opportunities.
 
+**Implemented:** blog post lists and forum thread comments use ordered model
+queries; recent admin events and proposal lists use projections. Existing sort
+keys, pagination bounds, result converters, and proposal status extraction remain
+in place. Integration coverage exercises blog pagination across revisions,
+proposal scope/order/status, forum comment order, and admin event limits/order.
+
 These have the best ratio of simplification to implementation risk. No general
 SQL expression API is needed.
 
@@ -269,3 +275,5 @@ The renderer lookup migration passed its targeted integration test, all 634 test
 in the full suite, lint, and typecheck.
 The shared user lookup migration passed its targeted integration test, all 635
 tests in the full suite, lint, and typecheck.
+The simple-list migration passed its targeted integration test, all 636 tests
+in the full suite, lint, and typecheck.
