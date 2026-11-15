@@ -25,6 +25,7 @@ import { loadCitationEntriesForSources } from '../../services/citation-render-se
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
 import { loadMediaEntriesForSources } from '../../services/media-render-service.js';
 import { loadMarkdownMentions } from '../../services/mention-service.js';
+import { loadUserAuthors } from '../../services/user-lookup-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import {
   renderAgentLabel,
@@ -119,15 +120,7 @@ export const loadDiscussionRenderData = async (
     bodies.set(comment.id, rendered.html);
   }
   const authorIds = [...new Set(comments.map(comment => comment.authorId).filter((id): id is string => Boolean(id)))];
-  const authors = new Map<string, DiscussionAuthor>();
-  if (authorIds.length) {
-    const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [
-      authorIds,
-    ]);
-    for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
-      authors.set(row.id, { name: row.display_name, username: row.username });
-    }
-  }
+  const authors = await loadUserAuthors(dalInstance, authorIds);
   return { bodies, authors };
 };
 

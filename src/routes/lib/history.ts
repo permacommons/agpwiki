@@ -1,9 +1,8 @@
 import type { TFunction } from 'i18next';
-import type { initializePostgreSQL } from '../../db.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
 import { NOT_DUPLICATE_TAG_PREFIX } from '../../services/duplicate-check-service.js';
 
-type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
+export { loadUserDisplayNames as fetchUserMap } from '../../services/user-lookup-service.js';
 
 // Colons cannot occur in generated Markdown heading IDs.
 export const HISTORY_ANCHOR = 'wiki:revision-history';
@@ -27,20 +26,6 @@ type HistoryOptions = {
   extraActions?: (revision: HistoryRevision, index: number) => Array<{ label: string; href: string }>;
   userMap: Map<string, string>;
   t: TFunction;
-};
-
-export const fetchUserMap = async (dalInstance: DalInstance, userIds: string[]) => {
-  const userMap = new Map<string, string>();
-  if (!userIds.length) return userMap;
-
-  const userResult = await dalInstance.query(
-    'SELECT id, display_name FROM users WHERE id = ANY($1)',
-    [userIds]
-  );
-  for (const row of userResult.rows as Array<{ id: string; display_name: string }>) {
-    userMap.set(row.id, row.display_name);
-  }
-  return userMap;
 };
 
 export const renderRevisionHistory = ({

@@ -2,7 +2,8 @@
 
 Reviewed 2026-11-15 against the sibling rev-dal documentation and implementation.
 This is an assessment and implementation backlog. P0, blog revision history,
-and citation/media renderer lookups from P1 have since been implemented.
+citation/media renderer lookups, and shared ID-based user lookups from P1 have
+since been implemented.
 
 ## Scope and baseline
 
@@ -70,6 +71,12 @@ with automatic current/live guards. Citation lookups select only key and data;
 media lookups select only registry fields and reuse the instance registry mapper.
 Integration coverage verifies current revision data, deleted/missing references,
 duplicate references, empty-input short circuits, and one query per lookup.
+**Implemented:** MCP positions, discussion rendering, and revision-history user
+maps share `user-lookup-service.ts` projections for display names or author names
+and usernames. Missing users remain absent, empty batches issue no query, and
+blocked/unverified users remain visible as historical authors. Username-based
+mention resolution is separate and remains an opportunity.
+
 The other items below remain opportunities.
 
 These have the best ratio of simplification to implementation risk. No general
@@ -260,3 +267,5 @@ The blog history migration passed its targeted integration test, all 633 tests
 in the full suite, lint, and typecheck.
 The renderer lookup migration passed its targeted integration test, all 634 tests
 in the full suite, lint, and typecheck.
+The shared user lookup migration passed its targeted integration test, all 635
+tests in the full suite, lint, and typecheck.
