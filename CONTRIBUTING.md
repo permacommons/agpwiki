@@ -159,10 +159,12 @@ import. Files that use the database are named `*.integration.test.ts` by
 convention, but the import is what gives a file a database.
 
 Several runs can share the PostgreSQL server at once, for example from two
-terminals. Each test process holds a PostgreSQL advisory lock on its database
-for as long as it runs, and a new run's setup only drops file databases whose
-process has exited, such as those left by an interrupted run. The harness and
-its tests are in `test/_database.ts` and `test/test-databases.integration.test.ts`.
+terminals. Each test process with a database holds a PostgreSQL advisory lock
+on it for as long as it runs, and a new run's setup only drops file databases
+whose process has exited, such as those left by an interrupted run. The harness
+is in `test/_use-database.ts`, `test/_database.ts` and
+`test/_global-database.ts`; its tests are in
+`test/test-databases.integration.test.ts`.
 
 To run selected files with the same setup:
 
