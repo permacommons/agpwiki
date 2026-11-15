@@ -71,8 +71,20 @@ const tryLockOwner = async (client: pg.Client, database: string) => {
 const unlockOwner = (client: pg.Client, database: string) =>
   client.query('SELECT pg_advisory_unlock($1, hashtext($2))', [OWNER_LOCK_CLASS, database]);
 
-const dropDatabaseWith = (client: pg.Client, database: string) =>
-  client.query(`DROP DATABASE IF EXISTS ${quote(database)} WITH (FORCE)`);
+// A plain DROP DATABASE stops autovacuum workers in the database itself,
+// whereas FORCE tries to terminate them and, for a role that is not a
+// superuser, fails with "permission denied to terminate process". So drop
+// plainly, and force only when our own connections are still open.
+const OBJECT_IN_USE = '55006';
+
+const dropDatabaseWith = async (client: pg.Client, database: string) => {
+  try {
+    await client.query(`DROP DATABASE IF EXISTS ${quote(database)}`);
+  } catch (error) {
+    if ((error as { code?: string }).code !== OBJECT_IN_USE) throw error;
+    await client.query(`DROP DATABASE IF EXISTS ${quote(database)} WITH (FORCE)`);
+  }
+};
 
 export const prepareTemplate = (base: PostgresConfig) =>
   withMaintenanceClient(base, async client => {
