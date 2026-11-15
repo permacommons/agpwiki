@@ -5,8 +5,6 @@ import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
-import AgentAccessRequest from '../src/models/agent-access-request.js';
-import User from '../src/models/user.js';
 import { restoreWikiPageRevision } from '../src/services/page-revert-service.js';
 import {
   applyWikiPagePatch,
@@ -17,6 +15,7 @@ import {
   rewriteWikiPageSection,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -36,26 +35,12 @@ const pause = () => new Promise(resolve => setTimeout(resolve, 5));
 
 const createTestUser = async () => {
   await getDal();
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  const user = await User.create({
-    username: `canonlangtest${suffix}`,
+  return insertTestUser({
+    prefix: 'canonlangtest',
     displayName: 'Canonical Language Test',
-    email: `canonlang-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-    emailVerifiedAt: new Date(),
-  });
-  await AgentAccessRequest.create({
-    userId: user.id,
-    interests: 'Translation testing',
-    profileUrl: 'https://example.com/profile',
-    status: 'approved',
-    createdAt: new Date(),
-    submittedAt: new Date(),
-    reviewedAt: new Date(),
+    emailVerified: true,
     approvedAt: new Date(),
   });
-  return user;
 };
 
 const cleanup = async (prefix: string, userId: string | null) => {

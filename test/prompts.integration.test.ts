@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -10,11 +9,11 @@ import { ForbiddenError, ValidationError } from '../src/lib/errors.js';
 import { PROMPT_SPECS, promptPageSlug } from '../src/lib/prompt-registry.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import { loadPromptText } from '../src/mcp/prompts.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { getWikiPageEditability } from '../src/services/page-protection-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { readWikiPage, replaceWikiPageExactText, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -30,16 +29,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `prompttest${suffix}`,
-    displayName: 'Prompt Test',
-    email: `prompt-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'prompttest', displayName: 'Prompt Test' });
 
 test('Every prompt has an admin-protected page with its placeholders, imported by the migration', async () => {
   const dal = await getDal();

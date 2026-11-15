@@ -6,10 +6,10 @@ import test from 'node:test';
 import express from 'express';
 
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -25,16 +25,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `robotstest${suffix}`,
-    displayName: 'Robots Test',
-    email: `robots-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'robotstest', displayName: 'Robots Test' });
 
 const startServer = async () => {
   const app = express();

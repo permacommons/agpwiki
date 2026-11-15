@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -8,8 +7,6 @@ import express from 'express';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ForbiddenError } from '../src/lib/errors.js';
-import AgentAccessRequest from '../src/models/agent-access-request.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 import {
@@ -22,6 +19,7 @@ import { getWikiPageEditability, protectWikiPage } from '../src/services/page-pr
 import { canUseRevertAction, restoreWikiPageRevision } from '../src/services/page-revert-service.js';
 import { grantRoleUpsert, SITE_ADMIN_ROLE, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -40,30 +38,12 @@ const getDal = async () => {
 const pause = () => new Promise(resolve => setTimeout(resolve, 5));
 const noJobs = { enqueueJob: async () => {} };
 
-const createTestUser = async ({ approved = true } = {}) => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  const user = await User.create({
-    username: `experiencedtest${suffix}`,
-    displayName: `Experienced Test ${suffix.slice(-4)}`,
-    email: `experienced-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-    emailVerifiedAt: new Date(),
+const createTestUser = ({ approved = true } = {}) =>
+  insertTestUser({
+    prefix: 'experiencedtest',
+    emailVerified: true,
+    approvedAt: approved ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : undefined,
   });
-  if (approved) {
-    await AgentAccessRequest.create({
-      userId: user.id,
-      interests: 'Testing',
-      profileUrl: 'https://example.com/profile',
-      status: 'approved',
-      createdAt: new Date(),
-      submittedAt: new Date(),
-      reviewedAt: new Date(),
-      approvedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-    });
-  }
-  return user;
-};
 
 const cleanup = async (prefix: string, userIds: string[]) => {
   const dal = await getDal();

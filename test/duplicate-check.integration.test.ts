@@ -1,13 +1,12 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import assert from 'node:assert/strict';
-import { randomBytes, randomInt } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import test from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { PAGE_NAMESPACES, pageNamespaceSql, resolvePageAddress } from '../src/lib/page-address.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import User from '../src/models/user.js';
 import { findPossibleDuplicates } from '../src/services/duplicate-check-service.js';
 import {
   addWikiPageAlias,
@@ -16,6 +15,7 @@ import {
   searchWikiPages,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -31,16 +31,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `duptest${suffix}`,
-    displayName: 'Duplicate Test',
-    email: `duplicate-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'duptest', displayName: 'Duplicate Test' });
 
 // Letters only, so titles stay unique among pages other tests create.
 const randomWord = () =>

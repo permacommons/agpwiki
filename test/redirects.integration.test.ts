@@ -8,13 +8,13 @@ import express from 'express';
 import { initializePostgreSQL } from '../src/db.js';
 import { ConflictError, NotFoundError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
-import User from '../src/models/user.js';
 import { registerBlogRoutes } from '../src/routes/blog.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { createBlogPost, readBlogPost, updateBlogPost } from '../src/services/blog-post-service.js';
 import { BLOG_AUTHOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { buildLocalWikiPreview, findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import { createWikiPage, readWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -30,16 +30,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `redirecttest${suffix}`,
-    displayName: 'Redirect Test',
-    email: `redirect-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'redirecttest', displayName: 'Redirect Test' });
 
 const startServer = async () => {
   const app = express();

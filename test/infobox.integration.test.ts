@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes, randomInt } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 import express from 'express';
@@ -8,8 +8,6 @@ import './_setup-i18n.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import { GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
-import AgentAccessRequest from '../src/models/agent-access-request.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { createCitation } from '../src/services/citation-service.js';
 import { createInfoboxService, infoboxService } from '../src/services/infobox-service.js';
@@ -20,6 +18,7 @@ import {
   readWikiPage,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -35,33 +34,12 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
 // Item IDs far above real ones, so parallel runs and real data never meet.
 const testQid = () => `Q9${randomInt(100_000_000, 999_999_999)}`;
 
 // Approved for editing, so it can also restore earlier versions.
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  const user = await User.create({
-    username: `infoboxtest${suffix}`,
-    displayName: 'Infobox Test',
-    email: `infobox-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-    emailVerifiedAt: new Date(),
-  });
-  await AgentAccessRequest.create({
-    userId: user.id,
-    interests: 'Infobox testing',
-    profileUrl: 'https://example.com/profile',
-    status: 'approved',
-    createdAt: new Date(),
-    submittedAt: new Date(),
-    reviewedAt: new Date(),
-    approvedAt: new Date(),
-  });
-  return user;
-};
+const createTestUser = () =>
+  insertTestUser({ prefix: 'infoboxtest', displayName: 'Infobox Test', emailVerified: true, approvedAt: new Date() });
 
 const createTestCitation = (dal: Dal, key: string, userId: string) =>
   createCitation(

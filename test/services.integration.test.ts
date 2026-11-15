@@ -136,6 +136,7 @@ import NotificationJob from '../src/models/notification-job.js';
 import PasswordResetToken from '../src/models/password-reset-token.js';
 import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -1185,19 +1186,7 @@ test('User rights update rejects site admin and unknown rights', async () => {
   }
 });
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  const email = `service-test-${suffix}@example.com`;
-  const user = await User.create({
-    username: `servicetest${suffix}`,
-    displayName: 'Service Test',
-    email,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-
-  return user;
-};
+const createTestUser = () => insertTestUser({ prefix: 'servicetest', displayName: 'Service Test' });
 
 const createVerifiedTestUser = async () => {
   const user = await createTestUser();

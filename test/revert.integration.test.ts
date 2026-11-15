@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -10,8 +9,6 @@ import { initializePostgreSQL } from '../src/db.js';
 import { ConflictError, ForbiddenError, InvalidRequestError, ValidationError } from '../src/lib/errors.js';
 import { getRecentWikiChanges } from '../src/services/recent-changes-service.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import AgentAccessRequest from '../src/models/agent-access-request.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { notificationJobHandlers } from '../src/services/notification-handlers.js';
 import { enqueueNotificationJob } from '../src/services/notification-queue.js';
@@ -25,6 +22,7 @@ import {
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { listSiteNotifications } from '../src/services/site-notification-service.js';
 import { createWikiPage, readWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -42,30 +40,8 @@ const getDal = async () => {
 
 const pause = () => new Promise(resolve => setTimeout(resolve, 5));
 
-const createTestUser = async ({ approved = true } = {}) => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  const user = await User.create({
-    username: `reverttest${suffix}`,
-    displayName: `Revert Test ${suffix.slice(-4)}`,
-    email: `revert-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-    emailVerifiedAt: new Date(),
-  });
-  if (approved) {
-    await AgentAccessRequest.create({
-      userId: user.id,
-      interests: 'Revert testing',
-      profileUrl: 'https://example.com/profile',
-      status: 'approved',
-      createdAt: new Date(),
-      submittedAt: new Date(),
-      reviewedAt: new Date(),
-      approvedAt: new Date(),
-    });
-  }
-  return user;
-};
+const createTestUser = ({ approved = true } = {}) =>
+  insertTestUser({ prefix: 'reverttest', emailVerified: true, approvedAt: approved ? new Date() : undefined });
 
 const cleanup = async (prefix: string, userIds: string[]) => {
   const dal = await getDal();

@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -9,7 +8,6 @@ import type { TFunction } from 'i18next';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { readNotificationChannel } from '../src/lib/notification-preferences.js';
-import User from '../src/models/user.js';
 import { FOLLOW_PATH, registerFollowRoutes } from '../src/routes/follow.js';
 import { renderFollowControl } from '../src/routes/lib/follow-control.js';
 import { renderNotificationText } from '../src/routes/lib/notifications.js';
@@ -33,6 +31,7 @@ import {
 } from '../src/services/page-subscription-service.js';
 import type { SiteNotification } from '../src/services/site-notification-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -48,17 +47,8 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async (name: string) => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `follow${name}${suffix}`,
-    displayName: `Follow ${name}`,
-    email: `follow-${name}-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    emailVerifiedAt: new Date(),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = (name: string) =>
+  insertTestUser({ prefix: `follow${name}`, displayName: `Follow ${name}`, emailVerified: true });
 
 const t = ((key: string, options?: Record<string, unknown>) =>
   options ? `${key}${JSON.stringify(options)}` : key) as unknown as TFunction;

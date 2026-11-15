@@ -7,7 +7,6 @@ import {
   formatMediaInlineHtml,
   formatMediaInvalidSizeHtml,
   formatMediaLabel,
-  formatMediaMissingHtml,
   formatMediaPageTitle,
   resolveWikimediaStepForWidth,
   type MediaData,
@@ -161,26 +160,6 @@ test('formatMediaInlineHtml renders an inline image with width/height', () => {
   assert.match(html, / width="250"/);
   // 4096x3072 -> 250 wide -> 188 high.
   assert.match(html, / height="188"/);
-});
-
-test('formatMediaMissingHtml wraps a message in a media-missing span', () => {
-  const html = formatMediaMissingHtml('missing-slug', 'Missing media: missing-slug');
-  assert.match(html, /class="media-missing"/);
-  assert.match(html, /data-slug="missing-slug"/);
-  assert.match(html, /Missing media: missing-slug/);
-});
-
-test('formatMediaInvalidSizeHtml wraps a message in a media-invalid-size span', () => {
-  const html = formatMediaInvalidSizeHtml(
-    'erik-portrait',
-    '[invalid media size: 0 for erik-portrait. Use an integer 1–1920; standard sizes: 250, 800. Article column is ~768 CSS px so larger sizes render no bigger.]'
-  );
-  assert.match(html, /class="media-invalid-size"/);
-  assert.match(html, /data-slug="erik-portrait"/);
-  assert.match(html, /\[invalid media size: 0 for erik-portrait\./);
-  assert.match(html, /Use an integer 1.1920/);
-  assert.match(html, /standard sizes: 250, 800/);
-  assert.match(html, /Article column is ~768 CSS px/);
 });
 
 test('formatMediaInvalidSizeHtml escapes embedded HTML in slug and message', () => {

@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import assert from 'node:assert/strict';
-import { randomBytes, randomInt } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -20,7 +20,6 @@ import {
 } from '../src/lib/page-address.js';
 import { createMcpServer } from '../src/mcp/core.js';
 import { articlePages } from '../src/models/page-scope.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { DRAFT_DUPLICATE_RECHECK_AFTER_MS, publishDraft } from '../src/services/draft-service.js';
 import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
@@ -31,6 +30,7 @@ import {
   searchWikiPages,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -46,16 +46,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `drafttest${suffix}`,
-    displayName: 'Draft Test',
-    email: `draft-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'drafttest', displayName: 'Draft Test' });
 
 // Letters only, so titles stay unique among pages other tests create.
 const randomWord = () =>

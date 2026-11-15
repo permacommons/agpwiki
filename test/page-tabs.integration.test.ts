@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -8,7 +7,6 @@ import type { TFunction } from 'i18next';
 
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
 import { HISTORY_ANCHOR, renderRevisionHistory } from '../src/routes/lib/history.js';
 import { renderPageTabs } from '../src/routes/lib/page-tabs.js';
@@ -18,6 +16,7 @@ import { createForumThread } from '../src/services/forum-service.js';
 import { protectWikiPage } from '../src/services/page-protection-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -82,18 +81,7 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
-
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  return User.create({
-    username: `tabstest${suffix}`,
-    displayName: 'Tabs Test',
-    email: `tabs-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'tabstest', displayName: 'Tabs Test' });
 
 const makeServer = async (accountState: Record<string, unknown> | null = null) => {
   const app = express();

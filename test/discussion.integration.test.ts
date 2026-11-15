@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -10,7 +9,6 @@ import { isUserSubscribedToForumThread } from '../src/services/forum-subscriptio
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import PageAlias from '../src/models/page-alias.js';
-import User from '../src/models/user.js';
 import { renderMarkdown } from '../src/render.js';
 import { loadDiscussionRenderData } from '../src/routes/lib/discussion.js';
 import { createCitation } from '../src/services/citation-service.js';
@@ -24,6 +22,7 @@ import { createBlogPost } from '../src/services/blog-post-service.js';
 import { listDiscussedPages } from '../src/services/discussion-service.js';
 import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
 import { replyToPosition } from '../src/services/position-reply-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -39,17 +38,8 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async (name: string) => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `disc${name}${suffix}`,
-    displayName: `Discussion ${name}`,
-    email: `discussion-${name}-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    emailVerifiedAt: new Date(),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = (name: string) =>
+  insertTestUser({ prefix: `disc${name}`, displayName: `Discussion ${name}`, emailVerified: true });
 
 const createPage = (dal: Dal, slug: string, userId: string) =>
   createWikiPage(

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -10,12 +10,12 @@ import hbs from 'hbs';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { listPageDiscussionSlugs } from '../src/services/discussion-service.js';
 import { findCurrentPageIdBySlug, resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
 import { addWikiPageAlias, createWikiPage, deleteWikiPage, listWikiPageResources, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -31,16 +31,7 @@ const getDal = async () => {
   return sharedDal;
 };
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(6).toString('hex')}`;
-  return User.create({
-    username: `permalinktest${suffix}`,
-    displayName: 'Permalink Test',
-    email: `permalink-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'permalinktest', displayName: 'Permalink Test' });
 
 const startServer = async () => {
   const app = express();

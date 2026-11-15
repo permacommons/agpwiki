@@ -7,7 +7,6 @@ import './_setup-i18n.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ForbiddenError } from '../src/lib/errors.js';
 import { createMcpServer } from '../src/mcp/core.js';
-import User from '../src/models/user.js';
 import { renderAgentLabel } from '../src/routes/lib/forum-comment-editor.js';
 import { renderPageSignoffs } from '../src/routes/lib/page-signoffs.js';
 import {
@@ -20,6 +19,7 @@ import {
 } from '../src/services/forum-service.js';
 import { signOffPage } from '../src/services/page-signoff-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -37,14 +37,7 @@ test.after(async () => {
 
 const run = `${Date.now()}${randomBytes(3).toString('hex')}`;
 const createTestUser = (name: string) =>
-  User.create({
-    username: `agentlabel${name}${run}`,
-    displayName: `Operator ${name}`,
-    email: `agentlabel-${name}-${run}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    emailVerifiedAt: new Date(),
-    createdAt: new Date(),
-  });
+  insertTestUser({ prefix: `agentlabel${name}`, displayName: `Operator ${name}`, emailVerified: true });
 
 const cleanup = async (dal: Dal, prefix: string, userIds: string[]) => {
   const pages = await dal.query('SELECT id FROM pages WHERE slug LIKE $1', [`%${prefix}%`]);

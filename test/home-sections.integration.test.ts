@@ -7,7 +7,6 @@ import express from 'express';
 import type { TFunction } from 'i18next';
 
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import BlogPost from '../src/models/blog-post.js';
 import Media from '../src/models/media.js';
 import { renderHomeSections } from '../src/routes/lib/home-sections.js';
@@ -16,6 +15,7 @@ import { registerToolRoutes } from '../src/routes/tools.js';
 import { createForumThread } from '../src/services/forum-service.js';
 import { HOME_PAGE_SLUG, type HomeSections, loadHomeSections } from '../src/services/home-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -126,16 +126,7 @@ test('renderHomeSections says so when a section has nothing to show', () => {
   assert.match(html, /class="home-help"/);
 });
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `hometest${suffix}`,
-    displayName: 'Home Test',
-    email: `home-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'hometest', displayName: 'Home Test' });
 
 const makeServer = async () => {
   const app = express();

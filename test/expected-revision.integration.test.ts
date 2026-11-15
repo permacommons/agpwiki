@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import test, { type TestContext } from 'node:test';
 
 import { initializePostgreSQL } from '../src/db.js';
@@ -10,7 +9,6 @@ import Citation from '../src/models/citation.js';
 import CitationClaim from '../src/models/citation-claim.js';
 import Media from '../src/models/media.js';
 import PageCheck from '../src/models/page-check.js';
-import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { createBlogPost } from '../src/services/blog-post-service.js';
 import { createCitationClaim } from '../src/services/citation-claim-service.js';
@@ -19,6 +17,7 @@ import { createMedia, refreshMedia } from '../src/services/media-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import { BLOG_AUTHOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -71,18 +70,7 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
-
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  return User.create({
-    username: `expectedrev${suffix}`,
-    displayName: 'Expected Revision Test',
-    email: `expected-rev-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'expectedrev', displayName: 'Expected Revision Test' });
 
 const cleanupUser = async (dal: Dal, userId: string) => {
   await dal.query('DELETE FROM user_roles WHERE user_id = $1', [userId]);

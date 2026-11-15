@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 
@@ -8,7 +7,6 @@ import express from 'express';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ConflictError } from '../src/lib/errors.js';
-import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { renderMarkdown } from '../src/render.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -19,6 +17,7 @@ import {
   rewriteWikiPageSection,
   sectionFingerprint,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -91,18 +90,7 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
-
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  return User.create({
-    username: `sectiontest${suffix}`,
-    displayName: 'Section Test',
-    email: `section-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'sectiontest', displayName: 'Section Test' });
 
 const cleanup = async (dal: Dal, slug: string, userId: string | null) => {
   await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);

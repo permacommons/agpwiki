@@ -10,11 +10,11 @@ import Citation from '../src/models/citation.js';
 import CitationClaim from '../src/models/citation-claim.js';
 import Media from '../src/models/media.js';
 import PageCheck from '../src/models/page-check.js';
-import User from '../src/models/user.js';
 import type { ChangesSinceResult } from '../src/services/change-service.js';
 import { updatePageCheck } from '../src/services/page-check-service.js';
 import { createSiteNotification } from '../src/services/site-notification-service.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -30,16 +30,8 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async (name: string) => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `changes${name}${suffix}`,
-    displayName: `Changes ${name}`,
-    email: `changes-${name}-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = (name: string) =>
+  insertTestUser({ prefix: `changes${name}`, displayName: `Changes ${name}` });
 
 type ToolResult = { isError?: boolean; structuredContent: unknown };
 type ToolHandlers = Record<

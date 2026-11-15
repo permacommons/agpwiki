@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -10,9 +9,9 @@ import hbs from 'hbs';
 
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import { registerNotificationRoutes } from '../src/routes/notifications.js';
 import { countUnreadNotifications } from '../src/services/site-notification-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -28,16 +27,7 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `paneltest${suffix}`,
-    displayName: 'Panel Test',
-    email: `panel-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'paneltest', displayName: 'Panel Test' });
 
 const startServer = async () => {
   const app = express();

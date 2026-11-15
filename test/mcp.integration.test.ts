@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import test from 'node:test';
 
 import { createMcpServer } from '../src/mcp/core.js';
@@ -12,7 +12,7 @@ import {
   grantRoleUpsert,
 } from '../src/services/roles.js';
 import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
-import User from '../src/models/user.js';
+import { insertTestUser } from './_test-users.js';
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -29,16 +29,7 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async () => {
-  const email = `mcp-test-${Date.now()}@example.com`;
-  return User.create({
-    username: `mcptest${Date.now()}`,
-    displayName: 'MCP Test',
-    email,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'mcptest', displayName: 'MCP Test' });
 
 const cleanupTestArtifacts = async (
   dal: Awaited<ReturnType<typeof initializePostgreSQL>>,

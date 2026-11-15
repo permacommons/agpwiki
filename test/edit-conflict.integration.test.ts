@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import http from 'node:http';
 import test, { type TestContext } from 'node:test';
 
@@ -11,7 +10,6 @@ import { NotFoundError } from '../src/lib/errors.js';
 import { toToolErrorPayload } from '../src/mcp/errors.js';
 import ForumComment from '../src/models/forum-comment.js';
 import ForumThread from '../src/models/forum-thread.js';
-import User from '../src/models/user.js';
 import WikiPage from '../src/models/wiki-page.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -27,6 +25,7 @@ import {
 import { replyToPosition } from '../src/services/position-reply-service.js';
 import { FORUM_MODERATOR_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -44,18 +43,7 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
-
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  return User.create({
-    username: `conflicttest${suffix}`,
-    displayName: 'Conflict Test',
-    email: `conflict-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'conflicttest', displayName: 'Conflict Test' });
 
 const cleanupUser = async (dal: Dal, userId: string | null) => {
   if (!userId) return;
