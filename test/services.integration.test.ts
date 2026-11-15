@@ -1313,6 +1313,54 @@ test('Service page protection blocks non-admin wiki edits', async () => {
     );
     assert.equal(updated.body?.en, 'Admin edit.');
 
+    const patched = await applyWikiPagePatch(dal, {
+      slug,
+      patch: '--- before\n+++ after\n@@ -1 +1 @@\n-Admin edit.\n+Patched text.',
+      format: 'unified',
+      baseRevId: updated.currentRevId,
+      tags: ['custom-edit'],
+      revSummary: { en: 'Patch protected page.' },
+    }, admin.id);
+    const rewritten = await rewriteWikiPageSection(dal, {
+      slug,
+      target: 'lead',
+      content: 'Rewritten text.',
+      expectedRevId: patched.currentRevId,
+      tags: ['custom-edit'],
+      revSummary: { en: 'Rewrite protected page.' },
+    }, admin.id);
+    const replaced = await replaceWikiPageExactText(dal, {
+      slug,
+      replacements: [{ from: 'Rewritten', to: 'Replaced' }],
+      expectedRevId: rewritten.currentRevId,
+      tags: ['custom-edit'],
+      revSummary: { en: 'Replace protected text.' },
+    }, admin.id);
+    assert.equal(replaced.body?.en, 'Replaced text.');
+
+    const editEvents = await dal.query(
+      "SELECT target_rev_id, details FROM admin_events WHERE target_id = $1 AND event_type = 'protected_wiki_page_edited'",
+      [page.id]
+    );
+    for (const [result, operation, summary] of [
+      [updated, 'update', 'Admin edit protected page.'],
+      [patched, 'patch', 'Patch protected page.'],
+      [rewritten, 'rewrite-section', 'Rewrite protected page.'],
+      [replaced, 'replace-exact', 'Replace protected text.'],
+    ] as const) {
+      const { revision } = await readWikiPageRevision(dal, slug, result.currentRevId);
+      assert.ok(revision);
+      assert.deepEqual(revision.revSummary, { en: summary });
+      assert.ok(revision.revTags?.includes('update'));
+      if (operation !== 'update') {
+        assert.ok(revision.revTags?.includes(operation));
+        assert.ok(revision.revTags?.includes('custom-edit'));
+      }
+      assert.ok(editEvents.rows.some(event =>
+        event.target_rev_id === result.currentRevId && event.details.operation === operation
+      ));
+    }
+
     const events = await listRecentAdminEvents(dal, 10);
     assert.ok(events.some(event => event.eventType === 'wiki_page_protected'));
     assert.ok(events.some(event => event.eventType === 'protected_wiki_page_edited'));
