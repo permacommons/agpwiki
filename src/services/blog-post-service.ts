@@ -1,6 +1,5 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
@@ -12,11 +11,13 @@ import {
   ValidationError,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
-import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { toAddressForm } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
+import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
+import { validateMediaRefs } from './media-reference-validation-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';

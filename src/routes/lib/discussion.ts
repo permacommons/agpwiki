@@ -1,7 +1,6 @@
 import type { TFunction } from 'i18next';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
 import {
   commentAnchor,
   commentPermalink,
@@ -20,10 +19,11 @@ import {
   forumThreadPath,
   forumThreadPinPath,
 } from '../../lib/forum-paths.js';
-import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
+import { loadCitationEntriesForSources } from '../../services/citation-render-service.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
+import { loadMediaEntriesForSources } from '../../services/media-render-service.js';
 import { loadMarkdownMentions } from '../../services/mention-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import {

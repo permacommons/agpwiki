@@ -5,7 +5,6 @@ import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { createOperators } from 'rev-dal/lib/filter-where';
 import debug from '../../util/debug.js';
-import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import {
   validateLocalizedMarkdownContent,
   validateMarkdownContent,
@@ -24,7 +23,7 @@ import { parseLocalDate } from '../lib/infobox-dates.js';
 import { INFOBOX_DATE_PROPERTIES, LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
 import type { InfoboxLocalValue, InfoboxLocalValues } from '../lib/infobox-values.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
-import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import {
   isArticleSlug,
   isDraftSlug,
@@ -51,8 +50,10 @@ import {
   recordAdminEvent,
 } from './admin-event-service.js';
 import { assertCanDeleteWikiPage } from './authorization.js';
+import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
 import { checkNewPage, type RelatedPage } from './duplicate-check-service.js';
 import { infoboxService } from './infobox-service.js';
+import { validateMediaRefs } from './media-reference-validation-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';

@@ -1,12 +1,12 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import striptags from 'striptags';
-import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { encodeSlugPath, isBlockedSlug, normalizeSlug, toAddressForm } from '../lib/slug.js';
 import { buildWikipediaTitleVariants } from '../lib/wiki-links.js';
 import PageAlias from '../models/page-alias.js';
 import WikiPage from '../models/wiki-page.js';
 import { renderMarkdown } from '../render.js';
+import { loadCitationEntriesForSources } from './citation-render-service.js';
 import { readWikiPage } from './wiki-page-service.js';
 
 export interface WikipediaPreview {

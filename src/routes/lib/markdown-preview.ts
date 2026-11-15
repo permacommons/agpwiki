@@ -1,8 +1,8 @@
 import type { Request, RequestHandler } from 'express';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
-import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { escapeHtml, renderMarkdown } from '../../render.js';
+import { loadCitationEntriesForSources } from '../../services/citation-render-service.js';
+import { loadMediaEntriesForSources } from '../../services/media-render-service.js';
 import { loadMarkdownMentions } from '../../services/mention-service.js';
 
 export interface MarkdownPreviewTexts {

@@ -4988,7 +4988,7 @@ test('Service updateMedia merges localized caption without re-fetching Commons',
 });
 
 test('getRecentMediaChanges orders newest-first and threads prevRevId via LEAD()', async () => {
-  const { getRecentMediaChanges } = await import('../src/lib/recent-changes.js');
+  const { getRecentMediaChanges } = await import('../src/services/recent-changes-service.js');
   const { createMedia, updateMedia } = await import('../src/services/media-service.js');
   const dal = await getDal();
   const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
