@@ -3,6 +3,8 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { firstSentence } from '../lib/excerpt.js';
 import { extractMediaSlugsFromSources } from '../lib/media-render.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
+import BlogPost from '../models/blog-post.js';
+import Media from '../models/media.js';
 import { type ArticleIssueKind, countArticlesWithIssues } from './article-issues-service.js';
 
 const { mlString } = dal;
@@ -51,7 +53,7 @@ const resolveText = (lang: string, value: Record<string, string> | null | undefi
   mlString.resolve(lang, value ?? null)?.str ?? '';
 
 // The first image the text embeds, if it is a known image.
-const firstImages = async (dalInstance: DataAccessLayer, sources: Map<string, string>) => {
+const firstImages = async (_dalInstance: DataAccessLayer, sources: Map<string, string>) => {
   const firstBySource = new Map<string, string>();
   for (const [key, source] of sources) {
     const [first] = extractMediaSlugsFromSources([source]);
@@ -59,13 +61,10 @@ const firstImages = async (dalInstance: DataAccessLayer, sources: Map<string, st
   }
   const slugs = [...new Set(firstBySource.values())];
   if (!slugs.length) return new Map<string, string>();
-  const result = await dalInstance.query(
-    `SELECT slug FROM media
-      WHERE slug = ANY($1) AND _old_rev_of IS NULL AND _rev_deleted = false
-        AND media_type = 'image'`,
-    [slugs]
-  );
-  const known = new Set((result.rows as Array<{ slug: string }>).map(row => row.slug));
+  const images = await Media.filterWhere({ mediaType: 'image' })
+    .whereIn('slug', slugs)
+    .select('slug');
+  const known = new Set(images.map(image => image.slug));
   return new Map([...firstBySource].filter(([, slug]) => known.has(slug)));
 };
 
@@ -96,26 +95,17 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
 };
 
 const loadPosts = async (dalInstance: DataAccessLayer, lang: string): Promise<HomePost[]> => {
-  const result = await dalInstance.query(
-    `SELECT slug, title, summary, body, created_at FROM posts
-      WHERE _old_rev_of IS NULL AND _rev_deleted = false
-      ORDER BY created_at DESC, _rev_date DESC
-      LIMIT $1`,
-    [BLOG_POST_COUNT]
-  );
-  const rows = result.rows as Array<{
-    slug: string;
-    title: Record<string, string> | null;
-    summary: Record<string, string> | null;
-    body: Record<string, string> | null;
-    created_at: Date;
-  }>;
+  const rows = await BlogPost.filterWhere({})
+    .orderBy('createdAt', 'DESC')
+    .orderBy('_revDate', 'DESC')
+    .limit(BLOG_POST_COUNT)
+    .select('slug', 'title', 'summary', 'body', 'createdAt');
   const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
   const images = await firstImages(dalInstance, bodies);
   return rows.map(row => ({
     slug: row.slug,
     title: row.title,
-    createdAt: row.created_at,
+    createdAt: row.createdAt,
     summary: resolveText(lang, row.summary) || firstSentence(bodies.get(row.slug)),
     imageSlug: images.get(row.slug) ?? null,
   }));

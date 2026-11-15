@@ -20,6 +20,7 @@ import {
   forumThreadPinPath,
 } from '../../lib/forum-paths.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
+import ForumThreadSubscription from '../../models/forum-thread-subscription.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
 import { loadCitationEntriesForSources } from '../../services/citation-render-service.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
@@ -126,17 +127,15 @@ export const loadDiscussionRenderData = async (
 
 /** The threads among these that the reader follows. */
 export const listFollowedThreadIds = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadIds: string[],
   userId: string | null
 ) => {
   if (!userId || !threadIds.length) return new Set<string>();
-  const result = await dalInstance.query(
-    `SELECT thread_id FROM forum_thread_subscriptions
-      WHERE user_id = $1 AND thread_id = ANY($2) AND unsubscribed_at IS NULL`,
-    [userId, threadIds]
-  );
-  return new Set((result.rows as Array<{ thread_id: string }>).map(row => row.thread_id));
+  const subscriptions = await ForumThreadSubscription.filterWhere({ userId, unsubscribedAt: null })
+    .whereIn('threadId', threadIds)
+    .select('threadId');
+  return new Set(subscriptions.map(subscription => subscription.threadId));
 };
 
 export const discussionCommentsOf = allComments;

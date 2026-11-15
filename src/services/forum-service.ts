@@ -325,13 +325,9 @@ export const resolveForumPageTarget = async (
 export const listForumCategories = async (
   dalInstance: DataAccessLayer
 ): Promise<ForumCategoryListItem[]> => {
-  const threadRows = await dalInstance.query(
-    `SELECT category, COUNT(*)::int AS thread_count
-     FROM ${ForumThread.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false AND attached_type IS NULL
-     GROUP BY category`,
-    []
-  );
+  const counts = await ForumThread.filterWhere({ attachedType: null })
+    .groupBy('category')
+    .aggregateGrouped('COUNT');
 
   const latestRows = await dalInstance.query(
     `SELECT DISTINCT ON (t.category)
@@ -354,9 +350,6 @@ export const listForumCategories = async (
     []
   );
 
-  const counts = new Map<string, number>(
-    threadRows.rows.map(row => [row.category as string, Number(row.thread_count) || 0])
-  );
   const latestByCategory = new Map(
     latestRows.rows.map(row => [
       row.category as string,
