@@ -47,6 +47,12 @@ Tests that use local PostgreSQL or bind ephemeral HTTP servers may need to run
 outside that sandbox. `npm run lint` and `npm run typecheck` should not need
 that exception.
 
+Tests that use PostgreSQL must be named `*.integration.test.ts`: only those
+files get a database, each its own, copied from a migrated template (see
+`test/_per-file-database.ts`). Data from other test files is never visible, so
+tests do not need to guard against parallel writers. Run selected files with
+`npm run test:file -- <paths>`; plain `node --test` skips the database setup.
+
 ## Wiki content formatting
 
 - Markdown is rendered with markdown-it (`html: false`, `linkify: true`). Raw HTML in markdown is not allowed.
