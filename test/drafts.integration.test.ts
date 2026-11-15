@@ -212,6 +212,13 @@ test('publishing moves a draft to its article address and keeps the draft addres
       { code: 'forbidden' }
     );
 
+    await updateWikiPage(dal, {
+      slug: draft.slug, body: { en: 'Edited by someone else.' }, revSummary: { en: 'Edit draft' },
+    }, stranger.id);
+    await assert.rejects(
+      publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, stranger.id),
+      { code: 'forbidden' }
+    );
     const published = await publishDraft(dal, { slug: draft.slug, revSummary: { en: 'Publish draft' } }, creator.id);
     assert.equal(published.slug, prefix);
     assert.equal(published.draftSlug, draft.slug);

@@ -3,7 +3,7 @@ import { extractCitationKeysFromSources } from '../lib/citation-render.js';
 import Citation from '../models/citation.js';
 
 export const loadCitationEntriesForSources = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   sources: Iterable<string>
 ) => {
   const keys = Array.from(extractCitationKeysFromSources(sources));
@@ -11,12 +11,11 @@ export const loadCitationEntriesForSources = async (
     return [] as Array<Record<string, unknown>>;
   }
 
-  const result = await dalInstance.query(
-    `SELECT * FROM ${Citation.tableName} WHERE key = ANY($1) AND _old_rev_of IS NULL AND _rev_deleted = false`,
-    [keys]
-  );
+  const entries = await Citation.filterWhere({})
+    .whereIn('key', keys)
+    .select('key', 'data');
 
-  return result.rows.map(row => {
+  return entries.map(row => {
     const item = (row.data ?? {}) as Record<string, unknown>;
     const id = row.key;
     return { ...item, id };

@@ -20,11 +20,13 @@ import {
   forumThreadPinPath,
 } from '../../lib/forum-paths.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
+import ForumThreadSubscription from '../../models/forum-thread-subscription.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
 import { loadCitationEntriesForSources } from '../../services/citation-render-service.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
 import { loadMediaEntriesForSources } from '../../services/media-render-service.js';
 import { loadMarkdownMentions } from '../../services/mention-service.js';
+import { loadUserAuthors } from '../../services/user-lookup-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
 import {
   renderAgentLabel,
@@ -119,31 +121,21 @@ export const loadDiscussionRenderData = async (
     bodies.set(comment.id, rendered.html);
   }
   const authorIds = [...new Set(comments.map(comment => comment.authorId).filter((id): id is string => Boolean(id)))];
-  const authors = new Map<string, DiscussionAuthor>();
-  if (authorIds.length) {
-    const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [
-      authorIds,
-    ]);
-    for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
-      authors.set(row.id, { name: row.display_name, username: row.username });
-    }
-  }
+  const authors = await loadUserAuthors(dalInstance, authorIds);
   return { bodies, authors };
 };
 
 /** The threads among these that the reader follows. */
 export const listFollowedThreadIds = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadIds: string[],
   userId: string | null
 ) => {
   if (!userId || !threadIds.length) return new Set<string>();
-  const result = await dalInstance.query(
-    `SELECT thread_id FROM forum_thread_subscriptions
-      WHERE user_id = $1 AND thread_id = ANY($2) AND unsubscribed_at IS NULL`,
-    [userId, threadIds]
-  );
-  return new Set((result.rows as Array<{ thread_id: string }>).map(row => row.thread_id));
+  const subscriptions = await ForumThreadSubscription.filterWhere({ userId, unsubscribedAt: null })
+    .whereIn('threadId', threadIds)
+    .select('threadId');
+  return new Set(subscriptions.map(subscription => subscription.threadId));
 };
 
 export const discussionCommentsOf = allComments;

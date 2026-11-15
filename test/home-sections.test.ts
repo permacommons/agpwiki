@@ -8,6 +8,8 @@ import type { TFunction } from 'i18next';
 
 import { initializePostgreSQL } from '../src/db.js';
 import User from '../src/models/user.js';
+import BlogPost from '../src/models/blog-post.js';
+import Media from '../src/models/media.js';
 import { renderHomeSections } from '../src/routes/lib/home-sections.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
@@ -262,5 +264,49 @@ test('The home page shows the sections below its text, and the page list sorts n
       await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
       await dal.query('DELETE FROM users WHERE id = $1', [userId]);
     }
+  }
+});
+
+
+test('Home posts use current text, summary fallback and only live image references', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  const prefix = `home-post-${randomBytes(8).toString('hex')}`;
+  try {
+    const image = await Media.createFirstRevision({ id: user.id });
+    image.slug = prefix;
+    image.commonsTitle = 'File:Example.jpg';
+    image.mediaType = 'image';
+    image.data = {};
+    await image.save();
+    const post = await BlogPost.createFirstRevision({ id: user.id });
+    post.slug = prefix;
+    post.title = { en: 'Home post' };
+    post.body = { en: 'Old body.' };
+    // Keep this fixture among the limited home posts during parallel tests.
+    post.createdAt = new Date('2300-01-01T00:00:00Z');
+    await post.save();
+    await post.newRevision({ id: user.id });
+    post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
+    await post.save();
+    const read = async () => (await loadHomeSections(dal, 'en', { fresh: true })).posts.filter(item => item.slug === prefix);
+    let posts = await read();
+    assert.equal(posts.length, 1);
+    assert.equal(posts[0].summary, 'Current text.');
+    assert.equal(posts[0].imageSlug, prefix);
+    assert.equal(posts[0].createdAt.getUTCFullYear(), 2300);
+    await post.newRevision({ id: user.id });
+    post.summary = { en: 'Explicit summary.' };
+    await post.save();
+    await image.deleteAllRevisions({ id: user.id });
+    posts = await read();
+    assert.equal(posts[0].summary, 'Explicit summary.');
+    assert.equal(posts[0].imageSlug, null);
+    await post.deleteAllRevisions({ id: user.id });
+    assert.deepEqual(await read(), []);
+  } finally {
+    await dal.query('DELETE FROM posts WHERE slug = $1', [prefix]);
+    await dal.query('DELETE FROM media WHERE slug = $1', [prefix]);
+    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
   }
 });

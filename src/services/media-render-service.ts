@@ -4,7 +4,11 @@ import { extractMediaSlugsFromSources, type MediaRegistryEntry } from '../lib/me
 import type { MediaInstance } from '../models/manifests/media.js';
 import Media from '../models/media.js';
 
-const toMediaRegistryEntry = (instance: MediaInstance): MediaRegistryEntry => ({
+type MediaRegistryFields = Pick<MediaInstance,
+  'slug' | 'title' | 'commonsTitle' | 'mediaType' | 'data' | 'caption' | 'altText' | '_revID'
+>;
+
+const toMediaRegistryEntry = (instance: MediaRegistryFields): MediaRegistryEntry => ({
   slug: instance.slug,
   title: (instance.title ?? null) as Record<string, string> | null,
   commonsTitle: instance.commonsTitle,
@@ -16,7 +20,7 @@ const toMediaRegistryEntry = (instance: MediaInstance): MediaRegistryEntry => ({
 });
 
 export const loadMediaEntriesForSources = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   sources: Iterable<string>
 ): Promise<Map<string, MediaRegistryEntry>> => {
   const slugs = Array.from(extractMediaSlugsFromSources(sources));
@@ -24,27 +28,13 @@ export const loadMediaEntriesForSources = async (
     return new Map();
   }
 
-  const result = await dalInstance.query(
-    `SELECT *
-     FROM ${Media.tableName}
-     WHERE slug = ANY($1)
-       AND _old_rev_of IS NULL
-       AND _rev_deleted = false`,
-    [slugs]
-  );
+  const entries = await Media.filterWhere({})
+    .whereIn('slug', slugs)
+    .select('slug', 'title', 'commonsTitle', 'mediaType', 'data', 'caption', 'altText', '_revID');
 
   const map = new Map<string, MediaRegistryEntry>();
-  for (const row of result.rows as Array<Record<string, unknown>>) {
-    const entry: MediaRegistryEntry = {
-      slug: row.slug as string,
-      title: (row.title ?? null) as Record<string, string> | null,
-      commonsTitle: row.commons_title as string,
-      mediaType: row.media_type as MediaType,
-      data: (row.data ?? {}) as unknown as MediaData,
-      caption: (row.caption ?? null) as Record<string, string> | null,
-      altText: (row.alt_text ?? null) as Record<string, string> | null,
-      revId: row._rev_id as string,
-    };
+  for (const row of entries) {
+    const entry = toMediaRegistryEntry(row);
     map.set(entry.slug, entry);
   }
   return map;

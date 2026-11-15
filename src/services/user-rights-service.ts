@@ -1,8 +1,8 @@
+import type { PoolClient } from 'pg';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 
 import { InvalidRequestError, NotFoundError } from '../lib/errors.js';
 import {
-  getUserRoles,
   isValidRole,
   SITE_ADMIN_ROLE,
   VALID_ROLES,
@@ -112,7 +112,8 @@ export async function searchVerifiedUsersWithRights(
 
 export async function getVerifiedUserRights(
   dal: DataAccessLayer,
-  userId: string
+  userId: string,
+  transaction?: PoolClient
 ): Promise<UserRightsSummary | null> {
   const result = await dal.query(
     `SELECT
@@ -126,7 +127,8 @@ export async function getVerifiedUserRights(
      WHERE u.id = $1
        AND u.email_verified_at IS NOT NULL
      GROUP BY u.id, u.username, u.display_name, u.email`,
-    [userId]
+    [userId],
+    transaction
   );
 
   return result.rows[0] ? mapUserRightsRow(result.rows[0]) : null;
@@ -140,56 +142,48 @@ export async function updateUserRightsBelowSiteAdmin(
   const uniqueDesiredRoles = [...new Set(desiredEditableRoles)];
   assertEditableRolesOnly(uniqueDesiredRoles);
 
-  const beforeUser = await getVerifiedUserRights(dal, userId);
-  if (!beforeUser) {
-    throw new NotFoundError('Verified user not found.', { userId });
-  }
+  return dal.transaction(async transaction => {
+    // Serialize replacements before reading roles, including users with no roles yet.
+    const locked = await dal.query(
+      'SELECT id FROM users WHERE id = $1 AND email_verified_at IS NOT NULL FOR UPDATE',
+      [userId],
+      transaction
+    );
+    if (!locked.rows.length) {
+      throw new NotFoundError('Verified user not found.', { userId });
+    }
 
-  const beforeRoles = await getUserRoles(dal, userId);
-  const normalizedBeforeRoles = normalizeRoles(beforeRoles);
-  const beforeEditableRoles = new Set(
-    normalizedBeforeRoles.filter((role): role is EditableUserRight =>
-      EDITABLE_USER_RIGHTS.includes(role as EditableUserRight)
-    )
-  );
-  const desiredRoleSet = new Set(uniqueDesiredRoles as EditableUserRight[]);
+    const beforeUser = await getVerifiedUserRights(dal, userId, transaction);
+    if (!beforeUser) {
+      throw new NotFoundError('Verified user not found.', { userId });
+    }
+    const beforeRoles = beforeUser.roles;
+    const desiredRoleSet = new Set(uniqueDesiredRoles as EditableUserRight[]);
+    const changes = EDITABLE_USER_RIGHTS.map(role => ({
+      role,
+      before: beforeRoles.includes(role),
+      after: desiredRoleSet.has(role),
+    })).filter(change => change.before !== change.after);
 
-  const changes = EDITABLE_USER_RIGHTS.map(role => ({
-    role,
-    before: beforeEditableRoles.has(role),
-    after: desiredRoleSet.has(role),
-  })).filter(change => change.before !== change.after);
-
-  if (changes.length) {
-    await dal.query('BEGIN');
-    try {
-      await dal.query('DELETE FROM user_roles WHERE user_id = $1 AND role = ANY($2::text[])', [
-        userId,
-        EDITABLE_USER_RIGHTS,
-      ]);
-
+    if (changes.length) {
+      await dal.query(
+        'DELETE FROM user_roles WHERE user_id = $1 AND role = ANY($2::text[])',
+        [userId, EDITABLE_USER_RIGHTS],
+        transaction
+      );
       for (const role of uniqueDesiredRoles) {
         await dal.query(
           'INSERT INTO user_roles (user_id, role) VALUES ($1, $2) ON CONFLICT (user_id, role) DO NOTHING',
-          [userId, role]
+          [userId, role],
+          transaction
         );
       }
-      await dal.query('COMMIT');
-    } catch (error) {
-      await dal.query('ROLLBACK');
-      throw error;
     }
-  }
 
-  const afterUser = await getVerifiedUserRights(dal, userId);
-  if (!afterUser) {
-    throw new NotFoundError('Verified user not found.', { userId });
-  }
-
-  return {
-    user: afterUser,
-    changes,
-    beforeRoles: normalizedBeforeRoles,
-    afterRoles: afterUser.roles,
-  };
+    const afterUser = await getVerifiedUserRights(dal, userId, transaction);
+    if (!afterUser) {
+      throw new NotFoundError('Verified user not found.', { userId });
+    }
+    return { user: afterUser, changes, beforeRoles, afterRoles: afterUser.roles };
+  });
 }

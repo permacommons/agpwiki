@@ -37,6 +37,7 @@ import {
 import { isFollowingPage } from '../services/page-subscription-service.js';
 import { listPositionReplies, listWithdrawnPositionsWithReplies } from '../services/position-reply-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
+import { loadUserDisplayNames } from '../services/user-lookup-service.js';
 import { findCurrentPageBySlugOrAlias, readWikiPage } from '../services/wiki-page-service.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
@@ -218,10 +219,8 @@ export const renderPositionsSection = async (
   const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
   const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
   const missing = [...signoffs, ...withdrawn].map(signoff => signoff.userId).filter(id => !userMap.has(id));
-  if (missing.length) {
-    const result = await dalInstance.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [missing]);
-    for (const row of result.rows as Array<{ id: string; display_name: string }>) userMap.set(row.id, row.display_name);
-  }
+  const missingNames = await loadUserDisplayNames(dalInstance, missing);
+  for (const [id, name] of missingNames) userMap.set(id, name);
   const session = await resolveSessionUser(req);
   const followedThreadIds = await listFollowedThreadIds(
     dalInstance,

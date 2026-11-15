@@ -139,6 +139,7 @@ import {
   markSiteNotificationsRead,
   markSiteNotificationsReadByIds,
 } from '../services/site-notification-service.js';
+import { loadUserDisplayNames } from '../services/user-lookup-service.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -1371,15 +1372,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       for (const thread of replies.values()) {
         for (const reply of thread.replies) if (reply.authorId) userIds.add(reply.authorId);
       }
-      const names = new Map<string, string>();
-      if (userIds.size) {
-        const result = await dal.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [
-          [...userIds],
-        ]);
-        for (const row of result.rows as Array<{ id: string; display_name: string }>) {
-          names.set(row.id, row.display_name);
-        }
-      }
+      const names = await loadUserDisplayNames(dal, userIds);
       return {
         slug: page.slug,
         currentRevId: page.currentRevId,

@@ -34,11 +34,11 @@ export type MentionPayload = MentionSource & {
 type EnqueueJob = (type: string, payload: MentionPayload) => Promise<unknown>;
 
 /** Which of these normalized names are usernames: name -> account. */
-export const resolveMentionedUsers = async (dal: DataAccessLayer, names: string[]) => {
+export const resolveMentionedUsers = async (_dal: DataAccessLayer, names: string[]) => {
   const users = new Map<string, { id: string; username: string }>();
   if (!names.length) return users;
-  const result = await dal.query('SELECT id, username FROM users WHERE username = ANY($1)', [names]);
-  for (const row of result.rows as Array<{ id: string; username: string }>) {
+  const matches = await User.filterWhere({}).whereIn('username', names).select('id', 'username');
+  for (const row of matches) {
     users.set(row.username, { id: row.id, username: row.username });
   }
   return users;

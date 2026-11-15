@@ -9,6 +9,7 @@ import {
 import type { LocalizedMapInput } from '../lib/localized.js';
 import { resolvePageAddress } from '../lib/page-address.js';
 import PageAlias from '../models/page-alias.js';
+import WikiPage from '../models/wiki-page.js';
 import { checkNewPage } from './duplicate-check-service.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
 import { findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
@@ -34,12 +35,13 @@ export interface PublishDraftResult extends WikiPageResult {
   draftSlug: string;
 }
 
-const findPageCreator = async (dalInstance: DataAccessLayer, pageId: string) => {
-  const result = await dalInstance.query(
-    'SELECT _rev_user FROM pages WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date ASC LIMIT 1',
-    [pageId]
-  );
-  return (result.rows[0] as { _rev_user: string | null } | undefined)?._rev_user ?? null;
+const findPageCreator = async (_dalInstance: DataAccessLayer, pageId: string) => {
+  const first = await WikiPage.filterWhere({})
+    .getAllRevisions(pageId)
+    .orderBy('_revDate', 'ASC')
+    .select('_revUser')
+    .first();
+  return first?._revUser ?? null;
 };
 
 /** The draft's creator, experienced editors and wiki admins may publish it. */

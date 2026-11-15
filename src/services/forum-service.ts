@@ -325,13 +325,9 @@ export const resolveForumPageTarget = async (
 export const listForumCategories = async (
   dalInstance: DataAccessLayer
 ): Promise<ForumCategoryListItem[]> => {
-  const threadRows = await dalInstance.query(
-    `SELECT category, COUNT(*)::int AS thread_count
-     FROM ${ForumThread.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false AND attached_type IS NULL
-     GROUP BY category`,
-    []
-  );
+  const counts = await ForumThread.filterWhere({ attachedType: null })
+    .groupBy('category')
+    .aggregateGrouped('COUNT');
 
   const latestRows = await dalInstance.query(
     `SELECT DISTINCT ON (t.category)
@@ -354,9 +350,6 @@ export const listForumCategories = async (
     []
   );
 
-  const counts = new Map<string, number>(
-    threadRows.rows.map(row => [row.category as string, Number(row.thread_count) || 0])
-  );
   const latestByCategory = new Map(
     latestRows.rows.map(row => [
       row.category as string,
@@ -421,23 +414,15 @@ export const listForumThreads = async (
 };
 
 export const readForumThread = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadId: string
 ): Promise<ForumThreadDetailResult> => {
   const thread = await requireThread(threadId);
-  const result = await dalInstance.query(
-    `SELECT *
-     FROM ${ForumComment.tableName}
-     WHERE thread_id = $1
-       AND _old_rev_of IS NULL
-       AND _rev_deleted = false
-     ORDER BY created_at ASC, _rev_date ASC`,
-    [thread.id]
-  );
-
-  const comments = result.rows.map(row =>
-    toForumCommentResult(ForumComment.createFromRow(row))
-  );
+  const rows = await ForumComment.filterWhere({ threadId: thread.id })
+    .orderBy('createdAt', 'ASC')
+    .orderBy('_revDate', 'ASC')
+    .run();
+  const comments = rows.map(toForumCommentResult);
 
   return {
     thread: {
