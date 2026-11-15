@@ -1,7 +1,8 @@
 # Raw SQL and rev-dal audit
 
 Reviewed 2026-11-15 against the sibling rev-dal documentation and implementation.
-This is an assessment and implementation backlog. P0 has since been implemented.
+This is an assessment and implementation backlog. P0 and the blog revision-history
+portion of P1 have since been implemented.
 
 ## Scope and baseline
 
@@ -57,6 +58,12 @@ Verification: force failure after DELETE and verify assignments survive; run two
 updates concurrently and verify the returned summaries and preserved site-admin role.
 
 ### P1: use existing query and projection APIs
+
+**Implemented:** blog history listing, revision reads, and diff lookups use
+`getAllRevisions` / `getRevisionByRevId`, with explicit descending list order.
+Service integration coverage checks archived and deleted historical revisions,
+current/default and explicit diff targets, document scoping, and missing/deleted
+posts. The remaining items below are still opportunities.
 
 These have the best ratio of simplification to implementation risk. No general
 SQL expression API is needed.
@@ -242,3 +249,5 @@ and remove archived history too, which may differ from a fixture's exact SQL.
 The original assessment was documentation-only. The P0 implementation passed
 the targeted rights integration tests, all 632 tests in the full suite, lint,
 and typecheck.
+The blog history migration passed its targeted integration test, all 633 tests
+in the full suite, lint, and typecheck.
