@@ -232,6 +232,7 @@
     "reviewAccounts": "Review accounts",
     "userRights": "User rights",
     "signOut": "Sign out",
+    "yourProfile": "Your profile",
     "help": "Help",
     "menu": "Menu",
     "permanentLink": "Permanent link",
@@ -1008,6 +1009,7 @@
       "errorCaptcha": "Please complete the verification challenge.",
       "errorEmailUnavailable": "We couldn't create an account with that email address.",
       "errorUsernameInvalid": "Usernames may not contain @.",
+      "errorUsernameProfileInvalid": "Choose another display name. Its username must not contain /, be . or .., or be reserved for a profile action (such as discussion or checks).",
       "errorUsernameTaken": "That username is already in use.",
       "errorRateLimited": "Too many account creation attempts from this network. Please try again later.",
       "emailWarning": "We're sorry, but email service is currently unavailable, preventing account confirmation. Please try again at a later time."
@@ -1313,5 +1315,39 @@
     "sectionThreads": "Threads not about one page",
     "discussedPages": "Pages with recent discussion",
     "noDiscussedPages": "No page has been discussed yet."
+  },
+  /*
+   i18n-identical-allowlist:
+   {
+     // Also the local words in these languages.
+     "es": ["profile.account.roles"],
+     "it": ["profile.account.title"],
+     "nl": ["profile.account.title"]
+   }
+  */
+  // Contributor profiles at /user/<username>: the profile, its account box and its Talk tab.
+  "profile": {
+    "label": "PROFILE — AGPEDIA CONTRIBUTOR",
+    "tabProfile": "Profile",
+    "tabTalk": "Talk",
+    "empty": "{{name}} has not written anything here yet.",
+    "emptyOwn": "You have not written your profile yet.",
+    "write": "Write your profile",
+    "edit": "Edit profile",
+    "editForbidden": "Only this contributor and wiki admins can edit this profile.",
+    "talkIntro": "Messages to {{username}}. Anyone signed in with a confirmed email address can write here. {{username}} is notified of every new message.",
+    "talkTitle": "Talk: {{name}}",
+    "forumSection": "Contributors",
+    "account": {
+      "title": "Account",
+      "username": "Username",
+      "displayName": "Display name",
+      "activeSince": "Active since",
+      "edits": "Edits",
+      "pagesCreated": "Pages created",
+      "comments": "Comments",
+      "roles": "Roles",
+      "editsBreakdown": "Edits by kind:"
+    }
   }
 }

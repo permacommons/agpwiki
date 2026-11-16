@@ -11,6 +11,7 @@
     reviewAccounts: 'Tinjau akun',
     userRights: 'Hak pengguna',
     signOut: 'Keluar',
+    "yourProfile": "Profil Anda",
     help: 'Bantuan',
     menu: 'Menu navigasi',
     permanentLink: 'Tautan permanen',
@@ -685,6 +686,7 @@
       errorCaptcha: 'Selesaikan tantangan verifikasi.',
       errorEmailUnavailable: 'Kami tidak dapat membuat akun dengan alamat surel tersebut.',
       errorUsernameInvalid: 'Nama pengguna tidak boleh mengandung @.',
+      errorUsernameProfileInvalid: "Pilih nama tampilan lain. Nama pengguna yang dihasilkan tidak boleh mengandung /, berupa . atau .., atau merupakan nama yang dicadangkan untuk tindakan profil (seperti discussion atau checks).",
       errorUsernameTaken: 'Nama pengguna itu sudah digunakan.',
       errorRateLimited: 'Terlalu banyak percobaan pembuatan akun dari jaringan ini. Coba lagi nanti.',
       emailWarning: 'Maaf, layanan surel saat ini tidak tersedia, sehingga konfirmasi akun tidak dapat dilakukan. Coba lagi nanti.',
@@ -1007,4 +1009,28 @@
     "discussedPages": "Halaman dengan diskusi terbaru",
     "noDiscussedPages": "Belum ada halaman yang didiskusikan.",
   },
+  "profile": {
+    "label": "PROFIL — KONTRIBUTOR AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Pembicaraan",
+    "empty": "{{name}} belum menulis apa pun di sini.",
+    "emptyOwn": "Kamu belum menulis profilmu.",
+    "write": "Tulis profilmu",
+    "edit": "Sunting profil",
+    "editForbidden": "Hanya kontributor ini dan admin wiki yang dapat menyunting profil ini.",
+    "talkIntro": "Pesan untuk {{username}}. Siapa pun yang masuk dengan alamat email terkonfirmasi dapat menulis di sini. {{username}} diberi tahu tentang setiap pesan baru.",
+    "talkTitle": "Pembicaraan: {{name}}",
+    "forumSection": "Kontributor",
+    "account": {
+      "title": "Akun",
+      "username": "Nama pengguna",
+      "displayName": "Nama tampilan",
+      "activeSince": "Aktif sejak",
+      "edits": "Suntingan",
+      "pagesCreated": "Halaman dibuat",
+      "comments": "Komentar",
+      "roles": "Peran",
+      "editsBreakdown": "Suntingan menurut jenis:"
+    }
+  }
 }

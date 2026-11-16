@@ -4,6 +4,7 @@ import { commentAnchor, discussionPath, positionAnchor } from '../../lib/discuss
 import { forumCommentDeletePath, forumCommentHistoryPath } from '../../lib/forum-paths.js';
 import { linkMentionsInEscapedText, type MentionMap } from '../../lib/mentions.js';
 import { splitEscapedTextUrls } from '../../lib/plain-text-urls.js';
+import { renderUserLink } from '../../lib/profile-paths.js';
 import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
 import {
@@ -125,7 +126,7 @@ export const renderPageSignoffs = ({
         )}</button></form>`
       : '';
     return `<article class="discussion-comment discussion-comment--reply page-signoff-reply" id="${commentAnchor(reply.id)}" data-comment-edit>
-  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale, renderAgentLabel(reply, name, t))}
+  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale, renderAgentLabel(reply, name, t), reply.authorId ? usernames.get(reply.authorId) : null)}
   <div class="discussion-comment-body" data-comment-content${reply.bodyLanguage ? ` lang="${escapeHtml(reply.bodyLanguage)}"` : ''} dir="auto">${reply.bodyHtml}</div>
   <div class="discussion-comment-actions" data-comment-actions>
     ${replyTrigger(signoff, reply.authorId ? usernames.get(reply.authorId) : undefined)}
@@ -187,7 +188,7 @@ export const renderPageSignoffs = ({
     }) : '';
     const metaHtml = `<span class="page-signoff-stance page-signoff-stance--${signoff.stance}">${escapeHtml(
       stanceLabel(signoff.stance, t)
-    )}</span> <strong class="discussion-author">${escapeHtml(name)}</strong> <span class="discussion-date" title="${escapeHtml(
+    )}</span> <strong class="discussion-author">${renderUserLink(name, usernames.get(signoff.userId))}</strong> <span class="discussion-date" title="${escapeHtml(
       formatDateUTC(signoff.signedAt)
     )}">· ${escapeHtml(
       signoff.signedAt

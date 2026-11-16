@@ -11,6 +11,7 @@
     reviewAccounts: 'Granska konton',
     userRights: 'Användarrättigheter',
     signOut: 'Logga ut',
+    "yourProfile": "Din profil",
     help: 'Hjälp',
     menu: 'Meny',
     permanentLink: 'Permanent länk',
@@ -685,6 +686,7 @@
       errorCaptcha: 'Slutför verifieringsutmaningen.',
       errorEmailUnavailable: 'Vi kunde inte skapa ett konto med den e-postadressen.',
       errorUsernameInvalid: 'Användarnamn får inte innehålla @.',
+      errorUsernameProfileInvalid: "Välj ett annat visningsnamn. Användarnamnet som bildas av det får inte innehålla /, vara . eller .. eller vara reserverat för en profilåtgärd (som discussion eller checks).",
       errorUsernameTaken: 'Det användarnamnet används redan.',
       errorRateLimited: 'För många försök att skapa konto från det här nätverket. Försök igen senare.',
       emailWarning: 'Vi beklagar, men e-posttjänsten är för närvarande otillgänglig, vilket hindrar kontobekräftelse. Försök igen senare.',
@@ -1007,4 +1009,28 @@
     "discussedPages": "Sidor med aktuell diskussion",
     "noDiscussedPages": "Ingen sida har diskuterats ännu.",
   },
+  "profile": {
+    "label": "PROFIL — BIDRAGSGIVARE TILL AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Diskussion",
+    "empty": "{{name}} har inte skrivit något här än.",
+    "emptyOwn": "Du har inte skrivit din profil än.",
+    "write": "Skriv din profil",
+    "edit": "Redigera profil",
+    "editForbidden": "Bara den här bidragsgivaren och wikins administratörer kan redigera profilen.",
+    "talkIntro": "Meddelanden till {{username}}. Alla som är inloggade med en bekräftad e-postadress kan skriva här. {{username}} meddelas om varje nytt meddelande.",
+    "talkTitle": "Diskussion: {{name}}",
+    "forumSection": "Bidragsgivare",
+    "account": {
+      "title": "Konto",
+      "username": "Användarnamn",
+      "displayName": "Visningsnamn",
+      "activeSince": "Aktiv sedan",
+      "edits": "Redigeringar",
+      "pagesCreated": "Skapade sidor",
+      "comments": "Kommentarer",
+      "roles": "Roller",
+      "editsBreakdown": "Redigeringar per typ:"
+    }
+  }
 }

@@ -32,7 +32,7 @@ const main = async () => {
       throw new Error('Display name, email, and password are required.');
     }
     if (!isValidUsername(displayName)) {
-      throw new Error('Usernames may not contain @.');
+      throw new Error('Usernames must not contain @ or /, be . or .., or use a reserved profile action name.');
     }
 
     const dal = await initializePostgreSQL();

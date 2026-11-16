@@ -37,6 +37,9 @@
           </span>
         </summary>
         <div class="user-menu-panel">
+          {{#if currentUserProfilePath}}
+          <a class="user-menu-link" href="{{currentUserProfilePath}}">{{__ "nav.yourProfile"}}</a>
+          {{/if}}
           {{#if isSiteAdmin}}
           <a class="user-menu-link" href="/tool/review-accounts">{{__ "nav.reviewAccounts"}}</a>
           <a class="user-menu-link" href="/tool/user-rights">{{__ "nav.userRights"}}</a>

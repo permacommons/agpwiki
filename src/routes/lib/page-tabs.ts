@@ -13,8 +13,12 @@ export interface PageTabsParams {
   discussCount: number;
   // True on the page's discussion: the Discuss tab is the current one.
   discussCurrent?: boolean;
-  editHref: string;
-  historyHref?: string;
+  // Null leaves the tab out, as for someone else's profile.
+  editHref: string | null;
+  historyHref?: string | null;
+  // A profile names its tabs Profile and Talk.
+  pageLabel?: string;
+  discussLabel?: string;
   // Shown to signed-in readers: whether they follow the comments on the page.
   follow?: { slug: string; following: boolean; returnTo: string; action: string };
   t: TFunction;
@@ -37,13 +41,17 @@ export const renderPageTabs = ({
   discussCurrent = false,
   editHref,
   historyHref = `#${HISTORY_ANCHOR}`,
+  pageLabel,
+  discussLabel,
   follow,
   t,
 }: PageTabsParams): string => {
   const left = [
-    tab(pageHref, t(isArticle ? 'pageTabs.article' : 'pageTabs.page'), { current: isCurrentView && !discussCurrent }),
+    tab(pageHref, pageLabel ?? t(isArticle ? 'pageTabs.article' : 'pageTabs.page'), {
+      current: isCurrentView && !discussCurrent,
+    }),
     discussHref
-      ? tab(discussHref, t('pageTabs.discuss'), {
+      ? tab(discussHref, discussLabel ?? t('pageTabs.discuss'), {
           current: discussCurrent,
           countHtml: discussCount > 0 ? ` <span class="page-tab-count">${discussCount}</span>` : '',
         })
@@ -58,8 +66,8 @@ export const renderPageTabs = ({
       help: t(follow.following ? 'pageTabs.followingHelp' : 'pageTabs.followHelp'),
       t,
     }) : '',
-    isCurrentView ? tab(editHref, t('pageTabs.edit'), { className: 'page-tab--edit' }) : '',
-    tab(historyHref, t('pageTabs.history')),
+    isCurrentView && editHref ? tab(editHref, t('pageTabs.edit'), { className: 'page-tab--edit' }) : '',
+    historyHref ? tab(historyHref, t('pageTabs.history')) : '',
   ];
   return `<nav class="page-tabs" aria-label="${escapeHtml(t('pageTabs.label'))}">${left.join('')}<span class="page-tabs-spacer"></span>${right.join('')}</nav>`;
 };

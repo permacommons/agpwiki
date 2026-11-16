@@ -11,6 +11,7 @@
     reviewAccounts: 'Fiókok áttekintése',
     userRights: 'Felhasználói jogok',
     signOut: 'Kijelentkezés',
+    "yourProfile": "Profilod",
     help: 'Súgó',
     menu: 'Menü',
     permanentLink: 'Állandó hivatkozás',
@@ -685,6 +686,7 @@
       errorCaptcha: 'Kérjük, végezd el az ellenőrző feladatot.',
       errorEmailUnavailable: 'Ezzel az e-mail-címmel nem sikerült fiókot létrehozni.',
       errorUsernameInvalid: 'A felhasználónevek nem tartalmazhatnak @ jelet.',
+      errorUsernameProfileInvalid: "Válassz másik megjelenítendő nevet. Az abból képzett felhasználónév nem tartalmazhat / jelet, nem lehet . vagy .., és nem lehet profilművelet számára fenntartott név (például discussion vagy checks).",
       errorUsernameTaken: 'Ez a felhasználónév már foglalt.',
       errorRateLimited: 'Túl sok fióklétrehozási kísérlet erről a hálózatról. Próbáld meg később újra.',
       emailWarning: 'Sajnáljuk, de az e-mail-szolgáltatás jelenleg nem érhető el, ezért a fiók megerősítése nem lehetséges. Próbáld meg később újra.',
@@ -1007,4 +1009,28 @@
     "discussedPages": "Friss vitával rendelkező oldalak",
     "noDiscussedPages": "Még egyik oldalról sem volt vita.",
   },
+  "profile": {
+    "label": "PROFIL — AGPEDIA-SZERKESZTŐ",
+    "tabProfile": "Profil",
+    "tabTalk": "Vita",
+    "empty": "{{name}} még nem írt ide semmit.",
+    "emptyOwn": "Még nem írtad meg a profilodat.",
+    "write": "Profil megírása",
+    "edit": "Profil szerkesztése",
+    "editForbidden": "Ezt a profilt csak a gazdája és a wiki adminisztrátorai szerkeszthetik.",
+    "talkIntro": "Üzenetek {{username}} részére. Bárki írhat ide, aki megerősített e-mail-címmel jelentkezett be. {{username}} minden új üzenetről értesítést kap.",
+    "talkTitle": "Vita: {{name}}",
+    "forumSection": "Szerkesztők",
+    "account": {
+      "title": "Fiók",
+      "username": "Felhasználónév",
+      "displayName": "Megjelenített név",
+      "activeSince": "Aktív ekkortól",
+      "edits": "Szerkesztések",
+      "pagesCreated": "Létrehozott lapok",
+      "comments": "Hozzászólások",
+      "roles": "Szerepkörök",
+      "editsBreakdown": "Szerkesztések típus szerint:"
+    }
+  }
 }

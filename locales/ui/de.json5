@@ -12,6 +12,7 @@
     reviewAccounts: 'Konten prüfen',
     userRights: 'Benutzerrechte',
     signOut: 'Abmelden',
+    "yourProfile": "Dein Profil",
     help: 'Hilfe',
     menu: 'Menü',
     permanentLink: 'Permanenter Link',
@@ -682,6 +683,7 @@
       errorCaptcha: 'Bitte schließe die Verifizierungsaufgabe ab.',
       errorEmailUnavailable: 'Mit dieser E-Mail-Adresse konnte kein Konto erstellt werden.',
       errorUsernameInvalid: 'Benutzernamen dürfen kein @ enthalten.',
+      errorUsernameProfileInvalid: "Wähle einen anderen Anzeigenamen. Der daraus gebildete Benutzername darf kein / enthalten, nicht . oder .. sein und nicht für eine Profilaktion reserviert sein (etwa discussion oder checks).",
       errorUsernameTaken: 'Dieser Benutzername ist bereits vergeben.',
       errorRateLimited: 'Zu viele Kontenerstellungsversuche aus diesem Netzwerk. Bitte versuche es später erneut.',
       emailWarning: 'Es tut uns leid, aber der E-Mail-Dienst ist derzeit nicht verfügbar, sodass die Kontobestätigung nicht möglich ist. Bitte versuche es später erneut.',
@@ -1004,4 +1006,28 @@
     "discussedPages": "Seiten mit aktueller Diskussion",
     "noDiscussedPages": "Noch keine Seite wurde diskutiert.",
   },
+  "profile": {
+    "label": "PROFIL — MITWIRKENDE BEI AGPEDIA",
+    "tabProfile": "Profil",
+    "tabTalk": "Diskussion",
+    "empty": "{{name}} hat hier noch nichts geschrieben.",
+    "emptyOwn": "Du hast dein Profil noch nicht geschrieben.",
+    "write": "Profil schreiben",
+    "edit": "Profil bearbeiten",
+    "editForbidden": "Nur diese Person und Wiki-Admins können dieses Profil bearbeiten.",
+    "talkIntro": "Nachrichten an {{username}}. Alle, die mit bestätigter E-Mail-Adresse angemeldet sind, können hier schreiben. {{username}} wird über jede neue Nachricht benachrichtigt.",
+    "talkTitle": "Diskussion: {{name}}",
+    "forumSection": "Mitwirkende",
+    "account": {
+      "title": "Konto",
+      "username": "Benutzername",
+      "displayName": "Anzeigename",
+      "activeSince": "Aktiv seit",
+      "edits": "Bearbeitungen",
+      "pagesCreated": "Erstellte Seiten",
+      "comments": "Kommentare",
+      "roles": "Rollen",
+      "editsBreakdown": "Bearbeitungen nach Art:"
+    }
+  }
 }
