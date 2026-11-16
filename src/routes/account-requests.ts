@@ -522,7 +522,7 @@ export const registerAccountRequestRoutes = (app: Express) => {
       renderToolLayout(
         res,
         req.t('account.create.title'),
-        renderCreateAccountForm(req, { displayName, email }, req.t('account.create.errorUsernameInvalid'))
+        renderCreateAccountForm(req, { displayName, email }, req.t(username.includes('@') ? 'account.create.errorUsernameInvalid' : 'account.create.errorUsernameProfileInvalid'))
       );
       return;
     }

@@ -1008,6 +1008,7 @@
       "errorCaptcha": "Please complete the verification challenge.",
       "errorEmailUnavailable": "We couldn't create an account with that email address.",
       "errorUsernameInvalid": "Usernames may not contain @.",
+      "errorUsernameProfileInvalid": "Choose another display name. Its username must not contain /, be . or .., or be reserved for a profile action (such as discussion or checks).",
       "errorUsernameTaken": "That username is already in use.",
       "errorRateLimited": "Too many account creation attempts from this network. Please try again later.",
       "emailWarning": "We're sorry, but email service is currently unavailable, preventing account confirmation. Please try again at a later time."
