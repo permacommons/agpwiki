@@ -20,7 +20,7 @@ import { createForumComment, createForumThread } from '../src/services/forum-ser
 import { getWikiPageEditability } from '../src/services/page-protection-service.js';
 import { loadAccountSummary } from '../src/services/profile-service.js';
 import { grantRoleUpsert, WIKI_ADMIN_ROLE } from '../src/services/roles.js';
-import { createWikiPage, searchWikiPages, updateWikiPage } from '../src/services/wiki-page-service.js';
+import { addWikiPageAlias, createWikiPage, readWikiPage, searchWikiPages, updateWikiPage } from '../src/services/wiki-page-service.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -284,4 +284,37 @@ test('Histories name each contributor with a link, so the date tooltip names onl
   assert.ok(html.includes('<a class="user-link" href="/user/exampleeditor">Example Editor</a>'));
   assert.ok(html.includes('title="agent:claude.ai · agent_version:1.0.0"'));
   assert.ok(!html.includes('history.operator'));
+});
+
+test('Profile addresses cannot be claimed as aliases, even before their text exists', async () => {
+  const dal = await getDal();
+  const owner = await createTestUser('aliasowner');
+  const other = await createTestUser('aliasother');
+  const admin = await createTestUser('aliasadmin');
+  await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+  const page = await createWikiPage(dal, {
+    slug: `alias-target-${other.username}`,
+    title: { en: other.username },
+    body: { en: 'An ordinary page.' },
+  }, other.id);
+
+  for (const actor of [other, owner, admin]) {
+    for (const slug of [
+      profileSlug(owner.username),
+      `USER/${owner.username.toUpperCase()}`,
+      `user/nobody${owner.username}`,
+      `${profileSlug(owner.username)}/notes`,
+    ]) {
+      await assert.rejects(
+        addWikiPageAlias(dal, { slug, pageSlug: page.slug }, actor.id),
+        InvalidRequestError
+      );
+    }
+  }
+
+  const profile = await writeProfile(dal, owner.username, owner.id);
+  assert.equal((await readWikiPage(dal, profile.slug)).id, profile.id);
+  const aliasSlug = `contributor-${owner.username}`;
+  await addWikiPageAlias(dal, { slug: aliasSlug, pageSlug: profile.slug }, owner.id);
+  assert.equal((await readWikiPage(dal, aliasSlug)).id, profile.id);
 });

@@ -1573,6 +1573,12 @@ export async function addWikiPageAlias(
     });
   }
 
+  if (isProfileSlug(normalizedSlug)) {
+    throw new InvalidRequestError('Contributor profile addresses cannot be aliases.', {
+      slug: normalizedSlug,
+    });
+  }
+
   const page = await findCurrentPageBySlugOrAlias(normalizedPageSlug);
   if (!page) {
     throw new NotFoundError(`Wiki page not found: ${normalizedPageSlug}`, {
