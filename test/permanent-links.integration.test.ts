@@ -1,4 +1,6 @@
 import './_use-database.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
@@ -11,6 +13,7 @@ import hbs from 'hbs';
 
 import { initializePostgreSQL } from '../src/db.js';
 import { createMcpServer } from '../src/mcp/core.js';
+import { registerDiscussionRoutes } from '../src/routes/discussion.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { listPageDiscussionSlugs } from '../src/services/discussion-service.js';
 import { findCurrentPageIdBySlug, resolvePageSlugOrId } from '../src/services/page-lookup-service.js';
@@ -47,6 +50,7 @@ const startServer = async () => {
     }) as express.Response['render'];
     next();
   });
+  registerDiscussionRoutes(app);
   registerPageRoutes(app);
   const server = http.createServer(app);
   await new Promise<void>((resolve, reject) => {
@@ -231,4 +235,64 @@ test('The Tools menu offers the permanent link on pages only, without showing th
   assert.equal(onPage.split('82796d63').length - 1, 1);
 
   assert.doesNotMatch(render({}), /data-permanent-link/);
+});
+
+test('MCP creates bare action names and comments pages that remain readable on the web', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  const web = await startServer();
+  const { server } = createMcpServer({ skipPolicyCheck: true });
+  const client = new Client({ name: 'slug-routing-test', version: '1' });
+  try {
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const send = clientTransport.send.bind(clientTransport);
+    clientTransport.send = (message, options) => send(message, {
+      ...options, authInfo: { token: 'test', clientId: 'test', scopes: [], extra: { userId: user.id } },
+    });
+    await server.connect(serverTransport);
+    await client.connect(clientTransport);
+
+    for (const slug of [
+      'comments', 'meta/comments', 'foo/comments', 'checks', 'discussion',
+      'operator-edit', 'operator-edit/dismiss-banner', 'publish-draft',
+      'proposal-links', 'proposal-status', 'position-reply', 'sign-off',
+    ]) {
+      const result = await client.callTool({
+        name: 'wiki_createPage',
+        arguments: {
+          slug, title: { en: randomUUID() }, body: { en: 'Routing fixture.' },
+          canonicalLanguage: 'en', policyHash: 'test',
+        },
+      });
+      assert.notEqual(result.isError, true, JSON.stringify(result));
+      const page = result.structuredContent as { id: string };
+      const response = await fetch(`${web.url}/${slug}`);
+      assert.equal(response.status, 200, slug);
+      const rendered = await response.json() as { permanentLinkUrl: string };
+      assert.ok(rendered.permanentLinkUrl.endsWith(`/id/${page.id}`), slug);
+    }
+
+    for (const slug of [
+      'foo/discussion', 'foo/checks', 'foo/checks/bar', 'foo/operator-edit',
+      'foo/operator-edit/dismiss-banner', 'foo/publish-draft', 'foo/proposal-links',
+      'foo/proposal-status', 'foo/position-reply', 'foo/sign-off',
+    ]) {
+      const result = await client.callTool({
+        name: 'wiki_createPage',
+        arguments: { slug, title: { en: randomUUID() }, policyHash: 'test' },
+      });
+      assert.equal(result.isError, true, slug);
+      const payload = result.structuredContent as { error: { code: string; message: string } };
+      assert.equal(payload.error.code, 'invalid_request', slug);
+      assert.match(payload.error.message, /reserved/, slug);
+      await assert.rejects(
+        addWikiPageAlias(dal, { slug, pageSlug: 'discussion' }, user.id),
+        /reserved/
+      );
+    }
+  } finally {
+    await client.close();
+    await server.close();
+    await web.close();
+  }
 });
