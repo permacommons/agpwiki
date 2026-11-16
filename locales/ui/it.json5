@@ -11,6 +11,7 @@
     reviewAccounts: 'Revisione account',
     userRights: 'Diritti utente',
     signOut: 'Disconnetti',
+    "yourProfile": "Il tuo profilo",
     help: 'Aiuto',
     menu: 'Menu di navigazione',
     permanentLink: 'Link permanente',

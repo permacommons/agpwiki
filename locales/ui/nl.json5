@@ -12,6 +12,7 @@
     reviewAccounts: 'Accounts beoordelen',
     userRights: 'Gebruikersrechten',
     signOut: 'Afmelden',
+    "yourProfile": "Je profiel",
     help: 'Hulp',
     menu: 'Navigatiemenu',
     permanentLink: 'Permanente link',

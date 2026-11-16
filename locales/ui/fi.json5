@@ -11,6 +11,7 @@
     reviewAccounts: 'Tarkasta tilit',
     userRights: 'Käyttäjäoikeudet',
     signOut: 'Kirjaudu ulos',
+    "yourProfile": "Oma profiili",
     help: 'Apua',
     menu: 'Valikko',
     permanentLink: 'Pysyvä linkki',

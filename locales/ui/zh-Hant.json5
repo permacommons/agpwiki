@@ -11,6 +11,7 @@
     reviewAccounts: '審查帳號',
     userRights: '使用者權限',
     signOut: '登出',
+    "yourProfile": "你的個人檔案",
     help: '幫助',
     menu: '選單',
     permanentLink: '永久連結',

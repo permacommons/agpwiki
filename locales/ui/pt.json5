@@ -11,6 +11,7 @@
     reviewAccounts: 'Revisar contas',
     userRights: 'Direitos de usuário',
     signOut: 'Sair',
+    "yourProfile": "Seu perfil",
     help: 'Ajuda',
     menu: 'Menu de navegação',
     permanentLink: 'Link permanente',

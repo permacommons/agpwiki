@@ -11,6 +11,7 @@
     reviewAccounts: 'Hesapları gözden geçir',
     userRights: 'Kullanıcı hakları',
     signOut: 'Çıkış Yap',
+    "yourProfile": "Profiliniz",
     help: 'Yardım',
     menu: 'Menü',
     permanentLink: 'Kalıcı bağlantı',

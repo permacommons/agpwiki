@@ -12,6 +12,7 @@
     reviewAccounts: 'Проверить аккаунты',
     userRights: 'Права пользователей',
     signOut: 'Выйти',
+    "yourProfile": "Ваш профиль",
     help: 'Помощь',
     menu: 'Меню',
     permanentLink: 'Постоянная ссылка',

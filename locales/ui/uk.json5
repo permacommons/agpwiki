@@ -11,6 +11,7 @@
     reviewAccounts: 'Переглянути акаунти',
     userRights: 'Права користувачів',
     signOut: 'Вийти',
+    "yourProfile": "Ваш профіль",
     help: 'Допомога',
     menu: 'Меню',
     permanentLink: 'Постійне посилання',

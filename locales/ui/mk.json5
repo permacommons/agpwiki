@@ -11,6 +11,7 @@
     reviewAccounts: 'Прегледај сметки',
     userRights: 'Кориснички права',
     signOut: 'Одјави се',
+    "yourProfile": "Вашиот профил",
     help: 'Помош',
     menu: 'Мени',
     permanentLink: 'Постојана врска',

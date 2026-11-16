@@ -11,6 +11,7 @@
     reviewAccounts: 'অ্যাকাউন্ট পর্যালোচনা',
     userRights: 'ব্যবহারকারীর অধিকার',
     signOut: 'সাইন আউট',
+    "yourProfile": "আপনার প্রোফাইল",
     help: 'সহায়তা',
     menu: 'মেনু',
     permanentLink: 'স্থায়ী লিংক',

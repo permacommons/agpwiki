@@ -11,6 +11,7 @@
     reviewAccounts: 'Granska konton',
     userRights: 'Användarrättigheter',
     signOut: 'Logga ut',
+    "yourProfile": "Din profil",
     help: 'Hjälp',
     menu: 'Meny',
     permanentLink: 'Permanent länk',

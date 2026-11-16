@@ -11,6 +11,7 @@
     reviewAccounts: 'مراجعة الحسابات',
     userRights: 'صلاحيات المستخدمين',
     signOut: 'خروج',
+    "yourProfile": "ملفك الشخصي",
     help: 'مساعدة',
     menu: 'القائمة',
     permanentLink: 'رابط دائم',

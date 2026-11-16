@@ -11,6 +11,7 @@
     reviewAccounts: '계정 검토',
     userRights: '사용자 권한',
     signOut: '로그아웃',
+    "yourProfile": "내 프로필",
     help: '도움말',
     menu: '메뉴',
     permanentLink: '고유 링크',

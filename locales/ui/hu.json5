@@ -11,6 +11,7 @@
     reviewAccounts: 'Fiókok áttekintése',
     userRights: 'Felhasználói jogok',
     signOut: 'Kijelentkezés',
+    "yourProfile": "Profilod",
     help: 'Súgó',
     menu: 'Menü',
     permanentLink: 'Állandó hivatkozás',

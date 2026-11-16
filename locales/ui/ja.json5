@@ -11,6 +11,7 @@
     reviewAccounts: 'アカウントの審査',
     userRights: 'ユーザー権限',
     signOut: 'ログアウト',
+    "yourProfile": "自分のプロフィール",
     help: 'ヘルプ',
     menu: 'メニュー',
     permanentLink: '固定リンク',

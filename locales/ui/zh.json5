@@ -11,6 +11,7 @@
     reviewAccounts: '审查账号',
     userRights: '用户权限',
     signOut: '退出',
+    "yourProfile": "你的个人资料",
     help: '帮助',
     menu: '菜单',
     permanentLink: '永久链接',

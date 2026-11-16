@@ -12,6 +12,7 @@
     reviewAccounts: 'Examiner les comptes',
     userRights: 'Droits utilisateur',
     signOut: 'Déconnexion',
+    "yourProfile": "Votre profil",
     help: 'Aide',
     menu: 'Navigation',
     permanentLink: 'Lien permanent',

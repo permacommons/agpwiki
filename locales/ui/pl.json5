@@ -11,6 +11,7 @@
     reviewAccounts: 'Przeglądaj konta',
     userRights: 'Uprawnienia użytkowników',
     signOut: 'Wyloguj',
+    "yourProfile": "Twój profil",
     help: 'Pomoc',
     menu: 'Menu nawigacji',
     permanentLink: 'Stały link',

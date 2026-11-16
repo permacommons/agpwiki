@@ -11,6 +11,7 @@
     reviewAccounts: 'Preglej račune',
     userRights: 'Uporabniške pravice',
     signOut: 'Odjava',
+    "yourProfile": "Vaš profil",
     help: 'Pomoč',
     menu: 'Meni',
     permanentLink: 'Trajna povezava',

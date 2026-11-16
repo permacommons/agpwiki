@@ -12,6 +12,7 @@
     reviewAccounts: 'Konten prüfen',
     userRights: 'Benutzerrechte',
     signOut: 'Abmelden',
+    "yourProfile": "Dein Profil",
     help: 'Hilfe',
     menu: 'Menü',
     permanentLink: 'Permanenter Link',
