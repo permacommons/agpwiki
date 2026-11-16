@@ -184,7 +184,7 @@ markdown.renderer.rules.link_open = (tokens, idx, options, env, self) => {
     }
     tokens[idx].attrSet('data-wiki-link', 'true');
     tokens[idx].attrSet('data-wiki-link-slug', slug);
-  } else if ((env as RenderEnv).nofollowLinks && href && /^[a-z][a-z0-9+.-]*:/i.test(href)) {
+  } else if ((env as RenderEnv).nofollowLinks && href && /^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(href)) {
     tokens[idx].attrSet('rel', 'nofollow ugc');
   }
 

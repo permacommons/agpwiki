@@ -197,3 +197,17 @@ test('renderMarkdown marks internal wiki links for previews and missing links as
     /<a href="\/existing-page" data-wiki-link="true" data-wiki-link-slug="existing-page">Existing<\/a>/
   );
 });
+
+test('Profile link protection covers explicit and protocol-relative external links only', async () => {
+  const markdown = '[HTTPS](https://example.com) [HTTP](http://example.com) [Relative protocol](//example.com) [Wiki](/example) [Section](#example)';
+  const { html } = await renderMarkdown(markdown, [], { nofollowLinks: true });
+  for (const href of ['https://example.com', 'http://example.com', '//example.com']) {
+    assert.ok(html.includes(`href="${href}" rel="nofollow ugc"`), href);
+  }
+  assert.match(html, /href="\/example" data-wiki-link=/);
+  assert.match(html, /href="#example">/);
+  assert.equal((html.match(/rel="nofollow ugc"/g) ?? []).length, 3);
+
+  const ordinary = await renderMarkdown(markdown, []);
+  assert.ok(!ordinary.html.includes('nofollow'));
+});
