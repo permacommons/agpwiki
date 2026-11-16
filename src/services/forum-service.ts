@@ -9,6 +9,7 @@ import {
 } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
 import { sanitizeLocalizedMapInput } from '../lib/localized.js';
+import { pickLocalizedText } from '../lib/notification-text.js';
 import { profileSlug } from '../lib/profile-paths.js';
 import { toAddressForm } from '../lib/slug.js';
 import { isUuid } from '../lib/uuid.js';
@@ -19,12 +20,9 @@ import type { ForumThreadInstance } from '../models/manifests/forum-thread.js';
 import { escapeHtml } from '../render.js';
 import { assertCanModerateForum } from './authorization.js';
 import { findCurrentPostBySlugOrAlias } from './blog-post-service.js';
-import {
-  enqueueForumReplyNotification,
-  subscribeActorToForumThread,
-} from './forum-notification-service.js';
-import { enqueueNotificationJob } from './notification-queue.js';
-import { notifyPageFollowersOfForumPost } from './page-comment-notification-service.js';
+import { subscribeActorToForumThread } from './forum-notification-service.js';
+import { notifyForumPost } from './forum-post-notification-service.js';
+import { notifyMentions } from './mention-service.js';
 import { findProfileOwnerBySlug } from './profile-service.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
@@ -76,6 +74,17 @@ export interface ForumCommentVersion {
   revUser: string | null;
   body: Record<string, string> | null;
   canonicalLanguage: string | null;
+  agentAuthored: boolean;
+  agentName: string | null;
+}
+
+/**
+ * An agent that wrote and posted a comment on its own, without its operator
+ * reading the text first. Only MCP tools set this; web posts never do.
+ */
+export interface CommentAgent {
+  // The MCP client name, as recorded in agent: revision tags.
+  name: string | null;
 }
 
 export interface ForumCommentResult {
@@ -84,6 +93,8 @@ export interface ForumCommentResult {
   parentId: string | null;
   body: Record<string, string> | null | undefined;
   canonicalLanguage: string | null | undefined;
+  agentAuthored: boolean;
+  agentName: string | null;
   createdAt: Date | null | undefined;
   updatedAt: Date | null | undefined;
   revDeleted?: boolean;
@@ -126,6 +137,9 @@ export interface CreateForumThreadInput {
   language: string;
   // Set by services only (never from a form): what the thread belongs to.
   attachment?: ForumThreadAttachment;
+  // Set by MCP tools only, for the opening comment.
+  agent?: CommentAgent | null;
+  tags?: string[];
 }
 
 export interface CreateForumCommentInput {
@@ -135,6 +149,9 @@ export interface CreateForumCommentInput {
   parentId?: string | null;
   body: string;
   language: string;
+  // Set by MCP tools only.
+  agent?: CommentAgent | null;
+  tags?: string[];
 }
 
 export interface UpdateForumThreadPinInput {
@@ -190,6 +207,8 @@ const toForumCommentResult = (comment: ForumCommentInstance): ForumCommentResult
   parentId: comment.parentId ?? null,
   body: comment.body ?? null,
   canonicalLanguage: comment.canonicalLanguage ?? null,
+  agentAuthored: Boolean(comment.agentAuthored),
+  agentName: comment.agentAuthored ? (comment.agentName ?? null) : null,
   createdAt: comment.createdAt ?? null,
   updatedAt: comment.updatedAt ?? null,
   revDeleted: comment._revDeleted ?? false,
@@ -249,6 +268,13 @@ const deleteAllEntityRevisions = async (
   return deleteAllRevisions.call(entity, { id: userId }, { tags: ['admin-delete'] });
 };
 
+const AGENT_NAME_MAX_LENGTH = 100;
+
+const applyCommentAgent = (comment: ForumCommentInstance, agent: CommentAgent | null | undefined) => {
+  comment.agentAuthored = Boolean(agent);
+  comment.agentName = agent?.name?.trim().slice(0, AGENT_NAME_MAX_LENGTH) || null;
+};
+
 const validateTitle = (title: string, errors: ValidationCollector) => {
   ensureString(title, 'title', errors);
   if (typeof title !== 'string') return;
@@ -303,13 +329,9 @@ export const resolveForumPageTarget = async (
 export const listForumCategories = async (
   dalInstance: DataAccessLayer
 ): Promise<ForumCategoryListItem[]> => {
-  const threadRows = await dalInstance.query(
-    `SELECT category, COUNT(*)::int AS thread_count
-     FROM ${ForumThread.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false AND attached_type IS NULL
-     GROUP BY category`,
-    []
-  );
+  const counts = await ForumThread.filterWhere({ attachedType: null })
+    .groupBy('category')
+    .aggregateGrouped('COUNT');
 
   const latestRows = await dalInstance.query(
     `SELECT DISTINCT ON (t.category)
@@ -332,9 +354,6 @@ export const listForumCategories = async (
     []
   );
 
-  const counts = new Map<string, number>(
-    threadRows.rows.map(row => [row.category as string, Number(row.thread_count) || 0])
-  );
   const latestByCategory = new Map(
     latestRows.rows.map(row => [
       row.category as string,
@@ -399,23 +418,15 @@ export const listForumThreads = async (
 };
 
 export const readForumThread = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadId: string
 ): Promise<ForumThreadDetailResult> => {
   const thread = await requireThread(threadId);
-  const result = await dalInstance.query(
-    `SELECT *
-     FROM ${ForumComment.tableName}
-     WHERE thread_id = $1
-       AND _old_rev_of IS NULL
-       AND _rev_deleted = false
-     ORDER BY created_at ASC, _rev_date ASC`,
-    [thread.id]
-  );
-
-  const comments = result.rows.map(row =>
-    toForumCommentResult(ForumComment.createFromRow(row))
-  );
+  const rows = await ForumComment.filterWhere({ threadId: thread.id })
+    .orderBy('createdAt', 'ASC')
+    .orderBy('_revDate', 'ASC')
+    .run();
+  const comments = rows.map(toForumCommentResult);
 
   return {
     thread: {
@@ -431,7 +442,7 @@ export const readForumComment = async (
 ): Promise<ForumCommentResult> => toForumCommentResult(await requireComment(commentId));
 
 export const createForumThread = async (
-  { category, pageSlug, title, body, language, attachment }: CreateForumThreadInput,
+  { category, pageSlug, title, body, language, attachment, agent, tags = [] }: CreateForumThreadInput,
   userId: string
 ): Promise<ForumThreadResult & { firstCommentId: string }> => {
   const errors = new ValidationCollector('Invalid forum thread input.');
@@ -519,11 +530,12 @@ export const createForumThread = async (
     await thread.save({ transaction });
     const comment = await ForumComment.createFirstRevision(
       { id: userId },
-      { tags: ['create'], date: createdAt }
+      { tags: [...tags, 'create'], date: createdAt }
     );
     comment.threadId = thread.id;
     comment.body = sanitizeLocalizedMapInput({ [language]: body });
     comment.canonicalLanguage = language;
+    applyCommentAgent(comment, agent);
     comment.createdAt = createdAt;
     comment.updatedAt = createdAt;
     await comment.save({ transaction });
@@ -537,19 +549,11 @@ export const createForumThread = async (
     debug.error(`Failed to auto-subscribe thread creator for thread ${thread.id}: ${message}`);
   }
 
-  // Attached threads hold replies to something on the page; whoever creates
-  // them notifies once the right people follow the thread.
-  if (normalizedPageSlug && !attachment) {
-    try {
-      await notifyPageFollowersOfForumPost(
-        ForumThread.dal as DataAccessLayer,
-        { threadId: thread.id, commentId: firstCommentId, actorUserId: userId, event: 'thread' },
-        enqueueNotificationJob
-      );
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      debug.error(`Failed to notify page followers of thread ${thread.id}: ${message}`);
-    }
+  // Position replies notify after their owner has subscribed to the new thread.
+  if (!attachment) {
+    await notifyForumPost(ForumThread.dal as DataAccessLayer, {
+      threadId: thread.id, commentId: firstCommentId, actorUserId: userId, text: body, event: 'thread',
+    });
   }
 
   return {
@@ -571,7 +575,7 @@ const resolveReplyParent = async (threadId: string, parentId: string | null | un
 };
 
 export const createForumComment = async (
-  { threadId, parentId, body, language }: CreateForumCommentInput,
+  { threadId, parentId, body, language, agent, tags = [] }: CreateForumCommentInput,
   userId: string
 ): Promise<ForumCommentResult> => {
   const errors = new ValidationCollector('Invalid forum comment input.');
@@ -587,12 +591,13 @@ export const createForumComment = async (
   const createdAt = new Date();
   const comment = await ForumComment.createFirstRevision(
     { id: userId },
-    { tags: ['create'], date: createdAt }
+    { tags: [...tags, 'create'], date: createdAt }
   );
   comment.threadId = thread.id;
   comment.parentId = replyTo;
   comment.body = sanitizeLocalizedMapInput({ [language]: body });
   comment.canonicalLanguage = language;
+  applyCommentAgent(comment, agent);
   comment.createdAt = createdAt;
   comment.updatedAt = createdAt;
   await comment.save();
@@ -617,44 +622,24 @@ export const createForumComment = async (
     const message = error instanceof Error ? error.message : String(error);
     debug.error(`Failed to auto-subscribe replier for thread ${thread.id}: ${message}`);
   }
-  try {
-    await enqueueForumReplyNotification(
-      thread.id,
-      comment.id,
-      userId,
-      enqueueNotificationJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to enqueue forum reply notification for comment ${comment.id}: ${message}`);
-  }
-  try {
-    await notifyPageFollowersOfForumPost(
-      ForumThread.dal as DataAccessLayer,
-      { threadId: thread.id, commentId: comment.id, actorUserId: userId, event: 'comment' },
-      enqueueNotificationJob
-    );
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`Failed to notify page followers of comment ${comment.id}: ${message}`);
-  }
+  await notifyForumPost(ForumThread.dal as DataAccessLayer, {
+    threadId: thread.id, commentId: comment.id, actorUserId: userId, text: body, event: 'comment',
+  });
 
   return toForumCommentResult(comment);
 };
 
 /** The person who wrote a post: the author of its first version. */
 export const findForumCommentAuthorId = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   commentId: string
 ): Promise<string | null> => {
-  const result = await dalInstance.query(
-    `SELECT _rev_user FROM ${ForumComment.tableName}
-      WHERE id = $1 OR _old_rev_of = $1
-      ORDER BY _rev_date ASC
-      LIMIT 1`,
-    [commentId]
-  );
-  return (result.rows[0] as { _rev_user: string | null } | undefined)?._rev_user ?? null;
+  const revision = await ForumComment.filterWhere({})
+    .getAllRevisions(commentId)
+    .orderBy('_revDate', 'ASC')
+    .select('_revUser')
+    .first();
+  return revision?._revUser ?? null;
 };
 
 export interface UpdateForumCommentInput {
@@ -684,35 +669,64 @@ export const updateForumComment = async (
   if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
     throw new ForbiddenError('Only the author can edit a post.', { commentId });
   }
+  const previousText = pickLocalizedText(comment.body, comment.canonicalLanguage);
   const updatedAt = new Date();
   const revision = await comment.newRevision({ id: userId }, { tags: ['edit'], date: updatedAt });
   revision.body = sanitizeLocalizedMapInput({ [language]: body });
   revision.canonicalLanguage = language;
   revision.updatedAt = updatedAt;
   await revision.save();
+  // Only people the edit newly mentions are notified.
+  await notifyMentions(
+    dalInstance,
+    { type: 'comment', threadId: comment.threadId, commentId: comment.id },
+    { text: body, previousText, actorUserId: userId }
+  );
+  return toForumCommentResult(revision);
+};
+
+/**
+ * The operator read a comment their agent posted on its own and stands by
+ * it: the agent label goes. The labelled version stays in the history.
+ */
+export const removeForumCommentAgentLabel = async (
+  dalInstance: DataAccessLayer,
+  commentId: string,
+  userId: string
+): Promise<ForumCommentResult> => {
+  const comment = await requireComment(commentId);
+  if ((await findForumCommentAuthorId(dalInstance, comment.id)) !== userId) {
+    throw new ForbiddenError('Only the author can remove the agent label.', { commentId });
+  }
+  if (!comment.agentAuthored) return toForumCommentResult(comment);
+  // The text is unchanged, so updatedAt stays and the post is not shown as edited.
+  const revision = await comment.newRevision({ id: userId }, { tags: ['remove-agent-label'] });
+  revision.agentAuthored = false;
+  revision.agentName = null;
+  await revision.save();
   return toForumCommentResult(revision);
 };
 
 /** Every version of a post, oldest first. */
 export const listForumCommentVersions = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   commentId: string
 ): Promise<ForumCommentVersion[]> => {
   const comment = await requireComment(commentId);
   await requireThread(comment.threadId);
-  const result = await dalInstance.query(
-    `SELECT _rev_id, _rev_date, _rev_user, body, canonical_language
-       FROM ${ForumComment.tableName}
-      WHERE (id = $1 OR _old_rev_of = $1) AND _rev_deleted = false
-      ORDER BY _rev_date ASC`,
-    [commentId]
-  );
-  return (result.rows as Array<Record<string, unknown>>).map(row => ({
-    revId: row._rev_id as string,
-    revDate: row._rev_date as Date,
-    revUser: (row._rev_user as string | null) ?? null,
-    body: (row.body as Record<string, string> | null) ?? null,
-    canonicalLanguage: (row.canonical_language as string | null) ?? null,
+  const revisions = await ForumComment.filterWhere({})
+    .getAllRevisions(commentId)
+    .and({ _revDeleted: false } as Record<string, unknown>)
+    .orderBy('_revDate', 'ASC')
+    .select('_revID', '_revDate', '_revUser', 'body', 'canonicalLanguage', 'agentAuthored', 'agentName');
+  return revisions.map(row => ({
+    revId: row._revID,
+    revDate: row._revDate,
+    revUser: row._revUser ?? null,
+    body: row.body ?? null,
+    canonicalLanguage: row.canonicalLanguage ?? null,
+    agentAuthored: Boolean(row.agentAuthored),
+    agentName: row.agentAuthored ? (row.agentName ?? null) : null,
   }));
 };
 

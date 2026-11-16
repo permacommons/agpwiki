@@ -1,10 +1,19 @@
 import type { TFunction } from 'i18next';
-import type { initializePostgreSQL } from '../../db.js';
+import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { renderUserLink } from '../../lib/profile-paths.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
 import { NOT_DUPLICATE_TAG_PREFIX } from '../../services/duplicate-check-service.js';
+import { loadUserAuthors } from '../../services/user-lookup-service.js';
 
-type DalInstance = Awaited<ReturnType<typeof initializePostgreSQL>>;
+export { loadUserDisplayNames as fetchUserMap } from '../../services/user-lookup-service.js';
+
+/** Display names and usernames, to show each contributor with a link to their profile. */
+export const fetchUserNames = async (dalInstance: DataAccessLayer, userIds: string[]) => {
+  const authors = await loadUserAuthors(dalInstance, userIds);
+  const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
+  const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
+  return { userMap, usernames };
+};
 
 // Colons cannot occur in generated Markdown heading IDs.
 export const HISTORY_ANCHOR = 'wiki:revision-history';
@@ -30,33 +39,6 @@ type HistoryOptions = {
   // Usernames by user ID: names with one link to their profile.
   usernames?: Map<string, string>;
   t: TFunction;
-};
-
-export const fetchUserMap = async (dalInstance: DalInstance, userIds: string[]) => {
-  const userMap = new Map<string, string>();
-  if (!userIds.length) return userMap;
-
-  const userResult = await dalInstance.query(
-    'SELECT id, display_name FROM users WHERE id = ANY($1)',
-    [userIds]
-  );
-  for (const row of userResult.rows as Array<{ id: string; display_name: string }>) {
-    userMap.set(row.id, row.display_name);
-  }
-  return userMap;
-};
-
-/** Display names and usernames, to show each contributor with a link to their profile. */
-export const fetchUserNames = async (dalInstance: DalInstance, userIds: string[]) => {
-  const userMap = new Map<string, string>();
-  const usernames = new Map<string, string>();
-  if (!userIds.length) return { userMap, usernames };
-  const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [userIds]);
-  for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
-    userMap.set(row.id, row.display_name);
-    usernames.set(row.id, row.username);
-  }
-  return { userMap, usernames };
 };
 
 export const renderRevisionHistory = ({

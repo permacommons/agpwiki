@@ -8,9 +8,9 @@
 import { randomBytes } from 'node:crypto';
 
 import { initializePostgreSQL } from '../db.js';
-import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import User from '../models/user.js';
 import { renderMarkdown } from '../render.js';
+import { loadMediaEntriesForSources } from '../services/media-render-service.js';
 import { createMedia } from '../services/media-service.js';
 
 const args = process.argv.slice(2);

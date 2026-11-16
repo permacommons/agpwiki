@@ -2,7 +2,6 @@ import type { Express, Request, Response } from 'express';
 import dal from 'rev-dal';
 import { resolveSessionUser } from '../auth/session.js';
 import { initializePostgreSQL } from '../db.js';
-import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { commentAnchor, discussionPath } from '../lib/discussion-paths.js';
 import {
   ConflictError,
@@ -15,7 +14,6 @@ import {
   ValidationError,
 } from '../lib/errors.js';
 import { forumPageCategory } from '../lib/forum-paths.js';
-import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { isArticleSlug, isDraftSlug, resolvePageAddress } from '../lib/page-address.js';
 import type { PageCheckMetrics } from '../lib/page-checks.js';
 import { isProfileSlug, profilePath, profileSlug } from '../lib/profile-paths.js';
@@ -46,10 +44,12 @@ import {
   renderMarkdown,
   renderToc,
 } from '../render.js';
+import { loadCitationEntriesForSources } from '../services/citation-render-service.js';
 import { countPageDiscussionComments, listPageDiscussionSlugs } from '../services/discussion-service.js';
 import { canPublishDraft, publishDraft } from '../services/draft-service.js';
 import { HOME_PAGE_SLUG, loadHomeSections } from '../services/home-service.js';
 import { renderArticleInfobox } from '../services/infobox-service.js';
+import { loadMediaEntriesForSources } from '../services/media-render-service.js';
 import {
   diffPageCheckRevisions,
   listPageCheckRevisions,

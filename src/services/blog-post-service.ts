@@ -1,6 +1,5 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { validateCitationClaimRefs } from '../lib/citation-claim-validation.js';
 import { validateLocalizedMarkdownContent } from '../lib/content-validation.js';
 import type { FieldDiff } from '../lib/diff-engine.js';
 import { diffLocalizedField, diffScalarField } from '../lib/diff-engine.js';
@@ -12,11 +11,13 @@ import {
   ValidationError,
 } from '../lib/errors.js';
 import { type LocalizedMapInput, mergeLocalizedMap, sanitizeLocalizedMapInput } from '../lib/localized.js';
-import { validateMediaRefs, validateNoStandardMarkdownImages } from '../lib/media-validation.js';
+import { validateNoStandardMarkdownImages } from '../lib/media-validation.js';
 import { toAddressForm } from '../lib/slug.js';
 import BlogPost from '../models/blog-post.js';
 import type { BlogPostInstance } from '../models/manifests/blog-post.js';
 import { assertCanDeleteBlogPost } from './authorization.js';
+import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
+import { validateMediaRefs } from './media-reference-validation-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import { BLOG_AUTHOR_ROLE, userHasRole } from './roles.js';
@@ -223,20 +224,18 @@ export async function listBlogPostResources(
 }
 
 export async function listBlogPosts(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   { limit, offset }: BlogPostListQueryInput = {}
 ): Promise<BlogPostResult[]> {
   const normalizedLimit = Math.min(Math.max(limit ?? 100, 1), 500);
   const normalizedOffset = Math.max(offset ?? 0, 0);
-  // Route list pages and APIs can share this read model without touching ORM directly.
-  const result = await dalInstance.query(
-    `SELECT * FROM ${BlogPost.tableName}
-     WHERE _old_rev_of IS NULL AND _rev_deleted = false
-     ORDER BY created_at DESC, _rev_date DESC
-     LIMIT $1 OFFSET $2`,
-    [normalizedLimit, normalizedOffset]
-  );
-  return result.rows.map(row => toBlogPostResult(BlogPost.createFromRow(row)));
+  const posts = await BlogPost.filterWhere({})
+    .orderBy('createdAt', 'DESC')
+    .orderBy('_revDate', 'DESC')
+    .limit(normalizedLimit)
+    .offset(normalizedOffset)
+    .run();
+  return posts.map(toBlogPostResult);
 }
 
 export async function readBlogPost(
@@ -411,7 +410,7 @@ export async function updateBlogPost(
 }
 
 export async function listBlogPostRevisions(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   slug: string
 ): Promise<BlogPostRevisionListResult> {
   const normalizedSlug = ensureNonEmptySlug(slug);
@@ -421,12 +420,11 @@ export async function listBlogPostRevisions(
       slug: normalizedSlug,
     });
   }
-  const tableName = BlogPost.tableName;
-  const result = await dalInstance.query(
-    `SELECT * FROM ${tableName} WHERE id = $1 OR _old_rev_of = $1 ORDER BY _rev_date DESC`,
-    [post.id]
-  );
-  const revisions = result.rows.map(row => toBlogPostRevisionResult(BlogPost.createFromRow(row)));
+  const history = await BlogPost.filterWhere({})
+    .getAllRevisions(post.id)
+    .orderBy('_revDate', 'DESC')
+    .run();
+  const revisions = history.map(toBlogPostRevisionResult);
   return {
     postId: post.id,
     revisions,
@@ -434,7 +432,7 @@ export async function listBlogPostRevisions(
 }
 
 export async function readBlogPostRevision(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   slug: string,
   revId: string
 ): Promise<BlogPostRevisionReadResult> {
@@ -445,17 +443,14 @@ export async function readBlogPostRevision(
       slug: normalizedSlug,
     });
   }
-  const result = await dalInstance.query(
-    `SELECT * FROM ${BlogPost.tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
-    [revId, post.id]
-  );
-  const [row] = result.rows;
-  if (!row) {
+  const revision = await BlogPost.filterWhere({})
+    .getRevisionByRevId(revId, post.id)
+    .first();
+  if (!revision) {
     throw new NotFoundError(`Revision not found: ${revId}`, {
       revId,
     });
   }
-  const revision = BlogPost.createFromRow(row);
   return {
     postId: post.id,
     revision: toBlogPostRevisionResult(revision),
@@ -463,7 +458,7 @@ export async function readBlogPostRevision(
 }
 
 export async function diffBlogPostRevisions(
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   { slug, fromRevId, toRevId, lang = 'en' }: BlogPostDiffInput
 ): Promise<BlogPostDiffResult> {
   ensureOptionalLanguage(lang, 'lang');
@@ -474,14 +469,8 @@ export async function diffBlogPostRevisions(
       slug: normalizedSlug,
     });
   }
-  const fetchRevisionByRevId = async (revId: string) => {
-    const result = await dalInstance.query(
-      `SELECT * FROM ${BlogPost.tableName} WHERE _rev_id = $1 AND (id = $2 OR _old_rev_of = $2) LIMIT 1`,
-      [revId, post.id]
-    );
-    const [row] = result.rows;
-    return row ? BlogPost.createFromRow(row) : null;
-  };
+  const fetchRevisionByRevId = (revId: string) =>
+    BlogPost.filterWhere({}).getRevisionByRevId(revId, post.id).first();
   const fromRev = await fetchRevisionByRevId(fromRevId);
   if (!fromRev) {
     throw new NotFoundError(`Revision not found: ${fromRevId}`, {

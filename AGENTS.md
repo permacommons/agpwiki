@@ -7,7 +7,7 @@
 
 ## Tech stack
 
-- Node.js 22 + TypeScript (ESM)
+- Node.js 24 + TypeScript (ESM)
 - Express 5 server with Handlebars templates
 - PostgreSQL 16+ with a typed DAL and migrations
 - Markdown rendering via markdown-it with custom plugins
@@ -21,6 +21,14 @@
 - `src/routes/` — Express routes for the web UI
 - `src/models/` — Sequelize-style models with rev-dal
 - `src/scripts/` — CLI scripts for role management, invites, tokens
+
+Database-backed rendering loaders, reference validators, and recent-history
+queries belong in `src/services/`; pure extraction and format validation stay
+in `src/lib/`.
+
+MCP private SDK registry access and custom request dispatch live in
+`src/mcp/sdk-dispatch.ts`. When changing that adapter or upgrading the SDK,
+check the client-level contracts in `test/mcp-sdk-dispatch.test.ts`.
 
 ## Acceptance criteria
 
@@ -38,6 +46,15 @@ listeners.
 Tests that use local PostgreSQL or bind ephemeral HTTP servers may need to run
 outside that sandbox. `npm run lint` and `npm run typecheck` should not need
 that exception.
+
+A test file that uses PostgreSQL must start with `import './_use-database.js';`,
+before any other import: only those files get a database, each its own, copied
+from a migrated template (see `test/_use-database.ts`). Name such files
+`*.integration.test.ts`. Data from other test files is never visible, so tests
+do not need to guard against parallel writers or clean up after themselves.
+Tests in the same file do share a database, and page creation refuses likely
+duplicates, so give fixture pages titles that are unique within the file. Run
+selected files with `npm run test:file -- <paths>`.
 
 ## Wiki content formatting
 

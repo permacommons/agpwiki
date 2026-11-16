@@ -11,14 +11,6 @@ import { formatMediaLabel } from '../lib/media.js';
 import { isDraftSlug } from '../lib/page-address.js';
 import { PAGE_CHECK_TYPES } from '../lib/page-checks.js';
 import { renderUserLink } from '../lib/profile-paths.js';
-import {
-  getRecentCitationChanges,
-  getRecentCitationClaimChanges,
-  getRecentMediaChanges,
-  getRecentWikiChanges,
-  type MediaChange,
-} from '../lib/recent-changes.js';
-import { getRecentPageChecks } from '../lib/recent-checks.js';
 import { resolveSafeTextWithFallback } from '../lib/safe-text.js';
 import { WIKI_LINK_PREVIEW_ENDPOINT } from '../lib/wiki-link-preview.js';
 import { createWikiLinkPreviewToken } from '../lib/wiki-link-preview-token.js';
@@ -55,6 +47,14 @@ import {
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import { REVERT_TAG } from '../services/page-revert-service.js';
 import { listProposalPages, PROPOSAL_LIST_ORDER } from '../services/proposal-status-service.js';
+import {
+  getRecentCitationChanges,
+  getRecentCitationClaimChanges,
+  getRecentMediaChanges,
+  getRecentWikiChanges,
+  type MediaChange,
+} from '../services/recent-changes-service.js';
+import { getRecentPageChecks } from '../services/recent-checks-service.js';
 import {
   getUserRoles,
   hasRole,

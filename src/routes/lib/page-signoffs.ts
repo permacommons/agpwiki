@@ -2,6 +2,8 @@ import type { TFunction } from 'i18next';
 
 import { commentAnchor, discussionPath, positionAnchor } from '../../lib/discussion-paths.js';
 import { forumCommentDeletePath, forumCommentHistoryPath } from '../../lib/forum-paths.js';
+import { linkMentionsInEscapedText, type MentionMap } from '../../lib/mentions.js';
+import { splitEscapedTextUrls } from '../../lib/plain-text-urls.js';
 import { renderUserLink } from '../../lib/profile-paths.js';
 import { encodeSlugPath } from '../../lib/slug.js';
 import { escapeHtml, formatDateUTC } from '../../render.js';
@@ -13,7 +15,12 @@ import {
 import type { PositionReply } from '../../services/position-reply-service.js';
 import { renderCommentMeta, renderFollowThread, renderReplyForm } from './discussion.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
-import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
+import {
+  renderAgentLabel,
+  renderForumCommentEditLink,
+  renderForumCommentEditor,
+  renderRemoveAgentLabel,
+} from './forum-comment-editor.js';
 
 type PageSignoffsParams = {
   slug: string;
@@ -35,6 +42,8 @@ type PageSignoffsParams = {
   withdrawn?: PageSignoffResult[];
   // Usernames, so a reply to a reply can start with @username.
   usernames?: Map<string, string>;
+  // Usernames mentioned in position comments, linked to their profiles.
+  mentions?: MentionMap;
   isModerator?: boolean;
   // The position whose reply form is open without JavaScript, or after an error.
   openReply?: { signoffId: string; body?: string; language?: string; errorMessage?: string };
@@ -49,14 +58,15 @@ export type RenderedPositionReply = PositionReply & { bodyHtml: string };
 export const pageSignoffPath = (slug: string) => `/${encodeSlugPath(slug)}/sign-off`;
 export const positionReplyPath = (slug: string) => `/${encodeSlugPath(slug)}/position-reply`;
 
-// Plain text with clickable web links. The text is escaped first, so the
-// links can only come from http(s) URLs written in it.
-export const renderPlainTextWithLinks = (text: string) =>
-  escapeHtml(text).replace(/https?:\/\/[^\s<]+/g, url => {
-    const trailing = /(?:[.,;:!?)]|&quot;|&#39;|&#039;|&gt;)+$/.exec(url)?.[0] ?? '';
-    const href = trailing ? url.slice(0, -trailing.length) : url;
-    return `<a href="${href}" rel="nofollow ugc noopener">${href}</a>${trailing}`;
-  });
+// Plain text with clickable web links and @mentions. The text is escaped
+// first, so the links can only come from http(s) URLs and usernames in it.
+export const renderPlainTextWithLinks = (text: string, mentions?: MentionMap) =>
+  linkMentionsInEscapedText(
+    splitEscapedTextUrls(escapeHtml(text))
+      .map(part => part.isUrl ? `<a href="${part.text}" rel="nofollow ugc noopener">${part.text}</a>` : part.text)
+      .join(''),
+    mentions
+  );
 
 const stanceLabel = (stance: SignoffStance, t: TFunction) => t(`signoff.stance.${stance}`);
 
@@ -76,6 +86,7 @@ export const renderPageSignoffs = ({
   replies,
   withdrawn = [],
   usernames = new Map(),
+  mentions,
   isModerator = false,
   openReply,
   showDiscussionLink = true,
@@ -84,8 +95,6 @@ export const renderPageSignoffs = ({
   const pagePath = `/${encodeSlugPath(slug)}`;
   const discussion = discussionPath({ kind: 'page', slug });
   const replyAction = positionReplyPath(slug);
-  const languageLabelFor = (code: string | null) =>
-    code ? (languageOptions.find(option => option.code === code)?.label ?? code) : null;
   // Positions and their replies are on the first page of the discussion, so
   // their links need no thread in the address.
   const commentLink = (id: string) => `${discussion}#${commentAnchor(id)}`;
@@ -117,12 +126,13 @@ export const renderPageSignoffs = ({
         )}</button></form>`
       : '';
     return `<article class="discussion-comment discussion-comment--reply page-signoff-reply" id="${commentAnchor(reply.id)}" data-comment-edit>
-  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale, reply.authorId ? usernames.get(reply.authorId) : null)}
+  ${renderCommentMeta(name, reply.createdAt, editedHtml, locale, renderAgentLabel(reply, name, t), reply.authorId ? usernames.get(reply.authorId) : null)}
   <div class="discussion-comment-body" data-comment-content${reply.bodyLanguage ? ` lang="${escapeHtml(reply.bodyLanguage)}"` : ''} dir="auto">${reply.bodyHtml}</div>
   <div class="discussion-comment-actions" data-comment-actions>
     ${replyTrigger(signoff, reply.authorId ? usernames.get(reply.authorId) : undefined)}
     <a href="${escapeHtml(permalink)}" data-permalink data-plain-click>${escapeHtml(t('discussion.commentLink'))}</a>
     ${own ? renderForumCommentEditLink(reply.id, permalink, t) : ''}
+    ${own && reply.agentAuthored ? renderRemoveAgentLabel(reply.id, permalink, t) : ''}
     ${deleteHtml}
   </div>
   ${editHtml}
@@ -163,9 +173,8 @@ export const renderPageSignoffs = ({
       ? ` · <span class="page-signoff-changed">${escapeHtml(t('forum.position.withdrawn'))}</span>`
       : '';
     const commentLanguage = signoff.commentLanguage;
-    const languageLabel = languageLabelFor(commentLanguage);
     const commentHtml = signoff.comment
-      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment)}</div>${languageLabel ? `<p class="page-signoff-language">${escapeHtml(languageLabel)}</p>` : ''}`
+      ? `<div class="discussion-comment-body page-signoff-comment" dir="auto"${commentLanguage ? ` lang="${escapeHtml(commentLanguage)}"` : ''}>${renderPlainTextWithLinks(signoff.comment, mentions)}</div>`
       : '';
     const positionLink = `${discussion}#${positionAnchor(signoff.id)}`;
     const actionsHtml = signoff.comment
@@ -229,7 +238,7 @@ export const renderPageSignoffs = ({
   const formHtml = !canSignOff
     ? ''
     : `<form class="page-signoff-form" method="post" action="${action}">
-  <textarea id="page-signoff-comment" name="comment" rows="2" dir="auto"
+  <textarea id="page-signoff-comment" name="comment" rows="2" dir="auto" data-mention-suggest
     aria-label="${escapeHtml(t('signoff.commentLabel'))}"
     placeholder="${escapeHtml(t('signoff.commentLabel'))}">${escapeHtml(own?.comment ?? '')}</textarea>
   <div class="form-actions page-signoff-actions">

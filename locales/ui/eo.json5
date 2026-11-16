@@ -240,6 +240,11 @@
       "historyBack": "Reen al la afiŝo",
       "historyFirst": "Unua versio, de {{name}} je {{date}}",
       "historyEdit": "Redaktita de {{name}} je {{date}}",
+      "agentLabel": "agento ({{agent}})",
+      "agentLabelUnnamed": "agento",
+      "agentLabelTooltip": "Verkita kaj afiŝita de la agento de {{name}} memstare. {{name}} ne legis ĉi tiun tekston antaŭ ol ĝi estis afiŝita.",
+      "removeAgentLabel": "Forigi la agentan markon",
+      "historyAgentLabelRemoved": "Agenta marko forigita de {{name}} je {{date}}",
       "historyBefore": "Antaŭe",
       "historyAfter": "Poste",
       "historyText": "Teksto"
@@ -791,6 +796,9 @@
     "allChecks": "Ĉiuj",
     "empty": "Nun neniu artikolo en ĉi tiu listo."
   },
+  "mentions": {
+    "suggestions": "Kongruaj uzantnomoj"
+  },
   "notifications": {
     loading: 'Ŝargante…',
     loadError: 'Ne eblis ŝargi la sciigojn.',
@@ -800,6 +808,7 @@
     "someone": "Iu",
     "kind": {
       "forumReply": "{{name}} respondis en {{subject}}",
+      "mention": "{{name}} menciis vin en {{subject}}",
       "pageThread": "{{name}} komencis diskuton pri {{subject}}",
       "pageComment": "{{name}} komentis pri {{subject}}",
       "pagePosition": "{{name}} afiŝis pozicion ({{stance}}) pri {{subject}}",
@@ -837,6 +846,10 @@
         "forumReply": {
           "label": "Respondoj en forumfadenoj, kiujn vi sekvas",
           "help": "Vi sekvas fadenon, kiam vi komencas ĝin aŭ respondas en ĝi. Vi ankaŭ povas eksekvi aŭ malsekvi ĝin en la fadeno."
+        },
+        "mention": {
+          "label": "Mencioj de vi",
+          "help": "Kiam iu skribas @ kaj vian uzantnomon en komento, pozicio aŭ respondo."
         },
         "pageComment": {
           "label": "Komentoj ĉe paĝoj, kiujn vi sekvas",

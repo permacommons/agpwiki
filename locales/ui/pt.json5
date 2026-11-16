@@ -239,6 +239,11 @@
       "historyBack": "Voltar à mensagem",
       "historyFirst": "Primeira versão, de {{name}} em {{date}}",
       "historyEdit": "Editado por {{name}} em {{date}}",
+      "agentLabel": "agente ({{agent}})",
+      "agentLabelUnnamed": "agente",
+      "agentLabelTooltip": "Escrito e publicado pelo agente de {{name}} por conta própria. {{name}} não leu este texto antes da publicação.",
+      "removeAgentLabel": "Remover o rótulo de agente",
+      "historyAgentLabelRemoved": "Rótulo de agente removido por {{name}} em {{date}}",
       "historyBefore": "Antes",
       "historyAfter": "Depois",
       "historyText": "Texto"
@@ -791,6 +796,9 @@
     "allChecks": "Todas",
     "empty": "Nenhum artigo nesta lista no momento."
   },
+  "mentions": {
+    "suggestions": "Nomes de usuário correspondentes"
+  },
   "notifications": {
     loading: 'Carregando…',
     loadError: 'Não foi possível carregar as notificações.',
@@ -800,6 +808,7 @@
     "someone": "Alguém",
     "kind": {
       "forumReply": "{{name}} respondeu em {{subject}}",
+      "mention": "{{name}} mencionou você em {{subject}}",
       "pageThread": "{{name}} iniciou uma discussão sobre {{subject}}",
       "pageComment": "{{name}} comentou em {{subject}}",
       "pagePosition": "{{name}} registrou uma posição ({{stance}}) sobre {{subject}}",
@@ -837,6 +846,10 @@
         "forumReply": {
           "label": "Respostas em tópicos do fórum que você segue",
           "help": "Você segue um tópico quando o inicia ou responde nele. Também pode seguir ou deixar de seguir pelo próprio tópico."
+        },
+        "mention": {
+          "label": "Menções a você",
+          "help": "Quando alguém escreve @ e seu nome de usuário em um comentário, uma posição ou uma resposta."
         },
         "pageComment": {
           "label": "Comentários nas páginas que você segue",

@@ -1,5 +1,5 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import http from 'node:http';
 import path from 'node:path';
@@ -10,9 +10,9 @@ import hbs from 'hbs';
 
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
 import { registerNotificationRoutes } from '../src/routes/notifications.js';
 import { countUnreadNotifications } from '../src/services/site-notification-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -28,16 +28,7 @@ test.after(async () => {
   }
 });
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `paneltest${suffix}`,
-    displayName: 'Panel Test',
-    email: `panel-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'paneltest', displayName: 'Panel Test' });
 
 const startServer = async () => {
   const app = express();
@@ -66,12 +57,10 @@ const startServer = async () => {
 
 test('The panel endpoint returns only your own latest notifications, and mark-all-read answers in JSON', async () => {
   const dal = await getDal();
-  const userIds: string[] = [];
   const server = await startServer();
   try {
     const me = await createTestUser();
     const other = await createTestUser();
-    userIds.push(me.id, other.id);
     await dal.query(
       `INSERT INTO notifications (user_id, kind, actor_user_id, url, subject, excerpt, created_at, read_at)
        SELECT $1, 'forum.reply', $2, '/tool/forum', 'Mine ' || n, CASE WHEN n = 1 THEN 'A <b>reply</b>' END,
@@ -128,11 +117,6 @@ test('The panel endpoint returns only your own latest notifications, and mark-al
     assert.equal(await countUnreadNotifications(dal, other.id), 1, "someone else's notifications stay unread");
   } finally {
     await server.close();
-    for (const id of userIds) {
-      await dal.query('DELETE FROM notifications WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [id]);
-      await dal.query('DELETE FROM users WHERE id = $1', [id]);
-    }
   }
 });
 

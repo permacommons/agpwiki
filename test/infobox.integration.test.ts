@@ -1,5 +1,6 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
-import { randomBytes, randomInt } from 'node:crypto';
+import { randomInt } from 'node:crypto';
 import http from 'node:http';
 import test from 'node:test';
 import express from 'express';
@@ -8,8 +9,6 @@ import './_setup-i18n.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { ValidationError } from '../src/lib/errors.js';
 import { GREGORIAN_CALENDAR, type WikidataSnapshot } from '../src/lib/wikidata.js';
-import AgentAccessRequest from '../src/models/agent-access-request.js';
-import User from '../src/models/user.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { createCitation } from '../src/services/citation-service.js';
 import { createInfoboxService, infoboxService } from '../src/services/infobox-service.js';
@@ -20,6 +19,7 @@ import {
   readWikiPage,
   updateWikiPage,
 } from '../src/services/wiki-page-service.js';
+import { insertTestUser, uniqueSuffix } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -35,33 +35,12 @@ test.after(async () => {
   }
 });
 
-const uniqueSuffix = () => `${Date.now()}-${randomBytes(4).toString('hex')}`;
-// Item IDs far above real ones, so parallel runs and real data never meet.
+// Item IDs far above real ones, so tests never stub a real item by accident.
 const testQid = () => `Q9${randomInt(100_000_000, 999_999_999)}`;
 
 // Approved for editing, so it can also restore earlier versions.
-const createTestUser = async () => {
-  const suffix = uniqueSuffix();
-  const user = await User.create({
-    username: `infoboxtest${suffix}`,
-    displayName: 'Infobox Test',
-    email: `infobox-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-    emailVerifiedAt: new Date(),
-  });
-  await AgentAccessRequest.create({
-    userId: user.id,
-    interests: 'Infobox testing',
-    profileUrl: 'https://example.com/profile',
-    status: 'approved',
-    createdAt: new Date(),
-    submittedAt: new Date(),
-    reviewedAt: new Date(),
-    approvedAt: new Date(),
-  });
-  return user;
-};
+const createTestUser = () =>
+  insertTestUser({ prefix: 'infoboxtest', displayName: 'Infobox Test', emailVerified: true, approvedAt: new Date() });
 
 const createTestCitation = (dal: Dal, key: string, userId: string) =>
   createCitation(
@@ -82,18 +61,6 @@ const personSnapshot = (qid: string): WikidataSnapshot => ({
   images: {},
 });
 
-const cleanup = async (dal: Dal, { slug, userId, citationKey, qid }: Record<string, string | null>) => {
-  if (slug) {
-    await dal.query('DELETE FROM pages WHERE slug = $1 OR _old_rev_of IN (SELECT id FROM pages WHERE slug = $1)', [slug]);
-  }
-  if (qid) await dal.query('DELETE FROM wikidata_items WHERE qid = $1', [qid]);
-  if (citationKey) await dal.query('DELETE FROM citations WHERE key = $1', [citationKey]);
-  if (userId) {
-    await dal.query('DELETE FROM agent_access_requests WHERE user_id = $1', [userId]);
-    await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-  }
-};
-
 test('Wikidata items are cached, and refreshed in the background once old', async () => {
   const dal = await getDal();
   const qid = testQid();
@@ -108,96 +75,86 @@ test('Wikidata items are cached, and refreshed in the background once old', asyn
       return personSnapshot(id);
     },
   });
-  try {
-    const first = await service.getSnapshot(dal, qid);
-    assert.equal(first?.boxId, 'person');
-    assert.equal((await service.getSnapshot(dal, qid))?.qid, qid);
-    assert.deepEqual(fetched, [qid], 'a cached item is not fetched again');
+  const first = await service.getSnapshot(dal, qid);
+  assert.equal(first?.boxId, 'person');
+  assert.equal((await service.getSnapshot(dal, qid))?.qid, qid);
+  assert.deepEqual(fetched, [qid], 'a cached item is not fetched again');
 
-    clock += 120_000;
-    const stale = await service.getSnapshot(dal, qid);
-    assert.equal(stale?.qid, qid, 'an old item is still shown while it is refreshed');
-    await service.refresh(dal, qid);
-    assert.equal(fetched.length >= 2, true);
+  clock += 120_000;
+  const stale = await service.getSnapshot(dal, qid);
+  assert.equal(stale?.qid, qid, 'an old item is still shown while it is refreshed');
+  await service.refresh(dal, qid);
+  assert.equal(fetched.length >= 2, true);
 
-    const offline = createInfoboxService({ fetchEnabled: false, fetchSnapshot: async () => assert.fail('no fetch') });
-    assert.equal(await offline.getSnapshot(dal, testQid()), null);
-  } finally {
-    await cleanup(dal, { qid, slug: null, userId: null, citationKey: null });
-  }
+  const offline = createInfoboxService({ fetchEnabled: false, fetchSnapshot: async () => assert.fail('no fetch') });
+  assert.equal(await offline.getSnapshot(dal, testQid()), null);
 });
 
 test('Infobox values are checked, merged, kept in history and restored by reverts', async () => {
   const dal = await getDal();
   const slug = `test-infobox-values-${uniqueSuffix()}`;
   const citationKey = `infobox-source-${uniqueSuffix()}`;
-  let userId: string | null = null;
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await createTestCitation(dal, citationKey, user.id);
+  const user = await createTestUser();
+  await createTestCitation(dal, citationKey, user.id);
 
-    const invalid = await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Values' },
-        body: { en: 'Text.' },
-        infoboxValues: { P9999: { value: 'x', citation: citationKey }, P569: { value: '1964', citation: 'no-such-citation' } },
-      },
-      user.id
-    ).catch(error => error);
-    assert.ok(invalid instanceof ValidationError);
-    const fields = (invalid.fieldErrors ?? []).map((error: { field: string }) => error.field);
-    assert.deepEqual(fields.sort(), ['infoboxValues.P569.citation', 'infoboxValues.P9999']);
+  const invalid = await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Values' },
+      body: { en: 'Text.' },
+      infoboxValues: { P9999: { value: 'x', citation: citationKey }, P569: { value: '1964', citation: 'no-such-citation' } },
+    },
+    user.id
+  ).catch(error => error);
+  assert.ok(invalid instanceof ValidationError);
+  const fields = (invalid.fieldErrors ?? []).map((error: { field: string }) => error.field);
+  assert.deepEqual(fields.sort(), ['infoboxValues.P569.citation', 'infoboxValues.P9999']);
 
-    const created = await createWikiPage(
-      dal,
-      {
-        slug,
-        title: { en: 'Values' },
-        body: { en: 'Text.' },
-        wikidata: 'Q297552',
-        infoboxValues: { P1477: { value: ' Thomas Baptist Morello ', citation: citationKey } },
-      },
-      user.id
-    );
-    assert.deepEqual(created.infoboxValues, { P1477: { value: 'Thomas Baptist Morello', citation: citationKey } });
-    assert.equal(created.wikidata, 'Q297552');
+  const created = await createWikiPage(
+    dal,
+    {
+      slug,
+      title: { en: 'Values' },
+      body: { en: 'Text.' },
+      wikidata: 'Q297552',
+      infoboxValues: { P1477: { value: ' Thomas Baptist Morello ', citation: citationKey } },
+    },
+    user.id
+  );
+  assert.deepEqual(created.infoboxValues, { P1477: { value: 'Thomas Baptist Morello', citation: citationKey } });
+  assert.equal(created.wikidata, 'Q297552');
 
-    const updated = await updateWikiPage(
-      dal,
-      {
-        slug,
-        infoboxValues: { P569: { value: '1964-05-30', citation: citationKey } },
-        revSummary: { en: 'Add date of birth.' },
-      },
-      user.id
-    );
-    assert.deepEqual(Object.keys(updated.infoboxValues ?? {}).sort(), ['P1477', 'P569'], 'values are merged');
+  const updated = await updateWikiPage(
+    dal,
+    {
+      slug,
+      infoboxValues: { P569: { value: '1964-05-30', citation: citationKey } },
+      revSummary: { en: 'Add date of birth.' },
+    },
+    user.id
+  );
+  assert.deepEqual(Object.keys(updated.infoboxValues ?? {}).sort(), ['P1477', 'P569'], 'values are merged');
 
-    const removed = await updateWikiPage(
-      dal,
-      { slug, infoboxValues: { P1477: null }, revSummary: { en: 'Remove birth name.' } },
-      user.id
-    );
-    assert.deepEqual(Object.keys(removed.infoboxValues ?? {}), ['P569']);
-    assert.equal((await readWikiPage(dal, slug)).wikidata, 'Q297552', 'the Wikidata ID is untouched');
+  const removed = await updateWikiPage(
+    dal,
+    { slug, infoboxValues: { P1477: null }, revSummary: { en: 'Remove birth name.' } },
+    user.id
+  );
+  assert.deepEqual(Object.keys(removed.infoboxValues ?? {}), ['P569']);
+  assert.equal((await readWikiPage(dal, slug)).wikidata, 'Q297552', 'the Wikidata ID is untouched');
 
-    const diff = await diffWikiPageRevisions(dal, { slug, fromRevId: created.currentRevId, toRevId: removed.currentRevId });
-    assert.ok(diff.fields.infoboxValues);
+  const diff = await diffWikiPageRevisions(dal, { slug, fromRevId: created.currentRevId, toRevId: removed.currentRevId });
+  assert.ok(diff.fields.infoboxValues);
 
-    const restored = await restoreWikiPageRevision(
-      dal,
-      { slug, revId: created.currentRevId, revSummary: { en: 'Back to the first version.' } },
-      user.id
-    );
-    assert.deepEqual(restored.page.infoboxValues, {
-      P1477: { value: 'Thomas Baptist Morello', citation: citationKey },
-    });
-  } finally {
-    await cleanup(dal, { slug, userId, citationKey, qid: null });
-  }
+  const restored = await restoreWikiPageRevision(
+    dal,
+    { slug, revId: created.currentRevId, revSummary: { en: 'Back to the first version.' } },
+    user.id
+  );
+  assert.deepEqual(restored.page.infoboxValues, {
+    P1477: { value: 'Thomas Baptist Morello', citation: citationKey },
+  });
 });
 
 test('Articles show cached Wikidata facts and local gap filling', async () => {
@@ -205,7 +162,6 @@ test('Articles show cached Wikidata facts and local gap filling', async () => {
   const slug = `test-infobox-page-${uniqueSuffix()}`;
   const citationKey = `infobox-source-${uniqueSuffix()}`;
   const qid = testQid();
-  let userId: string | null = null;
   const app = express();
   app.use((req, res, next) => {
     req.t = i18next.t.bind(i18next) as unknown as typeof req.t;
@@ -233,7 +189,6 @@ test('Articles show cached Wikidata facts and local gap filling', async () => {
     };
 
     const user = await createTestUser();
-    userId = user.id;
     await createTestCitation(dal, citationKey, user.id);
     // Tests never reach Wikidata: the item is put in the cache directly.
     await dal.query('INSERT INTO wikidata_items (qid, snapshot, fetched_at) VALUES ($1, $2, NOW())', [
@@ -265,10 +220,8 @@ test('Articles show cached Wikidata facts and local gap filling', async () => {
     assert.match(old, /class="infobox-note"/);
   } finally {
     server.close();
-    await cleanup(dal, { slug, userId, citationKey, qid });
   }
 });
-
 
 const scopeSweepTo = (dal: Dal, qid: string): Dal => new Proxy(dal, {
   get(target, property) {
@@ -287,7 +240,6 @@ test('Save warming, views and sweeps share a single in-flight fetch', async () =
   const dal = await getDal();
   const qid = testQid();
   const slug = `test-infobox-warm-${uniqueSuffix()}`;
-  let userId: string | null = null;
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });
   let started!: () => void;
@@ -305,7 +257,6 @@ test('Save warming, views and sweeps share a single in-flight fetch', async () =
   const warm = test.mock.method(infoboxService, 'warmCache', (_dal: Dal, id: string) => service.warmCache(_dal, id));
   try {
     const user = await createTestUser();
-    userId = user.id;
     await createWikiPage(dal, { slug, title: { en: 'Warm cache' }, wikidata: qid }, user.id);
     await fetching;
     assert.equal(warm.mock.callCount(), 1);
@@ -322,7 +273,6 @@ test('Save warming, views and sweeps share a single in-flight fetch', async () =
     release();
     warm.mock.restore();
     await service.refresh(dal, qid);
-    await cleanup(dal, { qid, slug, userId, citationKey: null });
   }
 });
 
@@ -330,7 +280,6 @@ test('Periodic sweeps populate missing items, refresh stale items and respect fa
   const dal = await getDal();
   const qid = testQid();
   const slug = `test-infobox-sweep-${uniqueSuffix()}`;
-  let userId: string | null = null;
   let clock = Date.now();
   let count = 0;
   let fail = false;
@@ -344,39 +293,32 @@ test('Periodic sweeps populate missing items, refresh stale items and respect fa
       return personSnapshot(id);
     },
   });
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await createWikiPage(dal, { slug, title: { en: 'Sweep cache' }, wikidata: qid }, user.id);
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 1);
-    assert.equal((await service.getSnapshot(dal, qid))?.qid, qid);
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 1, 'fresh entries are skipped');
-    clock += 120_000;
-    fail = true;
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 2);
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 2, 'failed entries wait through the retry cooldown');
-    assert.equal((await service.getSnapshot(dal, qid))?.qid, qid, 'failures preserve stale snapshots');
-    clock += 600_001;
-    fail = false;
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 3);
-    await service.sweep(scopeSweepTo(dal, qid), 20);
-    assert.equal(count, 3);
-  } finally {
-    await cleanup(dal, { qid, slug, userId, citationKey: null });
-  }
+  const user = await createTestUser();
+  await createWikiPage(dal, { slug, title: { en: 'Sweep cache' }, wikidata: qid }, user.id);
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 1);
+  assert.equal((await service.getSnapshot(dal, qid))?.qid, qid);
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 1, 'fresh entries are skipped');
+  clock += 120_000;
+  fail = true;
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 2);
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 2, 'failed entries wait through the retry cooldown');
+  assert.equal((await service.getSnapshot(dal, qid))?.qid, qid, 'failures preserve stale snapshots');
+  clock += 600_001;
+  fail = false;
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 3);
+  await service.sweep(scopeSweepTo(dal, qid), 20);
+  assert.equal(count, 3);
 });
-
 
 test('Page writes reject invalid local dates without creating or revising a page', async () => {
   const dal = await getDal();
   const slug = `test-infobox-date-validation-${uniqueSuffix()}`;
   const citationKey = `infobox-date-source-${uniqueSuffix()}`;
-  let userId: string | null = null;
   const invalidValues = {
     P569: { value: '1964-13-40', citation: citationKey },
     P570: { value: '2023-02-29', citation: citationKey },
@@ -392,35 +334,30 @@ test('Page writes reject invalid local dates without creating or revising a page
     );
     return true;
   };
-  try {
-    const user = await createTestUser();
-    userId = user.id;
-    await createTestCitation(dal, citationKey, user.id);
-    await assert.rejects(
-      createWikiPage(dal, { slug, title: { en: 'Dates' }, infoboxValues: invalidValues }, user.id),
-      rejectsDates
-    );
-    const absent = await dal.query('SELECT id FROM pages WHERE slug = $1', [slug]);
-    assert.equal(absent.rowCount, 0);
-    const created = await createWikiPage(dal, {
-      slug, title: { en: 'Dates' },
-      infoboxValues: {
-        P569: { value: '1964', citation: citationKey },
-        P570: { value: '2024-02', citation: citationKey },
-        P571: { value: '2000-02-29', citation: citationKey },
-        P2031: { value: '-0044-03-15', citation: citationKey },
-      },
-    }, user.id);
-    await assert.rejects(
-      updateWikiPage(dal, { slug, infoboxValues: invalidValues, revSummary: { en: 'Invalid dates.' } }, user.id),
-      rejectsDates
-    );
-    const unchanged = await readWikiPage(dal, slug);
-    assert.equal(unchanged.currentRevId, created.currentRevId);
-    assert.deepEqual(unchanged.infoboxValues, created.infoboxValues);
-  } finally {
-    await cleanup(dal, { slug, citationKey, userId, qid: null });
-  }
+  const user = await createTestUser();
+  await createTestCitation(dal, citationKey, user.id);
+  await assert.rejects(
+    createWikiPage(dal, { slug, title: { en: 'Dates' }, infoboxValues: invalidValues }, user.id),
+    rejectsDates
+  );
+  const absent = await dal.query('SELECT id FROM pages WHERE slug = $1', [slug]);
+  assert.equal(absent.rowCount, 0);
+  const created = await createWikiPage(dal, {
+    slug, title: { en: 'Dates' },
+    infoboxValues: {
+      P569: { value: '1964', citation: citationKey },
+      P570: { value: '2024-02', citation: citationKey },
+      P571: { value: '2000-02-29', citation: citationKey },
+      P2031: { value: '-0044-03-15', citation: citationKey },
+    },
+  }, user.id);
+  await assert.rejects(
+    updateWikiPage(dal, { slug, infoboxValues: invalidValues, revSummary: { en: 'Invalid dates.' } }, user.id),
+    rejectsDates
+  );
+  const unchanged = await readWikiPage(dal, slug);
+  assert.equal(unchanged.currentRevId, created.currentRevId);
+  assert.deepEqual(unchanged.infoboxValues, created.infoboxValues);
 });
 
 test('A delayed cache miss does not refetch a snapshot already saved by another caller', async () => {
@@ -480,6 +417,5 @@ test('A delayed cache miss does not refetch a snapshot already saved by another 
     releaseFetch();
     releaseLookup();
     await Promise.allSettled([first, second]);
-    await cleanup(dal, { qid, slug: null, userId: null, citationKey: null });
   }
 });

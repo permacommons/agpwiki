@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import http from 'node:http';
@@ -7,13 +8,15 @@ import express from 'express';
 import type { TFunction } from 'i18next';
 
 import { initializePostgreSQL } from '../src/db.js';
-import User from '../src/models/user.js';
+import BlogPost from '../src/models/blog-post.js';
+import Media from '../src/models/media.js';
 import { renderHomeSections } from '../src/routes/lib/home-sections.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 import { createForumThread } from '../src/services/forum-service.js';
 import { HOME_PAGE_SLUG, type HomeSections, loadHomeSections } from '../src/services/home-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
 
@@ -124,16 +127,7 @@ test('renderHomeSections says so when a section has nothing to show', () => {
   assert.match(html, /class="home-help"/);
 });
 
-const createTestUser = async () => {
-  const suffix = `${Date.now()}-${randomBytes(4).toString('hex')}`;
-  return User.create({
-    username: `hometest${suffix}`,
-    displayName: 'Home Test',
-    email: `home-test-${suffix}@example.com`,
-    passwordHash: randomBytes(32).toString('hex'),
-    createdAt: new Date(),
-  });
-};
+const createTestUser = () => insertTestUser({ prefix: 'hometest', displayName: 'Home Test' });
 
 const makeServer = async () => {
   const app = express();
@@ -177,14 +171,11 @@ test('The home page shows the sections below its text, and the page list sorts n
   const dal = await getDal();
   const prefix = `test-home-${Date.now()}`;
   const server = await makeServer();
-  let userId: string | null = null;
-  const threadIds: string[] = [];
   const welcomeExisted =
     ((await dal.query('SELECT 1 FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [HOME_PAGE_SLUG])).rowCount ?? 0) >
     0;
   try {
     const user = await createTestUser();
-    userId = user.id;
     if (!welcomeExisted) {
       await createWikiPage(
         dal,
@@ -211,12 +202,10 @@ test('The home page shows the sections below its text, and the page list sorts n
       { category: 'general', title: `${prefix} thread`, body: 'First post.', language: 'en' },
       user.id
     );
-    threadIds.push(thread.id);
     const attached = await createForumThread(
       { category: 'general', title: `${prefix} attached`, body: 'A reply.', language: 'en' },
       user.id
     );
-    threadIds.push(attached.id);
     await dal.query(
       "UPDATE forum_threads SET attached_type = 'position', attached_id = gen_random_uuid() WHERE id = $1",
       [attached.id]
@@ -242,7 +231,8 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.doesNotMatch(await getBody(`${server.url}/${prefix}-newer`), /home-sections/);
 
     const newest = await getBody(`${server.url}/tool/pages?sort=new&per=200`);
-    assert.ok(newest.indexOf(`/${prefix}-newer"`) < newest.indexOf(`/${prefix}-older"`));
+    const newerAt = newest.indexOf(`/${prefix}-newer"`);
+    assert.ok(newerAt >= 0 && newerAt < newest.indexOf(`/${prefix}-older"`));
     assert.match(newest, /<span class="pages-created">/);
     assert.match(newest, /<strong aria-current="true">tool\.pagesSortNew<\/strong>/);
     const byTitle = await getBody(`${server.url}/tool/pages?per=200`);
@@ -250,17 +240,40 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(byTitle, /href="\/tool\/pages\?per=200&amp;sort=new">tool\.pagesSortNew/);
   } finally {
     await server.close();
-    for (const threadId of threadIds) {
-      await dal.query('DELETE FROM forum_thread_subscriptions WHERE thread_id = $1', [threadId]);
-      await dal.query("DELETE FROM notification_jobs WHERE payload->>'threadId' = $1", [threadId]);
-      await dal.query('DELETE FROM forum_comments WHERE thread_id = $1', [threadId]);
-      await dal.query('DELETE FROM forum_threads WHERE id = $1 OR _old_rev_of = $1', [threadId]);
-    }
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-    if (!welcomeExisted) await dal.query('DELETE FROM pages WHERE slug = $1', [HOME_PAGE_SLUG]);
-    if (userId) {
-      await dal.query('DELETE FROM auth_sessions WHERE user_id = $1', [userId]);
-      await dal.query('DELETE FROM users WHERE id = $1', [userId]);
-    }
   }
+});
+
+test('Home posts use current text, summary fallback and only live image references', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  const prefix = `home-post-${randomBytes(8).toString('hex')}`;
+  const image = await Media.createFirstRevision({ id: user.id });
+  image.slug = prefix;
+  image.commonsTitle = 'File:Example.jpg';
+  image.mediaType = 'image';
+  image.data = {};
+  await image.save();
+  const post = await BlogPost.createFirstRevision({ id: user.id });
+  post.slug = prefix;
+  post.title = { en: 'Home post' };
+  post.body = { en: 'Old body.' };
+  await post.save();
+  await post.newRevision({ id: user.id });
+  post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
+  await post.save();
+  const read = async () => (await loadHomeSections(dal, 'en', { fresh: true })).posts.filter(item => item.slug === prefix);
+  let posts = await read();
+  assert.equal(posts.length, 1);
+  assert.equal(posts[0].summary, 'Current text.');
+  assert.equal(posts[0].imageSlug, prefix);
+  assert.equal(posts[0].createdAt.getTime(), post.createdAt.getTime());
+  await post.newRevision({ id: user.id });
+  post.summary = { en: 'Explicit summary.' };
+  await post.save();
+  await image.deleteAllRevisions({ id: user.id });
+  posts = await read();
+  assert.equal(posts[0].summary, 'Explicit summary.');
+  assert.equal(posts[0].imageSlug, null);
+  await post.deleteAllRevisions({ id: user.id });
+  assert.deepEqual(await read(), []);
 });

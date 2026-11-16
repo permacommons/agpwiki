@@ -1,7 +1,6 @@
 import type { TFunction } from 'i18next';
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
-import { loadCitationEntriesForSources } from '../../lib/citation-render.js';
 import {
   commentAnchor,
   commentPermalink,
@@ -20,13 +19,22 @@ import {
   forumThreadPath,
   forumThreadPinPath,
 } from '../../lib/forum-paths.js';
-import { loadMediaEntriesForSources } from '../../lib/media-render.js';
 import { renderUserLink } from '../../lib/profile-paths.js';
 import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
+import ForumThreadSubscription from '../../models/forum-thread-subscription.js';
 import { escapeHtml, type LanguageOption, renderMarkdown, renderText } from '../../render.js';
+import { loadCitationEntriesForSources } from '../../services/citation-render-service.js';
 import { DISCUSSION_PAGE_SIZE, type DiscussionComment, type DiscussionPage, type DiscussionThread } from '../../services/discussion-service.js';
+import { loadMediaEntriesForSources } from '../../services/media-render-service.js';
+import { loadMarkdownMentions } from '../../services/mention-service.js';
+import { loadUserAuthors } from '../../services/user-lookup-service.js';
 import { renderFormLanguageSelector } from './form-language-selector.js';
-import { renderForumCommentEditLink, renderForumCommentEditor } from './forum-comment-editor.js';
+import {
+  renderAgentLabel,
+  renderForumCommentEditLink,
+  renderForumCommentEditor,
+  renderRemoveAgentLabel,
+} from './forum-comment-editor.js';
 import { renderMarkdownPreviewPanel } from './markdown-preview.js';
 
 const { mlString } = dal;
@@ -97,9 +105,10 @@ export const loadDiscussionRenderData = async (
   { backToCitationLabel, locale }: { backToCitationLabel: string; locale: string }
 ) => {
   const sources = comments.map(bodySourceOf);
-  const [citationEntries, mediaRegistry] = await Promise.all([
+  const [citationEntries, mediaRegistry, mentions] = await Promise.all([
     loadCitationEntriesForSources(dalInstance, sources),
     loadMediaEntriesForSources(dalInstance, sources),
+    loadMarkdownMentions(dalInstance, sources),
   ]);
   const bodies = new Map<string, string>();
   for (const comment of comments) {
@@ -108,35 +117,26 @@ export const loadDiscussionRenderData = async (
       citationIdPrefix: `comment-${comment.id}-`,
       mediaRegistry,
       locale,
+      mentions,
     });
     bodies.set(comment.id, rendered.html);
   }
   const authorIds = [...new Set(comments.map(comment => comment.authorId).filter((id): id is string => Boolean(id)))];
-  const authors = new Map<string, DiscussionAuthor>();
-  if (authorIds.length) {
-    const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [
-      authorIds,
-    ]);
-    for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
-      authors.set(row.id, { name: row.display_name, username: row.username });
-    }
-  }
+  const authors = await loadUserAuthors(dalInstance, authorIds);
   return { bodies, authors };
 };
 
 /** The threads among these that the reader follows. */
 export const listFollowedThreadIds = async (
-  dalInstance: DataAccessLayer,
+  _dalInstance: DataAccessLayer,
   threadIds: string[],
   userId: string | null
 ) => {
   if (!userId || !threadIds.length) return new Set<string>();
-  const result = await dalInstance.query(
-    `SELECT thread_id FROM forum_thread_subscriptions
-      WHERE user_id = $1 AND thread_id = ANY($2) AND unsubscribed_at IS NULL`,
-    [userId, threadIds]
-  );
-  return new Set((result.rows as Array<{ thread_id: string }>).map(row => row.thread_id));
+  const subscriptions = await ForumThreadSubscription.filterWhere({ userId, unsubscribedAt: null })
+    .whereIn('threadId', threadIds)
+    .select('threadId');
+  return new Set(subscriptions.map(subscription => subscription.threadId));
 };
 
 export const discussionCommentsOf = allComments;
@@ -171,7 +171,7 @@ export const renderReplyForm = ({
   return `<form method="post" action="${escapeHtml(action)}" class="discussion-reply-form" data-reply-form>
   ${hidden}
   ${errorMessage ? `<p class="form-error" role="alert">${escapeHtml(errorMessage)}</p>` : ''}
-  <textarea name="body" rows="3" dir="auto" required aria-label="${escapeHtml(t('discussion.replyLabel'))}" placeholder="${escapeHtml(
+  <textarea name="body" rows="3" dir="auto" required data-mention-suggest aria-label="${escapeHtml(t('discussion.replyLabel'))}" placeholder="${escapeHtml(
     t('discussion.replyPlaceholder')
   )}">${escapeHtml(body)}</textarea>
   <div class="form-actions">
@@ -214,9 +214,10 @@ export const renderCommentMeta = (
   date: Date | null,
   extraHtml = '',
   locale = 'en',
+  labelHtml = '',
   username?: string | null
 ) =>
-  `<div class="discussion-comment-meta"><strong class="discussion-author">${renderUserLink(name, username)}</strong> <span class="discussion-date">· ${escapeHtml(
+  `<div class="discussion-comment-meta"><strong class="discussion-author">${renderUserLink(name, username)}</strong>${labelHtml} <span class="discussion-date">· ${escapeHtml(
     formatDay(date, locale)
   )}</span>${extraHtml}</div>`;
 
@@ -282,7 +283,7 @@ const renderComment = (
         .map(reply => renderComment(reply, thread, ctx, comment))
         .join('')}${openReply}</div>`;
   return `<article class="discussion-comment${parent ? ' discussion-comment--reply' : ''}" id="${commentAnchor(comment.id)}" data-comment-edit>
-  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale, author?.username)}
+  ${renderCommentMeta(name, comment.createdAt, editedHtml, ctx.locale, renderAgentLabel(comment, name, t), author?.username)}
   <div class="discussion-comment-body" data-comment-content${comment.canonicalLanguage ? ` lang="${escapeHtml(comment.canonicalLanguage)}"` : ''} dir="auto">${
     ctx.bodies.get(comment.id) ?? ''
   }</div>
@@ -290,6 +291,7 @@ const renderComment = (
     ${replyHtml}
     <a href="${escapeHtml(permalink)}" data-permalink ${plainClick}>${escapeHtml(t('discussion.commentLink'))}</a>
     ${own ? renderForumCommentEditLink(comment.id, permalink, t) : ''}
+    ${own && comment.agentAuthored ? renderRemoveAgentLabel(comment.id, permalink, t) : ''}
     ${deleteHtml}
   </div>
   ${editHtml}
@@ -435,7 +437,7 @@ export const renderStartThreadForm = ({
     </label>
     <label class="form-field">
       <span>${escapeHtml(t('discussion.commentLabel'))}</span>
-      <textarea id="discussion-thread-body" name="body" rows="5" required data-markdown-preview-field placeholder="${escapeHtml(
+      <textarea id="discussion-thread-body" name="body" rows="5" required data-markdown-preview-field data-mention-suggest placeholder="${escapeHtml(
         t('discussion.commentPlaceholder')
       )}">${escapeHtml(values.body)}</textarea>
     </label>

@@ -230,8 +230,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
 
   const { dalInstance } = adminContext;
   const requestedPage = getReviewPage(req.query.page);
-  const countResult = await dalInstance.query('SELECT COUNT(*)::int AS total FROM users');
-  const totalAccounts = Number(countResult.rows[0]?.total ?? 0);
+  const totalAccounts = await User.filterWhere({}).count();
   const totalPages = Math.max(1, Math.ceil(totalAccounts / ACCOUNT_REVIEW_PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
   const offset = (page - 1) * ACCOUNT_REVIEW_PAGE_SIZE;

@@ -23,6 +23,7 @@ export type ForumReplyCreatedPayload = {
   commentId: string;
   actorUserId: string;
   recipientUserIds?: string[];
+  mentionRecipientUserIds?: string[];
 };
 
 
@@ -30,7 +31,8 @@ export const enqueueForumReplyNotification = async (
   threadId: string,
   commentId: string,
   actorUserId: string,
-  enqueueJob: (type: string, payload: ForumReplyCreatedPayload) => Promise<unknown>
+  enqueueJob: (type: string, payload: ForumReplyCreatedPayload) => Promise<unknown>,
+  mentionRecipientUserIds: string[]
 ) => {
   const recipientUserIds = await listForumReplyRecipientUserIds(threadId, actorUserId);
   return enqueueJob(FORUM_REPLY_CREATED_NOTIFICATION, {
@@ -38,6 +40,7 @@ export const enqueueForumReplyNotification = async (
     commentId,
     actorUserId,
     recipientUserIds,
+    mentionRecipientUserIds,
   });
 };
 
@@ -52,8 +55,8 @@ export const listForumReplyRecipientUserIds = async (
   return [...new Set(subscriberIds)].filter(userId => userId !== actorUserId);
 };
 
-export const listForumReplyNotificationRecipients = (recipientUserIds: string[]) =>
-  loadNotificationRecipients(recipientUserIds, FORUM_NOTIFICATION_KIND);
+export const listForumReplyNotificationRecipients = (recipientUserIds: string[], mentionedUserIds: string[] = []) =>
+  loadNotificationRecipients(recipientUserIds, FORUM_NOTIFICATION_KIND, { kind: 'mention', userIds: mentionedUserIds });
 
 export const processForumReplyCreatedNotification = async (
   dal: DataAccessLayer,
@@ -84,7 +87,9 @@ export const processForumReplyCreatedNotification = async (
   const recipientUserIds = Array.isArray(payload.recipientUserIds)
     ? payload.recipientUserIds
     : await listForumReplyRecipientUserIds(payload.threadId, payload.actorUserId);
-  const recipients = await listForumReplyNotificationRecipients(recipientUserIds);
+  // People the reply mentions hear about it through the mention instead.
+  const mentionedUserIds = payload.mentionRecipientUserIds ?? [];
+  const recipients = await listForumReplyNotificationRecipients(recipientUserIds, mentionedUserIds);
   if (recipients.length === 0) return { sentCount: 0, siteCount: 0 };
   const bodySource =
     comment.body?.[comment.canonicalLanguage ?? 'en']

@@ -239,6 +239,11 @@
       "historyBack": "Gönderiye dön",
       "historyFirst": "İlk sürüm, {{name}}, {{date}}",
       "historyEdit": "{{name}} tarafından düzenlendi, {{date}}",
+      "agentLabel": "ajan ({{agent}})",
+      "agentLabelUnnamed": "ajan",
+      "agentLabelTooltip": "{{name}} adlı kullanıcının ajanı tarafından kendi başına yazıldı ve gönderildi. {{name}} bu metni gönderilmeden önce okumadı.",
+      "removeAgentLabel": "Ajan etiketini kaldır",
+      "historyAgentLabelRemoved": "{{name}} ajan etiketini kaldırdı, {{date}}",
       "historyBefore": "Önce",
       "historyAfter": "Sonra",
       "historyText": "Metin"
@@ -791,6 +796,9 @@
     "allChecks": "Tümü",
     "empty": "Şu anda bu listede madde yok."
   },
+  "mentions": {
+    "suggestions": "Eşleşen kullanıcı adları"
+  },
   "notifications": {
     loading: 'Yükleniyor…',
     loadError: 'Bildirimler yüklenemedi.',
@@ -800,6 +808,7 @@
     "someone": "Biri",
     "kind": {
       "forumReply": "{{name}}, {{subject}} konusunda yanıt verdi",
+      "mention": "{{name}}, {{subject}} içinde sizden bahsetti",
       "pageThread": "{{name}}, {{subject}} hakkında bir tartışma başlattı",
       "pageComment": "{{name}}, {{subject}} için yorum yaptı",
       "pagePosition": "{{name}}, {{subject}} hakkında bir görüş ({{stance}}) bildirdi",
@@ -837,6 +846,10 @@
         "forumReply": {
           "label": "Takip ettiğiniz forum konularındaki yanıtlar",
           "help": "Bir konuyu başlattığınızda veya yanıt verdiğinizde takip edersiniz. Konunun kendisinden de takip edebilir veya bırakabilirsiniz."
+        },
+        "mention": {
+          "label": "Sizden bahsedilmesi",
+          "help": "Biri bir yorumda, tutumda veya yanıtta @ ve kullanıcı adınızı yazdığında."
         },
         "pageComment": {
           "label": "Takip ettiğiniz sayfalardaki yorumlar",

@@ -27,6 +27,7 @@ import {
   readDiscussion,
 } from '../services/discussion-service.js';
 import { createForumThread, requireSignedInUserId } from '../services/forum-service.js';
+import { loadPlainTextMentions } from '../services/mention-service.js';
 import { getWikiPageEditability } from '../services/page-protection-service.js';
 import {
   canSignOffPages,
@@ -38,6 +39,7 @@ import { isFollowingPage } from '../services/page-subscription-service.js';
 import { listPositionReplies, listWithdrawnPositionsWithReplies } from '../services/position-reply-service.js';
 import { findProfileOwnerBySlug, type ProfileOwner } from '../services/profile-service.js';
 import { FORUM_MODERATOR_ROLE, userHasRole } from '../services/roles.js';
+import { loadUserAuthors } from '../services/user-lookup-service.js';
 import { findCurrentPageBySlugOrAlias, readWikiPage } from '../services/wiki-page-service.js';
 import { FOLLOW_PATH } from './follow.js';
 import { prependAccountBanner } from './lib/account-banner.js';
@@ -215,15 +217,17 @@ export const renderPositionsSection = async (
     })),
     { backToCitationLabel: req.t('citation.backToCitationAria'), locale }
   );
+  const mentions = await loadPlainTextMentions(
+    dalInstance,
+    [...signoffs, ...withdrawn].map(signoff => signoff.comment ?? '')
+  );
   const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
   const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
   const missing = [...signoffs, ...withdrawn].map(signoff => signoff.userId).filter(id => !userMap.has(id));
-  if (missing.length) {
-    const result = await dalInstance.query('SELECT id, display_name, username FROM users WHERE id = ANY($1)', [missing]);
-    for (const row of result.rows as Array<{ id: string; display_name: string; username: string }>) {
-      userMap.set(row.id, row.display_name);
-      usernames.set(row.id, row.username);
-    }
+  const missingAuthors = await loadUserAuthors(dalInstance, missing);
+  for (const [id, author] of missingAuthors) {
+    userMap.set(id, author.name);
+    usernames.set(id, author.username);
   }
   const session = await resolveSessionUser(req);
   const followedThreadIds = await listFollowedThreadIds(
@@ -245,6 +249,7 @@ export const renderPositionsSection = async (
     withdrawn,
     userMap,
     usernames,
+    mentions,
     viewerId: session?.userId ?? null,
     followedThreadIds,
     canSignOff,
@@ -562,7 +567,9 @@ const startThread = async (
       const threadPreviewHtml = await renderMarkdownPreviewHtml(
         await initializePostgreSQL(),
         body,
-        req.t('citation.backToCitationAria')
+        req.t('citation.backToCitationAria'),
+        undefined,
+        { mentions: true }
       );
       await render({ threadPreviewHtml });
       return;

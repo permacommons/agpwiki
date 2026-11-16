@@ -4,22 +4,7 @@ import test from 'node:test';
 import { layoutAssets } from '../src/asset-urls.js';
 
 test('layoutAssets include deterministic version query strings', () => {
-  assert.match(layoutAssets.siteCss, /^\/static\/styles\/site\.css\?v=[\da-f]{8}$/);
-  assert.match(layoutAssets.formLanguageSelectorJs, /^\/static\/scripts\/form-language-selector\.js\?v=[\da-f]{8}$/);
-  assert.match(layoutAssets.forumJs, /^\/static\/scripts\/forum\.js\?v=[\da-f]{8}$/);
-  assert.match(
-    layoutAssets.markdownPreviewJs,
-    /^\/static\/scripts\/markdown-preview\.js\?v=[\da-f]{8}$/
-  );
-  assert.match(layoutAssets.searchJs, /^\/static\/scripts\/search\.js\?v=[\da-f]{8}$/);
-  assert.match(layoutAssets.metaTooltipsJs, /^\/static\/scripts\/meta-tooltips\.js\?v=[\da-f]{8}$/);
-  assert.match(
-    layoutAssets.tableScrollHintsJs,
-    /^\/static\/scripts\/table-scroll-hints\.js\?v=[\da-f]{8}$/
-  );
-  assert.match(layoutAssets.tocJs, /^\/static\/scripts\/toc\.js\?v=[\da-f]{8}$/);
-  assert.match(
-    layoutAssets.recentMediaGridJs,
-    /^\/static\/scripts\/recent-media-grid\.js\?v=[\da-f]{8}$/
-  );
+  for (const [name, url] of Object.entries(layoutAssets)) {
+    assert.match(url, /^\/static\/(scripts|styles)\/[\w.-]+\.(js|css)\?v=[\da-f]{8}$/, name);
+  }
 });

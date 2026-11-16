@@ -1,3 +1,4 @@
+import './_use-database.js';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import test from 'node:test';
@@ -11,6 +12,7 @@ import User from '../src/models/user.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
+
 
 let sharedDal: Awaited<ReturnType<typeof initializePostgreSQL>> | null = null;
 
@@ -132,8 +134,6 @@ test('GET /tool/proposals groups proposals by status, open ones first', async ()
     assert.match(bodyHtml, /proposal-status--none">proposalStatus\.noStatus</);
     assert.match(bodyHtml, /tool\.proposalsDescription\{&quot;count&quot;:\d+\}/);
   } finally {
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
     await server.close();
   }
 });
@@ -206,8 +206,6 @@ test('Recent changes show one compact line per change, with its links first', as
     const item = bodyHtml.slice(bodyHtml.lastIndexOf('<li>', bodyHtml.indexOf(`/${slug}`)));
     assert.ok(item.indexOf('change-actions') < item.indexOf('change-meta'), 'links come first');
   } finally {
-    await dal.query('DELETE FROM pages WHERE slug = $1', [slug]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
     await server.close();
   }
 });
@@ -227,7 +225,7 @@ test('GET /tool/proposals lists draft proposals only on request', async () => {
   try {
     await createWikiPage(dal, { slug: `${prefix}-draft`, title: { en: 'Draft one' }, body: { en: 'Text.' } }, user.id);
     await setProposalStatus(dal, { slug: `${prefix}-draft`, status: 'draft' }, user.id);
-    await createWikiPage(dal, { slug: `${prefix}-open`, title: { en: 'Open one' }, body: { en: 'Text.' } }, user.id);
+    await createWikiPage(dal, { slug: `${prefix}-open`, title: { en: 'Open two' }, body: { en: 'Text.' } }, user.id);
     await setProposalStatus(dal, { slug: `${prefix}-open`, status: 'open' }, user.id);
 
     const list = async (query: string) => {
@@ -243,8 +241,6 @@ test('GET /tool/proposals lists draft proposals only on request', async () => {
     assert.ok(shown.includes(`/${prefix}-draft"`));
     assert.match(shown, /href="\/tool\/proposals">tool\.proposalsHideDrafts/);
   } finally {
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1', [`${prefix}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
     await server.close();
   }
 });
@@ -274,8 +270,6 @@ test('Recent changes label drafts, but not articles named after drafts', async (
     assert.match(itemOf(`/draft/${slug}`), /<span class="change-badge">draft\.recentLabel<\/span>/);
     assert.doesNotMatch(itemOf(`/${slug}-draft-horse`), /change-badge/);
   } finally {
-    await dal.query('DELETE FROM pages WHERE slug LIKE $1 OR slug LIKE $2', [`${slug}%`, `draft/${slug}%`]);
-    await dal.query('DELETE FROM users WHERE id = $1', [user.id]);
     await server.close();
   }
 });

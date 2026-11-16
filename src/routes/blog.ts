@@ -2,9 +2,7 @@ import type { Express } from 'express';
 
 import dal from 'rev-dal';
 import { initializePostgreSQL } from '../db.js';
-import { loadCitationEntriesForSources } from '../lib/citation-render.js';
 import { NotFoundError } from '../lib/errors.js';
-import { loadMediaEntriesForSources } from '../lib/media-render.js';
 import { resolveSafeText } from '../lib/safe-text.js';
 import { toAddressForm } from '../lib/slug.js';
 import {
@@ -22,6 +20,8 @@ import {
   readBlogPost,
   readBlogPostRevision,
 } from '../services/blog-post-service.js';
+import { loadCitationEntriesForSources } from '../services/citation-render-service.js';
+import { loadMediaEntriesForSources } from '../services/media-render-service.js';
 import { renderDiscussionUnderPost } from './discussion.js';
 import { prependAccountBanner } from './lib/account-banner.js';
 import { canonicalUrlFor, queryStringOf } from './lib/canonical.js';

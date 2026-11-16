@@ -1,13 +1,6 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import {
-  CallToolRequestSchema,
-  type CallToolResult,
-  ErrorCode,
-  McpError,
-  ReadResourceRequestSchema,
-  type ReadResourceResult,
-} from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import config from 'config';
 import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
@@ -23,9 +16,7 @@ import {
 } from '../lib/citation-claims.js';
 import { compactFieldDiffs } from '../lib/diff-compact.js';
 import {
-  InvalidRequestError,
   PreconditionFailedError,
-  UnsupportedError,
   ValidationError,
 } from '../lib/errors.js';
 import { LOCAL_VALUE_PROPERTIES } from '../lib/infobox-definitions.js';
@@ -148,6 +139,7 @@ import {
   markSiteNotificationsRead,
   markSiteNotificationsReadByIds,
 } from '../services/site-notification-service.js';
+import { loadUserDisplayNames } from '../services/user-lookup-service.js';
 import {
   addWikiPageAlias,
   applyWikiPagePatch,
@@ -173,9 +165,10 @@ import {
   type WikiPageUpdateInput,
 } from '../services/wiki-page-service.js';
 import { resolveAuthUserId } from './auth.js';
-import { toToolErrorPayload, toValidationErrorFromZod } from './errors.js';
+import { toToolErrorPayload } from './errors.js';
 import { registerPrompts } from './prompts.js';
 import { createLocalizedSchemas } from './schema.js';
+import { installSdkRequestHandlers } from './sdk-dispatch.js';
 
 export type FormatToolResult = (payload: unknown) => CallToolResult;
 
@@ -274,36 +267,6 @@ const ensureMcpErrorMap = () => {
 
   (mcpErrorMap as { __agpwikiMcp?: boolean }).__agpwikiMcp = true;
   z.setErrorMap(mcpErrorMap);
-};
-
-const normalizeToolSchema = (schema: unknown): z.ZodTypeAny | undefined => {
-  if (!schema || typeof schema !== 'object') return undefined;
-  const asAny = schema as Record<string, unknown> & {
-    _def?: unknown;
-    _zod?: unknown;
-    safeParse?: unknown;
-    safeParseAsync?: unknown;
-  };
-  if (asAny._def || asAny._zod || typeof asAny.safeParse === 'function') {
-    return schema as z.ZodTypeAny;
-  }
-
-  const values = Object.values(schema as Record<string, unknown>);
-  if (
-    values.length === 0 ||
-    values.every(
-      value =>
-        value &&
-        typeof value === 'object' &&
-        ('_def' in (value as Record<string, unknown>) ||
-          '_zod' in (value as Record<string, unknown>) ||
-          typeof (value as { safeParse?: unknown }).safeParse === 'function')
-    )
-  ) {
-    return z.object(schema as z.ZodRawShape);
-  }
-
-  return undefined;
 };
 
 export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
@@ -478,6 +441,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     const authUser = extra?.authInfo?.extra?.userId;
     return typeof authUser === 'string' && authUser ? authUser : null;
   };
+
+  const getAgentName = () => server.server.getClientVersion()?.name?.trim() || null;
 
   const getAgentTags = () => {
     const info = server.server.getClientVersion();
@@ -1386,7 +1351,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'List Proposal Positions',
       description:
-        'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition.',
+        'List the current positions (support, neutral, oppose) on a proposal under meta/proposals/, each with its comment and the replies under it, oldest first. Use the position id as signoffId with proposal_replyToPosition. A reply an agent posted without its operator reading it first has agentAuthored: true and the agent name in agentName.',
       annotations: readOnlyToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,
@@ -1407,15 +1372,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       for (const thread of replies.values()) {
         for (const reply of thread.replies) if (reply.authorId) userIds.add(reply.authorId);
       }
-      const names = new Map<string, string>();
-      if (userIds.size) {
-        const result = await dal.query('SELECT id, display_name FROM users WHERE id = ANY($1)', [
-          [...userIds],
-        ]);
-        for (const row of result.rows as Array<{ id: string; display_name: string }>) {
-          names.set(row.id, row.display_name);
-        }
-      }
+      const names = await loadUserDisplayNames(dal, userIds);
       return {
         slug: page.slug,
         currentRevId: page.currentRevId,
@@ -1433,6 +1390,8 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
             user: reply.authorId ? (names.get(reply.authorId) ?? null) : null,
             body: reply.body,
             bodyLanguage: reply.bodyLanguage,
+            agentAuthored: reply.agentAuthored,
+            agentName: reply.agentName,
             createdAt: reply.createdAt,
             edited: reply.edited,
           })),
@@ -1446,22 +1405,41 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Reply to a Proposal Position',
       description:
-        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are Markdown comments shown one level under the position in the proposal's discussion (<slug>/discussion), and the position's author is notified. To answer another reply, reply to the same position and start with @username. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
+        "Reply to a position's comment on a proposal under meta/proposals/, as your operator. Replies are Markdown comments shown one level under the position in the proposal's discussion (<slug>/discussion), and the position's author is notified. Writing @username mentions someone, who is notified too (at most 10 people per reply). To answer another reply, reply to the same position and start with @username. Get the position id (signoffId) from proposal_listPositions. Positions without a comment take no replies.",
       annotations: additiveWriteToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,
         signoffId: uuidSchema,
         body: z.string().min(1),
         bodyLanguage: z.string().min(2).max(LANGUAGE_TAG_MAX_LENGTH),
+        reviewedByOperator: z
+          .boolean()
+          .describe(
+            "Required every time, no default. true only if your operator read and approved this exact text before you post it. false: you wrote it and post it on your own, and it is shown with an agent label naming your client, next to your operator's name."
+          ),
         policyHash: policyHashSchema,
       },
     },
     withToolErrorHandling(withPageIds(['slug'], async (args, extra) => {
       const dal = await initializePostgreSQL();
       const userId = await requireAuthUserId(extra);
-      const { policyHash: _policyHash, bodyLanguage, ...input } = args as typeof args & { policyHash?: string };
+      const {
+        policyHash: _policyHash,
+        bodyLanguage,
+        reviewedByOperator,
+        ...input
+      } = args as typeof args & { policyHash?: string };
       await requireCurrentPolicyHash(dal, _policyHash);
-      const reply = await replyToPosition(dal, { ...input, language: bodyLanguage }, userId);
+      const reply = await replyToPosition(
+        dal,
+        {
+          ...input,
+          language: bodyLanguage,
+          agent: reviewedByOperator ? null : { name: getAgentName() },
+          tags: getAgentTags(),
+        },
+        userId
+      );
       return { commentId: reply.commentId, threadId: reply.threadId, startedThread: reply.createdThread };
     }))
   );
@@ -2529,114 +2507,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
 
   registerPrompts(server);
 
-  server.server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
-    type RegisteredTool = {
-      enabled: boolean;
-      inputSchema?: unknown;
-      handler:
-        | ((args: unknown, extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult)
-        | ((extra?: { authInfo?: AuthInfo }) => Promise<CallToolResult> | CallToolResult);
-    };
-
-    const tools = (server as unknown as { _registeredTools: Record<string, RegisteredTool> })
-      ._registeredTools;
-    const toolName = request.params.name;
-    const tool = tools[toolName];
-
-    if (!tool) {
-      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} not found.`));
-    }
-
-    if (!tool.enabled) {
-      return formatToolErrorResult(new InvalidRequestError(`Tool ${toolName} disabled.`));
-    }
-
-    if (request.params.task) {
-      return formatToolErrorResult(
-        new UnsupportedError(`Tool ${toolName} does not support task augmentation.`)
-      );
-    }
-
-    let parsedArgs: unknown = request.params.arguments;
-    if (tool.inputSchema) {
-      const schema = normalizeToolSchema(tool.inputSchema);
-      if (schema) {
-        const parseResult = await schema.safeParseAsync(parsedArgs);
-        if (!parseResult.success) {
-          return formatToolErrorResult(
-            toValidationErrorFromZod(
-              `Invalid arguments for tool ${toolName}.`,
-              parseResult.error.issues as {
-                code: string;
-                path?: Array<string | number>;
-                message: string;
-                input?: unknown;
-              }[]
-            )
-          );
-        }
-        parsedArgs = parseResult.data;
-      }
-    }
-
-    try {
-      const handler = tool.handler;
-      if (tool.inputSchema) {
-        return await Promise.resolve(handler(parsedArgs, extra));
-      }
-      return await Promise.resolve(handler(extra));
-    } catch (error) {
-      return formatToolErrorResult(error);
-    }
-  });
-
-  // Override the SDK's resource handler to provide helpful error messages
-  // when clients use incorrect URI formats
-  type RegisteredResource = {
-    enabled: boolean;
-    readCallback: (uri: URL, extra: unknown) => Promise<ReadResourceResult>;
-  };
-  type RegisteredTemplate = {
-    resourceTemplate: { uriTemplate: { match: (uri: string) => Record<string, string> | null } };
-    readCallback: (
-      uri: URL,
-      variables: Record<string, string>,
-      extra: unknown
-    ) => Promise<ReadResourceResult>;
-  };
-
-  server.server.setRequestHandler(ReadResourceRequestSchema, async (request, extra) => {
-    const uri = new URL(request.params.uri);
-
-    // Access private registries (fragile but necessary for custom error handling)
-    const mcpServer = server as unknown as {
-      _registeredResources: Record<string, RegisteredResource>;
-      _registeredResourceTemplates: Record<string, RegisteredTemplate>;
-    };
-
-    // Check for exact resource match
-    const resource = mcpServer._registeredResources[uri.toString()];
-    if (resource) {
-      if (!resource.enabled) {
-        throw new McpError(ErrorCode.InvalidParams, `Resource ${uri} disabled`);
-      }
-      return resource.readCallback(uri, extra);
-    }
-
-    // Check templates
-    for (const template of Object.values(mcpServer._registeredResourceTemplates)) {
-      const variables = template.resourceTemplate.uriTemplate.match(uri.toString());
-      if (variables) {
-        return template.readCallback(uri, variables, extra);
-      }
-    }
-
-    // No match found - provide helpful error message
-    throw new McpError(
-      ErrorCode.InvalidParams,
-      `Resource not found: ${uri}. Available resources: agpwiki://pages, agpwiki://blog/posts, agpwiki://locales. To read individual items, use tools: wiki_readPage, blog_readPost, citation_read.`
-    );
-  });
+  installSdkRequestHandlers(server, formatToolErrorResult);
 
   return { server, formatToolResult, formatToolErrorResult, adminTools };
 };

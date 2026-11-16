@@ -26,6 +26,8 @@ export const renderNotificationText = (notification: SiteNotification, t: TFunct
   switch (notification.kind) {
     case 'forum.reply':
       return t('notifications.kind.forumReply', { name, subject });
+    case 'mention':
+      return t('notifications.kind.mention', { name, subject });
     case 'page.thread':
       return t('notifications.kind.pageThread', { name, subject });
     case 'page.comment':
