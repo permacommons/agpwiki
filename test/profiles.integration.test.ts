@@ -203,6 +203,22 @@ test('A profile shows the account box, and its Talk tab works before the profile
       await fetch(`${server.url}${profilePath(owner.username)}`, { headers: { cookie: `agpwiki_session=${token}` } })
     ).json()) as Rendered;
     assert.ok(own.bodyHtml.includes('profile.emptyOwn'));
+    assert.ok(own.bodyHtml.includes('>profile.write</a>'));
+    assert.ok(!own.bodyHtml.includes('>profile.edit</a>'));
+
+    const admin = await createTestUser('viewadmin');
+    userIds.push(admin.id);
+    await grantRoleUpsert(dal, admin.id, WIKI_ADMIN_ROLE);
+    const { token: adminToken } = await createSession(admin.id);
+    const adminView = (await (
+      await fetch(`${server.url}${profilePath(owner.username)}`, {
+        headers: { cookie: `agpwiki_session=${adminToken}` },
+      })
+    ).json()) as Rendered;
+    assert.ok(adminView.bodyHtml.includes('>profile.edit</a>'));
+    assert.ok(!adminView.bodyHtml.includes('>profile.write</a>'));
+    assert.ok(!adminView.bodyHtml.includes('profile.emptyOwn'));
+    assert.ok(adminView.bodyHtml.includes(`href="${profilePath(owner.username)}/operator-edit"`));
     assert.ok(own.tabsHtml.includes(`${profilePath(owner.username)}/operator-edit`));
 
     const thread = await createForumThread(

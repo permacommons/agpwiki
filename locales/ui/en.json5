@@ -1332,6 +1332,7 @@
     "empty": "{{name}} has not written anything here yet.",
     "emptyOwn": "You have not written your profile yet.",
     "write": "Write your profile",
+    "edit": "Edit profile",
     "editForbidden": "Only this contributor and wiki admins can edit this profile.",
     "talkIntro": "Messages to {{username}}. Anyone signed in with a confirmed email address can write here. {{username}} is notified of every new message.",
     "talkTitle": "Talk: {{name}}",

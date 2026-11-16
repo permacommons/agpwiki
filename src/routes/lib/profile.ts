@@ -121,7 +121,7 @@ export const renderProfileTabs = (
 export const renderProfileWithoutText = (ctx: ProfileContext, { t, viewerId }: { t: TFunction; viewerId: string | null }) => {
   const own = viewerId === ctx.owner.id;
   const writeHtml = ctx.canEdit
-    ? ` <a href="${escapeHtml(`${profilePath(ctx.owner.username)}/operator-edit`)}">${escapeHtml(t('profile.write'))}</a>`
+    ? ` <a href="${escapeHtml(`${profilePath(ctx.owner.username)}/operator-edit`)}">${escapeHtml(t(own ? 'profile.write' : 'profile.edit'))}</a>`
     : '';
   return `<p class="profile-empty">${escapeHtml(
     own ? t('profile.emptyOwn') : t('profile.empty', { name: ctx.owner.displayName })
