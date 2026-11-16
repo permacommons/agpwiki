@@ -34,6 +34,7 @@ import {
   verifyWikiLinkPreviewToken,
 } from '../lib/wiki-link-preview-token.js';
 import { extractCandidateWikiLinkSlugs } from '../lib/wiki-links.js';
+import { getArticleCount } from '../metrics.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -104,7 +105,7 @@ import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderDraftBanner } from './lib/draft-banner.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
-import { renderHomeSections } from './lib/home-sections.js';
+import { renderHomePage } from './lib/home-sections.js';
 import {
   createPreviewHandler,
   renderMarkdownPreviewHtml,
@@ -1895,10 +1896,19 @@ export const registerPageRoutes = (app: Express) => {
               isOldRevision: Boolean(revIdParam),
             })
           : '';
-      // The home page shows what is new below its own text, on the current version only.
+      // The current version of the welcome page is the home page; its text
+      // appears there among the home sections.
       const homeHtml =
         canonicalSlug === HOME_PAGE_SLUG && !selectedRevId && !diffHtml
-          ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
+          ? renderHomePage({
+              sections: await loadHomeSections(dalInstance, contentLang),
+              articleCount: await getArticleCount(),
+              welcomeHtml: bodyHtml,
+              editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : null,
+              signedIn,
+              t: req.t,
+              locale: contentLang,
+            })
           : '';
       // The discussion follows the current version of the page; the home page
       // shows what is new instead.
@@ -1929,7 +1939,8 @@ export const registerPageRoutes = (app: Express) => {
         noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft',
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
+        homeHtml,
+        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
         wikiLinkPreviewConfig: {

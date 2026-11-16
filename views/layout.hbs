@@ -8,6 +8,7 @@
     {{#if relPrev}}<link rel="prev" href="{{relPrev}}" />{{/if}}
     {{#if relNext}}<link rel="next" href="{{relNext}}" />{{/if}}
     {{#if noindex}}<meta name="robots" content="noindex" />{{/if}}
+    <link rel="icon" type="image/svg+xml" href="{{{assets.iconSvg}}}" />
     <link rel="stylesheet" href="{{{assets.siteCss}}}" />
     {{!-- Progressive enhancement hooks: .js-enabled hides no-js-only fallbacks, noscript hides requires-js controls. --}}
     <script>document.documentElement.classList.add('js-enabled');</script>
@@ -26,6 +27,12 @@
   >
     {{> header}}
     {{{topHtml}}}
+    {{#if homeHtml}}
+    <main class="home">
+      <h1 class="visually-hidden">{{title}}</h1>
+      {{{homeHtml}}}
+    </main>
+    {{else}}
     <div class="page-layout{{#unless sidebarHtml}} single{{/unless}}">
       <main class="article">
         {{{labelHtml}}}
@@ -39,6 +46,7 @@
       </aside>
       {{/if}}
     </div>
+    {{/if}}
     {{> footer}}
     <script src="{{{assets.forumJs}}}" defer></script>
     <script src="{{{assets.discussionJs}}}" data-state-url="{{{assets.discussionStateJs}}}" defer></script>

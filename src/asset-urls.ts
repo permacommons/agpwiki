@@ -18,6 +18,8 @@ export const layoutAssets = {
   formLanguageSelectorJs: versionedAssetUrl('scripts/form-language-selector.js'),
   markdownPreviewJs: versionedAssetUrl('scripts/markdown-preview.js'),
   siteCss: versionedAssetUrl('styles/site.css'),
+  logoSvg: versionedAssetUrl('images/agpedia-logo.svg'),
+  iconSvg: versionedAssetUrl('images/agpedia-icon.svg'),
   searchJs: versionedAssetUrl('scripts/search.js'),
   metaTooltipsJs: versionedAssetUrl('scripts/meta-tooltips.js'),
   wikiLinkPreviewsJs: versionedAssetUrl('scripts/wiki-link-previews.js'),

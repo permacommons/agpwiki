@@ -10,7 +10,7 @@ import type { TFunction } from 'i18next';
 import { initializePostgreSQL } from '../src/db.js';
 import BlogPost from '../src/models/blog-post.js';
 import Media from '../src/models/media.js';
-import { renderHomeSections } from '../src/routes/lib/home-sections.js';
+import { type HomePageInput, pickNewArticles, renderHomePage } from '../src/routes/lib/home-sections.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 import { createForumThread } from '../src/services/forum-service.js';
@@ -71,60 +71,71 @@ const sections = (overrides: Partial<HomeSections> = {}): HomeSections => ({
       lastActivityAt: new Date('2026-10-23T12:00:00Z'),
     },
   ],
+  proposals: [{ slug: 'meta/proposals/drafts', title: { en: 'Proposal: Draft articles' }, status: 'applied' }],
   issues: { unchecked: 78, 'check-issues': 2, 'no-wikidata': 90 },
   ...overrides,
 });
 
-test('renderHomeSections shows cards, posts, discussions and ways to help, each with its button', () => {
-  const html = renderHomeSections(sections(), t, 'en');
-  assert.match(html, /<a class="home-card" href="\/rooibos">/);
-  assert.match(html, /home\.newArticleLabel · Oct 6, 2026/);
-  assert.match(html, /Rooibos is a herbal tea\./);
-  // A picture only when the article has one.
-  assert.equal((html.match(/class="home-thumb"/g) ?? []).length, 1);
-  assert.match(html, /src="\/media-files\/gillray-the-gout-1799\/250"/);
-  assert.match(html, /<a class="home-post" href="\/blog\/notifications">/);
-  assert.match(html, /src="\/media-files\/agpedia-notifications-mockup\/500"/);
-  assert.match(
-    html,
-    /href="\/tool\/forum\/general\?thread=00000000-0000-4000-8000-000000000001#thread"/
-  );
-  assert.match(html, /forum\.category\.general · Oct 23, 2026/);
-  assert.match(html, /home\.waitingForCheck\{&quot;count&quot;:78\}/);
-  assert.match(html, /home\.needWikidata\{&quot;count&quot;:90\}/);
-  for (const href of ['/tool/pages?sort=new', '/blog', '/tool/forum']) {
-    // Each button appears twice: beside the heading and under the section, for phones.
-    assert.equal(html.split(`class="home-button" href="${href}"`).length - 1, 2, href);
+const render = (overrides: Partial<HomeSections> = {}, input: Partial<HomePageInput> = {}) =>
+  renderHomePage({
+    sections: sections(overrides),
+    articleCount: 110,
+    welcomeHtml: '<p>Welcome text.</p>',
+    editHref: null,
+    signedIn: false,
+    t,
+    locale: 'en',
+    ...input,
+  });
+
+test('The home page leads with the search and the values, then what is new', () => {
+  const html = render();
+  assert.match(html, /home\.heroTitle/);
+  assert.match(html, /home\.heroSubtitle\{&quot;count&quot;:110\}/);
+  assert.match(html, /<form class="home-search" action="\/search" method="get" role="search">/);
+  assert.match(html, /<input class="home-search-input" id="home-search-input" type="search" name="q"/);
+  for (const key of ['secular', 'truthSeeking', 'methodical', 'agency', 'accountable']) {
+    assert.match(html, new RegExp(`home\\.values\\.${key}Name`), key);
   }
+  assert.match(html, /href="\/meta\/values"/);
+  assert.ok(html.indexOf('home-values') < html.indexOf('home-new'));
+  assert.match(html, /<p>Welcome text\.<\/p>/);
+  assert.match(html, /href="\/tool\/create-account"/);
+  assert.match(html, /home\.waitingForCheck\{&quot;count&quot;:78\}/);
+  assert.match(html, /<code class="home-endpoint">https:\/\/agpedia\.org\/mcp<\/code>/);
+  assert.match(html, /href="https:\/\/github\.com\/permacommons\/agpwiki"/);
+  assert.match(html, /href="\/tool\/forum\/general\?thread=00000000-0000-4000-8000-000000000001#thread"/);
+  assert.match(html, /forum\.category\.general · Oct 23, 2026/);
+  assert.match(html, /href="\/meta\/proposals\/drafts"/);
+  assert.match(html, /proposalStatus\.status\.applied/);
+  assert.match(html, /href="\/blog\/notifications"/);
 });
 
-test('blog previews show escaped plain text without Markdown or nested links', () => {
-  const data = sections();
-  data.posts[0].summary =
-    'A **bell** with [notifications](/notifications) & `updates`.[@source] ![Bell](/media/bell){size=250} Second sentence.';
-  const html = renderHomeSections(data, t, 'en');
-  assert.match(
-    html,
-    /<span class="home-card-text home-card-text--short">A bell with notifications &amp; updates\. Second sentence\.<\/span>/
-  );
-  assert.doesNotMatch(html, /href="\/notifications"|\*\*|\[@source\]|!\[Bell\]/);
+test('The featured article is the newest one with a picture; the others are listed', () => {
+  const html = render();
+  // Rooibos is newer but has no picture, so Gout is featured.
+  assert.match(html, /<a class="home-featured" href="\/gout">/);
+  assert.match(html, /src="\/media-files\/gillray-the-gout-1799\/500"/);
+  assert.match(html, /<li><a href="\/rooibos"><span class="home-list-title">Rooibos<\/span>/);
+
+  const { featured, alsoNew } = pickNewArticles(sections().articles.map(article => ({ ...article, imageSlug: null })));
+  assert.equal(featured?.slug, 'rooibos');
+  assert.deepEqual(alsoNew.map(article => article.slug), ['gout']);
 });
 
-test('blog previews decode entities once and preserve raw HTML as literal text', () => {
-  const data = sections();
-  data.posts[0].summary = 'Fish &amp; chips &quot;quoted&quot; caf&eacute; &#169; &#x1F41F; &amp;amp; <strong>literal</strong>';
-  const html = renderHomeSections(data, t, 'en');
-  assert.ok(html.includes('Fish &amp; chips &quot;quoted&quot; café © 🐟 &amp;amp; &lt;strong&gt;literal&lt;/strong&gt;'));
-  assert.ok(!html.includes('<strong>literal</strong>'));
+test('Signed-in editors get a link to edit the welcome text and no sign-up button', () => {
+  const html = render({}, { signedIn: true, editHref: '/meta/welcome/operator-edit?lang=en' });
+  assert.match(html, /href="\/meta\/welcome\/operator-edit\?lang=en">home\.editWelcome/);
+  assert.doesNotMatch(html, /href="\/tool\/create-account"/);
+  assert.doesNotMatch(render(), /home\.editWelcome/);
 });
 
-test('renderHomeSections says so when a section has nothing to show', () => {
-  const html = renderHomeSections(sections({ articles: [], posts: [], threads: [] }), t, 'en');
-  assert.match(html, /home\.noArticles/);
-  assert.match(html, /home\.noPosts/);
-  assert.match(html, /home\.noThreads/);
-  assert.doesNotMatch(html, /class="home-card"|class="home-post"/);
-  assert.match(html, /class="home-help"/);
+test('The home page says so when a section has nothing to show', () => {
+  const html = render({ articles: [], posts: [], threads: [], proposals: [] });
+  for (const key of ['noArticles', 'noPosts', 'noThreads', 'noProposals']) {
+    assert.match(html, new RegExp(`home\\.${key}`), key);
+  }
+  assert.doesNotMatch(html, /class="home-featured"/);
 });
 
 const createTestUser = () => insertTestUser({ prefix: 'hometest', displayName: 'Home Test' });
@@ -139,7 +150,7 @@ const makeServer = async () => {
     res.locals.accountBannerHtml = '';
     res.locals.currentPath = req.originalUrl || '/';
     res.render = ((view: string, options?: Record<string, unknown>) => {
-      res.json({ view, bodyHtml: options?.bodyHtml ?? '' });
+      res.json({ view, bodyHtml: options?.bodyHtml ?? '', homeHtml: options?.homeHtml ?? '' });
     }) as express.Response['render'];
     next();
   });
@@ -161,11 +172,12 @@ const makeServer = async () => {
   });
 };
 
-const getBody = async (url: string) => {
+const getPage = async (url: string) => {
   const response = await fetch(url);
   assert.equal(response.status, 200, url);
-  return ((await response.json()) as { bodyHtml: string }).bodyHtml;
+  return (await response.json()) as { bodyHtml: string; homeHtml: string };
 };
+const getBody = async (url: string) => (await getPage(url)).bodyHtml;
 
 test('The home page shows the sections below its text, and the page list sorts newest first', async () => {
   const dal = await getDal();
@@ -219,16 +231,17 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.ok(!loaded.threads.some(item => item.id === attached.id));
     assert.equal(typeof loaded.issues.unchecked, 'number');
 
-    const home = await getBody(`${server.url}/${HOME_PAGE_SLUG}`);
-    assert.match(home, /<div class="home-sections">/);
+    const home = (await getPage(`${server.url}/${HOME_PAGE_SLUG}`)).homeHtml;
+    assert.match(home, /class="home-hero"/);
     assert.match(home, /home\.newArticles/);
+    assert.match(home, /class="home-how-body"/);
     // Old versions of the welcome page show only its text.
     const revId = (
       await dal.query('SELECT _rev_id FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [HOME_PAGE_SLUG])
     ).rows[0]._rev_id as string;
-    assert.doesNotMatch(await getBody(`${server.url}/${HOME_PAGE_SLUG}?rev=${revId}`), /home-sections/);
+    assert.equal((await getPage(`${server.url}/${HOME_PAGE_SLUG}?rev=${revId}`)).homeHtml, '');
     // Other pages never show them.
-    assert.doesNotMatch(await getBody(`${server.url}/${prefix}-newer`), /home-sections/);
+    assert.equal((await getPage(`${server.url}/${prefix}-newer`)).homeHtml, '');
 
     const newest = await getBody(`${server.url}/tool/pages?sort=new&per=200`);
     const newerAt = newest.indexOf(`/${prefix}-newer"`);

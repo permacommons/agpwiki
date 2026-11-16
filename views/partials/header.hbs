@@ -1,5 +1,5 @@
 <header class="site-header">
-  <a class="home-link" href="/meta/welcome">{{__ "nav.home"}}</a>
+  <a class="home-link" href="/meta/welcome"><img class="home-logo" src="{{{assets.logoSvg}}}" alt="{{__ "nav.home"}}" width="135" height="50" /></a>
   <nav class="nav-menu" aria-label="{{__ "nav.menu"}}">
     <input class="nav-toggle-checkbox" type="checkbox" id="nav-toggle" />
     <label class="nav-toggle" for="nav-toggle" aria-hidden="true"></label>
@@ -23,7 +23,8 @@
           {{/if}}
         </div>
       </details>
-      <a class="nav-link" href="/meta/help">{{__ "nav.help"}}</a>
+      <a class="nav-link" href="/meta/help">{{__ "nav.contribute"}}</a>
+      <a class="nav-link" href="/meta/developers">{{__ "nav.developers"}}</a>
       {{#if signedIn}}
       <details class="user-menu">
         <summary class="user-menu-summary">
