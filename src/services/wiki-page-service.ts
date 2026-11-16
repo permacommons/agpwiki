@@ -1585,6 +1585,12 @@ export async function addWikiPageAlias(
       slug: normalizedPageSlug,
     });
   }
+  if (isProfileSlug(page.slug)) {
+    throw new InvalidRequestError('Contributor profiles cannot have aliases.', {
+      slug: normalizedSlug,
+      pageSlug: page.slug,
+    });
+  }
   await assertCanEditWikiPage(dalInstance, page, userId);
 
   if (page.slug === normalizedSlug) {

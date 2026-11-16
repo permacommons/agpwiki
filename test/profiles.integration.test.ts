@@ -315,6 +315,12 @@ test('Profile addresses cannot be claimed as aliases, even before their text exi
   const profile = await writeProfile(dal, owner.username, owner.id);
   assert.equal((await readWikiPage(dal, profile.slug)).id, profile.id);
   const aliasSlug = `contributor-${owner.username}`;
-  await addWikiPageAlias(dal, { slug: aliasSlug, pageSlug: profile.slug }, owner.id);
-  assert.equal((await readWikiPage(dal, aliasSlug)).id, profile.id);
+  for (const actor of [owner, admin]) {
+    await assert.rejects(
+      addWikiPageAlias(dal, { slug: aliasSlug, pageSlug: profile.slug }, actor.id),
+      InvalidRequestError
+    );
+  }
+  await addWikiPageAlias(dal, { slug: aliasSlug, pageSlug: page.slug }, other.id);
+  assert.equal((await readWikiPage(dal, aliasSlug)).id, page.id);
 });
