@@ -91,7 +91,8 @@ const render = (overrides: Partial<HomeSections> = {}, input: Partial<HomePageIn
 test('The home page leads with the search and the values, then what is new', () => {
   const html = render();
   assert.match(html, /home\.heroTitle/);
-  assert.match(html, /home\.heroSubtitle\{&quot;count&quot;:110\}/);
+  assert.match(html, />home\.heroSubtitle<\/p>/);
+  assert.match(html, /home\.searchPlaceholder\{&quot;count&quot;:110\}/);
   assert.match(html, /<form class="home-search" action="\/search" method="get" role="search">/);
   assert.match(html, /<input class="home-search-input" id="home-search-input" type="search" name="q"/);
   for (const key of ['secular', 'truthSeeking', 'methodical', 'agency', 'accountable']) {

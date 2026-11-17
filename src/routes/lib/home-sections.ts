@@ -71,7 +71,7 @@ export const renderHomePage = ({
   const hero = `<section class="home-hero" aria-labelledby="home-hero-title">
   <div class="home-hero-inner">
     <h2 class="home-hero-title" id="home-hero-title">${escapeHtml(t('home.heroTitle'))}</h2>
-    <p class="home-hero-subtitle">${escapeHtml(t('home.heroSubtitle', { count: articleCount }))}</p>
+    <p class="home-hero-subtitle">${escapeHtml(t('home.heroSubtitle'))}</p>
     <form class="home-search" action="/search" method="get" role="search">
       <label class="visually-hidden" for="home-search-input">${escapeHtml(t('home.searchLabel'))}</label>
       <input class="home-search-input" id="home-search-input" type="search" name="q" placeholder="${escapeHtml(
