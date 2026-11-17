@@ -83,6 +83,7 @@ const render = (overrides: Partial<HomeSections> = {}, input: Partial<HomePageIn
     welcomeHtml: '<p>Welcome text.</p>',
     editHref: null,
     signedIn: false,
+    welcomeLanguageRow: '',
     t,
     locale: 'en',
     ...input,
@@ -192,7 +193,12 @@ test('The home page shows the sections below its text, and the page list sorts n
     if (!welcomeExisted) {
       await createWikiPage(
         dal,
-        { slug: HOME_PAGE_SLUG, title: { en: 'Welcome' }, body: { en: 'Welcome text.' }, canonicalLanguage: 'en' },
+        {
+          slug: HOME_PAGE_SLUG,
+          title: { en: 'Welcome', de: 'Willkommen' },
+          body: { en: 'Welcome text.', de: 'Willkommen auf der Startseite.' },
+          canonicalLanguage: 'en',
+        },
         user.id
       );
     }
@@ -236,6 +242,13 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(home, /class="home-hero"/);
     assert.match(home, /home\.newArticles/);
     assert.match(home, /class="home-how-body"/);
+    if (!welcomeExisted) {
+      assert.match(home, /class="home-how-body"[\s\S]*?class="content-language-row"/);
+      assert.match(home, /href="\/meta\/welcome\?lang=de"/);
+      const germanHome = (await getPage(`${server.url}/${HOME_PAGE_SLUG}?lang=de`)).homeHtml;
+      assert.match(germanHome, /Willkommen auf der Startseite\./);
+      assert.match(germanHome, /href="\/meta\/welcome\?lang=de"[^>]*aria-current="true"/);
+    }
     // Old versions of the welcome page show only its text.
     const revId = (
       await dal.query('SELECT _rev_id FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [HOME_PAGE_SLUG])

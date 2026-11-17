@@ -1904,6 +1904,7 @@ export const registerPageRoutes = (app: Express) => {
               sections: await loadHomeSections(dalInstance, contentLang),
               articleCount: await getArticleCount(),
               welcomeHtml: bodyHtml,
+              welcomeLanguageRow: availableLangs.length > 1 ? languageRow : '',
               editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : null,
               signedIn,
               t: req.t,

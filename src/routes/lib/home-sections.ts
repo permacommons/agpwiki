@@ -46,6 +46,7 @@ export interface HomePageInput {
   articleCount: number;
   /** The rendered text of the welcome page, which editors keep up to date. */
   welcomeHtml: string;
+  welcomeLanguageRow: string;
   /** Where to edit the welcome text, for people who may; null otherwise. */
   editHref: string | null;
   signedIn: boolean;
@@ -58,6 +59,7 @@ export const renderHomePage = ({
   sections,
   articleCount,
   welcomeHtml,
+  welcomeLanguageRow,
   editHref,
   signedIn,
   t,
@@ -137,6 +139,7 @@ ${alsoNew
   <div class="home-how-body">
     ${welcomeHtml}
     ${editHref ? `<p class="home-edit">${link(editHref, t('home.editWelcome'))}</p>` : ''}
+    ${welcomeLanguageRow}
   </div>
 </section>`;
 
