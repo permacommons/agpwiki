@@ -33,7 +33,7 @@
       {{{homeHtml}}}
     </main>
     {{else}}
-    <div class="page-layout{{#unless sidebarHtml}} single{{/unless}}">
+    <div class="page-layout{{#unless sidebarHtml}} single{{/unless}}{{#if sidebarRight}} sidebar-right{{/if}}">
       <main class="article">
         {{{labelHtml}}}
         <h1>{{title}}</h1>

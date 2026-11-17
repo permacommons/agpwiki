@@ -432,6 +432,7 @@ export const renderPageDiscussionPage = async (
       : `<div class="page-label-row"><div class="page-label">${escapeHtml(pageType)}</div></div>`,
     tabsHtml,
     sidebarHtml: profile?.accountBoxHtml,
+    sidebarRight: Boolean(profile),
     topHtml: prependAccountBanner(res, ''),
     bodyHtml,
   });

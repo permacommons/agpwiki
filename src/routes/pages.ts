@@ -226,6 +226,7 @@ const renderEmptyProfilePage = async (req: Request, res: Response, owner: Profil
     topHtml: prependAccountBanner(res, ''),
     bodyHtml: renderProfileWithoutText(profile, { t: req.t, viewerId }),
     sidebarHtml: profile.accountBoxHtml,
+    sidebarRight: true,
   });
 };
 
@@ -2038,6 +2039,7 @@ export const registerPageRoutes = (app: Express) => {
         bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
+        sidebarRight: Boolean(profile),
         wikiLinkPreviewConfig: {
           endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
           introHtml: buildRedLinkIntroHtml(req, signedIn),

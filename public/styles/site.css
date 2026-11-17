@@ -608,6 +608,16 @@ header.site-header {
   grid-column: 1;
   grid-row: 1;
 }
+/* A profile's account box sits beside the contributor's own text, on the right. */
+.page-layout.sidebar-right {
+  grid-template-columns: minmax(0, 1fr) 15rem;
+}
+.page-layout.sidebar-right:not(.single) > .article {
+  grid-column: 1;
+}
+.page-layout.sidebar-right:not(.single) > .sidebar {
+  grid-column: 2;
+}
 .article {
   min-width: 0;
   /* Force-break long unbreakable strings (URLs, hashes, inline code) as a
@@ -2773,9 +2783,12 @@ altcha-widget {
   margin-bottom: 1rem;
 }
 @media (max-width: 900px) {
-  .page-layout { grid-template-columns: 1fr; }
+  .page-layout,
+  .page-layout.sidebar-right { grid-template-columns: 1fr; }
   .page-layout:not(.single) > .article,
-  .page-layout:not(.single) > .sidebar {
+  .page-layout:not(.single) > .sidebar,
+  .page-layout.sidebar-right:not(.single) > .article,
+  .page-layout.sidebar-right:not(.single) > .sidebar {
     grid-column: 1;
     grid-row: auto;
   }
