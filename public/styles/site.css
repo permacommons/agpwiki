@@ -3363,9 +3363,9 @@ altcha-widget {
 
 .pages-sort { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.85rem; }
 .pages-created { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.8rem; color: var(--muted); }
-}
 .page-tabs {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
   margin: 0.25rem 0 1rem;
   border-bottom: 1px solid var(--rule);
@@ -3446,7 +3446,7 @@ altcha-widget {
 }
 @media (max-width: 480px) {
   .page-tab {
-    padding: 0.4rem 0.55rem;
+    padding: 0.4rem 0.45rem;
     white-space: nowrap;
   }
   .follow-control.page-tab {
