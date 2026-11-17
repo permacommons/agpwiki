@@ -4349,7 +4349,7 @@ a.mention:focus-visible {
 }
 .home-ways-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
   gap: 1rem;
 }
 .home-way {
@@ -4409,7 +4409,7 @@ a.mention:focus-visible {
 }
 .home-community-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
   gap: 2.5rem;
 }
 .home-column-head {
