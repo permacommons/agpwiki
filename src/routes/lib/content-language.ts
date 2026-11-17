@@ -84,6 +84,8 @@ export const renderContentLanguageRow = ({
   languageOptions,
   path,
   queryParams,
+  fragment,
+  nativeLabels = false,
 }: {
   label: string;
   currentLang: string;
@@ -91,6 +93,8 @@ export const renderContentLanguageRow = ({
   languageOptions: LanguageOption[];
   path: string;
   queryParams: QueryParams;
+  fragment?: string;
+  nativeLabels?: boolean;
 }): string => {
   if (!availableLangs.length) return '';
 
@@ -100,13 +104,15 @@ export const renderContentLanguageRow = ({
 
   const chips = availableLangs
     .map(lang => {
-      const chipLabel = labels.get(lang) ?? lang;
-      const href = buildContentLangHref(path, params, lang);
+      const chipLabel = nativeLabels
+        ? new Intl.DisplayNames(lang, { type: 'language', languageDisplay: 'standard' }).of(lang) ?? lang
+        : labels.get(lang) ?? lang;
+      const href = buildContentLangHref(path, params, lang) + (fragment ? `#${fragment}` : '');
       const isActive = lang === currentLang;
       const className = `content-language-chip${isActive ? ' content-language-chip--active' : ''}`;
       return `<a class="${className}" href="${escapeHtml(href)}" title="${escapeHtml(
         chipLabel
-      )}" aria-current="${isActive ? 'true' : 'false'}">${escapeHtml(chipLabel)}</a>`;
+      )}" aria-current="${isActive ? 'true' : 'false'}"${nativeLabels ? ` lang="${escapeHtml(lang)}" dir="auto"` : ''}>${escapeHtml(chipLabel)}</a>`;
     })
     .join('\n');
 

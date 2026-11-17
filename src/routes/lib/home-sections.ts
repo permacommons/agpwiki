@@ -41,6 +41,8 @@ export const pickNewArticles = (articles: HomeArticle[]) => {
   return { featured, alsoNew };
 };
 
+export const WELCOME_TOOLS_ANCHOR = 'wiki:welcome-tools';
+
 export interface HomePageInput {
   sections: HomeSections;
   articleCount: number;
@@ -48,6 +50,8 @@ export interface HomePageInput {
   welcomeHtml: string;
   welcomeLanguageRow: string;
   welcomeHistoryHtml: string;
+  welcomeDiscussionHref: string | null;
+  welcomeFollowHtml: string;
   welcomeFallbackLanguage?: string;
   /** Where to edit the welcome text, for people who may; null otherwise. */
   editHref: string | null;
@@ -63,6 +67,8 @@ export const renderHomePage = ({
   welcomeHtml,
   welcomeLanguageRow,
   welcomeHistoryHtml,
+  welcomeDiscussionHref,
+  welcomeFollowHtml,
   welcomeFallbackLanguage,
   editHref,
   signedIn,
@@ -145,9 +151,15 @@ ${alsoNew
     ${welcomeFallbackLanguage ? `<p class="home-welcome-language">${escapeHtml(t('home.welcomeFallbackLanguage', { language: welcomeFallbackLanguage }))}</p>` : ''}
     <details class="home-welcome-details">
       <summary>${escapeHtml(t('home.welcomeDetails'))}</summary>
-      ${welcomeLanguageRow}
-      ${editHref ? `<p class="home-edit">${link(editHref, t('home.editWelcome'))}</p>` : ''}
-      ${welcomeHistoryHtml}
+      <div class="home-welcome-panel" id="${WELCOME_TOOLS_ANCHOR}">
+        ${welcomeLanguageRow}
+        <div class="home-welcome-actions">
+          ${welcomeDiscussionHref ? link(welcomeDiscussionHref, t('forum.discussThisPage'), 'home-welcome-action') : ''}
+          ${editHref ? link(editHref, t('home.editWelcome'), 'home-welcome-action') : ''}
+          ${welcomeFollowHtml}
+        </div>
+        ${welcomeHistoryHtml}
+      </div>
     </details>
   </div>
 </section>`;

@@ -7,8 +7,10 @@ import test from 'node:test';
 import express from 'express';
 import type { TFunction } from 'i18next';
 
+import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import BlogPost from '../src/models/blog-post.js';
+import { FOLLOW_PATH, registerFollowRoutes } from '../src/routes/follow.js';
 import { type HomePageInput, pickNewArticles, renderHomePage } from '../src/routes/lib/home-sections.js';
 import { registerLocaleRoutes } from '../src/routes/locale.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -83,6 +85,8 @@ const render = (overrides: Partial<HomeSections> = {}, input: Partial<HomePageIn
     signedIn: false,
     welcomeLanguageRow: '',
     welcomeHistoryHtml: '',
+    welcomeDiscussionHref: null,
+    welcomeFollowHtml: '',
     t,
     locale: 'en',
     ...input,
@@ -157,6 +161,7 @@ const makeServer = async () => {
     next();
   });
   registerLocaleRoutes(app);
+  registerFollowRoutes(app);
   registerToolRoutes(app);
   registerPageRoutes(app);
   const server = http.createServer(app);
@@ -175,8 +180,8 @@ const makeServer = async () => {
   });
 };
 
-const getPage = async (url: string) => {
-  const response = await fetch(url);
+const getPage = async (url: string, cookie?: string) => {
+  const response = await fetch(url, { headers: cookie ? { cookie } : undefined });
   assert.equal(response.status, 200, url);
   return (await response.json()) as { bodyHtml: string; homeHtml: string };
 };
@@ -245,12 +250,34 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(home, /class="home-how-body"/);
     assert.match(home, /<details class="home-welcome-details">\s*<summary>home\.welcomeDetails<\/summary>[\s\S]*?<details class="page-history"/);
     assert.match(home, /history\.compare/);
+    assert.match(home, /class="home-welcome-actions"[\s\S]*?href="\/meta\/welcome\/discussion"/);
+    assert.doesNotMatch(home, /class="follow-control-form"/);
+    const reader = await createTestUser();
+    const session = await createSession(reader.id);
+    const cookie = `agpwiki_session=${session.token}`;
+    const welcomeUrl = `${server.url}/${HOME_PAGE_SLUG}?lang=en`;
+    const returnTo = `/${HOME_PAGE_SLUG}?lang=en#wiki:welcome-tools`;
+    const submitFollow = async (action: 'follow' | 'unfollow') => {
+      const response = await fetch(server.url + FOLLOW_PATH, {
+        method: 'POST',
+        headers: { cookie },
+        body: new URLSearchParams({ page: HOME_PAGE_SLUG, return: returnTo, action }),
+        redirect: 'manual',
+      });
+      assert.equal(response.status, 303);
+      assert.equal(response.headers.get('location'), returnTo);
+    };
+    assert.match((await getPage(welcomeUrl, cookie)).homeHtml, /class="follow-control" aria-pressed="false"/);
+    await submitFollow('follow');
+    assert.match((await getPage(welcomeUrl, cookie)).homeHtml, /class="follow-control" aria-pressed="true"/);
+    await submitFollow('unfollow');
+    assert.match((await getPage(welcomeUrl, cookie)).homeHtml, /class="follow-control" aria-pressed="false"/);
     if (!welcomeExisted) {
       assert.match(home, /<details class="home-welcome-details">[\s\S]*?class="content-language-row"/);
-      assert.match(home, /href="\/meta\/welcome\?lang=de"/);
+      assert.match(home, /href="\/meta\/welcome\?lang=de#wiki:welcome-tools"[^>]*lang="de" dir="auto">Deutsch/);
       const germanHome = (await getPage(`${server.url}/${HOME_PAGE_SLUG}?lang=de`)).homeHtml;
       assert.match(germanHome, /Willkommen auf der Startseite\./);
-      assert.match(germanHome, /href="\/meta\/welcome\?lang=de"[^>]*aria-current="true"/);
+      assert.match(germanHome, /href="\/meta\/welcome\?lang=de#wiki:welcome-tools"[^>]*aria-current="true"/);
       assert.match(germanHome, /<input type="hidden" name="lang" value="de">/);
     }
     // Old versions of the welcome page show only its text.

@@ -104,8 +104,9 @@ import {
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderDraftBanner } from './lib/draft-banner.js';
+import { renderFollowControl } from './lib/follow-control.js';
 import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
-import { renderHomePage } from './lib/home-sections.js';
+import { renderHomePage, WELCOME_TOOLS_ANCHOR } from './lib/home-sections.js';
 import {
   createPreviewHandler,
   renderMarkdownPreviewHtml,
@@ -1797,6 +1798,8 @@ export const registerPageRoutes = (app: Express) => {
         languageOptions: res.locals.languageOptions,
         path: req.path,
         queryParams,
+        fragment: isCurrentWelcome ? WELCOME_TOOLS_ANCHOR : undefined,
+        nativeLabels: isCurrentWelcome,
       });
       const discussionCategory = forumPageCategory(canonicalSlug);
       const forumPath = discussionCategory ? discussionPath({ kind: 'page', slug: canonicalSlug }) : '';
@@ -1821,7 +1824,16 @@ export const registerPageRoutes = (app: Express) => {
       ].filter(Boolean);
       const isCurrentView = !revIdParam && !diffFrom && !diffTo;
       const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
-      const tabsHtml = renderPageTabs({
+      const follow = session
+        ? {
+            slug: canonicalSlug,
+            following: await isFollowingPage(dalInstance, page.id, session.userId),
+            returnTo: req.originalUrl || pageViewPath(canonicalSlug),
+            action: FOLLOW_PATH,
+          }
+        : undefined;
+      const showHome = isCurrentWelcome && !diffHtml;
+      const tabsHtml = showHome ? '' : renderPageTabs({
         isArticle: showsAsArticle,
         pageHref: pageViewPath(canonicalSlug, langOverride),
         isCurrentView,
@@ -1830,14 +1842,7 @@ export const registerPageRoutes = (app: Express) => {
           ? await countPageDiscussionComments(dalInstance, await listPageDiscussionSlugs(dalInstance, page))
           : 0,
         editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
-        follow: session
-          ? {
-              slug: canonicalSlug,
-              following: await isFollowingPage(dalInstance, page.id, session.userId),
-              returnTo: req.originalUrl || pageViewPath(canonicalSlug),
-              action: FOLLOW_PATH,
-            }
-          : undefined,
+        follow,
         t: req.t,
       });
       const forumLinkHtml = relatedLinks.length
@@ -1902,13 +1907,25 @@ export const registerPageRoutes = (app: Express) => {
       // The current version of the welcome page is the home page; its text
       // appears there among the home sections.
       const homeHtml =
-        isCurrentWelcome && !diffHtml
+        showHome
           ? renderHomePage({
               sections: await loadHomeSections(dalInstance, res.locals.locale),
               articleCount: await getArticleCount(),
               welcomeHtml: bodyHtml,
               welcomeLanguageRow: availableLangs.length > 1 ? languageRow : '',
               welcomeHistoryHtml: historyHtml,
+              welcomeDiscussionHref: forumPath || null,
+              welcomeFollowHtml: follow ? renderFollowControl({
+                action: follow.action,
+                following: follow.following,
+                fields: {
+                  page: follow.slug,
+                  return: `${follow.returnTo}#${WELCOME_TOOLS_ANCHOR}`,
+                  action: follow.following ? 'unfollow' : 'follow',
+                },
+                help: req.t(follow.following ? 'pageTabs.followingHelp' : 'pageTabs.followHelp'),
+                t: req.t,
+              }) : '',
               welcomeFallbackLanguage: !langOverride && bodySource && contentLang !== res.locals.locale
                 ? res.locals.languageOptions.find((option: { code: string }) => option.code === contentLang)?.label ?? contentLang
                 : undefined,
