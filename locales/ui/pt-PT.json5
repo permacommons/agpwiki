@@ -11,6 +11,7 @@
     reviewAccounts: 'Rever contas',
     userRights: 'Direitos de utilizador',
     signOut: 'Sair',
+    "yourProfile": "O teu perfil",
     help: 'Ajuda',
     menu: 'Menu de navegação',
     permanentLink: 'Ligação permanente',
@@ -683,6 +684,7 @@
       errorCaptcha: 'Completa o desafio de verificação.',
       errorEmailUnavailable: 'Não foi possível criar uma conta com esse endereço de e-mail.',
       errorUsernameInvalid: 'Os nomes de utilizador não podem conter @.',
+      errorUsernameProfileInvalid: "Escolhe outro nome de apresentação. O nome de utilizador resultante não pode conter /, ser . ou .., nem estar reservado para uma ação do perfil (como discussion ou checks).",
       errorUsernameTaken: 'Esse nome de utilizador já está a ser usado.',
       errorRateLimited: 'Demasiadas tentativas de criação de conta a partir desta rede. Tenta novamente mais tarde.',
       emailWarning: 'Lamentamos, mas o serviço de e-mail está indisponível neste momento, impedindo a confirmação da conta. Tenta novamente mais tarde.',
@@ -1005,4 +1007,28 @@
     "discussedPages": "Páginas com discussão recente",
     "noDiscussedPages": "Ainda nenhuma página foi discutida.",
   },
+  "profile": {
+    "label": "PERFIL — COLABORADOR DA AGPEDIA",
+    "tabProfile": "Perfil",
+    "tabTalk": "Discussão",
+    "empty": "{{name}} ainda não escreveu nada aqui.",
+    "emptyOwn": "Ainda não escreveste o teu perfil.",
+    "write": "Escrever o teu perfil",
+    "edit": "Editar perfil",
+    "editForbidden": "Só esta pessoa e os administradores da wiki podem editar este perfil.",
+    "talkIntro": "Mensagens para {{username}}. Qualquer pessoa com sessão iniciada e um endereço de email confirmado pode escrever aqui. {{username}} é avisado de cada nova mensagem.",
+    "talkTitle": "Discussão: {{name}}",
+    "forumSection": "Colaboradores",
+    "account": {
+      "title": "Conta",
+      "username": "Nome de utilizador",
+      "displayName": "Nome apresentado",
+      "activeSince": "Ativo desde",
+      "edits": "Edições",
+      "pagesCreated": "Páginas criadas",
+      "comments": "Comentários",
+      "roles": "Funções",
+      "editsBreakdown": "Edições por tipo:"
+    }
+  }
 }

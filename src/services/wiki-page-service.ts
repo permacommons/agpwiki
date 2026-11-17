@@ -32,6 +32,7 @@ import {
   toDraftSlug,
 } from '../lib/page-address.js';
 import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
+import { isProfileSlug } from '../lib/profile-paths.js';
 import { missingPromptPlaceholders, requiredPromptPlaceholders } from '../lib/prompt-registry.js';
 import {
   type ProposalStatusInfo,
@@ -57,6 +58,7 @@ import { validateMediaRefs } from './media-reference-validation-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
+import { assertCanWriteProfilePage } from './profile-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
 import {
@@ -981,12 +983,13 @@ export async function searchWikiPages(
   ensureNonEmptyString(query, 'query');
   const normalizedLimit = Math.min(Math.max(limit ?? 20, 1), 100);
   // Search is intentionally simple: a substring of the address or of the
-  // title in any language. Drafts are not promoted, so they never match.
+  // title in any language. Drafts are not promoted and profiles
+  // are not content, so neither matches.
   const result = await dalInstance.query(
     `SELECT slug, title, canonical_language
      FROM ${WikiPage.tableName}
      WHERE _old_rev_of IS NULL AND _rev_deleted = false
-       AND ${pageNamespaceSql()} IS DISTINCT FROM 'draft'
+       AND COALESCE(${pageNamespaceSql()}, '') NOT IN ('draft', 'user')
        AND (
          $2 = 'all'
          OR ($2 = 'content_only' AND ${pageNamespaceSql()} = 'article')
@@ -1069,6 +1072,7 @@ export async function createWikiPage(
     });
   }
   assertDraftBecomesArticle(normalizedSlug);
+  await assertCanWriteProfilePage(dalInstance, normalizedSlug, userId);
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
   if (existing) {
@@ -1194,6 +1198,13 @@ export async function updateWikiPage(
       );
     }
     assertDraftBecomesArticle(normalizedNewSlug);
+    // A profile stays at its contributor's address.
+    if (isProfileSlug(previousSlug) || isProfileSlug(normalizedNewSlug)) {
+      throw new InvalidRequestError('Contributor profiles cannot be moved.', {
+        slug: previousSlug,
+        newSlug: normalizedNewSlug,
+      });
+    }
   }
   // An alias of this same page may be renamed onto (moving a page back); it is
   // removed rather than treated as a conflict.
@@ -1562,10 +1573,22 @@ export async function addWikiPageAlias(
     });
   }
 
+  if (isProfileSlug(normalizedSlug)) {
+    throw new InvalidRequestError('Contributor profile addresses cannot be aliases.', {
+      slug: normalizedSlug,
+    });
+  }
+
   const page = await findCurrentPageBySlugOrAlias(normalizedPageSlug);
   if (!page) {
     throw new NotFoundError(`Wiki page not found: ${normalizedPageSlug}`, {
       slug: normalizedPageSlug,
+    });
+  }
+  if (isProfileSlug(page.slug)) {
+    throw new InvalidRequestError('Contributor profiles cannot have aliases.', {
+      slug: normalizedSlug,
+      pageSlug: page.slug,
     });
   }
   await assertCanEditWikiPage(dalInstance, page, userId);

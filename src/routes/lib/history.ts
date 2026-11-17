@@ -1,8 +1,19 @@
 import type { TFunction } from 'i18next';
+import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import { renderUserLink } from '../../lib/profile-paths.js';
 import { escapeHtml, renderText, type SafeText } from '../../render.js';
 import { NOT_DUPLICATE_TAG_PREFIX } from '../../services/duplicate-check-service.js';
+import { loadUserAuthors } from '../../services/user-lookup-service.js';
 
 export { loadUserDisplayNames as fetchUserMap } from '../../services/user-lookup-service.js';
+
+/** Display names and usernames, to show each contributor with a link to their profile. */
+export const fetchUserNames = async (dalInstance: DataAccessLayer, userIds: string[]) => {
+  const authors = await loadUserAuthors(dalInstance, userIds);
+  const userMap = new Map([...authors].map(([id, author]) => [id, author.name]));
+  const usernames = new Map([...authors].map(([id, author]) => [id, author.username]));
+  return { userMap, usernames };
+};
 
 // Colons cannot occur in generated Markdown heading IDs.
 export const HISTORY_ANCHOR = 'wiki:revision-history';
@@ -25,6 +36,8 @@ type HistoryOptions = {
   // Further links after "View", such as restoring that version.
   extraActions?: (revision: HistoryRevision, index: number) => Array<{ label: string; href: string }>;
   userMap: Map<string, string>;
+  // Usernames by user ID: names with one link to their profile.
+  usernames?: Map<string, string>;
   t: TFunction;
 };
 
@@ -36,6 +49,7 @@ export const renderRevisionHistory = ({
   viewHref,
   extraActions,
   userMap,
+  usernames,
   t,
 }: HistoryOptions) => {
   const historyItems = revisions
@@ -57,11 +71,8 @@ export const renderRevisionHistory = ({
       const agentTag = (rev.revTags ?? []).find(tag => tag.startsWith('agent:')) ?? null;
       const agentVersion =
         (rev.revTags ?? []).find(tag => tag.startsWith('agent_version:')) ?? null;
-      const metaLabelParts = [
-        displayName ? t('history.operator', { name: displayName }) : null,
-        agentTag,
-        agentVersion,
-      ].filter(Boolean);
+      // The name is shown next to the date, so its tooltip only names the agent.
+      const metaLabelParts = [agentTag, agentVersion].filter(Boolean);
       const metaLabel = metaLabelParts.join(' · ');
       const metaAttrs = metaLabel
         ? ` data-meta="true" data-user="${escapeHtml(displayName ?? '')}" data-agent="${escapeHtml(
@@ -79,7 +90,9 @@ export const renderRevisionHistory = ({
       toChecked ? 'checked' : ''
     } /></span>
     <strong>${renderText(rev.title)}</strong>
-    <span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span>
+    <span class="rev-byline">${
+      displayName ? `${renderUserLink(displayName, rev.revUser ? usernames?.get(rev.revUser) : null)} · ` : ''
+    }<span${metaAttrs}>${escapeHtml(rev.dateLabel)}</span></span>
   </div>
   ${summaryHtml}${notDuplicateHtml}
   <div class="rev-actions">

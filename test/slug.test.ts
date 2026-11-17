@@ -23,11 +23,11 @@ test('isBlockedSlug blocks empty or reserved prefixes', () => {
   assert.equal(isBlockedSlug('tool/pages'), true);
 });
 
-test('isBlockedSlug blocks reserved suffixes', () => {
-  assert.equal(isBlockedSlug('comments'), true);
-  assert.equal(isBlockedSlug('meta/comments'), true);
-  assert.equal(isBlockedSlug('foo/comments'), true);
-  assert.equal(isBlockedSlug('checks'), true);
+test('isBlockedSlug allows comments and bare suffix names but blocks check routes', () => {
+  assert.equal(isBlockedSlug('comments'), false);
+  assert.equal(isBlockedSlug('meta/comments'), false);
+  assert.equal(isBlockedSlug('foo/comments'), false);
+  assert.equal(isBlockedSlug('checks'), false);
   assert.equal(isBlockedSlug('meta/checks'), true);
   assert.equal(isBlockedSlug('foo/checks'), true);
 });
@@ -53,12 +53,15 @@ test('isBlockedSlug blocks page action paths', () => {
   for (const action of [
     'operator-edit',
     'operator-edit/dismiss-banner',
+    'discussion',
+    'publish-draft',
     'proposal-links',
     'proposal-status',
     'position-reply',
     'sign-off',
   ]) {
-    for (const slug of [action, `foo/${action}`, `foo/bar/${action}`]) {
+    assert.equal(isBlockedSlug(action), false, action);
+    for (const slug of [`foo/${action}`, `foo/bar/${action}`]) {
       assert.equal(isBlockedSlug(slug), true, slug);
     }
   }

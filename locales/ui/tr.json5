@@ -11,6 +11,7 @@
     reviewAccounts: 'Hesapları gözden geçir',
     userRights: 'Kullanıcı hakları',
     signOut: 'Çıkış Yap',
+    "yourProfile": "Profiliniz",
     help: 'Yardım',
     menu: 'Menü',
     permanentLink: 'Kalıcı bağlantı',
@@ -683,6 +684,7 @@
       errorCaptcha: 'Doğrulama görevini tamamlayın.',
       errorEmailUnavailable: 'Bu e-posta adresiyle bir hesap oluşturulamadı.',
       errorUsernameInvalid: 'Kullanıcı adları @ içeremez.',
+      errorUsernameProfileInvalid: "Başka bir görünen ad seçin. Bundan oluşturulan kullanıcı adı / içeremez, . veya .. olamaz ya da bir profil işlemi için ayrılmış bir ad (discussion veya checks gibi) olamaz.",
       errorUsernameTaken: 'Bu kullanıcı adı zaten kullanılıyor.',
       errorRateLimited: 'Bu ağdan çok fazla hesap oluşturma denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',
       emailWarning: 'Üzgünüz, ancak e-posta hizmeti şu anda kullanılamıyor ve bu da hesap doğrulamasını engelliyor. Lütfen daha sonra tekrar deneyin.',
@@ -1005,4 +1007,28 @@
     "discussedPages": "Yakın zamanda tartışılan sayfalar",
     "noDiscussedPages": "Henüz hiçbir sayfa tartışılmadı.",
   },
+  "profile": {
+    "label": "PROFİL — AGPEDIA KATKICISI",
+    "tabProfile": "Profil",
+    "tabTalk": "Tartışma",
+    "empty": "{{name}} henüz buraya bir şey yazmadı.",
+    "emptyOwn": "Profilini henüz yazmadın.",
+    "write": "Profilini yaz",
+    "edit": "Profili düzenle",
+    "editForbidden": "Bu profili yalnızca sahibi ve viki yöneticileri düzenleyebilir.",
+    "talkIntro": "{{username}} için mesajlar. Onaylı bir e-posta adresiyle oturum açmış herkes buraya yazabilir. {{username}} her yeni mesajdan haberdar edilir.",
+    "talkTitle": "Tartışma: {{name}}",
+    "forumSection": "Katkıcılar",
+    "account": {
+      "title": "Hesap",
+      "username": "Kullanıcı adı",
+      "displayName": "Görünen ad",
+      "activeSince": "Şu tarihten beri etkin",
+      "edits": "Düzenlemeler",
+      "pagesCreated": "Oluşturulan sayfalar",
+      "comments": "Yorumlar",
+      "roles": "Roller",
+      "editsBreakdown": "Türe göre düzenlemeler:"
+    }
+  }
 }

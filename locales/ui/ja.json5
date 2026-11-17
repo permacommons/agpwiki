@@ -11,6 +11,7 @@
     reviewAccounts: 'アカウントの審査',
     userRights: 'ユーザー権限',
     signOut: 'ログアウト',
+    "yourProfile": "自分のプロフィール",
     help: 'ヘルプ',
     menu: 'メニュー',
     permanentLink: '固定リンク',
@@ -683,6 +684,7 @@
       errorCaptcha: '確認タスクを完了してください。',
       errorEmailUnavailable: 'このメールアドレスではアカウントを作成できませんでした。',
       errorUsernameInvalid: 'ユーザー名に @ は使用できません。',
+      errorUsernameProfileInvalid: "別の表示名を選んでください。そこから生成されるユーザー名には / を含めることはできず、. や ..、またはプロフィール操作用の予約名（discussion や checks など）も使用できません。",
       errorUsernameTaken: 'そのユーザー名はすでに使われています。',
       errorRateLimited: 'このネットワークからのアカウント作成試行が多すぎます。後でもう一度お試しください。',
       emailWarning: '申し訳ありませんが、現在メールサービスを利用できないため、アカウント確認を行えません。後でもう一度お試しください。',
@@ -1005,4 +1007,28 @@
     "discussedPages": "最近議論のあったページ",
     "noDiscussedPages": "まだ議論されたページはありません。",
   },
+  "profile": {
+    "label": "プロフィール — AGPEDIA の投稿者",
+    "tabProfile": "プロフィール",
+    "tabTalk": "ノート",
+    "empty": "{{name}} さんはまだここに何も書いていません。",
+    "emptyOwn": "まだプロフィールを書いていません。",
+    "write": "プロフィールを書く",
+    "edit": "プロフィールを編集",
+    "editForbidden": "このプロフィールを編集できるのは、本人とウィキ管理者だけです。",
+    "talkIntro": "{{username}} さんへのメッセージ。確認済みのメールアドレスでサインインしている人なら誰でもここに書き込めます。新しいメッセージはすべて {{username}} さんに通知されます。",
+    "talkTitle": "ノート: {{name}}",
+    "forumSection": "投稿者",
+    "account": {
+      "title": "アカウント",
+      "username": "ユーザー名",
+      "displayName": "表示名",
+      "activeSince": "活動開始",
+      "edits": "編集",
+      "pagesCreated": "作成したページ",
+      "comments": "コメント",
+      "roles": "役割",
+      "editsBreakdown": "種類別の編集:"
+    }
+  }
 }

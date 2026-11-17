@@ -34,7 +34,7 @@ import {
   resolveContentLanguage,
 } from './lib/content-language.js';
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
-import { fetchUserMap, renderRevisionHistory } from './lib/history.js';
+import { fetchUserNames, renderRevisionHistory } from './lib/history.js';
 
 const { mlString } = dal;
 
@@ -153,7 +153,7 @@ export const registerMediaRoutes = (app: Express) => {
       const userIds = revisions
         .map(rev => rev.revUser)
         .filter((id): id is string => Boolean(id));
-      const userMap = await fetchUserMap(dalInstance, userIds);
+      const { userMap, usernames } = await fetchUserNames(dalInstance, userIds);
 
       const selectedRevision = revIdParam
         ? await (async () => {
@@ -342,6 +342,7 @@ export const registerMediaRoutes = (app: Express) => {
             ? `/media/${encodeURIComponent(slug)}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
             : `/media/${encodeURIComponent(slug)}?rev=${revId}`,
         userMap,
+        usernames,
         t: req.t,
       });
 

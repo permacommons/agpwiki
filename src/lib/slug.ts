@@ -14,11 +14,11 @@ const RESERVED_SLUGS = new Set([
 ]);
 
 const RESERVED_SUFFIXES = [
-  'comments',
   'checks',
   'discussion',
   'operator-edit',
   'operator-edit/dismiss-banner',
+  'publish-draft',
   'proposal-links',
   'proposal-status',
   'position-reply',
@@ -50,7 +50,7 @@ export const isBlockedSlug = (slug: string) => {
   if (/^.+\/checks\/[^/]+$/.test(slug)) return true;
 
   for (const suffix of RESERVED_SUFFIXES) {
-    if (slug === suffix || slug.endsWith(`/${suffix}`)) return true;
+    if (slug.endsWith(`/${suffix}`)) return true;
   }
 
   return false;

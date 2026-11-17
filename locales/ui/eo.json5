@@ -11,6 +11,7 @@
     reviewAccounts: 'Reviziu kontojn',
     userRights: 'Uzantorajtoj',
     signOut: 'Elsaluti',
+    "yourProfile": "Via profilo",
     help: 'Helpo',
     menu: 'Menuo',
     permanentLink: 'Daŭra ligilo',
@@ -683,6 +684,7 @@
       errorCaptcha: 'Bonvolu plenumi la konfirman taskon.',
       errorEmailUnavailable: 'Ni ne povis krei konton per tiu retadreso.',
       errorUsernameInvalid: 'Salutnomoj ne rajtas enhavi @.',
+      errorUsernameProfileInvalid: "Elektu alian montratan nomon. La uzantnomo derivita de ĝi ne rajtas enhavi /, esti . aŭ .., aŭ esti rezervita por profila ago (ekzemple discussion aŭ checks).",
       errorUsernameTaken: 'Tiu salutnomo jam estas uzata.',
       errorRateLimited: 'Tro da provoj krei konton el ĉi tiu reto. Bonvolu reprovi poste.',
       emailWarning: 'Ni bedaŭras, sed la retpoŝta servo nuntempe ne disponeblas, kio malebligas kontokonfirmon. Bonvolu reprovi poste.',
@@ -1005,4 +1007,28 @@
     "discussedPages": "Paĝoj kun freŝa diskuto",
     "noDiscussedPages": "Ankoraŭ neniu paĝo estis diskutita.",
   },
+  "profile": {
+    "label": "PROFILO — KONTRIBUANTO AL AGPEDIA",
+    "tabProfile": "Profilo",
+    "tabTalk": "Diskuto",
+    "empty": "{{name}} ankoraŭ skribis nenion ĉi tie.",
+    "emptyOwn": "Vi ankoraŭ ne skribis vian profilon.",
+    "write": "Skribi vian profilon",
+    "edit": "Redakti profilon",
+    "editForbidden": "Nur ĉi tiu kontribuanto kaj vikiaj administrantoj povas redakti ĉi tiun profilon.",
+    "talkIntro": "Mesaĝoj al {{username}}. Ĉiu, kiu ensalutis kun konfirmita retpoŝta adreso, povas skribi ĉi tie. {{username}} estas sciigata pri ĉiu nova mesaĝo.",
+    "talkTitle": "Diskuto: {{name}}",
+    "forumSection": "Kontribuantoj",
+    "account": {
+      "title": "Konto",
+      "username": "Uzantnomo",
+      "displayName": "Montrata nomo",
+      "activeSince": "Aktiva ekde",
+      "edits": "Redaktoj",
+      "pagesCreated": "Kreitaj paĝoj",
+      "comments": "Komentoj",
+      "roles": "Roloj",
+      "editsBreakdown": "Redaktoj laŭ speco:"
+    }
+  }
 }
