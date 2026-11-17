@@ -347,7 +347,8 @@ header.site-header {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.9rem;
 }
-.issue-kind--current {
+.issue-kind--current,
+.issue-kind--current:hover {
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
@@ -4254,6 +4255,7 @@ a.mention:focus-visible {
 }
 .home-how > h2 { margin: 0; }
 .home-how-body { font-size: 1.1rem; line-height: 1.65; max-width: 48rem; }
+.home-welcome-markdown { overflow-wrap: anywhere; }
 .home-welcome-markdown > :first-child { margin-top: 0; }
 .home-welcome-markdown figure.media { box-sizing: border-box; }
 .home-welcome-markdown img { max-width: 100%; height: auto; }
