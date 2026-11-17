@@ -65,6 +65,7 @@ header.site-header {
   border-bottom: 1px solid var(--rule);
   background: #fff;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.5rem;
 }
@@ -620,6 +621,9 @@ header.site-header {
 /* Keeps lines readable now that the article has no card around it. */
 .article > * {
   max-width: 54rem;
+}
+.article > .tool-page--wide {
+  max-width: none;
 }
 .sidebar {
   font-family: 'IBM Plex Sans', sans-serif;
@@ -1805,6 +1809,9 @@ pre.diff ins {
   display: inline-block;
   margin-right: 0.5rem;
 }
+.token-table-scroll {
+  overflow-x: auto;
+}
 .account-review-toolbar {
   display: flex;
   gap: 0.6rem 1rem;
@@ -1919,6 +1926,11 @@ pre.diff ins {
 .account-review-table th:first-child,
 .account-review-table td:first-child {
   width: 1%;
+}
+@media (width > 640px) {
+  .table-stack-mobile:has(> .account-review-table) {
+    overflow-x: auto;
+  }
 }
 .account-review-row.is-blocked {
   background: #f5eee8;
@@ -2781,9 +2793,6 @@ altcha-widget {
     grid-row: auto;
   }
   .home-logo { height: 2.4rem; }
-  header.site-header {
-    flex-wrap: wrap;
-  }
   .nav-menu {
     display: block;
     position: relative;
@@ -3056,6 +3065,28 @@ altcha-widget {
   .account-review-toolbar {
     padding: 0.85rem;
   }
+  .account-review-toolbar,
+  .account-review-table td,
+  .user-rights-search,
+  .user-rights-table td {
+    overflow-wrap: anywhere;
+  }
+  .user-rights-search label,
+  .user-rights-search input[type="search"],
+  .token-create-form label,
+  .token-create-form input,
+  .account-review-bulk-actions input {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .account-review-bulk-actions input {
+    box-sizing: border-box;
+  }
+  .account-review-toolbar button,
+  .account-review-table :is(summary, button),
+  .user-rights-table button {
+    white-space: normal;
+  }
   .account-review-selection-actions,
   .account-review-bulk-actions,
   .account-review-pagination {
@@ -3068,6 +3099,11 @@ altcha-widget {
   }
   .account-review-selection-group {
     flex: 1 1 100%;
+    min-width: 0;
+  }
+  .account-review-selection-group,
+  .account-review-bulk-group {
+    grid-template-columns: minmax(0, 1fr);
   }
   .account-review-bulk-actions {
     flex-wrap: wrap;
@@ -3083,11 +3119,16 @@ altcha-widget {
     align-items: stretch;
   }
   .account-review-table td.account-review-select-cell {
+    width: 100%;
     padding-bottom: 0;
     border-bottom: none;
   }
   .account-review-select-cell::before {
     display: none;
+  }
+  .account-review-select-cell .account-review-checkbox {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
   }
   .account-review-select-cell .account-review-checkbox span {
     position: static;
@@ -4077,6 +4118,7 @@ a.mention:focus-visible {
 /* Home page */
 .home { font-family: 'Source Serif 4', Georgia, serif; }
 .home-hero {
+  overflow-wrap: anywhere;
   padding: 2.5rem 1.5rem 2.25rem;
   background: var(--tint);
   border-bottom: 1px solid var(--tint-rule);
@@ -4179,6 +4221,7 @@ a.mention:focus-visible {
 .home-values-list h3 { margin: 0 0 0.3rem; font-size: 1.3rem; font-weight: 600; color: var(--brand); }
 .home-values-list p { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #3b404a; }
 .home-body {
+  overflow-wrap: anywhere;
   max-width: 77.5rem;
   margin: 0 auto;
   padding: 2.5rem 1.5rem 1rem;

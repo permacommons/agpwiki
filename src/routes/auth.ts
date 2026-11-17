@@ -413,10 +413,10 @@ export const registerAuthRoutes = (app: Express) => {
       : `<a href="${TOOL_TOKENS_PATH}?show=revoked">${req.t(
           'auth.tokens.showRevoked'
         )}</a>`;
-    const bodyHtml = `<div class="tool-page">
+    const bodyHtml = `<div class="tool-page tool-page--wide">
   <div class="form-card">
     <p class="form-help">${req.t('auth.tokens.description')}</p>
-    <form method="post" action="${TOOL_TOKENS_PATH}/create" class="form-inline">
+    <form method="post" action="${TOOL_TOKENS_PATH}/create" class="form-inline token-create-form">
       <label>
         <span>${req.t('auth.tokens.label')}</span>
         <input type="text" name="label" />
@@ -427,6 +427,7 @@ export const registerAuthRoutes = (app: Express) => {
   </div>
   <div class="form-card">
     <h2>${req.t('auth.tokens.activeTokens')}</h2>
+    <div class="token-table-scroll">
     <table class="token-table">
       <thead>
         <tr>
@@ -441,6 +442,7 @@ export const registerAuthRoutes = (app: Express) => {
         ${rows || `<tr><td colspan="5">${req.t('auth.tokens.empty')}</td></tr>`}
       </tbody>
     </table>
+    </div>
   </div>
   <form method="post" action="${TOOL_LOGOUT_PATH}" class="form-card">
     <button type="submit">${req.t('auth.tokens.logout')}</button>
