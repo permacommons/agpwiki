@@ -13,6 +13,7 @@
     reviewAccounts: 'Tarkasta tilit',
     userRights: 'Käyttäjäoikeudet',
     signOut: 'Kirjaudu ulos',
+    "yourProfile": "Oma profiili",
     help: 'Apua',
     menu: 'Valikko',
     permanentLink: 'Pysyvä linkki',
@@ -751,6 +752,7 @@
       errorCaptcha: 'Suorita vahvistushaaste loppuun.',
       errorEmailUnavailable: 'Tiliä ei voitu luoda tällä sähköpostiosoitteella.',
       errorUsernameInvalid: 'Käyttäjänimi ei saa sisältää @-merkkiä.',
+      errorUsernameProfileInvalid: "Valitse toinen näyttönimi. Siitä muodostettu käyttäjätunnus ei saa sisältää merkkiä /, olla . tai .. eikä olla varattu profiilitoiminnolle (kuten discussion tai checks).",
       errorUsernameTaken: 'Tämä käyttäjänimi on jo käytössä.',
       errorRateLimited: 'Liian monta tilinluontiyritystä tästä verkosta. Yritä myöhemmin uudelleen.',
       emailWarning: 'Valitettavasti sähköpostipalvelu ei ole tällä hetkellä saatavilla, joten tilin vahvistaminen ei onnistu. Yritä myöhemmin uudelleen.',
@@ -1081,4 +1083,28 @@
     "discussedPages": "Sivut, joilla on tuoretta keskustelua",
     "noDiscussedPages": "Mistään sivusta ei ole vielä keskusteltu.",
   },
+  "profile": {
+    "label": "PROFIILI — AGPEDIAN MUOKKAAJA",
+    "tabProfile": "Profiili",
+    "tabTalk": "Keskustelu",
+    "empty": "{{name}} ei ole vielä kirjoittanut tänne mitään.",
+    "emptyOwn": "Et ole vielä kirjoittanut profiiliasi.",
+    "write": "Kirjoita profiilisi",
+    "edit": "Muokkaa profiilia",
+    "editForbidden": "Vain tämä muokkaaja ja wikin ylläpitäjät voivat muokata tätä profiilia.",
+    "talkIntro": "Viestit käyttäjälle {{username}}. Kuka tahansa vahvistetulla sähköpostiosoitteella kirjautunut voi kirjoittaa tänne. {{username}} saa ilmoituksen jokaisesta uudesta viestistä.",
+    "talkTitle": "Keskustelu: {{name}}",
+    "forumSection": "Muokkaajat",
+    "account": {
+      "title": "Tili",
+      "username": "Käyttäjätunnus",
+      "displayName": "Näyttönimi",
+      "activeSince": "Aktiivinen alkaen",
+      "edits": "Muokkaukset",
+      "pagesCreated": "Luodut sivut",
+      "comments": "Kommentit",
+      "roles": "Roolit",
+      "editsBreakdown": "Muokkaukset lajeittain:"
+    }
+  }
 }

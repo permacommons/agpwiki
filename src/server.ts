@@ -7,6 +7,7 @@ import { layoutAssets } from './asset-urls.js';
 import { resolveSessionUser } from './auth/session.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
+import { profilePath } from './lib/profile-paths.js';
 import { runInRequestScope } from './lib/request-scope.js';
 import User from './models/user.js';
 import { registerAccountRequestRoutes } from './routes/account-requests.js';
@@ -65,6 +66,7 @@ app.use(async (req, res, next) => {
   res.locals.signedIn = Boolean(session);
   res.locals.currentUserId = null;
   res.locals.currentUserName = null;
+  res.locals.currentUserProfilePath = null;
   res.locals.currentPath = req.originalUrl || '/';
   res.locals.accountState = null;
   res.locals.accountBannerHtml = '';
@@ -81,6 +83,7 @@ app.use(async (req, res, next) => {
     ]);
     res.locals.currentUserId = session.userId;
     res.locals.currentUserName = user?.displayName ?? null;
+    res.locals.currentUserProfilePath = user ? profilePath(user.username) : null;
     res.locals.accountState = await getAccountLifecycleState(session.userId);
     res.locals.isSiteAdmin = hasRole(roles, SITE_ADMIN_ROLE);
 

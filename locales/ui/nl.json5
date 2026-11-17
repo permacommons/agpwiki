@@ -14,6 +14,7 @@
     reviewAccounts: 'Accounts beoordelen',
     userRights: 'Gebruikersrechten',
     signOut: 'Afmelden',
+    "yourProfile": "Je profiel",
     help: 'Hulp',
     menu: 'Navigatiemenu',
     permanentLink: 'Permanente link',
@@ -750,6 +751,7 @@
       errorCaptcha: 'Voltooi de verificatie-uitdaging.',
       errorEmailUnavailable: 'We konden geen account aanmaken met dat e-mailadres.',
       errorUsernameInvalid: 'Gebruikersnamen mogen geen @ bevatten.',
+      errorUsernameProfileInvalid: "Kies een andere weergavenaam. De daaruit afgeleide gebruikersnaam mag geen / bevatten, niet . of .. zijn en niet gereserveerd zijn voor een profielactie (zoals discussion of checks).",
       errorUsernameTaken: 'Die gebruikersnaam is al in gebruik.',
       errorRateLimited: 'Te veel pogingen om een account aan te maken vanaf dit netwerk. Probeer het later opnieuw.',
       emailWarning: 'Onze excuses, maar de e-maildienst is momenteel niet beschikbaar, waardoor accountbevestiging niet mogelijk is. Probeer het later opnieuw.',
@@ -1080,4 +1082,28 @@
     "discussedPages": "Pagina's met recente discussie",
     "noDiscussedPages": "Er is nog geen pagina besproken.",
   },
+  "profile": {
+    "label": "PROFIEL — BIJDRAGER AAN AGPEDIA",
+    "tabProfile": "Profiel",
+    "tabTalk": "Overleg",
+    "empty": "{{name}} heeft hier nog niets geschreven.",
+    "emptyOwn": "Je hebt je profiel nog niet geschreven.",
+    "write": "Schrijf je profiel",
+    "edit": "Profiel bewerken",
+    "editForbidden": "Alleen deze bijdrager en wiki-beheerders kunnen dit profiel bewerken.",
+    "talkIntro": "Berichten aan {{username}}. Iedereen die is aangemeld met een bevestigd e-mailadres kan hier schrijven. {{username}} krijgt een melding van elk nieuw bericht.",
+    "talkTitle": "Overleg: {{name}}",
+    "forumSection": "Bijdragers",
+    "account": {
+      "title": "Account",
+      "username": "Gebruikersnaam",
+      "displayName": "Weergavenaam",
+      "activeSince": "Actief sinds",
+      "edits": "Bewerkingen",
+      "pagesCreated": "Aangemaakte pagina’s",
+      "comments": "Reacties",
+      "roles": "Rollen",
+      "editsBreakdown": "Bewerkingen per soort:"
+    }
+  }
 }

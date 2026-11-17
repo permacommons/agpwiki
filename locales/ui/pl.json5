@@ -13,6 +13,7 @@
     reviewAccounts: 'Przeglądaj konta',
     userRights: 'Uprawnienia użytkowników',
     signOut: 'Wyloguj',
+    "yourProfile": "Twój profil",
     help: 'Pomoc',
     menu: 'Menu nawigacji',
     permanentLink: 'Stały link',
@@ -753,6 +754,7 @@
       errorCaptcha: 'Ukończ wyzwanie weryfikacyjne.',
       errorEmailUnavailable: 'Nie udało się utworzyć konta z tym adresem e-mail.',
       errorUsernameInvalid: 'Nazwy użytkownika nie mogą zawierać znaku @.',
+      errorUsernameProfileInvalid: "Wybierz inną nazwę wyświetlaną. Utworzona z niej nazwa użytkownika nie może zawierać /, mieć postaci . lub .. ani być zarezerwowana dla działania w profilu (np. discussion lub checks).",
       errorUsernameTaken: 'Ta nazwa użytkownika jest już zajęta.',
       errorRateLimited: 'Zbyt wiele prób tworzenia konta z tej sieci. Spróbuj ponownie później.',
       emailWarning: 'Przepraszamy, ale usługa e-mail jest obecnie niedostępna, co uniemożliwia potwierdzenie konta. Spróbuj ponownie później.',
@@ -1083,4 +1085,28 @@
     "discussedPages": "Strony z niedawną dyskusją",
     "noDiscussedPages": "Żadna strona nie była jeszcze dyskutowana.",
   },
+  "profile": {
+    "label": "PROFIL — WSPÓŁTWÓRCA AGPEDII",
+    "tabProfile": "Profil",
+    "tabTalk": "Dyskusja",
+    "empty": "{{name}} nie napisał(a) tu jeszcze niczego.",
+    "emptyOwn": "Nie napisałeś(-aś) jeszcze swojego profilu.",
+    "write": "Napisz swój profil",
+    "edit": "Edytuj profil",
+    "editForbidden": "Ten profil mogą edytować tylko jego właściciel i administratorzy wiki.",
+    "talkIntro": "Wiadomości do {{username}}. Pisać tu może każdy, kto jest zalogowany z potwierdzonym adresem e-mail. {{username}} dostaje powiadomienie o każdej nowej wiadomości.",
+    "talkTitle": "Dyskusja: {{name}}",
+    "forumSection": "Współtwórcy",
+    "account": {
+      "title": "Konto",
+      "username": "Nazwa użytkownika",
+      "displayName": "Wyświetlana nazwa",
+      "activeSince": "Aktywny od",
+      "edits": "Edycje",
+      "pagesCreated": "Utworzone strony",
+      "comments": "Komentarze",
+      "roles": "Role",
+      "editsBreakdown": "Edycje według rodzaju:"
+    }
+  }
 }

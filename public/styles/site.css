@@ -610,6 +610,16 @@ header.site-header {
   grid-column: 1;
   grid-row: 1;
 }
+/* A profile's account box sits beside the contributor's own text, on the right. */
+.page-layout.sidebar-right {
+  grid-template-columns: minmax(0, 1fr) 15rem;
+}
+.page-layout.sidebar-right:not(.single) > .article {
+  grid-column: 1;
+}
+.page-layout.sidebar-right:not(.single) > .sidebar {
+  grid-column: 2;
+}
 .article {
   min-width: 0;
   /* Force-break long unbreakable strings (URLs, hashes, inline code) as a
@@ -2786,9 +2796,12 @@ altcha-widget {
   margin-bottom: 1rem;
 }
 @media (max-width: 900px) {
-  .page-layout { grid-template-columns: 1fr; }
+  .page-layout,
+  .page-layout.sidebar-right { grid-template-columns: 1fr; }
   .page-layout:not(.single) > .article,
-  .page-layout:not(.single) > .sidebar {
+  .page-layout:not(.single) > .sidebar,
+  .page-layout.sidebar-right:not(.single) > .article,
+  .page-layout.sidebar-right:not(.single) > .sidebar {
     grid-column: 1;
     grid-row: auto;
   }
@@ -4491,4 +4504,51 @@ a.mention:focus-visible {
   .home-how { padding: 1.5rem 0; }
   .home-how-body { font-size: 1rem; }
   .home-way { padding: 1.1rem; }
+}
+/* Contributor profiles: the account box beside the profile and its Talk tab. */
+.profile-account {
+  margin: 0 0 1rem;
+  padding: 0 0 0.75rem;
+}
+.profile-account h2 {
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.profile-account-list {
+  margin: 0;
+}
+.profile-account-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.1rem 0;
+}
+.profile-account-row dt,
+.profile-account-row dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.profile-account-row dd {
+  color: var(--ink);
+}
+.profile-account-breakdown {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+}
+.profile-empty,
+.profile-talk-intro {
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--muted);
+}
+.profile-talk-intro {
+  font-size: 0.85rem;
+}
+.rev-byline,
+.change-user {
+  font-family: 'IBM Plex Sans', sans-serif;
 }
