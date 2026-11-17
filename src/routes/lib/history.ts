@@ -21,6 +21,7 @@ type HistoryOptions = {
   diffFrom?: string;
   diffTo?: string;
   action: string;
+  lang?: string;
   viewHref: (revId: string) => string;
   // Further links after "View", such as restoring that version.
   extraActions?: (revision: HistoryRevision, index: number) => Array<{ label: string; href: string }>;
@@ -33,6 +34,7 @@ export const renderRevisionHistory = ({
   diffFrom,
   diffTo,
   action,
+  lang,
   viewHref,
   extraActions,
   userMap,
@@ -96,6 +98,7 @@ export const renderRevisionHistory = ({
   return `<details class="page-history" id="${HISTORY_ANCHOR}">
   <summary>${t('history.title')}</summary>
   <form class="history-form" method="get" action="${escapeHtml(action)}">
+    ${lang ? `<input type="hidden" name="lang" value="${escapeHtml(lang)}">` : ''}
     <div class="history-actions">
       <button type="submit">${t('history.compare')}</button>
     </div>

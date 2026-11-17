@@ -11,6 +11,7 @@ import { initializePostgreSQL } from '../src/db.js';
 import BlogPost from '../src/models/blog-post.js';
 import Media from '../src/models/media.js';
 import { type HomePageInput, pickNewArticles, renderHomePage } from '../src/routes/lib/home-sections.js';
+import { registerLocaleRoutes } from '../src/routes/locale.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 import { createForumThread } from '../src/services/forum-service.js';
@@ -84,6 +85,7 @@ const render = (overrides: Partial<HomeSections> = {}, input: Partial<HomePageIn
     editHref: null,
     signedIn: false,
     welcomeLanguageRow: '',
+    welcomeHistoryHtml: '',
     t,
     locale: 'en',
     ...input,
@@ -144,6 +146,7 @@ const createTestUser = () => insertTestUser({ prefix: 'hometest', displayName: '
 
 const makeServer = async () => {
   const app = express();
+  app.use(express.urlencoded({ extended: false }));
   app.use((req, res, next) => {
     (req as express.Request & { t: TFunction }).t = t;
     res.locals.locale = 'en';
@@ -156,6 +159,7 @@ const makeServer = async () => {
     }) as express.Response['render'];
     next();
   });
+  registerLocaleRoutes(app);
   registerToolRoutes(app);
   registerPageRoutes(app);
   const server = http.createServer(app);
@@ -242,12 +246,15 @@ test('The home page shows the sections below its text, and the page list sorts n
     assert.match(home, /class="home-hero"/);
     assert.match(home, /home\.newArticles/);
     assert.match(home, /class="home-how-body"/);
+    assert.match(home, /<details class="home-welcome-details">\s*<summary>home\.welcomeDetails<\/summary>[\s\S]*?<details class="page-history"/);
+    assert.match(home, /history\.compare/);
     if (!welcomeExisted) {
-      assert.match(home, /class="home-how-body"[\s\S]*?class="content-language-row"/);
+      assert.match(home, /<details class="home-welcome-details">[\s\S]*?class="content-language-row"/);
       assert.match(home, /href="\/meta\/welcome\?lang=de"/);
       const germanHome = (await getPage(`${server.url}/${HOME_PAGE_SLUG}?lang=de`)).homeHtml;
       assert.match(germanHome, /Willkommen auf der Startseite\./);
       assert.match(germanHome, /href="\/meta\/welcome\?lang=de"[^>]*aria-current="true"/);
+      assert.match(germanHome, /<input type="hidden" name="lang" value="de">/);
     }
     // Old versions of the welcome page show only its text.
     const revId = (
@@ -265,6 +272,29 @@ test('The home page shows the sections below its text, and the page list sorts n
     const byTitle = await getBody(`${server.url}/tool/pages?per=200`);
     assert.doesNotMatch(byTitle, /pages-created/);
     assert.match(byTitle, /href="\/tool\/pages\?per=200&amp;sort=new">tool\.pagesSortNew/);
+  } finally {
+    await server.close();
+  }
+});
+
+test('Switching the interface language clears the current welcome text override', async () => {
+  const server = await makeServer();
+  try {
+    for (const [path, expected] of [
+      ['/meta/welcome?lang=de', '/meta/welcome'],
+      ['/meta/welcome?rev=123&lang=de', '/meta/welcome?rev=123&lang=de'],
+      ['/meta/values?lang=de', '/meta/values?lang=de'],
+    ]) {
+      const response = await fetch(`${server.url}/set-locale`, {
+        method: 'POST',
+        headers: { referer: `${server.url}${path}` },
+        body: new URLSearchParams({ locale: 'fr' }),
+        redirect: 'manual',
+      });
+      assert.equal(response.status, 302);
+      assert.match(response.headers.get('set-cookie') ?? '', /^locale=fr;/);
+      assert.equal(new URL(response.headers.get('location') ?? '', server.url).href, `${server.url}${expected}`);
+    }
   } finally {
     await server.close();
   }

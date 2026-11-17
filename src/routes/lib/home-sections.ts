@@ -47,6 +47,8 @@ export interface HomePageInput {
   /** The rendered text of the welcome page, which editors keep up to date. */
   welcomeHtml: string;
   welcomeLanguageRow: string;
+  welcomeHistoryHtml: string;
+  welcomeFallbackLanguage?: string;
   /** Where to edit the welcome text, for people who may; null otherwise. */
   editHref: string | null;
   signedIn: boolean;
@@ -60,6 +62,8 @@ export const renderHomePage = ({
   articleCount,
   welcomeHtml,
   welcomeLanguageRow,
+  welcomeHistoryHtml,
+  welcomeFallbackLanguage,
   editHref,
   signedIn,
   t,
@@ -138,8 +142,13 @@ ${alsoNew
   <h2 id="home-how-title">${escapeHtml(t('home.howTitle'))}</h2>
   <div class="home-how-body">
     ${welcomeHtml}
-    ${editHref ? `<p class="home-edit">${link(editHref, t('home.editWelcome'))}</p>` : ''}
-    ${welcomeLanguageRow}
+    ${welcomeFallbackLanguage ? `<p class="home-welcome-language">${escapeHtml(t('home.welcomeFallbackLanguage', { language: welcomeFallbackLanguage }))}</p>` : ''}
+    <details class="home-welcome-details">
+      <summary>${escapeHtml(t('home.welcomeDetails'))}</summary>
+      ${welcomeLanguageRow}
+      ${editHref ? `<p class="home-edit">${link(editHref, t('home.editWelcome'))}</p>` : ''}
+      ${welcomeHistoryHtml}
+    </details>
   </div>
 </section>`;
 

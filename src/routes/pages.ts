@@ -1525,9 +1525,10 @@ export const registerPageRoutes = (app: Express) => {
         : revisions[0];
       if (!selectedRevision) return;
 
+      const isCurrentWelcome = page.slug === HOME_PAGE_SLUG && !selectedRevId;
       const availableLangs = getAvailableLanguages(
         selectedRevision.body,
-        selectedRevision.title
+        isCurrentWelcome ? undefined : selectedRevision.title
       );
       const contentLang = resolveContentLanguage({
         uiLocale: res.locals.locale,
@@ -1575,6 +1576,7 @@ export const registerPageRoutes = (app: Express) => {
       });
       const canEditSections =
         Boolean(session) &&
+        !isCurrentWelcome &&
         (!editability.isProtected || editability.isEditable) &&
         !revIdParam &&
         !diffFrom &&
@@ -1721,7 +1723,7 @@ export const registerPageRoutes = (app: Express) => {
         revTags: rev.revTags ?? null,
       }));
       const queryParams = extractQueryParams(req.query);
-      const historyAction = langOverride
+      const historyAction = langOverride && !isCurrentWelcome
         ? `/${canonicalSlug}?lang=${encodeURIComponent(langOverride)}`
         : `/${canonicalSlug}`;
       const [canRestore, canRollback] = editability.isEditable
@@ -1739,6 +1741,7 @@ export const registerPageRoutes = (app: Express) => {
         diffFrom,
         diffTo,
         action: historyAction,
+        lang: isCurrentWelcome ? langOverride : undefined,
         viewHref: revId =>
           langOverride
             ? `/${canonicalSlug}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
@@ -1899,16 +1902,20 @@ export const registerPageRoutes = (app: Express) => {
       // The current version of the welcome page is the home page; its text
       // appears there among the home sections.
       const homeHtml =
-        canonicalSlug === HOME_PAGE_SLUG && !selectedRevId && !diffHtml
+        isCurrentWelcome && !diffHtml
           ? renderHomePage({
-              sections: await loadHomeSections(dalInstance, contentLang),
+              sections: await loadHomeSections(dalInstance, res.locals.locale),
               articleCount: await getArticleCount(),
               welcomeHtml: bodyHtml,
               welcomeLanguageRow: availableLangs.length > 1 ? languageRow : '',
+              welcomeHistoryHtml: historyHtml,
+              welcomeFallbackLanguage: !langOverride && bodySource && contentLang !== res.locals.locale
+                ? res.locals.languageOptions.find((option: { code: string }) => option.code === contentLang)?.label ?? contentLang
+                : undefined,
               editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : null,
               signedIn,
               t: req.t,
-              locale: contentLang,
+              locale: res.locals.locale,
             })
           : '';
       // The discussion follows the current version of the page; the home page

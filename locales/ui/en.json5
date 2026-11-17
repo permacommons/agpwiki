@@ -872,6 +872,8 @@
     "alsoNew": "Also new",
     "allNewArticles": "All new articles",
     "howTitle": "How Agpedia is written",
+    "welcomeDetails": "About this welcome text",
+    "welcomeFallbackLanguage": "Welcome text shown in {{language}}",
     "editWelcome": "Edit this text",
     "waysTitle": "Find your way in",
     "readLabel": "I want to read",

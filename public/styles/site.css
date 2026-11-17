@@ -4240,6 +4240,24 @@ a.mention:focus-visible {
 .home-how-body > :first-child { margin-top: 0; }
 .home-how-body h2 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; border: 0; padding: 0; }
 .home-edit { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.9rem; }
+.home-welcome-details,
+.home-welcome-language {
+  margin-top: 0.75rem;
+  color: var(--muted);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.9rem;
+}
+.home-welcome-details > summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.home-welcome-details > summary:hover { color: var(--accent); }
+.home-welcome-details > .content-language-row {
+  border-top: 0;
+  margin-top: 0.5rem;
+  padding-top: 0;
+}
+.home-welcome-details > .page-history { margin-top: 0.75rem; }
 .home-ways-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr));
