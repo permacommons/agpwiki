@@ -34,8 +34,6 @@ export interface HomePost {
   slug: string;
   title: Record<string, string> | null;
   createdAt: Date;
-  summary: string;
-  imageSlug: string | null;
 }
 
 export interface HomeThread {
@@ -64,7 +62,7 @@ const resolveText = (lang: string, value: Record<string, string> | null | undefi
   mlString.resolve(lang, value ?? null)?.str ?? '';
 
 // The first image the text embeds, if it is a known image.
-const firstImages = async (_dalInstance: DataAccessLayer, sources: Map<string, string>) => {
+const firstImages = async (sources: Map<string, string>) => {
   const firstBySource = new Map<string, string>();
   for (const [key, source] of sources) {
     const [first] = extractMediaSlugsFromSources([source]);
@@ -95,7 +93,7 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
     created_at: Date;
   }>;
   const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
-  const images = await firstImages(dalInstance, bodies);
+  const images = await firstImages(bodies);
   return rows.map(row => ({
     slug: row.slug,
     title: row.title,
@@ -105,20 +103,16 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
   }));
 };
 
-const loadPosts = async (dalInstance: DataAccessLayer, lang: string): Promise<HomePost[]> => {
+const loadPosts = async (): Promise<HomePost[]> => {
   const rows = await BlogPost.filterWhere({})
     .orderBy('createdAt', 'DESC')
     .orderBy('_revDate', 'DESC')
     .limit(BLOG_POST_COUNT)
-    .select('slug', 'title', 'summary', 'body', 'createdAt');
-  const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
-  const images = await firstImages(dalInstance, bodies);
+    .select('slug', 'title', 'createdAt');
   return rows.map(row => ({
     slug: row.slug,
     title: row.title,
     createdAt: row.createdAt,
-    summary: resolveText(lang, row.summary) || firstSentence(bodies.get(row.slug)),
-    imageSlug: images.get(row.slug) ?? null,
   }));
 };
 
@@ -176,7 +170,7 @@ export async function loadHomeSections(
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return cached.sections;
   const [articles, posts, threads, proposals, issues] = await Promise.all([
     loadArticles(dalInstance, lang),
-    loadPosts(dalInstance, lang),
+    loadPosts(),
     loadThreads(dalInstance),
     loadProposals(dalInstance),
     countArticlesWithIssues(dalInstance),

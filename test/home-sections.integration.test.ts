@@ -9,7 +9,6 @@ import type { TFunction } from 'i18next';
 
 import { initializePostgreSQL } from '../src/db.js';
 import BlogPost from '../src/models/blog-post.js';
-import Media from '../src/models/media.js';
 import { type HomePageInput, pickNewArticles, renderHomePage } from '../src/routes/lib/home-sections.js';
 import { registerLocaleRoutes } from '../src/routes/locale.js';
 import { registerPageRoutes } from '../src/routes/pages.js';
@@ -59,8 +58,6 @@ const sections = (overrides: Partial<HomeSections> = {}): HomeSections => ({
       slug: 'notifications',
       title: { en: 'Notifications on the site' },
       createdAt: new Date('2026-10-26T12:00:00Z'),
-      summary: 'A bell in the header.',
-      imageSlug: 'agpedia-notifications-mockup',
     },
   ],
   threads: [
@@ -300,37 +297,19 @@ test('Switching the interface language clears the current welcome text override'
   }
 });
 
-test('Home posts use current text, summary fallback and only live image references', async () => {
+test('Home posts use current titles and original dates and omit deleted posts', async () => {
   const dal = await getDal();
   const user = await createTestUser();
   const prefix = `home-post-${randomBytes(8).toString('hex')}`;
-  const image = await Media.createFirstRevision({ id: user.id });
-  image.slug = prefix;
-  image.commonsTitle = 'File:Example.jpg';
-  image.mediaType = 'image';
-  image.data = {};
-  await image.save();
   const post = await BlogPost.createFirstRevision({ id: user.id });
   post.slug = prefix;
-  post.title = { en: 'Home post' };
-  post.body = { en: 'Old body.' };
+  post.title = { en: 'Old title' };
   await post.save();
   await post.newRevision({ id: user.id });
-  post.body = { en: `Current text. More text. ![Image](/media/${prefix})` };
+  post.title = { en: 'Current title' };
   await post.save();
   const read = async () => (await loadHomeSections(dal, 'en', { fresh: true })).posts.filter(item => item.slug === prefix);
-  let posts = await read();
-  assert.equal(posts.length, 1);
-  assert.equal(posts[0].summary, 'Current text.');
-  assert.equal(posts[0].imageSlug, prefix);
-  assert.equal(posts[0].createdAt.getTime(), post.createdAt.getTime());
-  await post.newRevision({ id: user.id });
-  post.summary = { en: 'Explicit summary.' };
-  await post.save();
-  await image.deleteAllRevisions({ id: user.id });
-  posts = await read();
-  assert.equal(posts[0].summary, 'Explicit summary.');
-  assert.equal(posts[0].imageSlug, null);
+  assert.deepEqual(await read(), [{ slug: prefix, title: { en: 'Current title' }, createdAt: post.createdAt }]);
   await post.deleteAllRevisions({ id: user.id });
   assert.deepEqual(await read(), []);
 });

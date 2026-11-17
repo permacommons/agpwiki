@@ -3121,7 +3121,8 @@ altcha-widget {
    - <figcaption>: caption text on top, attribution as a smaller line below.
    ────────────────────────────────────────────────────────────────────── */
 .article figure.media,
-.markdown-preview-body figure.media {
+.markdown-preview-body figure.media,
+.home-welcome-markdown figure.media {
   /* Hero default (overridden by .media-image-flow below). Heroes
      always start below any preceding flow figure so their borders
      don't nest against a still-floating thumbnail. */
@@ -3137,7 +3138,8 @@ altcha-widget {
   clear: both;
 }
 .article figure.media.media-image-flow,
-.markdown-preview-body figure.media.media-image-flow {
+.markdown-preview-body figure.media.media-image-flow,
+.home-welcome-markdown figure.media.media-image-flow {
   float: right;
   /* Each new flow figure clears any previous right float so they
      stack vertically instead of overlapping when a section has
@@ -3154,7 +3156,8 @@ altcha-widget {
   max-width: 17rem;
 }
 .article figure.media-audio,
-.markdown-preview-body figure.media-audio {
+.markdown-preview-body figure.media-audio,
+.home-welcome-markdown figure.media-audio {
   /* Audio has no natural width; let the controls span the column. */
   width: auto;
   max-width: 36rem;
@@ -3162,7 +3165,9 @@ altcha-widget {
 .article figure.media img,
 .article figure.media video,
 .markdown-preview-body figure.media img,
-.markdown-preview-body figure.media video {
+.home-welcome-markdown figure.media img,
+.markdown-preview-body figure.media video,
+.home-welcome-markdown figure.media video {
   display: block;
   max-width: 100%;
   height: auto;
@@ -3170,12 +3175,14 @@ altcha-widget {
   border-radius: 2px;
 }
 .article figure.media audio,
-.markdown-preview-body figure.media audio {
+.markdown-preview-body figure.media audio,
+.home-welcome-markdown figure.media audio {
   display: block;
   width: 100%;
 }
 .article figure.media figcaption,
-.markdown-preview-body figure.media figcaption {
+.markdown-preview-body figure.media figcaption,
+.home-welcome-markdown figure.media figcaption {
   padding: 0.6rem 0.5rem 0.7rem;
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.88rem;
@@ -3184,25 +3191,29 @@ altcha-widget {
   text-align: left;
 }
 .article figure.media .media-caption-text,
-.markdown-preview-body figure.media .media-caption-text {
+.markdown-preview-body figure.media .media-caption-text,
+.home-welcome-markdown figure.media .media-caption-text {
   display: block;
   margin-bottom: 0.25rem;
   color: var(--ink, #16181d);
 }
 .article figure.media .media-attribution,
-.markdown-preview-body figure.media .media-attribution {
+.markdown-preview-body figure.media .media-attribution,
+.home-welcome-markdown figure.media .media-attribution {
   display: block;
   font-size: 0.78rem;
   color: var(--muted, #555b66);
 }
 .article figure.media .media-attribution a,
-.markdown-preview-body figure.media .media-attribution a {
+.markdown-preview-body figure.media .media-attribution a,
+.home-welcome-markdown figure.media .media-attribution a {
   color: inherit;
   text-decoration: underline;
   text-decoration-color: rgba(111, 101, 90, 0.5);
 }
 .article figure.media .media-attribution a:hover,
-.markdown-preview-body figure.media .media-attribution a:hover {
+.markdown-preview-body figure.media .media-attribution a:hover,
+.home-welcome-markdown figure.media .media-attribution a:hover {
   text-decoration-color: currentColor;
 }
 .media-commons-link {
@@ -3242,7 +3253,8 @@ altcha-widget {
 
 /* Inline thumbnail rendered for media embeds inside flowing text. Floats so text wraps. */
 .article img.media-inline,
-.markdown-preview-body img.media-inline {
+.markdown-preview-body img.media-inline,
+.home-welcome-markdown img.media-inline {
   float: right;
   max-width: 14rem;
   height: auto;
@@ -3251,7 +3263,8 @@ altcha-widget {
   border-radius: 2px;
 }
 .article p:has(img.media-inline)::after,
-.markdown-preview-body p:has(img.media-inline)::after {
+.markdown-preview-body p:has(img.media-inline)::after,
+.home-welcome-markdown p:has(img.media-inline)::after {
   /* Clear the float so the next paragraph doesn't run alongside. */
   content: '';
   display: block;
@@ -3261,7 +3274,8 @@ altcha-widget {
 /* Missing-media placeholder rendered when an article references an
    unknown slug. Visible warning, not silent. */
 .article .media-missing,
-.markdown-preview-body .media-missing {
+.markdown-preview-body .media-missing,
+.home-welcome-markdown .media-missing {
   display: inline-block;
   padding: 0.1rem 0.4rem;
   background: #fff0e0;
@@ -3318,7 +3332,8 @@ altcha-widget {
 
 @media (max-width: 720px) {
   .article img.media-inline,
-  .markdown-preview-body img.media-inline {
+  .markdown-preview-body img.media-inline,
+  .home-welcome-markdown img.media-inline {
     /* Drop the float on narrow screens — let the figure span the column. */
     float: none;
     display: block;
@@ -3326,12 +3341,14 @@ altcha-widget {
     margin: 0.5rem auto;
   }
   .article figure.media,
-  .markdown-preview-body figure.media {
+  .markdown-preview-body figure.media,
+  .home-welcome-markdown figure.media {
     margin-left: 0;
     margin-right: 0;
   }
   .article figure.media.media-image-flow,
-  .markdown-preview-body figure.media.media-image-flow {
+  .markdown-preview-body figure.media.media-image-flow,
+  .home-welcome-markdown figure.media.media-image-flow {
     /* Drop the float — at narrow widths a 250-wide figure plus
        wrapped text becomes cramped. Stack instead. */
     float: none;
@@ -4237,11 +4254,14 @@ a.mention:focus-visible {
 }
 .home-how > h2 { margin: 0; }
 .home-how-body { font-size: 1.1rem; line-height: 1.65; max-width: 48rem; }
-.home-how-body > :first-child { margin-top: 0; }
+.home-welcome-markdown > :first-child { margin-top: 0; }
+.home-welcome-markdown figure.media { box-sizing: border-box; }
+.home-welcome-markdown img { max-width: 100%; height: auto; }
 .home-how-body h2 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; border: 0; padding: 0; }
 .home-edit { font-family: 'IBM Plex Sans', sans-serif; font-size: 0.9rem; }
 .home-welcome-details,
 .home-welcome-language {
+  clear: both;
   margin-top: 0.75rem;
   color: var(--muted);
   font-family: 'IBM Plex Sans', sans-serif;

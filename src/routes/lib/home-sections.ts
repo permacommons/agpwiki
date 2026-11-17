@@ -141,7 +141,7 @@ ${alsoNew
   const how = `<section class="home-section home-how" aria-labelledby="home-how-title">
   <h2 id="home-how-title">${escapeHtml(t('home.howTitle'))}</h2>
   <div class="home-how-body">
-    ${welcomeHtml}
+    <div class="home-welcome-markdown">${welcomeHtml}</div>
     ${welcomeFallbackLanguage ? `<p class="home-welcome-language">${escapeHtml(t('home.welcomeFallbackLanguage', { language: welcomeFallbackLanguage }))}</p>` : ''}
     <details class="home-welcome-details">
       <summary>${escapeHtml(t('home.welcomeDetails'))}</summary>
