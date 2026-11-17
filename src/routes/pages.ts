@@ -1912,6 +1912,7 @@ export const registerPageRoutes = (app: Express) => {
               sections: await loadHomeSections(dalInstance, res.locals.locale),
               articleCount: await getArticleCount(),
               welcomeHtml: bodyHtml,
+              welcomeLanguage: resolvedBody?.lang,
               welcomeLanguageRow: availableLangs.length > 1 ? languageRow : '',
               welcomeHistoryHtml: historyHtml,
               welcomeDiscussionHref: forumPath || null,

@@ -48,6 +48,7 @@ export interface HomePageInput {
   articleCount: number;
   /** The rendered text of the welcome page, which editors keep up to date. */
   welcomeHtml: string;
+  welcomeLanguage?: string;
   welcomeLanguageRow: string;
   welcomeHistoryHtml: string;
   welcomeDiscussionHref: string | null;
@@ -65,6 +66,7 @@ export const renderHomePage = ({
   sections,
   articleCount,
   welcomeHtml,
+  welcomeLanguage,
   welcomeLanguageRow,
   welcomeHistoryHtml,
   welcomeDiscussionHref,
@@ -147,7 +149,7 @@ ${alsoNew
   const how = `<section class="home-section home-how" aria-labelledby="home-how-title">
   <h2 id="home-how-title">${escapeHtml(t('home.howTitle'))}</h2>
   <div class="home-how-body">
-    <div class="home-welcome-markdown">${welcomeHtml}</div>
+    <div class="home-welcome-markdown"${welcomeLanguage ? ` lang="${escapeHtml(welcomeLanguage)}"` : ''} dir="auto">${welcomeHtml}</div>
     ${welcomeFallbackLanguage ? `<p class="home-welcome-language">${escapeHtml(t('home.welcomeFallbackLanguage', { language: welcomeFallbackLanguage }))}</p>` : ''}
     <details class="home-welcome-details">
       <summary>${escapeHtml(t('home.welcomeDetails'))}</summary>

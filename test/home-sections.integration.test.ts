@@ -276,7 +276,7 @@ test('The home page shows the sections below its text, and the page list sorts n
       assert.match(home, /<details class="home-welcome-details">[\s\S]*?class="content-language-row"/);
       assert.match(home, /href="\/meta\/welcome\?lang=de#wiki:welcome-tools"[^>]*lang="de" dir="auto">Deutsch/);
       const germanHome = (await getPage(`${server.url}/${HOME_PAGE_SLUG}?lang=de`)).homeHtml;
-      assert.match(germanHome, /Willkommen auf der Startseite\./);
+      assert.match(germanHome, /<div class="home-welcome-markdown" lang="de" dir="auto">\s*<p>Willkommen auf der Startseite\./);
       assert.match(germanHome, /href="\/meta\/welcome\?lang=de#wiki:welcome-tools"[^>]*aria-current="true"/);
       assert.match(germanHome, /<input type="hidden" name="lang" value="de">/);
     }
