@@ -120,3 +120,29 @@ test('findLocaleIssues reports extra locale keys', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('findLocaleIssues accepts plural forms used by the locale for canonical plural keys', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'agpwiki-locale-test-'));
+  try {
+    writeLocale(dir, 'en.json5', '{ articles_one: "{{count}} article", articles_other: "{{count}} articles" }');
+    writeLocale(
+      dir,
+      'pl.json5',
+      `{
+  articles_one: "{{count}} artykuł",
+  articles_few: "{{count}} artykuły",
+  articles_many: "{{count}} artykułów",
+  articles_other: "Artykuły: {{count}}",
+  articles_two: "Nieobsługiwana forma",
+  comments_few: "{{count}} komentarze"
+}`
+    );
+
+    assert.deepEqual(findLocaleIssues(dir), [
+      { locale: 'pl', key: 'articles_two', issue: 'extra_in_locale' },
+      { locale: 'pl', key: 'comments_few', issue: 'extra_in_locale' },
+    ]);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

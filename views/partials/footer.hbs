@@ -1,7 +1,35 @@
 <footer class="site-footer">
   <div class="footer-inner">
-    <span>{{{__ "footer.license"}}}</span>
-    <span>{{{__ "footer.project"}}}</span>
-    <span><a href="/static/downloads/dumps/">{{__ "footer.free"}}</a></span>
+    <div class="footer-about">
+      <img class="footer-logo" src="{{{assets.logoSvg}}}" alt="{{__ "nav.home"}}" width="108" height="40" loading="lazy" />
+      <p>{{{__ "footer.license"}}}</p>
+      <p>{{{__ "footer.project"}}}</p>
+    </div>
+    <nav class="footer-column" aria-label="{{__ "footer.read"}}">
+      <h2>{{__ "footer.read"}}</h2>
+      <a href="/tool/pages?sort=new">{{__ "footer.newArticles"}}</a>
+      <a href="/tool/pages">{{__ "footer.allArticles"}}</a>
+      <a href="/blog">{{__ "nav.blog"}}</a>
+    </nav>
+    <nav class="footer-column" aria-label="{{__ "footer.takePart"}}">
+      <h2>{{__ "footer.takePart"}}</h2>
+      <a href="/meta/help">{{__ "nav.contribute"}}</a>
+      <a href="/tool/forum">{{__ "nav.forum"}}</a>
+      <a href="/tool/proposals">{{__ "page.proposals"}}</a>
+      <a href="/tool/recent-changes">{{__ "page.recentChanges"}}</a>
+    </nav>
+    <nav class="footer-column" aria-label="{{__ "footer.about"}}">
+      <h2>{{__ "footer.about"}}</h2>
+      <a href="/meta/values">{{__ "footer.values"}}</a>
+      <a href="/meta/scope">{{__ "footer.scope"}}</a>
+      <a href="/meta/governance">{{__ "footer.governance"}}</a>
+    </nav>
+    <nav class="footer-column" aria-label="{{__ "nav.developers"}}">
+      <h2>{{__ "nav.developers"}}</h2>
+      <a href="/meta/developers">{{__ "nav.developers"}}</a>
+      <a href="/meta/mcp-reference">{{__ "footer.mcpReference"}}</a>
+      <a href="/static/downloads/dumps/">{{__ "footer.downloads"}}</a>
+      <a href="https://github.com/permacommons/agpwiki">{{__ "footer.sourceCode"}}</a>
+    </nav>
   </div>
 </footer>

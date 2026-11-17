@@ -3,16 +3,20 @@ import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
 import { firstSentence } from '../lib/excerpt.js';
 import { extractMediaSlugsFromSources } from '../lib/media-render.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
+import type { ProposalStatus } from '../lib/proposal-status.js';
 import BlogPost from '../models/blog-post.js';
 import Media from '../models/media.js';
 import { type ArticleIssueKind, countArticlesWithIssues } from './article-issues-service.js';
+import { listProposalPages } from './proposal-status-service.js';
 
 const { mlString } = dal;
 
-/** The page whose text the home page shows, with these sections below it. */
+/** The page whose text the home page shows, among these sections. */
 export const HOME_PAGE_SLUG = 'meta/welcome';
 
-const NEW_ARTICLE_COUNT = 4;
+// Enough recent articles to find one with a picture for the featured card.
+const NEW_ARTICLE_COUNT = 12;
+const PROPOSAL_COUNT = 3;
 const BLOG_POST_COUNT = 3;
 const FORUM_THREAD_COUNT = 3;
 // The sections change slowly, and the home page is the most visited page.
@@ -30,8 +34,6 @@ export interface HomePost {
   slug: string;
   title: Record<string, string> | null;
   createdAt: Date;
-  summary: string;
-  imageSlug: string | null;
 }
 
 export interface HomeThread {
@@ -42,10 +44,17 @@ export interface HomeThread {
   lastActivityAt: Date;
 }
 
+export interface HomeProposal {
+  slug: string;
+  title: Record<string, string> | null;
+  status: ProposalStatus;
+}
+
 export interface HomeSections {
   articles: HomeArticle[];
   posts: HomePost[];
   threads: HomeThread[];
+  proposals: HomeProposal[];
   issues: Record<ArticleIssueKind, number>;
 }
 
@@ -53,7 +62,7 @@ const resolveText = (lang: string, value: Record<string, string> | null | undefi
   mlString.resolve(lang, value ?? null)?.str ?? '';
 
 // The first image the text embeds, if it is a known image.
-const firstImages = async (_dalInstance: DataAccessLayer, sources: Map<string, string>) => {
+const firstImages = async (sources: Map<string, string>) => {
   const firstBySource = new Map<string, string>();
   for (const [key, source] of sources) {
     const [first] = extractMediaSlugsFromSources([source]);
@@ -84,7 +93,7 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
     created_at: Date;
   }>;
   const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
-  const images = await firstImages(dalInstance, bodies);
+  const images = await firstImages(bodies);
   return rows.map(row => ({
     slug: row.slug,
     title: row.title,
@@ -94,20 +103,16 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
   }));
 };
 
-const loadPosts = async (dalInstance: DataAccessLayer, lang: string): Promise<HomePost[]> => {
+const loadPosts = async (): Promise<HomePost[]> => {
   const rows = await BlogPost.filterWhere({})
     .orderBy('createdAt', 'DESC')
     .orderBy('_revDate', 'DESC')
     .limit(BLOG_POST_COUNT)
-    .select('slug', 'title', 'summary', 'body', 'createdAt');
-  const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
-  const images = await firstImages(dalInstance, bodies);
+    .select('slug', 'title', 'createdAt');
   return rows.map(row => ({
     slug: row.slug,
     title: row.title,
     createdAt: row.createdAt,
-    summary: resolveText(lang, row.summary) || firstSentence(bodies.get(row.slug)),
-    imageSlug: images.get(row.slug) ?? null,
   }));
 };
 
@@ -145,6 +150,14 @@ const loadThreads = async (dalInstance: DataAccessLayer): Promise<HomeThread[]> 
   }));
 };
 
+// Recently changed proposals that have been opened; drafts are not promoted.
+const loadProposals = async (dalInstance: DataAccessLayer): Promise<HomeProposal[]> =>
+  (await listProposalPages(dalInstance))
+    .filter((item): item is typeof item & { status: ProposalStatus } => item.status !== null && item.status !== 'draft')
+    .sort((a, b) => (b.updatedAt?.getTime() ?? 0) - (a.updatedAt?.getTime() ?? 0))
+    .slice(0, PROPOSAL_COUNT)
+    .map(item => ({ slug: item.slug, title: item.title, status: item.status }));
+
 const cache = new Map<string, { at: number; sections: HomeSections }>();
 
 /** What the home page shows below the welcome text, in the reader's language where it exists. */
@@ -155,13 +168,14 @@ export async function loadHomeSections(
 ): Promise<HomeSections> {
   const cached = cache.get(lang);
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return cached.sections;
-  const [articles, posts, threads, issues] = await Promise.all([
+  const [articles, posts, threads, proposals, issues] = await Promise.all([
     loadArticles(dalInstance, lang),
-    loadPosts(dalInstance, lang),
+    loadPosts(),
     loadThreads(dalInstance),
+    loadProposals(dalInstance),
     countArticlesWithIssues(dalInstance),
   ]);
-  const sections = { articles, posts, threads, issues };
+  const sections = { articles, posts, threads, proposals, issues };
   cache.set(lang, { at: Date.now(), sections });
   return sections;
 }

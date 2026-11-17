@@ -651,7 +651,7 @@ export const registerToolRoutes = (app: Express) => {
     const rows = renderUserRightsRows(users, statuses, req);
     const includeBlockedChecked = includeBlocked ? ' checked' : '';
     const hasActiveFilter = Boolean(query || includeBlocked);
-    const bodyHtml = `<div class="tool-page">
+    const bodyHtml = `<div class="tool-page tool-page--wide">
   <div class="form-card">
     <p class="form-help">${escapeHtml(req.t('userRights.description'))}</p>
     ${renderUserRightsStatus(req)}

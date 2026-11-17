@@ -351,7 +351,7 @@ const renderAccountReviewPage = async (req: Request, res: Response) => {
     <span>${escapeHtml(req.t('account.review.pagination.page', { page: String(page), pages: String(totalPages) }))}</span>
     ${page < totalPages ? `<a href="${getAccountReviewPath(page + 1)}">${req.t('account.review.pagination.next')}</a>` : `<span>${req.t('account.review.pagination.next')}</span>`}
   </nav>`;
-  const bodyHtml = `<div class="tool-page">
+  const bodyHtml = `<div class="tool-page tool-page--wide">
   <div class="form-card" data-account-review-root>
     <p class="form-help">${req.t('account.review.description')}</p>
     ${renderAccountReviewStatus(req)}

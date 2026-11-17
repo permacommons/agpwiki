@@ -35,6 +35,7 @@ import {
   verifyWikiLinkPreviewToken,
 } from '../lib/wiki-link-preview-token.js';
 import { extractCandidateWikiLinkSlugs } from '../lib/wiki-links.js';
+import { getArticleCount } from '../metrics.js';
 import {
   concatSafeText,
   escapeHtml,
@@ -106,8 +107,9 @@ import {
 import { getDiffLabels, renderEntityDiff } from './lib/diff.js';
 import { dismissBanner, renderDismissableBanner } from './lib/dismissable-banner.js';
 import { renderDraftBanner } from './lib/draft-banner.js';
+import { renderFollowControl } from './lib/follow-control.js';
 import { fetchUserMap, fetchUserNames, renderRevisionHistory } from './lib/history.js';
-import { renderHomeSections } from './lib/home-sections.js';
+import { renderHomePage, WELCOME_TOOLS_ANCHOR } from './lib/home-sections.js';
 import {
   createPreviewHandler,
   renderMarkdownPreviewHtml,
@@ -225,6 +227,7 @@ const renderEmptyProfilePage = async (req: Request, res: Response, owner: Profil
     topHtml: prependAccountBanner(res, ''),
     bodyHtml: renderProfileWithoutText(profile, { t: req.t, viewerId }),
     sidebarHtml: profile.accountBoxHtml,
+    sidebarRight: true,
   });
 };
 
@@ -1615,9 +1618,10 @@ export const registerPageRoutes = (app: Express) => {
         : revisions[0];
       if (!selectedRevision) return;
 
+      const isCurrentWelcome = page.slug === HOME_PAGE_SLUG && !selectedRevId;
       const availableLangs = getAvailableLanguages(
         selectedRevision.body,
-        selectedRevision.title
+        isCurrentWelcome ? undefined : selectedRevision.title
       );
       const contentLang = resolveContentLanguage({
         uiLocale: res.locals.locale,
@@ -1665,6 +1669,7 @@ export const registerPageRoutes = (app: Express) => {
       });
       const canEditSections =
         Boolean(session) &&
+        !isCurrentWelcome &&
         (!editability.isProtected || editability.isEditable) &&
         !revIdParam &&
         !diffFrom &&
@@ -1812,7 +1817,7 @@ export const registerPageRoutes = (app: Express) => {
         revTags: rev.revTags ?? null,
       }));
       const queryParams = extractQueryParams(req.query);
-      const historyAction = langOverride
+      const historyAction = langOverride && !isCurrentWelcome
         ? `/${canonicalSlug}?lang=${encodeURIComponent(langOverride)}`
         : `/${canonicalSlug}`;
       const [canRestore, canRollback] = editability.isEditable
@@ -1830,6 +1835,7 @@ export const registerPageRoutes = (app: Express) => {
         diffFrom,
         diffTo,
         action: historyAction,
+        lang: isCurrentWelcome ? langOverride : undefined,
         viewHref: revId =>
           langOverride
             ? `/${canonicalSlug}?rev=${revId}&lang=${encodeURIComponent(langOverride)}`
@@ -1886,6 +1892,8 @@ export const registerPageRoutes = (app: Express) => {
         languageOptions: res.locals.languageOptions,
         path: req.path,
         queryParams,
+        fragment: isCurrentWelcome ? WELCOME_TOOLS_ANCHOR : undefined,
+        nativeLabels: isCurrentWelcome,
       });
       const discussionCategory = forumPageCategory(canonicalSlug);
       const forumPath = discussionCategory ? discussionPath({ kind: 'page', slug: canonicalSlug }) : '';
@@ -1897,7 +1905,7 @@ export const registerPageRoutes = (app: Express) => {
         visible: canShowOperatorEditLink,
         operatorEditHref: operatorEditPath(canonicalSlug, contentLang),
         loginHref: `/tool/login?redirect=${encodeURIComponent(
-          operatorEditPath(canonicalSlug, contentLang)
+          pageViewPath(canonicalSlug, langOverride)
         )}`,
         signupHref: '/tool/create-account',
         t: req.t,
@@ -1910,27 +1918,31 @@ export const registerPageRoutes = (app: Express) => {
       ].filter(Boolean);
       const isCurrentView = !revIdParam && !diffFrom && !diffTo;
       const canEditDirectly = signedIn && (!editability.isProtected || editability.isEditable);
+      const follow = session && !profile
+        ? {
+            slug: canonicalSlug,
+            following: await isFollowingPage(dalInstance, page.id, session.userId),
+            returnTo: req.originalUrl || pageViewPath(canonicalSlug),
+            action: FOLLOW_PATH,
+          }
+        : undefined;
+      const showHome = isCurrentWelcome && !diffHtml;
       const tabsHtml = profile
         ? renderProfileTabs(profile, { current: 'profile', hasText: true, isCurrentView, t: req.t })
-        : renderPageTabs({
-        isArticle: showsAsArticle,
-        pageHref: pageViewPath(canonicalSlug, langOverride),
-        isCurrentView,
-        discussHref: forumPath || null,
-        discussCount: discussionCategory
-          ? await countPageDiscussionComments(dalInstance, await listPageDiscussionSlugs(dalInstance, page))
-          : 0,
-        editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
-        follow: session
-          ? {
-              slug: canonicalSlug,
-              following: await isFollowingPage(dalInstance, page.id, session.userId),
-              returnTo: req.originalUrl || pageViewPath(canonicalSlug),
-              action: FOLLOW_PATH,
-            }
-          : undefined,
-        t: req.t,
-      });
+        : showHome
+          ? ''
+          : renderPageTabs({
+              isArticle: showsAsArticle,
+              pageHref: pageViewPath(canonicalSlug, langOverride),
+              isCurrentView,
+              discussHref: forumPath || null,
+              discussCount: discussionCategory
+                ? await countPageDiscussionComments(dalInstance, await listPageDiscussionSlugs(dalInstance, page))
+                : 0,
+              editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : howToEditPath(canonicalSlug),
+              follow,
+              t: req.t,
+            });
       const forumLinkHtml = relatedLinks.length && !profile
         ? `<div class="tool-related">
   <span class="tool-related-label">${escapeHtml(req.t('page.actions'))}</span>
@@ -1990,10 +2002,37 @@ export const registerPageRoutes = (app: Express) => {
               isOldRevision: Boolean(revIdParam),
             })
           : '';
-      // The home page shows what is new below its own text, on the current version only.
+      // The current version of the welcome page is the home page; its text
+      // appears there among the home sections.
       const homeHtml =
-        canonicalSlug === HOME_PAGE_SLUG && !selectedRevId && !diffHtml
-          ? renderHomeSections(await loadHomeSections(dalInstance, contentLang), req.t, contentLang)
+        showHome
+          ? renderHomePage({
+              sections: await loadHomeSections(dalInstance, res.locals.locale),
+              articleCount: await getArticleCount(),
+              welcomeHtml: bodyHtml,
+              welcomeLanguage: resolvedBody?.lang,
+              welcomeLanguageRow: availableLangs.length > 1 ? languageRow : '',
+              welcomeHistoryHtml: historyHtml,
+              welcomeDiscussionHref: forumPath || null,
+              welcomeFollowHtml: follow ? renderFollowControl({
+                action: follow.action,
+                following: follow.following,
+                fields: {
+                  page: follow.slug,
+                  return: `${follow.returnTo}#${WELCOME_TOOLS_ANCHOR}`,
+                  action: follow.following ? 'unfollow' : 'follow',
+                },
+                help: req.t(follow.following ? 'pageTabs.followingHelp' : 'pageTabs.followHelp'),
+                t: req.t,
+              }) : '',
+              welcomeFallbackLanguage: !langOverride && bodySource && contentLang !== res.locals.locale
+                ? res.locals.languageOptions.find((option: { code: string }) => option.code === contentLang)?.label ?? contentLang
+                : undefined,
+              editHref: canEditDirectly ? operatorEditPath(canonicalSlug, contentLang) : null,
+              signedIn,
+              t: req.t,
+              locale: res.locals.locale,
+            })
           : '';
       // The discussion follows the current version of the page; the home page
       // shows what is new instead.
@@ -2024,9 +2063,11 @@ export const registerPageRoutes = (app: Express) => {
         noindex: Boolean(selectedRevId) || isDraft || selectedRevision.proposal?.status === 'draft' || Boolean(profile),
         labelHtml,
         tabsHtml,
-        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${homeHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
+        homeHtml,
+        bodyHtml: `${draftBannerHtml}${draftNoticeHtml}${issuesNoticeHtml}${proposalHtml}${infoboxHtml}${bodyHtml}${signoffsHtml}${wikidataHtml}${languageRow}${forumLinkHtml}${discussionHtml}`,
         topHtml: prependAccountBanner(res, topHtml),
         sidebarHtml,
+        sidebarRight: Boolean(profile),
         wikiLinkPreviewConfig: {
           endpoint: WIKI_LINK_PREVIEW_ENDPOINT,
           introHtml: buildRedLinkIntroHtml(req, signedIn),

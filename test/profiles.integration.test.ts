@@ -101,6 +101,7 @@ const startServer = async () => {
         tabsHtml: options?.tabsHtml ?? null,
         labelHtml: options?.labelHtml ?? null,
         sidebarHtml: options?.sidebarHtml ?? null,
+        sidebarRight: options?.sidebarRight ?? false,
         noindex: options?.noindex ?? null,
       });
     }) as express.Response['render'];
@@ -128,6 +129,7 @@ type Rendered = {
   tabsHtml: string;
   labelHtml: string;
   sidebarHtml: string | null;
+  sidebarRight: boolean;
   noindex: boolean | null;
 };
 
@@ -196,6 +198,8 @@ test('A profile shows the account box, and its Talk tab works before the profile
     assert.ok(!empty.tabsHtml.includes('operator-edit'), 'Only the contributor gets an Edit tab');
     assert.ok(empty.sidebarHtml?.includes(`<dd>${owner.username}</dd>`));
     assert.ok(empty.sidebarHtml?.includes('profile.account.pagesCreated'));
+    // The account box sits on the right of a profile, unlike the contents of other pages.
+    assert.equal(empty.sidebarRight, true);
     assert.equal((await fetch(`${server.url}/user/nobody-${owner.username}`)).status, 404);
 
     const { token } = await createSession(owner.id);
@@ -249,6 +253,7 @@ test('A profile shows the account box, and its Talk tab works before the profile
     assert.ok(talk.bodyHtml.includes(`href="${profilePath(visitor.username)}"`), 'Authors link to their profiles');
     assert.ok(talk.tabsHtml.includes('page-tab--current'));
     assert.ok(talk.sidebarHtml?.includes('profile-account'));
+    assert.equal(talk.sidebarRight, true);
 
     const { token: visitorToken } = await createSession(visitor.id);
     const posted = await fetch(`${server.url}${profilePath(owner.username)}/discussion`, {
@@ -267,6 +272,7 @@ test('A profile shows the account box, and its Talk tab works before the profile
     assert.ok(written.bodyHtml.includes('rel="nofollow ugc"'));
     assert.ok(!written.bodyHtml.includes('page-discussion'), 'The Talk tab holds the discussion');
     assert.ok(written.sidebarHtml?.includes('profile-account'));
+    assert.equal(written.sidebarRight, true);
     assert.equal(written.noindex, true);
 
     const summary = await loadAccountSummary(dal, owner.id);
