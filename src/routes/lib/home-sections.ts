@@ -5,11 +5,11 @@ import { resolveSafeTextWithFallback } from '../../lib/safe-text.js';
 import { escapeHtml, renderText } from '../../render.js';
 import { FORUM_CATEGORY_KEYS, type ForumCategorySlug } from '../../services/forum-service.js';
 import type { HomeArticle, HomeSections } from '../../services/home-service.js';
+import { getSiteBaseUrl } from '../../services/site-config.js';
 
 const { mlString } = dal;
 
 export const NEW_ARTICLES_PATH = '/tool/pages?sort=new';
-export const MCP_ENDPOINT = 'https://agpedia.org/mcp';
 export const SOURCE_CODE_URL = 'https://github.com/permacommons/agpwiki';
 
 const FEATURED_IMAGE_WIDTH = 500;
@@ -199,7 +199,7 @@ ${alsoNew
     t('home.agentText'),
     [link('/meta/setup', t('home.agentSetup')), link('/meta/mcp-reference', t('home.agentReference'))],
     {
-      extra: `<code class="home-endpoint">${escapeHtml(MCP_ENDPOINT)}</code>`,
+      extra: `<code class="home-endpoint">${escapeHtml(`${getSiteBaseUrl()}/mcp`)}</code>`,
       footer: `<p class="home-code">${escapeHtml(t('home.codeLine'))} ${link(SOURCE_CODE_URL, t('home.codeLink'))}</p>`,
     }
   )}

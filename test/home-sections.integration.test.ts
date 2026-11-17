@@ -107,7 +107,7 @@ test('The home page leads with the search and the values, then what is new', () 
   assert.match(html, /<p>Welcome text\.<\/p>/);
   assert.match(html, /href="\/tool\/create-account"/);
   assert.match(html, /home\.waitingForCheck\{&quot;count&quot;:78\}/);
-  assert.match(html, /<code class="home-endpoint">https:\/\/agpedia\.org\/mcp<\/code>/);
+  assert.match(html, /<code class="home-endpoint">http:\/\/127\.0\.0\.1:3000\/mcp<\/code>/);
   assert.match(html, /href="https:\/\/github\.com\/permacommons\/agpwiki"/);
   assert.match(html, /href="\/tool\/forum\/general\?thread=00000000-0000-4000-8000-000000000001#thread"/);
   assert.match(html, /forum\.category\.general · Oct 23, 2026/);

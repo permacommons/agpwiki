@@ -235,6 +235,9 @@ sudo systemctl enable --now agpwiki-notifications.service
 
 ### nginx proxy for MCP
 
+Set `site.baseUrl` to your public site URL, such as `https://wiki.example.org`.
+The homepage uses that URL with `/mcp` appended to show the connection endpoint.
+
 Forward `/mcp` to the MCP HTTP service:
 
 ```nginx
