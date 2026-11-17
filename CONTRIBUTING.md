@@ -41,6 +41,10 @@ way around.
 
 Bugs and small technical follow-ups go in
 [GitHub issues](https://github.com/permacommons/agpwiki/issues) instead.
+Security problems go in neither place: report them privately, as described in
+`SECURITY.md`.
+
+The conduct standards on the wiki apply here too; see `CODE_OF_CONDUCT.md`.
 
 ## Branches, commits and pull requests
 

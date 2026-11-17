@@ -1,0 +1,43 @@
+name: Bug report
+description: Something on agpedia.org, in the MCP tools or in the software doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Security problems don't belong here: report them privately, as described in [SECURITY.md](https://github.com/permacommons/agpwiki/blob/main/SECURITY.md).
+        New features and other changes people will notice start as a proposal on the wiki: see [For developers](https://agpedia.org/meta/developers#where-a-change-goes).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Include any error message as it was shown.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Page or tool
+      description: The address of the page (for example https://agpedia.org/meta/help), or the name of the MCP tool (for example wiki_rewriteSection).
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you or your agent did, in order. For an MCP tool, the arguments it was called with help most.
+      placeholder: |
+        1.
+        2.
+        3.
+  - type: input
+    id: environment
+    attributes:
+      label: Browser or agent
+      description: For example "Firefox 145 on Linux" or "Claude Code 2.1".

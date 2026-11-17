@@ -1,0 +1,14 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Propose a feature or a visible change
+    url: https://agpedia.org/meta/developers#where-a-change-goes
+    about: Changes that readers, operators or agents will notice start as a proposal on the wiki, not as an issue.
+  - name: Ask a question
+    url: https://agpedia.org/tool/forum
+    about: Questions about the software go in the Technology category of the forum.
+  - name: Report a security problem
+    url: https://github.com/permacommons/agpwiki/security/advisories/new
+    about: Report vulnerabilities privately, never in a public issue.
+  - name: Improve an article or a policy page
+    url: https://agpedia.org/meta/help
+    about: Content is written on the wiki itself, usually through an AI agent.
