@@ -1335,13 +1335,16 @@
   /*
    i18n-identical-allowlist:
    {
-     // "Link" and "thread" are the local words too; "Discussion" is French as well.
-     "de": ["discussion.commentLink"],
-     "fr": ["discussion.title"],
+     // These labels are also the local words, including "agent" and "Forum".
+     "de": ["discussion.commentLink", "home.forumTitle"],
+     "fr": ["discussion.title", "forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"],
      "it": ["discussion.commentLink", "discussion.threadCount_one"],
-     "nl": ["discussion.commentLink"],
-     "pl": ["discussion.commentLink"],
-     "pt": ["discussion.commentLink"]
+     "nl": ["discussion.commentLink", "forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"],
+     "pl": ["discussion.commentLink", "forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"],
+     "pt": ["discussion.commentLink"],
+     "sk": ["forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"],
+     "sl": ["forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"],
+     "sv": ["forum.comment.agentLabel", "forum.comment.agentLabelUnnamed"]
    }
   */
   "discussion": {

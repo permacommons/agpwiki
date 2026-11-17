@@ -126,6 +126,11 @@ export function findLocaleIssues(localesDirectory: string): LocaleIssue[] {
       const obj = JSON5.parse(content);
       const existingKeys = flattenKeys(obj);
       const existingValues = flattenValues(obj);
+      const pluralCategories = new Set<string>(
+        Intl.PluralRules.supportedLocalesOf(langCode).length
+          ? new Intl.PluralRules(langCode).resolvedOptions().pluralCategories
+          : []
+      );
 
       for (const key of canonicalKeys) {
         if (!existingKeys.has(key)) {
@@ -144,7 +149,12 @@ export function findLocaleIssues(localesDirectory: string): LocaleIssue[] {
       }
 
       for (const key of existingKeys) {
-        if (!canonicalKeys.has(key)) {
+        const suffixStart = key.lastIndexOf('_');
+        const isLocalePlural =
+          suffixStart !== -1 &&
+          pluralCategories.has(key.slice(suffixStart + 1)) &&
+          canonicalKeys.has(`${key.slice(0, suffixStart)}_other`);
+        if (!canonicalKeys.has(key) && !isLocalePlural) {
           issues.push({ locale: langCode, key, issue: 'extra_in_locale' });
         }
       }
