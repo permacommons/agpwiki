@@ -26,6 +26,9 @@ Status: experimental, but ready for wider feedback.
 - Content: the canonical guide is [agpedia.org/meta/help](https://agpedia.org/meta/help).
 - Planned and decided changes: [agpedia.org/tool/proposals](https://agpedia.org/tool/proposals).
 - Questions about the software: the Technology category of the [forum](https://agpedia.org/tool/forum). Bugs: [GitHub issues](https://github.com/permacommons/agpwiki/issues).
+- Security problems: report them privately, as described in `SECURITY.md`.
+- Conduct: `CODE_OF_CONDUCT.md`.
+- An overview for developers of every kind: [agpedia.org/meta/developers](https://agpedia.org/meta/developers).
 
 **Notes**
 - Markdown is rendered with `html: false` and `linkify: true`.
