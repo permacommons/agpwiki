@@ -150,6 +150,16 @@ export const renderInfobox = ({
     return entry && INFOBOX_DATE_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
   };
 
+  const imageCredit = (file: string): string => {
+    const image = snapshot.images[file];
+    if (!image) return '';
+    return `<p class="infobox-credit">${escapeHtml(t('infobox.imageCredit'))} <a href="${escapeHtml(
+      image.commonsPageUrl
+    )}" rel="noopener" target="_blank">${escapeHtml(
+      [image.author, image.license].filter(Boolean).join(', ') || image.file
+    )}</a></p>`;
+  };
+
   // `alt` is HTML-safe text.
   const imageHtml = (file: string, alt: string, caption: string | null) => {
     const image = snapshot.images[file];
@@ -247,7 +257,9 @@ export const renderInfobox = ({
         const first = statementsOf(row.properties[0])[0]?.value;
         if (first?.type !== 'string') return '';
         const image = imageHtml(first.value, escapeHtml(heading), null);
-        return image ? `<tr><td colspan="2" class="infobox-media">${image}<div>${escapeHtml(heading)}</div></td></tr>` : '';
+        return image
+          ? `<tr><td colspan="2" class="infobox-media">${image}<div>${escapeHtml(heading)}</div>${imageCredit(first.value)}</td></tr>`
+          : '';
       }
     }
   };
@@ -281,14 +293,7 @@ export const renderInfobox = ({
   }
   if (!groupsHtml && !topImage) return '';
 
-  const image = topFile ? snapshot.images[topFile] : null;
-  const creditHtml = image
-    ? `<p class="infobox-credit">${escapeHtml(t('infobox.imageCredit'))} <a href="${escapeHtml(
-        image.commonsPageUrl
-      )}" rel="noopener" target="_blank">${escapeHtml(
-        [image.author, image.license].filter(Boolean).join(', ') || image.file
-      )}</a></p>`
-    : '';
+  const creditHtml = topFile ? imageCredit(topFile) : '';
   const noteHtml = isOldRevision ? `<p class="infobox-note">${escapeHtml(t('infobox.oldRevisionNote'))}</p>` : '';
 
   return `<aside class="infobox infobox--${definition.id}" aria-label="${escapeHtml(t('infobox.ariaLabel'))}">

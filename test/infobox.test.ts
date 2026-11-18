@@ -151,6 +151,32 @@ const personSnapshot = async (): Promise<WikidataSnapshot> => {
   return fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
 };
 
+test('A species box credits its range map and main image independently', async () => {
+  const { fetchImpl } = fakeWikidata({
+    Q140: {
+      P31: [item('Q16521')],
+      P18: [string('Lion.jpg', 'commonsMedia')],
+      P181: [string('Lion range.svg', 'commonsMedia')],
+    },
+  });
+  const options = fetchOptions(fetchImpl);
+  const snapshot = await fetchWikidataSnapshot('Q140', {
+    ...options,
+    fetchImage: async file => ({
+      ...(await options.fetchImage(file)),
+      ...(file === 'Lion range.svg' ? { author: 'Map author', license: 'CC BY-SA 4.0' } : {}),
+    }),
+  });
+  const html = renderInfobox({ snapshot, titleHtml: 'Lion', locale: 'en', t });
+
+  assert.match(html, /class="infobox-credit">Image: <a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:Lion\.jpg"[^>]*>Dario De Marco, Public domain<\/a>/);
+  const mapRow = html.match(/class="infobox-media">.*?<\/td>/s)?.[0] ?? '';
+  assert.match(
+    mapRow,
+    /class="infobox-credit">Image: <a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:Lion%20range\.svg"[^>]*>Map author, CC BY-SA 4\.0<\/a>/
+  );
+});
+
 test('The Person box shows known facts only, shortens long lists and links to Wikidata', async () => {
   const html = renderInfobox({
     snapshot: await personSnapshot(),
