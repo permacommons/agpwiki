@@ -150,6 +150,14 @@ export const renderInfobox = ({
     return entry && INFOBOX_DATE_PROPERTIES.has(property) ? parseLocalDate(entry.value) : null;
   };
 
+  const imageCredit = (image: WikidataSnapshot['images'][string]): string => {
+    return `<p class="infobox-credit">${escapeHtml(t('infobox.imageCredit'))} <a href="${escapeHtml(
+      image.commonsPageUrl
+    )}" rel="noopener" target="_blank">${escapeHtml(
+      [image.author, image.license].filter(Boolean).join(', ') || image.file
+    )}</a></p>`;
+  };
+
   // `alt` is HTML-safe text.
   const imageHtml = (file: string, alt: string, caption: string | null) => {
     const image = snapshot.images[file];
@@ -157,11 +165,10 @@ export const renderInfobox = ({
     if (!image || !src) return '';
     const widthUrl = src.replace(/\/\d+px-/, `/${THUMBNAIL_WIDTH}px-`);
     const doubleUrl = src.replace(/\/\d+px-/, `/${THUMBNAIL_WIDTH * 2}px-`);
+    const captionHtml = caption ? `<div>${escapeHtml(caption)}</div>` : '';
     return `<figure class="infobox-image"><a href="${escapeHtml(image.commonsPageUrl)}" rel="noopener" target="_blank"><img src="${escapeHtml(
       widthUrl
-    )}" srcset="${escapeHtml(doubleUrl)} 2x" alt="${alt.replace(/"/g, '&quot;')}" loading="lazy" decoding="async"></a>${
-      caption ? `<figcaption>${escapeHtml(caption)}</figcaption>` : ''
-    }</figure>`;
+    )}" srcset="${escapeHtml(doubleUrl)} 2x" alt="${alt.replace(/"/g, '&quot;')}" loading="lazy" decoding="async"></a><figcaption>${captionHtml}${imageCredit(image)}</figcaption></figure>`;
   };
 
   const rowHtml = (heading: string, value: string) =>
@@ -246,8 +253,10 @@ export const renderInfobox = ({
       case 'media': {
         const first = statementsOf(row.properties[0])[0]?.value;
         if (first?.type !== 'string') return '';
-        const image = imageHtml(first.value, escapeHtml(heading), null);
-        return image ? `<tr><td colspan="2" class="infobox-media">${image}<div>${escapeHtml(heading)}</div></td></tr>` : '';
+        const image = imageHtml(first.value, escapeHtml(heading), heading);
+        return image
+          ? `<tr><td colspan="2" class="infobox-media">${image}</td></tr>`
+          : '';
       }
     }
   };
@@ -265,7 +274,6 @@ export const renderInfobox = ({
     .join('');
 
   let topImage = '';
-  let topFile: string | null = null;
   for (const property of definition.imageProperties) {
     const statement = statementsOf(property)[0];
     if (statement?.value.type !== 'string') continue;
@@ -274,27 +282,16 @@ export const renderInfobox = ({
       .map(language => legend.find(value => value.type === 'monolingual' && value.language.toLowerCase() === language))
       .find(value => value !== undefined) ?? null;
     topImage = imageHtml(statement.value.value, titleHtml, caption?.type === 'monolingual' ? caption.text : null);
-    if (topImage) {
-      topFile = statement.value.value;
-      break;
-    }
+    if (topImage) break;
   }
   if (!groupsHtml && !topImage) return '';
 
-  const image = topFile ? snapshot.images[topFile] : null;
-  const creditHtml = image
-    ? `<p class="infobox-credit">${escapeHtml(t('infobox.imageCredit'))} <a href="${escapeHtml(
-        image.commonsPageUrl
-      )}" rel="noopener" target="_blank">${escapeHtml(
-        [image.author, image.license].filter(Boolean).join(', ') || image.file
-      )}</a></p>`
-    : '';
   const noteHtml = isOldRevision ? `<p class="infobox-note">${escapeHtml(t('infobox.oldRevisionNote'))}</p>` : '';
 
   return `<aside class="infobox infobox--${definition.id}" aria-label="${escapeHtml(t('infobox.ariaLabel'))}">
 <div class="infobox-title">${titleHtml}</div>
 ${topImage}${groupsHtml ? `<table class="infobox-facts">${groupsHtml}</table>` : ''}
-${noteHtml}${creditHtml}<p class="infobox-source"><a href="${wikidataItemUrl(snapshot.qid)}" rel="noopener" target="_blank">${escapeHtml(
+${noteHtml}<p class="infobox-source"><a href="${wikidataItemUrl(snapshot.qid)}" rel="noopener" target="_blank">${escapeHtml(
     t('infobox.factsOnWikidata')
   )}</a></p>
 </aside>`;

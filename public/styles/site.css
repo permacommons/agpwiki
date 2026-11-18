@@ -1119,8 +1119,10 @@ pre.diff ins {
   color: var(--muted);
   white-space: nowrap;
 }
+.infobox-credit {
+  margin: 0.2rem 0 0;
+}
 .infobox-note,
-.infobox-credit,
 .infobox-source {
   margin: 0;
   padding: 0.3rem 0.75rem;

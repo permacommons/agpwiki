@@ -151,6 +151,33 @@ const personSnapshot = async (): Promise<WikidataSnapshot> => {
   return fetchWikidataSnapshot('Q297552', fetchOptions(fetchImpl));
 };
 
+test('A species box credits its range map and main image independently', async () => {
+  const { fetchImpl } = fakeWikidata({
+    Q140: {
+      P31: [item('Q16521')],
+      P18: [string('Lion.jpg', 'commonsMedia')],
+      P181: [string('Lion range.svg', 'commonsMedia')],
+    },
+  });
+  const options = fetchOptions(fetchImpl);
+  const snapshot = await fetchWikidataSnapshot('Q140', {
+    ...options,
+    fetchImage: async file => ({
+      ...(await options.fetchImage(file)),
+      ...(file === 'Lion range.svg' ? { author: 'Map author', license: 'CC BY-SA 4.0' } : {}),
+    }),
+  });
+  const html = renderInfobox({ snapshot, titleHtml: 'Lion', locale: 'en', t });
+
+  const portrait = html.match(/<figure class="infobox-image">.*?<\/figure>/s)?.[0] ?? '';
+  assert.match(portrait, /class="infobox-credit">Image: <a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:Lion\.jpg"[^>]*>Dario De Marco, Public domain<\/a>/);
+  const mapRow = html.match(/class="infobox-media"><figure.*?<\/figure>/s)?.[0] ?? '';
+  assert.match(
+    mapRow,
+    /class="infobox-credit">Image: <a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:Lion%20range\.svg"[^>]*>Map author, CC BY-SA 4\.0<\/a>/
+  );
+});
+
 test('The Person box shows known facts only, shortens long lists and links to Wikidata', async () => {
   const html = renderInfobox({
     snapshot: await personSnapshot(),
@@ -168,7 +195,7 @@ test('The Person box shows known facts only, shortens long lists and links to Wi
   assert.doesNotMatch(html, /Political career/);
   assert.match(html, /<a href="https:\/\/www\.tommorello\.com\/"[^>]*>tommorello\.com<\/a>/);
   assert.match(html, /<img src="[^"]*\/250px-Tom%20Morello\.jpg" srcset="[^"]*\/500px-Tom%20Morello\.jpg 2x" alt="Tom Morello"/);
-  assert.match(html, /<figcaption>On stage<\/figcaption>/);
+  assert.match(html, /<figcaption><div>On stage<\/div>/);
   assert.match(html, /Image: <a href="https:\/\/commons\.wikimedia\.org\/wiki\/File:Tom%20Morello\.jpg"[^>]*>Dario De Marco, Public domain<\/a>/);
   assert.match(html, /<a href="https:\/\/www\.wikidata\.org\/wiki\/Q297552"[^>]*>Facts and sources on Wikidata<\/a>/);
   assert.doesNotMatch(html, /infobox-note/);
@@ -361,10 +388,10 @@ test('Image captions prefer the reader language over an earlier English caption'
   };
   const render = (locale: string) => renderInfobox({ snapshot, titleHtml: 'Person', locale, t });
   const fallback = render('de');
-  assert.match(fallback, /<figcaption>On stage<\/figcaption>/);
+  assert.match(fallback, /<figcaption><div>On stage<\/div>/);
   const french = render('fr');
-  assert.match(french, /<figcaption>Sur scène<\/figcaption>/);
-  assert.doesNotMatch(french, /<figcaption>On stage<\/figcaption>/);
+  assert.match(french, /<figcaption><div>Sur scène<\/div>/);
+  assert.doesNotMatch(french, /<figcaption><div>On stage<\/div>/);
 });
 
 
