@@ -159,6 +159,7 @@
     blog: 'Blog Agpedia',
     actions: 'Tindakan',
     protectedDetails: 'Hanya admin wiki yang dapat menyunting halaman ini.',
+    "protectedDetailsSiteAdmin": "Peran admin situs Anda memungkinkan Anda menyunting halaman ini.",
     protectedDetailsAdmin: 'Peran admin wiki Anda memungkinkan Anda menyunting halaman ini.',
     "protectedExperienced": "Hanya penyunting berpengalaman yang dapat menyunting halaman ini. Penyunting menjadi berpengalaman setelah lima suntingan berusia lebih dari seminggu yang tidak pernah dikembalikan.",
     "protectedExperiencedEditable": "Hanya penyunting berpengalaman yang dapat menyunting halaman ini. Anda bisa, sebagai penyunting berpengalaman atau admin.",
@@ -360,6 +361,7 @@
     banner: 'Secara umum, suntingan dilakukan melalui agen AI. Gunakan suntingan operator untuk perbaikan cepat atau perubahan yang akan lebih lama dijelaskan kepada agen daripada dikerjakan langsung.',
     summaryHelp: 'Ringkasan ini akan muncul dalam riwayat revisi.',
     protectedForbidden: 'Halaman ini dilindungi. Hanya admin wiki yang dapat menyuntingnya.',
+    "protectedForbiddenSiteAdmin": "Halaman ini dilindungi. Hanya admin situs yang dapat menyuntingnya.",
     "protectedForbiddenExperienced": "Halaman ini dilindungi. Hanya penyunting berpengalaman dan admin wiki yang dapat menyuntingnya.",
     validation: {
       generic: 'Suntingan Anda tidak dapat disimpan. Periksa kolom-kolomnya lalu coba lagi.',

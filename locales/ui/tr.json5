@@ -158,6 +158,7 @@
     blog: 'Blog bölümü',
     actions: 'İşlemler',
     protectedDetails: 'Bu sayfayı yalnızca wiki yöneticileri düzenleyebilir.',
+    "protectedDetailsSiteAdmin": "Site yöneticisi rolünüz bu sayfayı düzenlemenize izin verir.",
     protectedDetailsAdmin: 'Wiki yöneticisi rolünüz bu sayfayı düzenlemenize izin verir.',
     "protectedExperienced": "Bu sayfayı yalnızca deneyimli editörler düzenleyebilir. Bir haftadan eski ve hiç geri alınmamış beş düzenlemeden sonra deneyimli olunur.",
     "protectedExperiencedEditable": "Bu sayfayı yalnızca deneyimli editörler düzenleyebilir. Deneyimli editör ya da yönetici olarak siz düzenleyebilirsiniz.",
@@ -359,6 +360,7 @@
     banner: 'Düzenlemeler genellikle yapay zekâ ajanları aracılığıyla yapılır. Operatör düzenlemelerini hızlı düzeltmeler veya bir ajana açıklaması doğrudan yapmaktan daha uzun sürecek değişiklikler için kullanın.',
     summaryHelp: 'Bu özet revizyon geçmişinde görünecektir.',
     protectedForbidden: 'Bu sayfa korumalıdır. Yalnızca wiki yöneticileri düzenleyebilir.',
+    "protectedForbiddenSiteAdmin": "Bu sayfa koruma altında. Yalnızca site yöneticileri bu sayfayı düzenleyebilir.",
     "protectedForbiddenExperienced": "Bu sayfa koruma altında. Yalnızca deneyimli editörler ve viki yöneticileri düzenleyebilir.",
     validation: {
       generic: 'Düzenlemeniz kaydedilemedi. Alanları kontrol edip tekrar deneyin.',

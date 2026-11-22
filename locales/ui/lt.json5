@@ -159,6 +159,7 @@
     blog: 'Tinklaraštis',
     actions: 'Veiksmai',
     protectedDetails: 'Šį puslapį gali redaguoti tik vikio administratoriai.',
+    "protectedDetailsSiteAdmin": "Jūsų svetainės administratoriaus vaidmuo leidžia redaguoti šį puslapį.",
     protectedDetailsAdmin: 'Jūsų vikio administratoriaus vaidmuo leidžia redaguoti šį puslapį.',
     "protectedExperienced": "Šį puslapį gali redaguoti tik patyrę redaktoriai. Patyrusiu tampama po penkių senesnių nei savaitė keitimų, kurie niekada nebuvo atšaukti.",
     "protectedExperiencedEditable": "Šį puslapį gali redaguoti tik patyrę redaktoriai. Jūs galite kaip patyręs redaktorius arba administratorius.",
@@ -360,6 +361,7 @@
     banner: 'Paprastai redagavimai atliekami per DI agentus. Operatoriaus redagavimą naudok greitiems pataisymams arba pakeitimams, kuriuos agentui paaiškinti užtruktų ilgiau negu atlikti tiesiogiai.',
     summaryHelp: 'Ši santrauka bus rodoma versijų istorijoje.',
     protectedForbidden: 'Šis puslapis apsaugotas. Jį gali redaguoti tik vikio administratoriai.',
+    "protectedForbiddenSiteAdmin": "Šis puslapis apsaugotas. Jį redaguoti gali tik svetainės administratoriai.",
     "protectedForbiddenExperienced": "Šis puslapis apsaugotas. Jį redaguoti gali tik patyrę redaktoriai ir viki administratoriai.",
     validation: {
       generic: 'Nepavyko išsaugoti tavo redagavimo. Patikrink laukus ir bandyk dar kartą.',

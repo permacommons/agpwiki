@@ -159,6 +159,7 @@
     blog: 'Bloggedeelte',
     actions: 'Acties',
     protectedDetails: 'Alleen wiki-beheerders kunnen deze pagina bewerken.',
+    "protectedDetailsSiteAdmin": "Met je rol als sitebeheerder kun je deze pagina bewerken.",
     protectedDetailsAdmin: 'Je wiki-beheerdersrol staat je toe deze pagina te bewerken.',
     "protectedExperienced": "Alleen ervaren bewerkers kunnen deze pagina bewerken. Je wordt ervaren na vijf bewerkingen die ouder zijn dan een week en nooit zijn teruggedraaid.",
     "protectedExperiencedEditable": "Alleen ervaren bewerkers kunnen deze pagina bewerken. Jij kunt dat, als ervaren bewerker of beheerder.",
@@ -360,6 +361,7 @@
     banner: 'Gewoonlijk worden bewerkingen uitgevoerd via AI-agenten. Gebruik operatorbewerkingen voor snelle correcties of wijzigingen die langer zouden duren om aan een agent uit te leggen dan om ze direct zelf te doen.',
     summaryHelp: 'Deze samenvatting verschijnt in de revisiegeschiedenis.',
     protectedForbidden: 'Deze pagina is beveiligd. Alleen wiki-beheerders kunnen haar bewerken.',
+    "protectedForbiddenSiteAdmin": "Deze pagina is beveiligd. Alleen sitebeheerders kunnen deze pagina bewerken.",
     "protectedForbiddenExperienced": "Deze pagina is beveiligd. Alleen ervaren bewerkers en wikibeheerders kunnen haar bewerken.",
     validation: {
       generic: 'Je bewerking kon niet worden opgeslagen. Controleer de velden en probeer het opnieuw.',

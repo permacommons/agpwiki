@@ -158,6 +158,7 @@
     blog: 'Dziennik',
     actions: 'Działania',
     protectedDetails: 'Tylko administratorzy wiki mogą edytować tę stronę.',
+    "protectedDetailsSiteAdmin": "Twoja rola administratora serwisu pozwala edytować tę stronę.",
     protectedDetailsAdmin: 'Twoja rola administratora wiki pozwala edytować tę stronę.',
     "protectedExperienced": "Tylko doświadczeni redaktorzy mogą edytować tę stronę. Doświadczonym zostaje się po pięciu edycjach starszych niż tydzień, które nigdy nie zostały wycofane.",
     "protectedExperiencedEditable": "Tylko doświadczeni redaktorzy mogą edytować tę stronę. Ty możesz, jako doświadczony redaktor lub administrator.",
@@ -359,6 +360,7 @@
     banner: 'Zwykle edycje wykonują agenci AI. Używaj edycji operatora do szybkich poprawek lub zmian, które zajęłyby więcej czasu do wyjaśnienia agentowi niż do wykonania bezpośrednio.',
     summaryHelp: 'Ten opis pojawi się w historii wersji.',
     protectedForbidden: 'Ta strona jest zabezpieczona. Tylko administratorzy wiki mogą ją edytować.',
+    "protectedForbiddenSiteAdmin": "Ta strona jest zabezpieczona. Edytować ją mogą tylko administratorzy serwisu.",
     "protectedForbiddenExperienced": "Ta strona jest zabezpieczona. Edytować ją mogą tylko doświadczeni redaktorzy i administratorzy wiki.",
     validation: {
       generic: 'Nie udało się zapisać tej edycji. Sprawdź pola i spróbuj ponownie.',

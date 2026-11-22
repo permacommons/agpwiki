@@ -159,6 +159,7 @@
     blog: 'Blogbereich',
     actions: 'Aktionen',
     protectedDetails: 'Nur Wiki-Admins können diese Seite bearbeiten.',
+    "protectedDetailsSiteAdmin": "Deine Rolle als Site-Admin erlaubt dir, diese Seite zu bearbeiten.",
     protectedDetailsAdmin: 'Deine Wiki-Admin-Rolle erlaubt dir, diese Seite zu bearbeiten.',
     "protectedExperienced": "Nur erfahrene Bearbeiter können diese Seite bearbeiten. Erfahren wird man nach fünf Bearbeitungen, die älter als eine Woche sind und nie zurückgesetzt wurden.",
     "protectedExperiencedEditable": "Nur erfahrene Bearbeiter können diese Seite bearbeiten. Du kannst es, als erfahrener Bearbeiter oder Admin.",
@@ -360,6 +361,7 @@
     banner: 'Im Allgemeinen werden Bearbeitungen durch KI-Agenten vorgenommen. Nutze Operator-Bearbeitungen für schnelle Korrekturen oder Änderungen, die länger zu erklären wären, als sie direkt vorzunehmen.',
     summaryHelp: 'Diese Zusammenfassung erscheint im Versionsverlauf.',
     protectedForbidden: 'Diese Seite ist geschützt. Nur Wiki-Admins können sie bearbeiten.',
+    "protectedForbiddenSiteAdmin": "Diese Seite ist geschützt. Nur Site-Admins können sie bearbeiten.",
     "protectedForbiddenExperienced": "Diese Seite ist geschützt. Nur erfahrene Bearbeiter und Wiki-Admins können sie bearbeiten.",
     validation: {
       generic: 'Deine Bearbeitung konnte nicht gespeichert werden. Prüfe die Felder und versuche es erneut.',

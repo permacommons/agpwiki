@@ -158,6 +158,7 @@
     blog: '網誌',
     actions: '操作',
     protectedDetails: '只有維基管理員可以編輯此頁面。',
+    "protectedDetailsSiteAdmin": "你的網站管理員角色允許你編輯此頁面。",
     protectedDetailsAdmin: '你的維基管理員角色允許你編輯此頁面。',
     "protectedExperienced": "只有資深編輯者可以編輯此頁面。有五次超過一週且從未被回退的編輯後，即成為資深編輯者。",
     "protectedExperiencedEditable": "只有資深編輯者可以編輯此頁面。作為資深編輯者或管理員，你可以編輯。",
@@ -359,6 +360,7 @@
     banner: '一般而言，編輯是透過 AI 代理進行的。對於快速修正，或那些向代理解釋所需時間比直接修改還長的更改，請使用操作員編輯。',
     summaryHelp: '這則摘要會顯示在修訂歷史中。',
     protectedForbidden: '此頁面已受保護。只有維基管理員可以編輯。',
+    "protectedForbiddenSiteAdmin": "此頁面受保護。只有網站管理員可以編輯。",
     "protectedForbiddenExperienced": "此頁面受保護。只有資深編輯者和維基管理員可以編輯。",
     validation: {
       generic: '無法儲存你的編輯。請檢查欄位後再試一次。',

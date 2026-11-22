@@ -15,7 +15,8 @@ import {
 import { assertCanProtectWikiPage } from './authorization.js';
 import { isExperiencedEditor } from './experienced-editor-service.js';
 import { canEditProfile, findProfileOwnerBySlug } from './profile-service.js';
-import { userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import { SITE_ADMIN_ROLE, userHasRole, WIKI_ADMIN_ROLE } from './roles.js';
+import { assertCanManageSiteAdminPage, getSiteAdminPageAddress } from './site-admin-page-policy.js';
 import { ensureNonEmptyString, ensureOptionalString, normalizeSlugInput } from './validation.js';
 
 // Who may edit a protected page: admins only, or experienced editors too.
@@ -40,6 +41,7 @@ export interface PageEditabilityResult {
   protection: PageProtectionResult | null;
   // Set on a contributor profile: the username of the contributor it belongs to.
   profileOf?: string;
+  siteAdminOnly?: boolean;
 }
 
 export interface PageProtectionInput {
@@ -74,7 +76,14 @@ export const getWikiPageEditability = async (
   const owner = isProfileSlug(slug) ? await findProfileOwnerBySlug(dalInstance, slug) : null;
   const profileOf = owner?.username;
   const protection = await getPageProtectionForPage(dalInstance, page.id);
-  // Only its contributor and wiki admins may write a profile.
+  if (await getSiteAdminPageAddress({ id: page.id, slug })) {
+    return {
+      isProtected: true,
+      isEditable: userId ? await userHasRole(dalInstance, userId, SITE_ADMIN_ROLE) : false,
+      protection,
+      siteAdminOnly: true,
+    };
+  }
   if (owner && !(await canEditProfile(dalInstance, owner, userId))) {
     return { isProtected: true, isEditable: false, protection, profileOf };
   }
@@ -109,6 +118,12 @@ export const assertCanEditWikiPage = async (
   if (!editability.isProtected) return null;
   if (editability.isEditable) return editability.protection;
 
+  if (editability.siteAdminOnly) {
+    throw new ForbiddenError('Only site admins can modify this page or its addresses.', {
+      slug: page.slug,
+      requiredRole: SITE_ADMIN_ROLE,
+    });
+  }
   if (editability.profileOf) {
     throw new ForbiddenError('Only the contributor and wiki admins can edit this profile.', {
       slug: page.slug,
@@ -129,10 +144,10 @@ export const assertCanEditWikiPage = async (
 };
 
 const findCurrentPageBySlug = async (slug: string) =>
-  WikiPage.filterWhere({ slug }).select('id', '_revID').first();
+  WikiPage.filterWhere({ slug }).select('id', 'slug', '_revID').first();
 
 const findCurrentPageById = async (id: string) =>
-  WikiPage.filterWhere({ id }).select('id', '_revID').first();
+  WikiPage.filterWhere({ id }).select('id', 'slug', '_revID').first();
 
 const findPageForProtection = async (slug: string) => {
   const direct = await findCurrentPageBySlug(slug);
@@ -162,6 +177,7 @@ export const protectWikiPage = async (
 
   await assertCanProtectWikiPage(dalInstance, userId);
   const page = await findPageForProtection(normalizedSlug);
+  await assertCanManageSiteAdminPage(dalInstance, page, userId);
   const existing = await PageProtection.filterWhere({ pageId: page.id }).first();
   const normalizedReason = reason?.trim() ? reason.trim() : null;
 
@@ -214,7 +230,7 @@ export const unprotectWikiPage = async (
   dalInstance: DataAccessLayer,
   { slug, reason }: PageProtectionInput,
   userId: string
-): Promise<PageProtectionResult | null> => {
+) => {
   const errors = new ValidationCollector('Invalid page protection input.');
   const normalizedSlug = normalizeSlugInput(slug, 'slug', errors);
   ensureNonEmptyString(userId, 'userId', errors);
@@ -223,25 +239,32 @@ export const unprotectWikiPage = async (
 
   await assertCanProtectWikiPage(dalInstance, userId);
   const page = await findPageForProtection(normalizedSlug);
+  await assertCanManageSiteAdminPage(dalInstance, page, userId);
   const existing = await PageProtection.filterWhere({ pageId: page.id }).first();
-  if (!existing) return null;
+  const protection = existing ? toPageProtectionResult(existing) : null;
+  if (existing) {
+    await existing.delete();
 
-  const result = toPageProtectionResult(existing);
-  await existing.delete();
+    const normalizedReason = reason?.trim() ? reason.trim() : null;
+    await recordAdminEvent(dalInstance, {
+      eventType: ADMIN_EVENT_WIKI_PAGE_UNPROTECTED,
+      actorUserId: userId,
+      targetType: ADMIN_EVENT_TARGET_WIKI_PAGE,
+      targetId: page.id,
+      targetRevId: page._revID,
+      details: {
+        reason: normalizedReason,
+        previousProtection: true,
+        nextProtection: false,
+      },
+    });
+  }
 
-  const normalizedReason = reason?.trim() ? reason.trim() : null;
-  await recordAdminEvent(dalInstance, {
-    eventType: ADMIN_EVENT_WIKI_PAGE_UNPROTECTED,
-    actorUserId: userId,
-    targetType: ADMIN_EVENT_TARGET_WIKI_PAGE,
-    targetId: page.id,
-    targetRevId: page._revID,
-    details: {
-      reason: normalizedReason,
-      previousProtection: true,
-      nextProtection: false,
-    },
-  });
-
-  return result;
+  const editability = await getWikiPageEditability(dalInstance, page);
+  return {
+    protected: editability.isProtected,
+    siteAdminOnly: Boolean(editability.siteAdminOnly),
+    removed: Boolean(protection),
+    protection,
+  };
 };

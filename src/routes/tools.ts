@@ -1232,7 +1232,10 @@ export const registerToolRoutes = (app: Express) => {
         const discussHtml = discussHref
           ? ` <a href="${escapeHtml(discussHref)}">${escapeHtml(req.t('pageTabs.discuss'))}</a>`
           : '';
-        return `<p class="how-to-edit-protected">${escapeHtml(req.t('howToEdit.protected'))}${discussHtml}</p>`;
+        const messageKey = editability.siteAdminOnly
+          ? 'operatorEdit.protectedForbiddenSiteAdmin'
+          : 'howToEdit.protected';
+        return `<p class="how-to-edit-protected">${escapeHtml(req.t(messageKey))}${discussHtml}</p>`;
       }
       const loginHref = `/tool/login?redirect=${encodeURIComponent(editHref)}`;
       const steps = [

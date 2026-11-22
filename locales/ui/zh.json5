@@ -158,6 +158,7 @@
     blog: '博客',
     actions: '操作',
     protectedDetails: '只有维基管理员可以编辑此页面。',
+    "protectedDetailsSiteAdmin": "你的站点管理员角色允许你编辑此页面。",
     protectedDetailsAdmin: '你的维基管理员角色允许你编辑此页面。',
     "protectedExperienced": "只有资深编辑者可以编辑此页面。有五次超过一周且从未被回退的编辑后，即成为资深编辑者。",
     "protectedExperiencedEditable": "只有资深编辑者可以编辑此页面。作为资深编辑者或管理员，你可以编辑。",
@@ -359,6 +360,7 @@
     banner: '一般情况下，编辑是通过 AI 代理完成的。对于快速修正，或那些向代理解释所花时间比直接修改还长的更改，请使用操作员编辑。',
     summaryHelp: '此摘要将显示在修订历史中。',
     protectedForbidden: '此页面已受保护。只有维基管理员可以编辑。',
+    "protectedForbiddenSiteAdmin": "此页面受保护。只有站点管理员可以编辑。",
     "protectedForbiddenExperienced": "此页面受保护。只有资深编辑者和维基管理员可以编辑。",
     validation: {
       generic: '无法保存你的编辑。请检查各字段后再试。',

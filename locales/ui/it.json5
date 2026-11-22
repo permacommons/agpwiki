@@ -158,6 +158,7 @@
     blog: 'Diario',
     actions: 'Azioni',
     protectedDetails: 'Solo gli amministratori del wiki possono modificare questa pagina.',
+    "protectedDetailsSiteAdmin": "Il tuo ruolo di amministratore del sito ti consente di modificare questa pagina.",
     protectedDetailsAdmin: 'Il tuo ruolo di amministratore del wiki ti consente di modificare questa pagina.',
     "protectedExperienced": "Solo gli utenti esperti possono modificare questa pagina. Si diventa esperti dopo cinque modifiche più vecchie di una settimana e mai annullate.",
     "protectedExperiencedEditable": "Solo gli utenti esperti possono modificare questa pagina. Tu puoi, come utente esperto o amministratore.",
@@ -359,6 +360,7 @@
     banner: 'In generale, le modifiche vengono effettuate tramite agenti di IA. Usa le modifiche operatore per correzioni rapide o per cambiamenti che richiederebbero più tempo a essere spiegati a un agente che a essere fatti direttamente.',
     summaryHelp: 'Questo riepilogo apparirà nella cronologia delle revisioni.',
     protectedForbidden: 'Questa pagina è protetta. Solo gli amministratori del wiki possono modificarla.',
+    "protectedForbiddenSiteAdmin": "Questa pagina è protetta. Solo gli amministratori del sito possono modificarla.",
     "protectedForbiddenExperienced": "Questa pagina è protetta. Solo gli utenti esperti e gli amministratori del wiki possono modificarla.",
     validation: {
       generic: 'Impossibile salvare la modifica. Controlla i campi e riprova.',

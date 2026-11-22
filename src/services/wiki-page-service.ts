@@ -61,6 +61,7 @@ import { followPage } from './page-subscription-service.js';
 import { assertCanWriteProfilePage } from './profile-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
+import { assertCanManageSiteAdminPage } from './site-admin-page-policy.js';
 import {
   ensureNoControlCharacters,
   ensureNonEmptyString,
@@ -1072,6 +1073,7 @@ export async function createWikiPage(
     });
   }
   assertDraftBecomesArticle(normalizedSlug);
+  await assertCanManageSiteAdminPage(dalInstance, { slug: normalizedSlug }, userId);
   await assertCanWriteProfilePage(dalInstance, normalizedSlug, userId);
 
   const existing = await findCurrentPageBySlug(normalizedSlug);
@@ -1197,6 +1199,7 @@ export async function updateWikiPage(
         { slug: previousSlug, newSlug: normalizedNewSlug }
       );
     }
+    await assertCanManageSiteAdminPage(dalInstance, { slug: normalizedNewSlug }, userId);
     assertDraftBecomesArticle(normalizedNewSlug);
     // A profile stays at its contributor's address.
     if (isProfileSlug(previousSlug) || isProfileSlug(normalizedNewSlug)) {
@@ -1567,6 +1570,8 @@ export async function addWikiPageAlias(
   ensureOptionalLanguage(lang, 'lang', errors);
   errors.throwIfAny();
 
+  await assertCanManageSiteAdminPage(dalInstance, { slug: normalizedSlug }, userId);
+
   if (isBlockedSlug(normalizedSlug)) {
     throw new InvalidRequestError(`Alias slug is reserved: ${normalizedSlug}`, {
       slug: normalizedSlug,
@@ -1637,6 +1642,7 @@ export async function removeWikiPageAlias(
   ensureNonEmptyString(userId, 'userId', errors);
   errors.throwIfAny();
 
+  await assertCanManageSiteAdminPage(dalInstance, { slug: normalizedSlug }, userId);
   const alias = await PageAlias.filterWhere({ slug: normalizedSlug }).first();
   if (!alias) {
     throw new NotFoundError(`Wiki page alias not found: ${normalizedSlug}`, {
@@ -1787,6 +1793,7 @@ export async function deleteWikiPage(
     });
   }
 
+  await assertCanManageSiteAdminPage(dalInstance, page, userId);
   const deletionRevision = await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
   await applyDeletionRevisionSummary(deletionRevision, revSummary);
 

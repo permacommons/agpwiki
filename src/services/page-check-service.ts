@@ -21,8 +21,10 @@ import type { PageCheckInstance } from '../models/manifests/page-check.js';
 import PageCheck from '../models/page-check.js';
 import { assertCanDeletePageCheck } from './authorization.js';
 import { validateCitationClaimRefs } from './citation-claim-validation-service.js';
+import { findCurrentPageById } from './page-lookup-service.js';
 import { assertExpectedRevision, saveWithExpectedRevision } from './revision-precondition.js';
 import { applyDeletionRevisionSummary } from './revision-summary.js';
+import { assertCanManageSiteAdminPage } from './site-admin-page-policy.js';
 import {
   ensureNoControlCharacters,
   ensureNonEmptyString,
@@ -367,6 +369,7 @@ export async function createPageCheck(
     });
   }
 
+  await assertCanManageSiteAdminPage(dalInstance, page, userId);
   const targetRevision = await fetchPageRevisionByRevId(dalInstance, page.id, targetRevId);
   if (!targetRevision) {
     throw new ValidationError('targetRevId does not match a revision for this page.', [
@@ -462,6 +465,8 @@ export async function updatePageCheck(
       checkId,
     });
   }
+  const page = await findCurrentPageById(check.pageId);
+  if (page) await assertCanManageSiteAdminPage(dalInstance, page, userId);
   assertExpectedRevision(check._revID, expectedRevId);
 
   if (targetRevId) {
@@ -671,6 +676,8 @@ export async function deletePageCheck(
     });
   }
 
+  const page = await findCurrentPageById(check.pageId);
+  if (page) await assertCanManageSiteAdminPage(dalInstance, page, userId);
   const deletionRevision = await check.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
   await applyDeletionRevisionSummary(deletionRevision, revSummary);
 

@@ -158,6 +158,7 @@
     blog: 'Bitácora',
     actions: 'Acciones',
     protectedDetails: 'Solo los administradores del wiki pueden editar esta página.',
+    "protectedDetailsSiteAdmin": "Tu rol de administrador del sitio te permite editar esta página.",
     protectedDetailsAdmin: 'Tu rol de administrador del wiki te permite editar esta página.',
     "protectedExperienced": "Solo los editores con experiencia pueden editar esta página. Se adquiere experiencia tras cinco ediciones de más de una semana que nunca se revirtieron.",
     "protectedExperiencedEditable": "Solo los editores con experiencia pueden editar esta página. Tú puedes, como editor con experiencia o administrador.",
@@ -359,6 +360,7 @@
     banner: 'En general, las ediciones se realizan mediante agentes de IA. Usa las ediciones de operador para correcciones rápidas o cambios que llevarían más tiempo explicar a un agente que hacer directamente.',
     summaryHelp: 'Este resumen aparecerá en el historial de revisiones.',
     protectedForbidden: 'Esta página está protegida. Solo los administradores del wiki pueden editarla.',
+    "protectedForbiddenSiteAdmin": "Esta página está protegida. Solo los administradores del sitio pueden editarla.",
     "protectedForbiddenExperienced": "Esta página está protegida. Solo los editores con experiencia y los administradores del wiki pueden editarla.",
     validation: {
       generic: 'No se pudo guardar tu edición. Revisa los campos e inténtalo de nuevo.',
