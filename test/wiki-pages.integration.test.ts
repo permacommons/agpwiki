@@ -5,7 +5,7 @@ import test from 'node:test';
 import express from 'express';
 import { registerPageRoutes } from '../src/routes/pages.js';
 import { ForbiddenError, NotFoundError, ValidationError } from '../src/lib/errors.js';
-import { WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
+import { SITE_ADMIN_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
 import { findExistingWikiLinkSlugs } from '../src/services/wiki-link-preview-service.js';
 import { createPageCheck } from '../src/services/page-check-service.js';
 import { countArticlesWithIssues, listArticlesWithIssues } from '../src/services/article-issues-service.js';
@@ -20,6 +20,7 @@ import {
   deleteWikiPage,
   listWikiPageRevisions,
   readWikiPage,
+  removeWikiPageAlias,
   replaceWikiPageExactText,
   rewriteWikiPageSection,
   updateWikiPage,
@@ -158,7 +159,9 @@ test('Service page protection blocks non-admin wiki edits', async () => {
   assert.ok(events.some(event => event.eventType === 'protected_wiki_page_edited'));
 
   const removed = await unprotectWikiPage(dal, { slug: `/${slug}`, reason: 'Done.' }, admin.id);
-  assert.equal(removed?.pageId, page.id);
+  assert.equal(removed.protection?.pageId, page.id);
+  assert.equal(removed.protected, false);
+  assert.equal(removed.removed, true);
   assert.equal(await getPageProtectionForPage(dal, page.id), null);
 });
 
@@ -806,4 +809,58 @@ test('Service deleteWikiPage requires wiki_admin role', async () => {
       return true;
     }
   );
+});
+
+test('Privacy page mutations require site admin rights through canonical and alias addresses', async () => {
+  const dal = await getDal();
+  const siteAdmin = await createTestUser();
+  const wikiAdmin = await createTestUser();
+  await grantRoleUpsert(dal, siteAdmin.id, SITE_ADMIN_ROLE);
+  await grantRoleUpsert(dal, wikiAdmin.id, WIKI_ADMIN_ROLE);
+
+  const input = {
+    slug: '/Meta/Privacy/',
+    title: { en: 'Privacy policy' },
+    body: { en: 'Original policy.' },
+  };
+  const siteAdminRequired = (error: unknown) =>
+    error instanceof ForbiddenError && error.details?.requiredRole === SITE_ADMIN_ROLE;
+  await assert.rejects(createWikiPage(dal, input, wikiAdmin.id), siteAdminRequired);
+  const otherPage = await createWikiPage(dal, {
+    slug: 'unrestricted-policy-example',
+    title: { en: 'Unrestricted policy example' },
+    body: { en: 'Example text.' },
+  }, wikiAdmin.id);
+  await assert.rejects(
+    updateWikiPage(dal, {
+      slug: otherPage.slug, newSlug: input.slug, revSummary: { en: 'Move page.' },
+    }, wikiAdmin.id),
+    siteAdminRequired
+  );
+  await assert.rejects(
+    addWikiPageAlias(dal, { slug: input.slug, pageSlug: otherPage.slug }, wikiAdmin.id),
+    siteAdminRequired
+  );
+  const page = await createWikiPage(dal, input, siteAdmin.id);
+
+  const edit = { body: { en: 'Revised policy.' }, revSummary: { en: 'Update policy.' } };
+  await addWikiPageAlias(dal, { slug: 'privacy-policy-alias', pageSlug: page.slug }, siteAdmin.id);
+  await assert.rejects(
+    updateWikiPage(dal, { slug: 'privacy-policy-alias', ...edit }, wikiAdmin.id),
+    siteAdminRequired
+  );
+  await assert.rejects(protectWikiPage(dal, { slug: 'privacy-policy-alias' }, wikiAdmin.id), siteAdminRequired);
+  await assert.rejects(unprotectWikiPage(dal, { slug: page.slug }, wikiAdmin.id), siteAdminRequired);
+  await assert.rejects(
+    deleteWikiPage(dal, { slug: 'privacy-policy-alias', revSummary: edit.revSummary }, wikiAdmin.id),
+    siteAdminRequired
+  );
+
+  const moved = await updateWikiPage(
+    dal, { slug: page.slug, newSlug: 'meta/renamed-privacy-policy', ...edit }, siteAdmin.id
+  );
+  await assert.rejects(updateWikiPage(dal, { slug: moved.slug, ...edit }, wikiAdmin.id), siteAdminRequired);
+  await assert.rejects(removeWikiPageAlias(dal, '/meta/privacy/', wikiAdmin.id), siteAdminRequired);
+  await assert.rejects(removeWikiPageAlias(dal, 'privacy-policy-alias', wikiAdmin.id), siteAdminRequired);
+  assert.equal((await readWikiPage(dal, '/meta/privacy/')).id, page.id);
 });

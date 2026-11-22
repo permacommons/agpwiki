@@ -186,7 +186,12 @@ const iconLock =
 const iconLockHalfOpen =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path d="M128 288C128 252.7 156.7 224 192 224L448 224C483.3 224 512 252.7 512 288L512 512C512 547.3 483.3 576 448 576L192 576C156.7 576 128 547.3 128 512z"/><path d="M352 200L352 136C352 100.7 380.7 72 416 72C451.3 72 480 100.7 480 136L480 152" fill="none" stroke="currentColor" stroke-width="64" stroke-linecap="round"/></svg>';
 
-const protectionTooltipKey = (level: ProtectionLevel, editable: boolean) => {
+type DisplayProtectionLevel = ProtectionLevel | 'site-admin';
+
+const protectionTooltipKey = (level: DisplayProtectionLevel, editable: boolean) => {
+  if (level === 'site-admin') {
+    return editable ? 'page.protectedDetailsSiteAdmin' : 'operatorEdit.protectedForbiddenSiteAdmin';
+  }
   if (level === 'experienced') {
     return editable ? 'page.protectedExperiencedEditable' : 'page.protectedExperienced';
   }
@@ -196,7 +201,7 @@ const protectionTooltipKey = (level: ProtectionLevel, editable: boolean) => {
 const renderPageTypeLabel = (
   req: Request,
   label: string,
-  protection?: { editable: boolean; level: ProtectionLevel }
+  protection?: { editable: boolean; level: DisplayProtectionLevel }
 ) => {
   const protectedHtml = !protection
     ? ''
@@ -1091,11 +1096,13 @@ export const registerPageRoutes = (app: Express) => {
           .type('text')
           .send(
             req.t(
-              editability.profileOf
-                ? 'profile.editForbidden'
-                : editability.protection?.level === 'experienced'
-                  ? 'operatorEdit.protectedForbiddenExperienced'
-                  : 'operatorEdit.protectedForbidden'
+              editability.siteAdminOnly
+                ? 'operatorEdit.protectedForbiddenSiteAdmin'
+                : editability.profileOf
+                  ? 'profile.editForbidden'
+                  : editability.protection?.level === 'experienced'
+                    ? 'operatorEdit.protectedForbiddenExperienced'
+                    : 'operatorEdit.protectedForbidden'
             )
           );
         return;
@@ -1259,11 +1266,13 @@ export const registerPageRoutes = (app: Express) => {
           .type('text')
           .send(
             req.t(
-              error.details?.profileOf
-                ? 'profile.editForbidden'
-                : error.details?.level === 'experienced'
-                  ? 'operatorEdit.protectedForbiddenExperienced'
-                  : 'operatorEdit.protectedForbidden'
+              error.details?.requiredRole === 'site_admin'
+                ? 'operatorEdit.protectedForbiddenSiteAdmin'
+                : error.details?.profileOf
+                  ? 'profile.editForbidden'
+                  : error.details?.level === 'experienced'
+                    ? 'operatorEdit.protectedForbiddenExperienced'
+                    : 'operatorEdit.protectedForbidden'
             )
           );
         return;
@@ -2051,7 +2060,10 @@ export const registerPageRoutes = (app: Express) => {
         req,
         pageTypeLabel,
         editability.isProtected
-          ? { editable: editability.isEditable, level: editability.protection?.level ?? 'admins' }
+          ? {
+              editable: editability.isEditable,
+              level: editability.siteAdminOnly ? 'site-admin' : editability.protection?.level ?? 'admins',
+            }
           : undefined
       );
       res.render('layout', {

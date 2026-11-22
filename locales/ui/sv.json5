@@ -159,6 +159,7 @@
     blog: 'Blogg',
     actions: 'Åtgärder',
     protectedDetails: 'Endast wikiadministratörer kan redigera den här sidan.',
+    "protectedDetailsSiteAdmin": "Din roll som webbplatsadministratör låter dig redigera den här sidan.",
     protectedDetailsAdmin: 'Din roll som wikiadministratör låter dig redigera den här sidan.',
     "protectedExperienced": "Bara erfarna redigerare kan redigera den här sidan. Man blir erfaren efter fem redigeringar som är äldre än en vecka och aldrig har återställts.",
     "protectedExperiencedEditable": "Bara erfarna redigerare kan redigera den här sidan. Du kan, som erfaren redigerare eller administratör.",
@@ -360,6 +361,7 @@
     banner: 'Redigeringar görs i allmänhet via AI-agenter. Använd operatörsredigeringar för snabba rättelser eller ändringar som skulle ta längre tid att förklara för en agent än att göra direkt.',
     summaryHelp: 'Den här sammanfattningen visas i versionshistoriken.',
     protectedForbidden: 'Den här sidan är skyddad. Endast wikiadministratörer kan redigera den.',
+    "protectedForbiddenSiteAdmin": "Sidan är skyddad. Bara webbplatsadministratörer kan redigera den.",
     "protectedForbiddenExperienced": "Sidan är skyddad. Bara erfarna redigerare och wikiadministratörer kan redigera den.",
     validation: {
       generic: 'Det gick inte att spara din redigering. Kontrollera fälten och försök igen.',

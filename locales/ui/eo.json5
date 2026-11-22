@@ -159,6 +159,7 @@
     blog: 'Blogo',
     actions: 'Agoj',
     protectedDetails: 'Nur vikiaj administrantoj povas redakti ĉi tiun paĝon.',
+    "protectedDetailsSiteAdmin": "Via rolo kiel administranto de la retejo permesas al vi redakti ĉi tiun paĝon.",
     protectedDetailsAdmin: 'Via vikia administra rolo permesas al vi redakti ĉi tiun paĝon.',
     "protectedExperienced": "Nur spertaj redaktantoj povas redakti ĉi tiun paĝon. Oni fariĝas sperta post kvin redaktoj pli aĝaj ol semajno, kiuj neniam estis malfaritaj.",
     "protectedExperiencedEditable": "Nur spertaj redaktantoj povas redakti ĉi tiun paĝon. Vi povas, kiel sperta redaktanto aŭ administranto.",
@@ -360,6 +361,7 @@
     banner: 'Ĝenerale, redaktoj estas farataj per AI-agentoj. Uzu operaciantajn redaktojn por rapidaj korektoj aŭ ŝanĝoj, kies klarigo al agento daŭrus pli longe ol fari ilin rekte.',
     summaryHelp: 'Ĉi tiu resumo aperos en la revizia historio.',
     protectedForbidden: 'Ĉi tiu paĝo estas protektita. Nur vikiaj administrantoj povas ĝin redakti.',
+    "protectedForbiddenSiteAdmin": "Ĉi tiu paĝo estas protektita. Nur administrantoj de la retejo povas redakti ĝin.",
     "protectedForbiddenExperienced": "Ĉi tiu paĝo estas protektita. Nur spertaj redaktantoj kaj vikiaj administrantoj povas redakti ĝin.",
     validation: {
       generic: 'Via redakto ne povis esti konservita. Kontrolu la kampojn kaj reprovu.',

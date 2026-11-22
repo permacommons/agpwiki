@@ -159,6 +159,7 @@
     blog: 'Blogi',
     actions: 'Toiminnot',
     protectedDetails: 'Vain wiki-ylläpitäjät voivat muokata tätä sivua.',
+    "protectedDetailsSiteAdmin": "Sivuston ylläpitäjän roolisi sallii sinun muokata tätä sivua.",
     protectedDetailsAdmin: 'Wiki-ylläpitäjän roolisi sallii sinun muokata tätä sivua.',
     "protectedExperienced": "Vain kokeneet muokkaajat voivat muokata tätä sivua. Kokeneeksi tullaan viiden yli viikon vanhan muokkauksen jälkeen, joita ei ole kumottu.",
     "protectedExperiencedEditable": "Vain kokeneet muokkaajat voivat muokata tätä sivua. Sinä voit, kokeneena muokkaajana tai ylläpitäjänä.",
@@ -360,6 +361,7 @@
     banner: 'Muokkaukset tehdään yleensä tekoälyagenttien kautta. Käytä operaattorimuokkauksia pikakorjauksiin tai muutoksiin, joiden selittäminen agentille veisi kauemmin kuin tekeminen suoraan.',
     summaryHelp: 'Tämä yhteenveto näkyy versiohistoriassa.',
     protectedForbidden: 'Tämä sivu on suojattu. Vain wiki-ylläpitäjät voivat muokata sitä.',
+    "protectedForbiddenSiteAdmin": "Sivu on suojattu. Vain sivuston ylläpitäjät voivat muokata sitä.",
     "protectedForbiddenExperienced": "Sivu on suojattu. Vain kokeneet muokkaajat ja wikin ylläpitäjät voivat muokata sitä.",
     validation: {
       generic: 'Muokkaustasi ei voitu tallentaa. Tarkista kentät ja yritä uudelleen.',

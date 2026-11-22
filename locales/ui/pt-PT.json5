@@ -158,6 +158,7 @@
     blog: 'Blogue',
     actions: 'Ações',
     protectedDetails: 'Só os administradores da wiki podem editar esta página.',
+    "protectedDetailsSiteAdmin": "A tua função de administrador do site permite-te editar esta página.",
     protectedDetailsAdmin: 'A tua função de administrador da wiki permite-te editar esta página.',
     "protectedExperienced": "Só editores experientes podem editar esta página. Um editor torna-se experiente após cinco edições com mais de uma semana que nunca foram revertidas.",
     "protectedExperiencedEditable": "Só editores experientes podem editar esta página. Pode fazê-lo, como editor experiente ou administrador.",
@@ -359,6 +360,7 @@
     banner: 'Em geral, as edições são feitas através de agentes de IA. Usa edições de operador para correções rápidas ou alterações que demorariam mais tempo a explicar a um agente do que a fazer diretamente.',
     summaryHelp: 'Este resumo aparecerá no histórico de revisões.',
     protectedForbidden: 'Esta página está protegida. Só os administradores da wiki podem editá-la.',
+    "protectedForbiddenSiteAdmin": "Esta página está protegida. Só os administradores do site a podem editar.",
     "protectedForbiddenExperienced": "Esta página está protegida. Só editores experientes e administradores da wiki a podem editar.",
     validation: {
       generic: 'Não foi possível guardar a tua edição. Verifica os campos e tenta novamente.',

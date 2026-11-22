@@ -159,6 +159,7 @@
     blog: 'Napló',
     actions: 'Műveletek',
     protectedDetails: 'Ezt az oldalt csak wikiadminisztrátorok szerkeszthetik.',
+    "protectedDetailsSiteAdmin": "A webhely adminisztrátoraként szerkesztheted ezt az oldalt.",
     protectedDetailsAdmin: 'A wikiadminisztrátori szereped lehetővé teszi az oldal szerkesztését.',
     "protectedExperienced": "Ezt az oldalt csak tapasztalt szerkesztők szerkeszthetik. Tapasztalt az lesz, akinek öt, egy hétnél régebbi, soha vissza nem vont szerkesztése van.",
     "protectedExperiencedEditable": "Ezt az oldalt csak tapasztalt szerkesztők szerkeszthetik. Te szerkesztheted, tapasztalt szerkesztőként vagy adminisztrátorként.",
@@ -360,6 +361,7 @@
     banner: 'A szerkesztéseket általában MI-ügynökök végzik. Az operátori szerkesztést gyors javításokhoz vagy olyan módosításokhoz használd, amelyeket tovább tartana elmagyarázni egy ügynöknek, mint közvetlenül elvégezni.',
     summaryHelp: 'Ez az összefoglaló megjelenik a verziótörténetben.',
     protectedForbidden: 'Ez az oldal védett. Csak wikiadminisztrátorok szerkeszthetik.',
+    "protectedForbiddenSiteAdmin": "Ez az oldal védett. Csak a webhely adminisztrátorai szerkeszthetik.",
     "protectedForbiddenExperienced": "Ez az oldal védett. Csak tapasztalt szerkesztők és a wiki adminisztrátorai szerkeszthetik.",
     validation: {
       generic: 'A szerkesztést nem sikerült menteni. Ellenőrizd a mezőket, és próbáld újra.',

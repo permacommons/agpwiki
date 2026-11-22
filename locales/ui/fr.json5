@@ -159,6 +159,7 @@
     blog: 'Carnet',
     actions: 'Actions',
     protectedDetails: 'Seuls les administrateurs du wiki peuvent modifier cette page.',
+    "protectedDetailsSiteAdmin": "Ton rôle d’administrateur du site te permet de modifier cette page.",
     protectedDetailsAdmin: 'Ton rôle d’administrateur du wiki te permet de modifier cette page.',
     "protectedExperienced": "Seuls les contributeurs expérimentés peuvent modifier cette page. On devient expérimenté après cinq modifications de plus d'une semaine qui n'ont jamais été annulées.",
     "protectedExperiencedEditable": "Seuls les contributeurs expérimentés peuvent modifier cette page. Vous le pouvez, en tant que contributeur expérimenté ou administrateur.",
@@ -360,6 +361,7 @@
     banner: 'En général, les modifications sont effectuées via des agents IA. Utilise les modifications opérateur pour les corrections rapides ou les changements qui prendraient plus de temps à expliquer à un agent qu’à faire directement.',
     summaryHelp: 'Ce résumé apparaîtra dans l’historique des révisions.',
     protectedForbidden: 'Cette page est protégée. Seuls les administrateurs du wiki peuvent la modifier.',
+    "protectedForbiddenSiteAdmin": "Cette page est protégée. Seuls les administrateurs du site peuvent la modifier.",
     "protectedForbiddenExperienced": "Cette page est protégée. Seuls les contributeurs expérimentés et les administrateurs du wiki peuvent la modifier.",
     validation: {
       generic: 'Impossible d’enregistrer ta modification. Vérifie les champs et réessaie.',

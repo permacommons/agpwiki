@@ -418,6 +418,7 @@
     "blog": "Blog",
     "actions": "Actions",
     "protectedDetails": "Only wiki admins can edit this page.",
+    "protectedDetailsSiteAdmin": "Your site admin role allows you to edit this page.",
     "protectedDetailsAdmin": "Your wiki admin role allows you to edit this page.",
     "protectedExperienced": "Only experienced editors can edit this page. Editors become experienced after five edits that are more than a week old and were never reverted.",
     "protectedExperiencedEditable": "Only experienced editors can edit this page. You can, as an experienced editor or admin.",
@@ -621,6 +622,7 @@
     "wikidataHelp": "Optional but recommended for articles: the ID of the matching Wikidata item, such as Q42. Leave empty to remove it.",
     "summaryHelp": "This summary will appear in the revision history.",
     "protectedForbidden": "This page is protected. Only wiki admins can edit it.",
+    "protectedForbiddenSiteAdmin": "This page is protected. Only site admins can edit it.",
     "protectedForbiddenExperienced": "This page is protected. Only experienced editors and wiki admins can edit it.",
     "validation": {
       "generic": "Couldn't save your edit. Check the fields and try again.",

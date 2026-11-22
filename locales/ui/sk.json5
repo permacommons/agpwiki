@@ -159,6 +159,7 @@
     blog: 'Blogová sekcia',
     actions: 'Akcie',
     protectedDetails: 'Túto stránku môžu upravovať iba správcovia wiki.',
+    "protectedDetailsSiteAdmin": "Tvoja rola správcu webu ti umožňuje upravovať túto stránku.",
     protectedDetailsAdmin: 'Tvoja rola správcu wiki ti umožňuje upravovať túto stránku.',
     "protectedExperienced": "Túto stránku môžu upravovať iba skúsení redaktori. Skúseným sa stáva redaktor po piatich úpravách starších ako týždeň, ktoré neboli vrátené.",
     "protectedExperiencedEditable": "Túto stránku môžu upravovať iba skúsení redaktori. Vy môžete ako skúsený redaktor alebo správca.",
@@ -360,6 +361,7 @@
     banner: 'Úpravy sa vo všeobecnosti vykonávajú cez AI agentov. Operátorské úpravy používaj na rýchle opravy alebo zmeny, ktoré by trvalo dlhšie vysvetliť agentovi, než ich spraviť priamo.',
     summaryHelp: 'Toto zhrnutie sa zobrazí v histórii revízií.',
     protectedForbidden: 'Táto stránka je chránená. Upravovať ju môžu iba správcovia wiki.',
+    "protectedForbiddenSiteAdmin": "Táto stránka je zamknutá. Upravovať ju môžu iba správcovia webu.",
     "protectedForbiddenExperienced": "Táto stránka je zamknutá. Upravovať ju môžu iba skúsení redaktori a správcovia wiki.",
     validation: {
       generic: 'Tvoju úpravu sa nepodarilo uložiť. Skontroluj polia a skús to znova.',

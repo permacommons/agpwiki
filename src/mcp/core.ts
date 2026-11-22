@@ -2365,7 +2365,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
     {
       title: 'Unprotect Wiki Page',
       description:
-        'Remove wiki page protection so authenticated users can edit it. Requires wiki_admin role.',
+        'Remove explicit wiki page protection and report any remaining editing restriction. Requires wiki_admin role.',
       annotations: destructiveWriteToolAnnotations,
       inputSchema: {
         slug: pageSlugSchema,
@@ -2378,8 +2378,7 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
       const userId = await requireAuthUserId(extra);
       const { policyHash, ...writeArgs } = args;
       await requireCurrentPolicyHash(dal, policyHash);
-      const protection = await unprotectWikiPage(dal, writeArgs, userId);
-      return { protected: false, removed: Boolean(protection), protection };
+      return unprotectWikiPage(dal, writeArgs, userId);
     }))
   );
 

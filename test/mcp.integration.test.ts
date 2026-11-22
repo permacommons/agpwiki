@@ -697,6 +697,47 @@ const callTool = async <T>(
   return result.structuredContent as T;
 };
 
+test('MCP unprotect reports the remaining site-admin restriction', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  await grantRoleUpsert(dal, user.id, SITE_ADMIN_ROLE);
+  const { slug, id } = await createWikiPage(dal, {
+    slug: 'meta/privacy',
+    title: { en: 'MCP privacy policy' },
+    body: { en: 'Privacy policy text.' },
+  }, user.id);
+
+  const { server } = createMcpServer({ userRoles: [SITE_ADMIN_ROLE], skipPolicyCheck: true });
+  try {
+    const tools = getToolHandlers(server);
+    const authInfo = { extra: { userId: user.id } };
+    const args = { slug, policyHash: '' };
+    await callTool(tools, 'wiki_protectPage', args, authInfo);
+    const result = await callTool<{
+      protected: boolean;
+      siteAdminOnly: boolean;
+      removed: boolean;
+      protection: { pageId: string };
+    }>(tools, 'wiki_unprotectPage', args, authInfo);
+    assert.equal(result.protected, true);
+    assert.equal(result.siteAdminOnly, true);
+    assert.equal(result.removed, true);
+    assert.equal(result.protection.pageId, id);
+
+    assert.deepEqual(await callTool(tools, 'wiki_unprotectPage', args, authInfo), {
+      protected: true,
+      siteAdminOnly: true,
+      removed: false,
+      protection: null,
+    });
+    const page = await callTool<{ isProtected: boolean; protection: unknown }>(tools, 'wiki_readPage', { slug });
+    assert.equal(page.isProtected, true);
+    assert.equal(page.protection, null);
+  } finally {
+    await server.close();
+  }
+});
+
 type RevisionRead<T> = { revision: T & { revId: string } };
 
 type WikiRevisionFields = {
