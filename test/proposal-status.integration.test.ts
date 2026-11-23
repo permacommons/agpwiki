@@ -43,6 +43,21 @@ const setup = async () => {
   return { dal, author, admin, slug, page };
 };
 
+test('A new proposal starts as Draft; other new pages have no proposal status', async () => {
+  const { dal, author, slug, page } = await setup();
+  assert.equal(page.proposal?.status, 'draft');
+  assert.equal(page.proposal?.changedBy, author.id);
+  assert.equal((await readWikiPage(dal, slug)).proposal?.status, 'draft');
+
+  const other = await createWikiPage(dal, {
+    slug: `meta/not-a-proposal-${randomBytes(6).toString('hex')}`,
+    title: { en: `Not a proposal ${randomUUID()}` },
+    body: { en: 'Text.' },
+    canonicalLanguage: 'en',
+  }, author.id);
+  assert.equal(other.proposal ?? null, null);
+});
+
 test('Proposal status respects page protection', async () => {
   const { dal, author, admin, slug, page } = await setup();
   await protectWikiPage(dal, { slug, reason: 'Protected proposal.' }, admin.id);
@@ -138,7 +153,7 @@ test('Proposal history renders the selected revision status, links and decision 
       assert.ok(match);
       return match[0];
     };
-    assert.match(await header(`?rev=${page.currentRevId}`), /No status set yet/);
+    assert.match(await header(`?rev=${page.currentRevId}`), /Draft/);
     const adoptedHeader = await header(`?rev=${adopted.currentRevId}`);
     assert.match(adoptedHeader, /Adopted, not yet applied/);
     assert.match(adoptedHeader, /Historical adoption rationale\./);

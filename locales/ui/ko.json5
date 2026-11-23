@@ -583,6 +583,12 @@
   tool: {
     "proposalsShowDrafts": "초안 제안 보기 ({{number}})",
     "proposalsHideDrafts": "초안 제안 숨기기",
+    "proposalsColumnProposal": "제안",
+    "proposalsColumnAuthor": "제안자",
+    "proposalsColumnPositions": "입장",
+    "proposalsColumnStarted": "시작일",
+    "proposalsColumnUpdated": "마지막 변경",
+    "proposalsNoPositions": "아직 없음",
     view: '보기',
     diff: '차이',
     recentChangesDescription: '위키 전체의 최근 수정.',

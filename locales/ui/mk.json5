@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Прикажи нацрт-предлози ({{number}})",
     "proposalsHideDrafts": "Скриј нацрт-предлози",
+    "proposalsColumnProposal": "Предлог",
+    "proposalsColumnAuthor": "Започнат од",
+    "proposalsColumnPositions": "Ставови",
+    "proposalsColumnStarted": "Започнат",
+    "proposalsColumnUpdated": "Последна промена",
+    "proposalsNoPositions": "Сè уште нема",
     view: 'Прикажи',
     diff: 'Разлики',
     recentChangesDescription: 'Најнови уредувања низ викито.',

@@ -586,6 +586,12 @@
   tool: {
     "proposalsShowDrafts": "Afficher les propositions en brouillon ({{number}})",
     "proposalsHideDrafts": "Masquer les propositions en brouillon",
+    "proposalsColumnProposal": "Proposition",
+    "proposalsColumnAuthor": "Lancée par",
+    "proposalsColumnPositions": "Prises de position",
+    "proposalsColumnStarted": "Lancée le",
+    "proposalsColumnUpdated": "Dernière modification",
+    "proposalsNoPositions": "Aucune pour l’instant",
     view: 'Voir',
     diff: 'Différence',
     recentChangesDescription: 'Dernières modifications sur le wiki.',

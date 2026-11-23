@@ -588,6 +588,12 @@
   tool: {
     "proposalsShowDrafts": "Показать черновики предложений ({{number}})",
     "proposalsHideDrafts": "Скрыть черновики предложений",
+    "proposalsColumnProposal": "Предложение",
+    "proposalsColumnAuthor": "Автор",
+    "proposalsColumnPositions": "Позиции",
+    "proposalsColumnStarted": "Начато",
+    "proposalsColumnUpdated": "Последнее изменение",
+    "proposalsNoPositions": "Пока нет",
     view: 'Просмотр',
     diff: 'Различия',
     recentChangesDescription: 'Последние правки во всей вики.',

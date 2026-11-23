@@ -170,11 +170,18 @@ export async function setProposalStatus(
   return readWikiPage(dalInstance, page.slug);
 }
 
+export type ProposalPositionCounts = Record<'support' | 'neutral' | 'oppose', number>;
+
 export interface ProposalListItem {
+  id: string;
   slug: string;
   title: Record<string, string> | null;
   status: ProposalStatus | null;
+  createdAt: Date | null;
   updatedAt: Date | null;
+  creatorId: string | null;
+  parentId: string | null;
+  positions: ProposalPositionCounts;
 }
 
 // Order of the groups on the Proposals list: what needs attention first.
@@ -189,15 +196,54 @@ export const PROPOSAL_LIST_ORDER: Array<ProposalStatus | null> = [
   'superseded',
 ];
 
-/** Every current page under meta/proposals/, with its status. */
-export async function listProposalPages(_dalInstance: DataAccessLayer): Promise<ProposalListItem[]> {
+/**
+ * Every current page under meta/proposals/, with its status, who started it
+ * and the positions currently stated on it.
+ */
+export async function listProposalPages(dalInstance: DataAccessLayer): Promise<ProposalListItem[]> {
   const pages = await WikiPage.filterWhere({ slug: WikiPage.ops.like(`${PROPOSAL_PAGE_PREFIX}%`) })
     .orderBy('slug')
-    .select('slug', 'title', 'properties', 'updatedAt');
+    .select('id', 'slug', 'title', 'properties', 'createdAt', 'updatedAt');
+  const ids = pages.map(page => page.id);
+  const creators = new Map<string, string>();
+  const positions = new Map<string, ProposalPositionCounts>();
+  if (ids.length) {
+    const [creatorRows, positionRows] = await Promise.all([
+      dalInstance.query(
+        `SELECT DISTINCT ON (COALESCE(_old_rev_of, id)) COALESCE(_old_rev_of, id) AS page_id, _rev_user AS user_id
+           FROM pages
+          WHERE id = ANY($1) OR _old_rev_of = ANY($1)
+          ORDER BY COALESCE(_old_rev_of, id), _rev_date ASC`,
+        [ids]
+      ),
+      dalInstance.query(
+        `SELECT page_id, stance, COUNT(*)::int AS count
+           FROM page_signoffs
+          WHERE withdrawn_at IS NULL AND page_id = ANY($1)
+          GROUP BY page_id, stance`,
+        [ids]
+      ),
+    ]);
+    for (const row of creatorRows.rows as Array<{ page_id: string; user_id: string | null }>) {
+      if (row.user_id) creators.set(row.page_id, row.user_id);
+    }
+    for (const row of positionRows.rows as Array<{ page_id: string; stance: string; count: number }>) {
+      const counts = positions.get(row.page_id) ?? { support: 0, neutral: 0, oppose: 0 };
+      if (row.stance === 'support' || row.stance === 'neutral' || row.stance === 'oppose') {
+        counts[row.stance] += row.count;
+      }
+      positions.set(row.page_id, counts);
+    }
+  }
   return pages.map(page => ({
+    id: page.id,
     slug: page.slug,
     title: page.title,
     status: readProposalStatus(page.properties)?.status ?? null,
+    createdAt: page.createdAt ?? null,
     updatedAt: page.updatedAt,
+    creatorId: creators.get(page.id) ?? null,
+    parentId: readProposalLinks(page.properties)?.parentId ?? null,
+    positions: positions.get(page.id) ?? { support: 0, neutral: 0, oppose: 0 },
   }));
 }

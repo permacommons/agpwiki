@@ -583,6 +583,12 @@
   tool: {
     "proposalsShowDrafts": "显示草稿提案（{{number}}）",
     "proposalsHideDrafts": "隐藏草稿提案",
+    "proposalsColumnProposal": "提案",
+    "proposalsColumnAuthor": "发起人",
+    "proposalsColumnPositions": "立场",
+    "proposalsColumnStarted": "发起日期",
+    "proposalsColumnUpdated": "最后更改",
+    "proposalsNoPositions": "暂无",
     view: '查看',
     diff: '差异',
     recentChangesDescription: '全站最新编辑。',

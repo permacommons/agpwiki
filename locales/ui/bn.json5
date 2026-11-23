@@ -582,6 +582,12 @@
   tool: {
     "proposalsShowDrafts": "খসড়া প্রস্তাব দেখান ({{number}})",
     "proposalsHideDrafts": "খসড়া প্রস্তাব লুকান",
+    "proposalsColumnProposal": "প্রস্তাব",
+    "proposalsColumnAuthor": "শুরু করেছেন",
+    "proposalsColumnPositions": "অবস্থানসমূহ",
+    "proposalsColumnStarted": "শুরু",
+    "proposalsColumnUpdated": "শেষ পরিবর্তন",
+    "proposalsNoPositions": "এখনও নেই",
     view: 'দেখুন',
     diff: 'পার্থক্য',
     recentChangesDescription: 'উইকি জুড়ে সর্বশেষ সম্পাদনা।',

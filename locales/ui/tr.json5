@@ -583,6 +583,12 @@
   tool: {
     "proposalsShowDrafts": "Taslak önerileri göster ({{number}})",
     "proposalsHideDrafts": "Taslak önerileri gizle",
+    "proposalsColumnProposal": "Öneri",
+    "proposalsColumnAuthor": "Başlatan",
+    "proposalsColumnPositions": "Görüşler",
+    "proposalsColumnStarted": "Başlangıç",
+    "proposalsColumnUpdated": "Son değişiklik",
+    "proposalsNoPositions": "Henüz yok",
     view: 'Görüntüle',
     diff: 'Fark',
     recentChangesDescription: 'Vikideki son değişiklikler.',

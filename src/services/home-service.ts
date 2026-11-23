@@ -1,5 +1,6 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import languages from '../../locales/languages.js';
 import { firstSentence } from '../lib/excerpt.js';
 import { extractMediaSlugsFromSources } from '../lib/media-render.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
@@ -14,8 +15,7 @@ const { mlString } = dal;
 /** The page whose text the home page shows, among these sections. */
 export const HOME_PAGE_SLUG = 'meta/welcome';
 
-// Enough recent articles to find one with a picture for the featured card.
-const NEW_ARTICLE_COUNT = 12;
+const NEW_ARTICLE_COUNT = 4;
 const PROPOSAL_COUNT = 3;
 const BLOG_POST_COUNT = 3;
 const FORUM_THREAD_COUNT = 3;
@@ -52,6 +52,8 @@ export interface HomeProposal {
 
 export interface HomeSections {
   articles: HomeArticle[];
+  /** The newest article with a picture, however far back it is. */
+  featured: HomeArticle | null;
   posts: HomePost[];
   threads: HomeThread[];
   proposals: HomeProposal[];
@@ -61,20 +63,34 @@ export interface HomeSections {
 const resolveText = (lang: string, value: Record<string, string> | null | undefined) =>
   mlString.resolve(lang, value ?? null)?.str ?? '';
 
-// The first image the text embeds, if it is a known image.
 const firstImages = async (sources: Map<string, string>) => {
-  const firstBySource = new Map<string, string>();
-  for (const [key, source] of sources) {
-    const [first] = extractMediaSlugsFromSources([source]);
-    if (first) firstBySource.set(key, first);
-  }
-  const slugs = [...new Set(firstBySource.values())];
-  if (!slugs.length) return new Map<string, string>();
+  const candidates = new Map([...sources].map(([key, source]) => [key, [...extractMediaSlugsFromSources([source])]]));
+  const slugs = [...new Set([...candidates.values()].flat())];
+  if (!slugs.length) return new Map<string, string | undefined>();
   const images = await Media.filterWhere({ mediaType: 'image' })
     .whereIn('slug', slugs)
     .select('slug');
   const known = new Set(images.map(image => image.slug));
-  return new Map([...firstBySource].filter(([, slug]) => known.has(slug)));
+  return new Map([...candidates].map(([key, refs]) => [key, refs.find(slug => known.has(slug))]));
+};
+
+type ArticleRow = {
+  slug: string;
+  title: Record<string, string> | null;
+  body: Record<string, string> | null;
+  created_at: Date;
+};
+
+const toHomeArticles = async (rows: ArticleRow[], lang: string): Promise<HomeArticle[]> => {
+  const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
+  const images = await firstImages(bodies);
+  return rows.map(row => ({
+    slug: row.slug,
+    title: row.title,
+    createdAt: row.created_at,
+    excerpt: firstSentence(bodies.get(row.slug)),
+    imageSlug: images.get(row.slug) ?? null,
+  }));
 };
 
 const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle[]> => {
@@ -86,21 +102,45 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
       LIMIT $1`,
     [NEW_ARTICLE_COUNT]
   );
-  const rows = result.rows as Array<{
-    slug: string;
-    title: Record<string, string> | null;
-    body: Record<string, string> | null;
-    created_at: Date;
-  }>;
-  const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
-  const images = await firstImages(bodies);
-  return rows.map(row => ({
+  return toHomeArticles(result.rows as ArticleRow[], lang);
+};
+
+const loadFeaturedArticle = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle | null> => {
+  // Match mlString.resolve: prefer requested languages, then the first populated JSONB key.
+  const result = await dalInstance.query(
+    `SELECT p.slug, p.title, selected.body, p.created_at, image.media_slug
+       FROM pages p
+       CROSS JOIN LATERAL (
+         SELECT translation.language, translation.body
+           FROM jsonb_each_text(p.body) WITH ORDINALITY AS translation(language, body, position)
+          WHERE translation.body <> ''
+          ORDER BY array_position($1::text[], translation.language) NULLS LAST, translation.position
+          LIMIT 1
+       ) selected
+       CROSS JOIN LATERAL (
+         SELECT ref.media_slug FROM page_media_refs ref
+           JOIN media m ON m.slug = ref.media_slug
+            AND m._old_rev_of IS NULL AND m._rev_deleted = false AND m.media_type = 'image'
+          WHERE ref.page_id = p.id AND ref.language = selected.language
+          ORDER BY ref.position
+          LIMIT 1
+       ) image
+      WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
+        AND ${pageNamespaceSql('p.slug')} = 'article'
+        AND EXISTS (SELECT 1 FROM page_media_refs ref WHERE ref.page_id = p.id)
+      ORDER BY p.created_at DESC, p.slug
+      LIMIT 1`,
+    [[lang, ...languages.getFallbacks(lang)]]
+  );
+  const row = result.rows[0] as (Omit<ArticleRow, 'body'> & { body: string; media_slug: string }) | undefined;
+  if (!row) return null;
+  return {
     slug: row.slug,
     title: row.title,
     createdAt: row.created_at,
-    excerpt: firstSentence(bodies.get(row.slug)),
-    imageSlug: images.get(row.slug) ?? null,
-  }));
+    excerpt: firstSentence(row.body),
+    imageSlug: row.media_slug,
+  };
 };
 
 const loadPosts = async (): Promise<HomePost[]> => {
@@ -168,14 +208,15 @@ export async function loadHomeSections(
 ): Promise<HomeSections> {
   const cached = cache.get(lang);
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return cached.sections;
-  const [articles, posts, threads, proposals, issues] = await Promise.all([
+  const [articles, featured, posts, threads, proposals, issues] = await Promise.all([
     loadArticles(dalInstance, lang),
+    loadFeaturedArticle(dalInstance, lang),
     loadPosts(),
     loadThreads(dalInstance),
     loadProposals(dalInstance),
     countArticlesWithIssues(dalInstance),
   ]);
-  const sections = { articles, posts, threads, proposals, issues };
+  const sections = { articles, featured, posts, threads, proposals, issues };
   cache.set(lang, { at: Date.now(), sections });
   return sections;
 }

@@ -583,6 +583,12 @@
   tool: {
     "proposalsShowDrafts": "顯示草稿提案（{{number}}）",
     "proposalsHideDrafts": "隱藏草稿提案",
+    "proposalsColumnProposal": "提案",
+    "proposalsColumnAuthor": "發起人",
+    "proposalsColumnPositions": "立場",
+    "proposalsColumnStarted": "發起日期",
+    "proposalsColumnUpdated": "最後更改",
+    "proposalsNoPositions": "尚無",
     view: '檢視',
     diff: '差異',
     recentChangesDescription: '全站最新編輯。',

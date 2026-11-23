@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Conceptvoorstellen tonen ({{number}})",
     "proposalsHideDrafts": "Conceptvoorstellen verbergen",
+    "proposalsColumnProposal": "Voorstel",
+    "proposalsColumnAuthor": "Gestart door",
+    "proposalsColumnPositions": "Standpunten",
+    "proposalsColumnStarted": "Gestart",
+    "proposalsColumnUpdated": "Laatste wijziging",
+    "proposalsNoPositions": "Nog geen",
     view: 'Bekijk',
     diff: 'Verschil',
     recentChangesDescription: 'Laatste bewerkingen op de hele wiki.',

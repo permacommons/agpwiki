@@ -62,6 +62,7 @@ import {
   type ValidRole,
   WIKI_ADMIN_ROLE,
 } from '../services/roles.js';
+import { loadUserAuthors } from '../services/user-lookup-service.js';
 import {
   EDITABLE_USER_RIGHTS,
   type EditableUserRight,
@@ -74,6 +75,7 @@ import { prependAccountBanner } from './lib/account-banner.js';
 import { fetchUserMap, fetchUserNames } from './lib/history.js';
 import { HOW_TO_EDIT_PATH } from './lib/operator-edit-link.js';
 import { formatCheckStatus, formatCheckType } from './lib/page-checks.js';
+import { renderProposalList } from './lib/proposal-list.js';
 
 const { mlString } = dal;
 
@@ -1167,24 +1169,18 @@ export const registerToolRoutes = (app: Express) => {
             : req.t('tool.proposalsShowDrafts', { number: draftCount })
         )}</a></p>`
       : '';
-    const sections = PROPOSAL_LIST_ORDER.filter(status => showDrafts || status !== 'draft').map(status => {
-      const items = proposals.filter(item => item.status === status);
-      if (!items.length) return '';
-      const label = status ? req.t(`proposalStatus.status.${status}`) : req.t('proposalStatus.noStatus');
-      const badge = `proposal-status-badge proposal-status--${status ?? 'none'}`;
-      const listItems = items
-        .map(item => {
-          const title = resolveSafeTextWithFallback(mlString.resolve, lang, item.title, item.slug);
-          return `<li><a href="/${escapeHtml(item.slug)}">${renderText(title)}</a>${
-            item.updatedAt ? ` <span class="proposal-list-date">${escapeHtml(formatDateUTC(item.updatedAt))}</span>` : ''
-          }</li>`;
-        })
-        .join('');
-      return `<section class="proposal-list-group">
-  <h2><span class="${badge}">${escapeHtml(label)}</span> <span class="proposal-list-count">${items.length}</span></h2>
-  <ul class="change-list">${listItems}</ul>
-</section>`;
-    }).join('');
+    const authors = await loadUserAuthors(
+      dalInstance,
+      proposals.flatMap(item => (item.creatorId ? [item.creatorId] : []))
+    );
+    const sections = renderProposalList({
+      items: proposals,
+      order: PROPOSAL_LIST_ORDER.filter(status => showDrafts || status !== 'draft'),
+      authors,
+      lang,
+      locale: lang,
+      t: req.t,
+    });
     const bodyHtml = `<div class="tool-page">
   <p>${escapeHtml(req.t('tool.proposalsDescription', { count: proposals.length }))}</p>
   ${draftToggleHtml}

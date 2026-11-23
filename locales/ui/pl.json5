@@ -587,6 +587,12 @@
   tool: {
     "proposalsShowDrafts": "Pokaż szkice propozycji ({{number}})",
     "proposalsHideDrafts": "Ukryj szkice propozycji",
+    "proposalsColumnProposal": "Propozycja",
+    "proposalsColumnAuthor": "Autor",
+    "proposalsColumnPositions": "Stanowiska",
+    "proposalsColumnStarted": "Rozpoczęto",
+    "proposalsColumnUpdated": "Ostatnia zmiana",
+    "proposalsNoPositions": "Jeszcze brak",
     view: 'Widok',
     diff: 'Różnica',
     recentChangesDescription: 'Najnowsze edycje w całej wiki.',

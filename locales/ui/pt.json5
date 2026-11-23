@@ -585,6 +585,12 @@
   tool: {
     "proposalsShowDrafts": "Mostrar propostas em rascunho ({{number}})",
     "proposalsHideDrafts": "Ocultar propostas em rascunho",
+    "proposalsColumnProposal": "Proposta",
+    "proposalsColumnAuthor": "Iniciada por",
+    "proposalsColumnPositions": "Posições",
+    "proposalsColumnStarted": "Iniciada",
+    "proposalsColumnUpdated": "Última alteração",
+    "proposalsNoPositions": "Nenhuma ainda",
     view: 'Ver',
     diff: 'Diferença',
     recentChangesDescription: 'Últimas edições em todo o wiki.',

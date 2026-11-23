@@ -13,6 +13,7 @@ import { setBootstrapResolver } from 'rev-dal/lib/model-handle';
 import languages from '../locales/languages.js';
 import debug from '../util/debug.js';
 import './models/index.js';
+import { backfillPageMediaRefs } from './services/page-media-ref-service.js';
 
 type JsonObject = Record<string, unknown>;
 
@@ -88,6 +89,7 @@ export async function initializePostgreSQL(): Promise<DataAccessLayer> {
       if (shouldRunMigrations()) {
         await withMigrationLock(dal, async () => {
           await dal.migrate();
+          await backfillPageMediaRefs(dal);
           debug.db('PostgreSQL migrations completed');
         });
       } else {

@@ -588,6 +588,12 @@
   tool: {
     "proposalsShowDrafts": "Показати чернетки пропозицій ({{number}})",
     "proposalsHideDrafts": "Сховати чернетки пропозицій",
+    "proposalsColumnProposal": "Пропозиція",
+    "proposalsColumnAuthor": "Автор",
+    "proposalsColumnPositions": "Позиції",
+    "proposalsColumnStarted": "Розпочато",
+    "proposalsColumnUpdated": "Остання зміна",
+    "proposalsNoPositions": "Поки немає",
     view: 'Переглянути',
     diff: 'Різниця',
     recentChangesDescription: 'Найновіші редагування в усій вікі.',

@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Tampilkan usulan draf ({{number}})",
     "proposalsHideDrafts": "Sembunyikan usulan draf",
+    "proposalsColumnProposal": "Usulan",
+    "proposalsColumnAuthor": "Dimulai oleh",
+    "proposalsColumnPositions": "Sikap",
+    "proposalsColumnStarted": "Dimulai",
+    "proposalsColumnUpdated": "Perubahan terakhir",
+    "proposalsNoPositions": "Belum ada",
     view: 'Lihat',
     diff: 'Perbedaan',
     recentChangesDescription: 'Suntingan terbaru di seluruh wiki.',

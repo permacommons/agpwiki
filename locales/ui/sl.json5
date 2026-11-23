@@ -588,6 +588,12 @@
   tool: {
     "proposalsShowDrafts": "Prikaži osnutke predlogov ({{number}})",
     "proposalsHideDrafts": "Skrij osnutke predlogov",
+    "proposalsColumnProposal": "Predlog",
+    "proposalsColumnAuthor": "Začel",
+    "proposalsColumnPositions": "Stališča",
+    "proposalsColumnStarted": "Začeto",
+    "proposalsColumnUpdated": "Zadnja sprememba",
+    "proposalsNoPositions": "Še nobenega",
     view: 'Prikaži',
     diff: 'Razlika',
     recentChangesDescription: 'Najnovejša urejanja po celotni wiki zbirki.',

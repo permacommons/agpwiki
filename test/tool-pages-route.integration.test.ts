@@ -9,6 +9,8 @@ import { randomBytes } from 'node:crypto';
 
 import { initializePostgreSQL } from '../src/db.js';
 import User from '../src/models/user.js';
+import { signOffPage, withdrawPageSignoff } from '../src/services/page-signoff-service.js';
+import { setProposalLinks } from '../src/services/proposal-links-service.js';
 import { setProposalStatus } from '../src/services/proposal-status-service.js';
 import { createWikiPage } from '../src/services/wiki-page-service.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
@@ -120,6 +122,11 @@ test('GET /tool/proposals groups proposals by status, open ones first', async ()
   });
   try {
     await createWikiPage(dal, { slug: `${prefix}-draftless`, title: { en: 'Without status' }, body: { en: 'Text.' } }, user.id);
+    // Proposals created before new ones started as Draft have no status.
+    await dal.query(
+      `UPDATE pages SET properties = properties - 'proposal' WHERE slug = $1 AND _old_rev_of IS NULL`,
+      [`${prefix}-draftless`]
+    );
     await createWikiPage(dal, { slug: `${prefix}-open`, title: { en: 'Open one' }, body: { en: 'Text.' } }, user.id);
     await setProposalStatus(dal, { slug: `${prefix}-open`, status: 'open' }, user.id);
 
@@ -133,6 +140,66 @@ test('GET /tool/proposals groups proposals by status, open ones first', async ()
     assert.match(bodyHtml, /proposal-status--open">proposalStatus\.status\.open</);
     assert.match(bodyHtml, /proposal-status--none">proposalStatus\.noStatus</);
     assert.match(bodyHtml, /tool\.proposalsDescription\{&quot;count&quot;:\d+\}/);
+  } finally {
+    await server.close();
+  }
+});
+
+test('GET /tool/proposals shows who started each proposal, its positions and its last change', async () => {
+  const server = await makeTestServer();
+  const dal = sharedDal ?? (await initializePostgreSQL());
+  const stamp = Date.now();
+  const prefix = `meta/proposals/test-table-${stamp}`;
+  const makeUser = (role: string) =>
+    User.create({
+      username: `proposaltable${role}${stamp}`,
+      displayName: `Proposal Table ${role}`,
+      email: `proposal-table-${role}-${stamp}@example.com`,
+      passwordHash: randomBytes(32).toString('hex'),
+      createdAt: new Date(),
+    });
+  const [author, first, second, third] = [
+    await makeUser('author'),
+    await makeUser('first'),
+    await makeUser('second'),
+    await makeUser('third'),
+  ];
+  try {
+    await createWikiPage(dal, { slug: `${prefix}-main`, title: { en: 'Table main' }, body: { en: 'Text.' } }, author.id);
+    await createWikiPage(dal, { slug: `${prefix}-part`, title: { en: 'Table part' }, body: { en: 'Text.' } }, author.id);
+    await setProposalLinks(dal, { slug: `${prefix}-part`, parent: `${prefix}-main` }, author.id);
+    await setProposalStatus(dal, { slug: `${prefix}-part`, status: 'open' }, author.id);
+    await setProposalStatus(dal, { slug: `${prefix}-main`, status: 'open' }, author.id);
+
+    await signOffPage(dal, { slug: `${prefix}-main`, stance: 'support' }, first.id);
+    await signOffPage(dal, { slug: `${prefix}-main`, stance: 'support' }, second.id);
+    await signOffPage(dal, { slug: `${prefix}-main`, stance: 'oppose' }, third.id);
+    await withdrawPageSignoff(dal, { slug: `${prefix}-main` }, third.id);
+
+    const response = await fetch(`${server.url}/tool/proposals`);
+    const { bodyHtml } = (await response.json()) as { bodyHtml: string };
+    const row = (slug: string) => {
+      const match = bodyHtml.match(new RegExp(`<tr>\\s*<td class="proposal-table-title"><a href="/${slug}">[\\s\\S]*?</tr>`));
+      assert.ok(match, `row for ${slug}`);
+      return match[0];
+    };
+
+    assert.match(bodyHtml, /<table class="proposal-table">/);
+    assert.match(bodyHtml, /<th scope="col">tool\.proposalsColumnAuthor<\/th>/);
+
+    const main = row(`${prefix}-main`);
+    assert.match(main, new RegExp(`href="/user/proposaltableauthor${stamp}">Proposal Table author</a>`));
+    assert.match(main, /page-signoff-stance--support">signoff\.count\.support\{&quot;count&quot;:2\}/);
+    assert.doesNotMatch(main, /page-signoff-stance--oppose|page-signoff-stance--neutral/);
+    assert.match(main, /<time datetime="\d{4}-\d\d-\d\dT/);
+
+    const part = row(`${prefix}-part`);
+    assert.match(part, new RegExp(`proposal-table-parent">proposalLinks\\.partOf <a href="/${prefix}-main">Table main</a>`));
+    assert.match(part, /proposal-table-none">tool\.proposalsNoPositions</);
+    assert.ok(
+      bodyHtml.indexOf(`href="/${prefix}-main"`) < bodyHtml.indexOf(`<td class="proposal-table-title"><a href="/${prefix}-part"`),
+      'the main proposal, changed last, comes first'
+    );
   } finally {
     await server.close();
   }

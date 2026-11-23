@@ -15,6 +15,7 @@ import { loadDiscussionRenderData } from '../src/routes/lib/discussion.js';
 import { createCitation } from '../src/services/citation-service.js';
 import { registerDiscussionRoutes } from '../src/routes/discussion.js';
 import { registerForumRoutes } from '../src/routes/forum.js';
+import { registerPageRoutes } from '../src/routes/pages.js';
 import { readDiscussion } from '../src/services/discussion-service.js';
 import { createForumComment, createForumThread, setForumThreadPinned } from '../src/services/forum-service.js';
 import { BLOG_AUTHOR_ROLE, FORUM_MODERATOR_ROLE, WIKI_ADMIN_ROLE, grantRoleUpsert } from '../src/services/roles.js';
@@ -76,6 +77,7 @@ const startServer = async () => {
   });
   registerForumRoutes(app);
   registerDiscussionRoutes(app);
+  registerPageRoutes(app);
   const server = http.createServer(app);
   await new Promise<void>((resolve, reject) => {
     server.once('error', reject);
@@ -596,6 +598,53 @@ test('A blog post has its own discussion, under the post and at its address plus
     assert.ok(item);
     assert.equal(item.threadCount, 1);
     assert.deepEqual(item.title, { en: 'A post' });
+  } finally {
+    await server.close();
+  }
+});
+
+test('Under a page, the next threads load from its discussion as the reader scrolls', async () => {
+  const dal = await getDal();
+  const prefix = `disc-under-${Date.now()}`;
+  const server = await startServer();
+  try {
+    const author = await createTestUser('under');
+    await createPage(dal, prefix, author.id);
+    const threads = [];
+    for (let i = 0; i < 7; i++) threads.push(await startThread(prefix, `Under thread ${i}`, author.id));
+
+    const page = (await (await fetch(`${server.url}/${prefix}`)).json()) as { bodyHtml: string };
+    // The first threads show under the page; the rest load from the page's discussion.
+    assert.equal((page.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 5);
+    assert.match(page.bodyHtml, /data-discussion-pager/);
+    assert.ok(page.bodyHtml.includes(`data-discussion-base="/${prefix}/discussion"`));
+    assert.match(page.bodyHtml, /data-heading-level="3" data-in-page/);
+    assert.match(page.bodyHtml, /data-page-size="5"/);
+    for (const thread of threads) assert.ok(page.bodyHtml.includes(thread.id), thread.id);
+    // Without JavaScript, the link opens the whole discussion.
+    assert.ok(page.bodyHtml.includes(`href="/${prefix}/discussion" data-discussion-older>discussion.seeAllThreads{&quot;count&quot;:7}`));
+
+    const batchPath = `${server.url}/${prefix}/discussion?batch=${threads[0].id}`;
+    const underBatch = (await (await fetch(`${batchPath}&level=3`)).json()) as { bodyHtml: string };
+    assert.match(underBatch.bodyHtml, /<h3 class="discussion-thread-title"/);
+    const pageBatch = (await (await fetch(batchPath)).json()) as { bodyHtml: string };
+    assert.match(pageBatch.bodyHtml, /<h2 class="discussion-thread-title"/);
+  } finally {
+    await server.close();
+  }
+});
+
+test('A page with few threads shows them all, with nothing more to load', async () => {
+  const dal = await getDal();
+  const prefix = `disc-few-${Date.now()}`;
+  const server = await startServer();
+  try {
+    const author = await createTestUser('few');
+    await createPage(dal, prefix, author.id);
+    await startThread(prefix, 'Only thread', author.id);
+    const page = (await (await fetch(`${server.url}/${prefix}`)).json()) as { bodyHtml: string };
+    assert.equal((page.bodyHtml.match(/class="discussion-thread"/g) ?? []).length, 1);
+    assert.doesNotMatch(page.bodyHtml, /data-discussion-pager/);
   } finally {
     await server.close();
   }

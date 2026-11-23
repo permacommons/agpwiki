@@ -4,10 +4,10 @@
     <input class="nav-toggle-checkbox" type="checkbox" id="nav-toggle" />
     <label class="nav-toggle" for="nav-toggle" aria-hidden="true"></label>
     <div class="nav-menu-content">
-      <a class="nav-link" href="/blog">{{__ "nav.blog"}}</a>
-      <a class="nav-link" href="/tool/forum">{{__ "nav.forum"}}</a>
+      <a class="nav-link{{#if (eq navSection "blog")}} nav-link--current{{/if}}" href="/blog"{{#if (eq navSection "blog")}} aria-current="true"{{/if}}>{{__ "nav.blog"}}</a>
+      <a class="nav-link{{#if (eq navSection "forum")}} nav-link--current{{/if}}" href="/tool/forum"{{#if (eq navSection "forum")}} aria-current="true"{{/if}}>{{__ "nav.forum"}}</a>
       <details class="tools-menu" data-tools-menu>
-        <summary class="tools-menu-summary nav-link">{{__ "nav.tools"}}</summary>
+        <summary class="tools-menu-summary nav-link{{#if (eq navSection "tools")}} nav-link--current{{/if}}"{{#if (eq navSection "tools")}} aria-current="true"{{/if}}>{{__ "nav.tools"}}</summary>
         <div class="tools-menu-panel">
           <a class="tools-menu-link" href="/tool/recent-changes">{{__ "page.recentChanges"}}</a>
           <a class="tools-menu-link" href="/tool/proposals">{{__ "page.proposals"}}</a>
@@ -23,8 +23,8 @@
           {{/if}}
         </div>
       </details>
-      <a class="nav-link" href="/meta/help">{{__ "nav.contribute"}}</a>
-      <a class="nav-link" href="/meta/developers">{{__ "nav.developers"}}</a>
+      <a class="nav-link{{#if (eq navSection "contribute")}} nav-link--current{{/if}}" href="/meta/help"{{#if (eq navSection "contribute")}} aria-current="true"{{/if}}>{{__ "nav.contribute"}}</a>
+      <a class="nav-link{{#if (eq navSection "developers")}} nav-link--current{{/if}}" href="/meta/developers"{{#if (eq navSection "developers")}} aria-current="true"{{/if}}>{{__ "nav.developers"}}</a>
       {{#if signedIn}}
       <details class="user-menu">
         <summary class="user-menu-summary">

@@ -583,6 +583,12 @@
   tool: {
     "proposalsShowDrafts": "下書きの提案を表示 ({{number}})",
     "proposalsHideDrafts": "下書きの提案を隠す",
+    "proposalsColumnProposal": "提案",
+    "proposalsColumnAuthor": "提案者",
+    "proposalsColumnPositions": "立場表明",
+    "proposalsColumnStarted": "開始日",
+    "proposalsColumnUpdated": "最終変更",
+    "proposalsNoPositions": "まだありません",
     view: '表示',
     diff: '差分',
     recentChangesDescription: 'Wiki全体の最新の編集。',

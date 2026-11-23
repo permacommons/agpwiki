@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Visa förslagsutkast ({{number}})",
     "proposalsHideDrafts": "Dölj förslagsutkast",
+    "proposalsColumnProposal": "Förslag",
+    "proposalsColumnAuthor": "Startat av",
+    "proposalsColumnPositions": "Ställningstaganden",
+    "proposalsColumnStarted": "Startat",
+    "proposalsColumnUpdated": "Senaste ändring",
+    "proposalsNoPositions": "Inga än",
     view: 'Visa',
     diff: 'Skillnad',
     recentChangesDescription: 'Senaste redigeringar i hela wikin.',

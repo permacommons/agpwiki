@@ -375,19 +375,57 @@ const renderDiscussionNewer = (
 ) => `<nav class="discussion-pager" data-discussion-newer-nav aria-label="${escapeHtml(t('discussion.pages'))}">${page > 1
   ? `<a href="${escapeHtml(discussionPagePath(target, page - 1))}" rel="prev" data-discussion-newer>${escapeHtml(t('discussion.loadNewer'))}</a>` : ''}</nav>`;
 
-const renderDiscussionPager = (
-  target: DiscussionTarget,
-  { page, pageCount, threadIds }: { page: number; pageCount: number; threadIds: string[] },
+const pagerData = (
+  { page, threadIds, pageSize }: { page: number; threadIds: string[]; pageSize: number },
   t: TFunction
-) => `<nav class="discussion-pager" aria-label="${escapeHtml(t('discussion.pages'))}" data-discussion-pager
-  data-thread-ids="${escapeHtml(JSON.stringify(threadIds))}" data-page="${page}" data-page-size="${DISCUSSION_PAGE_SIZE}"
+) => `data-discussion-pager
+  data-thread-ids="${escapeHtml(JSON.stringify(threadIds))}" data-page="${page}" data-page-size="${pageSize}"
   data-newer-label="${escapeHtml(t('discussion.loadNewer'))}" data-older-label="${escapeHtml(t('discussion.loadOlder'))}"
   data-automatic-label="${escapeHtml(t('discussion.automatic'))}"
   data-loading-label="${escapeHtml(t('discussion.loading'))}"
   data-error-label="${escapeHtml(t('discussion.loadError'))}"
   data-range-label="${escapeHtml(t('discussion.loadedRange', { start: '{start}', end: '{end}', total: '{total}' }))}"
   data-no-newer-label="${escapeHtml(t('discussion.noNewer'))}"
-  data-end-label="${escapeHtml(t('discussion.noOlder'))}">
+  data-end-label="${escapeHtml(t('discussion.noOlder'))}"`;
+
+/**
+ * Under a page, the next threads load from the page's discussion as the reader
+ * scrolls, without leaving the page. Without JavaScript, the link opens the
+ * whole discussion.
+ */
+export const renderInPageDiscussion = (
+  discussion: DiscussionPage,
+  ctx: DiscussionRenderContext,
+  { pageSize }: { pageSize: number }
+) => {
+  const { target, t } = ctx;
+  const more = discussion.threadCount > discussion.threads.length;
+  return `<nav class="discussion-pager" data-discussion-newer-nav hidden></nav>
+  ${renderDiscussionThreads(discussion.threads, ctx)}
+  ${
+    more
+      ? `<nav class="discussion-pager discussion-more" aria-label="${escapeHtml(t('discussion.pages'))}" ${pagerData(
+          { page: 1, threadIds: discussion.threadIds, pageSize },
+          t
+        )}
+  data-discussion-base="${escapeHtml(discussionPath(target))}" data-heading-level="${ctx.headingLevel}" data-in-page>
+  <span data-discussion-range role="status" aria-live="polite" aria-atomic="true"></span>
+  <a href="${escapeHtml(discussionPagePath(target, 1))}" data-discussion-older>${escapeHtml(
+    t('discussion.seeAllThreads', { count: discussion.threadCount })
+  )}</a>
+</nav>`
+      : ''
+  }`;
+};
+
+const renderDiscussionPager = (
+  target: DiscussionTarget,
+  { page, pageCount, threadIds }: { page: number; pageCount: number; threadIds: string[] },
+  t: TFunction
+) => `<nav class="discussion-pager" aria-label="${escapeHtml(t('discussion.pages'))}" ${pagerData(
+  { page, threadIds, pageSize: DISCUSSION_PAGE_SIZE },
+  t
+)}>
   <span data-discussion-range role="status" aria-live="polite" aria-atomic="true">${escapeHtml(t('discussion.pageOf', { page, count: pageCount }))}</span>
   ${page < pageCount ? `<a href="${escapeHtml(discussionPagePath(target, page + 1))}" rel="next" data-discussion-older>${escapeHtml(t('discussion.loadOlder'))}</a>` : `<span data-discussion-end>${escapeHtml(t('discussion.noOlder'))}</span>`}
 </nav>`;

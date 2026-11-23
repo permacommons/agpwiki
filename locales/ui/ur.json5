@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "مسودہ تجاویز دکھائیں ({{number}})",
     "proposalsHideDrafts": "مسودہ تجاویز چھپائیں",
+    "proposalsColumnProposal": "تجویز",
+    "proposalsColumnAuthor": "شروع کرنے والے",
+    "proposalsColumnPositions": "مؤقف",
+    "proposalsColumnStarted": "آغاز",
+    "proposalsColumnUpdated": "آخری تبدیلی",
+    "proposalsNoPositions": "ابھی کوئی نہیں",
     view: 'دیکھیں',
     diff: 'فرق',
     recentChangesDescription: 'پورے وکی میں تازہ ترین ترامیم۔',

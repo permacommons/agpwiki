@@ -588,6 +588,12 @@
   tool: {
     "proposalsShowDrafts": "Zobraziť rozpracované návrhy ({{number}})",
     "proposalsHideDrafts": "Skryť rozpracované návrhy",
+    "proposalsColumnProposal": "Návrh",
+    "proposalsColumnAuthor": "Začal",
+    "proposalsColumnPositions": "Postoje",
+    "proposalsColumnStarted": "Začaté",
+    "proposalsColumnUpdated": "Posledná zmena",
+    "proposalsNoPositions": "Zatiaľ žiadne",
     view: 'Zobraziť',
     diff: 'Rozdiel',
     recentChangesDescription: 'Najnovšie úpravy v celej wiki.',
