@@ -582,6 +582,12 @@
   tool: {
     "proposalsShowDrafts": "Montri malnetajn proponojn ({{number}})",
     "proposalsHideDrafts": "Kaŝi malnetajn proponojn",
+    "proposalsColumnProposal": "Propono",
+    "proposalsColumnAuthor": "Komencita de",
+    "proposalsColumnPositions": "Starpunktoj",
+    "proposalsColumnStarted": "Komencita",
+    "proposalsColumnUpdated": "Lasta ŝanĝo",
+    "proposalsNoPositions": "Ankoraŭ neniu",
     view: 'Vidi',
     diff: 'Diferenco',
     recentChangesDescription: 'Plej novaj redaktoj tra la vikio.',

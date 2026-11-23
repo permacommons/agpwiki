@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Näytä luonnosehdotukset ({{number}})",
     "proposalsHideDrafts": "Piilota luonnosehdotukset",
+    "proposalsColumnProposal": "Ehdotus",
+    "proposalsColumnAuthor": "Aloittaja",
+    "proposalsColumnPositions": "Kannanotot",
+    "proposalsColumnStarted": "Aloitettu",
+    "proposalsColumnUpdated": "Viimeisin muutos",
+    "proposalsNoPositions": "Ei vielä",
     view: 'Näytä',
     diff: 'Erot',
     recentChangesDescription: 'Viimeisimmät muokkaukset koko wikissä.',

@@ -589,6 +589,12 @@
   tool: {
     "proposalsShowDrafts": "عرض مقترحات المسودة ({{number}})",
     "proposalsHideDrafts": "إخفاء مقترحات المسودة",
+    "proposalsColumnProposal": "المقترح",
+    "proposalsColumnAuthor": "بدأه",
+    "proposalsColumnPositions": "المواقف",
+    "proposalsColumnStarted": "البداية",
+    "proposalsColumnUpdated": "آخر تغيير",
+    "proposalsNoPositions": "لا شيء بعد",
     view: 'عرض',
     diff: 'فرق',
     recentChangesDescription: 'أحدث التعديلات في الويكي.',

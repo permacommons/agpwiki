@@ -588,6 +588,12 @@
   tool: {
     "proposalsShowDrafts": "Rodyti pasiūlymų juodraščius ({{number}})",
     "proposalsHideDrafts": "Slėpti pasiūlymų juodraščius",
+    "proposalsColumnProposal": "Pasiūlymas",
+    "proposalsColumnAuthor": "Pradėjo",
+    "proposalsColumnPositions": "Pozicijos",
+    "proposalsColumnStarted": "Pradėta",
+    "proposalsColumnUpdated": "Paskutinis pakeitimas",
+    "proposalsNoPositions": "Dar nėra",
     view: 'Peržiūrėti',
     diff: 'Skirtumas',
     recentChangesDescription: 'Naujausi redagavimai visame vikyje.',

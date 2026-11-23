@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "ड्राफ़्ट प्रस्ताव दिखाएँ ({{number}})",
     "proposalsHideDrafts": "ड्राफ़्ट प्रस्ताव छिपाएँ",
+    "proposalsColumnProposal": "प्रस्ताव",
+    "proposalsColumnAuthor": "शुरू करने वाले",
+    "proposalsColumnPositions": "रुख",
+    "proposalsColumnStarted": "शुरू",
+    "proposalsColumnUpdated": "अंतिम बदलाव",
+    "proposalsNoPositions": "अभी कोई नहीं",
     view: 'देखें',
     diff: 'अंतर',
     recentChangesDescription: 'पूरे विकि में हाल के संपादन।',

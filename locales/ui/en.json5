@@ -913,6 +913,14 @@
     "missingWikidataDescription_other": "{{count}} articles have no Wikidata ID yet. Add one with the operator editor or the MCP tools.",
     "proposalsDescription_one": "{{count}} proposal, grouped by status.",
     "proposalsDescription_other": "{{count}} proposals, grouped by status.",
+    // Column headings of the table on the proposals list.
+    "proposalsColumnProposal": "Proposal",
+    "proposalsColumnAuthor": "Started by",
+    "proposalsColumnPositions": "Positions",
+    "proposalsColumnStarted": "Started",
+    "proposalsColumnUpdated": "Last change",
+    // Shown in the Positions column when no one has stated a position.
+    "proposalsNoPositions": "None yet",
     "view": "View",
     "diff": "Diff",
     "recentChangesDescription": "Latest edits across the wiki.",

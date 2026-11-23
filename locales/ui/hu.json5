@@ -584,6 +584,12 @@
   tool: {
     "proposalsShowDrafts": "Piszkozat javaslatok mutatása ({{number}})",
     "proposalsHideDrafts": "Piszkozat javaslatok elrejtése",
+    "proposalsColumnProposal": "Javaslat",
+    "proposalsColumnAuthor": "Indította",
+    "proposalsColumnPositions": "Állásfoglalások",
+    "proposalsColumnStarted": "Indítva",
+    "proposalsColumnUpdated": "Utolsó módosítás",
+    "proposalsNoPositions": "Még nincs",
     view: 'Megtekintés',
     diff: 'Eltérés',
     recentChangesDescription: 'Legújabb szerkesztések a teljes wikiben.',

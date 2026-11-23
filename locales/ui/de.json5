@@ -582,6 +582,12 @@
   tool: {
     "proposalsShowDrafts": "Entwürfe von Vorschlägen anzeigen ({{number}})",
     "proposalsHideDrafts": "Entwürfe von Vorschlägen ausblenden",
+    "proposalsColumnProposal": "Vorschlag",
+    "proposalsColumnAuthor": "Begonnen von",
+    "proposalsColumnPositions": "Positionen",
+    "proposalsColumnStarted": "Begonnen",
+    "proposalsColumnUpdated": "Letzte Änderung",
+    "proposalsNoPositions": "Noch keine",
     view: 'Ansehen',
     diff: 'Unterschied',
     recentChangesDescription: 'Neueste Bearbeitungen im gesamten Wiki.',
