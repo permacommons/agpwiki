@@ -15,10 +15,6 @@ const { mlString } = dal;
 export const HOME_PAGE_SLUG = 'meta/welcome';
 
 const NEW_ARTICLE_COUNT = 4;
-// The featured card always has a picture, so it looks further back than the
-// newest articles, a batch at a time, among articles whose text embeds media.
-const FEATURED_BATCH = 50;
-const FEATURED_MAX_SCANNED = 1000;
 const PROPOSAL_COUNT = 3;
 const BLOG_POST_COUNT = 3;
 const FORUM_THREAD_COUNT = 3;
@@ -113,23 +109,31 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
   return toHomeArticles(result.rows as ArticleRow[], lang);
 };
 
+// Pages record the first image their text embeds (`lead_image`, kept by a
+// trigger), so the newest article with a picture comes from an index.
 const loadFeaturedArticle = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle | null> => {
-  for (let offset = 0; offset < FEATURED_MAX_SCANNED; offset += FEATURED_BATCH) {
-    const result = await dalInstance.query(
-      `SELECT slug, title, body, created_at FROM pages
-        WHERE _old_rev_of IS NULL AND _rev_deleted = false
-          AND ${pageNamespaceSql()} = 'article'
-          AND body::text LIKE '%](/media/%'
-        ORDER BY created_at DESC, slug
-        LIMIT $1 OFFSET $2`,
-      [FEATURED_BATCH, offset]
-    );
-    const rows = result.rows as ArticleRow[];
-    const withImage = (await toHomeArticles(rows, lang)).find(article => article.imageSlug);
-    if (withImage) return withImage;
-    if (rows.length < FEATURED_BATCH) return null;
-  }
-  return null;
+  const result = await dalInstance.query(
+    `SELECT p.slug, p.title, p.body, p.created_at, p.lead_image
+       FROM pages p
+      WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
+        AND p.lead_image IS NOT NULL
+        AND ${pageNamespaceSql('p.slug')} = 'article'
+        AND EXISTS (
+          SELECT 1 FROM media m
+           WHERE m.slug = p.lead_image AND m._old_rev_of IS NULL AND m._rev_deleted = false
+        )
+      ORDER BY p.created_at DESC, p.slug
+      LIMIT 1`
+  );
+  const row = result.rows[0] as (ArticleRow & { lead_image: string }) | undefined;
+  if (!row) return null;
+  return {
+    slug: row.slug,
+    title: row.title,
+    createdAt: row.created_at,
+    excerpt: firstSentence(resolveText(lang, row.body)),
+    imageSlug: row.lead_image,
+  };
 };
 
 const loadPosts = async (): Promise<HomePost[]> => {

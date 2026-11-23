@@ -18,7 +18,7 @@ import { registerPageRoutes } from '../src/routes/pages.js';
 import { registerToolRoutes } from '../src/routes/tools.js';
 import { createForumThread } from '../src/services/forum-service.js';
 import { HOME_PAGE_SLUG, type HomeSections, loadHomeSections } from '../src/services/home-service.js';
-import { createWikiPage } from '../src/services/wiki-page-service.js';
+import { createWikiPage, updateWikiPage } from '../src/services/wiki-page-service.js';
 import { insertTestUser } from './_test-users.js';
 
 type Dal = Awaited<ReturnType<typeof initializePostgreSQL>>;
@@ -392,4 +392,19 @@ test('The featured article is found however far back the last picture is', async
   assert.ok(loaded.articles.every(article => !article.slug.endsWith('-pictured')));
   assert.equal(loaded.featured?.slug, `${prefix}-pictured`);
   assert.equal(loaded.featured?.imageSlug, `${prefix}-image`);
+  assert.equal(loaded.featured?.excerpt, 'The pictured article.');
+
+  // The page row records its first image, and forgets it when an edit removes it.
+  const leadImage = async () =>
+    (
+      await dal.query('SELECT lead_image FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [`${prefix}-pictured`])
+    ).rows[0]?.lead_image as string | null;
+  assert.equal(await leadImage(), `${prefix}-image`);
+  await updateWikiPage(
+    dal,
+    { slug: `${prefix}-pictured`, body: { en: 'No picture any more.' }, revSummary: { en: 'Remove the picture.' } },
+    user.id
+  );
+  assert.equal(await leadImage(), null);
+  assert.notEqual((await loadHomeSections(dal, 'en', { fresh: true })).featured?.slug, `${prefix}-pictured`);
 });
