@@ -394,17 +394,58 @@ test('The featured article is found however far back the last picture is', async
   assert.equal(loaded.featured?.imageSlug, `${prefix}-image`);
   assert.equal(loaded.featured?.excerpt, 'The pictured article.');
 
-  // The page row records its first image, and forgets it when an edit removes it.
-  const leadImage = async () =>
+  const mediaRefs = async () =>
     (
-      await dal.query('SELECT lead_image FROM pages WHERE slug = $1 AND _old_rev_of IS NULL', [`${prefix}-pictured`])
-    ).rows[0]?.lead_image as string | null;
-  assert.equal(await leadImage(), `${prefix}-image`);
+      await dal.query(
+        'SELECT ref.media_slug FROM page_media_refs ref JOIN pages p ON p.id = ref.page_id WHERE p.slug = $1',
+        [`${prefix}-pictured`]
+      )
+    ).rows.map(row => row.media_slug);
+  assert.deepEqual(await mediaRefs(), [`${prefix}-image`]);
   await updateWikiPage(
     dal,
     { slug: `${prefix}-pictured`, body: { en: 'No picture any more.' }, revSummary: { en: 'Remove the picture.' } },
     user.id
   );
-  assert.equal(await leadImage(), null);
+  assert.deepEqual(await mediaRefs(), []);
   assert.notEqual((await loadHomeSections(dal, 'en', { fresh: true })).featured?.slug, `${prefix}-pictured`);
+});
+
+test('Featured selection follows the excerpt language and skips deleted media', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  const slug = `home-localized-${randomBytes(6).toString('hex')}`;
+  const images = [];
+  for (const kind of ['link', 'first', 'second']) {
+    const media = await Media.createFirstRevision({ id: user.id });
+    Object.assign(media, { slug: `${slug}-${kind}`, commonsTitle: `File:${slug}-${kind}.jpg`, mediaType: 'image', data: {} });
+    await media.save();
+    images.push(media);
+  }
+  const [link, first, second] = images;
+  await createWikiPage(dal, {
+    slug,
+    title: { en: `Localized pictures ${slug}` },
+    body: {
+      en: `[Ordinary link](/media/${link.slug})
+
+    ![Code example](/media/${link.slug})`,
+      de: `Ein Bild.
+
+![Erstes Bild](/media/${first.slug} "Titel"){size=250}
+
+![Zweites Bild](/media/${second.slug}){size=250}`,
+    },
+    canonicalLanguage: 'en',
+  }, user.id);
+
+  assert.notEqual((await loadHomeSections(dal, 'en', { fresh: true })).featured?.slug, slug);
+  const german = () => loadHomeSections(dal, 'de', { fresh: true });
+  const { featured } = await german();
+  assert.equal(featured?.slug, slug);
+  assert.equal(featured?.excerpt, 'Ein Bild.');
+  assert.equal(featured?.imageSlug, first.slug);
+
+  await first.deleteAllRevisions({ id: user.id });
+  assert.equal((await german()).featured?.imageSlug, second.slug);
 });

@@ -1,5 +1,6 @@
 import dal from 'rev-dal';
 import type { DataAccessLayer } from 'rev-dal/lib/data-access-layer';
+import languages from '../../locales/languages.js';
 import { firstSentence } from '../lib/excerpt.js';
 import { extractMediaSlugsFromSources } from '../lib/media-render.js';
 import { pageNamespaceSql } from '../lib/page-address.js';
@@ -62,20 +63,15 @@ export interface HomeSections {
 const resolveText = (lang: string, value: Record<string, string> | null | undefined) =>
   mlString.resolve(lang, value ?? null)?.str ?? '';
 
-// The first image the text embeds, if it is a known image.
 const firstImages = async (sources: Map<string, string>) => {
-  const firstBySource = new Map<string, string>();
-  for (const [key, source] of sources) {
-    const [first] = extractMediaSlugsFromSources([source]);
-    if (first) firstBySource.set(key, first);
-  }
-  const slugs = [...new Set(firstBySource.values())];
-  if (!slugs.length) return new Map<string, string>();
+  const candidates = new Map([...sources].map(([key, source]) => [key, [...extractMediaSlugsFromSources([source])]]));
+  const slugs = [...new Set([...candidates.values()].flat())];
+  if (!slugs.length) return new Map<string, string | undefined>();
   const images = await Media.filterWhere({ mediaType: 'image' })
     .whereIn('slug', slugs)
     .select('slug');
   const known = new Set(images.map(image => image.slug));
-  return new Map([...firstBySource].filter(([, slug]) => known.has(slug)));
+  return new Map([...candidates].map(([key, refs]) => [key, refs.find(slug => known.has(slug))]));
 };
 
 type ArticleRow = {
@@ -109,30 +105,41 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
   return toHomeArticles(result.rows as ArticleRow[], lang);
 };
 
-// Pages record the first image their text embeds (`lead_image`, kept by a
-// trigger), so the newest article with a picture comes from an index.
 const loadFeaturedArticle = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle | null> => {
+  // Match mlString.resolve: prefer requested languages, then the first populated JSONB key.
   const result = await dalInstance.query(
-    `SELECT p.slug, p.title, p.body, p.created_at, p.lead_image
+    `SELECT p.slug, p.title, selected.body, p.created_at, image.media_slug
        FROM pages p
+       CROSS JOIN LATERAL (
+         SELECT translation.language, translation.body
+           FROM jsonb_each_text(p.body) WITH ORDINALITY AS translation(language, body, position)
+          WHERE translation.body <> ''
+          ORDER BY array_position($1::text[], translation.language) NULLS LAST, translation.position
+          LIMIT 1
+       ) selected
+       CROSS JOIN LATERAL (
+         SELECT ref.media_slug FROM page_media_refs ref
+           JOIN media m ON m.slug = ref.media_slug
+            AND m._old_rev_of IS NULL AND m._rev_deleted = false AND m.media_type = 'image'
+          WHERE ref.page_id = p.id AND ref.language = selected.language
+          ORDER BY ref.position
+          LIMIT 1
+       ) image
       WHERE p._old_rev_of IS NULL AND p._rev_deleted = false
-        AND p.lead_image IS NOT NULL
         AND ${pageNamespaceSql('p.slug')} = 'article'
-        AND EXISTS (
-          SELECT 1 FROM media m
-           WHERE m.slug = p.lead_image AND m._old_rev_of IS NULL AND m._rev_deleted = false
-        )
+        AND EXISTS (SELECT 1 FROM page_media_refs ref WHERE ref.page_id = p.id)
       ORDER BY p.created_at DESC, p.slug
-      LIMIT 1`
+      LIMIT 1`,
+    [[lang, ...languages.getFallbacks(lang)]]
   );
-  const row = result.rows[0] as (ArticleRow & { lead_image: string }) | undefined;
+  const row = result.rows[0] as (Omit<ArticleRow, 'body'> & { body: string; media_slug: string }) | undefined;
   if (!row) return null;
   return {
     slug: row.slug,
     title: row.title,
     createdAt: row.created_at,
-    excerpt: firstSentence(resolveText(lang, row.body)),
-    imageSlug: row.lead_image,
+    excerpt: firstSentence(row.body),
+    imageSlug: row.media_slug,
   };
 };
 

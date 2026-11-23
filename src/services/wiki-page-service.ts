@@ -57,6 +57,7 @@ import { checkNewPage, type RelatedPage } from './duplicate-check-service.js';
 import { infoboxService } from './infobox-service.js';
 import { validateMediaRefs } from './media-reference-validation-service.js';
 import { findCurrentPageById, findCurrentPageBySlug, findCurrentPageBySlugOrAlias } from './page-lookup-service.js';
+import { replacePageMediaRefs } from './page-media-ref-service.js';
 import { assertCanEditWikiPage } from './page-protection-service.js';
 import { followPage } from './page-subscription-service.js';
 import { assertCanWriteProfilePage } from './profile-service.js';
@@ -1119,7 +1120,10 @@ export async function createWikiPage(
   page.createdAt = createdAt;
   page.updatedAt = createdAt;
 
-  await page.save();
+  await dalInstance.transaction(async transaction => {
+    await page.save({ transaction });
+    await replacePageMediaRefs(transaction, page.id, page.body);
+  });
   const qid = readWikidataId(page);
   if (qid) infoboxService.warmCache(dalInstance, qid);
   try {
@@ -1253,6 +1257,7 @@ export async function updateWikiPage(
 
   await dalInstance.transaction(async transaction => {
     await saveWithExpectedRevision(page, expectedRevId, 'expectedRevId', { transaction });
+    if (mergedBody !== undefined) await replacePageMediaRefs(transaction, page.id, page.body);
     if (protection) {
       await recordProtectedWikiPageEdit(dalInstance, page, userId, 'update', transaction);
     }
@@ -1320,7 +1325,10 @@ export async function applyWikiPagePatch(
   await createBodyEditRevision(page, userId, {
     lang, text: patched, operation: 'patch', tags, translation, revSummary,
   });
-  await saveWithExpectedRevision(page, baseRevId, 'baseRevId');
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(page, baseRevId, 'baseRevId', { transaction });
+    await replacePageMediaRefs(transaction, page.id, page.body);
+  });
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'patch');
   }
@@ -1482,7 +1490,10 @@ export async function rewriteWikiPageSection(
   await createBodyEditRevision(page, userId, {
     lang, text: updatedText, operation: 'rewrite-section', tags, translation, revSummary,
   });
-  await saveWithExpectedRevision(page, expectedRevId);
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(page, expectedRevId, 'expectedRevId', { transaction });
+    await replacePageMediaRefs(transaction, page.id, page.body);
+  });
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'rewrite-section');
   }
@@ -1555,7 +1566,10 @@ export async function replaceWikiPageExactText(
   await createBodyEditRevision(page, userId, {
     lang, text: updatedText, operation: 'replace-exact', tags, translation, revSummary,
   });
-  await saveWithExpectedRevision(page, expectedRevId);
+  await dalInstance.transaction(async transaction => {
+    await saveWithExpectedRevision(page, expectedRevId, 'expectedRevId', { transaction });
+    await replacePageMediaRefs(transaction, page.id, page.body);
+  });
   if (protection) {
     await recordProtectedWikiPageEdit(dalInstance, page, userId, 'replace-exact');
   }
@@ -1799,7 +1813,11 @@ export async function deleteWikiPage(
   }
 
   await assertCanManageSiteAdminPage(dalInstance, page, userId);
-  const deletionRevision = await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'] });
+  const deletionRevision = await dalInstance.transaction(async transaction => {
+    const revision = await page.deleteAllRevisions({ id: userId }, { tags: ['admin-delete'], transaction });
+    await replacePageMediaRefs(transaction, page.id, null);
+    return revision;
+  });
   await applyDeletionRevisionSummary(deletionRevision, revSummary);
 
   return {

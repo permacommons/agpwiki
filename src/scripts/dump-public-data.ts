@@ -79,6 +79,12 @@ const VIEW_CONFIGS: ViewConfig[] = [
     where: isCurrent('p'),
   },
   {
+    name: 'current_page_media_refs',
+    baseTable: 'page_media_refs',
+    alias: 'ref',
+    joins: [{ target: `${TEMP_SCHEMA}.current_pages`, alias: 'p', on: 'p.id = ref.page_id' }],
+  },
+  {
     name: 'current_citations',
     baseTable: 'citations',
     alias: 'c',
@@ -486,6 +492,7 @@ async function createDump(): Promise<void> {
 
     console.log('Step 4: Dumping public content tables...');
     await copyFromView('pages', `${TEMP_SCHEMA}.current_pages`, outputStream, env);
+    await copyFromView('page_media_refs', `${TEMP_SCHEMA}.current_page_media_refs`, outputStream, env);
     await copyFromView('citations', `${TEMP_SCHEMA}.current_citations`, outputStream, env);
     await copyFromView('posts', `${TEMP_SCHEMA}.current_posts`, outputStream, env);
     await copyFromView('page_aliases', `${TEMP_SCHEMA}.current_page_aliases`, outputStream, env);
