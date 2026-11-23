@@ -127,6 +127,20 @@ test('renderToc returns empty string for no items', () => {
   assert.equal(result, '');
 });
 
+test('renderMarkdown marks inserted text with ++ and removed text with ~~', async () => {
+  const { html } = await renderMarkdown('We never send ~~anything specific~~ ++which pages you read++.', []);
+  assert.match(html, /We never send <s>anything specific<\/s> <ins>which pages you read<\/ins>\./);
+
+  const { html: nested } = await renderMarkdown('++**new** and [linked](/meta/privacy)++ text', []);
+  assert.match(nested, /<ins><strong>new<\/strong> and <a [^>]*href="\/meta\/privacy"[^>]*>linked<\/a><\/ins> text/);
+});
+
+test('renderMarkdown leaves single and unmatched plus signs alone', async () => {
+  const { html } = await renderMarkdown('C++ and 1 + 1, ++unclosed, a ++ b', []);
+  assert.match(html, /C\+\+ and 1 \+ 1, \+\+unclosed, a \+\+ b/);
+  assert.doesNotMatch(html, /<ins>/);
+});
+
 test('renderMarkdown keeps tables of any width as tables in a scroll container', async () => {
   for (const markdown of [
     `| One | Two |

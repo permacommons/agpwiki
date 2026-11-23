@@ -1,10 +1,12 @@
 import MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 import citationsPlugin from '../markdown/citations.js';
+import { insertPlugin } from '../markdown/insert.js';
 import { mediaPlugin } from '../markdown/media.js';
 
 const plainTextParser = new MarkdownIt({ html: false, linkify: true })
   .use(citationsPlugin)
+  .use(insertPlugin())
   .use(mediaPlugin());
 
 const textOf = (tokens: Token[]): string => {

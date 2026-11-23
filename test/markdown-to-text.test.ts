@@ -4,7 +4,7 @@ import { markdownToPlainText } from '../src/lib/markdown-to-text.js';
 
 test('markdownToPlainText parses links, emphasis, escapes and block structure', () => {
   const source = [
-    '**Bold**, _italic_, ~~struck~~, `code`, [nested destination](https://example.com/a_(b)).',
+    '**Bold**, _italic_, ~~struck~~, ++inserted++, `code`, [nested destination](https://example.com/a_(b)).',
     '',
     '> Quoted text',
     '',
@@ -18,7 +18,7 @@ test('markdownToPlainText parses links, emphasis, escapes and block structure', 
   ].join('\n');
   assert.equal(
     markdownToPlainText(source),
-    'Bold, italic, struck, code, nested destination. Quoted text List item reference link *Literal asterisks*.'
+    'Bold, italic, struck, inserted, code, nested destination. Quoted text List item reference link *Literal asterisks*.'
   );
 });
 
