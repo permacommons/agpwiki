@@ -10,6 +10,7 @@ import type { TFunction } from 'i18next';
 import { createSession } from '../src/auth/session.js';
 import { initializePostgreSQL } from '../src/db.js';
 import BlogPost from '../src/models/blog-post.js';
+import Media from '../src/models/media.js';
 import { FOLLOW_PATH, registerFollowRoutes } from '../src/routes/follow.js';
 import { type HomePageInput, pickNewArticles, renderHomePage } from '../src/routes/lib/home-sections.js';
 import { registerLocaleRoutes } from '../src/routes/locale.js';
@@ -71,6 +72,7 @@ const sections = (overrides: Partial<HomeSections> = {}): HomeSections => ({
       lastActivityAt: new Date('2026-10-23T12:00:00Z'),
     },
   ],
+  featured: null,
   proposals: [{ slug: 'meta/proposals/drafts', title: { en: 'Proposal: Draft articles' }, status: 'applied' }],
   issues: { unchecked: 78, 'check-issues': 2, 'no-wikidata': 90 },
   ...overrides,
@@ -126,6 +128,26 @@ test('The featured article is the newest one with a picture; the others are list
   const { featured, alsoNew } = pickNewArticles(sections().articles.map(article => ({ ...article, imageSlug: null })));
   assert.equal(featured?.slug, 'rooibos');
   assert.deepEqual(alsoNew.map(article => article.slug), ['gout']);
+});
+
+test('An older article with a picture is featured when the newest ones have none', () => {
+  const older = {
+    slug: 'fiddle',
+    title: { en: 'Fiddle' },
+    createdAt: new Date('2026-08-01T12:00:00Z'),
+    excerpt: 'The fiddle is a violin.',
+    imageSlug: 'fiddler-2009',
+  };
+  const plain = sections().articles.map(article => ({ ...article, imageSlug: null }));
+  const html = render({ articles: plain, featured: older });
+  assert.match(html, /<a class="home-featured" href="\/fiddle">/);
+  assert.match(html, /src="\/media-files\/fiddler-2009\/500"/);
+  // The newest articles still fill the list.
+  assert.match(html, /<li><a href="\/rooibos">/);
+  assert.match(html, /<li><a href="\/gout">/);
+  // An article is never both featured and listed.
+  const { alsoNew } = pickNewArticles([older, ...plain], older);
+  assert.deepEqual(alsoNew.map(article => article.slug), ['rooibos', 'gout']);
 });
 
 test('Signed-in editors get a link to edit the welcome text and no sign-up button', () => {
@@ -339,4 +361,35 @@ test('Home posts use current titles and original dates and omit deleted posts', 
   assert.deepEqual(await read(), [{ slug: prefix, title: { en: 'Current title' }, createdAt: post.createdAt }]);
   await post.deleteAllRevisions({ id: user.id });
   assert.deepEqual(await read(), []);
+});
+
+test('The featured article is found however far back the last picture is', async () => {
+  const dal = await getDal();
+  const user = await createTestUser();
+  const prefix = `home-featured-${randomBytes(6).toString('hex')}`;
+  const media = await Media.createFirstRevision({ id: user.id });
+  Object.assign(media, { slug: `${prefix}-image`, commonsTitle: `File:${prefix}.jpg`, mediaType: 'image', data: {} });
+  await media.save();
+  await createWikiPage(
+    dal,
+    {
+      slug: `${prefix}-pictured`,
+      title: { en: `Pictured ${prefix}` },
+      body: { en: `![A fiddler](/media/${prefix}-image){size=250 caption="A fiddler."}\n\nThe pictured article.` },
+      canonicalLanguage: 'en',
+    },
+    user.id
+  );
+  // More new articles without pictures than the list shows.
+  for (let i = 0; i < 6; i++) {
+    await createWikiPage(
+      dal,
+      { slug: `${prefix}-plain-${i}`, title: { en: `Plain ${prefix} ${i}` }, body: { en: 'No picture.' }, canonicalLanguage: 'en' },
+      user.id
+    );
+  }
+  const loaded = await loadHomeSections(dal, 'en', { fresh: true });
+  assert.ok(loaded.articles.every(article => !article.slug.endsWith('-pictured')));
+  assert.equal(loaded.featured?.slug, `${prefix}-pictured`);
+  assert.equal(loaded.featured?.imageSlug, `${prefix}-image`);
 });

@@ -14,8 +14,11 @@ const { mlString } = dal;
 /** The page whose text the home page shows, among these sections. */
 export const HOME_PAGE_SLUG = 'meta/welcome';
 
-// Enough recent articles to find one with a picture for the featured card.
-const NEW_ARTICLE_COUNT = 12;
+const NEW_ARTICLE_COUNT = 4;
+// The featured card always has a picture, so it looks further back than the
+// newest articles, a batch at a time, among articles whose text embeds media.
+const FEATURED_BATCH = 50;
+const FEATURED_MAX_SCANNED = 1000;
 const PROPOSAL_COUNT = 3;
 const BLOG_POST_COUNT = 3;
 const FORUM_THREAD_COUNT = 3;
@@ -52,6 +55,8 @@ export interface HomeProposal {
 
 export interface HomeSections {
   articles: HomeArticle[];
+  /** The newest article with a picture, however far back it is. */
+  featured: HomeArticle | null;
   posts: HomePost[];
   threads: HomeThread[];
   proposals: HomeProposal[];
@@ -77,21 +82,14 @@ const firstImages = async (sources: Map<string, string>) => {
   return new Map([...firstBySource].filter(([, slug]) => known.has(slug)));
 };
 
-const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle[]> => {
-  const result = await dalInstance.query(
-    `SELECT slug, title, body, created_at FROM pages
-      WHERE _old_rev_of IS NULL AND _rev_deleted = false
-        AND ${pageNamespaceSql()} = 'article'
-      ORDER BY created_at DESC, slug
-      LIMIT $1`,
-    [NEW_ARTICLE_COUNT]
-  );
-  const rows = result.rows as Array<{
-    slug: string;
-    title: Record<string, string> | null;
-    body: Record<string, string> | null;
-    created_at: Date;
-  }>;
+type ArticleRow = {
+  slug: string;
+  title: Record<string, string> | null;
+  body: Record<string, string> | null;
+  created_at: Date;
+};
+
+const toHomeArticles = async (rows: ArticleRow[], lang: string): Promise<HomeArticle[]> => {
   const bodies = new Map(rows.map(row => [row.slug, resolveText(lang, row.body)]));
   const images = await firstImages(bodies);
   return rows.map(row => ({
@@ -101,6 +99,37 @@ const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise
     excerpt: firstSentence(bodies.get(row.slug)),
     imageSlug: images.get(row.slug) ?? null,
   }));
+};
+
+const loadArticles = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle[]> => {
+  const result = await dalInstance.query(
+    `SELECT slug, title, body, created_at FROM pages
+      WHERE _old_rev_of IS NULL AND _rev_deleted = false
+        AND ${pageNamespaceSql()} = 'article'
+      ORDER BY created_at DESC, slug
+      LIMIT $1`,
+    [NEW_ARTICLE_COUNT]
+  );
+  return toHomeArticles(result.rows as ArticleRow[], lang);
+};
+
+const loadFeaturedArticle = async (dalInstance: DataAccessLayer, lang: string): Promise<HomeArticle | null> => {
+  for (let offset = 0; offset < FEATURED_MAX_SCANNED; offset += FEATURED_BATCH) {
+    const result = await dalInstance.query(
+      `SELECT slug, title, body, created_at FROM pages
+        WHERE _old_rev_of IS NULL AND _rev_deleted = false
+          AND ${pageNamespaceSql()} = 'article'
+          AND body::text LIKE '%](/media/%'
+        ORDER BY created_at DESC, slug
+        LIMIT $1 OFFSET $2`,
+      [FEATURED_BATCH, offset]
+    );
+    const rows = result.rows as ArticleRow[];
+    const withImage = (await toHomeArticles(rows, lang)).find(article => article.imageSlug);
+    if (withImage) return withImage;
+    if (rows.length < FEATURED_BATCH) return null;
+  }
+  return null;
 };
 
 const loadPosts = async (): Promise<HomePost[]> => {
@@ -168,14 +197,15 @@ export async function loadHomeSections(
 ): Promise<HomeSections> {
   const cached = cache.get(lang);
   if (!fresh && cached && Date.now() - cached.at < CACHE_MS) return cached.sections;
-  const [articles, posts, threads, proposals, issues] = await Promise.all([
+  const [articles, featured, posts, threads, proposals, issues] = await Promise.all([
     loadArticles(dalInstance, lang),
+    loadFeaturedArticle(dalInstance, lang),
     loadPosts(),
     loadThreads(dalInstance),
     loadProposals(dalInstance),
     countArticlesWithIssues(dalInstance),
   ]);
-  const sections = { articles, posts, threads, proposals, issues };
+  const sections = { articles, featured, posts, threads, proposals, issues };
   cache.set(lang, { at: Date.now(), sections });
   return sections;
 }

@@ -31,13 +31,13 @@ const formatDay = (date: Date, locale: string) =>
   date.toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
 /**
- * The big card shows the newest article that has a picture; the others follow
- * as a list. With no picture among the recent articles, the newest one is
- * featured without one.
+ * The big card shows the newest article that has a picture, found however far
+ * back it is; the newest articles follow as a list. Only when no article has a
+ * picture at all is the newest one featured without one.
  */
-export const pickNewArticles = (articles: HomeArticle[]) => {
-  const featured = articles.find(article => article.imageSlug) ?? articles[0] ?? null;
-  const alsoNew = articles.filter(article => article !== featured).slice(0, ALSO_NEW_COUNT);
+export const pickNewArticles = (articles: HomeArticle[], featuredWithImage: HomeArticle | null = null) => {
+  const featured = featuredWithImage ?? articles.find(article => article.imageSlug) ?? articles[0] ?? null;
+  const alsoNew = articles.filter(article => article.slug !== featured?.slug).slice(0, ALSO_NEW_COUNT);
   return { featured, alsoNew };
 };
 
@@ -107,7 +107,7 @@ ${VALUES.map(
   </div>
 </section>`;
 
-  const { featured, alsoNew } = pickNewArticles(sections.articles);
+  const { featured, alsoNew } = pickNewArticles(sections.articles, sections.featured);
   const featuredHtml = featured
     ? `<a class="home-featured" href="${escapeHtml(pathFor(featured.slug))}">
     ${
