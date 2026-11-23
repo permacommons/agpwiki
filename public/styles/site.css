@@ -448,7 +448,7 @@ header.site-header {
   color: var(--muted);
 }
 .proposal-table-date {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 @media (max-width: 720px) {
   .article .proposal-table thead {
