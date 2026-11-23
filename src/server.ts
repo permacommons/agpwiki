@@ -7,6 +7,7 @@ import { layoutAssets } from './asset-urls.js';
 import { resolveSessionUser } from './auth/session.js';
 import { initializePostgreSQL } from './db.js';
 import { getLanguageOptions, i18next, middleware as i18nMiddleware, initializeI18n } from './i18n.js';
+import { navSectionFor } from './lib/nav-section.js';
 import { profilePath } from './lib/profile-paths.js';
 import { runInRequestScope } from './lib/request-scope.js';
 import User from './models/user.js';
@@ -68,6 +69,7 @@ app.use(async (req, res, next) => {
   res.locals.currentUserName = null;
   res.locals.currentUserProfilePath = null;
   res.locals.currentPath = req.originalUrl || '/';
+  res.locals.navSection = navSectionFor(req.path);
   res.locals.accountState = null;
   res.locals.accountBannerHtml = '';
   res.locals.assets = layoutAssets;
