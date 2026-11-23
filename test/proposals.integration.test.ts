@@ -366,7 +366,7 @@ test('Service proposal links record pull requests and main proposals', async () 
     ],
     parent: { id: main.id, slug: mainSlug },
   });
-  assert.equal(linked.proposal, null);
+  assert.equal(linked.proposal?.status, 'draft');
   assert.equal(linked.body?.en, 'Part.');
 
   await assert.rejects(
@@ -395,7 +395,7 @@ test('Service proposal links record pull requests and main proposals', async () 
   const parts = await listProposalParts(dal, main.id);
   assert.deepEqual(
     parts.map(item => [item.slug, item.status]),
-    [[partSlug, null]]
+    [[partSlug, 'draft']]
   );
 
   const renamedSlug = `${prefix}/renamed-main`;
@@ -498,7 +498,7 @@ test('Service proposal status follows who may set what and keeps decisions', asy
     author.id
   );
   await createWikiPage(dal, { slug: otherSlug, title: { en: 'Next' }, body: { en: 'Text.' } }, author.id);
-  assert.equal(created.proposal, null);
+  assert.equal(created.proposal?.status, 'draft');
 
   const opened = await setProposalStatus(dal, { slug, status: 'open' }, author.id);
   assert.equal(opened.proposal?.status, 'open');

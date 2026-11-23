@@ -35,6 +35,7 @@ import { applyUnifiedPatch, type PatchFormat } from '../lib/patch.js';
 import { isProfileSlug } from '../lib/profile-paths.js';
 import { missingPromptPlaceholders, requiredPromptPlaceholders } from '../lib/prompt-registry.js';
 import {
+  isProposalSlug,
   type ProposalStatusInfo,
   readProposalLinks,
   readProposalStatus,
@@ -1109,6 +1110,10 @@ export async function createWikiPage(
   if (canonicalLanguage !== undefined) page.canonicalLanguage = canonicalLanguage;
   applyWikidataId(page, wikidata);
   applyInfoboxValues(page, infoboxValues);
+  if (isProposalSlug(normalizedSlug)) {
+    const draftStatus: ProposalStatusInfo = { status: 'draft', changedAt: createdAt.toISOString(), changedBy: userId };
+    page.properties = { ...((page.properties as PageProperties | null) ?? {}), proposal: draftStatus };
+  }
   const normalizedRevSummary = sanitizeLocalizedMapInput(revSummary);
   if (normalizedRevSummary !== undefined) page._revSummary = normalizedRevSummary;
   page.createdAt = createdAt;
