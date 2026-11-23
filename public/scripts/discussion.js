@@ -200,9 +200,10 @@
     return { restored, rememberContent, save };
   };
 
-  const fetchThreadBatch = async (base, threadIds) => {
+  const fetchThreadBatch = async (base, threadIds, headingLevel) => {
     const url = new URL(base);
     url.searchParams.set('batch', threadIds.join(','));
+    if (headingLevel === '3') url.searchParams.set('level', '3');
     const response = await fetch(url, { headers: { Accept: 'text/html' } });
     if (!response.ok) throw new Error(String(response.status));
     const doc = new DOMParser().parseFromString(await response.text(), 'text/html');
@@ -216,9 +217,14 @@
   };
 
   const initializeLoading = (threads, pager, newerNav) => {
-    const base = new URL(location.pathname, location.origin);
+    // Under a page, threads come from that page's discussion, and the page
+    // keeps its own address: only the discussion's own page tracks the reader.
+    const inPage = 'inPage' in pager.dataset;
+    const base = new URL(pager.dataset.discussionBase || location.pathname, location.origin);
     const pageSize = Number(pager.dataset.pageSize);
-    const position = createReadingPosition(base.pathname, pageSize);
+    const position = inPage
+      ? { restored: null, rememberContent: () => {}, save: () => {} }
+      : createReadingPosition(base.pathname, pageSize);
     let state = createDiscussionState({
       threadOrder: JSON.parse(pager.dataset.threadIds || '[]'),
       page: Number(pager.dataset.page),
@@ -294,7 +300,7 @@
       threads.setAttribute('aria-busy', 'true');
       renderControls();
       try {
-        const fragment = await fetchThreadBatch(base, state.pending.threadIds);
+        const fragment = await fetchThreadBatch(base, state.pending.threadIds, pager.dataset.headingLevel);
         insertBatch(fragment, direction);
         state = finishDiscussionLoad(state, true);
       } catch {
@@ -321,9 +327,11 @@
       const down = scrollY > lastScrollY;
       lastScrollY = scrollY;
       if (down && state.automatic && pager.getBoundingClientRect().top < innerHeight + 300) void load('older');
+      if (inPage) return;
       clearTimeout(positionTimer);
       positionTimer = setTimeout(() => position.save(visibleThreadUrl(threads)), 120);
     }, { passive: true });
+    if (inPage) return;
     window.addEventListener('pagehide', () => {
       clearTimeout(positionTimer);
       position.save(visibleThreadUrl(threads));

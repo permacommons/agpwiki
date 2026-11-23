@@ -50,7 +50,7 @@ import {
   loadDiscussionRenderData,
   type OpenReplyForm,
   renderDiscussionSummary,
-  renderDiscussionThreads,
+  renderInPageDiscussion,
   renderPaginatedDiscussion,
   renderPostingGate,
   renderReplyTemplate,
@@ -159,12 +159,6 @@ const renderDiscussionUnder = async (
   const discussion = await readDiscussion(dalInstance, scope, { pageSize: THREADS_UNDER_PAGE });
   const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, { headingLevel: 3 });
   const fullLink = ` · <a href="${escapeHtml(discussionPath(target))}">${escapeHtml(req.t('discussion.openFull'))}</a>`;
-  const moreHtml =
-    discussion.threadCount > discussion.threads.length
-      ? `<p class="discussion-more"><a href="${escapeHtml(discussionPagePath(target, 1))}">${escapeHtml(
-          req.t('discussion.seeAllThreads', { count: discussion.threadCount })
-        )}</a></p>`
-      : '';
   return `<section class="page-discussion" aria-labelledby="page-discussion-title">
   <h2 id="page-discussion-title">${escapeHtml(req.t('discussion.title'))}</h2>
   ${
@@ -172,8 +166,7 @@ const renderDiscussionUnder = async (
       ? renderDiscussionSummary(discussion, req.t, fullLink)
       : `<p class="discussion-empty">${escapeHtml(req.t('discussion.empty'))}</p>`
   }
-  ${renderDiscussionThreads(discussion.threads, ctx)}
-  ${moreHtml}
+  ${renderInPageDiscussion(discussion, ctx, { pageSize: THREADS_UNDER_PAGE })}
   ${renderReplyTemplate(ctx)}
   ${renderStartThread(req, res, target, ctx.viewer)}
 </section>`;

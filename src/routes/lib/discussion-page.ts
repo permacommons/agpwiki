@@ -90,7 +90,8 @@ export const loadDiscussionPage = async (
       : undefined,
   });
   const ctx = await buildDiscussionContext(dalInstance, req, res, target, discussion, {
-    headingLevel: 2,
+    // A batch loaded under a page keeps that page's heading level.
+    headingLevel: req.query.batch && req.query.level === '3' ? 3 : 2,
     openReply: state.openReply ?? (threadId && replyParentId ? { threadId, parentId: replyParentId } : undefined),
   });
   ctx.requestedThreadId = threadId;
