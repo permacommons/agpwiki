@@ -10,7 +10,6 @@ import type { MentionMap } from './lib/mentions.js';
 import { normalizeLineEndings } from './lib/text-normalization.js';
 import { parseWikiLinkSlug } from './lib/wiki-links.js';
 import citationsPlugin from './markdown/citations.js';
-import { insertPlugin } from './markdown/insert.js';
 import { mediaPlugin } from './markdown/media.js';
 import { mentionsPlugin } from './markdown/mentions.js';
 import { type SectionEditLinkRenderer, sectionEditPlugin } from './markdown/section-edit.js';
@@ -147,7 +146,6 @@ const citationStylePath = path.resolve(process.cwd(), 'vendor/csl/agpwiki-author
 const citationStyle = fs.readFileSync(citationStylePath, 'utf8');
 const markdown = new MarkdownIt({ html: false, linkify: true });
 markdown.use(variablesPlugin());
-markdown.use(insertPlugin());
 markdown.use(tocPlugin());
 markdown.use(sectionEditPlugin());
 

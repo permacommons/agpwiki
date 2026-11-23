@@ -1581,21 +1581,6 @@ pre.diff ins {
 .markdown-preview-body blockquote p {
   font-size: 0.98rem;
 }
-.article ins,
-.markdown-preview-body ins {
-  background: #dff5e1;
-  color: #0b4d0b;
-  text-decoration: none;
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px #bfecc4;
-}
-.article s,
-.markdown-preview-body s {
-  background: #ffe3e3;
-  color: #6b0000;
-  border-radius: 2px;
-  box-shadow: 0 0 0 1px #ffbaba;
-}
 .citation-card {
   background: var(--panel);
   border: 1px solid var(--rule);
