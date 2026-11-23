@@ -437,6 +437,7 @@ header.site-header {
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.8rem;
 }
+.proposal-table-title,
 .proposal-table-author {
   overflow-wrap: anywhere;
 }

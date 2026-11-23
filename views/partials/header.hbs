@@ -7,7 +7,7 @@
       <a class="nav-link{{#if (eq navSection "blog")}} nav-link--current{{/if}}" href="/blog"{{#if (eq navSection "blog")}} aria-current="true"{{/if}}>{{__ "nav.blog"}}</a>
       <a class="nav-link{{#if (eq navSection "forum")}} nav-link--current{{/if}}" href="/tool/forum"{{#if (eq navSection "forum")}} aria-current="true"{{/if}}>{{__ "nav.forum"}}</a>
       <details class="tools-menu" data-tools-menu>
-        <summary class="tools-menu-summary nav-link{{#if (eq navSection "tools")}} nav-link--current{{/if}}">{{__ "nav.tools"}}</summary>
+        <summary class="tools-menu-summary nav-link{{#if (eq navSection "tools")}} nav-link--current{{/if}}"{{#if (eq navSection "tools")}} aria-current="true"{{/if}}>{{__ "nav.tools"}}</summary>
         <div class="tools-menu-panel">
           <a class="tools-menu-link" href="/tool/recent-changes">{{__ "page.recentChanges"}}</a>
           <a class="tools-menu-link" href="/tool/proposals">{{__ "page.proposals"}}</a>
