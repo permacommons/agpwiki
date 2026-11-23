@@ -377,11 +377,6 @@ async function getTableColumnNames(tableName: string, env: NodeJS.ProcessEnv): P
   });
 }
 
-async function getTableColumnsString(tableName: string, env: NodeJS.ProcessEnv): Promise<string> {
-  const columns = await getTableColumnNames(tableName, env);
-  return columns.join(', ');
-}
-
 async function createViewFromConfig(configEntry: ViewConfig, env: NodeJS.ProcessEnv): Promise<void> {
   const columns = await getTableColumnNames(configEntry.baseTable, env);
   const selectExpressions = columns.map(column => {
@@ -414,24 +409,27 @@ async function createViewFromConfig(configEntry: ViewConfig, env: NodeJS.Process
   await runCommand('psql', ['-c', `${lines.join('\n')};`], { env });
 }
 
-async function copyFromView(
-  targetTable: string,
-  viewName: string,
-  outputStream: fs.WriteStream,
-  env: NodeJS.ProcessEnv,
-  { orderBy = null }: { orderBy?: string | null } = {}
-): Promise<void> {
-  const columns = await getTableColumnsString(targetTable, env);
-  outputStream.write(
-    `\n--\n-- Data for Name: ${targetTable}; Type: TABLE DATA; Schema: public; Owner: -\n--\n\n`
-  );
-  outputStream.write(`COPY public.${targetTable} (${columns}) FROM stdin;\n`);
+async function copyPublicData(outputStream: fs.WriteStream, env: NodeJS.ProcessEnv): Promise<void> {
+  const args = ['-X', '-qAt', '-v', 'ON_ERROR_STOP=1', '-c', 'BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY'];
 
-  const orderClause = orderBy ? ` ORDER BY ${orderBy}` : '';
-  const query = `COPY (SELECT * FROM ${viewName}${orderClause}) TO STDOUT`;
+  // Keep each exported row and its dependent rows on the same snapshot.
+  for (const { baseTable, name } of VIEW_CONFIGS) {
+    const columns = (await getTableColumnNames(baseTable, env)).join(', ');
+    const order = baseTable === 'users' ? ' ORDER BY created_at' : '';
+    args.push(
+      '-c', `SELECT $dump$
+--
+-- Data for Name: ${baseTable}; Type: TABLE DATA; Schema: public; Owner: -
+--
 
-  await runCommand('psql', ['-c', query], { outputStream, env });
-  outputStream.write('\\.\n\n');
+COPY public.${baseTable} (${columns}) FROM stdin;$dump$`,
+      '-c', `COPY (SELECT * FROM ${TEMP_SCHEMA}.${name}${order}) TO STDOUT`,
+      '-c', "SELECT $dump$\\.$dump$"
+    );
+  }
+
+  args.push('-c', 'COMMIT');
+  await runCommand('psql', args, { outputStream, env });
 }
 
 async function ensureTempSchema(env: NodeJS.ProcessEnv): Promise<void> {
@@ -485,30 +483,13 @@ async function createDump(): Promise<void> {
       { outputStream, env }
     );
 
-    console.log('Step 3: Dumping sanitized users...');
-    await copyFromView('users', `${TEMP_SCHEMA}.sanitized_users`, outputStream, env, {
-      orderBy: 'created_at',
-    });
-
-    console.log('Step 4: Dumping public content tables...');
-    await copyFromView('pages', `${TEMP_SCHEMA}.current_pages`, outputStream, env);
-    await copyFromView('page_media_refs', `${TEMP_SCHEMA}.current_page_media_refs`, outputStream, env);
-    await copyFromView('citations', `${TEMP_SCHEMA}.current_citations`, outputStream, env);
-    await copyFromView('posts', `${TEMP_SCHEMA}.current_posts`, outputStream, env);
-    await copyFromView('page_aliases', `${TEMP_SCHEMA}.current_page_aliases`, outputStream, env);
-    await copyFromView('post_aliases', `${TEMP_SCHEMA}.current_post_aliases`, outputStream, env);
-    await copyFromView('page_checks', `${TEMP_SCHEMA}.current_page_checks`, outputStream, env);
-    await copyFromView(
-      'citation_claims',
-      `${TEMP_SCHEMA}.current_citation_claims`,
-      outputStream,
-      env
-    );
+    console.log('Step 3: Dumping sanitized users and public content tables...');
+    await copyPublicData(outputStream, env);
 
     outputStream.end();
     await once(outputStream, 'finish');
 
-    console.log('Step 5: Compressing dump...');
+    console.log('Step 4: Compressing dump...');
     await runCommand('tar', ['-czf', tarPath, '-C', EXPORT_DIR, SQL_FILE], { stdio: 'inherit' });
 
     fs.unlinkSync(outputPath);
@@ -519,7 +500,7 @@ async function createDump(): Promise<void> {
     }
     fs.symlinkSync(TAR_FILE, latestPath);
 
-    console.log('Step 6: Generating dump index page...');
+    console.log('Step 5: Generating dump index page...');
     writeDumpIndex();
 
     const stats = fs.statSync(tarPath);
