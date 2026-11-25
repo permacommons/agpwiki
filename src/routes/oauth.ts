@@ -119,7 +119,7 @@ const buildOAuthMetadata = (req: Request) => {
       ? new URL('/tool/oauth/register', baseUrl).href
       : undefined,
     response_types_supported: ['code'],
-    code_challenge_methods_supported: ['S256', 'plain'],
+    code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['client_secret_post', 'client_secret_basic', 'none'],
     grant_types_supported: ['authorization_code', 'refresh_token'],
     scopes_supported: oauthConfig.defaultScopes,
@@ -188,7 +188,7 @@ export const registerOAuthRoutes = (app: Express) => {
       return;
     }
 
-    if (!['S256', 'plain'].includes(codeChallengeMethod)) {
+    if (codeChallengeMethod !== 'S256') {
       redirectWithParams(req, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
@@ -291,7 +291,7 @@ export const registerOAuthRoutes = (app: Express) => {
       return;
     }
 
-    if (!['S256', 'plain'].includes(codeChallengeMethod)) {
+    if (codeChallengeMethod !== 'S256') {
       redirectWithParams(req, res, redirectUri, {
         error: 'invalid_request',
         error_description: 'Unsupported code challenge method.',
