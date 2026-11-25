@@ -6,7 +6,13 @@ import test from 'node:test';
 
 import express from 'express';
 
-import { generateOAuthAccessToken, generateOAuthRefreshToken, getTokenMetadata } from '../src/auth/oauth.js';
+import {
+  computeCodeChallenge,
+  generateOAuthAccessToken,
+  generateOAuthRefreshToken,
+  getTokenMetadata,
+  verifyPkceChallenge,
+} from '../src/auth/oauth.js';
 import { initializePostgreSQL } from '../src/db.js';
 import { resolveAuthInfoFromToken } from '../src/mcp/auth.js';
 import AgentAccessRequest from '../src/models/agent-access-request.js';
@@ -172,6 +178,55 @@ test('refresh token rotation: new tokens issued before old token is consumed', a
     assert.equal(retry.status, 400);
     const retryBody = await retry.json() as Record<string, unknown>;
     assert.equal(retryBody.error, 'invalid_grant');
+  } finally {
+    await server.close();
+  }
+});
+
+test('PKCE verification accepts only S256', () => {
+  const verifier = 'a'.repeat(43);
+  assert.equal(verifyPkceChallenge(verifier, computeCodeChallenge(verifier), 'S256'), true);
+  assert.equal(verifyPkceChallenge(verifier, verifier, 'plain'), false);
+});
+
+test('authorization server metadata advertises only S256 PKCE', async () => {
+  const server = await makeTestServer();
+  try {
+    const res = await fetch(`${server.url}/.well-known/oauth-authorization-server`);
+    const body = (await res.json()) as { code_challenge_methods_supported: string[] };
+    assert.deepEqual(body.code_challenge_methods_supported, ['S256']);
+  } finally {
+    await server.close();
+  }
+});
+
+test('authorize rejects the plain PKCE method', async () => {
+  await getDal();
+  const clientId = `test-plain-client-${Date.now()}`;
+  await OAuthClient.create({
+    clientId,
+    clientName: 'Plain PKCE Test Client',
+    redirectUris: ['https://example.com/callback'],
+    grantTypes: ['authorization_code', 'refresh_token'],
+    tokenEndpointAuthMethod: 'none',
+    createdAt: new Date(),
+  });
+  const server = await makeTestServer();
+  try {
+    const params = new URLSearchParams({
+      response_type: 'code',
+      client_id: clientId,
+      redirect_uri: 'https://example.com/callback',
+      code_challenge: 'x'.repeat(43),
+      code_challenge_method: 'plain',
+      state: 'abc',
+    });
+    const res = await fetch(`${server.url}/tool/oauth/authorize?${params}`, { redirect: 'manual' });
+    assert.equal(res.status, 302);
+    const location = new URL(res.headers.get('location') ?? '');
+    assert.equal(location.origin + location.pathname, 'https://example.com/callback');
+    assert.equal(location.searchParams.get('error'), 'invalid_request');
+    assert.equal(location.searchParams.get('state'), 'abc');
   } finally {
     await server.close();
   }

@@ -41,19 +41,10 @@ export const computeCodeChallenge = (verifier: string) => {
   return base64UrlEncode(digest);
 };
 
-export const verifyPkceChallenge = (
-  verifier: string,
-  challenge: string,
-  method: string
-): boolean => {
-  if (method === 'S256') {
-    return computeCodeChallenge(verifier) === challenge;
-  }
-  if (method === 'plain') {
-    return verifier === challenge;
-  }
-  return false;
-};
+// Only S256: "plain" offers no protection once the authorization request is
+// observed, and every client we serve can compute SHA-256.
+export const verifyPkceChallenge = (verifier: string, challenge: string, method: string) =>
+  method === 'S256' && computeCodeChallenge(verifier) === challenge;
 
 export const generateOAuthClientId = () => `agp_client_${crypto.randomBytes(18).toString('hex')}`;
 export const generateOAuthClientSecret = () =>
