@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { createMcpExpressApp } from '@modelcontextprotocol/sdk/server/express.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
@@ -9,8 +8,8 @@ import type { NextFunction, Request, Response } from 'express';
 import debug from '../../util/debug.js';
 import { initializePostgreSQL } from '../db.js';
 import { getUserRoles } from '../services/roles.js';
-import { resolveAuthInfoFromToken } from './auth.js';
 import { createMcpServer } from './core.js';
+import { authMiddleware, getAuthInfo, sendInvalidToken } from './http-auth.js';
 import { isJsonParseError } from './http-errors.js';
 
 type McpConfig = {
@@ -26,36 +25,6 @@ const getMcpConfig = (): McpConfig => {
   return {};
 };
 
-const parseBearerToken = (req: Request) => {
-  const header = req.headers.authorization;
-  if (!header) return null;
-  const [scheme, value] = header.split(' ');
-  if (!scheme || scheme.toLowerCase() !== 'bearer') return null;
-  return value?.trim() || null;
-};
-
-const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const token = parseBearerToken(req);
-    if (!token) {
-      res.status(401).json({
-        error: 'Missing Authorization header. Use: Authorization: Bearer <token>',
-      });
-      return;
-    }
-
-    await initializePostgreSQL();
-    const authInfo: AuthInfo = await resolveAuthInfoFromToken(token);
-
-    (req as Request & { auth?: AuthInfo }).auth = authInfo;
-    next();
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    debug.error(`MCP auth failed: ${message}`);
-    res.status(401).json({ error: 'Invalid or expired token.' });
-  }
-};
-
 const mcpConfig = getMcpConfig();
 const host = mcpConfig.host ?? '127.0.0.1';
 const port = mcpConfig.port ?? 3333;
@@ -64,6 +33,9 @@ const app = createMcpExpressApp({
   host,
   allowedHosts: mcpConfig.allowedHosts,
 });
+// The WWW-Authenticate challenge is built from req.protocol, which is only
+// correct behind a TLS-terminating proxy if the proxy is trusted.
+app.set('trust proxy', config.get<boolean | string | number | string[]>('server.trustProxy'));
 
 type SessionEntry = {
   transport: StreamableHTTPServerTransport;
@@ -73,8 +45,6 @@ type SessionEntry = {
 };
 
 const sessions = new Map<string, SessionEntry>();
-
-const getAuthInfo = (req: Request) => (req as Request & { auth?: AuthInfo }).auth;
 
 const sendJsonError = (res: Response, status: number, message: string) => {
   res.status(status).json({
@@ -102,7 +72,11 @@ app.all('/mcp', authMiddleware, async (req, res) => {
   const authInfo = getAuthInfo(req);
   const userId = authInfo?.extra?.userId;
   if (typeof userId !== 'string' || !userId) {
-    sendJsonError(res, 401, 'Unauthorized.');
+    sendInvalidToken(req, res, {
+      jsonrpc: '2.0',
+      error: { code: -32000, message: 'Unauthorized.' },
+      id: null,
+    });
     return;
   }
 

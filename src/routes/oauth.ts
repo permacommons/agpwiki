@@ -7,8 +7,11 @@ import {
   generateOAuthClientSecret,
   generateOAuthCode,
   generateOAuthRefreshToken,
+  getIssuerUrl,
   getOAuthConfig,
+  getResourceServerUrl,
   getTokenMetadata,
+  PROTECTED_RESOURCE_METADATA_PATH,
   parseScopeParam,
   resolveScopes,
   verifyPkceChallenge,
@@ -103,23 +106,6 @@ const isValidAuthMethod = (method: string) =>
 
 const getRequestBodyValue = (req: Request, key: string) => pickString(req.body?.[key]);
 
-const getIssuerUrl = (req: Request) => {
-  const oauthConfig = getOAuthConfig();
-  if (oauthConfig.issuerUrl) return new URL(oauthConfig.issuerUrl);
-  const host = req.get('host');
-  const protocol = req.protocol;
-  if (!host) {
-    throw new Error('Missing Host header.');
-  }
-  return new URL(`${protocol}://${host}`);
-};
-
-const getResourceServerUrl = (_req: Request, issuer: URL) => {
-  const oauthConfig = getOAuthConfig();
-  if (oauthConfig.resourceServerUrl) return new URL(oauthConfig.resourceServerUrl);
-  return new URL('/mcp', issuer.origin);
-};
-
 const buildOAuthMetadata = (req: Request) => {
   const oauthConfig = getOAuthConfig();
   const issuer = getIssuerUrl(req);
@@ -143,7 +129,7 @@ const buildOAuthMetadata = (req: Request) => {
 const buildProtectedResourceMetadata = (req: Request) => {
   const oauthConfig = getOAuthConfig();
   const issuer = getIssuerUrl(req);
-  const resourceServerUrl = getResourceServerUrl(req, issuer);
+  const resourceServerUrl = getResourceServerUrl(issuer);
   return {
     resource: resourceServerUrl.href,
     authorization_servers: [new URL(issuer.origin).href],
@@ -162,7 +148,7 @@ export const registerOAuthRoutes = (app: Express) => {
     }
   });
 
-  app.get('/.well-known/oauth-protected-resource/mcp', (req, res) => {
+  app.get(PROTECTED_RESOURCE_METADATA_PATH, (req, res) => {
     try {
       res.json(buildProtectedResourceMetadata(req));
     } catch (error) {
