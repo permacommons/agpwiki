@@ -81,3 +81,48 @@ export const resolveScopes = (requestedScopes: string[]) => {
 };
 
 export const hashClientSecret = (secret: string) => hashToken(secret);
+
+export const PROTECTED_RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource/mcp';
+
+type RequestOrigin = {
+  protocol: string;
+  get(name: string): string | undefined;
+};
+
+export const getIssuerUrl = (req: RequestOrigin) => {
+  const oauthConfig = getOAuthConfig();
+  if (oauthConfig.issuerUrl) return new URL(oauthConfig.issuerUrl);
+  const host = req.get('host');
+  if (!host) {
+    throw new Error('Missing Host header.');
+  }
+  return new URL(`${req.protocol}://${host}`);
+};
+
+export const getResourceServerUrl = (issuer: URL) => {
+  const oauthConfig = getOAuthConfig();
+  if (oauthConfig.resourceServerUrl) return new URL(oauthConfig.resourceServerUrl);
+  return new URL('/mcp', issuer.origin);
+};
+
+export const getProtectedResourceMetadataUrl = (issuer: URL) =>
+  new URL(PROTECTED_RESOURCE_METADATA_PATH, issuer.origin);
+
+const quoteAuthParam = (value: string) => `"${value.replace(/[\\"]/g, '\\$&')}"`;
+
+// RFC 6750 §3 and RFC 9728 §5.1: clients discover the authorization server
+// from resource_metadata, so every 401 from the resource server carries it.
+export const buildBearerChallenge = ({
+  resourceMetadataUrl,
+  scopes,
+  error,
+}: {
+  resourceMetadataUrl: URL;
+  scopes: string[];
+  error?: 'invalid_token';
+}) => {
+  const params = [`resource_metadata=${quoteAuthParam(resourceMetadataUrl.href)}`];
+  if (scopes.length) params.push(`scope=${quoteAuthParam(formatScope(scopes))}`);
+  if (error) params.push(`error=${quoteAuthParam(error)}`);
+  return `Bearer ${params.join(', ')}`;
+};
