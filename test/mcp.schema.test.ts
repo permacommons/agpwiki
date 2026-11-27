@@ -108,6 +108,11 @@ test('MCP tools expose review annotations', () => {
     assert.notEqual(tool.title?.trim(), '', `${name} must have a non-empty title`);
     assert.ok(tool.annotations, `${name} must have annotations`);
     assert.equal(
+      tool.annotations?.title,
+      tool.title,
+      `${name} must repeat its title in annotations.title`
+    );
+    assert.equal(
       tool.annotations?.idempotentHint,
       undefined,
       `${name} must not set idempotentHint`

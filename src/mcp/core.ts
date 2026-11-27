@@ -1,6 +1,6 @@
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, ToolAnnotations } from '@modelcontextprotocol/sdk/types.js';
 import config from 'config';
 import { z } from 'zod';
 import { getLanguageOptions } from '../../locales/cldr.js';
@@ -374,6 +374,21 @@ export const createMcpServer = (options: CreateMcpServerOptions = {}) => {
         'Use tools to create/update wiki pages, citations, and media (Wikimedia Commons), and resources to read them. Wiki and blog write tools return compact metadata and omit full body content; use read tools to retrieve content after writing.',
     }
   );
+
+  // Some clients, including Claude's connector directory, read the display
+  // name from annotations.title rather than the top-level tool title.
+  type ToolConfigWithTitle = { title?: string; annotations?: ToolAnnotations };
+  const registerToolWithoutAnnotationTitle = server.registerTool.bind(server) as (
+    name: string,
+    config: ToolConfigWithTitle,
+    callback: unknown
+  ) => ReturnType<typeof server.registerTool>;
+  server.registerTool = ((name: string, config: ToolConfigWithTitle, callback: unknown) =>
+    registerToolWithoutAnnotationTitle(
+      name,
+      { ...config, annotations: { title: config.title, ...config.annotations } },
+      callback
+    )) as typeof server.registerTool;
 
   const formatToolResult: FormatToolResult = payload => {
     const structuredContent =
